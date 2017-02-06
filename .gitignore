@@ -1,0 +1,7 @@
+# Xcode & Finder
+.DS_Store
+xcuserdata/
+
+# SwiftPM
+/Packages/
+/.build/
