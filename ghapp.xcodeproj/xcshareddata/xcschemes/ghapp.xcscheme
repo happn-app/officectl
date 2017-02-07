@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "OBJ_59"
+               BlueprintIdentifier = "OBJ_58"
                BuildableName = "StringScanner.framework"
                BlueprintName = "StringScanner"
                ReferencedContainer = "container:ghapp.xcodeproj">
@@ -28,7 +28,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "OBJ_70"
+               BlueprintIdentifier = "OBJ_69"
                BuildableName = "Guaka.framework"
                BlueprintName = "Guaka"
                ReferencedContainer = "container:ghapp.xcodeproj">
@@ -42,7 +42,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "OBJ_102"
+               BlueprintIdentifier = "OBJ_101"
                BuildableName = "ghapp"
                BlueprintName = "ghapp"
                ReferencedContainer = "container:ghapp.xcodeproj">
@@ -73,7 +73,7 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "OBJ_59"
+            BlueprintIdentifier = "OBJ_58"
             BuildableName = "StringScanner.framework"
             BlueprintName = "StringScanner"
             ReferencedContainer = "container:ghapp.xcodeproj">
