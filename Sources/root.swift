@@ -47,7 +47,7 @@ private func inheritablePreRun(flags: Flags, args: [String]) -> Bool {
 			URLQueryItem(name: "refresh_token", value: refreshToken),
 			URLQueryItem(name: "grant_type", value: "refresh_token")
 		]
-		request.httpBody = components.percentEncodedQuery?.data(using: .utf8)
+		request.httpBody = components.percentEncodedQuery?.addingPercentEncoding(withAllowedCharacters: CharacterSet(charactersIn: "+").inverted)?.data(using: .utf8)
 		request.httpMethod = "POST"
 		guard
 			let (data, response) = try? URLSession.shared.synchronousDataTask(with: request),
@@ -84,6 +84,10 @@ private func inheritablePreRun(flags: Flags, args: [String]) -> Bool {
 			return User(id: id, email: email)
 		}
 	}
+	
+//	for var user in users {
+//		try? print("\(user) --> \(user.accessToken(forScopes: ["https://mail.google.com/"], withSuperuserEmail: superuserEmail, superuserKey: superuserKey))")
+//	}
 	
 	return false
 }

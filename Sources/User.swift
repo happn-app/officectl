@@ -27,8 +27,8 @@ struct User : CustomStringConvertible {
 	private var _accessToken: String? = nil
 	private var _accessTokenScopes: Set<String>? = nil
 	private var _accessTokenExpirationDate: Date? = nil
-	mutating func accessToken(forScopes scopes: [String], withSuperuserEmail superuserEmail: String, superuserKey: SecKey) throws -> String {
-		if let accessToken = _accessToken, let expirationDate = _accessTokenExpirationDate, expirationDate.timeIntervalSinceNow > 5*60, Set(scopes) == _accessTokenScopes {return accessToken}
+	mutating func accessToken(forScopes scopes: [String], withSuperuserEmail superuserEmail: String, superuserKey: SecKey) throws -> (String, Date) {
+		if let accessToken = _accessToken, let expirationDate = _accessTokenExpirationDate, expirationDate.timeIntervalSinceNow > 5*60, Set(scopes) == _accessTokenScopes {return (accessToken, expirationDate)}
 		
 		let scopeURL = URL(string: "https://www.googleapis.com/oauth2/v4/token")!
 		let jwtRequestHeader = ["alg": "RS256", "typ": "JWT"]
@@ -54,16 +54,13 @@ struct User : CustomStringConvertible {
 		}
 		let jwtRequest = jwtRequestSignedString + "." + jwtRequestSignature.base64EncodedString()
 		
-		var allowedCharacters = CharacterSet.urlQueryAllowed
-		allowedCharacters.remove(charactersIn: "+")
-		
 		var request = URLRequest(url: scopeURL)
 		var components = URLComponents()
 		components.queryItems = [
 			URLQueryItem(name: "grant_type", value: "urn:ietf:params:oauth:grant-type:jwt-bearer"),
 			URLQueryItem(name: "assertion", value: jwtRequest)
 		]
-		request.httpBody = components.query?.addingPercentEncoding(withAllowedCharacters: allowedCharacters)?.data(using: .utf8)
+		request.httpBody = components.percentEncodedQuery?.addingPercentEncoding(withAllowedCharacters: CharacterSet(charactersIn: "+").inverted)?.data(using: .utf8)
 		request.httpMethod = "POST"
 		guard
 			let (data, response) = try? URLSession.shared.synchronousDataTask(with: request),
@@ -74,10 +71,12 @@ struct User : CustomStringConvertible {
 			throw NSError(domain: "JWT", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."])
 		}
 		
+		let expirationDate = Date(timeIntervalSinceNow: TimeInterval(expireDelay))
+		
 		_accessToken = token
 		_accessTokenScopes = Set(scopes)
-		_accessTokenExpirationDate = Date(timeIntervalSinceNow: TimeInterval(expireDelay))
-		return token
+		_accessTokenExpirationDate = expirationDate
+		return (token, expirationDate)
 	}
 	
 }
