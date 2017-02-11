@@ -218,7 +218,7 @@ class MailBackuper {
 		var config = ""
 		print("[general]", to: &config)
 		print("ui = MachineUI", to: &config)
-		print("maxsyncaccounts = \(tokenForUsers.count)", to: &config)
+		print("maxsyncaccounts = 16", to: &config) /* Arbitrary */
 		print("accounts = ", terminator: "", to: &config)
 		var first = true
 		for (user, _) in tokenForUsers {
