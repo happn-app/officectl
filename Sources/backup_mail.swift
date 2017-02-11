@@ -33,6 +33,8 @@ func backupMail(forUsers users: [User], withSuperuser superuser: Superuser, inFo
 		
 		let mb = MailBackuper(users: users, superuser: superuser, destinationFolderURL: destinationFolderURL, configurationFileURL: configFileURL)
 		try mb.backupMails()
+		
+		/* TODO: Linkify the backups? */
 	} catch {
 		command.fail(statusCode: 1, errorMessage: "Received error: \(error)")
 	}
