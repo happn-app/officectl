@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7B05F66E1E4E4A2400CE8826 /* backup_mail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B05F66D1E4E4A2400CE8826 /* backup_mail.swift */; };
+		7B1C7E531E4F40CB00A8A1C6 /* Superuser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B1C7E521E4F40CB00A8A1C6 /* Superuser.swift */; };
+		7B1C7E551E4F53A100A8A1C6 /* stderr.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B1C7E541E4F53A100A8A1C6 /* stderr.swift */; };
 		OBJ_106 /* URLSession+Synchronous.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_47 /* URLSession+Synchronous.swift */; };
 		OBJ_107 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_48 /* User.swift */; };
 		OBJ_108 /* backup.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_49 /* backup.swift */; };
@@ -72,6 +75,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7B05F66D1E4E4A2400CE8826 /* backup_mail.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = backup_mail.swift; sourceTree = "<group>"; };
+		7B1C7E521E4F40CB00A8A1C6 /* Superuser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Superuser.swift; sourceTree = "<group>"; };
+		7B1C7E541E4F53A100A8A1C6 /* stderr.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = stderr.swift; sourceTree = "<group>"; };
 		OBJ_10 /* Regex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Regex.swift; sourceTree = "<group>"; };
 		OBJ_11 /* ScannerResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerResult.swift; sourceTree = "<group>"; };
 		OBJ_12 /* StringExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtension.swift; sourceTree = "<group>"; };
@@ -141,6 +147,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7B05F66F1E4E4A2600CE8826 /* Backup Command */ = {
+			isa = PBXGroup;
+			children = (
+				OBJ_49 /* backup.swift */,
+				7B05F66D1E4E4A2400CE8826 /* backup_mail.swift */,
+			);
+			name = "Backup Command";
+			sourceTree = "<group>";
+		};
+		7B1C7E511E4F3F6900A8A1C6 /* Objects */ = {
+			isa = PBXGroup;
+			children = (
+				OBJ_48 /* User.swift */,
+				7B1C7E521E4F40CB00A8A1C6 /* Superuser.swift */,
+			);
+			name = Objects;
+			sourceTree = "<group>";
+		};
 		OBJ_14 /* Guaka */ = {
 			isa = PBXGroup;
 			children = (
@@ -232,18 +256,19 @@
 		OBJ_46 /* ghapp */ = {
 			isa = PBXGroup;
 			children = (
+				7B1C7E511E4F3F6900A8A1C6 /* Objects */,
+				7B05F66F1E4E4A2600CE8826 /* Backup Command */,
 				OBJ_47 /* URLSession+Synchronous.swift */,
-				OBJ_49 /* backup.swift */,
 				OBJ_50 /* main.swift */,
 				OBJ_51 /* root.swift */,
 				OBJ_52 /* setup.swift */,
-				OBJ_48 /* User.swift */,
+				7B1C7E541E4F53A100A8A1C6 /* stderr.swift */,
 			);
 			name = ghapp;
 			path = Sources;
 			sourceTree = SOURCE_ROOT;
 		};
-		OBJ_5 /*  */ = {
+		OBJ_5 = {
 			isa = PBXGroup;
 			children = (
 				OBJ_6 /* Package.swift */,
@@ -251,7 +276,6 @@
 				OBJ_53 /* Tests */,
 				OBJ_54 /* Products */,
 			);
-			name = "";
 			sourceTree = "<group>";
 		};
 		OBJ_53 /* Tests */ = {
@@ -363,7 +387,7 @@
 			knownRegions = (
 				en,
 			);
-			mainGroup = OBJ_5 /*  */;
+			mainGroup = OBJ_5;
 			productRefGroup = OBJ_54 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -380,6 +404,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
+				7B1C7E551E4F53A100A8A1C6 /* stderr.swift in Sources */,
+				7B1C7E531E4F40CB00A8A1C6 /* Superuser.swift in Sources */,
+				7B05F66E1E4E4A2400CE8826 /* backup_mail.swift in Sources */,
 				OBJ_106 /* URLSession+Synchronous.swift in Sources */,
 				OBJ_107 /* User.swift in Sources */,
 				OBJ_108 /* backup.swift in Sources */,
@@ -498,7 +525,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_NS_ASSERTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_SWIFT_FLAGS = "-DXcode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -519,7 +546,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GCC_OPTIMIZATION_LEVEL = s;
-				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_SWIFT_FLAGS = "-DXcode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;

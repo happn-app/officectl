@@ -10,7 +10,7 @@ import Foundation
 
 
 
-struct User : CustomStringConvertible {
+class User : CustomStringConvertible, Hashable, Equatable {
 	
 	let id: String
 	let email: String
@@ -27,13 +27,13 @@ struct User : CustomStringConvertible {
 	private var _accessToken: String? = nil
 	private var _accessTokenScopes: Set<String>? = nil
 	private var _accessTokenExpirationDate: Date? = nil
-	mutating func accessToken(forScopes scopes: [String], withSuperuserEmail superuserEmail: String, superuserKey: SecKey) throws -> (String, Date) {
-		if let accessToken = _accessToken, let expirationDate = _accessTokenExpirationDate, expirationDate.timeIntervalSinceNow > 5*60, Set(scopes) == _accessTokenScopes {return (accessToken, expirationDate)}
+	func accessToken(forScopes scopes: Set<String>, withSuperuser superuser: Superuser, forceRegeneration: Bool = false) throws -> (String, Date) {
+		if !forceRegeneration, let accessToken = _accessToken, let expirationDate = _accessTokenExpirationDate, expirationDate.timeIntervalSinceNow > 5*60, _accessTokenScopes?.isSuperset(of: scopes) ?? false {return (accessToken, expirationDate)}
 		
 		let scopeURL = URL(string: "https://www.googleapis.com/oauth2/v4/token")!
 		let jwtRequestHeader = ["alg": "RS256", "typ": "JWT"]
 		let jwtRequestContent: [String: Any] = [
-			"iss": superuserEmail,
+			"iss": superuser.email,
 			"scope": scopes.joined(separator: " "), "aud": scopeURL.absoluteString,
 			"iat": Int(Date(timeIntervalSinceNow: -3).timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 30).timeIntervalSince1970),
 			"sub": email
@@ -43,7 +43,7 @@ struct User : CustomStringConvertible {
 		let jwtRequestSignedString = jwtRequestHeaderBase64 + "." + jwtRequestContentBase64
 		guard
 			let jwtRequestSignedData = jwtRequestSignedString.data(using: .utf8),
-			let superuserSigner = SecSignTransformCreate(superuserKey, nil),
+			let superuserSigner = SecSignTransformCreate(superuser.privateKey, nil),
 			SecTransformSetAttribute(superuserSigner, kSecDigestTypeAttribute, kSecDigestSHA2, nil),
 			SecTransformSetAttribute(superuserSigner, kSecDigestLengthAttribute, NSNumber(value: 256), nil),
 			SecTransformSetAttribute(superuserSigner, kSecTransformInputAttributeName, jwtRequestSignedData as CFData, nil),
@@ -77,6 +77,14 @@ struct User : CustomStringConvertible {
 		_accessTokenScopes = Set(scopes)
 		_accessTokenExpirationDate = expirationDate
 		return (token, expirationDate)
+	}
+	
+	var hashValue: Int {
+		return id.hashValue
+	}
+	
+	static func ==(_ lhs: User, _ rhs: User) -> Bool {
+		return lhs.id == rhs.id
 	}
 	
 }

@@ -3,5 +3,6 @@ import Guaka
 // Generated, dont update
 func setupCommands() {
 	rootCommand.add(subCommand: backupCommand)
-	// Command adding placeholder, edit this line
+	backupCommand.add(subCommand: backupMailCommand)
+  // Command adding placeholder, edit this line.
 }
