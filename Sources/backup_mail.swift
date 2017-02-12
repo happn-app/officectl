@@ -206,6 +206,7 @@ class OfflineImapManager {
 		let processOutput = try offlineimapOutputFileURL.map{ try FileHandle(forWritingTo: $0) } ?? FileHandle.nullDevice /* Set to Pipe() and uncomment set of currentOfflineimapOutputPipe if we want to parse the data. */
 		process.launchPath = "/usr/local/bin/offlineimap"
 		process.arguments = ["-c", configurationFileURL.path]
+		process.standardInput = FileHandle.nullDevice
 		process.standardOutput = processOutput
 		process.terminationHandler = { p in
 //			print("In termination handler")
@@ -279,7 +280,6 @@ class OfflineImapManager {
 			print("type = Gmail", to: &config)
 			print("readonly = True", to: &config)
 			print("remoteuser = \(user.email)", to: &config)
-			print("remotepass = ", to: &config) /* We don't want offlineimap to hang when OAuth token expires. */
 			print("oauth2_access_token = \(token)", to: &config)
 			print("sslcacertfile = ~/.dummycert_for_python.pem", to: &config)
 			print("", to: &config)
