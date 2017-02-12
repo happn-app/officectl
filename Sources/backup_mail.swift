@@ -97,6 +97,9 @@ class OfflineImapManager {
 			}
 		}
 		
+		print("Removing offlineimap config file")
+		_ = try? FileManager.default.removeItem(at: configurationFileURL)
+		
 		if let err = endRunError {throw err}
 	}
 	
