@@ -206,7 +206,7 @@ class OfflineImapManager {
 		let processOutput = try offlineimapOutputFileURL.map{ try FileHandle(forWritingTo: $0) } ?? FileHandle.nullDevice /* Set to Pipe() and uncomment set of currentOfflineimapOutputPipe if we want to parse the data. */
 		process.launchPath = "/usr/local/bin/offlineimap"
 		process.arguments = ["-c", configurationFileURL.path]
-		process.standardInput = FileHandle.nullDevice
+		process.standardInput = FileHandle.nullDevice /* Forces failure of getting user pass from input when auth token expires. */
 		process.standardOutput = processOutput
 		process.terminationHandler = { p in
 //			print("In termination handler")
