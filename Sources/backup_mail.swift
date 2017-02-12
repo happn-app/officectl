@@ -247,7 +247,8 @@ class OfflineImapManager {
 		var config = ""
 		print("[general]", to: &config)
 		print("ui = MachineUI", to: &config)
-		print("maxsyncaccounts = \(maxConcurrentSync ?? 8)", to: &config) /* Defaults arbitrarily to 8 */
+		/* Defaults arbitrarily to 4. Even on an 8-core machine, offlineimap seems greedy, and I got "pthread_cond_wait: Resource busy" with 8 */
+		print("maxsyncaccounts = \(maxConcurrentSync ?? 4)", to: &config)
 		print("accounts = ", terminator: "", to: &config)
 		var first = true
 		for (user, _) in tokenForUsers {
