@@ -271,6 +271,7 @@ class OfflineImapManager {
 			print("type = Gmail", to: &config)
 			print("readonly = True", to: &config)
 			print("remoteuser = \(user.email)", to: &config)
+			print("remotepass = ", to: &config) /* We don't want offlineimap to hang when OAuth token expires. */
 			print("oauth2_access_token = \(token)", to: &config)
 			print("sslcacertfile = ~/.dummycert_for_python.pem", to: &config)
 			print("", to: &config)
