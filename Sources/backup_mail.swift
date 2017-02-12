@@ -180,11 +180,11 @@ class OfflineImapManager {
 			return
 		}
 		
-		/* We guess in 7 minutes offlineimap will have time to close. If not, it's
+		/* We guess in 5 minutes offlineimap will have time to close. If not, it's
 		 * no big deal anyway, it will simply not be able to finish whatever it
 		 * was doing remote side before closing, but we'll still relaunch it when
 		 * it finishes. */
-		let killDate = max(try updateOfflineimapConfig().addingTimeInterval(-7*60), Date(timeIntervalSinceNow: 5))
+		let killDate = max(try updateOfflineimapConfig().addingTimeInterval(-5*60), Date(timeIntervalSinceNow: 5))
 		let t = Timer(fire: killDate, interval: 0, repeats: false) { [weak self] _ in
 			guard let strongSelf = self else {return}
 			
