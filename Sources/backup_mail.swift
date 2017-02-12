@@ -11,28 +11,45 @@ private func configuration(command: Command) {
 	command.add(
 		flags: [
 			Flag(longName: "offlineimap-config-file", type: String.self, description: "The path to the config file to use (WILL BE OVERWRITTEN) for offlineimap.", required: true),
-			Flag(longName: "destination-dir", type: String.self, description: "The folder in which the backuped mails will go. There will be one folder per backed account.", required: true)
+			Flag(longName: "destination-dir", type: String.self, description: "The folder in which the backuped mails will go. There will be one folder per backed account.", required: true),
+			Flag(longName: "max-concurrent-account-sync", type: Int.self, description: "The maximum number of concurrent sync that will be done by offlineimap.", required: false),
+			Flag(longName: "offlineimap-output", type: String.self, description: "A path to a file in which the offlineimap output will be written.", required: false)
 		]
 	)
 }
 
 private func execute(flags: Flags, args: [String]) {
-	let offlineimapConfigFileURL = URL(fileURLWithPath: flags.getString(name: "offlineimap-config-file")!, isDirectory: false)
-	let destinationFolder = URL(fileURLWithPath: flags.getString(name: "destination-dir")!, isDirectory: true)
-	backupMail(forUsers: allUsers!, withSuperuser: superuser!, inFolder: destinationFolder, usingConfigurationFile: offlineimapConfigFileURL, fromCommand: backupMailCommand)
+	let options = BackupMailOptions(
+		users: allUsers!, superuser: superuser!,
+		offlineimapConfigFileURL: URL(fileURLWithPath: flags.getString(name: "offlineimap-config-file")!, isDirectory: false),
+		backupDestinationFolder: URL(fileURLWithPath: flags.getString(name: "destination-dir")!, isDirectory: true),
+		maxConcurrentSync: flags.getInt(name: "max-concurrent-account-sync"),
+		offlineimapOutputFileURL: flags.getString(name: "offlineimap-output").map{ URL(fileURLWithPath: $0, isDirectory: false) }
+	)
+	backupMail(options: options, fromCommand: backupMailCommand)
 }
 
 
-func backupMail(forUsers users: [User], withSuperuser superuser: Superuser, inFolder destinationFolderURL: URL, usingConfigurationFile configFileURL: URL, fromCommand command: Command) {
-	guard users.count > 0 else {return}
+struct BackupMailOptions {
+	let users: [User]
+	let superuser: Superuser
+	
+	let offlineimapConfigFileURL: URL
+	let backupDestinationFolder: URL
+	let maxConcurrentSync: Int?
+	let offlineimapOutputFileURL: URL?
+}
+
+func backupMail(options: BackupMailOptions, fromCommand command: Command) {
+	guard options.users.count > 0 else {return}
 	
 	do {
 		/* Will create the folder if not already there, does not error out if
 		 * already there. */
-		try FileManager.default.createDirectory(at: destinationFolderURL, withIntermediateDirectories: true, attributes: nil)
+		try FileManager.default.createDirectory(at: options.backupDestinationFolder, withIntermediateDirectories: true, attributes: nil)
 		
-		let mb = MailBackuper(users: users, superuser: superuser, destinationFolderURL: destinationFolderURL, configurationFileURL: configFileURL)
-		try mb.backupMails()
+		let mb = OfflineImapManager(backupMailOptions: options)
+		try mb.run()
 		
 		/* TODO: Linkify the backups? */
 	} catch {
@@ -42,21 +59,30 @@ func backupMail(forUsers users: [User], withSuperuser superuser: Superuser, inFo
 
 
 
-class MailBackuper {
+private class Nop : NSObject {
+	func nop() {}
+}
+
+class OfflineImapManager {
 	
 	let users: [User]
 	let superuser: Superuser
 	let destinationFolderURL: URL
 	let configurationFileURL: URL
 	
-	init(users u: [User], superuser su: Superuser, destinationFolderURL dfu: URL, configurationFileURL cfu: URL) {
-		users = u
-		superuser = su
-		destinationFolderURL = dfu
-		configurationFileURL = cfu
+	let maxConcurrentSync: Int?
+	let offlineimapOutputFileURL: URL?
+	
+	init(backupMailOptions: BackupMailOptions) {
+		users = backupMailOptions.users
+		superuser = backupMailOptions.superuser
+		destinationFolderURL = backupMailOptions.backupDestinationFolder
+		configurationFileURL = backupMailOptions.offlineimapConfigFileURL
+		maxConcurrentSync = backupMailOptions.maxConcurrentSync
+		offlineimapOutputFileURL = backupMailOptions.offlineimapOutputFileURL
 	}
 	
-	func backupMails() throws {
+	func run() throws {
 		print("Starting mail backup")
 		
 		try startNewOfflineimapProcess()
@@ -68,12 +94,6 @@ class MailBackuper {
 			autoreleasepool {
 //				print("New Bg RunLoop run")
 				ok = (shouldKeepRunningRunLoop && rl.run(mode: .defaultRunLoopMode, before: .distantFuture))
-				/* I have NO idea.
-				 * Without this sleep, it happens (a lot) that killing the
-				 * offlineimap process manually (eg. killall -9 python) does not
-				 * trigger a new runloop run, even though the termination handler of
-				 * the offlineimap process is called. */
-				Thread.sleep(forTimeInterval: 0.001)
 			}
 		}
 		
@@ -135,7 +155,9 @@ class MailBackuper {
 		print("Stopping runloop")
 		shouldKeepRunningRunLoop = false
 		/* Force trigger a new runloop event to get out. */
-		RunLoop.main.add(Timer(timeInterval: 0, repeats: false, block: {_ in}), forMode: .defaultRunLoopMode)
+		Nop().perform(#selector(Nop.nop), with: nil, afterDelay: 0)
+		/* Apparently triggering a new runloop event with a block Timer does not work... */
+//		RunLoop.main.add(Timer(timeInterval: 0, repeats: false, block: {_ in print("hello!")}), forMode: .defaultRunLoopMode)
 	}
 	
 	private func startNewOfflineimapProcess() throws {
@@ -169,11 +191,15 @@ class MailBackuper {
 		RunLoop.current.add(t, forMode: .defaultRunLoopMode)
 		timerConfigExpirationDate = t
 		
-		let pipe = Pipe()
+		if let offlineimapOutputFileURL = offlineimapOutputFileURL {
+			FileManager.default.createFile(atPath: offlineimapOutputFileURL.path, contents: nil, attributes: nil)
+		}
+		
 		let process = Process()
+		let processOutput = try offlineimapOutputFileURL.map{ try FileHandle(forWritingTo: $0) } ?? FileHandle.nullDevice /* Set to Pipe() and uncomment set of currentOfflineimapOutputPipe if we want to parse the data. */
 		process.launchPath = "/usr/local/bin/offlineimap"
 		process.arguments = ["-c", configurationFileURL.path]
-		process.standardOutput = pipe
+		process.standardOutput = processOutput
 		process.terminationHandler = { p in
 //			print("In termination handler")
 			self.timerConfigExpirationDate?.invalidate(); self.timerConfigExpirationDate = nil
@@ -188,7 +214,8 @@ class MailBackuper {
 		}
 		
 		currentOfflineimapProcess = process
-		currentOfflineimapOutputPipe = pipe
+		processOutput.seekToEndOfFile(); processOutput.write("***** \(Date()): NEW OFFLINEIMAP RUN!\n".data(using: .utf8)!)
+//		currentOfflineimapOutputPipe = processOutput as? Pipe
 		
 		print("Launching offlineimap")
 		process.launch()
@@ -220,7 +247,7 @@ class MailBackuper {
 		var config = ""
 		print("[general]", to: &config)
 		print("ui = MachineUI", to: &config)
-		print("maxsyncaccounts = 16", to: &config) /* Arbitrary */
+		print("maxsyncaccounts = \(maxConcurrentSync ?? 8)", to: &config) /* Defaults arbitrarily to 8 */
 		print("accounts = ", terminator: "", to: &config)
 		var first = true
 		for (user, _) in tokenForUsers {
