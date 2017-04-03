@@ -16,7 +16,8 @@ private func configuration(command: Command) {
 	command.add(
 		flags: [
 			Flag(longName: "admin-email", type: String.self, description: "The email of an admin user in the domain.", required: true, inheritable: true),
-			Flag(longName: "superuser-json-creds", type: String.self, description: "The path to the json credentials for the superuser.", required: true, inheritable: true)
+			Flag(longName: "superuser-json-creds", type: String.self, description: "The path to the json credentials for the superuser.", required: true, inheritable: true),
+			Flag(longName: "emails-to-backup", type: String.self, description: "A comma-separated list of emails to backup. If an email is not in the directory, it is skipped. If not specified, all emails are backed up.", required: false, inheritable: true)
 		]
 	)
 	command.inheritablePreRun = inheritablePreRun
@@ -52,6 +53,7 @@ private func inheritablePreRun(flags: Flags, args: [String]) -> Bool {
 	/* Then let's get the users in the directory */
 	do {
 		print("Getting users in directory")
+		let emailsList = (flags.getString(name: "emails-to-backup")?.components(separatedBy: ",")).flatMap{ Set($0) }
 		var usersDictionaries = [[String: Any]]()
 		for domain in ["happn.fr", "happnambassadeur.com"] {
 			var request = URLRequest(url: URL(string: "https://www.googleapis.com/admin/directory/v1/users?domain=\(domain)")!)
@@ -69,6 +71,7 @@ private func inheritablePreRun(flags: Flags, args: [String]) -> Bool {
 		}
 		allUsers = usersDictionaries.flatMap { userDictionary in
 			guard let id = userDictionary["id"] as? String, let email = userDictionary["primaryEmail"] as? String else {return nil}
+			if let emailsList = emailsList {guard emailsList.contains(email) else {return nil}}
 			return User(id: id, email: email)
 		}
 	}
