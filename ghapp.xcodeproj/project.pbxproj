@@ -10,6 +10,8 @@
 		7B05F66E1E4E4A2400CE8826 /* backup_mail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B05F66D1E4E4A2400CE8826 /* backup_mail.swift */; };
 		7B1C7E531E4F40CB00A8A1C6 /* Superuser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B1C7E521E4F40CB00A8A1C6 /* Superuser.swift */; };
 		7B1C7E551E4F53A100A8A1C6 /* stderr.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B1C7E541E4F53A100A8A1C6 /* stderr.swift */; };
+		7B7F7EF41EB744A20025286B /* devtest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7F7EF31EB744A20025286B /* devtest.swift */; };
+		7B7F7EF61EB7454D0025286B /* devtest_gmailapi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7F7EF51EB7454D0025286B /* devtest_gmailapi.swift */; };
 		OBJ_106 /* URLSession+Synchronous.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_47 /* URLSession+Synchronous.swift */; };
 		OBJ_107 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_48 /* User.swift */; };
 		OBJ_108 /* backup.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_49 /* backup.swift */; };
@@ -77,6 +79,8 @@
 		7B05F66D1E4E4A2400CE8826 /* backup_mail.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = backup_mail.swift; sourceTree = "<group>"; };
 		7B1C7E521E4F40CB00A8A1C6 /* Superuser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Superuser.swift; sourceTree = "<group>"; };
 		7B1C7E541E4F53A100A8A1C6 /* stderr.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = stderr.swift; sourceTree = "<group>"; };
+		7B7F7EF31EB744A20025286B /* devtest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest.swift; sourceTree = "<group>"; };
+		7B7F7EF51EB7454D0025286B /* devtest_gmailapi.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest_gmailapi.swift; sourceTree = "<group>"; };
 		OBJ_10 /* Regex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Regex.swift; sourceTree = "<group>"; };
 		OBJ_11 /* ScannerResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerResult.swift; sourceTree = "<group>"; };
 		OBJ_12 /* StringExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtension.swift; sourceTree = "<group>"; };
@@ -177,8 +181,18 @@
 			children = (
 				OBJ_51 /* root.swift */,
 				7B05F66F1E4E4A2600CE8826 /* Backup Commands */,
+				7B7F7EF21EB744780025286B /* Dev Test Commands */,
 			);
 			name = Commands;
+			sourceTree = "<group>";
+		};
+		7B7F7EF21EB744780025286B /* Dev Test Commands */ = {
+			isa = PBXGroup;
+			children = (
+				7B7F7EF31EB744A20025286B /* devtest.swift */,
+				7B7F7EF51EB7454D0025286B /* devtest_gmailapi.swift */,
+			);
+			name = "Dev Test Commands";
 			sourceTree = "<group>";
 		};
 		OBJ_14 /* Guaka */ = {
@@ -424,7 +438,9 @@
 				OBJ_107 /* User.swift in Sources */,
 				OBJ_108 /* backup.swift in Sources */,
 				OBJ_109 /* main.swift in Sources */,
+				7B7F7EF41EB744A20025286B /* devtest.swift in Sources */,
 				OBJ_110 /* root.swift in Sources */,
+				7B7F7EF61EB7454D0025286B /* devtest_gmailapi.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
