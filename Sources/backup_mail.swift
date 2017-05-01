@@ -2,10 +2,10 @@ import Guaka
 import Darwin
 import Foundation
 
-var backupMailCommand = Command(
+
+let backupMailCommand = Command(
 	usage: "mail", configuration: configuration, run: execute
 )
-
 
 private func configuration(command: Command) {
 	command.add(
@@ -20,7 +20,7 @@ private func configuration(command: Command) {
 
 private func execute(flags: Flags, args: [String]) {
 	let options = BackupMailOptions(
-		users: allUsers!, superuser: superuser!,
+		users: backupConfig.backedUpUsers, superuser: rootConfig.superuser,
 		offlineimapConfigFileURL: URL(fileURLWithPath: flags.getString(name: "offlineimap-config-file")!, isDirectory: false),
 		backupDestinationFolder: URL(fileURLWithPath: flags.getString(name: "destination-dir")!, isDirectory: true),
 		maxConcurrentSync: flags.getInt(name: "max-concurrent-account-sync"),
@@ -29,6 +29,8 @@ private func execute(flags: Flags, args: [String]) {
 	backupMail(options: options, fromCommand: backupMailCommand)
 }
 
+
+/* ****************************************** */
 
 struct BackupMailOptions {
 	let users: [User]

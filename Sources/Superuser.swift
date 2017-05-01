@@ -60,4 +60,33 @@ struct Superuser {
 		return (token, expirationDate)
 	}
 	
+	func retrieveUsers(using adminEmail: String, with domains: Set<String>, contrainedTo emails: Set<String>? = nil, verbose: Bool = false) throws -> [User] {
+		/* First let's get an access token from the refresh token */
+		if verbose {print("Getting access token from superuser creds")}
+		let (accessToken, _) = try getAccessToken(forScopes: ["https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly"], onBehalfOfUserWithEmail: adminEmail)
+		
+		/* Then let's get the users in the directory */
+		if verbose {print("Getting users in directory")}
+		var usersDictionaries = [[String: Any]]()
+		for domain in domains {
+			var request = URLRequest(url: URL(string: "https://www.googleapis.com/admin/directory/v1/users?domain=\(domain)")!)
+			request.addValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+			request.httpMethod = "GET"
+			guard
+				let (data, response) = try? URLSession.shared.synchronousDataTask(with: request),
+				let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
+				let nonOptionalData = data, let parsedJson = (try? JSONSerialization.jsonObject(with: nonOptionalData, options: [])) as? [String: Any],
+				let users = parsedJson["users"] as? [[String: Any]]
+			else {
+				throw NSError(domain: "Superuser", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get the list of users for domain \(domain)"])
+			}
+			usersDictionaries.append(contentsOf: users)
+		}
+		return usersDictionaries.flatMap { userDictionary in
+			guard let id = userDictionary["id"] as? String, let email = userDictionary["primaryEmail"] as? String else {return nil}
+			if let emails = emails {guard emails.contains(email) else {return nil}}
+			return User(id: id, email: email)
+		}
+	}
+	
 }
