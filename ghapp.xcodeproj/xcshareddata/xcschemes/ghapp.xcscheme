@@ -84,6 +84,10 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "list-users"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "get-token --scopes=https://www.googleapis.com/auth/admin.directory.group,https://www.googleapis.com/auth/admin.directory.user.readonly"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7B05F66E1E4E4A2400CE8826 /* backup_mail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B05F66D1E4E4A2400CE8826 /* backup_mail.swift */; };
+		7B0712671EC4782C003592D5 /* get-token.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B0712661EC4782C003592D5 /* get-token.swift */; };
 		7B1C7E531E4F40CB00A8A1C6 /* Superuser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B1C7E521E4F40CB00A8A1C6 /* Superuser.swift */; };
 		7B1C7E551E4F53A100A8A1C6 /* stderr.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B1C7E541E4F53A100A8A1C6 /* stderr.swift */; };
 		7B50BF5B1EB87B2C002CC5E0 /* list-users.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B50BF5A1EB87B2C002CC5E0 /* list-users.swift */; };
@@ -78,6 +79,7 @@
 
 /* Begin PBXFileReference section */
 		7B05F66D1E4E4A2400CE8826 /* backup_mail.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = backup_mail.swift; sourceTree = "<group>"; };
+		7B0712661EC4782C003592D5 /* get-token.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "get-token.swift"; sourceTree = "<group>"; };
 		7B1C7E521E4F40CB00A8A1C6 /* Superuser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Superuser.swift; sourceTree = "<group>"; };
 		7B1C7E541E4F53A100A8A1C6 /* stderr.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = stderr.swift; sourceTree = "<group>"; };
 		7B50BF5A1EB87B2C002CC5E0 /* list-users.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "list-users.swift"; sourceTree = "<group>"; };
@@ -182,6 +184,7 @@
 			isa = PBXGroup;
 			children = (
 				OBJ_51 /* root.swift */,
+				7B0712661EC4782C003592D5 /* get-token.swift */,
 				7B50BF5A1EB87B2C002CC5E0 /* list-users.swift */,
 				7B05F66F1E4E4A2600CE8826 /* Backup Commands */,
 				7B7F7EF21EB744780025286B /* Dev Test Commands */,
@@ -434,6 +437,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
+				7B0712671EC4782C003592D5 /* get-token.swift in Sources */,
 				7B50BF5B1EB87B2C002CC5E0 /* list-users.swift in Sources */,
 				7B1C7E551E4F53A100A8A1C6 /* stderr.swift in Sources */,
 				7B1C7E531E4F40CB00A8A1C6 /* Superuser.swift in Sources */,
