@@ -75,27 +75,15 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "backup"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "mail"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--destination-dir /Users/frizlab/Desktop/backups/"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--offlineimap-config-file /Users/frizlab/Desktop/backups/offlineimapconfig"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--offlineimap-output /Users/frizlab/Desktop/offlineimap.log"
+            argument = "backup mail --destination-dir /Users/frizlab/Desktop/backups/ --offlineimap-config-file /Users/frizlab/Desktop/backups/offlineimapconfig --offlineimap-output /Users/frizlab/Desktop/offlineimap.log"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "devtest gmailapi"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "list-users"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
