@@ -27,10 +27,10 @@ private func execute(flags: Flags, args: [String]) {
 		URLQueryItem(name: "maxResults", value: "500")
 	]
 	
-	var getMessagesRequet = URLRequest(url: getMessagesComponents.url!)
-	getMessagesRequet.addValue("Bearer \(accessTokenString)", forHTTPHeaderField: "Authorization")
+	var getMessagesRequest = URLRequest(url: getMessagesComponents.url!)
+	getMessagesRequest.addValue("Bearer \(accessTokenString)", forHTTPHeaderField: "Authorization")
 	
-	guard let (dataO, _) = try? URLSession.shared.synchronousDataTask(with: getMessagesRequet), let data = dataO, let parsedData = try? JSONSerialization.jsonObject(with: data, options: []) else {
+	guard let (dataO, _) = try? URLSession.shared.synchronousDataTask(with: getMessagesRequest), let data = dataO, let parsedData = try? JSONSerialization.jsonObject(with: data, options: []) else {
 		devtestGmailapiCommand.fail(statusCode: 1, errorMessage: "Cannot get tested user messages")
 	}
 	

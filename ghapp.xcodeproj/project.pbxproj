@@ -14,6 +14,8 @@
 		7B50BF5B1EB87B2C002CC5E0 /* list-users.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B50BF5A1EB87B2C002CC5E0 /* list-users.swift */; };
 		7B7F7EF41EB744A20025286B /* devtest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7F7EF31EB744A20025286B /* devtest.swift */; };
 		7B7F7EF61EB7454D0025286B /* devtest_gmailapi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7F7EF51EB7454D0025286B /* devtest_gmailapi.swift */; };
+		7B80CCCF1F0533A800869573 /* devtest_getstaffgroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B80CCCE1F0533A800869573 /* devtest_getstaffgroups.swift */; };
+		7BA0487C1F014EFE005CD16F /* devtest_getgroupscontaininggroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BA0487B1F014EFE005CD16F /* devtest_getgroupscontaininggroups.swift */; };
 		OBJ_106 /* URLSession+Synchronous.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_47 /* URLSession+Synchronous.swift */; };
 		OBJ_107 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_48 /* User.swift */; };
 		OBJ_108 /* backup.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_49 /* backup.swift */; };
@@ -85,6 +87,8 @@
 		7B50BF5A1EB87B2C002CC5E0 /* list-users.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "list-users.swift"; sourceTree = "<group>"; };
 		7B7F7EF31EB744A20025286B /* devtest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest.swift; sourceTree = "<group>"; };
 		7B7F7EF51EB7454D0025286B /* devtest_gmailapi.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest_gmailapi.swift; sourceTree = "<group>"; };
+		7B80CCCE1F0533A800869573 /* devtest_getstaffgroups.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest_getstaffgroups.swift; sourceTree = "<group>"; };
+		7BA0487B1F014EFE005CD16F /* devtest_getgroupscontaininggroups.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest_getgroupscontaininggroups.swift; sourceTree = "<group>"; };
 		OBJ_10 /* Regex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Regex.swift; sourceTree = "<group>"; };
 		OBJ_11 /* ScannerResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerResult.swift; sourceTree = "<group>"; };
 		OBJ_12 /* StringExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtension.swift; sourceTree = "<group>"; };
@@ -197,6 +201,8 @@
 			children = (
 				7B7F7EF31EB744A20025286B /* devtest.swift */,
 				7B7F7EF51EB7454D0025286B /* devtest_gmailapi.swift */,
+				7B80CCCE1F0533A800869573 /* devtest_getstaffgroups.swift */,
+				7BA0487B1F014EFE005CD16F /* devtest_getgroupscontaininggroups.swift */,
 			);
 			name = "Dev Test Commands";
 			sourceTree = "<group>";
@@ -438,9 +444,11 @@
 			buildActionMask = 0;
 			files = (
 				7B0712671EC4782C003592D5 /* get-token.swift in Sources */,
+				7B80CCCF1F0533A800869573 /* devtest_getstaffgroups.swift in Sources */,
 				7B50BF5B1EB87B2C002CC5E0 /* list-users.swift in Sources */,
 				7B1C7E551E4F53A100A8A1C6 /* stderr.swift in Sources */,
 				7B1C7E531E4F40CB00A8A1C6 /* Superuser.swift in Sources */,
+				7BA0487C1F014EFE005CD16F /* devtest_getgroupscontaininggroups.swift in Sources */,
 				7B05F66E1E4E4A2400CE8826 /* backup_mail.swift in Sources */,
 				OBJ_106 /* URLSession+Synchronous.swift in Sources */,
 				OBJ_107 /* User.swift in Sources */,
