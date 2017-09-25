@@ -10,6 +10,7 @@ func setupCommands() {
 	
 	devtestCommand.add(subCommand: devtestGmailapiCommand)
 	devtestCommand.add(subCommand: devtestGetstaffgroupsCommand)
+	devtestCommand.add(subCommand: devtestGetexternalgroupsCommand)
 	devtestCommand.add(subCommand: devtestGetgroupscontaininggroupsCommand)
 }
 

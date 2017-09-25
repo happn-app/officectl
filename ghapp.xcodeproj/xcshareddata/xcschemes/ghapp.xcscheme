@@ -87,6 +87,10 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "devtest getexternalgroups"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "devtest getstaffgroups"
             isEnabled = "YES">
          </CommandLineArgument>
