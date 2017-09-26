@@ -270,7 +270,6 @@ class OfflineImapManager {
 		print("", to: &config)
 		for (user, token) in tokenForUsers {
 			print("[Account AccountUserID\(user.id)]", to: &config)
-			print("status_backend = sqlite", to: &config)
 			print("localrepository = LocalRepoID\(user.id)", to: &config)
 			print("remoterepository = RemoteRepoID\(user.id)", to: &config)
 			print("", to: &config)
