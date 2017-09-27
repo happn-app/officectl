@@ -7,332 +7,307 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		7B05F66E1E4E4A2400CE8826 /* backup_mail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B05F66D1E4E4A2400CE8826 /* backup_mail.swift */; };
-		7B0712671EC4782C003592D5 /* get-token.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B0712661EC4782C003592D5 /* get-token.swift */; };
-		7B1C7E531E4F40CB00A8A1C6 /* Superuser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B1C7E521E4F40CB00A8A1C6 /* Superuser.swift */; };
-		7B1C7E551E4F53A100A8A1C6 /* stderr.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B1C7E541E4F53A100A8A1C6 /* stderr.swift */; };
-		7B50BF5B1EB87B2C002CC5E0 /* list-users.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B50BF5A1EB87B2C002CC5E0 /* list-users.swift */; };
-		7B71E3641F78FB02001ABBD2 /* devtest_getexternalgroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B71E3631F78FB02001ABBD2 /* devtest_getexternalgroups.swift */; };
-		7B7F7EF41EB744A20025286B /* devtest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7F7EF31EB744A20025286B /* devtest.swift */; };
-		7B7F7EF61EB7454D0025286B /* devtest_gmailapi.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7F7EF51EB7454D0025286B /* devtest_gmailapi.swift */; };
-		7B80CCCF1F0533A800869573 /* devtest_getstaffgroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B80CCCE1F0533A800869573 /* devtest_getstaffgroups.swift */; };
-		7BA0487C1F014EFE005CD16F /* devtest_getgroupscontaininggroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BA0487B1F014EFE005CD16F /* devtest_getgroupscontaininggroups.swift */; };
-		OBJ_106 /* URLSession+Synchronous.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_47 /* URLSession+Synchronous.swift */; };
-		OBJ_107 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_48 /* User.swift */; };
-		OBJ_108 /* backup.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_49 /* backup.swift */; };
-		OBJ_109 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_50 /* main.swift */; };
-		OBJ_110 /* root.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_51 /* root.swift */; };
-		OBJ_113 /* StringScanner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = OBJ_55 /* StringScanner.framework */; };
-		OBJ_114 /* Guaka.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = OBJ_56 /* Guaka.framework */; };
-		OBJ_63 /* CharacterSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_9 /* CharacterSet.swift */; };
-		OBJ_64 /* Regex.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_10 /* Regex.swift */; };
-		OBJ_65 /* ScannerResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_11 /* ScannerResult.swift */; };
-		OBJ_66 /* StringExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_12 /* StringExtension.swift */; };
-		OBJ_67 /* StringScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_13 /* StringScanner.swift */; };
-		OBJ_74 /* Command+Execution.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_16 /* Command+Execution.swift */; };
-		OBJ_75 /* Command+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_17 /* Command+Utilities.swift */; };
-		OBJ_76 /* Command.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_18 /* Command.swift */; };
-		OBJ_77 /* CommandTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_19 /* CommandTypes.swift */; };
-		OBJ_78 /* CommandExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_21 /* CommandExecution.swift */; };
-		OBJ_79 /* Flag+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_23 /* Flag+Utilities.swift */; };
-		OBJ_80 /* Flag.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_24 /* Flag.swift */; };
-		OBJ_81 /* FlagSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_25 /* FlagSet.swift */; };
-		OBJ_82 /* Flags.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_26 /* Flags.swift */; };
-		OBJ_83 /* CommandHelp.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_28 /* CommandHelp.swift */; };
-		OBJ_84 /* DefaultHelpGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_29 /* DefaultHelpGenerator.swift */; };
-		OBJ_85 /* FlagHelp.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_30 /* FlagHelp.swift */; };
-		OBJ_86 /* FlagHelpGeneratorUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_31 /* FlagHelpGeneratorUtils.swift */; };
-		OBJ_87 /* HelpGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_32 /* HelpGenerator.swift */; };
-		OBJ_88 /* HelpGeneratorDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_33 /* HelpGeneratorDefaults.swift */; };
-		OBJ_89 /* HelpGeneratorErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_34 /* HelpGeneratorErrors.swift */; };
-		OBJ_90 /* GuakaConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_36 /* GuakaConfig.swift */; };
-		OBJ_91 /* Levenshtein.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_37 /* Levenshtein.swift */; };
-		OBJ_92 /* ArgTokenType.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_39 /* ArgTokenType.swift */; };
-		OBJ_93 /* Command+Parsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_40 /* Command+Parsing.swift */; };
-		OBJ_94 /* FlagSet+Parsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_41 /* FlagSet+Parsing.swift */; };
-		OBJ_95 /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_43 /* Errors.swift */; };
-		OBJ_96 /* FlagValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_44 /* FlagValue.swift */; };
-		OBJ_97 /* Result.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_45 /* Result.swift */; };
-		OBJ_99 /* StringScanner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = OBJ_55 /* StringScanner.framework */; };
+		OBJ_100 /* devtest_getgroupscontaininggroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_15 /* devtest_getgroupscontaininggroups.swift */; };
+		OBJ_101 /* devtest_getstaffgroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_16 /* devtest_getstaffgroups.swift */; };
+		OBJ_102 /* devtest_gmailapi.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_17 /* devtest_gmailapi.swift */; };
+		OBJ_103 /* get-token.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_18 /* get-token.swift */; };
+		OBJ_104 /* list-users.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_19 /* list-users.swift */; };
+		OBJ_105 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_20 /* main.swift */; };
+		OBJ_106 /* root.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_21 /* root.swift */; };
+		OBJ_107 /* stderr.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_22 /* stderr.swift */; };
+		OBJ_109 /* Guaka.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "Guaka::Guaka::Product" /* Guaka.framework */; };
+		OBJ_110 /* StringScanner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "StringScanner::StringScanner::Product" /* StringScanner.framework */; };
+		OBJ_119 /* Command+Execution.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_28 /* Command+Execution.swift */; };
+		OBJ_120 /* Command+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_29 /* Command+Utilities.swift */; };
+		OBJ_121 /* Command.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_30 /* Command.swift */; };
+		OBJ_122 /* CommandTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_31 /* CommandTypes.swift */; };
+		OBJ_123 /* CommandExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_33 /* CommandExecution.swift */; };
+		OBJ_124 /* Flag+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_35 /* Flag+Utilities.swift */; };
+		OBJ_125 /* Flag.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_36 /* Flag.swift */; };
+		OBJ_126 /* FlagSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_37 /* FlagSet.swift */; };
+		OBJ_127 /* Flags.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_38 /* Flags.swift */; };
+		OBJ_128 /* CommandHelp.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_40 /* CommandHelp.swift */; };
+		OBJ_129 /* DefaultHelpGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_41 /* DefaultHelpGenerator.swift */; };
+		OBJ_130 /* FlagHelp.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_42 /* FlagHelp.swift */; };
+		OBJ_131 /* FlagHelpGeneratorUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_43 /* FlagHelpGeneratorUtils.swift */; };
+		OBJ_132 /* HelpGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_44 /* HelpGenerator.swift */; };
+		OBJ_133 /* HelpGeneratorDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_45 /* HelpGeneratorDefaults.swift */; };
+		OBJ_134 /* HelpGeneratorErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_46 /* HelpGeneratorErrors.swift */; };
+		OBJ_135 /* GuakaConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_48 /* GuakaConfig.swift */; };
+		OBJ_136 /* Levenshtein.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_49 /* Levenshtein.swift */; };
+		OBJ_137 /* ArgTokenType.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_51 /* ArgTokenType.swift */; };
+		OBJ_138 /* Command+Parsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_52 /* Command+Parsing.swift */; };
+		OBJ_139 /* FlagSet+Parsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_53 /* FlagSet+Parsing.swift */; };
+		OBJ_140 /* Errors.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_55 /* Errors.swift */; };
+		OBJ_141 /* FlagValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_56 /* FlagValue.swift */; };
+		OBJ_142 /* Result.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_57 /* Result.swift */; };
+		OBJ_144 /* StringScanner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "StringScanner::StringScanner::Product" /* StringScanner.framework */; };
+		OBJ_150 /* CharacterSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_61 /* CharacterSet.swift */; };
+		OBJ_151 /* Regex.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_62 /* Regex.swift */; };
+		OBJ_152 /* ScannerResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_63 /* ScannerResult.swift */; };
+		OBJ_153 /* StringExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_64 /* StringExtension.swift */; };
+		OBJ_154 /* StringScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_65 /* StringScanner.swift */; };
+		OBJ_75 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_6 /* Package.swift */; };
+		OBJ_81 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_58 /* Package.swift */; };
+		OBJ_87 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_60 /* Package.swift */; };
+		OBJ_93 /* Superuser.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_8 /* Superuser.swift */; };
+		OBJ_94 /* URLSession+Synchronous.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_9 /* URLSession+Synchronous.swift */; };
+		OBJ_95 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_10 /* User.swift */; };
+		OBJ_96 /* backup.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_11 /* backup.swift */; };
+		OBJ_97 /* backup_mail.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_12 /* backup_mail.swift */; };
+		OBJ_98 /* devtest.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_13 /* devtest.swift */; };
+		OBJ_99 /* devtest_getexternalgroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_14 /* devtest_getexternalgroups.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		7BA05FA41E4A346200068EFC /* PBXContainerItemProxy */ = {
+		7B6E53181F7BA218004607A7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = OBJ_1 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = OBJ_58;
-			remoteInfo = StringScanner;
-		};
-		7BA05FA51E4A346200068EFC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = OBJ_1 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = OBJ_58;
-			remoteInfo = StringScanner;
-		};
-		7BA05FA61E4A346200068EFC /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = OBJ_1 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = OBJ_69;
+			remoteGlobalIDString = "Guaka::Guaka";
 			remoteInfo = Guaka;
+		};
+		7B6E53191F7BA218004607A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = OBJ_1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = "StringScanner::StringScanner";
+			remoteInfo = StringScanner;
+		};
+		7B6E531A1F7BA218004607A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = OBJ_1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = "StringScanner::StringScanner";
+			remoteInfo = StringScanner;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		7B05F66D1E4E4A2400CE8826 /* backup_mail.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = backup_mail.swift; sourceTree = "<group>"; };
-		7B0712661EC4782C003592D5 /* get-token.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "get-token.swift"; sourceTree = "<group>"; };
-		7B1C7E521E4F40CB00A8A1C6 /* Superuser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Superuser.swift; sourceTree = "<group>"; };
-		7B1C7E541E4F53A100A8A1C6 /* stderr.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = stderr.swift; sourceTree = "<group>"; };
-		7B50BF5A1EB87B2C002CC5E0 /* list-users.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "list-users.swift"; sourceTree = "<group>"; };
-		7B71E3631F78FB02001ABBD2 /* devtest_getexternalgroups.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest_getexternalgroups.swift; sourceTree = "<group>"; };
-		7B7F7EF31EB744A20025286B /* devtest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest.swift; sourceTree = "<group>"; };
-		7B7F7EF51EB7454D0025286B /* devtest_gmailapi.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest_gmailapi.swift; sourceTree = "<group>"; };
-		7B80CCCE1F0533A800869573 /* devtest_getstaffgroups.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest_getstaffgroups.swift; sourceTree = "<group>"; };
-		7BA0487B1F014EFE005CD16F /* devtest_getgroupscontaininggroups.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest_getgroupscontaininggroups.swift; sourceTree = "<group>"; };
-		OBJ_10 /* Regex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Regex.swift; sourceTree = "<group>"; };
-		OBJ_11 /* ScannerResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerResult.swift; sourceTree = "<group>"; };
-		OBJ_12 /* StringExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtension.swift; sourceTree = "<group>"; };
-		OBJ_13 /* StringScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringScanner.swift; sourceTree = "<group>"; };
-		OBJ_16 /* Command+Execution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Command+Execution.swift"; sourceTree = "<group>"; };
-		OBJ_17 /* Command+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Command+Utilities.swift"; sourceTree = "<group>"; };
-		OBJ_18 /* Command.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Command.swift; sourceTree = "<group>"; };
-		OBJ_19 /* CommandTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandTypes.swift; sourceTree = "<group>"; };
-		OBJ_21 /* CommandExecution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandExecution.swift; sourceTree = "<group>"; };
-		OBJ_23 /* Flag+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Flag+Utilities.swift"; sourceTree = "<group>"; };
-		OBJ_24 /* Flag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Flag.swift; sourceTree = "<group>"; };
-		OBJ_25 /* FlagSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagSet.swift; sourceTree = "<group>"; };
-		OBJ_26 /* Flags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Flags.swift; sourceTree = "<group>"; };
-		OBJ_28 /* CommandHelp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandHelp.swift; sourceTree = "<group>"; };
-		OBJ_29 /* DefaultHelpGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultHelpGenerator.swift; sourceTree = "<group>"; };
-		OBJ_30 /* FlagHelp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagHelp.swift; sourceTree = "<group>"; };
-		OBJ_31 /* FlagHelpGeneratorUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagHelpGeneratorUtils.swift; sourceTree = "<group>"; };
-		OBJ_32 /* HelpGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpGenerator.swift; sourceTree = "<group>"; };
-		OBJ_33 /* HelpGeneratorDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpGeneratorDefaults.swift; sourceTree = "<group>"; };
-		OBJ_34 /* HelpGeneratorErrors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpGeneratorErrors.swift; sourceTree = "<group>"; };
-		OBJ_36 /* GuakaConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuakaConfig.swift; sourceTree = "<group>"; };
-		OBJ_37 /* Levenshtein.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Levenshtein.swift; sourceTree = "<group>"; };
-		OBJ_39 /* ArgTokenType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArgTokenType.swift; sourceTree = "<group>"; };
-		OBJ_40 /* Command+Parsing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Command+Parsing.swift"; sourceTree = "<group>"; };
-		OBJ_41 /* FlagSet+Parsing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FlagSet+Parsing.swift"; sourceTree = "<group>"; };
-		OBJ_43 /* Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
-		OBJ_44 /* FlagValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagValue.swift; sourceTree = "<group>"; };
-		OBJ_45 /* Result.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Result.swift; sourceTree = "<group>"; };
-		OBJ_47 /* URLSession+Synchronous.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSession+Synchronous.swift"; sourceTree = "<group>"; };
-		OBJ_48 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
-		OBJ_49 /* backup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = backup.swift; sourceTree = "<group>"; };
-		OBJ_50 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		OBJ_51 /* root.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = root.swift; sourceTree = "<group>"; };
-		OBJ_55 /* StringScanner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = StringScanner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		OBJ_56 /* Guaka.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Guaka.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		OBJ_57 /* ghapp */ = {isa = PBXFileReference; lastKnownFileType = text; path = ghapp; sourceTree = BUILT_PRODUCTS_DIR; };
+		"Guaka::Guaka::Product" /* Guaka.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Guaka.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		OBJ_10 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		OBJ_11 /* backup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = backup.swift; sourceTree = "<group>"; };
+		OBJ_12 /* backup_mail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = backup_mail.swift; sourceTree = "<group>"; };
+		OBJ_13 /* devtest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = devtest.swift; sourceTree = "<group>"; };
+		OBJ_14 /* devtest_getexternalgroups.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = devtest_getexternalgroups.swift; sourceTree = "<group>"; };
+		OBJ_15 /* devtest_getgroupscontaininggroups.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = devtest_getgroupscontaininggroups.swift; sourceTree = "<group>"; };
+		OBJ_16 /* devtest_getstaffgroups.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = devtest_getstaffgroups.swift; sourceTree = "<group>"; };
+		OBJ_17 /* devtest_gmailapi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = devtest_gmailapi.swift; sourceTree = "<group>"; };
+		OBJ_18 /* get-token.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "get-token.swift"; sourceTree = "<group>"; };
+		OBJ_19 /* list-users.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "list-users.swift"; sourceTree = "<group>"; };
+		OBJ_20 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		OBJ_21 /* root.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = root.swift; sourceTree = "<group>"; };
+		OBJ_22 /* stderr.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = stderr.swift; sourceTree = "<group>"; };
+		OBJ_28 /* Command+Execution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Command+Execution.swift"; sourceTree = "<group>"; };
+		OBJ_29 /* Command+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Command+Utilities.swift"; sourceTree = "<group>"; };
+		OBJ_30 /* Command.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Command.swift; sourceTree = "<group>"; };
+		OBJ_31 /* CommandTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandTypes.swift; sourceTree = "<group>"; };
+		OBJ_33 /* CommandExecution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandExecution.swift; sourceTree = "<group>"; };
+		OBJ_35 /* Flag+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Flag+Utilities.swift"; sourceTree = "<group>"; };
+		OBJ_36 /* Flag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Flag.swift; sourceTree = "<group>"; };
+		OBJ_37 /* FlagSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagSet.swift; sourceTree = "<group>"; };
+		OBJ_38 /* Flags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Flags.swift; sourceTree = "<group>"; };
+		OBJ_40 /* CommandHelp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandHelp.swift; sourceTree = "<group>"; };
+		OBJ_41 /* DefaultHelpGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultHelpGenerator.swift; sourceTree = "<group>"; };
+		OBJ_42 /* FlagHelp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagHelp.swift; sourceTree = "<group>"; };
+		OBJ_43 /* FlagHelpGeneratorUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagHelpGeneratorUtils.swift; sourceTree = "<group>"; };
+		OBJ_44 /* HelpGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpGenerator.swift; sourceTree = "<group>"; };
+		OBJ_45 /* HelpGeneratorDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpGeneratorDefaults.swift; sourceTree = "<group>"; };
+		OBJ_46 /* HelpGeneratorErrors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpGeneratorErrors.swift; sourceTree = "<group>"; };
+		OBJ_48 /* GuakaConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuakaConfig.swift; sourceTree = "<group>"; };
+		OBJ_49 /* Levenshtein.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Levenshtein.swift; sourceTree = "<group>"; };
+		OBJ_51 /* ArgTokenType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArgTokenType.swift; sourceTree = "<group>"; };
+		OBJ_52 /* Command+Parsing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Command+Parsing.swift"; sourceTree = "<group>"; };
+		OBJ_53 /* FlagSet+Parsing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FlagSet+Parsing.swift"; sourceTree = "<group>"; };
+		OBJ_55 /* Errors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Errors.swift; sourceTree = "<group>"; };
+		OBJ_56 /* FlagValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagValue.swift; sourceTree = "<group>"; };
+		OBJ_57 /* Result.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Result.swift; sourceTree = "<group>"; };
+		OBJ_58 /* Package.swift */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; name = Package.swift; path = "/Users/frizlab/Documents/Projects/ghapp/.build/checkouts/Guaka.git-6012216803242370009/Package.swift"; sourceTree = "<group>"; };
 		OBJ_6 /* Package.swift */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
-		OBJ_9 /* CharacterSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CharacterSet.swift; sourceTree = "<group>"; };
+		OBJ_60 /* Package.swift */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; name = Package.swift; path = "/Users/frizlab/Documents/Projects/ghapp/.build/checkouts/StringScanner-1886185151129191747/Package.swift"; sourceTree = "<group>"; };
+		OBJ_61 /* CharacterSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CharacterSet.swift; sourceTree = "<group>"; };
+		OBJ_62 /* Regex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Regex.swift; sourceTree = "<group>"; };
+		OBJ_63 /* ScannerResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerResult.swift; sourceTree = "<group>"; };
+		OBJ_64 /* StringExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringExtension.swift; sourceTree = "<group>"; };
+		OBJ_65 /* StringScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringScanner.swift; sourceTree = "<group>"; };
+		OBJ_8 /* Superuser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Superuser.swift; sourceTree = "<group>"; };
+		OBJ_9 /* URLSession+Synchronous.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSession+Synchronous.swift"; sourceTree = "<group>"; };
+		"StringScanner::StringScanner::Product" /* StringScanner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = StringScanner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		"ghapp::ghapp::Product" /* ghapp */ = {isa = PBXFileReference; lastKnownFileType = text; path = ghapp; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		OBJ_112 /* Frameworks */ = {
+		OBJ_108 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 0;
 			files = (
-				OBJ_113 /* StringScanner.framework in Frameworks */,
-				OBJ_114 /* Guaka.framework in Frameworks */,
+				OBJ_109 /* Guaka.framework in Frameworks */,
+				OBJ_110 /* StringScanner.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		OBJ_68 /* Frameworks */ = {
+		OBJ_143 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 0;
 			files = (
+				OBJ_144 /* StringScanner.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		OBJ_98 /* Frameworks */ = {
+		OBJ_155 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 0;
 			files = (
-				OBJ_99 /* StringScanner.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		7B05F66F1E4E4A2600CE8826 /* Backup Commands */ = {
+		OBJ_23 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_49 /* backup.swift */,
-				7B05F66D1E4E4A2400CE8826 /* backup_mail.swift */,
 			);
-			name = "Backup Commands";
-			sourceTree = "<group>";
-		};
-		7B1C7E511E4F3F6900A8A1C6 /* Objects */ = {
-			isa = PBXGroup;
-			children = (
-				OBJ_48 /* User.swift */,
-				7B1C7E521E4F40CB00A8A1C6 /* Superuser.swift */,
-			);
-			name = Objects;
-			sourceTree = "<group>";
-		};
-		7B4C67C11EB679D2003E1CE1 /* Utilities */ = {
-			isa = PBXGroup;
-			children = (
-				7B1C7E541E4F53A100A8A1C6 /* stderr.swift */,
-				OBJ_47 /* URLSession+Synchronous.swift */,
-			);
-			name = Utilities;
-			sourceTree = "<group>";
-		};
-		7B4C67C21EB67A44003E1CE1 /* Commands */ = {
-			isa = PBXGroup;
-			children = (
-				OBJ_51 /* root.swift */,
-				7B0712661EC4782C003592D5 /* get-token.swift */,
-				7B50BF5A1EB87B2C002CC5E0 /* list-users.swift */,
-				7B05F66F1E4E4A2600CE8826 /* Backup Commands */,
-				7B7F7EF21EB744780025286B /* Dev Test Commands */,
-			);
-			name = Commands;
-			sourceTree = "<group>";
-		};
-		7B7F7EF21EB744780025286B /* Dev Test Commands */ = {
-			isa = PBXGroup;
-			children = (
-				7B7F7EF31EB744A20025286B /* devtest.swift */,
-				7B7F7EF51EB7454D0025286B /* devtest_gmailapi.swift */,
-				7B80CCCE1F0533A800869573 /* devtest_getstaffgroups.swift */,
-				7BA0487B1F014EFE005CD16F /* devtest_getgroupscontaininggroups.swift */,
-				7B71E3631F78FB02001ABBD2 /* devtest_getexternalgroups.swift */,
-			);
-			name = "Dev Test Commands";
-			sourceTree = "<group>";
-		};
-		OBJ_14 /* Guaka */ = {
-			isa = PBXGroup;
-			children = (
-				OBJ_15 /* Command */,
-				OBJ_20 /* Execution */,
-				OBJ_22 /* Flag */,
-				OBJ_27 /* Help */,
-				OBJ_35 /* Misc */,
-				OBJ_38 /* Parsing */,
-				OBJ_42 /* Types */,
-			);
-			name = Guaka;
-			path = "Packages/Guaka-0.1.3/Sources/Guaka";
+			name = Tests;
 			sourceTree = SOURCE_ROOT;
 		};
-		OBJ_15 /* Command */ = {
+		OBJ_24 /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_16 /* Command+Execution.swift */,
-				OBJ_17 /* Command+Utilities.swift */,
-				OBJ_18 /* Command.swift */,
-				OBJ_19 /* CommandTypes.swift */,
+				OBJ_25 /* Guaka 0.1.3 */,
+				OBJ_59 /* StringScanner 0.2.0 */,
+			);
+			name = Dependencies;
+			sourceTree = "<group>";
+		};
+		OBJ_25 /* Guaka 0.1.3 */ = {
+			isa = PBXGroup;
+			children = (
+				OBJ_26 /* Guaka */,
+				OBJ_58 /* Package.swift */,
+			);
+			name = "Guaka 0.1.3";
+			sourceTree = SOURCE_ROOT;
+		};
+		OBJ_26 /* Guaka */ = {
+			isa = PBXGroup;
+			children = (
+				OBJ_27 /* Command */,
+				OBJ_32 /* Execution */,
+				OBJ_34 /* Flag */,
+				OBJ_39 /* Help */,
+				OBJ_47 /* Misc */,
+				OBJ_50 /* Parsing */,
+				OBJ_54 /* Types */,
+			);
+			name = Guaka;
+			path = ".build/checkouts/Guaka.git-6012216803242370009/Sources/Guaka";
+			sourceTree = SOURCE_ROOT;
+		};
+		OBJ_27 /* Command */ = {
+			isa = PBXGroup;
+			children = (
+				OBJ_28 /* Command+Execution.swift */,
+				OBJ_29 /* Command+Utilities.swift */,
+				OBJ_30 /* Command.swift */,
+				OBJ_31 /* CommandTypes.swift */,
 			);
 			path = Command;
 			sourceTree = "<group>";
 		};
-		OBJ_20 /* Execution */ = {
+		OBJ_32 /* Execution */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_21 /* CommandExecution.swift */,
+				OBJ_33 /* CommandExecution.swift */,
 			);
 			path = Execution;
 			sourceTree = "<group>";
 		};
-		OBJ_22 /* Flag */ = {
+		OBJ_34 /* Flag */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_23 /* Flag+Utilities.swift */,
-				OBJ_24 /* Flag.swift */,
-				OBJ_25 /* FlagSet.swift */,
-				OBJ_26 /* Flags.swift */,
+				OBJ_35 /* Flag+Utilities.swift */,
+				OBJ_36 /* Flag.swift */,
+				OBJ_37 /* FlagSet.swift */,
+				OBJ_38 /* Flags.swift */,
 			);
 			path = Flag;
 			sourceTree = "<group>";
 		};
-		OBJ_27 /* Help */ = {
+		OBJ_39 /* Help */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_28 /* CommandHelp.swift */,
-				OBJ_29 /* DefaultHelpGenerator.swift */,
-				OBJ_30 /* FlagHelp.swift */,
-				OBJ_31 /* FlagHelpGeneratorUtils.swift */,
-				OBJ_32 /* HelpGenerator.swift */,
-				OBJ_33 /* HelpGeneratorDefaults.swift */,
-				OBJ_34 /* HelpGeneratorErrors.swift */,
+				OBJ_40 /* CommandHelp.swift */,
+				OBJ_41 /* DefaultHelpGenerator.swift */,
+				OBJ_42 /* FlagHelp.swift */,
+				OBJ_43 /* FlagHelpGeneratorUtils.swift */,
+				OBJ_44 /* HelpGenerator.swift */,
+				OBJ_45 /* HelpGeneratorDefaults.swift */,
+				OBJ_46 /* HelpGeneratorErrors.swift */,
 			);
 			path = Help;
 			sourceTree = "<group>";
 		};
-		OBJ_35 /* Misc */ = {
+		OBJ_47 /* Misc */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_36 /* GuakaConfig.swift */,
-				OBJ_37 /* Levenshtein.swift */,
+				OBJ_48 /* GuakaConfig.swift */,
+				OBJ_49 /* Levenshtein.swift */,
 			);
 			path = Misc;
 			sourceTree = "<group>";
-		};
-		OBJ_38 /* Parsing */ = {
-			isa = PBXGroup;
-			children = (
-				OBJ_39 /* ArgTokenType.swift */,
-				OBJ_40 /* Command+Parsing.swift */,
-				OBJ_41 /* FlagSet+Parsing.swift */,
-			);
-			path = Parsing;
-			sourceTree = "<group>";
-		};
-		OBJ_42 /* Types */ = {
-			isa = PBXGroup;
-			children = (
-				OBJ_43 /* Errors.swift */,
-				OBJ_44 /* FlagValue.swift */,
-				OBJ_45 /* Result.swift */,
-			);
-			path = Types;
-			sourceTree = "<group>";
-		};
-		OBJ_46 /* ghapp */ = {
-			isa = PBXGroup;
-			children = (
-				7B4C67C11EB679D2003E1CE1 /* Utilities */,
-				7B1C7E511E4F3F6900A8A1C6 /* Objects */,
-				7B4C67C21EB67A44003E1CE1 /* Commands */,
-				OBJ_50 /* main.swift */,
-			);
-			name = ghapp;
-			path = Sources;
-			sourceTree = SOURCE_ROOT;
 		};
 		OBJ_5 = {
 			isa = PBXGroup;
 			children = (
 				OBJ_6 /* Package.swift */,
 				OBJ_7 /* Sources */,
-				OBJ_53 /* Tests */,
-				OBJ_54 /* Products */,
+				OBJ_23 /* Tests */,
+				OBJ_24 /* Dependencies */,
+				OBJ_66 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		OBJ_53 /* Tests */ = {
+		OBJ_50 /* Parsing */ = {
 			isa = PBXGroup;
 			children = (
+				OBJ_51 /* ArgTokenType.swift */,
+				OBJ_52 /* Command+Parsing.swift */,
+				OBJ_53 /* FlagSet+Parsing.swift */,
 			);
-			path = Tests;
+			path = Parsing;
 			sourceTree = "<group>";
 		};
-		OBJ_54 /* Products */ = {
+		OBJ_54 /* Types */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_55 /* StringScanner.framework */,
-				OBJ_56 /* Guaka.framework */,
-				OBJ_57 /* ghapp */,
+				OBJ_55 /* Errors.swift */,
+				OBJ_56 /* FlagValue.swift */,
+				OBJ_57 /* Result.swift */,
+			);
+			path = Types;
+			sourceTree = "<group>";
+		};
+		OBJ_59 /* StringScanner 0.2.0 */ = {
+			isa = PBXGroup;
+			children = (
+				OBJ_60 /* Package.swift */,
+				OBJ_61 /* CharacterSet.swift */,
+				OBJ_62 /* Regex.swift */,
+				OBJ_63 /* ScannerResult.swift */,
+				OBJ_64 /* StringExtension.swift */,
+				OBJ_65 /* StringScanner.swift */,
+			);
+			name = "StringScanner 0.2.0";
+			path = ".build/checkouts/StringScanner-1886185151129191747/Sources";
+			sourceTree = SOURCE_ROOT;
+		};
+		OBJ_66 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				"ghapp::ghapp::Product" /* ghapp */,
+				"Guaka::Guaka::Product" /* Guaka.framework */,
+				"StringScanner::StringScanner::Product" /* StringScanner.framework */,
 			);
 			name = Products;
 			sourceTree = BUILT_PRODUCTS_DIR;
@@ -340,53 +315,65 @@
 		OBJ_7 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_8 /* StringScanner */,
-				OBJ_14 /* Guaka */,
-				OBJ_46 /* ghapp */,
+				OBJ_8 /* Superuser.swift */,
+				OBJ_9 /* URLSession+Synchronous.swift */,
+				OBJ_10 /* User.swift */,
+				OBJ_11 /* backup.swift */,
+				OBJ_12 /* backup_mail.swift */,
+				OBJ_13 /* devtest.swift */,
+				OBJ_14 /* devtest_getexternalgroups.swift */,
+				OBJ_15 /* devtest_getgroupscontaininggroups.swift */,
+				OBJ_16 /* devtest_getstaffgroups.swift */,
+				OBJ_17 /* devtest_gmailapi.swift */,
+				OBJ_18 /* get-token.swift */,
+				OBJ_19 /* list-users.swift */,
+				OBJ_20 /* main.swift */,
+				OBJ_21 /* root.swift */,
+				OBJ_22 /* stderr.swift */,
 			);
 			path = Sources;
-			sourceTree = "<group>";
-		};
-		OBJ_8 /* StringScanner */ = {
-			isa = PBXGroup;
-			children = (
-				OBJ_9 /* CharacterSet.swift */,
-				OBJ_10 /* Regex.swift */,
-				OBJ_11 /* ScannerResult.swift */,
-				OBJ_12 /* StringExtension.swift */,
-				OBJ_13 /* StringScanner.swift */,
-			);
-			name = StringScanner;
-			path = "Packages/StringScanner-0.2.0/Sources";
 			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		OBJ_101 /* ghapp */ = {
+		"Guaka::Guaka" /* Guaka */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = OBJ_102 /* Build configuration list for PBXNativeTarget "ghapp" */;
+			buildConfigurationList = OBJ_115 /* Build configuration list for PBXNativeTarget "Guaka" */;
 			buildPhases = (
-				OBJ_105 /* Sources */,
-				OBJ_112 /* Frameworks */,
+				OBJ_118 /* Sources */,
+				OBJ_143 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				OBJ_115 /* PBXTargetDependency */,
-				OBJ_116 /* PBXTargetDependency */,
+				OBJ_145 /* PBXTargetDependency */,
 			);
-			name = ghapp;
-			productName = ghapp;
-			productReference = OBJ_57 /* ghapp */;
-			productType = "com.apple.product-type.tool";
+			name = Guaka;
+			productName = Guaka;
+			productReference = "Guaka::Guaka::Product" /* Guaka.framework */;
+			productType = "com.apple.product-type.framework";
 		};
-		OBJ_58 /* StringScanner */ = {
+		"Guaka::SwiftPMPackageDescription" /* GuakaPackageDescription */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = OBJ_59 /* Build configuration list for PBXNativeTarget "StringScanner" */;
+			buildConfigurationList = OBJ_77 /* Build configuration list for PBXNativeTarget "GuakaPackageDescription" */;
 			buildPhases = (
-				OBJ_62 /* Sources */,
-				OBJ_68 /* Frameworks */,
+				OBJ_80 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GuakaPackageDescription;
+			productName = GuakaPackageDescription;
+			productType = "com.apple.product-type.framework";
+		};
+		"StringScanner::StringScanner" /* StringScanner */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = OBJ_146 /* Build configuration list for PBXNativeTarget "StringScanner" */;
+			buildPhases = (
+				OBJ_149 /* Sources */,
+				OBJ_155 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -394,25 +381,54 @@
 			);
 			name = StringScanner;
 			productName = StringScanner;
-			productReference = OBJ_55 /* StringScanner.framework */;
+			productReference = "StringScanner::StringScanner::Product" /* StringScanner.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		OBJ_69 /* Guaka */ = {
+		"StringScanner::SwiftPMPackageDescription" /* StringScannerPackageDescription */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = OBJ_70 /* Build configuration list for PBXNativeTarget "Guaka" */;
+			buildConfigurationList = OBJ_83 /* Build configuration list for PBXNativeTarget "StringScannerPackageDescription" */;
 			buildPhases = (
-				OBJ_73 /* Sources */,
-				OBJ_98 /* Frameworks */,
+				OBJ_86 /* Sources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				OBJ_100 /* PBXTargetDependency */,
 			);
-			name = Guaka;
-			productName = Guaka;
-			productReference = OBJ_56 /* Guaka.framework */;
+			name = StringScannerPackageDescription;
+			productName = StringScannerPackageDescription;
 			productType = "com.apple.product-type.framework";
+		};
+		"ghapp::SwiftPMPackageDescription" /* ghappPackageDescription */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = OBJ_71 /* Build configuration list for PBXNativeTarget "ghappPackageDescription" */;
+			buildPhases = (
+				OBJ_74 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ghappPackageDescription;
+			productName = ghappPackageDescription;
+			productType = "com.apple.product-type.framework";
+		};
+		"ghapp::ghapp" /* ghapp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = OBJ_89 /* Build configuration list for PBXNativeTarget "ghapp" */;
+			buildPhases = (
+				OBJ_92 /* Sources */,
+				OBJ_108 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				OBJ_111 /* PBXTargetDependency */,
+				OBJ_113 /* PBXTargetDependency */,
+			);
+			name = ghapp;
+			productName = ghapp;
+			productReference = "ghapp::ghapp::Product" /* ghapp */;
+			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
@@ -420,7 +436,7 @@
 		OBJ_1 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0830;
+				LastUpgradeCheck = 9999;
 			};
 			buildConfigurationList = OBJ_2 /* Build configuration list for PBXProject "ghapp" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -430,167 +446,229 @@
 				en,
 			);
 			mainGroup = OBJ_5;
-			productRefGroup = OBJ_54 /* Products */;
+			productRefGroup = OBJ_66 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				OBJ_58 /* StringScanner */,
-				OBJ_69 /* Guaka */,
-				OBJ_101 /* ghapp */,
+				"ghapp::SwiftPMPackageDescription" /* ghappPackageDescription */,
+				"Guaka::SwiftPMPackageDescription" /* GuakaPackageDescription */,
+				"StringScanner::SwiftPMPackageDescription" /* StringScannerPackageDescription */,
+				"ghapp::ghapp" /* ghapp */,
+				"Guaka::Guaka" /* Guaka */,
+				"StringScanner::StringScanner" /* StringScanner */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
-		OBJ_105 /* Sources */ = {
+		OBJ_118 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				7B0712671EC4782C003592D5 /* get-token.swift in Sources */,
-				7B80CCCF1F0533A800869573 /* devtest_getstaffgroups.swift in Sources */,
-				7B50BF5B1EB87B2C002CC5E0 /* list-users.swift in Sources */,
-				7B1C7E551E4F53A100A8A1C6 /* stderr.swift in Sources */,
-				7B1C7E531E4F40CB00A8A1C6 /* Superuser.swift in Sources */,
-				7BA0487C1F014EFE005CD16F /* devtest_getgroupscontaininggroups.swift in Sources */,
-				7B05F66E1E4E4A2400CE8826 /* backup_mail.swift in Sources */,
-				OBJ_106 /* URLSession+Synchronous.swift in Sources */,
-				OBJ_107 /* User.swift in Sources */,
-				7B71E3641F78FB02001ABBD2 /* devtest_getexternalgroups.swift in Sources */,
-				OBJ_108 /* backup.swift in Sources */,
-				OBJ_109 /* main.swift in Sources */,
-				7B7F7EF41EB744A20025286B /* devtest.swift in Sources */,
-				OBJ_110 /* root.swift in Sources */,
-				7B7F7EF61EB7454D0025286B /* devtest_gmailapi.swift in Sources */,
+				OBJ_119 /* Command+Execution.swift in Sources */,
+				OBJ_120 /* Command+Utilities.swift in Sources */,
+				OBJ_121 /* Command.swift in Sources */,
+				OBJ_122 /* CommandTypes.swift in Sources */,
+				OBJ_123 /* CommandExecution.swift in Sources */,
+				OBJ_124 /* Flag+Utilities.swift in Sources */,
+				OBJ_125 /* Flag.swift in Sources */,
+				OBJ_126 /* FlagSet.swift in Sources */,
+				OBJ_127 /* Flags.swift in Sources */,
+				OBJ_128 /* CommandHelp.swift in Sources */,
+				OBJ_129 /* DefaultHelpGenerator.swift in Sources */,
+				OBJ_130 /* FlagHelp.swift in Sources */,
+				OBJ_131 /* FlagHelpGeneratorUtils.swift in Sources */,
+				OBJ_132 /* HelpGenerator.swift in Sources */,
+				OBJ_133 /* HelpGeneratorDefaults.swift in Sources */,
+				OBJ_134 /* HelpGeneratorErrors.swift in Sources */,
+				OBJ_135 /* GuakaConfig.swift in Sources */,
+				OBJ_136 /* Levenshtein.swift in Sources */,
+				OBJ_137 /* ArgTokenType.swift in Sources */,
+				OBJ_138 /* Command+Parsing.swift in Sources */,
+				OBJ_139 /* FlagSet+Parsing.swift in Sources */,
+				OBJ_140 /* Errors.swift in Sources */,
+				OBJ_141 /* FlagValue.swift in Sources */,
+				OBJ_142 /* Result.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		OBJ_62 /* Sources */ = {
+		OBJ_149 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				OBJ_63 /* CharacterSet.swift in Sources */,
-				OBJ_64 /* Regex.swift in Sources */,
-				OBJ_65 /* ScannerResult.swift in Sources */,
-				OBJ_66 /* StringExtension.swift in Sources */,
-				OBJ_67 /* StringScanner.swift in Sources */,
+				OBJ_150 /* CharacterSet.swift in Sources */,
+				OBJ_151 /* Regex.swift in Sources */,
+				OBJ_152 /* ScannerResult.swift in Sources */,
+				OBJ_153 /* StringExtension.swift in Sources */,
+				OBJ_154 /* StringScanner.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		OBJ_73 /* Sources */ = {
+		OBJ_74 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				OBJ_74 /* Command+Execution.swift in Sources */,
-				OBJ_75 /* Command+Utilities.swift in Sources */,
-				OBJ_76 /* Command.swift in Sources */,
-				OBJ_77 /* CommandTypes.swift in Sources */,
-				OBJ_78 /* CommandExecution.swift in Sources */,
-				OBJ_79 /* Flag+Utilities.swift in Sources */,
-				OBJ_80 /* Flag.swift in Sources */,
-				OBJ_81 /* FlagSet.swift in Sources */,
-				OBJ_82 /* Flags.swift in Sources */,
-				OBJ_83 /* CommandHelp.swift in Sources */,
-				OBJ_84 /* DefaultHelpGenerator.swift in Sources */,
-				OBJ_85 /* FlagHelp.swift in Sources */,
-				OBJ_86 /* FlagHelpGeneratorUtils.swift in Sources */,
-				OBJ_87 /* HelpGenerator.swift in Sources */,
-				OBJ_88 /* HelpGeneratorDefaults.swift in Sources */,
-				OBJ_89 /* HelpGeneratorErrors.swift in Sources */,
-				OBJ_90 /* GuakaConfig.swift in Sources */,
-				OBJ_91 /* Levenshtein.swift in Sources */,
-				OBJ_92 /* ArgTokenType.swift in Sources */,
-				OBJ_93 /* Command+Parsing.swift in Sources */,
-				OBJ_94 /* FlagSet+Parsing.swift in Sources */,
-				OBJ_95 /* Errors.swift in Sources */,
-				OBJ_96 /* FlagValue.swift in Sources */,
-				OBJ_97 /* Result.swift in Sources */,
+				OBJ_75 /* Package.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		OBJ_80 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 0;
+			files = (
+				OBJ_81 /* Package.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		OBJ_86 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 0;
+			files = (
+				OBJ_87 /* Package.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		OBJ_92 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 0;
+			files = (
+				OBJ_93 /* Superuser.swift in Sources */,
+				OBJ_94 /* URLSession+Synchronous.swift in Sources */,
+				OBJ_95 /* User.swift in Sources */,
+				OBJ_96 /* backup.swift in Sources */,
+				OBJ_97 /* backup_mail.swift in Sources */,
+				OBJ_98 /* devtest.swift in Sources */,
+				OBJ_99 /* devtest_getexternalgroups.swift in Sources */,
+				OBJ_100 /* devtest_getgroupscontaininggroups.swift in Sources */,
+				OBJ_101 /* devtest_getstaffgroups.swift in Sources */,
+				OBJ_102 /* devtest_gmailapi.swift in Sources */,
+				OBJ_103 /* get-token.swift in Sources */,
+				OBJ_104 /* list-users.swift in Sources */,
+				OBJ_105 /* main.swift in Sources */,
+				OBJ_106 /* root.swift in Sources */,
+				OBJ_107 /* stderr.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		OBJ_100 /* PBXTargetDependency */ = {
+		OBJ_111 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = OBJ_58 /* StringScanner */;
-			targetProxy = 7BA05FA41E4A346200068EFC /* PBXContainerItemProxy */;
+			target = "Guaka::Guaka" /* Guaka */;
+			targetProxy = 7B6E53181F7BA218004607A7 /* PBXContainerItemProxy */;
 		};
-		OBJ_115 /* PBXTargetDependency */ = {
+		OBJ_113 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = OBJ_58 /* StringScanner */;
-			targetProxy = 7BA05FA51E4A346200068EFC /* PBXContainerItemProxy */;
+			target = "StringScanner::StringScanner" /* StringScanner */;
+			targetProxy = 7B6E531A1F7BA218004607A7 /* PBXContainerItemProxy */;
 		};
-		OBJ_116 /* PBXTargetDependency */ = {
+		OBJ_145 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = OBJ_69 /* Guaka */;
-			targetProxy = 7BA05FA61E4A346200068EFC /* PBXContainerItemProxy */;
+			target = "StringScanner::StringScanner" /* StringScanner */;
+			targetProxy = 7B6E53191F7BA218004607A7 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		OBJ_103 /* Debug */ = {
+		OBJ_116 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ENABLE_TESTABILITY = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
 				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
-				INFOPLIST_FILE = ghapp.xcodeproj/ghapp_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx @executable_path";
+				INFOPLIST_FILE = ghapp.xcodeproj/Guaka_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
-				SWIFT_FORCE_DYNAMIC_LINK_STDLIB = YES;
-				SWIFT_FORCE_STATIC_LINK_STDLIB = NO;
-				TARGET_NAME = ghapp;
+				PRODUCT_BUNDLE_IDENTIFIER = Guaka;
+				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 3.0;
+				TARGET_NAME = Guaka;
 			};
 			name = Debug;
 		};
-		OBJ_104 /* Release */ = {
+		OBJ_117 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ENABLE_TESTABILITY = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
 				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
-				INFOPLIST_FILE = ghapp.xcodeproj/ghapp_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx @executable_path";
+				INFOPLIST_FILE = ghapp.xcodeproj/Guaka_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
-				SWIFT_FORCE_DYNAMIC_LINK_STDLIB = YES;
-				SWIFT_FORCE_STATIC_LINK_STDLIB = NO;
-				TARGET_NAME = ghapp;
+				PRODUCT_BUNDLE_IDENTIFIER = Guaka;
+				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 3.0;
+				TARGET_NAME = Guaka;
+			};
+			name = Release;
+		};
+		OBJ_147 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
+				);
+				HEADER_SEARCH_PATHS = "$(inherited)";
+				INFOPLIST_FILE = ghapp.xcodeproj/StringScanner_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				PRODUCT_BUNDLE_IDENTIFIER = StringScanner;
+				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 3.0;
+				TARGET_NAME = StringScanner;
+			};
+			name = Debug;
+		};
+		OBJ_148 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
+				);
+				HEADER_SEARCH_PATHS = "$(inherited)";
+				INFOPLIST_FILE = ghapp.xcodeproj/StringScanner_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				PRODUCT_BUNDLE_IDENTIFIER = StringScanner;
+				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 3.0;
+				TARGET_NAME = StringScanner;
 			};
 			name = Release;
 		};
 		OBJ_3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_NS_ASSERTIONS = YES;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_SWIFT_FLAGS = "-DXcode";
@@ -599,7 +677,6 @@
 				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = SWIFT_PACKAGE;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 3.0;
 				USE_HEADERMAP = NO;
 			};
 			name = Debug;
@@ -607,28 +684,12 @@
 		OBJ_4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = s;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_SWIFT_FLAGS = "-DXcode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -636,99 +697,119 @@
 				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = SWIFT_PACKAGE;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
-				SWIFT_VERSION = 3.0;
 				USE_HEADERMAP = NO;
 			};
 			name = Release;
 		};
-		OBJ_60 /* Debug */ = {
+		OBJ_72 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ENABLE_TESTABILITY = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
-				);
-				HEADER_SEARCH_PATHS = "$(inherited)";
-				INFOPLIST_FILE = ghapp.xcodeproj/StringScanner_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
-				OTHER_LDFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = StringScanner;
-				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				TARGET_NAME = StringScanner;
+				LD = /usr/bin/true;
+				OTHER_SWIFT_FLAGS = "-swift-version 3 -I /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/pm/3 -target x86_64-apple-macosx10.10 -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
-		OBJ_61 /* Release */ = {
+		OBJ_73 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ENABLE_TESTABILITY = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
-				);
-				HEADER_SEARCH_PATHS = "$(inherited)";
-				INFOPLIST_FILE = ghapp.xcodeproj/StringScanner_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
-				OTHER_LDFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = StringScanner;
-				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				TARGET_NAME = StringScanner;
+				LD = /usr/bin/true;
+				OTHER_SWIFT_FLAGS = "-swift-version 3 -I /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/pm/3 -target x86_64-apple-macosx10.10 -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
 		};
-		OBJ_71 /* Debug */ = {
+		OBJ_78 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ENABLE_TESTABILITY = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
-				);
-				HEADER_SEARCH_PATHS = "$(inherited)";
-				INFOPLIST_FILE = ghapp.xcodeproj/Guaka_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
-				OTHER_LDFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = Guaka;
-				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				TARGET_NAME = Guaka;
+				LD = /usr/bin/true;
+				OTHER_SWIFT_FLAGS = "-swift-version 3 -I /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/pm/3 -target x86_64-apple-macosx10.10 -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
-		OBJ_72 /* Release */ = {
+		OBJ_79 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ENABLE_TESTABILITY = YES;
+				LD = /usr/bin/true;
+				OTHER_SWIFT_FLAGS = "-swift-version 3 -I /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/pm/3 -target x86_64-apple-macosx10.10 -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk";
+				SWIFT_VERSION = 3.0;
+			};
+			name = Release;
+		};
+		OBJ_84 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				LD = /usr/bin/true;
+				OTHER_SWIFT_FLAGS = "-swift-version 3 -I /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/pm/3 -target x86_64-apple-macosx10.10 -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk";
+				SWIFT_VERSION = 3.0;
+			};
+			name = Debug;
+		};
+		OBJ_85 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				LD = /usr/bin/true;
+				OTHER_SWIFT_FLAGS = "-swift-version 3 -I /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/pm/3 -target x86_64-apple-macosx10.10 -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk";
+				SWIFT_VERSION = 3.0;
+			};
+			name = Release;
+		};
+		OBJ_90 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
 				);
 				HEADER_SEARCH_PATHS = "$(inherited)";
-				INFOPLIST_FILE = ghapp.xcodeproj/Guaka_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
+				INFOPLIST_FILE = ghapp.xcodeproj/ghapp_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx @executable_path";
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = Guaka;
-				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				TARGET_NAME = Guaka;
+				SWIFT_FORCE_DYNAMIC_LINK_STDLIB = YES;
+				SWIFT_FORCE_STATIC_LINK_STDLIB = NO;
+				SWIFT_VERSION = 3.0;
+				TARGET_NAME = ghapp;
+			};
+			name = Debug;
+		};
+		OBJ_91 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
+				);
+				HEADER_SEARCH_PATHS = "$(inherited)";
+				INFOPLIST_FILE = ghapp.xcodeproj/ghapp_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(TOOLCHAIN_DIR)/usr/lib/swift/macosx @executable_path";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				SWIFT_FORCE_DYNAMIC_LINK_STDLIB = YES;
+				SWIFT_FORCE_STATIC_LINK_STDLIB = NO;
+				SWIFT_VERSION = 3.0;
+				TARGET_NAME = ghapp;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		OBJ_102 /* Build configuration list for PBXNativeTarget "ghapp" */ = {
+		OBJ_115 /* Build configuration list for PBXNativeTarget "Guaka" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				OBJ_103 /* Debug */,
-				OBJ_104 /* Release */,
+				OBJ_116 /* Debug */,
+				OBJ_117 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		OBJ_146 /* Build configuration list for PBXNativeTarget "StringScanner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				OBJ_147 /* Debug */,
+				OBJ_148 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -742,20 +823,38 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		OBJ_59 /* Build configuration list for PBXNativeTarget "StringScanner" */ = {
+		OBJ_71 /* Build configuration list for PBXNativeTarget "ghappPackageDescription" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				OBJ_60 /* Debug */,
-				OBJ_61 /* Release */,
+				OBJ_72 /* Debug */,
+				OBJ_73 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		OBJ_70 /* Build configuration list for PBXNativeTarget "Guaka" */ = {
+		OBJ_77 /* Build configuration list for PBXNativeTarget "GuakaPackageDescription" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				OBJ_71 /* Debug */,
-				OBJ_72 /* Release */,
+				OBJ_78 /* Debug */,
+				OBJ_79 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		OBJ_83 /* Build configuration list for PBXNativeTarget "StringScannerPackageDescription" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				OBJ_84 /* Debug */,
+				OBJ_85 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		OBJ_89 /* Build configuration list for PBXNativeTarget "ghapp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				OBJ_90 /* Debug */,
+				OBJ_91 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
