@@ -94,11 +94,11 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "devtest getstaffgroups"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "list-users"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "get-token --scopes=https://www.googleapis.com/auth/admin.directory.group,https://www.googleapis.com/auth/admin.directory.user.readonly"
