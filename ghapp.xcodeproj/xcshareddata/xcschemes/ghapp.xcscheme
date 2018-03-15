@@ -77,7 +77,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "backup mail --destination-dir /Users/frizlab/Desktop/backups/ --offlineimap-config-file /Users/frizlab/Desktop/backups/offlineimapconfig --offlineimap-output /Users/frizlab/Desktop/offlineimap.log"
+            argument = "backup mail --destination-dir /Users/frizlab/Desktop/backups/ --offlineimap-config-file /Users/frizlab/Desktop/backups/offlineimapconfig --offlineimap-output /Users/frizlab/Desktop/offlineimap.log --emails-to-backup valentino.di-nardo.disabled@happn.fr"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument

@@ -266,7 +266,10 @@
 				OBJ_24 /* Dependencies */,
 				OBJ_66 /* Products */,
 			);
+			indentWidth = 3;
 			sourceTree = "<group>";
+			tabWidth = 3;
+			usesTabs = 1;
 		};
 		OBJ_50 /* Parsing */ = {
 			isa = PBXGroup;

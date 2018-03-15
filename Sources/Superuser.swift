@@ -89,7 +89,7 @@ struct Superuser {
 		return usersDictionaries.flatMap { userDictionary in
 			guard let id = userDictionary["id"] as? String, let email = userDictionary["primaryEmail"] as? String else {return nil}
 			if let emails = emails {guard emails.contains(email) else {return nil}}
-			return User(id: id, email: email)
+			return User(id: id, email: email, givenName: (userDictionary["name"] as? [String: Any?])?["givenName"] as? String)
 		}
 	}
 	

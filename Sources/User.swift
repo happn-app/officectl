@@ -14,10 +14,12 @@ class User : CustomStringConvertible, Hashable, Equatable {
 	
 	let id: String
 	let email: String
+	let givenName: String?
 	
-	init(id theId: String, email theEmail: String) {
+	init(id theId: String, email theEmail: String, givenName theGivenName: String? = nil) {
 		id = theId
 		email = theEmail
+		givenName = theGivenName
 	}
 	
 	public var description: String {
