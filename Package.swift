@@ -1,7 +1,12 @@
+// swift-tools-version:4.0
 import PackageDescription
+
 let package = Package(
-  name: "ghapp",
-  dependencies: [
-    .Package(url: "https://github.com/oarrabi/Guaka.git", majorVersion: 0)
-  ]
+	name: "ghapp",
+	dependencies: [
+		.package(url: "https://github.com/klaas/Guaka", from: "0.3.0")
+	],
+	targets: [
+		.target(name: "ghapp", dependencies: ["Guaka"]),
+	]	
 )

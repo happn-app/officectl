@@ -34,7 +34,7 @@ private func inheritablePreRun(flags: Flags, args: [String]) -> Bool {
 	return true
 }
 
-private func execute(flags: Flags, args: [String]) {
+private func execute(command: Command, flags: Flags, args: [String]) {
 	rootCommand.fail(statusCode: 1, errorMessage: "Please choose a command verb")
 }
 

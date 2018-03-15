@@ -18,7 +18,7 @@ private func configuration(command: Command) {
 	)
 }
 
-private func execute(flags: Flags, args: [String]) {
+private func execute(command: Command, flags: Flags, args: [String]) {
 	let options = BackupMailOptions(
 		users: backupConfig.backedUpUsers, superuser: rootConfig.superuser,
 		offlineimapConfigFileURL: URL(fileURLWithPath: flags.getString(name: "offlineimap-config-file")!, isDirectory: false),
@@ -62,7 +62,7 @@ func backupMail(options: BackupMailOptions, fromCommand command: Command) {
 
 
 private class Nop : NSObject {
-	func nop() {}
+	@objc func nop() {}
 }
 
 class OfflineImapManager {

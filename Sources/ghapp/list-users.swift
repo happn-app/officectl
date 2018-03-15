@@ -13,7 +13,7 @@ private func configuration(command: Command) {
 	)
 }
 
-private func execute(flags: Flags, args: [String]) {
+private func execute(command: Command, flags: Flags, args: [String]) {
 	guard let users = try? rootConfig.superuser.retrieveUsers(using: rootConfig.adminEmail, with: ["happn.fr"], contrainedTo: nil, verbose: false) else {
 		listusersCommand.fail(statusCode: 1, errorMessage: "cannot retrieve users")
 	}

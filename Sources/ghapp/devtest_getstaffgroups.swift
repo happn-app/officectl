@@ -13,7 +13,7 @@ private func configuration(command: Command) {
 	)
 }
 
-private func execute(flags: Flags, args: [String]) {
+private func execute(command: Command, flags: Flags, args: [String]) {
 	guard let (accessTokenString, _) = try? rootConfig.superuser.getAccessToken(forScopes: ["https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly"], onBehalfOfUserWithEmail: "francois.lamboley@happn.fr") else {
 		devtestGetstaffgroupsCommand.fail(statusCode: 1, errorMessage: "Cannot get access token for admin user")
 	}

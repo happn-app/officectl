@@ -12,11 +12,11 @@
       },
       {
         "package": "StringScanner",
-        "repositoryURL": "https://github.com/oarrabi/StringScanner",
+        "repositoryURL": "https://github.com/klaas/StringScanner",
         "state": {
           "branch": null,
-          "revision": "246c697efe2f57d9042f58b1b53ace4fddb1efc4",
-          "version": "0.2.0"
+          "revision": "576ed0725055966b1e59a14edd99945640c55e3a",
+          "version": "0.3.2"
         }
       }
     ]

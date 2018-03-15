@@ -14,7 +14,7 @@ private func configuration(command: Command) {
 	)
 }
 
-private func execute(flags: Flags, args: [String]) {
+private func execute(command: Command, flags: Flags, args: [String]) {
 	guard let token = try? rootConfig.superuser.getAccessToken(forScopes: Set(flags.getString(name: "scopes")!.components(separatedBy: ",")), onBehalfOfUserWithEmail: rootConfig.adminEmail) else {
 		gettokenCommand.fail(statusCode: 2, errorMessage: "Cannot get token")
 	}

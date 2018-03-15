@@ -2,8 +2,8 @@ import Guaka
 import Foundation
 
 
-let devtestGetexternalgroupsCommand = Command(
-	usage: "getexternalgroups", configuration: configuration, run: execute
+let devtestGetgroupscontaininggroupsCommand = Command(
+	usage: "getgroupscontaininggroups", configuration: configuration, run: execute
 )
 
 private func configuration(command: Command) {
@@ -13,7 +13,7 @@ private func configuration(command: Command) {
 	)
 }
 
-private func execute(flags: Flags, args: [String]) {
+private func execute(command: Command, flags: Flags, args: [String]) {
 	guard let (accessTokenString, _) = try? rootConfig.superuser.getAccessToken(forScopes: ["https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly"], onBehalfOfUserWithEmail: "francois.lamboley@happn.fr") else {
 		devtestGetgroupscontaininggroupsCommand.fail(statusCode: 1, errorMessage: "Cannot get access token for admin user")
 	}
@@ -42,7 +42,7 @@ private func execute(flags: Flags, args: [String]) {
 			continue
 		}
 		
-		if members.contains(where: { !$0.hasSuffix("@happn.fr") && !$0.hasSuffix("@happn.com") }) {
+		if members.contains(where: { $0.hasPrefix("staff.") }) {
 			print(name)
 		}
 	}

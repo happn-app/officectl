@@ -13,7 +13,7 @@ private func configuration(command: Command) {
 	)
 }
 
-private func execute(flags: Flags, args: [String]) {
+private func execute(command: Command, flags: Flags, args: [String]) {
 	guard let user = (try? rootConfig.superuser.retrieveUsers(using: "francois.lamboley@happn.fr", with: ["happn.fr"], contrainedTo: ["francois.lamboley@happn.fr"], verbose: true))?.first else {
 		devtestGmailapiCommand.fail(statusCode: 1, errorMessage: "Cannot get tested user")
 	}
