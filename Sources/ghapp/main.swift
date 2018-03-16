@@ -8,6 +8,7 @@ func setupCommands() {
 	
 	backupCommand.add(subCommand: backupMailCommand)
 	
+	devtestCommand.add(subCommand: devtestCurtestCommand)
 	devtestCommand.add(subCommand: devtestGmailapiCommand)
 	devtestCommand.add(subCommand: devtestGetstaffgroupsCommand)
 	devtestCommand.add(subCommand: devtestGetexternalgroupsCommand)

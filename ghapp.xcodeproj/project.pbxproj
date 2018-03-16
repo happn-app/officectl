@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7B236A13205C403700FB8691 /* devtest_curtest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B236A12205C403700FB8691 /* devtest_curtest.swift */; };
 		OBJ_100 /* devtest.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_14 /* devtest.swift */; };
 		OBJ_101 /* devtest_getexternalgroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_15 /* devtest_getexternalgroups.swift */; };
 		OBJ_102 /* devtest_getgroupscontaininggroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_16 /* devtest_getgroupscontaininggroups.swift */; };
@@ -85,6 +86,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7B236A12205C403700FB8691 /* devtest_curtest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest_curtest.swift; sourceTree = "<group>"; };
 		"Guaka::Guaka::Product" /* Guaka.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Guaka.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		OBJ_10 /* URLSession+Synchronous.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSession+Synchronous.swift"; sourceTree = "<group>"; };
 		OBJ_11 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
@@ -339,6 +341,7 @@
 				OBJ_16 /* devtest_getgroupscontaininggroups.swift */,
 				OBJ_17 /* devtest_getstaffgroups.swift */,
 				OBJ_18 /* devtest_gmailapi.swift */,
+				7B236A12205C403700FB8691 /* devtest_curtest.swift */,
 				OBJ_19 /* get-token.swift */,
 				OBJ_20 /* list-users.swift */,
 				OBJ_21 /* main.swift */,
@@ -556,6 +559,7 @@
 				OBJ_100 /* devtest.swift in Sources */,
 				OBJ_101 /* devtest_getexternalgroups.swift in Sources */,
 				OBJ_102 /* devtest_getgroupscontaininggroups.swift in Sources */,
+				7B236A13205C403700FB8691 /* devtest_curtest.swift in Sources */,
 				OBJ_103 /* devtest_getstaffgroups.swift in Sources */,
 				OBJ_104 /* devtest_gmailapi.swift in Sources */,
 				OBJ_105 /* get-token.swift in Sources */,
