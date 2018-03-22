@@ -21,7 +21,7 @@ private func execute(command: Command, flags: Flags, args: [String]) {
 	var i = 1
 	for user in users {
 		print(user.email + ",", terminator: "")
-		if i == 99 {print(); print(); i = 0}
+		if i == 69 {print(); print(); i = 0}
 		i += 1
 	}
 	print()

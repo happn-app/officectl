@@ -55,7 +55,7 @@
 		OBJ_83 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_60 /* Package.swift */; };
 		OBJ_89 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_62 /* Package.swift */; };
 		OBJ_95 /* Superuser.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_9 /* Superuser.swift */; };
-		OBJ_96 /* URLSession+Synchronous.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_10 /* URLSession+Synchronous.swift */; };
+		OBJ_96 /* URLSession+Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_10 /* URLSession+Utils.swift */; };
 		OBJ_97 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_11 /* User.swift */; };
 		OBJ_98 /* backup.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_12 /* backup.swift */; };
 		OBJ_99 /* backup_mail.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_13 /* backup_mail.swift */; };
@@ -88,7 +88,7 @@
 /* Begin PBXFileReference section */
 		7B236A12205C403700FB8691 /* devtest_curtest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = devtest_curtest.swift; sourceTree = "<group>"; };
 		"Guaka::Guaka::Product" /* Guaka.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Guaka.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		OBJ_10 /* URLSession+Synchronous.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSession+Synchronous.swift"; sourceTree = "<group>"; };
+		OBJ_10 /* URLSession+Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSession+Utils.swift"; sourceTree = "<group>"; };
 		OBJ_11 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		OBJ_12 /* backup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = backup.swift; sourceTree = "<group>"; };
 		OBJ_13 /* backup_mail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = backup_mail.swift; sourceTree = "<group>"; };
@@ -332,7 +332,7 @@
 			isa = PBXGroup;
 			children = (
 				OBJ_9 /* Superuser.swift */,
-				OBJ_10 /* URLSession+Synchronous.swift */,
+				OBJ_10 /* URLSession+Utils.swift */,
 				OBJ_11 /* User.swift */,
 				OBJ_12 /* backup.swift */,
 				OBJ_13 /* backup_mail.swift */,
@@ -552,7 +552,7 @@
 			buildActionMask = 0;
 			files = (
 				OBJ_95 /* Superuser.swift in Sources */,
-				OBJ_96 /* URLSession+Synchronous.swift in Sources */,
+				OBJ_96 /* URLSession+Utils.swift in Sources */,
 				OBJ_97 /* User.swift in Sources */,
 				OBJ_98 /* backup.swift in Sources */,
 				OBJ_99 /* backup_mail.swift in Sources */,

@@ -22,6 +22,16 @@ class User : CustomStringConvertible, Hashable, Equatable {
 		givenName = theGivenName
 	}
 	
+	init?(json userDictionary: [String: Any?]) {
+		guard let theId = userDictionary["id"] as? String, let theEmail = userDictionary["primaryEmail"] as? String else {
+			return nil
+		}
+		
+		id = theId
+		email = theEmail
+		givenName = (userDictionary["name"] as? [String: Any?])?["givenName"] as? String
+	}
+	
 	public var description: String {
 		return "\(id):\(email)"
 	}

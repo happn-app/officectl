@@ -30,7 +30,7 @@ private func execute(command: Command, flags: Flags, args: [String]) {
 	var getMessagesRequest = URLRequest(url: getMessagesComponents.url!)
 	getMessagesRequest.addValue("Bearer \(accessTokenString)", forHTTPHeaderField: "Authorization")
 	
-	guard let (dataO, _) = try? URLSession.shared.synchronousDataTask(with: getMessagesRequest), let data = dataO, let parsedData = try? JSONSerialization.jsonObject(with: data, options: []) else {
+	guard let parsedData = URLSession.shared.fetchJSON(request: getMessagesRequest) else {
 		devtestGmailapiCommand.fail(statusCode: 1, errorMessage: "Cannot get tested user messages")
 	}
 	

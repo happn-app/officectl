@@ -14,7 +14,7 @@ private func configuration(command: Command) {
 }
 
 private func execute(command: Command, flags: Flags, args: [String]) {
-	guard let (accessTokenString, _) = try? rootConfig.superuser.getAccessToken(forScopes: ["https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly"], onBehalfOfUserWithEmail: "francois.lamboley@happn.fr") else {
+	guard let (accessTokenString, _) = try? rootConfig.superuser.getAccessToken(forScopes: ["https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly"], onBehalfOfUserWithEmail: rootConfig.adminEmail) else {
 		devtestGetstaffgroupsCommand.fail(statusCode: 1, errorMessage: "Cannot get access token for admin user")
 	}
 	
@@ -26,7 +26,7 @@ private func execute(command: Command, flags: Flags, args: [String]) {
 	var getGroupsRequest = URLRequest(url: getGroupsComponents.url!)
 	getGroupsRequest.addValue("Bearer \(accessTokenString)", forHTTPHeaderField: "Authorization")
 	
-	guard let (dataO, _) = try? URLSession.shared.synchronousDataTask(with: getGroupsRequest), let data = dataO, let parsedData = (try? JSONSerialization.jsonObject(with: data, options: [])) as? [String: Any], let groups = parsedData["groups"] as? [[String: Any]] else {
+	guard let parsedData = URLSession.shared.fetchJSON(request: getGroupsRequest), let groups = parsedData["groups"] as? [[String: Any?]] else {
 		devtestGetstaffgroupsCommand.fail(statusCode: 1, errorMessage: "Cannot get groups")
 	}
 	

@@ -98,7 +98,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "devtest curtest"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "list-users"
@@ -106,7 +106,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "get-token --scopes=https://www.googleapis.com/auth/admin.directory.group,https://www.googleapis.com/auth/admin.directory.user.readonly"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
       <AdditionalOptions>
