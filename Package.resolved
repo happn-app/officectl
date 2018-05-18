@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "AsyncOperationResult",
+        "repositoryURL": "git@github.com:happn-app/AsyncOperationResult.git",
+        "state": {
+          "branch": null,
+          "revision": "e09d47367a86dd48fef993b08d095e1e3e4188de",
+          "version": "1.0.2"
+        }
+      },
+      {
         "package": "Guaka",
         "repositoryURL": "https://github.com/klaas/Guaka.git",
         "state": {

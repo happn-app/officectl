@@ -80,7 +80,7 @@ struct Superuser {
 				usersDictionaries.append(contentsOf: users)
 			}
 		}
-		return usersDictionaries.flatMap{ userDictionary in
+		return usersDictionaries.compactMap{ userDictionary in
 			guard let user = User(json: userDictionary) else {return nil}
 			if let emails = emails {guard emails.contains(user.email) else {return nil}}
 			return user

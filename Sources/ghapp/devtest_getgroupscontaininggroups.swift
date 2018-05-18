@@ -38,7 +38,7 @@ private func execute(command: Command, flags: Flags, args: [String]) {
 		var getGroupsContentRequest = URLRequest(url: getGroupContentComponents.url!)
 		getGroupsContentRequest.addValue("Bearer \(accessTokenString)", forHTTPHeaderField: "Authorization")
 		
-		guard let parsedData = URLSession.shared.fetchJSON(request: getGroupsContentRequest), let members = (parsedData["members"] as? [[String: Any?]])?.flatMap({ $0["email"] as? String }) else {
+		guard let parsedData = URLSession.shared.fetchJSON(request: getGroupsContentRequest), let members = (parsedData["members"] as? [[String: Any?]])?.compactMap({ $0["email"] as? String }) else {
 			continue
 		}
 		

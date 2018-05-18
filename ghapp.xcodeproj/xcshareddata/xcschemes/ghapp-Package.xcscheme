@@ -14,9 +14,23 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "ghapp::ghapp"
-               BuildableName = "ghapp"
-               BlueprintName = "ghapp"
+               BlueprintIdentifier = "AsyncOperationResult::AsyncOperationResult"
+               BuildableName = "AsyncOperationResult.framework"
+               BlueprintName = "AsyncOperationResult"
+               ReferencedContainer = "container:ghapp.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StringScanner::StringScanner"
+               BuildableName = "StringScanner.framework"
+               BlueprintName = "StringScanner"
                ReferencedContainer = "container:ghapp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -42,9 +56,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "StringScanner::StringScanner"
-               BuildableName = "StringScanner.framework"
-               BlueprintName = "StringScanner"
+               BlueprintIdentifier = "ghapp::ghapp"
+               BuildableName = "ghapp"
+               BlueprintName = "ghapp"
                ReferencedContainer = "container:ghapp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -54,7 +68,6 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      language = ""
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
       </Testables>
@@ -65,7 +78,6 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      language = ""
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
@@ -75,9 +87,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "ghapp::ghapp"
-            BuildableName = "ghapp"
-            BlueprintName = "ghapp"
+            BlueprintIdentifier = "AsyncOperationResult::AsyncOperationResult"
+            BuildableName = "AsyncOperationResult.framework"
+            BlueprintName = "AsyncOperationResult"
             ReferencedContainer = "container:ghapp.xcodeproj">
          </BuildableReference>
       </MacroExpansion>

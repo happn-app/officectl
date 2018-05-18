@@ -30,7 +30,7 @@ private func execute(command: Command, flags: Flags, args: [String]) {
 		devtestGetstaffgroupsCommand.fail(statusCode: 1, errorMessage: "Cannot get groups")
 	}
 	
-	for email in groups.flatMap({ $0["email"] as? String }) {
+	for email in groups.compactMap({ $0["email"] as? String }) {
 		if email.hasPrefix("staff.") {print(email)}
 	}
 }
