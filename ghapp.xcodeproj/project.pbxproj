@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7BDAD7BE20C01C4C0066161C /* GogoleConnectorHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BDAD7BD20C01C4C0066161C /* GogoleConnectorHelper.swift */; };
 		OBJ_100 /* Command+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_34 /* Command+Utilities.swift */; };
 		OBJ_101 /* Command.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_35 /* Command.swift */; };
 		OBJ_102 /* CommandTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_36 /* CommandTypes.swift */; };
@@ -97,6 +98,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7BDAD7BD20C01C4C0066161C /* GogoleConnectorHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GogoleConnectorHelper.swift; sourceTree = "<group>"; };
 		"AsyncOperationResult::AsyncOperationResult::Product" /* AsyncOperationResult.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AsyncOperationResult.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		"Guaka::Guaka::Product" /* Guaka.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Guaka.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		OBJ_10 /* Connector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connector.swift; sourceTree = "<group>"; };
@@ -400,6 +402,7 @@
 			isa = PBXGroup;
 			children = (
 				OBJ_10 /* Connector.swift */,
+				7BDAD7BD20C01C4C0066161C /* GogoleConnectorHelper.swift */,
 			);
 			path = Connectors;
 			sourceTree = "<group>";
@@ -537,7 +540,7 @@
 		OBJ_1 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 9999;
+				LastUpgradeCheck = 0940;
 			};
 			buildConfigurationList = OBJ_2 /* Build configuration list for PBXProject "ghapp" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -604,6 +607,7 @@
 				OBJ_159 /* backup_mail.swift in Sources */,
 				OBJ_160 /* devtest.swift in Sources */,
 				OBJ_161 /* devtest_curtest.swift in Sources */,
+				7BDAD7BE20C01C4C0066161C /* GogoleConnectorHelper.swift in Sources */,
 				OBJ_162 /* devtest_getexternalgroups.swift in Sources */,
 				OBJ_163 /* devtest_getgroupscontaininggroups.swift in Sources */,
 				OBJ_164 /* devtest_getstaffgroups.swift in Sources */,
@@ -842,12 +846,38 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_NS_ASSERTIONS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_SWIFT_FLAGS = "-DXcode";
@@ -864,11 +894,36 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				OTHER_SWIFT_FLAGS = "-DXcode";
 				PRODUCT_NAME = "$(TARGET_NAME)";

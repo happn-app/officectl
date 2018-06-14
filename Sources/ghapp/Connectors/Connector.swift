@@ -11,15 +11,13 @@ import AsyncOperationResult
 
 
 
-protocol ConnectorScope : SetAlgebra {}
-
 protocol ConnectorHelper {
 	
 	associatedtype RequestType
-	associatedtype Scope : ConnectorScope
+	associatedtype ScopeType : SetAlgebra
 	
 	/** `nil` if not connected, otherwise, any non-nil value */
-	var currentScope: Scope? {get}
+	var currentScope: ScopeType? {get}
 	
 //	func handleApplicationDidFinishLaunching(_ application: UIApplication, withLaunchOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool
 //	func handleOpenURL(_ url: URL, inApplication application: UIApplication, withOptions options: [UIApplicationOpenURLOptionsKey: Any]) -> Bool
@@ -27,44 +25,59 @@ protocol ConnectorHelper {
 	
 	func authenticate(request: RequestType, handler: @escaping (_ result: AsyncOperationResult<RequestType>, _ userInfo: Any?) -> Void)
 	
-	func connect(scope: Scope, handler: @escaping (_ error: Error?) -> Void)
+	func connect(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
 	func refreshSession(handler: @escaping (_ error: Error?) -> Void)
 	func disconnect(handler: @escaping (_ error: Error?) -> Void)
-	func grant(scope: Scope, handler: @escaping (_ error: Error?) -> Void)
-	func revoke(scope: Scope, handler: @escaping (_ error: Error?) -> Void)
-	func checkSession(forScope scope: Scope, handler: @escaping (_ error: Error?) -> Void)
+	func grant(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
+	func revoke(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
+	func checkSession(forScope scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
 	
 }
 
 
-class Connector<Helper : ConnectorHelper> {
+class Connector<ScopeType : SetAlgebra, RequestType> {
 	
-	typealias Scope = Helper.Scope
-	typealias RequestType = Helper.RequestType
-	
-	let helper: Helper
-	
-	init(helper h: Helper) {
-		helper = h
+	init<H : ConnectorHelper>(helper h: H) where H.ScopeType == ScopeType, H.RequestType == RequestType {
+		currentScopeHandler = { h.currentScope }
+		
+		authenticateHandler = h.authenticate
+		
+		connectHandler = h.connect
+		refreshSessionHandler = h.refreshSession
+		disconnectHandler = h.disconnect
+		grantHandler = h.grant
+		revokeHandler = h.revoke
+		checkSessionHandler = h.checkSession
 	}
 	
 	var isConnected: Bool {
-		return helper.currentScope != nil
+		return currentScopeHandler() != nil
 	}
 	
-	var currentScope: Scope? {
-		return helper.currentScope
+	var currentScope: ScopeType? {
+		return currentScopeHandler()
 	}
 	
 	/** If there is already an action in progress, the action will be delayed
 	until the current (and all other currently queued) action(s) are finished.
 	
 	The handler is always called on the main thread. */
-	func connect(scope: Scope, handler: ((_ error: Error?) -> Void)?) {
-		assert(Thread.isMainThread)
-		
+	func authenticate(request: RequestType, handler: @escaping (_ result: AsyncOperationResult<RequestType>, _ userInfo: Any?) -> Void) {
 		queuedActions.append{
-			self.helper.connect(scope: scope, handler: { err in
+			self.authenticateHandler(request, { result, userInfo in
+				self.finishAction{ handler(result, userInfo) }
+			})
+		}
+		startNextAction()
+	}
+	
+	/** If there is already an action in progress, the action will be delayed
+	until the current (and all other currently queued) action(s) are finished.
+	
+	The handler is always called on the main thread. */
+	func connect(scope: ScopeType, handler: ((_ error: Error?) -> Void)?) {
+		queuedActions.append{
+			self.connectHandler(scope, { err in
 				self.finishAction(error: err, handler: handler)
 			})
 		}
@@ -76,10 +89,8 @@ class Connector<Helper : ConnectorHelper> {
 	
 	The handler is always called on the main thread. */
 	func refreshSession(handler: ((_ error: Error?) -> Void)?) {
-		assert(Thread.isMainThread)
-		
 		queuedActions.append{
-			self.helper.refreshSession(handler: { err in
+			self.refreshSessionHandler({ err in
 				self.finishAction(error: err, handler: handler)
 			})
 		}
@@ -91,10 +102,8 @@ class Connector<Helper : ConnectorHelper> {
 	
 	The handler is always called on the main thread. */
 	func disconnect(handler: ((_ error: Error?) -> Void)?) {
-		assert(Thread.isMainThread)
-		
 		queuedActions.append{
-			self.helper.disconnect(handler: { err in
+			self.disconnectHandler({ err in
 				self.finishAction(error: err, handler: handler)
 			})
 		}
@@ -105,11 +114,9 @@ class Connector<Helper : ConnectorHelper> {
 	until the current (and all other currently queued) action(s) are finished.
 	
 	The handler is always called on the main thread. */
-	func grant(scope: Scope, force: Bool = false, handler: ((_ error: Error?) -> Void)?) {
-		assert(Thread.isMainThread)
-		
+	func grant(scope: ScopeType, force: Bool = false, handler: ((_ error: Error?) -> Void)?) {
 		queuedActions.append{
-			self.helper.grant(scope: scope, handler: { err in
+			self.grantHandler(scope, { err in
 				self.finishAction(error: err, handler: handler)
 			})
 		}
@@ -120,11 +127,9 @@ class Connector<Helper : ConnectorHelper> {
 	until the current (and all other currently queued) action(s) are finished.
 	
 	The handler is always called on the main thread. */
-	func revoke(scope: Scope, force: Bool = false, handler: ((_ error: Error?) -> Void)?) {
-		assert(Thread.isMainThread)
-		
+	func revoke(scope: ScopeType, force: Bool = false, handler: ((_ error: Error?) -> Void)?) {
 		queuedActions.append{
-			self.helper.revoke(scope: scope, handler: { err in
+			self.revokeHandler(scope, { err in
 				self.finishAction(error: err, handler: handler)
 			})
 		}
@@ -135,11 +140,9 @@ class Connector<Helper : ConnectorHelper> {
 	until the current (and all other currently queued) action(s) are finished.
 	
 	The handler is always called on the main thread. */
-	func checkSession(forScope scope: Scope, handler: ((_ error: Error?) -> Void)?) {
-		assert(Thread.isMainThread)
-		
+	func checkSession(forScope scope: ScopeType, handler: ((_ error: Error?) -> Void)?) {
 		queuedActions.append{
-			self.helper.checkSession(forScope: scope, handler: { err in
+			self.checkSessionHandler(scope, { err in
 				self.finishAction(error: err, handler: handler)
 			})
 		}
@@ -174,5 +177,28 @@ class Connector<Helper : ConnectorHelper> {
 			startNextAction()
 		}
 	}
+	
+	private func finishAction(handler: @escaping () -> Void) {
+		DispatchQueue.main.async{
+			handler()
+			self.actionSemaphore.signal()
+			self.startNextAction()
+		}
+	}
+	
+	/* *********************************
+      MARK: - Connector Handler Erasure
+	   ********************************* */
+	
+	private let currentScopeHandler: () -> ScopeType?
+	
+	private let authenticateHandler: (_ request: RequestType, _ handler: @escaping (_ result: AsyncOperationResult<RequestType>, _ userInfo: Any?) -> Void) -> Void
+	
+	private let connectHandler: (_ scope: ScopeType, _ handler: @escaping (_ error: Error?) -> Void) -> Void
+	private let refreshSessionHandler: (_ handler: @escaping (_ error: Error?) -> Void) -> Void
+	private let disconnectHandler: (_ handler: @escaping (_ error: Error?) -> Void) -> Void
+	private let grantHandler: (_ scope: ScopeType, _ handler: @escaping (_ error: Error?) -> Void) -> Void
+	private let revokeHandler: (_ scope: ScopeType, _ handler: @escaping (_ error: Error?) -> Void) -> Void
+	private let checkSessionHandler: (_ scope: ScopeType, _ handler: @escaping (_ error: Error?) -> Void) -> Void
 	
 }
