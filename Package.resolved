@@ -20,6 +20,15 @@
         }
       },
       {
+        "package": "RetryingOperation",
+        "repositoryURL": "git@github.com:happn-app/RetryingOperation.git",
+        "state": {
+          "branch": null,
+          "revision": "99993050e260c7b7fb3e15b247211286903aa87d",
+          "version": "1.0.1"
+        }
+      },
+      {
         "package": "StringScanner",
         "repositoryURL": "https://github.com/klaas/StringScanner",
         "state": {

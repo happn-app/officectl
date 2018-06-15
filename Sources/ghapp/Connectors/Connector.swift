@@ -11,10 +11,15 @@ import AsyncOperationResult
 
 
 
-protocol ConnectorHelper {
+public protocol Connector {
 	
 	associatedtype RequestType
 	associatedtype ScopeType : SetAlgebra
+	
+	/** A connector should only do one “connection” operation at a time. The
+	handler operation queue given here will be used by default to serialize
+	“unsafe” operations in a queue so they’re executed safely in order. */
+	var handlerOperationQueue: HandlerOperationQueue {get}
 	
 	/** `nil` if not connected, otherwise, any non-nil value */
 	var currentScope: ScopeType? {get}
@@ -25,180 +30,121 @@ protocol ConnectorHelper {
 	
 	func authenticate(request: RequestType, handler: @escaping (_ result: AsyncOperationResult<RequestType>, _ userInfo: Any?) -> Void)
 	
-	func connect(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
-	func refreshSession(handler: @escaping (_ error: Error?) -> Void)
-	func disconnect(handler: @escaping (_ error: Error?) -> Void)
-	func grant(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
-	func revoke(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
-	func checkSession(forScope scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
+	func unsafeConnect(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
+	func unsafeDisconnect(handler: @escaping (_ error: Error?) -> Void)
+	func unsafeGrant(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
+	func unsafeRevoke(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
+	
+}
+
+extension Connector {
+	
+	var isConnected: Bool {
+		return currentScope != nil
+	}
+	
+	func connect(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void) {
+		handlerOperationQueue.addToQueue{ stopOperationHandler in
+			self.unsafeConnect(scope: scope, handler: { error in
+				DispatchQueue.main.async{
+					handler(error)
+					stopOperationHandler()
+				}
+			})
+		}
+	}
+	
+	func disconnect(handler: @escaping (_ error: Error?) -> Void) {
+		handlerOperationQueue.addToQueue{ stopOperationHandler in
+			self.unsafeDisconnect(handler: { error in
+				DispatchQueue.main.async{
+					handler(error)
+					stopOperationHandler()
+				}
+			})
+		}
+	}
+	
+	func grant(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void) {
+		handlerOperationQueue.addToQueue{ stopOperationHandler in
+			self.unsafeGrant(scope: scope, handler: { error in
+				DispatchQueue.main.async{
+					handler(error)
+					stopOperationHandler()
+				}
+			})
+		}
+	}
+	
+	func revoke(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void) {
+		handlerOperationQueue.addToQueue{ stopOperationHandler in
+			self.unsafeRevoke(scope: scope, handler: { error in
+				DispatchQueue.main.async{
+					handler(error)
+					stopOperationHandler()
+				}
+			})
+		}
+	}
 	
 }
 
 
-class Connector<ScopeType : SetAlgebra, RequestType> {
-	
-	init<H : ConnectorHelper>(helper h: H) where H.ScopeType == ScopeType, H.RequestType == RequestType {
-		currentScopeHandler = { h.currentScope }
-		
-		authenticateHandler = h.authenticate
-		
-		connectHandler = h.connect
-		refreshSessionHandler = h.refreshSession
-		disconnectHandler = h.disconnect
-		grantHandler = h.grant
-		revokeHandler = h.revoke
-		checkSessionHandler = h.checkSession
-	}
-	
-	var isConnected: Bool {
-		return currentScopeHandler() != nil
-	}
+class AnyConnector<ScopeType : SetAlgebra, RequestType> : Connector {
 	
 	var currentScope: ScopeType? {
 		return currentScopeHandler()
 	}
 	
-	/** If there is already an action in progress, the action will be delayed
-	until the current (and all other currently queued) action(s) are finished.
-	
-	The handler is always called on the main thread. */
-	func authenticate(request: RequestType, handler: @escaping (_ result: AsyncOperationResult<RequestType>, _ userInfo: Any?) -> Void) {
-		queuedActions.append{
-			self.authenticateHandler(request, { result, userInfo in
-				self.finishAction{ handler(result, userInfo) }
-			})
-		}
-		startNextAction()
+	var handlerOperationQueue: HandlerOperationQueue {
+		return handlerOperationQueueHandler()
 	}
 	
-	/** If there is already an action in progress, the action will be delayed
-	until the current (and all other currently queued) action(s) are finished.
-	
-	The handler is always called on the main thread. */
-	func connect(scope: ScopeType, handler: ((_ error: Error?) -> Void)?) {
-		queuedActions.append{
-			self.connectHandler(scope, { err in
-				self.finishAction(error: err, handler: handler)
-			})
-		}
-		startNextAction()
+	init<C : Connector>(base b: C) where C.ScopeType == ScopeType, C.RequestType == RequestType {
+		handlerOperationQueueHandler = { b.handlerOperationQueue }
+		currentScopeHandler = { b.currentScope }
+		
+		authenticateHandler = b.authenticate
+		
+		connectHandler = b.unsafeConnect
+		disconnectHandler = b.unsafeDisconnect
+		grantHandler = b.unsafeGrant
+		revokeHandler = b.unsafeRevoke
 	}
 	
-	/** If there is already an action in progress, the action will be delayed
-	until the current (and all other currently queued) action(s) are finished.
-	
-	The handler is always called on the main thread. */
-	func refreshSession(handler: ((_ error: Error?) -> Void)?) {
-		queuedActions.append{
-			self.refreshSessionHandler({ err in
-				self.finishAction(error: err, handler: handler)
-			})
-		}
-		startNextAction()
+	func authenticate(request: RequestType, handler: @escaping (AsyncOperationResult<RequestType>, Any?) -> Void) {
+		authenticateHandler(request, handler)
 	}
 	
-	/** If there is already an action in progress, the action will be delayed
-	until the current (and all other currently queued) action(s) are finished.
-	
-	The handler is always called on the main thread. */
-	func disconnect(handler: ((_ error: Error?) -> Void)?) {
-		queuedActions.append{
-			self.disconnectHandler({ err in
-				self.finishAction(error: err, handler: handler)
-			})
-		}
-		startNextAction()
+	func unsafeConnect(scope: ScopeType, handler: @escaping (Error?) -> Void) {
+		connectHandler(scope, handler)
 	}
 	
-	/** If there is already an action in progress, the action will be delayed
-	until the current (and all other currently queued) action(s) are finished.
-	
-	The handler is always called on the main thread. */
-	func grant(scope: ScopeType, force: Bool = false, handler: ((_ error: Error?) -> Void)?) {
-		queuedActions.append{
-			self.grantHandler(scope, { err in
-				self.finishAction(error: err, handler: handler)
-			})
-		}
-		startNextAction()
+	func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
+		disconnectHandler(handler)
 	}
 	
-	/** If there is already an action in progress, the action will be delayed
-	until the current (and all other currently queued) action(s) are finished.
-	
-	The handler is always called on the main thread. */
-	func revoke(scope: ScopeType, force: Bool = false, handler: ((_ error: Error?) -> Void)?) {
-		queuedActions.append{
-			self.revokeHandler(scope, { err in
-				self.finishAction(error: err, handler: handler)
-			})
-		}
-		startNextAction()
+	func unsafeGrant(scope: ScopeType, handler: @escaping (Error?) -> Void) {
+		grantHandler(scope, handler)
 	}
 	
-	/** If there is already an action in progress, the action will be delayed
-	until the current (and all other currently queued) action(s) are finished.
-	
-	The handler is always called on the main thread. */
-	func checkSession(forScope scope: ScopeType, handler: ((_ error: Error?) -> Void)?) {
-		queuedActions.append{
-			self.checkSessionHandler(scope, { err in
-				self.finishAction(error: err, handler: handler)
-			})
-		}
-		startNextAction()
+	func unsafeRevoke(scope: ScopeType, handler: @escaping (Error?) -> Void) {
+		revokeHandler(scope, handler)
 	}
 	
-	/* ***************
-      MARK: - Private
-	   *************** */
+	/* *************************
+      MARK: - Connector Erasure
+	   ************************* */
 	
-	private var queuedActions = [() -> Void]()
-	private var actionQueue = DispatchQueue(label: "A Connector Queue", qos: .utility)
-	private var actionSemaphore = DispatchSemaphore(value: 1)
-	
-	private func startNextAction() {
-		actionQueue.async{
-			guard self.actionSemaphore.wait(timeout: .now()) == .success else {return}
-			guard let action = self.queuedActions.popLast() else {self.actionSemaphore.signal(); return}
-			action()
-		}
-	}
-	
-	private func finishAction(error: Error?, handler: ((Error?) -> Void)?) {
-		if let h = handler {
-			DispatchQueue.main.async{
-				h(error)
-				self.actionSemaphore.signal()
-				self.startNextAction()
-			}
-		} else {
-			actionSemaphore.signal()
-			startNextAction()
-		}
-	}
-	
-	private func finishAction(handler: @escaping () -> Void) {
-		DispatchQueue.main.async{
-			handler()
-			self.actionSemaphore.signal()
-			self.startNextAction()
-		}
-	}
-	
-	/* *********************************
-      MARK: - Connector Handler Erasure
-	   ********************************* */
+	private let handlerOperationQueueHandler: () -> HandlerOperationQueue
 	
 	private let currentScopeHandler: () -> ScopeType?
 	
 	private let authenticateHandler: (_ request: RequestType, _ handler: @escaping (_ result: AsyncOperationResult<RequestType>, _ userInfo: Any?) -> Void) -> Void
 	
 	private let connectHandler: (_ scope: ScopeType, _ handler: @escaping (_ error: Error?) -> Void) -> Void
-	private let refreshSessionHandler: (_ handler: @escaping (_ error: Error?) -> Void) -> Void
 	private let disconnectHandler: (_ handler: @escaping (_ error: Error?) -> Void) -> Void
 	private let grantHandler: (_ scope: ScopeType, _ handler: @escaping (_ error: Error?) -> Void) -> Void
 	private let revokeHandler: (_ scope: ScopeType, _ handler: @escaping (_ error: Error?) -> Void) -> Void
-	private let checkSessionHandler: (_ scope: ScopeType, _ handler: @escaping (_ error: Error?) -> Void) -> Void
 	
 }

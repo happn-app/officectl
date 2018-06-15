@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "0940"
+   LastUpgradeVersion = "9999"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -28,9 +28,23 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "StringScanner::StringScanner"
-               BuildableName = "StringScanner.framework"
-               BlueprintName = "StringScanner"
+               BlueprintIdentifier = "RetryingOperation::RetryingOperation"
+               BuildableName = "RetryingOperation.framework"
+               BlueprintName = "RetryingOperation"
+               ReferencedContainer = "container:ghapp.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ghapp::ghapp"
+               BuildableName = "ghapp"
+               BlueprintName = "ghapp"
                ReferencedContainer = "container:ghapp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -56,9 +70,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "ghapp::ghapp"
-               BuildableName = "ghapp"
-               BlueprintName = "ghapp"
+               BlueprintIdentifier = "StringScanner::StringScanner"
+               BuildableName = "StringScanner.framework"
+               BlueprintName = "StringScanner"
                ReferencedContainer = "container:ghapp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
