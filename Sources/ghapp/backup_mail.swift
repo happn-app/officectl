@@ -238,7 +238,7 @@ class OfflineImapManager {
 	anymore (access tokens expired). */
 	private func updateOfflineimapConfig() throws -> Date {
 		print("Generating config for offlineimap")
-		var configExpirationDate = Date(timeIntervalSinceNow: 100 * 365 * 24 * 60 * 60) /* Init with 100 years expiration. Set to min of expiration dates later. */
+		var configExpirationDate = Date.distantFuture
 		
 		var tokenForUsers = [User: String]()
 		for user in users {
@@ -282,7 +282,8 @@ class OfflineImapManager {
 			print("readonly = True", to: &config)
 			print("remoteuser = \(user.email)", to: &config)
 			print("oauth2_access_token = \(token)", to: &config)
-			print("sslcacertfile = ~/.dummycert_for_python.pem", to: &config)
+//			print("sslcacertfile = ~/.dummycert_for_python.pem", to: &config) /* The dummycert solution works when using the System Python */
+			print("sslcacertfile = /usr/local/etc/openssl/cert.pem", to: &config) /* This is required when using homebrew’s Python (offlineimap uses Python2; should be fine with Python3) */
 			print("", to: &config)
 		}
 		guard let data = config.data(using: .utf8) else {
