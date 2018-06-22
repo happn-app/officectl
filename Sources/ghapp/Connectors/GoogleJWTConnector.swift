@@ -1,5 +1,5 @@
 /*
- * GogoleConnectorHelper.swift
+ * GoogleJWTConnector.swift
  * ghapp
  *
  * Created by François Lamboley on 31/05/2018.
@@ -11,7 +11,7 @@ import AsyncOperationResult
 
 
 
-class GogoleConnector : Connector {
+class GoogleJWTConnector : Connector {
 	
 	typealias RequestType = URLRequest
 	typealias ScopeType = Set<String>
@@ -21,7 +21,7 @@ class GogoleConnector : Connector {
 	var currentScope: ScopeType?
 	
 	init() {
-		handlerOperationQueue = HandlerOperationQueue(name: "GogoleConnector")
+		handlerOperationQueue = HandlerOperationQueue(name: "GoogleJWTConnector")
 	}
 	
 	func authenticate(request: RequestType, handler: @escaping (AsyncOperationResult<RequestType>, Any?) -> Void) {

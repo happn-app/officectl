@@ -46,7 +46,7 @@
 		OBJ_162 /* StringScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_71 /* StringScanner.swift */; };
 		OBJ_169 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_66 /* Package.swift */; };
 		OBJ_175 /* Connector.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_10 /* Connector.swift */; };
-		OBJ_176 /* GogoleConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_11 /* GogoleConnector.swift */; };
+		OBJ_176 /* GoogleJWTConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_11 /* GoogleJWTConnector.swift */; };
 		OBJ_177 /* Superuser.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_12 /* Superuser.swift */; };
 		OBJ_178 /* URLSession+Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_13 /* URLSession+Utils.swift */; };
 		OBJ_179 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_14 /* User.swift */; };
@@ -115,7 +115,7 @@
 		"AsyncOperationResult::AsyncOperationResult::Product" /* AsyncOperationResult.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AsyncOperationResult.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		"Guaka::Guaka::Product" /* Guaka.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Guaka.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		OBJ_10 /* Connector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connector.swift; sourceTree = "<group>"; };
-		OBJ_11 /* GogoleConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GogoleConnector.swift; sourceTree = "<group>"; };
+		OBJ_11 /* GoogleJWTConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleJWTConnector.swift; sourceTree = "<group>"; };
 		OBJ_12 /* Superuser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Superuser.swift; sourceTree = "<group>"; };
 		OBJ_13 /* URLSession+Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSession+Utils.swift"; sourceTree = "<group>"; };
 		OBJ_14 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
@@ -494,7 +494,7 @@
 			children = (
 				7B487F0020D2D494000DD7EB /* HandlerOperationQueue.swift */,
 				OBJ_10 /* Connector.swift */,
-				OBJ_11 /* GogoleConnector.swift */,
+				OBJ_11 /* GoogleJWTConnector.swift */,
 			);
 			path = Connectors;
 			sourceTree = "<group>";
@@ -774,7 +774,7 @@
 			buildActionMask = 0;
 			files = (
 				OBJ_175 /* Connector.swift in Sources */,
-				OBJ_176 /* GogoleConnector.swift in Sources */,
+				OBJ_176 /* GoogleJWTConnector.swift in Sources */,
 				OBJ_177 /* Superuser.swift in Sources */,
 				OBJ_178 /* URLSession+Utils.swift in Sources */,
 				OBJ_179 /* User.swift in Sources */,
