@@ -13,8 +13,8 @@ import AsyncOperationResult
 
 public protocol Connector {
 	
+	associatedtype ScopeType
 	associatedtype RequestType
-	associatedtype ScopeType : SetAlgebra
 	
 	/** A connector should only do one “connection” operation at a time. The
 	handler operation queue given here will be used by default to serialize
@@ -90,7 +90,7 @@ extension Connector {
 }
 
 
-class AnyConnector<ScopeType : SetAlgebra, RequestType> : Connector {
+class AnyConnector<ScopeType, RequestType> : Connector {
 	
 	var currentScope: ScopeType? {
 		return currentScopeHandler()
