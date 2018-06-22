@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7B32053C20DD462900F02BDF /* stdstreams.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B32053B20DD462900F02BDF /* stdstreams.swift */; };
 		7B487F0120D2D494000DD7EB /* HandlerOperationQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B487F0020D2D494000DD7EB /* HandlerOperationQueue.swift */; };
 		OBJ_105 /* Command+Execution.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_33 /* Command+Execution.swift */; };
 		OBJ_106 /* Command+ParkBench.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_34 /* Command+ParkBench.swift */; };
@@ -61,7 +62,6 @@
 		OBJ_189 /* list-users.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_24 /* list-users.swift */; };
 		OBJ_190 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_25 /* main.swift */; };
 		OBJ_191 /* root.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_26 /* root.swift */; };
-		OBJ_192 /* stderr.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_27 /* stderr.swift */; };
 		OBJ_194 /* RetryingOperation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "RetryingOperation::RetryingOperation::Product" /* RetryingOperation.framework */; };
 		OBJ_195 /* AsyncOperationResult.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "AsyncOperationResult::AsyncOperationResult::Product" /* AsyncOperationResult.framework */; };
 		OBJ_196 /* Guaka.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "Guaka::Guaka::Product" /* Guaka.framework */; };
@@ -110,6 +110,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7B32053B20DD462900F02BDF /* stdstreams.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = stdstreams.swift; sourceTree = "<group>"; };
 		7B487F0020D2D494000DD7EB /* HandlerOperationQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandlerOperationQueue.swift; sourceTree = "<group>"; };
 		"AsyncOperationResult::AsyncOperationResult::Product" /* AsyncOperationResult.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AsyncOperationResult.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		"Guaka::Guaka::Product" /* Guaka.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Guaka.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -130,7 +131,6 @@
 		OBJ_24 /* list-users.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "list-users.swift"; sourceTree = "<group>"; };
 		OBJ_25 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		OBJ_26 /* root.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = root.swift; sourceTree = "<group>"; };
-		OBJ_27 /* stderr.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = stderr.swift; sourceTree = "<group>"; };
 		OBJ_33 /* Command+Execution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Command+Execution.swift"; sourceTree = "<group>"; };
 		OBJ_34 /* Command+ParkBench.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Command+ParkBench.swift"; sourceTree = "<group>"; };
 		OBJ_35 /* Command+Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Command+Utilities.swift"; sourceTree = "<group>"; };
@@ -218,6 +218,66 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7B21D66E20DD43C800E23DB8 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				OBJ_14 /* User.swift */,
+				OBJ_12 /* Superuser.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		7B21D66F20DD445000E23DB8 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				7B32053B20DD462900F02BDF /* stdstreams.swift */,
+				OBJ_13 /* URLSession+Utils.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		7B32053D20DD465900F02BDF /* Commands */ = {
+			isa = PBXGroup;
+			children = (
+				OBJ_26 /* root.swift */,
+				7B32053E20DD477A00F02BDF /* root */,
+			);
+			path = Commands;
+			sourceTree = "<group>";
+		};
+		7B32053E20DD477A00F02BDF /* root */ = {
+			isa = PBXGroup;
+			children = (
+				OBJ_15 /* backup.swift */,
+				7B32053F20DD47A500F02BDF /* backup */,
+				OBJ_24 /* list-users.swift */,
+				OBJ_23 /* get-token.swift */,
+				OBJ_17 /* devtest.swift */,
+				7B32054020DD47C800F02BDF /* devtest */,
+			);
+			path = root;
+			sourceTree = "<group>";
+		};
+		7B32053F20DD47A500F02BDF /* backup */ = {
+			isa = PBXGroup;
+			children = (
+				OBJ_16 /* backup_mail.swift */,
+			);
+			path = backup;
+			sourceTree = "<group>";
+		};
+		7B32054020DD47C800F02BDF /* devtest */ = {
+			isa = PBXGroup;
+			children = (
+				OBJ_18 /* devtest_curtest.swift */,
+				OBJ_19 /* devtest_getexternalgroups.swift */,
+				OBJ_20 /* devtest_getgroupscontaininggroups.swift */,
+				OBJ_21 /* devtest_getstaffgroups.swift */,
+				OBJ_22 /* devtest_gmailapi.swift */,
+			);
+			path = devtest;
+			sourceTree = "<group>";
+		};
 		OBJ_28 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
@@ -407,23 +467,11 @@
 		OBJ_8 /* ghapp */ = {
 			isa = PBXGroup;
 			children = (
+				7B21D66F20DD445000E23DB8 /* Utilities */,
 				OBJ_9 /* Connectors */,
-				OBJ_12 /* Superuser.swift */,
-				OBJ_13 /* URLSession+Utils.swift */,
-				OBJ_14 /* User.swift */,
-				OBJ_15 /* backup.swift */,
-				OBJ_16 /* backup_mail.swift */,
-				OBJ_17 /* devtest.swift */,
-				OBJ_18 /* devtest_curtest.swift */,
-				OBJ_19 /* devtest_getexternalgroups.swift */,
-				OBJ_20 /* devtest_getgroupscontaininggroups.swift */,
-				OBJ_21 /* devtest_getstaffgroups.swift */,
-				OBJ_22 /* devtest_gmailapi.swift */,
-				OBJ_23 /* get-token.swift */,
-				OBJ_24 /* list-users.swift */,
+				7B21D66E20DD43C800E23DB8 /* Model */,
+				7B32053D20DD465900F02BDF /* Commands */,
 				OBJ_25 /* main.swift */,
-				OBJ_26 /* root.swift */,
-				OBJ_27 /* stderr.swift */,
 			);
 			name = ghapp;
 			path = Sources/ghapp;
@@ -730,6 +778,7 @@
 				OBJ_177 /* Superuser.swift in Sources */,
 				OBJ_178 /* URLSession+Utils.swift in Sources */,
 				OBJ_179 /* User.swift in Sources */,
+				7B32053C20DD462900F02BDF /* stdstreams.swift in Sources */,
 				OBJ_180 /* backup.swift in Sources */,
 				OBJ_181 /* backup_mail.swift in Sources */,
 				OBJ_182 /* devtest.swift in Sources */,
@@ -743,7 +792,6 @@
 				OBJ_189 /* list-users.swift in Sources */,
 				OBJ_190 /* main.swift in Sources */,
 				OBJ_191 /* root.swift in Sources */,
-				OBJ_192 /* stderr.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
