@@ -42,9 +42,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "ghapp::ghapp"
-               BuildableName = "ghapp"
-               BlueprintName = "ghapp"
+               BlueprintIdentifier = "URLRequestOperation::URLRequestOperation"
+               BuildableName = "URLRequestOperation.framework"
+               BlueprintName = "URLRequestOperation"
                ReferencedContainer = "container:ghapp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -70,9 +70,37 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ghapp::ghapp"
+               BuildableName = "ghapp"
+               BlueprintName = "ghapp"
+               ReferencedContainer = "container:ghapp.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "StringScanner::StringScanner"
                BuildableName = "StringScanner.framework"
                BlueprintName = "StringScanner"
+               ReferencedContainer = "container:ghapp.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SemiSingleton::SemiSingleton"
+               BuildableName = "SemiSingleton.framework"
+               BlueprintName = "SemiSingleton"
                ReferencedContainer = "container:ghapp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>

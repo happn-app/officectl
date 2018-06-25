@@ -32,8 +32,6 @@ public protocol Connector {
 	
 	func unsafeConnect(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
 	func unsafeDisconnect(handler: @escaping (_ error: Error?) -> Void)
-	func unsafeGrant(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
-	func unsafeRevoke(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
 	
 }
 
@@ -65,28 +63,6 @@ extension Connector {
 		}
 	}
 	
-	func grant(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void) {
-		handlerOperationQueue.addToQueue{ stopOperationHandler in
-			self.unsafeGrant(scope: scope, handler: { error in
-				DispatchQueue.main.async{
-					handler(error)
-					stopOperationHandler()
-				}
-			})
-		}
-	}
-	
-	func revoke(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void) {
-		handlerOperationQueue.addToQueue{ stopOperationHandler in
-			self.unsafeRevoke(scope: scope, handler: { error in
-				DispatchQueue.main.async{
-					handler(error)
-					stopOperationHandler()
-				}
-			})
-		}
-	}
-	
 }
 
 
@@ -108,8 +84,6 @@ class AnyConnector<ScopeType, RequestType> : Connector {
 		
 		connectHandler = b.unsafeConnect
 		disconnectHandler = b.unsafeDisconnect
-		grantHandler = b.unsafeGrant
-		revokeHandler = b.unsafeRevoke
 	}
 	
 	func authenticate(request: RequestType, handler: @escaping (AsyncOperationResult<RequestType>, Any?) -> Void) {
@@ -124,14 +98,6 @@ class AnyConnector<ScopeType, RequestType> : Connector {
 		disconnectHandler(handler)
 	}
 	
-	func unsafeGrant(scope: ScopeType, handler: @escaping (Error?) -> Void) {
-		grantHandler(scope, handler)
-	}
-	
-	func unsafeRevoke(scope: ScopeType, handler: @escaping (Error?) -> Void) {
-		revokeHandler(scope, handler)
-	}
-	
 	/* *************************
       MARK: - Connector Erasure
 	   ************************* */
@@ -144,7 +110,5 @@ class AnyConnector<ScopeType, RequestType> : Connector {
 	
 	private let connectHandler: (_ scope: ScopeType, _ handler: @escaping (_ error: Error?) -> Void) -> Void
 	private let disconnectHandler: (_ handler: @escaping (_ error: Error?) -> Void) -> Void
-	private let grantHandler: (_ scope: ScopeType, _ handler: @escaping (_ error: Error?) -> Void) -> Void
-	private let revokeHandler: (_ scope: ScopeType, _ handler: @escaping (_ error: Error?) -> Void) -> Void
 	
 }

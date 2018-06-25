@@ -15,8 +15,12 @@ private func configuration(command: Command) {
 }
 
 private func execute(command: Command, flags: Flags, args: [String]) {
-	guard let token = try? rootConfig.superuser.getAccessToken(forScopes: Set(flags.getString(name: "scopes")!.components(separatedBy: ",")), onBehalfOfUserWithEmail: rootConfig.adminEmail) else {
-		gettokenCommand.fail(statusCode: 2, errorMessage: "Cannot get token")
+	let op = HandlerOperation{ endOperation in
+		rootConfig.googleConnector.unsafeConnect(scope: GoogleJWTConnector.ScopeType(userBehalf: rootConfig.adminEmail, scope: Set(flags.getString(name: "scopes")!.components(separatedBy: ","))), handler: { error in
+			print(rootConfig.googleConnector.token ?? "Cannot retrieve the token")
+			endOperation()
+		})
 	}
-	print(token.0)
+	op.start()
+	op.waitUntilFinished()
 }

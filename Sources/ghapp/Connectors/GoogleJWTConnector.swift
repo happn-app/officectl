@@ -8,35 +8,186 @@
 import Foundation
 
 import AsyncOperationResult
+import URLRequestOperation
 
+
+
+struct GoogleJWTConnectorScope : Codable {
+	
+	var userBehalf: String?
+	var scope: Set<String>
+	
+}
 
 
 class GoogleJWTConnector : Connector {
 	
 	typealias RequestType = URLRequest
-	typealias ScopeType = Set<String>
+	typealias ScopeType = GoogleJWTConnectorScope
+	
+	let privateKey: SecKey
+	let superuserEmail: String
+	
+	var currentScope: ScopeType? {
+		return auth?.scope
+	}
+	var token: String? {
+		return auth?.token
+	}
 	
 	let handlerOperationQueue: HandlerOperationQueue
 	
-	var currentScope: ScopeType?
-	
-	init() {
+	init?(jsonCredentialsURL: URL) {
+		/* Decode JSON credentials */
+		let jsonDecoder = JSONDecoder()
+		jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+		guard let superuserCreds = try? jsonDecoder.decode(CredentialsFile.self, from: Data(contentsOf: jsonCredentialsURL)) else {
+			return nil
+		}
+		
+		/* We expect to have a service account */
+		guard superuserCreds.type == "service_account" else {
+			return nil
+		}
+		
+		/* Parse the PEM key from the credentials file */
+		var keys: CFArray?
+		guard
+			SecItemImport(Data(superuserCreds.privateKey.utf8) as CFData, nil, nil, nil, [], nil, nil, &keys) == 0,
+			let key = (keys as? [SecKey])?.first
+		else {
+			return nil
+		}
+		
+		privateKey = key
+		superuserEmail = superuserCreds.clientEmail
+		
 		handlerOperationQueue = HandlerOperationQueue(name: "GoogleJWTConnector")
 	}
 	
+	/* ********************************
+      MARK: - Connector Implementation
+	   ******************************** */
+	
 	func authenticate(request: RequestType, handler: @escaping (AsyncOperationResult<RequestType>, Any?) -> Void) {
+		/* Make sure we're connected */
+		guard let auth = auth else {
+			handler(.error(NSError(domain: "com.happn.ghapp", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
+			return
+		}
+		
+		/* Add the “Authorization” header to the request */
+		var request = request
+		request.addValue("Bearer \(auth.token)", forHTTPHeaderField: "Authorization")
+		handler(.success(request), nil)
 	}
 	
 	func unsafeConnect(scope: ScopeType, handler: @escaping (Error?) -> Void) {
+		/* Retrieve connection information */
+		let authURL = URL(string: "https://www.googleapis.com/oauth2/v4/token")!
+		let jwtRequestHeader = ["alg": "RS256", "typ": "JWT"]
+		var jwtRequestContent: [String: Any] = [
+			"iss": superuserEmail,
+			"scope": scope.scope.joined(separator: " "), "aud": authURL.absoluteString,
+			"iat": Int(Date(timeIntervalSinceNow: -3).timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 30).timeIntervalSince1970)
+		]
+		if let subemail = scope.userBehalf {jwtRequestContent["sub"] = subemail}
+		
+		/* Compute the JWT request */
+		let jwtRequestHeaderBase64  = (try! JSONSerialization.data(withJSONObject: jwtRequestHeader, options: [])).base64EncodedString()
+		let jwtRequestContentBase64 = (try! JSONSerialization.data(withJSONObject: jwtRequestContent, options: [])).base64EncodedString()
+		let jwtRequestSignedString = jwtRequestHeaderBase64 + "." + jwtRequestContentBase64
+		guard
+			let jwtRequestSignedData = jwtRequestSignedString.data(using: .utf8),
+			let signer = SecSignTransformCreate(privateKey, nil),
+			SecTransformSetAttribute(signer, kSecDigestTypeAttribute, kSecDigestSHA2, nil),
+			SecTransformSetAttribute(signer, kSecDigestLengthAttribute, NSNumber(value: 256), nil),
+			SecTransformSetAttribute(signer, kSecTransformInputAttributeName, jwtRequestSignedData as CFData, nil),
+			let jwtRequestSignature = SecTransformExecute(signer, nil) as? Data
+		else {
+			handler(NSError(domain: "JWT", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."]))
+			return
+		}
+		let jwtRequest = jwtRequestSignedString + "." + jwtRequestSignature.base64EncodedString()
+		
+		/* Create the URLRequest for the JWT request */
+		var request = URLRequest(url: authURL)
+		var components = URLComponents()
+		components.queryItems = [
+			URLQueryItem(name: "grant_type", value: "urn:ietf:params:oauth:grant-type:jwt-bearer"),
+			URLQueryItem(name: "assertion", value: jwtRequest)
+		]
+		request.httpBody = components.percentEncodedQuery?.addingPercentEncoding(withAllowedCharacters: CharacterSet(charactersIn: "+").inverted)?.data(using: .utf8)
+		request.httpMethod = "POST"
+		
+		/* Run the URLRequest and parse the response in the TokenResponse object */
+		let op = JSONOperation<TokenResponse>(request: request)
+		op.completionBlock = {
+			guard let o = op.decodedObject else {
+				handler(op.finalError ?? NSError(domain: "com.happn.ghapp", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
+				return
+			}
+			
+			guard o.tokenType == "Bearer" else {
+				handler(op.finalError ?? NSError(domain: "com.happn.ghapp", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unexpected Bearer type \(o.tokenType)"]))
+				return
+			}
+			
+			self.auth = Auth(token: o.accessToken, expirationDate: Date(timeIntervalSinceNow: TimeInterval(o.expiresIn)), scope: scope)
+			handler(nil)
+		}
+		op.start()
+		
+		/* ***** TokenResponse Object ***** */
+		/* This struct is used strictly for conveniently decoding the response
+		 * when reading the results of the token request */
+		struct TokenResponse : Decodable {
+			
+			let tokenType: String
+			let accessToken: String
+			let expiresIn: Int
+			
+		}
 	}
 	
 	func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
+		guard let auth = auth else {handler(nil); return}
+		
+		var components = URLComponents(string: "https://accounts.google.com/o/oauth2/revoke")!
+		components.queryItems = [URLQueryItem(name: "token", value: auth.token)]
+		let op = URLRequestOperation(url: components.url!)
+		op.completionBlock = { handler(op.finalError) }
+		op.start()
 	}
 	
-	func unsafeGrant(scope: ScopeType, handler: @escaping (Error?) -> Void) {
+	/* ***************
+      MARK: - Private
+	   *************** */
+	
+	private var auth: Auth?
+	
+	private struct Auth : Codable {
+		
+		var token: String
+		var expirationDate: Date
+		
+		var scope: GoogleJWTConnectorScope
+		
 	}
 	
-	func unsafeRevoke(scope: ScopeType, handler: @escaping (Error?) -> Void) {
+	private struct CredentialsFile : Decodable {
+		
+		let type: String
+		let projectId: String
+		let privateKeyId: String
+		let privateKey: String
+		let clientEmail: String
+		let clientId: String
+		let authUri: URL
+		let tokenUri: URL
+		let authProviderX509CertUrl: URL
+		let clientX509CertUrl: URL
+		
 	}
 	
 }

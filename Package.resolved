@@ -29,12 +29,30 @@
         }
       },
       {
+        "package": "SemiSingleton",
+        "repositoryURL": "git@github.com:happn-app/SemiSingleton",
+        "state": {
+          "branch": null,
+          "revision": "4ac83c4b5eabba365b0d152db6e661f8b90cafc9",
+          "version": "1.1.1"
+        }
+      },
+      {
         "package": "StringScanner",
         "repositoryURL": "https://github.com/klaas/StringScanner",
         "state": {
           "branch": null,
           "revision": "576ed0725055966b1e59a14edd99945640c55e3a",
           "version": "0.3.2"
+        }
+      },
+      {
+        "package": "URLRequestOperation",
+        "repositoryURL": "git@github.com:happn-app/URLRequestOperation.git",
+        "state": {
+          "branch": null,
+          "revision": "33f89e94eb59d17dced20ca33e28dc418b4c3728",
+          "version": "1.1.0"
         }
       }
     ]
