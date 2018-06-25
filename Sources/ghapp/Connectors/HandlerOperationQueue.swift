@@ -13,13 +13,15 @@ import RetryingOperation
 
 public class HandlerOperationQueue {
 	
+	public typealias StartHandler = (_ stopHandler: @escaping () -> Void) -> Void
+	
 	public init(name: String) {
 		operationQueue = OperationQueue()
 		operationQueue.name = "Operation Queue for HandlerOperationQueue \(name)"
 		operationQueue.maxConcurrentOperationCount = 1
 	}
 	
-	public func addToQueue(handler: @escaping (_ stopHandler: @escaping () -> Void) -> Void) {
+	public func addToQueue(handler: @escaping StartHandler) {
 		operationQueue.addOperation(HandlerOperation(startHandler: handler))
 	}
 	
@@ -30,9 +32,9 @@ public class HandlerOperationQueue {
 
 private class HandlerOperation : RetryingOperation {
 	
-	let startHandler: (_ stopHandler: @escaping () -> Void) -> Void
+	let startHandler: HandlerOperationQueue.StartHandler
 	
-	init(startHandler h: @escaping (_ stopHandler: @escaping () -> Void) -> Void) {
+	init(startHandler h: @escaping HandlerOperationQueue.StartHandler) {
 		startHandler = h
 	}
 	
