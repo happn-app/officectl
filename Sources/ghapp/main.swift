@@ -1,4 +1,8 @@
 import Guaka
+import URLRequestOperation
+
+/*URLRequestOperation.*/di.log = nil
+
 
 func setupCommands() {
 	rootCommand.add(subCommand: backupCommand)
