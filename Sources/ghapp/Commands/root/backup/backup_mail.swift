@@ -1,3 +1,10 @@
+/*
+ * backup_mail.swift
+ * ghapp
+ *
+ * Created by François Lamboley on 6/26/18.
+ */
+
 import Guaka
 import Darwin
 import Foundation
@@ -162,7 +169,7 @@ class OfflineImapManager {
 		/* Force trigger a new runloop event to get out. */
 		Nop().perform(#selector(Nop.nop), with: nil, afterDelay: 0)
 		/* Apparently triggering a new runloop event with a block Timer does not work... */
-//		RunLoop.main.add(Timer(timeInterval: 0, repeats: false, block: {_ in print("hello!")}), forMode: .defaultRunLoopMode)
+//		RunLoop.main.add(Timer(timeInterval: 0, repeats: false, block: { _ in print("hello!") }), forMode: .defaultRunLoopMode)
 	}
 	
 	private func startNewOfflineimapProcess() throws {

@@ -81,7 +81,7 @@ class GitHubJWTConnector : Connector {
 		request.httpMethod = "POST"
 		
 		/* Run the URLRequest and parse the response in the TokenResponse object */
-		let op = JSONOperation<Auth>(request: request)
+		let op = AuthenticatedJSONOperation<Auth>(request: request, authenticator: nil)
 		op.completionBlock = {
 			guard let o = op.decodedObject else {
 				handler(op.finalError ?? NSError(domain: "com.happn.ghapp", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))

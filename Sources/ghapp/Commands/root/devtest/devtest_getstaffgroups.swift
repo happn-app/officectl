@@ -1,3 +1,10 @@
+/*
+ * devtest_getstaffgroups.swift
+ * ghapp
+ *
+ * Created by François Lamboley on 6/26/18.
+ */
+
 import Guaka
 import Foundation
 

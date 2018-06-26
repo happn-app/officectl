@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		7BABFB9820E23FEB00343E72 /* GitHubJWTConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BABFB9720E23FEB00343E72 /* GitHubJWTConnector.swift */; };
+		7BABFB9A20E261AF00343E72 /* CommandOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BABFB9920E261AF00343E72 /* CommandOperation.swift */; };
+		7BABFBA220E27F5000343E72 /* Operation+Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BABFBA120E27F5000343E72 /* Operation+Utils.swift */; };
+		7BABFBA520E2947300343E72 /* GoogleUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BABFBA420E2947300343E72 /* GoogleUser.swift */; };
+		7BABFBA720E2965700343E72 /* GoogleUsersList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BABFBA620E2965700343E72 /* GoogleUsersList.swift */; };
+		7BABFBA920E2A36300343E72 /* JSONDateDecoderUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BABFBA820E2A36300343E72 /* JSONDateDecoderUtils.swift */; };
 		OBJ_119 /* AsyncOperationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_104 /* AsyncOperationResult.swift */; };
 		OBJ_126 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_105 /* Package.swift */; };
 		OBJ_132 /* Command+Execution.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_43 /* Command+Execution.swift */; };
@@ -77,7 +82,7 @@
 		OBJ_255 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_29 /* User.swift */; };
 		OBJ_256 /* HandlerOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_31 /* HandlerOperation.swift */; };
 		OBJ_257 /* HandlerOperationQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_32 /* HandlerOperationQueue.swift */; };
-		OBJ_258 /* JSONOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_33 /* JSONOperation.swift */; };
+		OBJ_258 /* AuthenticatedJSONOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_33 /* AuthenticatedJSONOperation.swift */; };
 		OBJ_259 /* JWT.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_34 /* JWT.swift */; };
 		OBJ_260 /* URLSession+Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_35 /* URLSession+Utils.swift */; };
 		OBJ_261 /* stdstreams.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_36 /* stdstreams.swift */; };
@@ -166,6 +171,11 @@
 
 /* Begin PBXFileReference section */
 		7BABFB9720E23FEB00343E72 /* GitHubJWTConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubJWTConnector.swift; sourceTree = "<group>"; };
+		7BABFB9920E261AF00343E72 /* CommandOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandOperation.swift; sourceTree = "<group>"; };
+		7BABFBA120E27F5000343E72 /* Operation+Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Operation+Utils.swift"; sourceTree = "<group>"; };
+		7BABFBA420E2947300343E72 /* GoogleUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleUser.swift; sourceTree = "<group>"; };
+		7BABFBA620E2965700343E72 /* GoogleUsersList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleUsersList.swift; sourceTree = "<group>"; };
+		7BABFBA820E2A36300343E72 /* JSONDateDecoderUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONDateDecoderUtils.swift; sourceTree = "<group>"; };
 		"AsyncOperationResult::AsyncOperationResult::Product" /* AsyncOperationResult.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AsyncOperationResult.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		"Guaka::Guaka::Product" /* Guaka.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Guaka.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		OBJ_10 /* root.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = root.swift; sourceTree = "<group>"; };
@@ -189,7 +199,7 @@
 		OBJ_29 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		OBJ_31 /* HandlerOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandlerOperation.swift; sourceTree = "<group>"; };
 		OBJ_32 /* HandlerOperationQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandlerOperationQueue.swift; sourceTree = "<group>"; };
-		OBJ_33 /* JSONOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONOperation.swift; sourceTree = "<group>"; };
+		OBJ_33 /* AuthenticatedJSONOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticatedJSONOperation.swift; sourceTree = "<group>"; };
 		OBJ_34 /* JWT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JWT.swift; sourceTree = "<group>"; };
 		OBJ_35 /* URLSession+Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URLSession+Utils.swift"; sourceTree = "<group>"; };
 		OBJ_36 /* stdstreams.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = stdstreams.swift; sourceTree = "<group>"; };
@@ -309,6 +319,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7BABFBA320E2946900343E72 /* Google */ = {
+			isa = PBXGroup;
+			children = (
+				7BABFBA420E2947300343E72 /* GoogleUser.swift */,
+				7BABFBA620E2965700343E72 /* GoogleUsersList.swift */,
+			);
+			path = Google;
+			sourceTree = "<group>";
+		};
 		OBJ_102 /* AsyncOperationResult 1.0.2 */ = {
 			isa = PBXGroup;
 			children = (
@@ -387,6 +406,7 @@
 		OBJ_27 /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				7BABFBA320E2946900343E72 /* Google */,
 				OBJ_28 /* Superuser.swift */,
 				OBJ_29 /* User.swift */,
 			);
@@ -396,9 +416,12 @@
 		OBJ_30 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				7BABFBA120E27F5000343E72 /* Operation+Utils.swift */,
+				7BABFB9920E261AF00343E72 /* CommandOperation.swift */,
 				OBJ_31 /* HandlerOperation.swift */,
 				OBJ_32 /* HandlerOperationQueue.swift */,
-				OBJ_33 /* JSONOperation.swift */,
+				OBJ_33 /* AuthenticatedJSONOperation.swift */,
+				7BABFBA820E2A36300343E72 /* JSONDateDecoderUtils.swift */,
 				OBJ_34 /* JWT.swift */,
 				OBJ_35 /* URLSession+Utils.swift */,
 				OBJ_36 /* stdstreams.swift */,
@@ -560,11 +583,11 @@
 		OBJ_8 /* ghapp */ = {
 			isa = PBXGroup;
 			children = (
+				OBJ_37 /* main.swift */,
 				OBJ_9 /* Commands */,
 				OBJ_24 /* Connectors */,
 				OBJ_27 /* Model */,
 				OBJ_30 /* Utilities */,
-				OBJ_37 /* main.swift */,
 			);
 			name = ghapp;
 			path = Sources/ghapp;
@@ -1042,6 +1065,7 @@
 				OBJ_241 /* root.swift in Sources */,
 				OBJ_242 /* backup.swift in Sources */,
 				OBJ_243 /* backup_mail.swift in Sources */,
+				7BABFBA520E2947300343E72 /* GoogleUser.swift in Sources */,
 				OBJ_244 /* devtest.swift in Sources */,
 				7BABFB9820E23FEB00343E72 /* GitHubJWTConnector.swift in Sources */,
 				OBJ_245 /* devtest_curtest.swift in Sources */,
@@ -1056,10 +1080,14 @@
 				OBJ_254 /* Superuser.swift in Sources */,
 				OBJ_255 /* User.swift in Sources */,
 				OBJ_256 /* HandlerOperation.swift in Sources */,
+				7BABFBA920E2A36300343E72 /* JSONDateDecoderUtils.swift in Sources */,
+				7BABFB9A20E261AF00343E72 /* CommandOperation.swift in Sources */,
+				7BABFBA220E27F5000343E72 /* Operation+Utils.swift in Sources */,
 				OBJ_257 /* HandlerOperationQueue.swift in Sources */,
-				OBJ_258 /* JSONOperation.swift in Sources */,
+				OBJ_258 /* AuthenticatedJSONOperation.swift in Sources */,
 				OBJ_259 /* JWT.swift in Sources */,
 				OBJ_260 /* URLSession+Utils.swift in Sources */,
+				7BABFBA720E2965700343E72 /* GoogleUsersList.swift in Sources */,
 				OBJ_261 /* stdstreams.swift in Sources */,
 				OBJ_262 /* main.swift in Sources */,
 			);
@@ -1581,7 +1609,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_NS_ASSERTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_SWIFT_FLAGS = "-DXcode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1602,7 +1630,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GCC_OPTIMIZATION_LEVEL = s;
-				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				OTHER_SWIFT_FLAGS = "-DXcode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;

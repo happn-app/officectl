@@ -8,6 +8,7 @@
 import Foundation
 
 import AsyncOperationResult
+import Guaka
 import URLRequestOperation
 
 
@@ -36,6 +37,11 @@ class GoogleJWTConnector : Connector {
 	}
 	
 	let handlerOperationQueue: HandlerOperationQueue = HandlerOperationQueue(name: "GoogleJWTConnector")
+	
+	convenience init?(flags: Flags) {
+		guard let path = flags.getString(name: "superuser-json-creds") else {return nil}
+		self.init(jsonCredentialsURL: URL(fileURLWithPath: path, isDirectory: false))
+	}
 	
 	init?(jsonCredentialsURL: URL) {
 		/* Decode JSON credentials */
@@ -105,7 +111,7 @@ class GoogleJWTConnector : Connector {
 		request.httpMethod = "POST"
 		
 		/* Run the URLRequest and parse the response in the TokenResponse object */
-		let op = JSONOperation<TokenResponse>(request: request)
+		let op = AuthenticatedJSONOperation<TokenResponse>(request: request, authenticator: nil)
 		op.completionBlock = {
 			guard let o = op.decodedObject else {
 				handler(op.finalError ?? NSError(domain: "com.happn.ghapp", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
