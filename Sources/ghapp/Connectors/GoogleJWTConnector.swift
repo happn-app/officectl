@@ -35,7 +35,7 @@ class GoogleJWTConnector : Connector {
 		return auth?.token
 	}
 	
-	let handlerOperationQueue: HandlerOperationQueue
+	let handlerOperationQueue: HandlerOperationQueue = HandlerOperationQueue(name: "GoogleJWTConnector")
 	
 	init?(jsonCredentialsURL: URL) {
 		/* Decode JSON credentials */
@@ -61,8 +61,6 @@ class GoogleJWTConnector : Connector {
 		
 		privateKey = key
 		superuserEmail = superuserCreds.clientEmail
-		
-		handlerOperationQueue = HandlerOperationQueue(name: "GoogleJWTConnector")
 	}
 	
 	/* ********************************
@@ -88,7 +86,7 @@ class GoogleJWTConnector : Connector {
 		var jwtRequestContent: [String: Any] = [
 			"iss": superuserEmail,
 			"scope": scope.scope.joined(separator: " "), "aud": authURL.absoluteString,
-			"iat": Int(Date(timeIntervalSinceNow: -3).timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 30).timeIntervalSince1970)
+			"iat": Int(Date().timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 30).timeIntervalSince1970)
 		]
 		if let subemail = scope.userBehalf {jwtRequestContent["sub"] = subemail}
 		guard let jwtRequest = try? JWT.encode(jwtRequest: jwtRequestContent, privateKey: privateKey) else {

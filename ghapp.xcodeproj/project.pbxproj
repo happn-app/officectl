@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7BABFB9820E23FEB00343E72 /* GitHubJWTConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BABFB9720E23FEB00343E72 /* GitHubJWTConnector.swift */; };
 		OBJ_119 /* AsyncOperationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_104 /* AsyncOperationResult.swift */; };
 		OBJ_126 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_105 /* Package.swift */; };
 		OBJ_132 /* Command+Execution.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_43 /* Command+Execution.swift */; };
@@ -164,6 +165,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7BABFB9720E23FEB00343E72 /* GitHubJWTConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubJWTConnector.swift; sourceTree = "<group>"; };
 		"AsyncOperationResult::AsyncOperationResult::Product" /* AsyncOperationResult.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AsyncOperationResult.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		"Guaka::Guaka::Product" /* Guaka.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Guaka.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		OBJ_10 /* root.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = root.swift; sourceTree = "<group>"; };
@@ -377,6 +379,7 @@
 			children = (
 				OBJ_25 /* Connector.swift */,
 				OBJ_26 /* GoogleJWTConnector.swift */,
+				7BABFB9720E23FEB00343E72 /* GitHubJWTConnector.swift */,
 			);
 			path = Connectors;
 			sourceTree = "<group>";
@@ -1040,6 +1043,7 @@
 				OBJ_242 /* backup.swift in Sources */,
 				OBJ_243 /* backup_mail.swift in Sources */,
 				OBJ_244 /* devtest.swift in Sources */,
+				7BABFB9820E23FEB00343E72 /* GitHubJWTConnector.swift in Sources */,
 				OBJ_245 /* devtest_curtest.swift in Sources */,
 				OBJ_246 /* devtest_getexternalgroups.swift in Sources */,
 				OBJ_247 /* devtest_getgroupscontaininggroups.swift in Sources */,

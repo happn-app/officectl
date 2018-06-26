@@ -28,6 +28,7 @@ class JSONOperation<ObjectType : Decodable> : URLRequestOperation {
 			decodedObject = try decoder.decode(ObjectType.self, from: fetchedData)
 			completionHandler(.doNotRetry, currentURLRequest, nil)
 		} catch {
+			print("Cannot decode JSON \(fetchedData.reduce("", { $0 + String(format: "%02x", $1) }))", to: &stderrStream)
 			completionHandler(.doNotRetry, currentURLRequest, error)
 		}
 	}
