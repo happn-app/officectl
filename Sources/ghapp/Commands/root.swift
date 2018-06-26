@@ -54,31 +54,6 @@ class GetConnectedGoogleConnector : CommandOperation {
 }
 
 
-private func inheritablePreRun(flags: Flags, args: [String]) -> Bool {
-	let jsonCredsURL = URL(fileURLWithPath: flags.getString(name: "superuser-json-creds")!, isDirectory: false)
-	guard let googleConnector = GoogleJWTConnector(jsonCredentialsURL: jsonCredsURL) else {
-		rootCommand.fail(statusCode: 1, errorMessage: "Cannot read superuser creds")
-	}
-	
-	/* The whole guard below can be removed once we get rid of Superuser */
-	var keys: CFArray?
-	guard
-		let superuserCreds = (try? JSONSerialization.jsonObject(with: Data(contentsOf: jsonCredsURL), options: [])) as? [String: String],
-		let jsonCredsType = superuserCreds["type"], jsonCredsType == "service_account",
-		let superuserPEMKey = superuserCreds["private_key"]?.data(using: .utf8), let superuserEmail = superuserCreds["client_email"],
-		SecItemImport(superuserPEMKey as CFData, nil, nil, nil, [], nil, nil, &keys) == 0, let superuserKey = (keys as? [SecKey])?.first
-	else {
-		rootCommand.fail(statusCode: 1, errorMessage: "Cannot read superuser creds")
-	}
-	
-	rootConfig = RootConfig(adminEmail: flags.getString(name: "admin-email")!, googleConnector: googleConnector, superuser: Superuser(email: superuserEmail, privateKey: superuserKey))
-	return true
-}
-
-private func execute(command: Command, flags: Flags, args: [String]) {
-	rootCommand.fail(statusCode: 1, errorMessage: "Please choose a command verb")
-}
-
 
 /* ***** Config Object ***** */
 
