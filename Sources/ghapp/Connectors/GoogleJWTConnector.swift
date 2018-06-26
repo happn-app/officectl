@@ -85,30 +85,16 @@ class GoogleJWTConnector : Connector {
 	func unsafeConnect(scope: ScopeType, handler: @escaping (Error?) -> Void) {
 		/* Retrieve connection information */
 		let authURL = URL(string: "https://www.googleapis.com/oauth2/v4/token")!
-		let jwtRequestHeader = ["alg": "RS256", "typ": "JWT"]
 		var jwtRequestContent: [String: Any] = [
 			"iss": superuserEmail,
 			"scope": scope.scope.joined(separator: " "), "aud": authURL.absoluteString,
 			"iat": Int(Date(timeIntervalSinceNow: -3).timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 30).timeIntervalSince1970)
 		]
 		if let subemail = scope.userBehalf {jwtRequestContent["sub"] = subemail}
-		
-		/* Compute the JWT request */
-		let jwtRequestHeaderBase64  = (try! JSONSerialization.data(withJSONObject: jwtRequestHeader, options: [])).base64EncodedString()
-		let jwtRequestContentBase64 = (try! JSONSerialization.data(withJSONObject: jwtRequestContent, options: [])).base64EncodedString()
-		let jwtRequestSignedString = jwtRequestHeaderBase64 + "." + jwtRequestContentBase64
-		guard
-			let jwtRequestSignedData = jwtRequestSignedString.data(using: .utf8),
-			let signer = SecSignTransformCreate(privateKey, nil),
-			SecTransformSetAttribute(signer, kSecDigestTypeAttribute, kSecDigestSHA2, nil),
-			SecTransformSetAttribute(signer, kSecDigestLengthAttribute, NSNumber(value: 256), nil),
-			SecTransformSetAttribute(signer, kSecTransformInputAttributeName, jwtRequestSignedData as CFData, nil),
-			let jwtRequestSignature = SecTransformExecute(signer, nil) as? Data
-		else {
+		guard let jwtRequest = try? JWT.encode(jwtRequest: jwtRequestContent, privateKey: privateKey) else {
 			handler(NSError(domain: "JWT", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."]))
 			return
 		}
-		let jwtRequest = jwtRequestSignedString + "." + jwtRequestSignature.base64EncodedString()
 		
 		/* Create the URLRequest for the JWT request */
 		var request = URLRequest(url: authURL)
@@ -129,7 +115,7 @@ class GoogleJWTConnector : Connector {
 			}
 			
 			guard o.tokenType == "Bearer" else {
-				handler(op.finalError ?? NSError(domain: "com.happn.ghapp", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unexpected Bearer type \(o.tokenType)"]))
+				handler(op.finalError ?? NSError(domain: "com.happn.ghapp", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unexpected token type \(o.tokenType)"]))
 				return
 			}
 			
