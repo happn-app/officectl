@@ -36,10 +36,10 @@ class GoogleJWTConnector : Connector {
 		return auth?.token
 	}
 	
-	let handlerOperationQueue: HandlerOperationQueue = HandlerOperationQueue(name: "GoogleJWTConnector")
+	let handlerOperationQueue = HandlerOperationQueue(name: "GoogleJWTConnector")
 	
 	convenience init?(flags: Flags) {
-		guard let path = flags.getString(name: "superuser-json-creds") else {return nil}
+		guard let path = flags.getString(name: "google-superuser-json-creds") else {return nil}
 		self.init(jsonCredentialsURL: URL(fileURLWithPath: path, isDirectory: false))
 	}
 	
