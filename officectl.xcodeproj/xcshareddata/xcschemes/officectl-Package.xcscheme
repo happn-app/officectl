@@ -14,37 +14,23 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "URLRequestOperation::URLRequestOperation"
+               BuildableName = "URLRequestOperation.framework"
+               BlueprintName = "URLRequestOperation"
+               ReferencedContainer = "container:officectl.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "StringScanner::StringScanner"
                BuildableName = "StringScanner.framework"
                BlueprintName = "StringScanner"
-               ReferencedContainer = "container:officectl.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SemiSingleton::SemiSingleton"
-               BuildableName = "SemiSingleton.framework"
-               BlueprintName = "SemiSingleton"
-               ReferencedContainer = "container:officectl.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "Guaka::Guaka"
-               BuildableName = "Guaka.framework"
-               BlueprintName = "Guaka"
                ReferencedContainer = "container:officectl.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -70,9 +56,23 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "URLRequestOperation::URLRequestOperation"
-               BuildableName = "URLRequestOperation.framework"
-               BlueprintName = "URLRequestOperation"
+               BlueprintIdentifier = "RetryingOperation::RetryingOperation"
+               BuildableName = "RetryingOperation.framework"
+               BlueprintName = "RetryingOperation"
+               ReferencedContainer = "container:officectl.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SemiSingleton::SemiSingleton"
+               BuildableName = "SemiSingleton.framework"
+               BlueprintName = "SemiSingleton"
                ReferencedContainer = "container:officectl.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -98,9 +98,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "RetryingOperation::RetryingOperation"
-               BuildableName = "RetryingOperation.framework"
-               BlueprintName = "RetryingOperation"
+               BlueprintIdentifier = "Guaka::Guaka"
+               BuildableName = "Guaka.framework"
+               BlueprintName = "Guaka"
                ReferencedContainer = "container:officectl.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -129,9 +129,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "StringScanner::StringScanner"
-            BuildableName = "StringScanner.framework"
-            BlueprintName = "StringScanner"
+            BlueprintIdentifier = "URLRequestOperation::URLRequestOperation"
+            BuildableName = "URLRequestOperation.framework"
+            BlueprintName = "URLRequestOperation"
             ReferencedContainer = "container:officectl.xcodeproj">
          </BuildableReference>
       </MacroExpansion>

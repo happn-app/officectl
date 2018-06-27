@@ -1,0 +1,206 @@
+/*
+ * HappnConnector.swift
+ * officectl
+ *
+ * Created by François Lamboley on 27/06/2018.
+ */
+
+import Foundation
+
+import AsyncOperationResult
+import CommonCrypto
+import URLRequestOperation
+
+
+
+class HappnConnector : Connector {
+	
+	typealias ScopeType = Set<String>
+	typealias RequestType = URLRequest
+	
+	let clientId: String
+	let clientSecret: String
+	
+	var currentScope: Set<String>? {
+		return auth?.scope
+	}
+	var accessToken: String? {
+		return auth?.accessToken
+	}
+	var refreshToken: String? {
+		return auth?.refreshToken
+	}
+	
+	let handlerOperationQueue = HandlerOperationQueue(name: "HappnConnector")
+	
+	init(clientId id: String, clientSecret s: String, username u: String, password p: String) {
+		clientId = id
+		clientSecret = s
+		
+		authMode = .userPass(username: u, password: p)
+	}
+	
+	init(clientId id: String, clientSecret s: String, refreshToken t: String) {
+		clientId = id
+		clientSecret = s
+		
+		authMode = .refreshToken(t)
+	}
+	
+	func authenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
+		/* Make sure we're connected */
+		guard let auth = auth else {
+			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
+			return
+		}
+		
+		var request = request
+		
+		/* *** Add the “Authorization” header to the request *** */
+		request.setValue("OAuth=\"\(auth.accessToken)\"", forHTTPHeaderField: "Authorization")
+		
+		/* *** Sign the request *** */
+		let queryData = request.url?.query?.data(using: .ascii)
+		let queryDataLength = queryData?.count ?? 0
+		let bodyDataLength = request.httpBody?.count ?? 0
+		if
+			let clientSecretData = clientSecret.data(using: .ascii),
+			let clientIdData = clientId.data(using: .ascii),
+			let pathData = request.url?.path.data(using: .ascii),
+			let httpMethodData = request.httpMethod?.data(using: .ascii),
+			let backslashData = "\\".data(using: .ascii),
+			let semiColonData = ";".data(using: .ascii)
+		{
+			var key = Data(capacity: clientSecretData.count + clientIdData.count + 1)
+			key.append(clientSecretData)
+			key.append(backslashData)
+			key.append(clientIdData)
+			/* key is: "client_secret\client_id" */
+			
+			var content = Data(capacity: pathData.count + 1 + queryDataLength + 1 + bodyDataLength + 1 + httpMethodData.count)
+			content.append(pathData)
+			if let queryData = queryData, let interrogationPointData = "?".data(using: .ascii) {
+				content.append(interrogationPointData)
+				content.append(queryData)
+			}
+			content.append(semiColonData)
+			if let body = request.httpBody {content.append(body)}
+			content.append(semiColonData)
+			content.append(httpMethodData)
+			/* content is (the part in brackets is only there if the value of the
+			 * field is not empty): "url_path[?url_query];http_body;http_method" */
+			
+			var hmac = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
+			key.withUnsafeBytes{ (keyBytes: UnsafePointer<Int8>) in
+				content.withUnsafeBytes{ (dataBytes: UnsafePointer<Int8>) in
+					hmac.withUnsafeMutableBytes{ (hmacBytes: UnsafeMutablePointer<Int8>) in
+						CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA256), keyBytes, key.count, dataBytes, content.count, hmacBytes)
+					}
+				}
+			}
+			request.setValue(hmac.reduce("", { $0 + String(format: "%02x", $1) }), forHTTPHeaderField: "Signature")
+		}
+		
+		handler(.success(request), nil)
+	}
+	
+	func unsafeConnect(scope: Set<String>, handler: @escaping (Error?) -> Void) {
+		let url = URL(string: "https://api.happn.fr/connect/oauth/token")!
+		var components = URLComponents()
+		components.queryItems = [
+			URLQueryItem(name: "scope", value: scope.joined(separator: " ")),
+			URLQueryItem(name: "client_id", value: clientId),
+			URLQueryItem(name: "client_secret", value: clientSecret)
+		]
+		switch authMode {
+		case .userPass(username: let username, password: let password):
+			components.queryItems!.append(contentsOf: [
+				URLQueryItem(name: "grant_type", value: "password"),
+				URLQueryItem(name: "username", value: username),
+				URLQueryItem(name: "password", value: password)
+			])
+		case .refreshToken(let refreshToken):
+			components.queryItems!.append(contentsOf: [
+				URLQueryItem(name: "grant_type", value: "refresh_token"),
+				URLQueryItem(name: "refresh_token", value: refreshToken)
+			])
+		}
+		let requestData = components.percentEncodedQuery!.data(using: .utf8)!
+		
+		var request = URLRequest(url: url)
+		request.httpMethod = "POST"
+		request.httpBody = requestData
+		
+		let op = AuthenticatedJSONOperation<TokenResponse>(request: request, authenticator: nil)
+		op.completionBlock = {
+			guard let o = op.decodedObject else {
+				handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
+				return
+			}
+			
+			self.auth = Auth(
+				scope: Set(o.scope.components(separatedBy: " ")), userId: o.userId,
+				accessToken: o.accessToken, refreshToken: o.refreshToken,
+				expirationDate: Date(timeIntervalSinceNow: TimeInterval(o.expiresIn))
+			)
+			handler(nil)
+		}
+		op.start()
+		
+		/* ***** TokenResponse Object ***** */
+		/* This struct is used strictly for conveniently decoding the response
+		 * when reading the results of the token request */
+		struct TokenResponse : Decodable {
+			
+			let scope: String
+			let userId: String
+			
+			let accessToken: String
+			let refreshToken: String
+			
+			let expiresIn: Int
+			let errorCode: Int
+			
+		}
+	}
+	
+	func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
+		guard let auth = auth else {handler(nil); return}
+		
+		var request = URLRequest(url: URL(string: "https://api.happn.fr/connect/oauth/revoke-token")!)
+		request.setValue("OAuth=\"\(auth.accessToken)\"", forHTTPHeaderField: "Authorization")
+		let op = URLRequestOperation(request: request)
+		op.completionBlock = {
+			if op.finalError == nil {self.auth = nil}
+			handler(op.finalError)
+		}
+		op.start()
+	}
+	
+	/* ***************
+      MARK: - Private
+	   *************** */
+	
+	private var auth: Auth?
+	private let authMode: AuthMode
+	
+	private struct Auth {
+		
+		let scope: Set<String>
+		let userId: String
+		
+		let accessToken: String
+		let refreshToken: String
+		
+		let expirationDate: Date
+		
+	}
+	
+	private enum AuthMode {
+		
+		case userPass(username: String, password: String)
+		case refreshToken(String)
+		
+	}
+	
+}

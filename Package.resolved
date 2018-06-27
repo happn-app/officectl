@@ -11,6 +11,15 @@
         }
       },
       {
+        "package": "CommonCrypto",
+        "repositoryURL": "https://github.com/venj/CommonCrypto.git",
+        "state": {
+          "branch": null,
+          "revision": "2ea774842088bd63a14dc0ceb9d381472482f028",
+          "version": "0.3.0"
+        }
+      },
+      {
         "package": "Guaka",
         "repositoryURL": "https://github.com/klaas/Guaka.git",
         "state": {

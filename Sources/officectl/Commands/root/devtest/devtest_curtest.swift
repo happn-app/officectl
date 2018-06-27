@@ -9,16 +9,23 @@ import Guaka
 import Foundation
 
 
-let devtestCurtestCommand = Command(
-	usage: "curtest", configuration: configuration, run: execute
-)
 
-private func configuration(command: Command) {
-	command.add(
-		flags: [
-		]
-	)
-}
-
-private func execute(command: Command, flags: Flags, args: [String]) {
+class CurTestOperation : CommandOperation {
+	
+	override func startBaseOperation(isRetry: Bool) {
+//		let c = HappnConnector(
+//			clientId: "AtCialX437NjAPynnGWJzJt_FbnIFncNpUY-Vl8SMs", clientSecret: "ts4f2BQPkfCv1ooqt2G8WveOTggFKkin9tDvkmbX17",
+//			username: "francois.lamboley@happn.fr", password: "REDACTED"
+//		)
+		let c = HappnConnector(
+			clientId: "AtCialX437NjAPynnGWJzJt_FbnIFncNpUY-Vl8SMs", clientSecret: "ts4f2BQPkfCv1ooqt2G8WveOTggFKkin9tDvkmbX17",
+			refreshToken: "kj9b234gv279mnppknrr4ida700oaq1l06"
+		)
+		c.connect(scope: ["admin_scopes", "mobile_app"]){ error in
+			print(c.currentScope)
+			print(c.accessToken)
+			self.baseOperationEnded()
+		}
+	}
+	
 }

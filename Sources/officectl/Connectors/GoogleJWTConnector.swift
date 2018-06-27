@@ -140,7 +140,10 @@ class GoogleJWTConnector : Connector {
 		var components = URLComponents(string: "https://accounts.google.com/o/oauth2/revoke")!
 		components.queryItems = [URLQueryItem(name: "token", value: auth.token)]
 		let op = URLRequestOperation(url: components.url!)
-		op.completionBlock = { handler(op.finalError) }
+		op.completionBlock = {
+			if op.finalError == nil {self.auth = nil}
+			handler(op.finalError)
+		}
 		op.start()
 	}
 	

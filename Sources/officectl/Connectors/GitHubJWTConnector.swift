@@ -95,6 +95,7 @@ class GitHubJWTConnector : Connector {
 	}
 	
 	func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
+		handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not implemented (could not find doc to revoke token...)"]))
 	}
 	
 	/* ***************
