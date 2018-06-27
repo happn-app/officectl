@@ -13,19 +13,12 @@ import URLRequestOperation
 
 
 
-struct GoogleJWTConnectorScope : Codable {
-	
-	var userBehalf: String?
-	var scope: Set<String>
-	
-}
-
-
 class GoogleJWTConnector : Connector {
 	
+	typealias ScopeType = Set<String>
 	typealias RequestType = URLRequest
-	typealias ScopeType = GoogleJWTConnectorScope
 	
+	let userBehalf: String?
 	let privateKey: SecKey
 	let superuserEmail: String
 	
@@ -38,12 +31,12 @@ class GoogleJWTConnector : Connector {
 	
 	let handlerOperationQueue = HandlerOperationQueue(name: "GoogleJWTConnector")
 	
-	convenience init?(flags: Flags) {
+	convenience init?(flags: Flags, userBehalf: String?) {
 		guard let path = flags.getString(name: "google-superuser-json-creds") else {return nil}
-		self.init(jsonCredentialsURL: URL(fileURLWithPath: path, isDirectory: false))
+		self.init(jsonCredentialsURL: URL(fileURLWithPath: path, isDirectory: false), userBehalf: userBehalf)
 	}
 	
-	init?(jsonCredentialsURL: URL) {
+	init?(jsonCredentialsURL: URL, userBehalf u: String?) {
 		/* Decode JSON credentials */
 		let jsonDecoder = JSONDecoder()
 		jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -65,6 +58,7 @@ class GoogleJWTConnector : Connector {
 			return nil
 		}
 		
+		userBehalf = u
 		privateKey = key
 		superuserEmail = superuserCreds.clientEmail
 	}
@@ -91,10 +85,10 @@ class GoogleJWTConnector : Connector {
 		let authURL = URL(string: "https://www.googleapis.com/oauth2/v4/token")!
 		var jwtRequestContent: [String: Any] = [
 			"iss": superuserEmail,
-			"scope": scope.scope.joined(separator: " "), "aud": authURL.absoluteString,
+			"scope": scope.joined(separator: " "), "aud": authURL.absoluteString,
 			"iat": Int(Date().timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 30).timeIntervalSince1970)
 		]
-		if let subemail = scope.userBehalf {jwtRequestContent["sub"] = subemail}
+		if let subemail = userBehalf {jwtRequestContent["sub"] = subemail}
 		guard let jwtRequest = try? JWT.encode(jwtRequest: jwtRequestContent, privateKey: privateKey) else {
 			handler(NSError(domain: "JWT", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."]))
 			return
@@ -161,7 +155,7 @@ class GoogleJWTConnector : Connector {
 		var token: String
 		var expirationDate: Date
 		
-		var scope: GoogleJWTConnectorScope
+		var scope: Set<String>
 		
 	}
 	

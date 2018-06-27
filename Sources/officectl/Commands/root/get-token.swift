@@ -16,8 +16,8 @@ class GetTokenOperation : CommandOperation {
 	
 	override init(command c: Command, flags f: Flags, arguments args: [String]) {
 		let scopes = f.getString(name: "scopes")!
-		let scope = GoogleJWTConnector.ScopeType(userBehalf: f.getString(name: "admin-email")!, scope: Set(scopes.components(separatedBy: ",")))
-		googleConnectorOperation = GetConnectedGoogleConnector(command: c, flags: f, arguments: args, scope: scope)
+		let userBehalf = f.getString(name: "google-admin-email")!
+		googleConnectorOperation = GetConnectedGoogleConnector(command: c, flags: f, arguments: args, scope: Set(scopes.components(separatedBy: ",")), userBehalf: userBehalf)
 		
 		super.init(command: c, flags: f, arguments: args)
 		

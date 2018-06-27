@@ -13,15 +13,15 @@ import Guaka
 
 class GetConnectedGoogleConnector : CommandOperation {
 	
-	let scope: GoogleJWTConnectorScope
+	let scope: Set<String>
 	
 	let connector: GoogleJWTConnector
 	
-	init(command cmd: Command, flags f: Flags, arguments args: [String], scope s: GoogleJWTConnectorScope) {
+	init(command cmd: Command, flags f: Flags, arguments args: [String], scope s: Set<String>, userBehalf: String?) {
 		guard let credsURLString = f.getString(name: "google-superuser-json-creds") else {
 			cmd.fail(statusCode: 1, errorMessage: "The google-superuser-json-creds argument is required for commands dealing with Google APIs")
 		}
-		guard let c = GoogleJWTConnector(jsonCredentialsURL: URL(fileURLWithPath: credsURLString, isDirectory: false)) else {
+		guard let c = GoogleJWTConnector(jsonCredentialsURL: URL(fileURLWithPath: credsURLString, isDirectory: false), userBehalf: userBehalf) else {
 			cmd.fail(statusCode: 1, errorMessage: "Cannot create the Google connector (does the credentials file exist?)")
 		}
 		

@@ -15,8 +15,9 @@ class ListUsersOperation : CommandOperation {
 	var users = [GoogleUser]()
 	
 	override init(command c: Command, flags f: Flags, arguments args: [String]) {
-		let scope = GoogleJWTConnectorScope(userBehalf: f.getString(name: "admin-email")!, scope: ["https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly"])
-		googleConnectorOperation = GetConnectedGoogleConnector(command: c, flags: f, arguments: args, scope: scope)
+		let userBehalf = f.getString(name: "google-admin-email")!
+		let scope = Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly")
+		googleConnectorOperation = GetConnectedGoogleConnector(command: c, flags: f, arguments: args, scope: scope, userBehalf: userBehalf)
 		
 		super.init(command: c, flags: f, arguments: args)
 		
