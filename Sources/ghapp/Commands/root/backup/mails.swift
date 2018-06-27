@@ -1,5 +1,5 @@
 /*
- * backup_mail.swift
+ * mails.swift
  * ghapp
  *
  * Created by François Lamboley on 6/26/18.
@@ -10,8 +10,9 @@ import Darwin
 import Foundation
 
 
+
 let backupMailCommand = Command(
-	usage: "mail", configuration: configuration, run: execute
+	usage: "mails", configuration: configuration, run: execute
 )
 
 private func configuration(command: Command) {

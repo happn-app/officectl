@@ -67,16 +67,32 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--admin-email francois.lamboley@happn.fr"
+            argument = "--github-private-key /Users/frizlab/Downloads/officectl.2018-06-25.private-key.pem"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--superuser-json-creds /Users/frizlab/Downloads/happn-office-ghapp-creds.json"
+            argument = "--github-app-id 14017"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--github-install-id 220844"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--google-admin-email francois.lamboley@happn.fr"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--google-superuser-json-creds /Users/frizlab/Downloads/happn-office-ghapp-creds.json"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "backup mail --destination-dir /Users/frizlab/Desktop/backups/ --offlineimap-config-file /Users/frizlab/Desktop/backups/offlineimapconfig --offlineimap-output /Users/frizlab/Desktop/offlineimap.log --emails-to-backup valentino.di-nardo.disabled@happn.fr"
             isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "backup github --destination /Users/frizlab/Downloads/GitHub\ Backups --orgname happn-app"
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "devtest gmailapi"
@@ -100,7 +116,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "list-users"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "get-token --scopes=https://www.googleapis.com/auth/admin.directory.group,https://www.googleapis.com/auth/admin.directory.user.readonly"
