@@ -59,9 +59,9 @@
         "package": "COpenLDAP",
         "repositoryURL": "git@github.com:happn-app/Swift-OpenLDAP.git",
         "state": {
-          "branch": "master",
+          "branch": null,
           "revision": "dc899ea63a7037bb4d1ac6d5ebcb86cdf781d79b",
-          "version": null
+          "version": "1.0.0"
         }
       },
       {

@@ -9,34 +9,50 @@ import Foundation
 
 import AsyncOperationResult
 import COpenLDAP
-//import OpenDirectory
 
 
 
 class LDAPConnector : Connector {
 	
 	typealias ScopeType = Void
-	typealias RequestType = String
+	typealias RequestType = Never /* The requests do not have to be authenticated: the **session** is, w/ LDAP. */
 	
 	var currentScope: Void?
 	
 	let handlerOperationQueue = HandlerOperationQueue(name: "LDAPConnector")
 	
-	func authenticate(request: String, handler: @escaping (AsyncOperationResult<String>, Any?) -> Void) {
-		handler(AORError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Implemented"]), nil)
+	func authenticate(request: Never, handler: @escaping (AsyncOperationResult<Never>, Any?) -> Void) {
+		handler(.success(request), nil)
 	}
 	
 	func unsafeConnect(scope: Void, handler: @escaping (Error?) -> Void) {
-//		let serverName = "vip-ldap.happn.io"
-//		let session = ODSession.default()
-//		let node = try! ODNode(session: session, name: "/LDAPv3/" + serverName)
-//		let query = try! ODQuery(node: node, forRecordTypes: ["uid"], attribute: "mail", matchType: ODMatchType(kODMatchAny), queryValues: "francois.lamboley@happn.fr", returnAttributes: nil, maximumResults: 3)
-//		print(try! query.resultsAllowingPartial(false))
 		handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Implemented"]))
 	}
 	
 	func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
 		handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Implemented"]))
 	}
+	
+	func unsafeExecute(request: LDAPRequest, handler: @escaping (AsyncOperationResult<Void/*TBD*/>) -> Void) {
+	}
+	
+}
+
+
+public struct LDAPRequest {
+	
+	public enum Scope : ber_int_t {
+		
+		case base = 0
+		case singleLevel = 1
+		case subtree = 2
+		case children = 3 /* OpenLDAP Extension */
+		case `default` = -1 /* OpenLDAP Extension */
+		
+	}
+	
+	public var scope: Scope
+	public var base: String
+	public var searchFilter: String?
 	
 }

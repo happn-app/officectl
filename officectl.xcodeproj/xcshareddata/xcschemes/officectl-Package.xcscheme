@@ -14,51 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SemiSingleton::SemiSingleton"
-               BuildableName = "SemiSingleton.framework"
-               BlueprintName = "SemiSingleton"
-               ReferencedContainer = "container:officectl.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AsyncOperationResult::AsyncOperationResult"
-               BuildableName = "AsyncOperationResult.framework"
-               BlueprintName = "AsyncOperationResult"
-               ReferencedContainer = "container:officectl.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
                BlueprintIdentifier = "officectl::officectl"
                BuildableName = "officectl"
                BlueprintName = "officectl"
-               ReferencedContainer = "container:officectl.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "RetryingOperation::RetryingOperation"
-               BuildableName = "RetryingOperation.framework"
-               BlueprintName = "RetryingOperation"
                ReferencedContainer = "container:officectl.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -98,9 +56,51 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AsyncOperationResult::AsyncOperationResult"
+               BuildableName = "AsyncOperationResult.framework"
+               BlueprintName = "AsyncOperationResult"
+               ReferencedContainer = "container:officectl.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "Guaka::Guaka"
                BuildableName = "Guaka.framework"
                BlueprintName = "Guaka"
+               ReferencedContainer = "container:officectl.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SemiSingleton::SemiSingleton"
+               BuildableName = "SemiSingleton.framework"
+               BlueprintName = "SemiSingleton"
+               ReferencedContainer = "container:officectl.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "RetryingOperation::RetryingOperation"
+               BuildableName = "RetryingOperation.framework"
+               BlueprintName = "RetryingOperation"
                ReferencedContainer = "container:officectl.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -129,9 +129,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "SemiSingleton::SemiSingleton"
-            BuildableName = "SemiSingleton.framework"
-            BlueprintName = "SemiSingleton"
+            BlueprintIdentifier = "officectl::officectl"
+            BuildableName = "officectl"
+            BlueprintName = "officectl"
             ReferencedContainer = "container:officectl.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
