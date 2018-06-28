@@ -11,15 +11,6 @@
         }
       },
       {
-        "package": "CommonCrypto",
-        "repositoryURL": "https://github.com/venj/CommonCrypto.git",
-        "state": {
-          "branch": null,
-          "revision": "2ea774842088bd63a14dc0ceb9d381472482f028",
-          "version": "0.3.0"
-        }
-      },
-      {
         "package": "Guaka",
         "repositoryURL": "https://github.com/klaas/Guaka.git",
         "state": {
@@ -53,6 +44,24 @@
           "branch": null,
           "revision": "576ed0725055966b1e59a14edd99945640c55e3a",
           "version": "0.3.2"
+        }
+      },
+      {
+        "package": "CCommonCrypto",
+        "repositoryURL": "git@github.com:happn-app/Swift-CommonCrypto.git",
+        "state": {
+          "branch": null,
+          "revision": "f409d3b9971bf3bf5b393e0ccc8d36f0aea0df1a",
+          "version": "1.0.0"
+        }
+      },
+      {
+        "package": "COpenLDAP",
+        "repositoryURL": "git@github.com:happn-app/Swift-OpenLDAP.git",
+        "state": {
+          "branch": "master",
+          "revision": "dc899ea63a7037bb4d1ac6d5ebcb86cdf781d79b",
+          "version": null
         }
       },
       {

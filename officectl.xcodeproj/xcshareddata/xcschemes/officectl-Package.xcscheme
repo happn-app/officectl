@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "URLRequestOperation::URLRequestOperation"
-               BuildableName = "URLRequestOperation.framework"
-               BlueprintName = "URLRequestOperation"
+               BlueprintIdentifier = "SemiSingleton::SemiSingleton"
+               BuildableName = "SemiSingleton.framework"
+               BlueprintName = "SemiSingleton"
                ReferencedContainer = "container:officectl.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -28,9 +28,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "StringScanner::StringScanner"
-               BuildableName = "StringScanner.framework"
-               BlueprintName = "StringScanner"
+               BlueprintIdentifier = "AsyncOperationResult::AsyncOperationResult"
+               BuildableName = "AsyncOperationResult.framework"
+               BlueprintName = "AsyncOperationResult"
                ReferencedContainer = "container:officectl.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -70,9 +70,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SemiSingleton::SemiSingleton"
-               BuildableName = "SemiSingleton.framework"
-               BlueprintName = "SemiSingleton"
+               BlueprintIdentifier = "StringScanner::StringScanner"
+               BuildableName = "StringScanner.framework"
+               BlueprintName = "StringScanner"
                ReferencedContainer = "container:officectl.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -84,9 +84,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AsyncOperationResult::AsyncOperationResult"
-               BuildableName = "AsyncOperationResult.framework"
-               BlueprintName = "AsyncOperationResult"
+               BlueprintIdentifier = "URLRequestOperation::URLRequestOperation"
+               BuildableName = "URLRequestOperation.framework"
+               BlueprintName = "URLRequestOperation"
                ReferencedContainer = "container:officectl.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -129,9 +129,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "URLRequestOperation::URLRequestOperation"
-            BuildableName = "URLRequestOperation.framework"
-            BlueprintName = "URLRequestOperation"
+            BlueprintIdentifier = "SemiSingleton::SemiSingleton"
+            BuildableName = "SemiSingleton.framework"
+            BlueprintName = "SemiSingleton"
             ReferencedContainer = "container:officectl.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
