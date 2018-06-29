@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7B2870F920E614E4004D1DB1 /* Authenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B2870F820E614E4004D1DB1 /* Authenticator.swift */; };
 		OBJ_137 /* AsyncOperationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_122 /* AsyncOperationResult.swift */; };
 		OBJ_144 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_123 /* Package.swift */; };
 		OBJ_150 /* Command+Execution.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_61 /* Command+Execution.swift */; };
@@ -177,6 +178,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7B2870F820E614E4004D1DB1 /* Authenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Authenticator.swift; sourceTree = "<group>"; };
 		"AsyncOperationResult::AsyncOperationResult::Product" /* AsyncOperationResult.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AsyncOperationResult.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		"Guaka::Guaka::Product" /* Guaka.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Guaka.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		OBJ_10 /* root.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = root.swift; sourceTree = "<group>"; };
@@ -461,16 +463,17 @@
 			path = devtest;
 			sourceTree = "<group>";
 		};
-		OBJ_25 /* Connectors */ = {
+		OBJ_25 /* Connectors & Authenticators */ = {
 			isa = PBXGroup;
 			children = (
 				OBJ_26 /* Connector.swift */,
+				7B2870F820E614E4004D1DB1 /* Authenticator.swift */,
 				OBJ_27 /* GitHubJWTConnector.swift */,
 				OBJ_28 /* GoogleJWTConnector.swift */,
 				OBJ_29 /* HappnConnector.swift */,
 				OBJ_30 /* LDAPConnector.swift */,
 			);
-			path = Connectors;
+			path = "Connectors & Authenticators";
 			sourceTree = "<group>";
 		};
 		OBJ_31 /* Model */ = {
@@ -534,7 +537,7 @@
 			path = Operations;
 			sourceTree = "<group>";
 		};
-		OBJ_5 /*  */ = {
+		OBJ_5 = {
 			isa = PBXGroup;
 			children = (
 				OBJ_6 /* Package.swift */,
@@ -543,7 +546,6 @@
 				OBJ_57 /* Dependencies */,
 				OBJ_124 /* Products */,
 			);
-			name = "";
 			sourceTree = "<group>";
 		};
 		OBJ_50 /* Other */ = {
@@ -656,7 +658,7 @@
 			isa = PBXGroup;
 			children = (
 				OBJ_9 /* Commands */,
-				OBJ_25 /* Connectors */,
+				OBJ_25 /* Connectors & Authenticators */,
 				OBJ_31 /* Model */,
 				OBJ_39 /* Operations */,
 				OBJ_43 /* Utilities */,
@@ -956,7 +958,7 @@
 			knownRegions = (
 				en,
 			);
-			mainGroup = OBJ_5 /*  */;
+			mainGroup = OBJ_5;
 			productRefGroup = OBJ_124 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -1133,6 +1135,7 @@
 				OBJ_273 /* GoogleJWTConnector.swift in Sources */,
 				OBJ_274 /* HappnConnector.swift in Sources */,
 				OBJ_275 /* LDAPConnector.swift in Sources */,
+				7B2870F920E614E4004D1DB1 /* Authenticator.swift in Sources */,
 				OBJ_276 /* GitHubRepository.swift in Sources */,
 				OBJ_277 /* GoogleUser.swift in Sources */,
 				OBJ_278 /* GoogleUsersList.swift in Sources */,

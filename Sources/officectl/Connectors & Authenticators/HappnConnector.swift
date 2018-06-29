@@ -13,7 +13,7 @@ import URLRequestOperation
 
 
 
-class HappnConnector : Connector {
+class HappnConnector : Connector, Authenticator {
 	
 	typealias ScopeType = Set<String>
 	typealias RequestType = URLRequest

@@ -15,15 +15,10 @@ import COpenLDAP
 class LDAPConnector : Connector {
 	
 	typealias ScopeType = Void
-	typealias RequestType = Never /* The requests do not have to be authenticated: the **session** is, w/ LDAP. */
 	
 	var currentScope: Void?
 	
 	let handlerOperationQueue = HandlerOperationQueue(name: "LDAPConnector")
-	
-	func authenticate(request: Never, handler: @escaping (AsyncOperationResult<Never>, Any?) -> Void) {
-		handler(.success(request), nil)
-	}
 	
 	func unsafeConnect(scope: Void, handler: @escaping (Error?) -> Void) {
 		handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Implemented"]))
@@ -39,9 +34,9 @@ class LDAPConnector : Connector {
 }
 
 
-public struct LDAPRequest {
+struct LDAPRequest {
 	
-	public enum Scope : ber_int_t {
+	enum Scope : ber_int_t {
 		
 		case base = 0
 		case singleLevel = 1
@@ -51,8 +46,8 @@ public struct LDAPRequest {
 		
 	}
 	
-	public var scope: Scope
-	public var base: String
-	public var searchFilter: String?
+	var scope: Scope
+	var base: String
+	var searchFilter: String?
 	
 }

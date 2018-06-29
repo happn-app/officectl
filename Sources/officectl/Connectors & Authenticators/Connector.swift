@@ -14,7 +14,6 @@ import AsyncOperationResult
 public protocol Connector {
 	
 	associatedtype ScopeType
-	associatedtype RequestType
 	
 	/** A connector should only do one “connection” operation at a time. The
 	handler operation queue given here will be used by default to serialize
@@ -27,8 +26,6 @@ public protocol Connector {
 //	func handleApplicationDidFinishLaunching(_ application: UIApplication, withLaunchOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool
 //	func handleOpenURL(_ url: URL, inApplication application: UIApplication, withOptions options: [UIApplicationOpenURLOptionsKey: Any]) -> Bool
 //	func handleApplicationDidBecomeActive()
-	
-	func authenticate(request: RequestType, handler: @escaping (_ result: AsyncOperationResult<RequestType>, _ userInfo: Any?) -> Void)
 	
 	func unsafeConnect(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void)
 	func unsafeDisconnect(handler: @escaping (_ error: Error?) -> Void)
@@ -66,7 +63,7 @@ extension Connector {
 }
 
 
-class AnyConnector<ScopeType, RequestType> : Connector {
+class AnyConnector<ScopeType> : Connector {
 	
 	var currentScope: ScopeType? {
 		return currentScopeHandler()
@@ -76,18 +73,12 @@ class AnyConnector<ScopeType, RequestType> : Connector {
 		return handlerOperationQueueHandler()
 	}
 	
-	init<C : Connector>(base b: C) where C.ScopeType == ScopeType, C.RequestType == RequestType {
+	init<C : Connector>(base b: C) where C.ScopeType == ScopeType {
 		handlerOperationQueueHandler = { b.handlerOperationQueue }
 		currentScopeHandler = { b.currentScope }
 		
-		authenticateHandler = b.authenticate
-		
 		connectHandler = b.unsafeConnect
 		disconnectHandler = b.unsafeDisconnect
-	}
-	
-	func authenticate(request: RequestType, handler: @escaping (AsyncOperationResult<RequestType>, Any?) -> Void) {
-		authenticateHandler(request, handler)
 	}
 	
 	func unsafeConnect(scope: ScopeType, handler: @escaping (Error?) -> Void) {
@@ -105,8 +96,6 @@ class AnyConnector<ScopeType, RequestType> : Connector {
 	private let handlerOperationQueueHandler: () -> HandlerOperationQueue
 	
 	private let currentScopeHandler: () -> ScopeType?
-	
-	private let authenticateHandler: (_ request: RequestType, _ handler: @escaping (_ result: AsyncOperationResult<RequestType>, _ userInfo: Any?) -> Void) -> Void
 	
 	private let connectHandler: (_ scope: ScopeType, _ handler: @escaping (_ error: Error?) -> Void) -> Void
 	private let disconnectHandler: (_ handler: @escaping (_ error: Error?) -> Void) -> Void

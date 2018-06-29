@@ -11,7 +11,7 @@ import AsyncOperationResult
 
 
 
-class GitHubJWTConnector : Connector {
+class GitHubJWTConnector : Connector, Authenticator {
 	
 	typealias ScopeType = Void
 	typealias RequestType = URLRequest

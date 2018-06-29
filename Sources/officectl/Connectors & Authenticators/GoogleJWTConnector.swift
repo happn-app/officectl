@@ -13,7 +13,7 @@ import URLRequestOperation
 
 
 
-class GoogleJWTConnector : Connector {
+class GoogleJWTConnector : Connector, Authenticator {
 	
 	typealias ScopeType = Set<String>
 	typealias RequestType = URLRequest
