@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7B2870F920E614E4004D1DB1 /* Authenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B2870F820E614E4004D1DB1 /* Authenticator.swift */; };
+		7B2870FB20E64979004D1DB1 /* LDAPSearchOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B2870FA20E64979004D1DB1 /* LDAPSearchOperation.swift */; };
 		OBJ_137 /* AsyncOperationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_122 /* AsyncOperationResult.swift */; };
 		OBJ_144 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_123 /* Package.swift */; };
 		OBJ_150 /* Command+Execution.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_61 /* Command+Execution.swift */; };
@@ -179,6 +180,7 @@
 
 /* Begin PBXFileReference section */
 		7B2870F820E614E4004D1DB1 /* Authenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Authenticator.swift; sourceTree = "<group>"; };
+		7B2870FA20E64979004D1DB1 /* LDAPSearchOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LDAPSearchOperation.swift; sourceTree = "<group>"; };
 		"AsyncOperationResult::AsyncOperationResult::Product" /* AsyncOperationResult.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AsyncOperationResult.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		"Guaka::Guaka::Product" /* Guaka.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Guaka.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		OBJ_10 /* root.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = root.swift; sourceTree = "<group>"; };
@@ -510,6 +512,7 @@
 				OBJ_40 /* CloneGitHubRepoOperation.swift */,
 				OBJ_41 /* GetConnectedGitHubConnector.swift */,
 				OBJ_42 /* GetConnectedGoogleConnector.swift */,
+				7B2870FA20E64979004D1DB1 /* LDAPSearchOperation.swift */,
 			);
 			path = Operations;
 			sourceTree = "<group>";
@@ -1130,6 +1133,7 @@
 				OBJ_268 /* devtest_gmailapi.swift in Sources */,
 				OBJ_269 /* get-token.swift in Sources */,
 				OBJ_270 /* list-users.swift in Sources */,
+				7B2870FB20E64979004D1DB1 /* LDAPSearchOperation.swift in Sources */,
 				OBJ_271 /* Connector.swift in Sources */,
 				OBJ_272 /* GitHubJWTConnector.swift in Sources */,
 				OBJ_273 /* GoogleJWTConnector.swift in Sources */,
