@@ -20,7 +20,7 @@ class LDAPSearchOperation : RetryingOperation {
 	let ldapConnector: LDAPConnector
 	let request: LDAPRequest
 	
-	var results = AsyncOperationResult<[String: [String: [Data]]]>.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Operation is not finished"]))
+	var results = AsyncOperationResult<(results: [String: [String: [Data]]], references: [[String]])>.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Operation is not finished"]))
 	
 	init(ldapConnector c: LDAPConnector, request r: LDAPRequest) {
 		ldapConnector = c
@@ -51,6 +51,7 @@ class LDAPSearchOperation : RetryingOperation {
 			return
 		}
 		
+		var swiftReferences = [[String]]()
 		var swiftResults = [String: [String: [Data]]]()
 		var nextMessage = ldap_first_entry(ldapConnector.ldapPtr, searchResultMessagePtr)
 		while let currentMessage = nextMessage {
@@ -91,8 +92,25 @@ class LDAPSearchOperation : RetryingOperation {
 				}
 				swiftResults[String(cString: dnCString)] = swiftAttributesAndValues
 				
-			case LDAP_RES_SEARCH_REFERENCE: /* A search reference (not sure what this is though...) */
-				()
+			case LDAP_RES_SEARCH_REFERENCE: /* UNTESTED (our server does not return search references. A search reference (not sure what this is though...) */
+				var referrals: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?
+				let err = ldap_parse_reference(ldapConnector.ldapPtr, currentMessage, &referrals, nil /* Server Controls */, 0 /* Do not free the message */)
+				guard err == LDAP_SUCCESS else {
+					print("Cannot get search reference: got error \(String(cString: ldap_err2string(err)))", to: &stderrStream)
+					continue
+				}
+				
+				var swiftValues = [String]()
+				var nextReferralPtr = referrals
+				while let currentReferral = nextReferralPtr?.pointee {
+					defer {ldap_memfree(currentReferral)}
+					nextReferralPtr = nextReferralPtr?.successor()
+					
+					swiftValues.append(String(cString: currentReferral))
+				}
+				ldap_memfree(referrals)
+				
+				swiftReferences.append(swiftValues)
 				
 			case LDAP_RES_SEARCH_RESULT: /* The metadata about the search results */
 				()
@@ -101,7 +119,7 @@ class LDAPSearchOperation : RetryingOperation {
 				print("Got unknown message of type \(ldap_msgtype(currentMessage)). Ignoring.", to: &stderrStream)
 			}
 			
-			results = .success(swiftResults)
+			results = .success((results: swiftResults, references: swiftReferences))
 		}
 	}
 	
