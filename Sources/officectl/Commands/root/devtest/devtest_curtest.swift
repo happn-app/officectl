@@ -23,9 +23,9 @@ class CurTestOperation : CommandOperation {
 			
 			let searchOp = LDAPSearchOperation(ldapConnector: c, request: LDAPRequest(scope: .children, base: "dc=happn,dc=com", searchFilter: nil, attributesToFetch: nil))
 			searchOp.completionBlock = {
-				for (u, v) in searchOp.results.successValue!.results {
-					print(u, terminator: "")
-					print(v)
+				for r in searchOp.results.successValue!.results {
+					print(r.distinguishedName)
+					print(r.singleStringValue(for: "cn"))
 				}
 				self.baseOperationEnded()
 			}

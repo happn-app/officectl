@@ -20,7 +20,7 @@ class LDAPSearchOperation : RetryingOperation {
 	let ldapConnector: LDAPConnector
 	let request: LDAPRequest
 	
-	var results = AsyncOperationResult<(results: [String: [String: [Data]]], references: [[String]])>.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Operation is not finished"]))
+	var results = AsyncOperationResult<(results: [LDAPObject], references: [[String]])>.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Operation is not finished"]))
 	
 	init(ldapConnector c: LDAPConnector, request r: LDAPRequest) {
 		ldapConnector = c
@@ -53,8 +53,8 @@ class LDAPSearchOperation : RetryingOperation {
 			return
 		}
 		
+		var swiftResults = [LDAPObject]()
 		var swiftReferences = [[String]]()
-		var swiftResults = [String: [String: [Data]]]()
 		var nextMessage = ldap_first_entry(ldapConnector.ldapPtr, searchResultMessagePtr)
 		while let currentMessage = nextMessage {
 			nextMessage = ldap_next_message(ldapConnector.ldapPtr, currentMessage)
@@ -92,7 +92,7 @@ class LDAPSearchOperation : RetryingOperation {
 					ldap_value_free_len(valueSetPtr)
 					swiftAttributesAndValues[currentAttributeString] = swiftValues
 				}
-				swiftResults[String(cString: dnCString)] = swiftAttributesAndValues
+				swiftResults.append(LDAPObject(distinguishedName: String(cString: dnCString), attributes: swiftAttributesAndValues))
 				
 			case LDAP_RES_SEARCH_REFERENCE: /* UNTESTED (our server does not return search references. A search reference (not sure what this is though...) */
 				var referrals: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?

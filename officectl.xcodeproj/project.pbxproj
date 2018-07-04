@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		7B2870F920E614E4004D1DB1 /* Authenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B2870F820E614E4004D1DB1 /* Authenticator.swift */; };
 		7B2870FB20E64979004D1DB1 /* LDAPSearchOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B2870FA20E64979004D1DB1 /* LDAPSearchOperation.swift */; };
+		7B4ED4ED20ECDE7200BAAB16 /* LDAPObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B4ED4EC20ECDE7200BAAB16 /* LDAPObject.swift */; };
 		OBJ_137 /* AsyncOperationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_122 /* AsyncOperationResult.swift */; };
 		OBJ_144 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_123 /* Package.swift */; };
 		OBJ_150 /* Command+Execution.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_61 /* Command+Execution.swift */; };
@@ -181,6 +182,7 @@
 /* Begin PBXFileReference section */
 		7B2870F820E614E4004D1DB1 /* Authenticator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Authenticator.swift; sourceTree = "<group>"; };
 		7B2870FA20E64979004D1DB1 /* LDAPSearchOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LDAPSearchOperation.swift; sourceTree = "<group>"; };
+		7B4ED4EC20ECDE7200BAAB16 /* LDAPObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LDAPObject.swift; sourceTree = "<group>"; };
 		"AsyncOperationResult::AsyncOperationResult::Product" /* AsyncOperationResult.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AsyncOperationResult.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		"Guaka::Guaka::Product" /* Guaka.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Guaka.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		OBJ_10 /* root.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = root.swift; sourceTree = "<group>"; };
@@ -337,6 +339,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7B4ED4E920ECDDA100BAAB16 /* happn LDAP */ = {
+			isa = PBXGroup;
+			children = (
+				7B4ED4EC20ECDE7200BAAB16 /* LDAPObject.swift */,
+			);
+			path = "happn LDAP";
+			sourceTree = "<group>";
+		};
 		OBJ_100 /* URLRequestOperation 1.1.0 */ = {
 			isa = PBXGroup;
 			children = (
@@ -483,6 +493,7 @@
 			children = (
 				OBJ_32 /* GitHub */,
 				OBJ_34 /* Google */,
+				7B4ED4E920ECDDA100BAAB16 /* happn LDAP */,
 				OBJ_37 /* Superuser.swift */,
 				OBJ_38 /* User.swift */,
 			);
@@ -1134,6 +1145,7 @@
 				OBJ_269 /* get-token.swift in Sources */,
 				OBJ_270 /* list-users.swift in Sources */,
 				7B2870FB20E64979004D1DB1 /* LDAPSearchOperation.swift in Sources */,
+				7B4ED4ED20ECDE7200BAAB16 /* LDAPObject.swift in Sources */,
 				OBJ_271 /* Connector.swift in Sources */,
 				OBJ_272 /* GitHubJWTConnector.swift in Sources */,
 				OBJ_273 /* GoogleJWTConnector.swift in Sources */,
