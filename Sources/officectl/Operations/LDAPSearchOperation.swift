@@ -37,12 +37,14 @@ class LDAPSearchOperation : RetryingOperation {
 		 * which is not convenient nor useful for our use-case compared to the
 		 * synchronous alternative. */
 		var searchResultMessagePtr: OpaquePointer? /* “LDAPMessage*”; Cannot use the LDAPMessage type (not exported to Swift, because opaque in C headers...) */
-		let searchResultError = ldap_search_ext_s(
-			ldapConnector.ldapPtr,
-			request.base, request.scope.rawValue, request.searchFilter, nil/*request.attributesToFetch*/,
-			0 /* We want attributes and values */, nil /* Server controls */, nil /* Client controls */,
-			nil /* Timeout */, 0 /* Size limit */, &searchResultMessagePtr
-		)
+		let searchResultError = withCArrayOfString(array: request.attributesToFetch){ attributesPtr in
+			return ldap_search_ext_s(
+				ldapConnector.ldapPtr,
+				request.base, request.scope.rawValue, request.searchFilter, attributesPtr,
+				0 /* We want attributes and values */, nil /* Server controls */, nil /* Client controls */,
+				nil /* Timeout */, 0 /* Size limit */, &searchResultMessagePtr
+			)
+		}
 		defer {_ = ldap_msgfree(searchResultMessagePtr)}
 		
 		guard searchResultError == LDAP_SUCCESS else {
@@ -125,6 +127,19 @@ class LDAPSearchOperation : RetryingOperation {
 	
 	override var isAsynchronous: Bool {
 		return false
+	}
+	
+	/* From https://github.com/PerfectlySoft/Perfect-LDAP/blob/master/Sources/PerfectLDAP/Utilities.swift */
+	private func withCArrayOfString<R>(array: [String]?, _ body: (UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?) throws -> R) rethrows -> R {
+		guard let array = array else {
+			return try body(nil)
+		}
+		
+		/* Convert array to NULL-terminated array of pointers */
+		var parr = (array as [String?] + [nil]).map{ $0.flatMap{ ber_strdup($0) } }
+		defer {parr.forEach{ ber_memfree($0) }}
+		
+		return try parr.withUnsafeMutableBufferPointer{ try body($0.baseAddress) }
 	}
 	
 }
