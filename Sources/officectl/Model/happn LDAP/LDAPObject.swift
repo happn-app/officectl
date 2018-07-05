@@ -25,6 +25,13 @@ struct LDAPObject {
 		attributes = attrs
 	}
 	
+	func relativeDistinguishedNameValues(for key: String) -> [String]? {
+		return parsedDistinguishedName?.compactMap{ (currentKey, currentValue) in
+			guard currentKey == key else {return nil}
+			return currentValue
+		}
+	}
+	
 	func stringValues(for key: String) -> [String]? {
 		guard let v = attributes[key] else {return nil}
 		return v.compactMap{ String(data: $0, encoding: .utf8) }

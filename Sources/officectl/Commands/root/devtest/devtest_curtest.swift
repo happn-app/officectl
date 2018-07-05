@@ -23,9 +23,13 @@ class CurTestOperation : CommandOperation {
 			
 			let searchOp = LDAPSearchOperation(ldapConnector: c, request: LDAPRequest(scope: .children, base: "dc=happn,dc=com", searchFilter: nil, attributesToFetch: nil))
 			searchOp.completionBlock = {
-				for r in searchOp.results.successValue!.results {
-					print(r.distinguishedName)
-					print(r.singleStringValue(for: "cn"))
+				for r in searchOp.results.successValue!.results.filter({ $0.relativeDistinguishedNameValues(for: "ou") == ["people"] && $0.relativeDistinguishedNameValues(for: "uid") != [] }) {
+//					print(r.distinguishedName)
+//					print(r.singleStringValue(for: "cn"))
+//					print(r.attributes.keys)
+//					print(r.singleStringValue(for: "uid"))
+//					print(r.stringValues(for: "objectClass"))
+//					print(r)
 				}
 				self.baseOperationEnded()
 			}
