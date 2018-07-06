@@ -13,6 +13,8 @@ import COpenLDAP
 
 
 
+/* Most of this class is adapted from https://github.com/PerfectlySoft/Perfect-LDAP/blob/master/Sources/PerfectLDAP/PerfectLDAP.swift */
+
 @available(OSX, deprecated: 10.11) /* TODO: Rewrite a connector that uses OpenDirectory on macOS */
 class LDAPConnector : Connector {
 	
