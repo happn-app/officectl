@@ -8,6 +8,8 @@
 import Guaka
 import Foundation
 
+import OfficeKit
+
 
 
 class ListUsersOperation : CommandOperation {
@@ -15,9 +17,13 @@ class ListUsersOperation : CommandOperation {
 	var users = [GoogleUser]()
 	
 	override init(command c: Command, flags f: Flags, arguments args: [String]) {
-		let userBehalf = f.getString(name: "google-admin-email")!
-		let scope = Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly")
-		googleConnectorOperation = GetConnectedGoogleConnector(command: c, flags: f, arguments: args, scope: scope, userBehalf: userBehalf)
+		do {
+			let userBehalf = f.getString(name: "google-admin-email")!
+			let scope = Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly")
+			googleConnectorOperation = try GetConnectedGoogleConnector(flags: f, scope: scope, userBehalf: userBehalf)
+		} catch {
+			c.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)
+		}
 		
 		super.init(command: c, flags: f, arguments: args)
 		
@@ -25,6 +31,10 @@ class ListUsersOperation : CommandOperation {
 	}
 	
 	override func startBaseOperation(isRetry: Bool) {
+		if let e = googleConnectorOperation.connectionError as NSError? {
+			command.fail(statusCode: e.code, errorMessage: e.localizedDescription)
+		}
+		
 		fetchNextPage(nextPageToken: nil)
 	}
 	
@@ -39,7 +49,7 @@ class ListUsersOperation : CommandOperation {
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .customISO8601
 		decoder.keyDecodingStrategy = .useDefaultKeys
-		let op = AuthenticatedJSONOperation<GoogleUsersList>(url: urlComponents.url!, authConfig: .init(authenticator: googleConnector.authenticate, decoder: decoder))
+		let op = AuthenticatedJSONOperation<GoogleUsersList>(url: urlComponents.url!, authenticator: googleConnector.authenticate, decoder: decoder)
 		op.completionBlock = {
 			guard let o = op.decodedObject else {
 				self.command.fail(statusCode: 1, errorMessage: op.finalError?.localizedDescription ?? "Unknown error while fetching the users")
@@ -58,6 +68,10 @@ class ListUsersOperation : CommandOperation {
 			}
 		}
 		op.start()
+	}
+	
+	override var isAsynchronous: Bool {
+		return true
 	}
 	
 }

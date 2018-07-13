@@ -7,6 +7,8 @@
 
 import Foundation
 
+import OfficeKit
+
 import Guaka
 
 
@@ -14,7 +16,11 @@ import Guaka
 class BackupGitHubOperation : CommandOperation {
 	
 	override init(command c: Command, flags f: Flags, arguments args: [String]) {
-		gitHubConnectorOperation = GetConnectedGitHubConnector(command: c, flags: f, arguments: args)
+		do {
+			gitHubConnectorOperation = try GetConnectedGitHubConnector(flags: f)
+		} catch {
+			c.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)
+		}
 		
 		cloneOperationQueue = OperationQueue()
 		cloneOperationQueue.maxConcurrentOperationCount = 7
@@ -24,6 +30,10 @@ class BackupGitHubOperation : CommandOperation {
 		super.init(command: c, flags: f, arguments: args)
 		
 		addDependency(gitHubConnectorOperation)
+	}
+	
+	override var isAsynchronous: Bool {
+		return true
 	}
 	
 	override func startBaseOperation(isRetry: Bool) {
@@ -45,7 +55,7 @@ class BackupGitHubOperation : CommandOperation {
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .iso8601
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
-		let op = AuthenticatedJSONOperation<[GitHubRepository]>(url: urlComponents.url!, authConfig: .init(authenticator: gitHubConnector.authenticate, decoder: decoder))
+		let op = AuthenticatedJSONOperation<[GitHubRepository]>(url: urlComponents.url!, authenticator: gitHubConnector.authenticate, decoder: decoder)
 		op.completionBlock = {
 			guard let o = op.decodedObject else {
 				self.command.fail(statusCode: 1, errorMessage: op.finalError?.localizedDescription ?? "Unknown error while fetching the repositories")

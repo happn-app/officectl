@@ -8,6 +8,8 @@
 import Guaka
 import Foundation
 
+import OfficeKit
+
 
 
 class CurTestOperation : CommandOperation {

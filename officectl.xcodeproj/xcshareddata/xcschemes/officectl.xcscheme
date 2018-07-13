@@ -87,12 +87,12 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "backup mail --destination-dir /Users/frizlab/Desktop/backups/ --offlineimap-config-file /Users/frizlab/Desktop/backups/offlineimapconfig --offlineimap-output /Users/frizlab/Desktop/offlineimap.log --emails-to-backup valentino.di-nardo.disabled@happn.fr"
+            argument = "backup mails --destination /Users/frizlab/Desktop/backups/ --offlineimap-config-file /Users/frizlab/Desktop/backups/offlineimapconfig --offlineimap-output /Users/frizlab/Desktop/offlineimap.log --emails-to-backup francois.lamboley@happn.fr"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "backup github --destination /Users/frizlab/Downloads/GitHub\ Backups --orgname happn-app"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "devtest gmailapi"
@@ -112,7 +112,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "devtest curtest"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "list-users"

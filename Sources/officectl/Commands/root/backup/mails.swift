@@ -9,32 +9,48 @@ import Guaka
 import Darwin
 import Foundation
 
+import OfficeKit
 
 
-let backupMailCommand = Command(
-	usage: "mails", configuration: configuration, run: execute
-)
 
-private func configuration(command: Command) {
-	command.add(
-		flags: [
-			Flag(longName: "offlineimap-config-file", type: String.self, description: "The path to the config file to use (WILL BE OVERWRITTEN) for offlineimap.", required: true),
-			Flag(longName: "destination-dir", type: String.self, description: "The folder in which the backuped mails will go. There will be one folder per backed account.", required: true),
-			Flag(longName: "max-concurrent-account-sync", type: Int.self, description: "The maximum number of concurrent sync that will be done by offlineimap.", required: false),
-			Flag(longName: "offlineimap-output", type: String.self, description: "A path to a file in which the offlineimap output will be written.", required: false)
-		]
-	)
-}
-
-private func execute(command: Command, flags: Flags, args: [String]) {
-	let options = BackupMailOptions(
-		users: backupConfig.backedUpUsers, superuser: rootConfig.superuser,
-		offlineimapConfigFileURL: URL(fileURLWithPath: flags.getString(name: "offlineimap-config-file")!, isDirectory: false),
-		backupDestinationFolder: URL(fileURLWithPath: flags.getString(name: "destination-dir")!, isDirectory: true),
-		maxConcurrentSync: flags.getInt(name: "max-concurrent-account-sync"),
-		offlineimapOutputFileURL: flags.getString(name: "offlineimap-output").map{ URL(fileURLWithPath: $0, isDirectory: false) }
-	)
-	backupMail(options: options, fromCommand: backupMailCommand)
+class BackupMailsOperation : CommandOperation {
+	
+	let googleConnectorOperation: GetConnectedGoogleConnector
+	
+	override init(command c: Command, flags f: Flags, arguments args: [String]) {
+		do {
+			let scopes = f.getString(name: "scopes")!
+			let userBehalf = f.getString(name: "google-admin-email")!
+			googleConnectorOperation = try GetConnectedGoogleConnector(flags: f, scope: Set(scopes.components(separatedBy: ",")), userBehalf: userBehalf)
+		} catch {
+			c.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)
+		}
+		
+		super.init(command: c, flags: f, arguments: args)
+//	let options = BackupMailOptions(
+//		users: backupConfig.backedUpUsers, superuser: rootConfig.superuser,
+//		offlineimapConfigFileURL: URL(fileURLWithPath: flags.getString(name: "offlineimap-config-file")!, isDirectory: false),
+//		backupDestinationFolder: URL(fileURLWithPath: flags.getString(name: "destination")!, isDirectory: true),
+//		maxConcurrentSync: flags.getInt(name: "max-concurrent-account-sync"),
+//		offlineimapOutputFileURL: flags.getString(name: "offlineimap-output").map{ URL(fileURLWithPath: $0, isDirectory: false) }
+//	)
+//	backupMail(options: options, fromCommand: backupMailCommand)
+	}
+	
+	override func startBaseOperation(isRetry: Bool) {
+		/* Let's make sure we have a connected Google connector */
+		if let e = googleConnectorOperation.connectionError as NSError? {
+			command.fail(statusCode: e.code, errorMessage: e.localizedDescription)
+		}
+		
+		print("hello")
+		baseOperationEnded()
+	}
+	
+	override var isAsynchronous: Bool {
+		return false
+	}
+	
 }
 
 
@@ -42,7 +58,6 @@ private func execute(command: Command, flags: Flags, args: [String]) {
 
 struct BackupMailOptions {
 	let users: [User]
-	let superuser: Superuser
 	
 	let offlineimapConfigFileURL: URL
 	let backupDestinationFolder: URL
@@ -76,7 +91,6 @@ private class Nop : NSObject {
 class OfflineImapManager {
 	
 	let users: [User]
-	let superuser: Superuser
 	let destinationFolderURL: URL
 	let configurationFileURL: URL
 	
@@ -85,7 +99,6 @@ class OfflineImapManager {
 	
 	init(backupMailOptions: BackupMailOptions) {
 		users = backupMailOptions.users
-		superuser = backupMailOptions.superuser
 		destinationFolderURL = backupMailOptions.backupDestinationFolder
 		configurationFileURL = backupMailOptions.offlineimapConfigFileURL
 		maxConcurrentSync = backupMailOptions.maxConcurrentSync
@@ -250,7 +263,7 @@ class OfflineImapManager {
 		
 		var tokenForUsers = [User: String]()
 		for user in users {
-			guard let (token, expirationDate) = try? user.accessToken(forScopes: ["https://mail.google.com/"], withSuperuser: superuser, forceRegeneration: true) else {
+			guard let (token, expirationDate) = try? user.accessToken(forScopes: ["https://mail.google.com/"], withSuperuser: NSNull(), forceRegeneration: true) else {
 				print("Skipping user with unretrievable access token: \(user)")
 				continue
 			}

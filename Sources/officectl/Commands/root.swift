@@ -24,18 +24,3 @@ class RootOperation : CommandOperation {
 	}
 	
 }
-
-/* ***** Config Object ***** */
-
-@available(*, deprecated)
-var rootConfig: RootConfig!
-
-struct RootConfig {
-	
-	let adminEmail: String
-	let googleConnector: GoogleJWTConnector
-	
-	@available(*, deprecated)
-	let superuser: Superuser
-	
-}
