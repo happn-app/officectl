@@ -53,7 +53,7 @@ func configure() -> Command {
 		Flag(longName: "to",   type: String.self, description: "The services to which the directory will be synchronized to. This is a comma-separated list.", required: true)
 	]
 	
-	let devtestCommand = Command(usage: "devtest",    flags: [],            parent: rootCommand, run: { command, flags, args in execute(operation: DevTestOperation(command: command, flags: flags, arguments: args)) })
+	let devtestCommand = Command(usage: "devtest",    flags: [],            parent: rootCommand, run: { command, flags, args in execute(command: command, with: devTest(flags: flags, arguments: args, asyncConfig: asyncConfig)) })
 	let _              = Command(usage: "get-token",  flags: getTokenFlags, parent: rootCommand, run: { command, flags, args in execute(operation: GetTokenOperation(command: command, flags: flags, arguments: args)) })
 	let _              = Command(usage: "list-users", flags: [],            parent: rootCommand, run: { command, flags, args in execute(operation: ListUsersOperation(command: command, flags: flags, arguments: args)) })
 	let backupCommand  = Command(usage: "backup",     flags: backupFlags,   parent: rootCommand, run: { command, flags, args in execute(operation: BackupOperation(command: command, flags: flags, arguments: args)) })

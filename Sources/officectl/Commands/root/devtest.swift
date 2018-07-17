@@ -8,16 +8,12 @@
 import Guaka
 import Foundation
 
+import NIO
+
+import OfficeKit
 
 
-class DevTestOperation : CommandOperation {
-	
-	override func startBaseOperation(isRetry: Bool) {
-		command.fail(statusCode: 1, errorMessage: "Please choose what to test")
-	}
-	
-	override var isAsynchronous: Bool {
-		return false
-	}
-	
+
+func devTest(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
+	return asyncConfig.eventLoop.newFailedFuture(error: NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please choose what to test"]))
 }
