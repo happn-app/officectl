@@ -7,14 +7,16 @@
 
 import Foundation
 
-import OfficeKit
-
 import AsyncOperationResult
 import Guaka
+import NIO
 import RetryingOperation
 
+import OfficeKit
 
 
+
+@available(*, deprecated, message: "Use NIO’s Promises now.")
 class CommandOperation : RetryingOperation {
 	
 	let command: Command
@@ -27,6 +29,11 @@ class CommandOperation : RetryingOperation {
 		arguments = args
 	}
 	
+}
+
+func execute(command: Command, with future: EventLoopFuture<Void>) {
+	do    {try future.wait()}
+	catch {command.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)}
 }
 
 /** Call this in the “run” block of a command. */

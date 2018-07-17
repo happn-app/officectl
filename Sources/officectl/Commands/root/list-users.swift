@@ -5,8 +5,9 @@
  * Created by François Lamboley on 6/26/18.
  */
 
-import Guaka
 import Foundation
+
+import Guaka
 
 import OfficeKit
 
@@ -28,6 +29,10 @@ class ListUsersOperation : CommandOperation {
 		super.init(command: c, flags: f, arguments: args)
 		
 		addDependency(googleConnectorOperation)
+	}
+	
+	override var isAsynchronous: Bool {
+		return true
 	}
 	
 	override func startBaseOperation(isRetry: Bool) {
@@ -59,7 +64,7 @@ class ListUsersOperation : CommandOperation {
 			else {
 				var i = 1
 				for user in self.users {
-					print(user.primaryEmail + ",", terminator: "")
+					print(user.primaryEmail.stringValue + ",", terminator: "")
 					if i == 69 {print(); print(); i = 0}
 					i += 1
 				}
@@ -68,10 +73,6 @@ class ListUsersOperation : CommandOperation {
 			}
 		}
 		op.start()
-	}
-	
-	override var isAsynchronous: Bool {
-		return true
 	}
 	
 }

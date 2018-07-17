@@ -17,15 +17,25 @@ public struct GoogleUser : Codable {
 		
 	}
 	
+	public struct Name : Codable {
+		
+		var givenName: String
+		var familyName: String
+		var fullName: String
+		
+	}
+	
 	public var kind: Kind
 	public var etag: String?
 	
 	public var id: String
 	public var customerId: String
 	
-	public var primaryEmail: String
-	public var aliases: [String]?
-	public var nonEditableAliases: [String]?
+	public var name: Name
+	
+	public var primaryEmail: Email
+	public var aliases: [Email]?
+	public var nonEditableAliases: [Email]?
 	public var includeInGlobalAddressList: Bool
 	
 	public var isAdmin: Bool

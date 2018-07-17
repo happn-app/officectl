@@ -6,8 +6,8 @@
         "repositoryURL": "git@github.com:happn-app/AsyncOperationResult.git",
         "state": {
           "branch": null,
-          "revision": "8d5cd339143bb7fd7da66d5977ce36325ccf51f1",
-          "version": "1.0.3"
+          "revision": "27a69817521f7a47a1f466cd094bbc2e4ad4e099",
+          "version": "1.0.4"
         }
       },
       {
@@ -51,8 +51,8 @@
         "repositoryURL": "https://github.com/vapor/fluent-sqlite.git",
         "state": {
           "branch": null,
-          "revision": "83075582da7414e5b3cdf179266381dec5a106b0",
-          "version": "3.0.0-rc.4.0.1"
+          "revision": "8262e8aa3f66a4f1d5c5d6cbddfd0a3b12cf5e31",
+          "version": "3.0.0-rc.4.0.2"
         }
       },
       {
@@ -105,8 +105,8 @@
         "repositoryURL": "https://github.com/vapor/sqlite.git",
         "state": {
           "branch": null,
-          "revision": "500748e7bd9d19b9beeba5b4bccbe751741eb280",
-          "version": "3.0.0-rc.4.1"
+          "revision": "386a6ed934017c1c9cba4d44b52e00dd5f9fd8d6",
+          "version": "3.0.0-rc.4.1.1"
         }
       },
       {

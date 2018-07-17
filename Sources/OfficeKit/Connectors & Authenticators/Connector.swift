@@ -44,10 +44,10 @@ public extension Connector {
 		return currentScope != nil
 	}
 	
-	func connect(scope: ScopeType, handler: @escaping (_ error: Error?) -> Void) {
+	func connect(scope: ScopeType, handlerQueue: DispatchQueue = .main, handler: @escaping (_ error: Error?) -> Void) {
 		handlerOperationQueue.addToQueue{ stopOperationHandler in
 			self.unsafeConnect(scope: scope, handler: { error in
-				DispatchQueue.main.async{
+				handlerQueue.async{
 					handler(error)
 					stopOperationHandler()
 				}
@@ -55,10 +55,10 @@ public extension Connector {
 		}
 	}
 	
-	func disconnect(handler: @escaping (_ error: Error?) -> Void) {
+	func disconnect(handlerQueue: DispatchQueue = .main, handler: @escaping (_ error: Error?) -> Void) {
 		handlerOperationQueue.addToQueue{ stopOperationHandler in
 			self.unsafeDisconnect(handler: { error in
-				DispatchQueue.main.async{
+				handlerQueue.async{
 					handler(error)
 					stopOperationHandler()
 				}
