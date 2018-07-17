@@ -8,29 +8,50 @@
 import Foundation
 
 import Guaka
+import NIO
+
+import OfficeKit
 
 
 
-class SyncOperation : CommandOperation {
-	
-	override init(command c: Command, flags f: Flags, arguments args: [String]) {
-		switch f.getString(name: "from")!.lowercased() {
-		case "google": ()
-		case "ldap": ()
-		default: ()
+func sync(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
+	do {
+		let fromStr = f.getString(name: "from")!
+		let happnUsersFuture: EventLoopFuture<[HappnUser]>
+		switch fromStr.lowercased() {
+		case "google": happnUsersFuture = try happnUsersFromGoogle(flags: f, asyncConfig: asyncConfig)
+		case "ldap":   happnUsersFuture = try happnUsersFromLDAP(flags: f, asyncConfig: asyncConfig)
+		default: throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid \"from\" value for syncing directories: \(fromStr)"])
 		}
 		
-		super.init(command: c, flags: f, arguments: args)
+		let f = happnUsersFuture.then{ happnUsers -> EventLoopFuture<Void> in
+			print(happnUsers)
+			print(f.getString(name: "to")!.split(separator: ","))
+			return asyncConfig.eventLoop.newSucceededFuture(result: ())
+		}
+		return f
+	} catch {
+		return asyncConfig.eventLoop.newFailedFuture(error: error)
 	}
-	
-	override func startBaseOperation(isRetry: Bool) {
-		print()
-		print(flags.getString(name: "to")!.split(separator: ","))
-		command.fail(statusCode: 1, errorMessage: "Todo")
+}
+
+private func happnUsersFromGoogle(flags f: Flags, asyncConfig: AsyncConfig) throws -> EventLoopFuture<[HappnUser]> {
+	let userBehalf = f.getString(name: "google-admin-email")!
+	let scope = Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly")
+	let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
+	let f = googleConnector.connect(scope: scope, asyncConfig: asyncConfig)
+	.then{ _ -> EventLoopFuture<[GoogleUser]> in
+		let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
+		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { (searchOp) -> [GoogleUser] in try searchOp.result.successValueOrThrow() })
 	}
-	
-	override var isAsynchronous: Bool {
-		return false
+	.map{ (googleUsers) -> [HappnUser] in
+		return googleUsers.map{ user in
+			HappnUser(googleUser: user)
+		}
 	}
-	
+	return f
+}
+
+private func happnUsersFromLDAP(flags f: Flags, asyncConfig: AsyncConfig) throws -> EventLoopFuture<[HappnUser]> {
+	return asyncConfig.eventLoop.newFailedFuture(error: NSError(domain: "com.happn.officectl", code: 255, userInfo: [NSLocalizedDescriptionKey: "Not implemented"]))
 }
