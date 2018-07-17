@@ -8,71 +8,35 @@
 import Foundation
 
 import Guaka
+import NIO
 
 import OfficeKit
 
 
 
-class ListUsersOperation : CommandOperation {
-	
-	var users = [GoogleUser]()
-	
-	override init(command c: Command, flags f: Flags, arguments args: [String]) {
-		do {
-			let userBehalf = f.getString(name: "google-admin-email")!
-			let scope = Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly")
-			googleConnectorOperation = try GetConnectedGoogleConnector(flags: f, scope: scope, userBehalf: userBehalf)
-		} catch {
-			c.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)
+func listUsers(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
+	do {
+		let userBehalf = f.getString(name: "google-admin-email")!
+		let scope = Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly")
+		let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
+		
+		let f = googleConnector.connect(scope: scope, asyncConfig: asyncConfig)
+		.then{ _ -> EventLoopFuture<[GoogleUser]> in
+			let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
+			return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { (searchOp) -> [GoogleUser] in try searchOp.result.successValueOrThrow() })
 		}
-		
-		super.init(command: c, flags: f, arguments: args)
-		
-		addDependency(googleConnectorOperation)
-	}
-	
-	override var isAsynchronous: Bool {
-		return true
-	}
-	
-	override func startBaseOperation(isRetry: Bool) {
-		if let e = googleConnectorOperation.connectionError as NSError? {
-			command.fail(statusCode: e.code, errorMessage: e.localizedDescription)
-		}
-		
-		fetchNextPage(nextPageToken: nil)
-	}
-	
-	private let googleConnectorOperation: GetConnectedGoogleConnector
-	private var googleConnector: GoogleJWTConnector {return googleConnectorOperation.connector}
-	
-	private func fetchNextPage(nextPageToken: String?) {
-		var urlComponents = URLComponents(string: "https://www.googleapis.com/admin/directory/v1/users")!
-		urlComponents.queryItems = [URLQueryItem(name: "domain", value: "happn.fr")]
-		if let t = nextPageToken {urlComponents.queryItems!.append(URLQueryItem(name: "pageToken", value: t))}
-		
-		let decoder = JSONDecoder()
-		decoder.dateDecodingStrategy = .customISO8601
-		decoder.keyDecodingStrategy = .useDefaultKeys
-		let op = AuthenticatedJSONOperation<GoogleUsersList>(url: urlComponents.url!, authenticator: googleConnector.authenticate, decoder: decoder)
-		op.completionBlock = {
-			guard let o = op.decodedObject else {
-				self.command.fail(statusCode: 1, errorMessage: op.finalError?.localizedDescription ?? "Unknown error while fetching the users")
+		.then{ users -> EventLoopFuture<Void> in
+			var i = 1
+			for user in users {
+				print(user.primaryEmail.stringValue + ",", terminator: "")
+				if i == 69 {print(); print(); i = 0}
+				i += 1
 			}
-			self.users.append(contentsOf: o.users)
-			if let t = o.nextPageToken {self.fetchNextPage(nextPageToken: t)}
-			else {
-				var i = 1
-				for user in self.users {
-					print(user.primaryEmail.stringValue + ",", terminator: "")
-					if i == 69 {print(); print(); i = 0}
-					i += 1
-				}
-				print()
-				self.baseOperationEnded()
-			}
+			print()
+			return asyncConfig.eventLoop.newSucceededFuture(result: ())
 		}
-		op.start()
+		return f
+	} catch {
+		return asyncConfig.eventLoop.newFailedFuture(error: error)
 	}
-	
 }

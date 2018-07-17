@@ -14,7 +14,7 @@ import OfficeKit
 
 
 class GetTokenOperation : CommandOperation {
-	
+	/*
 	let googleConnectorOperation: GetConnectedGoogleConnector
 	
 	override init(command c: Command, flags f: Flags, arguments args: [String]) {
@@ -42,6 +42,6 @@ class GetTokenOperation : CommandOperation {
 	
 	override var isAsynchronous: Bool {
 		return false
-	}
+	}*/
 	
 }

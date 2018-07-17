@@ -15,13 +15,13 @@ import OfficeKit
 
 class BackupMailsOperation : CommandOperation {
 	
-	let googleConnectorOperation: GetConnectedGoogleConnector
+//	let googleConnectorOperation: GetConnectedGoogleConnector
 	
 	override init(command c: Command, flags f: Flags, arguments args: [String]) {
 		do {
 			let scopes = f.getString(name: "scopes")!
 			let userBehalf = f.getString(name: "google-admin-email")!
-			googleConnectorOperation = try GetConnectedGoogleConnector(flags: f, scope: Set(scopes.components(separatedBy: ",")), userBehalf: userBehalf)
+//			googleConnectorOperation = try GetConnectedGoogleConnector(flags: f, scope: Set(scopes.components(separatedBy: ",")), userBehalf: userBehalf)
 		} catch {
 			c.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)
 		}
@@ -39,9 +39,9 @@ class BackupMailsOperation : CommandOperation {
 	
 	override func startBaseOperation(isRetry: Bool) {
 		/* Let's make sure we have a connected Google connector */
-		if let e = googleConnectorOperation.connectionError as NSError? {
-			command.fail(statusCode: e.code, errorMessage: e.localizedDescription)
-		}
+//		if let e = googleConnectorOperation.connectionError as NSError? {
+//			command.fail(statusCode: e.code, errorMessage: e.localizedDescription)
+//		}
 		
 		print("hello")
 		baseOperationEnded()

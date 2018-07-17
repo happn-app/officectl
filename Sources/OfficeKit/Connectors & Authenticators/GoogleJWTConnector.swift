@@ -31,22 +31,22 @@ public class GoogleJWTConnector : Connector, Authenticator {
 	
 	public let handlerOperationQueue = HandlerOperationQueue(name: "GoogleJWTConnector")
 	
-	public convenience init?(flags: Flags, userBehalf: String?) {
-		guard let path = flags.getString(name: "google-superuser-json-creds") else {return nil}
-		self.init(jsonCredentialsURL: URL(fileURLWithPath: path, isDirectory: false), userBehalf: userBehalf)
+	public convenience init(flags: Flags, userBehalf: String?) throws {
+		guard let path = flags.getString(name: "google-superuser-json-creds") else {
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "The google-superuser-json-creds flag is needed when initing a Google connector from flags."])
+		}
+		try self.init(jsonCredentialsURL: URL(fileURLWithPath: path, isDirectory: false), userBehalf: userBehalf)
 	}
 	
-	public init?(jsonCredentialsURL: URL, userBehalf u: String?) {
+	public init(jsonCredentialsURL: URL, userBehalf u: String?) throws {
 		/* Decode JSON credentials */
 		let jsonDecoder = JSONDecoder()
 		jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-		guard let superuserCreds = try? jsonDecoder.decode(CredentialsFile.self, from: Data(contentsOf: jsonCredentialsURL)) else {
-			return nil
-		}
+		let superuserCreds = try jsonDecoder.decode(CredentialsFile.self, from: Data(contentsOf: jsonCredentialsURL))
 		
 		/* We expect to have a service account */
 		guard superuserCreds.type == "service_account" else {
-			return nil
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid service account: the superuser credentials does not have a \"service_account\" type."])
 		}
 		
 		/* Parse the PEM key from the credentials file */
@@ -55,7 +55,7 @@ public class GoogleJWTConnector : Connector, Authenticator {
 			SecItemImport(Data(superuserCreds.privateKey.utf8) as CFData, nil, nil, nil, [], nil, nil, &keys) == 0,
 			let key = (keys as? [SecKey])?.first
 		else {
-			return nil
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid service account: cannot read the private key."])
 		}
 		
 		userBehalf = u
