@@ -33,7 +33,7 @@ func configure() -> Command {
 		Flag(longName: "happn-refresh-token",         type: String.self, description: "A refresh token to authenticate happn.", inheritable: true)
 	]
 	
-	let rootCommand = Command(usage: "officectl", flags: rootFlags, run: { command, flags, args in execute(operation: RootOperation(command: command, flags: flags, arguments: args)) })
+	let rootCommand = Command(usage: "officectl", flags: rootFlags, run: { command, flags, args in execute(command: command, with: root(flags: flags, arguments: args, asyncConfig: asyncConfig)) })
 	
 	
 	/* ***********************

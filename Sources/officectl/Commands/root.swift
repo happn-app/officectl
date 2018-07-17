@@ -6,21 +6,14 @@
  */
 
 import Foundation
-import Security
 
 import Guaka
-import RetryingOperation
+import NIO
+
+import OfficeKit
 
 
 
-class RootOperation : CommandOperation {
-	
-	override func startBaseOperation(isRetry: Bool) {
-		command.fail(statusCode: 1, errorMessage: "Please choose a command verb")
-	}
-	
-	override var isAsynchronous: Bool {
-		return false
-	}
-	
+func root(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
+	return asyncConfig.eventLoop.newFailedFuture(error: NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please choose a command verb"]))
 }

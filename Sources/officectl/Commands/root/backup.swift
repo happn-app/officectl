@@ -5,9 +5,9 @@
  * Created by François Lamboley on 6/26/18.
  */
 
-import Guaka
 import Foundation
 
+import Guaka
 import NIO
 
 import OfficeKit
