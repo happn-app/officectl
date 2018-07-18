@@ -34,7 +34,7 @@ func backupMails(flags f: Flags, arguments args: [String], asyncConfig: AsyncCon
 			let promise: EventLoopPromise<Void> = asyncConfig.eventLoop.newPromise()
 			asyncConfig.defaultDispatchQueue.async{
 				let options = BackupMailOptions(
-					mainConnector: googleConnector,
+					queue: asyncConfig.defaultOperationQueue, mainConnector: googleConnector,
 					users: allUsers.filter{ usersFilter?.contains($0.primaryEmail.stringValue) ?? true },
 					offlineimapConfigFileURL: URL(fileURLWithPath: f.getString(name: "offlineimap-config-file")!, isDirectory: false),
 					backupDestinationFolder: URL(fileURLWithPath: f.getString(name: "destination")!, isDirectory: true),
@@ -73,19 +73,23 @@ private class Nop : NSObject {
 }
 
 struct BackupMailOptions {
-	let mainConnector: GoogleJWTConnector
 	
+	let queue: OperationQueue
+	
+	let mainConnector: GoogleJWTConnector
 	let users: [GoogleUser]
 	
 	let offlineimapConfigFileURL: URL
 	let backupDestinationFolder: URL
 	let maxConcurrentSync: Int?
 	let offlineimapOutputFileURL: URL?
+	
 }
 
 /* Modernize this, if possible (futures, etc.) */
 class OfflineImapManager {
 	
+	let queue: OperationQueue
 	let mainConnector: GoogleJWTConnector
 	
 	let users: [GoogleUser]
@@ -96,6 +100,7 @@ class OfflineImapManager {
 	let offlineimapOutputFileURL: URL?
 	
 	init(backupMailOptions: BackupMailOptions) {
+		queue = backupMailOptions.queue
 		mainConnector = backupMailOptions.mainConnector
 		users = backupMailOptions.users
 		destinationFolderURL = backupMailOptions.backupDestinationFolder
@@ -135,8 +140,8 @@ class OfflineImapManager {
 	private var currentOfflineimapProcess: Process? {
 		didSet {
 			if currentOfflineimapProcess != nil {
-				signalNotifObservers.append(NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "SigInt"),  object: nil, queue: OperationQueue.main) { [weak self] _ in guard let strongSelf = self else {return}; strongSelf.interrupted = true; if strongSelf.currentOfflineimapProcess?.isRunning ?? false {strongSelf.currentOfflineimapProcess?.interrupt()} })
-				signalNotifObservers.append(NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "SigTerm"), object: nil, queue: OperationQueue.main) { [weak self] _ in guard let strongSelf = self else {return}; strongSelf.interrupted = true; if strongSelf.currentOfflineimapProcess?.isRunning ?? false {strongSelf.currentOfflineimapProcess?.terminate()} })
+				signalNotifObservers.append(NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "SigInt"),  object: nil, queue: queue) { [weak self] _ in guard let strongSelf = self else {return}; strongSelf.interrupted = true; if strongSelf.currentOfflineimapProcess?.isRunning ?? false {strongSelf.currentOfflineimapProcess?.interrupt()} })
+				signalNotifObservers.append(NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "SigTerm"), object: nil, queue: queue) { [weak self] _ in guard let strongSelf = self else {return}; strongSelf.interrupted = true; if strongSelf.currentOfflineimapProcess?.isRunning ?? false {strongSelf.currentOfflineimapProcess?.terminate()} })
 				signal(SIGINT)  { _ in print("Received SIGINT");  NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SigInt"),  object: nil) }
 				signal(SIGTERM) { _ in print("Received SIGTERM"); NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SigTerm"), object: nil) }
 			} else {
@@ -156,7 +161,7 @@ class OfflineImapManager {
 			}
 			
 			if let pipe = currentOfflineimapOutputPipe {
-				processDataReceivedObserver = NotificationCenter.default.addObserver(forName: NSNotification.Name.NSFileHandleDataAvailable, object: nil, queue: OperationQueue.main) { [weak pipe] _ in
+				processDataReceivedObserver = NotificationCenter.default.addObserver(forName: .NSFileHandleDataAvailable, object: nil, queue: queue) { [weak pipe] _ in
 					guard let pipe = pipe else {return}
 					
 					/* TODO: Process the new data. */
