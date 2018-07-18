@@ -149,7 +149,7 @@ class OfflineImapManager {
 			} else {
 				signal(SIGINT,  nil)
 				signal(SIGTERM, nil)
-				signalNotifObservers.forEach { NotificationCenter.default.removeObserver($0) }
+				signalNotifObservers.forEach{ NotificationCenter.default.removeObserver($0) }
 				signalNotifObservers.removeAll()
 			}
 		}
