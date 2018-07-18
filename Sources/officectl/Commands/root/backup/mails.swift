@@ -99,6 +99,8 @@ class OfflineImapManager {
 	let maxConcurrentSync: Int?
 	let offlineimapOutputFileURL: URL?
 	
+	private var runLoop: RunLoop!
+	
 	init(backupMailOptions: BackupMailOptions) {
 		queue = backupMailOptions.queue
 		mainConnector = backupMailOptions.mainConnector
@@ -112,15 +114,15 @@ class OfflineImapManager {
 	func run() throws {
 		print("Starting mail backup")
 		
+		runLoop = RunLoop.current
+		
 		try startNewOfflineimapProcess()
 		
-		var ok = true
-		let rl = RunLoop.current
-		rl.add(Port(), forMode: .defaultRunLoopMode) /* Forces the runloop to continue when all timers, etc. are gone. */
-		while ok {
+		runLoop.add(Port(), forMode: .defaultRunLoopMode) /* Forces the runloop to continue when all timers, etc. are gone. */
+		while shouldKeepRunningRunLoop {
 			autoreleasepool {
 //				print("New Bg RunLoop run")
-				ok = (shouldKeepRunningRunLoop && rl.run(mode: .defaultRunLoopMode, before: .distantFuture))
+				_ = runLoop.run(mode: .defaultRunLoopMode, before: Date(timeIntervalSinceNow: 0.01))
 			}
 		}
 		
@@ -184,10 +186,6 @@ class OfflineImapManager {
 	private func stopRunLoop() {
 		print("Stopping runloop")
 		shouldKeepRunningRunLoop = false
-		/* Force trigger a new runloop event to get out. */
-		Nop().perform(#selector(Nop.nop), with: nil, afterDelay: 0)
-		/* Apparently triggering a new runloop event with a block Timer does not work... */
-//		RunLoop.current.add(Timer(timeInterval: 0, repeats: false, block: { _ in print("hello!") }), forMode: .defaultRunLoopMode)
 	}
 	
 	private func startNewOfflineimapProcess() throws {
@@ -222,7 +220,7 @@ class OfflineImapManager {
 				strongSelf.stopRunLoop()
 			}
 		}
-		RunLoop.current.add(t, forMode: .defaultRunLoopMode)
+		runLoop.add(t, forMode: .defaultRunLoopMode)
 		timerConfigExpirationDate = t
 		
 		if let offlineimapOutputFileURL = offlineimapOutputFileURL {
