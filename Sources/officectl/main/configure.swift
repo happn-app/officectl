@@ -87,3 +87,9 @@ func configure() -> Command {
 	
 	return rootCommand
 }
+
+
+private func execute(command: Command, with future: EventLoopFuture<Void>) {
+	do    {try future.wait()}
+	catch {command.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)}
+}
