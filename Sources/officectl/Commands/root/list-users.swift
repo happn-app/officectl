@@ -17,10 +17,9 @@ import OfficeKit
 func listUsers(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
 	do {
 		let userBehalf = f.getString(name: "google-admin-email")!
-		let scope = Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly")
 		let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
 		
-		let f = googleConnector.connect(scope: scope, asyncConfig: asyncConfig)
+		let f = googleConnector.connect(scope: GoogleUserSearchOperation.searchScopes, asyncConfig: asyncConfig)
 		.then{ _ -> EventLoopFuture<[GoogleUser]> in
 			let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
 			return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { try $0.result.successValueOrThrow() })

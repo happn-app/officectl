@@ -27,6 +27,9 @@ public class GoogleJWTConnector : Connector, Authenticator {
 	public var token: String? {
 		return auth?.token
 	}
+	public var expirationDate: Date? {
+		return auth?.expirationDate
+	}
 	
 	public let handlerOperationQueue = HandlerOperationQueue(name: "GoogleJWTConnector")
 	
@@ -55,22 +58,15 @@ public class GoogleJWTConnector : Connector, Authenticator {
 		superuserEmail = superuserCreds.clientEmail
 	}
 	
-	/* ********************************
-      MARK: - Connector Implementation
-	   ******************************** */
-	
-	public func authenticate(request: RequestType, handler: @escaping (AsyncOperationResult<RequestType>, Any?) -> Void) {
-		/* Make sure we're connected */
-		guard let auth = auth else {
-			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
-			return
-		}
-		
-		/* Add the “Authorization” header to the request */
-		var request = request
-		request.addValue("Bearer \(auth.token)", forHTTPHeaderField: "Authorization")
-		handler(.success(request), nil)
+	public init(from connector: GoogleJWTConnector, userBehalf u: String?) {
+		userBehalf = u
+		privateKey = connector.privateKey
+		superuserEmail = connector.superuserEmail
 	}
+	
+	/* ********************************
+	   MARK: - Connector Implementation
+	   ******************************** */
 	
 	public func unsafeConnect(scope: ScopeType, handler: @escaping (Error?) -> Void) {
 		/* Retrieve connection information */
@@ -137,6 +133,23 @@ public class GoogleJWTConnector : Connector, Authenticator {
 			handler(op.finalError)
 		}
 		op.start()
+	}
+	
+	/* ************************************
+	   MARK: - Authenticator Implementation
+	   ************************************ */
+	
+	public func authenticate(request: RequestType, handler: @escaping (AsyncOperationResult<RequestType>, Any?) -> Void) {
+		/* Make sure we're connected */
+		guard let auth = auth else {
+			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
+			return
+		}
+		
+		/* Add the “Authorization” header to the request */
+		var request = request
+		request.addValue("Bearer \(auth.token)", forHTTPHeaderField: "Authorization")
+		handler(.success(request), nil)
 	}
 	
 	/* ***************

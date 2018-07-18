@@ -15,55 +15,67 @@ import OfficeKit
 
 
 
-//func backupMails(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
-//	return asyncConfig.eventLoop.newFailedFuture(error: NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please choose what to test"]))
-//}
-
-class BackupMailsOperation : CommandOperation {
-	
-//	let googleConnectorOperation: GetConnectedGoogleConnector
-	
-	override init(command c: Command, flags f: Flags, arguments args: [String]) {
-		do {
-			let scopes = f.getString(name: "scopes")!
-			let userBehalf = f.getString(name: "google-admin-email")!
-//			googleConnectorOperation = try GetConnectedGoogleConnector(flags: f, scope: Set(scopes.components(separatedBy: ",")), userBehalf: userBehalf)
-		} catch {
-			c.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)
+func backupMails(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
+	do {
+		let userBehalf = f.getString(name: "google-admin-email")!
+		let usersFilter = (f.getString(name: "emails-to-backup")?.components(separatedBy: ",")).flatMap{ Set($0) }
+		
+		let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
+		let f = googleConnector.connect(scope: GoogleUserSearchOperation.searchScopes, asyncConfig: asyncConfig)
+		.then{ _ -> EventLoopFuture<[GoogleUser]> in
+			let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
+			return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
 		}
-		
-		super.init(command: c, flags: f, arguments: args)
-//	let options = BackupMailOptions(
-//		users: backupConfig.backedUpUsers, superuser: rootConfig.superuser,
-//		offlineimapConfigFileURL: URL(fileURLWithPath: flags.getString(name: "offlineimap-config-file")!, isDirectory: false),
-//		backupDestinationFolder: URL(fileURLWithPath: flags.getString(name: "destination")!, isDirectory: true),
-//		maxConcurrentSync: flags.getInt(name: "max-concurrent-account-sync"),
-//		offlineimapOutputFileURL: flags.getString(name: "offlineimap-output").map{ URL(fileURLWithPath: $0, isDirectory: false) }
-//	)
-//	backupMail(options: options, fromCommand: backupMailCommand)
+		.then{ happnFrUsers -> EventLoopFuture<[GoogleUser]> in
+			let searchOp = GoogleUserSearchOperation(searchedDomain: "happnambassadeur.com", googleConnector: googleConnector)
+			return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { try happnFrUsers + $0.result.successValueOrThrow() })
+		}
+		.then{ allUsers -> EventLoopFuture<Void> in
+			let promise: EventLoopPromise<Void> = asyncConfig.eventLoop.newPromise()
+			asyncConfig.defaultDispatchQueue.async{
+				let options = BackupMailOptions(
+					mainConnector: googleConnector,
+					users: allUsers.filter{ usersFilter?.contains($0.primaryEmail.stringValue) ?? true },
+					offlineimapConfigFileURL: URL(fileURLWithPath: f.getString(name: "offlineimap-config-file")!, isDirectory: false),
+					backupDestinationFolder: URL(fileURLWithPath: f.getString(name: "destination")!, isDirectory: true),
+					maxConcurrentSync: f.getInt(name: "max-concurrent-account-sync"),
+					offlineimapOutputFileURL: f.getString(name: "offlineimap-output").map{ URL(fileURLWithPath: $0, isDirectory: false) }
+				)
+				
+				do {
+					/* Will create the folder if not already there, does not error
+					 * out if already there. */
+					try FileManager.default.createDirectory(at: options.backupDestinationFolder, withIntermediateDirectories: true, attributes: nil)
+					
+					let mb = OfflineImapManager(backupMailOptions: options)
+					try mb.run()
+					
+					/* TODO: Linkify the backups? */
+					
+					promise.succeed(result: ())
+				} catch {
+					promise.fail(error: error)
+				}
+			}
+			return promise.futureResult
+		}
+		return f
+	} catch {
+		return asyncConfig.eventLoop.newFailedFuture(error: error)
 	}
-	
-	override func startBaseOperation(isRetry: Bool) {
-		/* Let's make sure we have a connected Google connector */
-//		if let e = googleConnectorOperation.connectionError as NSError? {
-//			command.fail(statusCode: e.code, errorMessage: e.localizedDescription)
-//		}
-		
-		print("hello")
-		baseOperationEnded()
-	}
-	
-	override var isAsynchronous: Bool {
-		return false
-	}
-	
 }
 
 
 /* ****************************************** */
 
+private class Nop : NSObject {
+	@objc func nop() {}
+}
+
 struct BackupMailOptions {
-	let users: [User]
+	let mainConnector: GoogleJWTConnector
+	
+	let users: [GoogleUser]
 	
 	let offlineimapConfigFileURL: URL
 	let backupDestinationFolder: URL
@@ -71,32 +83,12 @@ struct BackupMailOptions {
 	let offlineimapOutputFileURL: URL?
 }
 
-func backupMail(options: BackupMailOptions, fromCommand command: Command) {
-	guard options.users.count > 0 else {return}
-	
-	do {
-		/* Will create the folder if not already there, does not error out if
-		 * already there. */
-		try FileManager.default.createDirectory(at: options.backupDestinationFolder, withIntermediateDirectories: true, attributes: nil)
-		
-		let mb = OfflineImapManager(backupMailOptions: options)
-		try mb.run()
-		
-		/* TODO: Linkify the backups? */
-	} catch {
-		command.fail(statusCode: 1, errorMessage: "Received error: \(error)")
-	}
-}
-
-
-
-private class Nop : NSObject {
-	@objc func nop() {}
-}
-
+/* Modernize this, if possible (futures, etc.) */
 class OfflineImapManager {
 	
-	let users: [User]
+	let mainConnector: GoogleJWTConnector
+	
+	let users: [GoogleUser]
 	let destinationFolderURL: URL
 	let configurationFileURL: URL
 	
@@ -104,6 +96,7 @@ class OfflineImapManager {
 	let offlineimapOutputFileURL: URL?
 	
 	init(backupMailOptions: BackupMailOptions) {
+		mainConnector = backupMailOptions.mainConnector
 		users = backupMailOptions.users
 		destinationFolderURL = backupMailOptions.backupDestinationFolder
 		configurationFileURL = backupMailOptions.offlineimapConfigFileURL
@@ -267,9 +260,9 @@ class OfflineImapManager {
 		print("Generating config for offlineimap")
 		var configExpirationDate = Date.distantFuture
 		
-		var tokenForUsers = [User: String]()
+		var tokenForUsers = [GoogleUser: String]()
 		for user in users {
-			guard let (token, expirationDate) = try? user.accessToken(forScopes: ["https://mail.google.com/"], withSuperuser: NSNull(), forceRegeneration: true) else {
+			guard let (token, expirationDate) = try? retrieveToken(for: user) else {
 				print("Skipping user with unretrievable access token: \(user)")
 				continue
 			}
@@ -302,12 +295,12 @@ class OfflineImapManager {
 			print("", to: &config)
 			print("[Repository LocalRepoID\(user.id)]", to: &config)
 			print("type = Maildir", to: &config)
-			print("localfolders = \(URL(fileURLWithPath: user.email, relativeTo: destinationFolderURL).path)", to: &config)
+			print("localfolders = \(URL(fileURLWithPath: user.primaryEmail.stringValue, relativeTo: destinationFolderURL).path)", to: &config)
 			print("", to: &config)
 			print("[Repository RemoteRepoID\(user.id)]", to: &config)
 			print("type = Gmail", to: &config)
 			print("readonly = True", to: &config)
-			print("remoteuser = \(user.email)", to: &config)
+			print("remoteuser = \(user.primaryEmail.stringValue)", to: &config)
 			print("oauth2_access_token = \(token)", to: &config)
 //			print("sslcacertfile = ~/.dummycert_for_python.pem", to: &config) /* The dummycert solution works when using the System Python */
 			print("sslcacertfile = /usr/local/etc/openssl/cert.pem", to: &config) /* This is required when using homebrew’s Python (offlineimap uses Python2; should be fine with Python3) */
@@ -319,6 +312,21 @@ class OfflineImapManager {
 		try data.write(to: configurationFileURL)
 		
 		return configExpirationDate
+	}
+	
+	private func retrieveToken(for user: GoogleUser) throws -> (String, Date) {
+		let scope = Set(arrayLiteral: "https://mail.google.com/")
+		let connector = GoogleJWTConnector(from: mainConnector, userBehalf: user.primaryEmail.stringValue)
+		
+		var error: Error?
+		let semaphore = DispatchSemaphore(value: 0)
+		connector.disconnect(handlerQueue: DispatchQueue(label: "Disconnect"), handler: { _ in semaphore.signal() }); semaphore.wait()
+		connector.connect(scope: scope, handlerQueue: DispatchQueue(label: "Connect"), handler: { e in error = e; semaphore.signal() }); semaphore.wait()
+		
+		guard let token = connector.token, let expirationDate = connector.expirationDate else {
+			throw error ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown error while retrieving token for user \(user.primaryEmail.stringValue)"])
+		}
+		return (token, expirationDate)
 	}
 	
 }

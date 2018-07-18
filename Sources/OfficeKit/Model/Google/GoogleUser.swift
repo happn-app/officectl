@@ -9,7 +9,7 @@ import Foundation
 
 
 
-public struct GoogleUser : Codable {
+public struct GoogleUser : Hashable, Codable {
 	
 	public enum Kind: String, Codable {
 		
@@ -23,6 +23,14 @@ public struct GoogleUser : Codable {
 		var familyName: String
 		var fullName: String
 		
+	}
+	
+	public static func ==(_ user1: GoogleUser, _ user2: GoogleUser) -> Bool {
+		return user1.id == user2.id
+	}
+	
+	public func hash(into hasher: inout Hasher) {
+		hasher.combine(id)
 	}
 	
 	public var kind: Kind

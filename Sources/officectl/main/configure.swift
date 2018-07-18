@@ -75,7 +75,7 @@ func configure() -> Command {
 		Flag(longName: "orgname", type: String.self, description: "The organisation name from which to backup the repositories from.", required: true)
 	]
 	
-	let _ = Command(usage: "mails",  flags: backupMailsFlags,  parent: backupCommand, run: { command, flags, args in execute(operation: BackupMailsOperation(command: command, flags: flags, arguments: args)) })
+	let _ = Command(usage: "mails",  flags: backupMailsFlags,  parent: backupCommand, run: { command, flags, args in execute(command: command, with: backupMails(flags: flags, arguments: args, asyncConfig: asyncConfig)) })
 	let _ = Command(usage: "github", flags: backupGitHubFlags, parent: backupCommand, run: { command, flags, args in execute(command: command, with: backupGitHub(flags: flags, arguments: args, asyncConfig: asyncConfig)) })
 	
 	

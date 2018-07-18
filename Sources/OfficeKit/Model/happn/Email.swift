@@ -9,7 +9,7 @@ import Foundation
 
 
 
-public struct Email : Codable {
+public struct Email : Hashable, Codable {
 	
 	public var username: String
 	public var domain: String
