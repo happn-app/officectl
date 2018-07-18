@@ -29,9 +29,15 @@ public struct GoogleUser : Hashable, Codable {
 		return user1.id == user2.id
 	}
 	
+	#if swift(>=4.2)
 	public func hash(into hasher: inout Hasher) {
 		hasher.combine(id)
 	}
+	#else
+	public var hashValue: Int {
+		return id.hashValue
+	}
+	#endif
 	
 	public var kind: Kind
 	public var etag: String?
