@@ -42,7 +42,7 @@ private func happnUsersFromGoogle(flags f: Flags, asyncConfig: AsyncConfig) thro
 	let f = googleConnector.connect(scope: scope, asyncConfig: asyncConfig)
 	.then{ _ -> EventLoopFuture<[GoogleUser]> in
 		let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
-		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { (searchOp) -> [GoogleUser] in try searchOp.result.successValueOrThrow() })
+		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
 	}
 	.map{ (googleUsers) -> [HappnUser] in
 		return googleUsers.map{ user in

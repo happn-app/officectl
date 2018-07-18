@@ -76,7 +76,7 @@ func configure() -> Command {
 	]
 	
 	let _ = Command(usage: "mails",  flags: backupMailsFlags,  parent: backupCommand, run: { command, flags, args in execute(operation: BackupMailsOperation(command: command, flags: flags, arguments: args)) })
-	let _ = Command(usage: "github", flags: backupGitHubFlags, parent: backupCommand, run: { command, flags, args in execute(operation: BackupGitHubOperation(command: command, flags: flags, arguments: args)) })
+	let _ = Command(usage: "github", flags: backupGitHubFlags, parent: backupCommand, run: { command, flags, args in execute(command: command, with: backupGitHub(flags: flags, arguments: args, asyncConfig: asyncConfig)) })
 	
 	
 	/* **************************

@@ -22,7 +22,7 @@ func curTest(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig)
 	let f = c.connect(scope: (), asyncConfig: asyncConfig)
 	.then{ _ -> EventLoopFuture<[LDAPObject]> in
 		let searchOp = LDAPSearchOperation(ldapConnector: c, request: LDAPRequest(scope: .children, base: "dc=happn,dc=com", searchFilter: nil, attributesToFetch: nil))
-		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { (searchOp) -> [LDAPObject] in try searchOp.results.successValueOrThrow().results })
+		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { try $0.results.successValueOrThrow().results })
 	}
 	.then{ ldapObjects -> EventLoopFuture<Void> in
 		print(ldapObjects.compactMap{ $0.inetOrgPerson })

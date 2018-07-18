@@ -8,7 +8,6 @@
 import Foundation
 
 import AsyncOperationResult
-import Guaka
 import URLRequestOperation
 
 
@@ -30,13 +29,6 @@ public class GoogleJWTConnector : Connector, Authenticator {
 	}
 	
 	public let handlerOperationQueue = HandlerOperationQueue(name: "GoogleJWTConnector")
-	
-	public convenience init(flags: Flags, userBehalf: String?) throws {
-		guard let path = flags.getString(name: "google-superuser-json-creds") else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "The google-superuser-json-creds flag is needed when initing a Google connector from flags."])
-		}
-		try self.init(jsonCredentialsURL: URL(fileURLWithPath: path, isDirectory: false), userBehalf: userBehalf)
-	}
 	
 	public init(jsonCredentialsURL: URL, userBehalf u: String?) throws {
 		/* Decode JSON credentials */

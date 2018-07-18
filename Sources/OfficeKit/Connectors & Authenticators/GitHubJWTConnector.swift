@@ -29,7 +29,7 @@ public class GitHubJWTConnector : Connector, Authenticator {
 	
 	public let handlerOperationQueue: HandlerOperationQueue = HandlerOperationQueue(name: "GitHubJWTConnector")
 	
-	public init?(appId a: String, installationId i: String, privateKeyURL: URL) {
+	public init(appId a: String, installationId i: String, privateKeyURL: URL) throws {
 		/* Parse the PEM key from the credentials file */
 		var keys: CFArray?
 		guard
@@ -37,7 +37,7 @@ public class GitHubJWTConnector : Connector, Authenticator {
 			SecItemImport(privateKeyData as CFData, nil, nil, nil, [], nil, nil, &keys) == 0,
 			let key = (keys as? [SecKey])?.first
 		else {
-			return nil
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot read the private key."])
 		}
 		
 		appId = a

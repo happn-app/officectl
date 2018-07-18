@@ -23,7 +23,7 @@ func listUsers(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfi
 		let f = googleConnector.connect(scope: scope, asyncConfig: asyncConfig)
 		.then{ _ -> EventLoopFuture<[GoogleUser]> in
 			let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
-			return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { (searchOp) -> [GoogleUser] in try searchOp.result.successValueOrThrow() })
+			return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
 		}
 		.then{ users -> EventLoopFuture<Void> in
 			var i = 1

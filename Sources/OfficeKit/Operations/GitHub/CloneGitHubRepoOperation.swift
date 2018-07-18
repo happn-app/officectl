@@ -21,7 +21,7 @@ public class CloneGitHubRepoOperation : RetryingOperation {
 	public var cloneError: Error?
 	
 	public convenience init(in containerURL: URL, repoFullName name: String, accessToken: String) {
-		let url = URL(fileURLWithPath: name.trimmingCharacters(in: CharacterSet(charactersIn: "/")), isDirectory: true, relativeTo: containerURL)
+		let url = URL(fileURLWithPath: name.trimmingCharacters(in: CharacterSet(charactersIn: "/")), isDirectory: true, relativeTo: containerURL).appendingPathExtension("git")
 		self.init(destinationURL: url, repoFullName: name, accessToken: accessToken)
 	}
 	
@@ -48,6 +48,7 @@ public class CloneGitHubRepoOperation : RetryingOperation {
 		
 		let process = Process()
 		process.standardInput = FileHandle.nullDevice
+		process.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when git fails... */
 		process.standardOutput = FileHandle.nullDevice
 		
 		process.launchPath = "/usr/bin/git"
@@ -59,25 +60,25 @@ public class CloneGitHubRepoOperation : RetryingOperation {
 			 * but let's do things properly and call git for that. */
 			let updateRemoteProcess = Process()
 			updateRemoteProcess.standardInput = FileHandle.nullDevice
+			updateRemoteProcess.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when git fails... */
 			updateRemoteProcess.standardOutput = FileHandle.nullDevice
 			updateRemoteProcess.launchPath = process.launchPath
 			updateRemoteProcess.arguments = ["-C", destinationURL.path, "remote", "set-url", "origin", repoCloneURL]
 			updateRemoteProcess.launch()
 			updateRemoteProcess.waitUntilExit()
 			guard updateRemoteProcess.terminationStatus == 0 else {
-				cloneError = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "git exited with code \(process.terminationStatus) when updating the remote"])
+				cloneError = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "git exited with code \(updateRemoteProcess.terminationStatus) when updating the remote for repository \(repoName)"])
 				return
 			}
 			
 			process.arguments = ["-C", destinationURL.path, "remote", "update", "--prune"]
-			process.standardError = FileHandle.nullDevice /* Did not find the option to tell git to be quiet for this one... :( */
 		}
 		
 		process.launch()
 		process.waitUntilExit()
 		
 		if process.terminationStatus != 0 {
-			cloneError = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "git exited with code \(process.terminationStatus)"])
+			cloneError = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "git exited with code \(process.terminationStatus) for repository \(repoName)"])
 		}
 	}
 	
