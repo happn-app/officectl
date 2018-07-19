@@ -10,6 +10,7 @@ import Foundation
 
 import Guaka
 import NIO
+import RetryingOperation
 
 import OfficeKit
 
@@ -31,34 +32,12 @@ func backupMails(flags f: Flags, arguments args: [String], asyncConfig: AsyncCon
 			return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { try happnFrUsers + $0.result.successValueOrThrow() })
 		}
 		.then{ allUsers -> EventLoopFuture<Void> in
-			let promise: EventLoopPromise<Void> = asyncConfig.eventLoop.newPromise()
-			asyncConfig.defaultDispatchQueue.async{
-				let options = BackupMailOptions(
-					queue: asyncConfig.defaultOperationQueue, mainConnector: googleConnector,
-					users: allUsers.filter{ usersFilter?.contains($0.primaryEmail.stringValue) ?? true },
-					offlineimapConfigFileURL: URL(fileURLWithPath: f.getString(name: "offlineimap-config-file")!, isDirectory: false),
-					backupDestinationFolder: URL(fileURLWithPath: f.getString(name: "destination")!, isDirectory: true),
-					maxConcurrentSync: f.getInt(name: "max-concurrent-account-sync"),
-					offlineimapOutputFileURL: f.getString(name: "offlineimap-output").map{ URL(fileURLWithPath: $0, isDirectory: false) }
-				)
-				
-				do {
-					/* Will create the folder if not already there, does not error
-					 * out if already there. */
-					try FileManager.default.createDirectory(at: options.backupDestinationFolder, withIntermediateDirectories: true, attributes: nil)
-					
-					let mb = OfflineImapManager(backupMailOptions: options)
-					try mb.run()
-					
-					/* TODO: Linkify the backups? */
-					
-					promise.succeed(result: ())
-				} catch {
-					promise.fail(error: error)
-				}
-			}
-			return promise.futureResult
+			let filteredUsers = allUsers.filter{ usersFilter?.contains($0.primaryEmail.stringValue) ?? true }
+			let options = BackupMailOptions(flags: f, asyncConfig: asyncConfig, mainConnector: googleConnector, users: filteredUsers)
+			
+			return asyncConfig.eventLoop.future(from: FetchAllMailsOperation(options: options), queue: asyncConfig.defaultOperationQueue, resultRetriever: { if let e = $0.fetchError {throw e} })
 		}
+		/*.then Linkify the backups? */
 		return f
 	} catch {
 		return asyncConfig.eventLoop.newFailedFuture(error: error)
@@ -68,268 +47,293 @@ func backupMails(flags f: Flags, arguments args: [String], asyncConfig: AsyncCon
 
 /* ****************************************** */
 
-private class Nop : NSObject {
-	@objc func nop() {}
-}
-
 struct BackupMailOptions {
-	
-	let queue: OperationQueue
-	
-	let mainConnector: GoogleJWTConnector
-	let users: [GoogleUser]
 	
 	let offlineimapConfigFileURL: URL
 	let backupDestinationFolder: URL
 	let maxConcurrentSync: Int?
 	let offlineimapOutputFileURL: URL?
 	
-}
-
-/* Modernize this, if possible (futures, etc.) */
-class OfflineImapManager {
+	let asyncConfig: AsyncConfig
 	
-	let queue: OperationQueue
 	let mainConnector: GoogleJWTConnector
-	
 	let users: [GoogleUser]
-	let destinationFolderURL: URL
-	let configurationFileURL: URL
 	
-	let maxConcurrentSync: Int?
-	let offlineimapOutputFileURL: URL?
-	
-	private var runLoop: RunLoop!
-	
-	init(backupMailOptions: BackupMailOptions) {
-		queue = backupMailOptions.queue
-		mainConnector = backupMailOptions.mainConnector
-		users = backupMailOptions.users
-		destinationFolderURL = backupMailOptions.backupDestinationFolder
-		configurationFileURL = backupMailOptions.offlineimapConfigFileURL
-		maxConcurrentSync = backupMailOptions.maxConcurrentSync
-		offlineimapOutputFileURL = backupMailOptions.offlineimapOutputFileURL
+	init(flags f: Flags, asyncConfig conf: AsyncConfig, mainConnector c: GoogleJWTConnector, users u: [GoogleUser]) {
+		offlineimapConfigFileURL = URL(fileURLWithPath: f.getString(name: "offlineimap-config-file")!, isDirectory: false)
+		backupDestinationFolder = URL(fileURLWithPath: f.getString(name: "destination")!, isDirectory: true)
+		maxConcurrentSync = f.getInt(name: "max-concurrent-account-sync")
+		offlineimapOutputFileURL = f.getString(name: "offlineimap-output").map{ URL(fileURLWithPath: $0, isDirectory: false) }
+		
+		asyncConfig = conf
+		
+		mainConnector = c
+		users = u
 	}
 	
-	func run() throws {
-		print("Starting mail backup")
-		
-		runLoop = RunLoop.current
-		
-		try startNewOfflineimapProcess()
-		
-		runLoop.add(Port(), forMode: .defaultRunLoopMode) /* Forces the runloop to continue when all timers, etc. are gone. */
-		while shouldKeepRunningRunLoop {
-			autoreleasepool {
-//				print("New Bg RunLoop run")
-				_ = runLoop.run(mode: .defaultRunLoopMode, before: Date(timeIntervalSinceNow: 0.01))
+}
+
+class FetchAllMailsOperation : RetryingOperation {
+	
+	let options: BackupMailOptions
+	
+	var fetchError: Error?
+	
+	init(options o: BackupMailOptions) {
+		options = o
+	}
+	
+	override var isAsynchronous: Bool {
+		return false
+	}
+	
+	override func startBaseOperation(isRetry: Bool) {
+		do {
+			/* Will create the folder if not already there, does not error out if
+			 * already there. */
+			try FileManager.default.createDirectory(at: options.backupDestinationFolder, withIntermediateDirectories: true, attributes: nil)
+			
+			let futureAccessTokens = options.users.map{ futureAccessToken(for: $0) }
+			let f = EventLoopFuture.reduce(into: (tokens: [GoogleUser: String](), minExpirationDate: Date.distantFuture), futureAccessTokens, eventLoop: options.asyncConfig.eventLoop, { (currentResult, newResult) in
+				currentResult.minExpirationDate = min(currentResult.minExpirationDate, newResult.2)
+				currentResult.tokens[newResult.0] = newResult.1
+			})
+			.then { (info: (tokens: [GoogleUser : String], minExpirationDate: Date)) -> EventLoopFuture<Void> in
+				let operation = OfflineimapRunOperation(userTokens: info.tokens, tokensMinExpirationDate: info.minExpirationDate, options: self.options)
+				return self.options.asyncConfig.eventLoop.future(from: operation, queue: self.options.asyncConfig.defaultOperationQueue, resultRetriever: { if let e = $0.runError {throw e} })
 			}
+			try f.wait()
+			baseOperationEnded()
+		} catch _ as OfflineimapRunOperation.ConfigExpiredError {
+			baseOperationEnded(needsRetryIn: 0)
+		} catch {
+			fetchError = error
+			baseOperationEnded()
+		}
+	}
+	
+	private func futureAccessToken(for user: GoogleUser) -> EventLoopFuture<(GoogleUser, String, Date)> {
+		let scope = Set(arrayLiteral: "https://mail.google.com/")
+		let connector = GoogleJWTConnector(from: options.mainConnector, userBehalf: user.primaryEmail.stringValue)
+		return connector.connect(scope: scope, asyncConfig: options.asyncConfig)
+		.then{
+			let promise: EventLoopPromise<(GoogleUser, String, Date)> = self.options.asyncConfig.eventLoop.newPromise()
+			
+			if let token = connector.token, let expirationDate = connector.expirationDate {promise.succeed(result: (user, token, expirationDate))}
+			else                                                                          {promise.fail(error: NSError(domain: "com.happn.officectl", code: 42, userInfo: [NSLocalizedDescriptionKey: "Internal error"]))}
+			
+			return promise.futureResult
+		}
+	}
+	
+}
+
+class OfflineimapRunOperation : RetryingOperation {
+	
+	struct ConfigExpiredError : Error {}
+	
+	let tokensMinExpirationDate: Date
+	let userTokens: [GoogleUser: String]
+	
+	let configurationFileURL: URL
+	let destinationFolderURL: URL
+	let offlineimapOutputFileURL: URL?
+	let maxConcurrentOfflineimapSyncTasks: Int?
+	
+	var offlineimapProcess: Process?
+	
+	var runError: Error?
+	
+	init(userTokens t: [GoogleUser: String], tokensMinExpirationDate date: Date, options: BackupMailOptions) {
+		userTokens = t
+		configurationFileURL = options.offlineimapConfigFileURL
+		destinationFolderURL = options.backupDestinationFolder
+		offlineimapOutputFileURL = options.offlineimapOutputFileURL
+		maxConcurrentOfflineimapSyncTasks = options.maxConcurrentSync
+		
+		tokensMinExpirationDate = date
+		timer = DispatchSource.makeTimerSource(flags: [], queue: timerQueue)
+	}
+	
+	deinit {
+		assert(offlineimapProcess == nil)
+		cancelKillTimer()
+		releaseSignalHandlers()
+	}
+	
+	override var isAsynchronous: Bool {
+		return false
+	}
+	
+	override func startBaseOperation(isRetry: Bool) {
+		defer {baseOperationEnded()}
+		
+		do {
+			try updateOfflineimapConfig()
+			
+			setupKillTimer()
+			setupSignalHandlers()
+			
+			/* *** Creating and launching the offlineimap process. *** */
+			
+			let process = try createOfflineimapProcess()
+			offlineimapProcess = process
+			
+			print("Waiting on offlineimap…")
+			process.launch()
+			process.waitUntilExit()
+			offlineimapProcess = nil
+			
+			/* *** offlineimap has now finished running. Let's end the operation. *** */
+			
+			releaseSignalHandlers()
+			cancelKillTimer()
+			
+			if process.terminationStatus != 0 {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "offlineimap exited with status \(process.terminationStatus)"])
+			}
+		} catch {
+			if runError == nil {runError = error}
 		}
 		
 		print("Removing offlineimap config file")
 		_ = try? FileManager.default.removeItem(at: configurationFileURL)
-		
-		if let err = endRunError {throw err}
 	}
 	
 	/* ***************
 	   MARK: - Private
 	   *************** */
 	
-	private var interrupted = false
-	private var shouldKeepRunningRunLoop = true
+	private var timer: DispatchSourceTimer
+	private let timerQueue = DispatchQueue(label: "OfflineimapRun Timer Queue")
 	
-	private var currentOfflineimapProcess: Process? {
-		didSet {
-			if currentOfflineimapProcess != nil {
-				signalNotifObservers.append(NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "SigInt"),  object: nil, queue: queue) { [weak self] _ in guard let strongSelf = self else {return}; strongSelf.interrupted = true; if strongSelf.currentOfflineimapProcess?.isRunning ?? false {strongSelf.currentOfflineimapProcess?.interrupt()} })
-				signalNotifObservers.append(NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "SigTerm"), object: nil, queue: queue) { [weak self] _ in guard let strongSelf = self else {return}; strongSelf.interrupted = true; if strongSelf.currentOfflineimapProcess?.isRunning ?? false {strongSelf.currentOfflineimapProcess?.terminate()} })
-				signal(SIGINT)  { _ in print("Received SIGINT");  NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SigInt"),  object: nil) }
-				signal(SIGTERM) { _ in print("Received SIGTERM"); NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SigTerm"), object: nil) }
-			} else {
-				signal(SIGINT,  nil)
-				signal(SIGTERM, nil)
-				signalNotifObservers.forEach{ NotificationCenter.default.removeObserver($0) }
-				signalNotifObservers.removeAll()
-			}
-		}
-	}
-	
-	private var currentOfflineimapOutputPipe: Pipe? {
-		didSet {
-			if let obs = processDataReceivedObserver {
-				NotificationCenter.default.removeObserver(obs)
-				processDataReceivedObserver = nil
-			}
-			
-			if let pipe = currentOfflineimapOutputPipe {
-				processDataReceivedObserver = NotificationCenter.default.addObserver(forName: .NSFileHandleDataAvailable, object: nil, queue: queue) { [weak pipe] _ in
-					guard let pipe = pipe else {return}
-					
-					/* TODO: Process the new data. */
-					_ = pipe.fileHandleForReading.availableData
-					
-					pipe.fileHandleForReading.waitForDataInBackgroundAndNotify()
-				}
-				pipe.fileHandleForReading.waitForDataInBackgroundAndNotify()
-			}
-		}
-	}
-	
-	private var processDataReceivedObserver: NSObjectProtocol?
+	private let signalQueue = OperationQueue()
 	private var signalNotifObservers = [NSObjectProtocol]()
 	
-	private var timerConfigExpirationDate: Timer?
-	
-	private var endRunError: Error?
-	
-	private func stopRunLoop() {
-		print("Stopping runloop")
-		shouldKeepRunningRunLoop = false
-	}
-	
-	private func startNewOfflineimapProcess() throws {
-		if let t = timerConfigExpirationDate {
-			t.invalidate()
-			timerConfigExpirationDate = nil
-		}
-		if let currentProcess = currentOfflineimapProcess {
-			currentProcess.terminationHandler = nil
-			currentProcess.interrupt()
-			currentProcess.waitUntilExit()
-			currentOfflineimapProcess = nil
-		}
-		
-		guard !interrupted else {
-			stopRunLoop()
-			return
-		}
-		
-		/* We guess in 5 minutes offlineimap will have time to close. If not, it's
-		 * no big deal anyway, it will simply not be able to finish whatever it
-		 * was doing remote side before closing, but we'll still relaunch it when
-		 * it finishes. */
-		let killDate = max(try updateOfflineimapConfig().addingTimeInterval(-5*60), Date(timeIntervalSinceNow: 5))
-		let t = Timer(fire: killDate, interval: 0, repeats: false) { [weak self] _ in
-			guard let strongSelf = self else {return}
-			
-			print("offlineimap config expired! Re-generating and re-launching offlineimap.")
-			do    {try strongSelf.startNewOfflineimapProcess()}
-			catch {
-				strongSelf.endRunError = error
-				strongSelf.stopRunLoop()
-			}
-		}
-		runLoop.add(t, forMode: .defaultRunLoopMode)
-		timerConfigExpirationDate = t
-		
+	private func createOfflineimapProcess() throws -> Process {
 		if let offlineimapOutputFileURL = offlineimapOutputFileURL {
 			FileManager.default.createFile(atPath: offlineimapOutputFileURL.path, contents: nil, attributes: nil)
 		}
 		
+		/* About processOutput, an interesting thing to do would be to set it to a
+		 * a Pipe() so we can parse the output in real-time and process it! */
+		let processOutput = try offlineimapOutputFileURL.map{ try FileHandle(forWritingTo: $0) } ?? FileHandle.nullDevice
+		processOutput.seekToEndOfFile(); processOutput.write(Data("***** \(Date()): NEW OFFLINEIMAP RUN!\n".utf8))
+		
 		let process = Process()
-		let processOutput = try offlineimapOutputFileURL.map{ try FileHandle(forWritingTo: $0) } ?? FileHandle.nullDevice /* Set to Pipe() and uncomment set of currentOfflineimapOutputPipe if we want to parse the data. */
 		process.launchPath = "/usr/local/bin/offlineimap"
 		process.arguments = ["-c", configurationFileURL.path]
 		process.standardInput = FileHandle.nullDevice /* Forces failure of getting user pass from input when auth token expires. */
 		process.standardOutput = processOutput
-		process.terminationHandler = { p in
-//			print("In termination handler")
-			self.timerConfigExpirationDate?.invalidate(); self.timerConfigExpirationDate = nil
-			self.currentOfflineimapOutputPipe = nil
-			self.currentOfflineimapProcess = nil
-			
-			if p.terminationStatus != 0 {
-				self.endRunError = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "offlineimap exited with status \(p.terminationStatus)"])
-			}
-			
-			self.stopRunLoop()
-		}
 		
-		currentOfflineimapProcess = process
-		processOutput.seekToEndOfFile(); processOutput.write("***** \(Date()): NEW OFFLINEIMAP RUN!\n".data(using: .utf8)!)
-//		currentOfflineimapOutputPipe = processOutput as? Pipe
-		
-		print("Launching offlineimap")
-		process.launch()
+		return process
+	}
+	
+	private func offlineimapConfigExpired() {
+		print("offlineimap config expired! Stopping offlineimap...")
+		if runError == nil {runError = ConfigExpiredError()}
+		killOfflineimap(terminate: false)
+	}
+	
+	/** If terminate is false, sends an interrupt signal. */
+	private func killOfflineimap(terminate: Bool) {
+		guard let p = offlineimapProcess, p.isRunning else {return}
+		if terminate {p.terminate()}
+		else         {p.interrupt()}
+	}
+	
+	private func setupKillTimer() {
+		/* We guess in 5 minutes offlineimap will have time to close. If not, it's
+		 * no big deal anyway, it will simply not be able to finish whatever it
+		 * was doing remote side before closing, but we'll still relaunch it when
+		 * it finishes. */
+		let killTime = max(
+			DispatchTime.now() + .milliseconds(Int(tokensMinExpirationDate.timeIntervalSinceNow*1000)) - .seconds(5*60),
+			DispatchTime.now() + .seconds(5)
+		)
+		timer.setEventHandler{ [weak self] in self?.offlineimapConfigExpired() }
+		timer.schedule(deadline: killTime, leeway: .milliseconds(250))
+		timer.resume()
+	}
+	
+	private func cancelKillTimer() {
+		timer.cancel()
+	}
+	
+	private func interruptReceived() {
+		runError = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "SIGINT received"])
+		killOfflineimap(terminate: false)
+	}
+	
+	private func terminateReceived() {
+		runError = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "SIGTERM received"])
+		killOfflineimap(terminate: true)
+	}
+	
+	private func setupSignalHandlers() {
+		let nc = NotificationCenter.default
+		signalNotifObservers.append(nc.addObserver(forName: NSNotification.Name(rawValue: "SigInt"),  object: nil, queue: signalQueue) { [weak self] _ in self?.interruptReceived() })
+		signalNotifObservers.append(nc.addObserver(forName: NSNotification.Name(rawValue: "SigTerm"), object: nil, queue: signalQueue) { [weak self] _ in self?.terminateReceived() })
+		signal(SIGINT,  { _ in print("Received SIGINT");  NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SigInt"),  object: nil) })
+		signal(SIGTERM, { _ in print("Received SIGTERM"); NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SigTerm"), object: nil) })
+	}
+	
+	private func releaseSignalHandlers() {
+		signal(SIGTERM, nil)
+		signal(SIGINT,  nil)
+		signalNotifObservers.forEach{ NotificationCenter.default.removeObserver($0) }
+		signalNotifObservers.removeAll()
 	}
 	
 	/** Writes the offlineimap config file in configFileURL and returns the
 	expiration date of the config.
 	
-	- Returns: The date after which the configuration file will not be valid
+	- returns: The date after which the configuration file will not be valid
 	anymore (access tokens expired). */
-	private func updateOfflineimapConfig() throws -> Date {
+	private func updateOfflineimapConfig() throws {
 		print("Generating config for offlineimap")
-		var configExpirationDate = Date.distantFuture
 		
-		var tokenForUsers = [GoogleUser: String]()
-		for user in users {
-			guard let (token, expirationDate) = try? retrieveToken(for: user) else {
-				print("Skipping user with unretrievable access token: \(user)")
-				continue
-			}
-			tokenForUsers[user] = token
-			configExpirationDate = min(configExpirationDate, expirationDate)
+		guard userTokens.count > 0 else {
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "No access tokens…"])
 		}
 		
-		guard tokenForUsers.count > 0 else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "No access tokens could be retrieved..."])
-		}
+		/* About maxsyncaccounts:
+		 *    We default arbitrarily to 4 (ncores/2 would probably be better).
+		 *    Even on an 8-core machine, offlineimap seems greedy, and I got a
+		 *    "pthread_cond_wait: Resource busy" error with maxsyncaccounts = 8. */
+		let config = """
+		[general]
+		ui = MachineUI
+		maxsyncaccounts = \(maxConcurrentOfflineimapSyncTasks ?? 4)
+		accounts = \(userTokens.keys.map{ "AccountUserID_" + $0.id }.joined(separator: ","))
 		
-		var config = ""
-		print("[general]", to: &config)
-		print("ui = MachineUI", to: &config)
-		/* Defaults arbitrarily to 4. Even on an 8-core machine, offlineimap seems greedy, and I got "pthread_cond_wait: Resource busy" with 8 */
-		print("maxsyncaccounts = \(maxConcurrentSync ?? 4)", to: &config)
-		print("accounts = ", terminator: "", to: &config)
-		var first = true
-		for (user, _) in tokenForUsers {
-			if !first {print(",", terminator: "", to: &config)}
-			print("AccountUserID\(user.id)", terminator: "", to: &config)
-			first = false
-		}
-		print("", to: &config)
-		print("", to: &config)
-		for (user, token) in tokenForUsers {
-			print("[Account AccountUserID\(user.id)]", to: &config)
-			print("localrepository = LocalRepoID\(user.id)", to: &config)
-			print("remoterepository = RemoteRepoID\(user.id)", to: &config)
-			print("", to: &config)
-			print("[Repository LocalRepoID\(user.id)]", to: &config)
-			print("type = Maildir", to: &config)
-			print("localfolders = \(URL(fileURLWithPath: user.primaryEmail.stringValue, relativeTo: destinationFolderURL).path)", to: &config)
-			print("", to: &config)
-			print("[Repository RemoteRepoID\(user.id)]", to: &config)
-			print("type = Gmail", to: &config)
-			print("readonly = True", to: &config)
-			print("remoteuser = \(user.primaryEmail.stringValue)", to: &config)
-			print("oauth2_access_token = \(token)", to: &config)
-//			print("sslcacertfile = ~/.dummycert_for_python.pem", to: &config) /* The dummycert solution works when using the System Python */
-			print("sslcacertfile = /usr/local/etc/openssl/cert.pem", to: &config) /* This is required when using homebrew’s Python (offlineimap uses Python2; should be fine with Python3) */
-			print("", to: &config)
-		}
-		guard let data = config.data(using: .utf8) else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot retrieve config as UTF8 data..."])
-		}
-		try data.write(to: configurationFileURL)
 		
-		return configExpirationDate
-	}
-	
-	private func retrieveToken(for user: GoogleUser) throws -> (String, Date) {
-		let scope = Set(arrayLiteral: "https://mail.google.com/")
-		let connector = GoogleJWTConnector(from: mainConnector, userBehalf: user.primaryEmail.stringValue)
 		
-		var error: Error?
-		let semaphore = DispatchSemaphore(value: 0)
-		connector.disconnect(handlerQueue: DispatchQueue(label: "Disconnect"), handler: { _ in semaphore.signal() }); semaphore.wait()
-		connector.connect(scope: scope, handlerQueue: DispatchQueue(label: "Connect"), handler: { e in error = e; semaphore.signal() }); semaphore.wait()
+		""" + userTokens.map{ userTokenPair -> String in
+			let (user, token) = userTokenPair
+			/* About the sslcacertfile:
+			 *    - When using the system (macOS) Python, we must use the dummycert trick (sslcacertfile = ~/.dummycert_for_python.pem);
+			 *    - When using homebrew’s Python2 (offlineimap uses Python2…), we must specify the cacert file. We use the one from openssl. */
+			return """
+			[Account AccountUserID_\(user.id)]
+			localrepository = LocalRepoID_\(user.id)
+			remoterepository = RemoteRepoID_\(user.id)
+			
+			[Repository LocalRepoID_\(user.id)]
+			type = Maildir
+			localfolders = \(URL(fileURLWithPath: user.primaryEmail.stringValue, relativeTo: destinationFolderURL).path)
+			
+			[Repository RemoteRepoID_\(user.id)]
+			type = Gmail
+			readonly = True
+			remoteuser = \(user.primaryEmail.stringValue)
+			oauth2_access_token = \(token)
+			sslcacertfile = /usr/local/etc/openssl/cert.pem
+			
+			"""
+		}.joined(separator: "\n")
 		
-		guard let token = connector.token, let expirationDate = connector.expirationDate else {
-			throw error ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown error while retrieving token for user \(user.primaryEmail.stringValue)"])
-		}
-		return (token, expirationDate)
+		try Data(config.utf8).write(to: configurationFileURL)
 	}
 	
 }
