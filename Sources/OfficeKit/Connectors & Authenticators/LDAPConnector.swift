@@ -41,15 +41,15 @@ public class LDAPConnector : Connector {
 	
 	public let handlerOperationQueue = HandlerOperationQueue(name: "LDAPConnector")
 	
-	public convenience init?(ldapURL u: URL, protocolVersion: LDAPProtocolVersion) {
-		self.init(ldapURL: u, protocolVersion: protocolVersion, authMode: .none)
+	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion) throws {
+		try self.init(ldapURL: u, protocolVersion: protocolVersion, authMode: .none)
 	}
 	
-	public convenience init?(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, username: String, password: String) {
-		self.init(ldapURL: u, protocolVersion: protocolVersion, authMode: .userPass(username: username, password: password))
+	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, username: String, password: String) throws {
+		try self.init(ldapURL: u, protocolVersion: protocolVersion, authMode: .userPass(username: username, password: password))
 	}
 
-	private init?(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, authMode a: AuthMode) {
+	private init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, authMode a: AuthMode) throws {
 		ldapURL = u
 		authMode = a
 		
@@ -66,16 +66,14 @@ public class LDAPConnector : Connector {
 		var ldapPtrInit: OpaquePointer? = nil
 		let error = ldap_initialize(&ldapPtrInit, u.absoluteString)
 		guard error == LDAP_SUCCESS, let ldapPtrInitNonNil = ldapPtrInit else {
-			print("Cannot connect to LDAP with address \(u): \(error != LDAP_SUCCESS ? String(cString: ldap_err2string(error)) : "Internal error")", to: &stderrStream)
-			return nil
+			throw NSError(domain: "com.happn.officectl.openldap", code: Int(error), userInfo: [NSLocalizedDescriptionKey: "Cannot connect to LDAP with address \(u): \(error != LDAP_SUCCESS ? String(cString: ldap_err2string(error)) : "Internal error")"])
 		}
 		ldapPtr = ldapPtrInitNonNil
 		
 		var v = protocolVersion.ldapVal
 		let error2 = ldap_set_option(ldapPtr, LDAP_OPT_PROTOCOL_VERSION, &v)
 		guard error2 == LDAP_OPT_SUCCESS else {
-			print("Cannot set LDAP version to \(protocolVersion): \(String(cString: ldap_err2string(error2)))", to: &stderrStream)
-			return nil
+			throw NSError(domain: "com.happn.officectl.openldap", code: Int(error2), userInfo: [NSLocalizedDescriptionKey: "Cannot set LDAP version to \(protocolVersion): \(String(cString: ldap_err2string(error2)))"])
 		}
 	}
 	
@@ -101,6 +99,7 @@ public class LDAPConnector : Connector {
 					return
 				}
 				
+				self.currentScope = scope
 				handler(nil)
 			}
 		}

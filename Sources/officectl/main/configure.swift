@@ -25,6 +25,9 @@ func configure() -> Command {
 	   ****************** */
 	
 	let rootFlags = [
+		Flag(longName: "ldap-host",                   type: String.self, description: "The host of the LDAP. LDAP server is expected to be communicating with LDAPv3.", inheritable: true),
+		Flag(longName: "ldap-admin-username",         type: String.self, description: "The admin username to connect to the LDAP.", inheritable: true),
+		Flag(longName: "ldap-admin-password",         type: String.self, description: "The admin password to connect to the LDAP.", inheritable: true),
 		Flag(longName: "github-private-key",          type: String.self, description: "The private key to authenticate GitHub.", inheritable: true),
 		Flag(longName: "github-app-id",               type: String.self, description: "The app id to use to authenticate GitHub.", inheritable: true),
 		Flag(longName: "github-install-id",           type: String.self, description: "The install id to use to authenticate GitHub.", inheritable: true),

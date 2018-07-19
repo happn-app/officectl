@@ -57,6 +57,7 @@ public struct LDAPObject {
 		guard let sn = stringValues(for: "sn"), let cn = stringValues(for: "cn") else {return nil}
 		
 		let ret = LDAPInetOrgPerson(dn: distinguishedName, sn: sn, cn: cn)
+		ret.uid = singleStringValue(for: "uid")
 		ret.givenName = stringValues(for: "givenName")
 		ret.userPassword = singleStringValue(for: "userPassword")
 		ret.mail = stringValues(for: "mail")?.compactMap{ Email(string: $0) }

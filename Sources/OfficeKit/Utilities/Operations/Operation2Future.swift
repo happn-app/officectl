@@ -25,14 +25,13 @@ public extension EventLoop {
 		return promise.futureResult
 	}
 	
-	/** Executes all the operations in order and stop at first failure. The
-	future only succeeds when all operations succeed. */
+	/** Executes all the operations in order and stop at first failure (reduce
+	the operations). The future only succeeds if all the operations succeed. */
 	func future<T, O : Operation>(from operations: [O], queue q: OperationQueue, resultRetriever: @escaping (_ operation: O) throws -> T) -> EventLoopFuture<[T]> {
 		let futures = operations.map{ future(from: $0, queue: q, resultRetriever: resultRetriever) }
 		
-		let initialFuture = newSucceededFuture(result: [T]())
-		return initialFuture.fold(futures, with: { (currentResults, newResult) -> EventLoopFuture<[T]> in
-			return self.newSucceededFuture(result: currentResults + [newResult])
+		return EventLoopFuture.reduce([T](), futures, eventLoop: self, { (currentResults, newResult) -> [T] in
+			return currentResults + [newResult]
 		})
 	}
 	

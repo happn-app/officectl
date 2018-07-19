@@ -9,7 +9,7 @@ import Foundation
 
 
 
-public struct HappnUser {
+public struct HappnUser : Hashable {
 	
 	public var uid: String
 	public var email: Email
@@ -43,6 +43,40 @@ public struct HappnUser {
 		lastName = googleUser.name.familyName
 		
 		googleUserId = googleUser.id
+	}
+	
+	public init?(ldapInetOrgPerson: LDAPInetOrgPerson) {
+		guard let u = ldapInetOrgPerson.uid, let m = ldapInetOrgPerson.mail?.first, let f = ldapInetOrgPerson.givenName?.first, let l = ldapInetOrgPerson.sn.first else {return nil}
+		uid = u
+		email = m
+		
+		firstName = f
+		lastName = l
+		
+		password = ldapInetOrgPerson.userPassword
+	}
+	
+	public static func ==(_ user1: HappnUser, _ user2: HappnUser) -> Bool {
+		return user1.uid == user2.uid
+	}
+	
+	#if swift(>=4.2)
+	public func hash(into hasher: inout Hasher) {
+		hasher.combine(uid)
+	}
+	#else
+	public var hashValue: Int {
+		return uid.hashValue
+	}
+	#endif
+	
+	public func ldapInetOrgPerson(baseDN: String) -> LDAPInetOrgPerson {
+		var ret = LDAPInetOrgPerson(dn: "uid=" + uid + ",ou=people," + baseDN, sn: [lastName], cn: [firstName + " " + lastName])
+		ret.givenName = [firstName]
+		ret.mail = [email]
+		ret.uid = uid
+		ret.userPassword = password
+		return ret
 	}
 	
 }

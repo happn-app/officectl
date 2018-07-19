@@ -7,6 +7,7 @@
 
 import Foundation
 
+import AsyncOperationResult
 import Guaka
 import NIO
 
@@ -14,44 +15,97 @@ import OfficeKit
 
 
 
+enum Service : String {
+	
+	case ldap
+	case google
+	case github
+	
+}
+
+struct Connectors {
+	
+	var ldapConnector: LDAPConnector!
+	var googleConnector: GoogleJWTConnector!
+	
+	init() {
+	}
+	
+}
+
 func sync(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
 	do {
+		var connectors = Connectors()
+		var service2FutureUsers = [Service: EventLoopFuture<(Service, [HappnUser])>]()
+		
+		
+		/* *** Parse command line options *** */
 		let fromStr = f.getString(name: "from")!
-		let happnUsersFuture: EventLoopFuture<[HappnUser]>
-		switch fromStr.lowercased() {
-		case "google": happnUsersFuture = try happnUsersFromGoogle(flags: f, asyncConfig: asyncConfig)
-		case "ldap":   happnUsersFuture = try happnUsersFromLDAP(flags: f, asyncConfig: asyncConfig)
-		default: throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid \"from\" value for syncing directories: \(fromStr)"])
+		guard let fromService = Service(rawValue: fromStr) else {
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid \"from\" value for syncing directories: \(fromStr)"])
+		}
+		let toServices = try f.getString(name: "to")!.split(separator: ",").map{ substr -> Service in
+			let strService = String(substr)
+			guard let s = Service(rawValue: strService) else {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid \"to\" value for syncing directories: \(strService)"])
+			}
+			return s
 		}
 		
-		let f = happnUsersFuture.then{ happnUsers -> EventLoopFuture<Void> in
-			print(happnUsers)
-			print(f.getString(name: "to")!.split(separator: ","))
-			return asyncConfig.eventLoop.newSucceededFuture(result: ())
+		/* *** Connect services connectors and retrieve all (future) users from required services *** */
+		for s in [fromService] + toServices {
+			guard service2FutureUsers[s] == nil else {continue}
+			switch s {
+			case .google:
+				let userBehalf = f.getString(name: "google-admin-email")!
+				connectors.googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
+				service2FutureUsers[s] =
+					connectors.googleConnector.connect(scope: GoogleUserSearchOperation.searchScopes, asyncConfig: asyncConfig)
+					.then{ happnUsersFromGoogle(connector: connectors.googleConnector, asyncConfig: asyncConfig) }
+				
+			case .ldap:
+				connectors.ldapConnector = try LDAPConnector(flags: f)
+				service2FutureUsers[s] =
+					connectors.ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
+					.then{ happnUsersFromLDAP(connector: connectors.ldapConnector, asyncConfig: asyncConfig) }
+				
+			case .github: throw NSError(domain: "com.happn.officectl", code: 255, userInfo: [NSLocalizedDescriptionKey: "Not implemented"])
+			}
 		}
+		
+		/* *** Launch sync *** */
+		let f = EventLoopFuture.reduce(into: [Service: [HappnUser]](), Array(service2FutureUsers.values), eventLoop: asyncConfig.eventLoop, { currentValue, newValue in
+			let (service, users) = newValue
+			currentValue[service] = users
+		})
+		.then{ syncFromGoogleToLDAP(users: $0, connectors: connectors, asyncConfig: asyncConfig) }
 		return f
 	} catch {
 		return asyncConfig.eventLoop.newFailedFuture(error: error)
 	}
 }
 
-private func happnUsersFromGoogle(flags f: Flags, asyncConfig: AsyncConfig) throws -> EventLoopFuture<[HappnUser]> {
-	let userBehalf = f.getString(name: "google-admin-email")!
-	let scope = Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly")
-	let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
-	let f = googleConnector.connect(scope: scope, asyncConfig: asyncConfig)
-	.then{ _ -> EventLoopFuture<[GoogleUser]> in
-		let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
-		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
-	}
-	.map{ (googleUsers) -> [HappnUser] in
-		return googleUsers.map{ user in
-			HappnUser(googleUser: user)
-		}
-	}
-	return f
+private func syncFromGoogleToLDAP(users: [Service: [HappnUser]], connectors: Connectors, asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
+	let warning = "temp code"
+	let ldapUsers = Set(users[.ldap]!)
+	let googleUsers = Set(users[.google]!)
+	let usersToCreate = googleUsers.subtracting(ldapUsers)
+	
+	let ldapUsersToCreate = usersToCreate.compactMap{ $0.ldapInetOrgPerson(baseDN: "dc=happn,dc=com") }
+	let createUsersOperation = CreateLDAPObjectsOperation(users: Array(ldapUsersToCreate), connector: connectors.ldapConnector)
+	return asyncConfig.eventLoop.future(from: createUsersOperation, queue: asyncConfig.defaultOperationQueue, resultRetriever: { _ in return () })
 }
 
-private func happnUsersFromLDAP(flags f: Flags, asyncConfig: AsyncConfig) throws -> EventLoopFuture<[HappnUser]> {
-	return asyncConfig.eventLoop.newFailedFuture(error: NSError(domain: "com.happn.officectl", code: 255, userInfo: [NSLocalizedDescriptionKey: "Not implemented"]))
+private func happnUsersFromGoogle(connector: GoogleJWTConnector, asyncConfig: AsyncConfig) -> EventLoopFuture<(Service, [HappnUser])> {
+	let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: connector)
+	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: {
+		(.google, try $0.result.successValueOrThrow().map{ HappnUser(googleUser: $0) })
+	})
+}
+
+private func happnUsersFromLDAP(connector: LDAPConnector, asyncConfig: AsyncConfig) -> EventLoopFuture<(Service, [HappnUser])> {
+	let searchOp = LDAPSearchOperation(ldapConnector: connector, request: LDAPRequest(scope: .children, base: "dc=happn,dc=com", searchFilter: nil, attributesToFetch: nil))
+	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: {
+		(.ldap, try $0.results.successValueOrThrow().results.compactMap{ $0.inetOrgPerson }.compactMap{ HappnUser(ldapInetOrgPerson: $0) })
+	})
 }

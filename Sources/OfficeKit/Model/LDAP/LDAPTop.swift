@@ -9,12 +9,17 @@ import Foundation
 
 
 
+/* https://www.ietf.org/rfc/rfc4512.txt */
 public class LDAPTop {
 	
 	public var dn: String
 	
 	public init(dn dname: String) {
 		dn = dname
+	}
+	
+	public func ldapObject() -> LDAPObject {
+		return LDAPObject(distinguishedName: dn, attributes: ["objectClass": [Data("top".utf8)]])
 	}
 	
 }

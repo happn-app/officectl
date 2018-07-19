@@ -25,20 +25,6 @@ public struct GoogleUser : Hashable, Codable {
 		
 	}
 	
-	public static func ==(_ user1: GoogleUser, _ user2: GoogleUser) -> Bool {
-		return user1.id == user2.id
-	}
-	
-	#if swift(>=4.2)
-	public func hash(into hasher: inout Hasher) {
-		hasher.combine(id)
-	}
-	#else
-	public var hashValue: Int {
-		return id.hashValue
-	}
-	#endif
-	
 	public var kind: Kind
 	public var etag: String?
 	
@@ -61,5 +47,19 @@ public struct GoogleUser : Hashable, Codable {
 	
 	public var suspended: Bool
 	public var changePasswordAtNextLogin: Bool
+	
+	public static func ==(_ user1: GoogleUser, _ user2: GoogleUser) -> Bool {
+		return user1.id == user2.id
+	}
+	
+	#if swift(>=4.2)
+	public func hash(into hasher: inout Hasher) {
+		hasher.combine(id)
+	}
+	#else
+	public var hashValue: Int {
+		return id.hashValue
+	}
+	#endif
 	
 }

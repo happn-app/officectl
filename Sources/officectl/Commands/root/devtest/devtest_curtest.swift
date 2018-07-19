@@ -15,7 +15,7 @@ import OfficeKit
 
 
 func curTest(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
-	guard let c = LDAPConnector(ldapURL: URL(string: "ldap://vip-ldap.happn.io")!, protocolVersion: .v3/*, username: "cn=admin,dc=happn,dc=com", password: "REDACTED"*/) else {
+	guard let c = try? LDAPConnector(flags: f) else {
 		return asyncConfig.eventLoop.newFailedFuture(error: NSError(domain: "lol", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot instantiate the LDAP Connector"]))
 	}
 	

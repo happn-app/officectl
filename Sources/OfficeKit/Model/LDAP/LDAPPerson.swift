@@ -9,7 +9,7 @@ import Foundation
 
 
 
-/* http://www.faqs.org/rfcs/rfc4519.html */
+/* https://www.ietf.org/rfc/rfc4519.txt */
 public class LDAPPerson : LDAPTop {
 	
 	public var sn: [String] /* 2.5.4.4 — The surname (family name) of the person */
@@ -22,6 +22,14 @@ public class LDAPPerson : LDAPTop {
 		cn = commonName
 		
 		super.init(dn: dname)
+	}
+	
+	public override func ldapObject() -> LDAPObject {
+		var ret = super.ldapObject()
+		ret.attributes["objectClass"] = [Data("person".utf8)] /* We override the superclass’s value because it is implicit. */
+		ret.attributes["sn"] = sn.map{ Data($0.utf8) }
+		ret.attributes["cn"] = cn.map{ Data($0.utf8) }
+		return ret
 	}
 	
 }
