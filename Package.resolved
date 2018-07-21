@@ -38,6 +38,15 @@
         }
       },
       {
+        "package": "DummyLinuxOSLog",
+        "repositoryURL": "git@github.com:happn-app/DummyLinuxOSLog.git",
+        "state": {
+          "branch": null,
+          "revision": "47333c87665e0f9e957246148965418c9a4ad823",
+          "version": "1.0.0"
+        }
+      },
+      {
         "package": "Fluent",
         "repositoryURL": "https://github.com/vapor/fluent.git",
         "state": {
@@ -69,17 +78,17 @@
         "repositoryURL": "git@github.com:happn-app/RetryingOperation.git",
         "state": {
           "branch": null,
-          "revision": "9d689daa42d073d5f30588acad719ff7b09bdd04",
-          "version": "1.1.0"
+          "revision": "9a1bbe89aee28e42fd51553435f35a50b91b0195",
+          "version": "1.1.1"
         }
       },
       {
         "package": "SemiSingleton",
-        "repositoryURL": "git@github.com:happn-app/SemiSingleton",
+        "repositoryURL": "git@github.com:happn-app/SemiSingleton.git",
         "state": {
           "branch": null,
-          "revision": "e417234a07735bce88bbc1fb662457b416666140",
-          "version": "1.1.2"
+          "revision": "c738da7064f9c9b4407133f59779e8770396e3c7",
+          "version": "1.1.3"
         }
       },
       {
@@ -123,7 +132,7 @@
         "repositoryURL": "git@github.com:happn-app/Swift-CommonCrypto.git",
         "state": {
           "branch": null,
-          "revision": "f409d3b9971bf3bf5b393e0ccc8d36f0aea0df1a",
+          "revision": "e1838baa8855499844b22f2f1cae634ee3339d8d",
           "version": "1.0.0"
         }
       },
@@ -159,8 +168,8 @@
         "repositoryURL": "git@github.com:happn-app/URLRequestOperation.git",
         "state": {
           "branch": null,
-          "revision": "9c4fb5eec8fcba111cf7d94a16a18ef546be287b",
-          "version": "1.1.1"
+          "revision": "d7172413a69ece8b05cc06a8023f2ec0459e3db3",
+          "version": "1.1.2"
         }
       }
     ]
