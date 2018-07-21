@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Security
+
 
 
 struct JWT {

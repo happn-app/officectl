@@ -6,6 +6,7 @@
  */
 
 import Foundation
+import Security
 
 import AsyncOperationResult
 
