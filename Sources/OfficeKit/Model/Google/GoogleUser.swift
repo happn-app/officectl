@@ -62,4 +62,17 @@ public struct GoogleUser : Hashable, Codable {
 	}
 	#endif
 	
+	#if os(Linux)
+		/* We can get rid of this when Linux supports keyDecodingStrategy */
+		private enum CodingKeys : String, CodingKey {
+			case kind, etag
+			case id, customerId = "customer_id"
+			case name
+			case primaryEmail = "primary_email", aliases, nonEditableAliases = "non_editable_aliases", includeInGlobalAddressList = "include_in_global_address_list"
+			case isAdmin = "is_admin", isDelegatedAdmin = "is_delegated_admin"
+			case lastLoginTime = "last_login_time", creationTime = "creation_time", agreedToTerms = "agreed_to_terms"
+			case suspended, changePasswordAtNextLogin = "change_password_at_next_login"
+		}
+	#endif
+	
 }

@@ -16,7 +16,9 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 	
 	public static var defaultDecoder: JSONDecoder {
 		let r = JSONDecoder()
-		r.keyDecodingStrategy = .convertFromSnakeCase
+		#if !os(Linux)
+			r.keyDecodingStrategy = .convertFromSnakeCase
+		#endif
 		return r
 	}
 	

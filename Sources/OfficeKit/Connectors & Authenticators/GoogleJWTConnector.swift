@@ -39,7 +39,9 @@ public class GoogleJWTConnector : Connector, Authenticator {
 	public init(jsonCredentialsURL: URL, userBehalf u: String?) throws {
 		/* Decode JSON credentials */
 		let jsonDecoder = JSONDecoder()
-		jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+		#if !os(Linux)
+			jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+		#endif
 		let superuserCreds = try jsonDecoder.decode(CredentialsFile.self, from: Data(contentsOf: jsonCredentialsURL))
 		
 		/* We expect to have a service account */
@@ -173,6 +175,17 @@ public class GoogleJWTConnector : Connector, Authenticator {
 		let tokenUri: URL
 		let authProviderX509CertUrl: URL
 		let clientX509CertUrl: URL
+		
+		#if os(Linux)
+			/* We can get rid of this when Linux supports keyDecodingStrategy */
+			private enum CodingKeys : String, CodingKey {
+				case type, projectId = "project_id"
+				case privateKeyId = "private_key_id", privateKey = "private_key"
+				case clientEmail = "client_email", clientId = "client_id"
+				case authUri = "auth_uri", tokenUri = "token_uri"
+				case authProviderX509CertUrl = "auth_provider_x509_cert_url", clientX509CertUrl = "client_x509_cert_url"
+			}
+		#endif
 		
 	}
 	
