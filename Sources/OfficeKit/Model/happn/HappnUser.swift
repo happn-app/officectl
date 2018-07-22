@@ -71,7 +71,7 @@ public struct HappnUser : Hashable {
 	#endif
 	
 	public func ldapInetOrgPerson(baseDN: String) -> LDAPInetOrgPerson {
-		var ret = LDAPInetOrgPerson(dn: "uid=" + uid + ",ou=people," + baseDN, sn: [lastName], cn: [firstName + " " + lastName])
+		let ret = LDAPInetOrgPerson(dn: "uid=" + uid + ",ou=people," + baseDN, sn: [lastName], cn: [firstName + " " + lastName])
 		ret.givenName = [firstName]
 		ret.mail = [email]
 		ret.uid = uid
