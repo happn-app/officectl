@@ -3,7 +3,7 @@ import XCTest
 
 
 
-class UBJSONSerializationTests: XCTestCase {
+class OfficeKitTests: XCTestCase {
 	
 	func testExample() {
 		XCTAssert(true)
