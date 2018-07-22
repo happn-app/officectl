@@ -10,7 +10,11 @@ import Foundation
 import AsyncOperationResult
 import URLRequestOperation
 
-import CCommonCrypto
+#if canImport(CCommonCrypto)
+	import CCommonCrypto
+#else
+	import Crypto
+#endif
 
 
 
@@ -91,15 +95,23 @@ class HappnConnector : Connector, Authenticator {
 			/* content is (the part in brackets is only there if the value of the
 			 * field is not empty): "url_path[?url_query];http_body;http_method" */
 			
-			var hmac = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
-			key.withUnsafeBytes{ (keyBytes: UnsafePointer<Int8>) in
-				content.withUnsafeBytes{ (dataBytes: UnsafePointer<Int8>) in
-					hmac.withUnsafeMutableBytes{ (hmacBytes: UnsafeMutablePointer<Int8>) in
-						CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA256), keyBytes, key.count, dataBytes, content.count, hmacBytes)
+			let finalHMAC: Data?
+			#if canImport(CCommonCrypto)
+				var hmac = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
+				key.withUnsafeBytes{ (keyBytes: UnsafePointer<Int8>) in
+					content.withUnsafeBytes{ (dataBytes: UnsafePointer<Int8>) in
+						hmac.withUnsafeMutableBytes{ (hmacBytes: UnsafeMutablePointer<Int8>) in
+							CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA256), keyBytes, key.count, dataBytes, content.count, hmacBytes)
+						}
 					}
 				}
+				finalHMAC = hmac
+			#else
+				finalHMAC = try? HMAC.SHA256.authenticate(content, key: key)
+			#endif
+			if let hmac = finalHMAC {
+				request.setValue(hmac.reduce("", { $0 + String(format: "%02x", $1) }), forHTTPHeaderField: "Signature")
 			}
-			request.setValue(hmac.reduce("", { $0 + String(format: "%02x", $1) }), forHTTPHeaderField: "Signature")
 		}
 		
 		handler(.success(request), nil)

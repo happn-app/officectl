@@ -59,7 +59,7 @@ struct Crypto {
 		static func createRS256JWT(payload: [String: Any?], privateKey pemData: Data) throws -> String {
 			let jwtRequestNoSignatureString = try jwtRS256RequestNoSignature(payload: payload)
 			let jwtRequestNoSignatureData = Data(jwtRequestNoSignatureString.utf8)
-			guard let jwtRequestSignature = try? RSA.SHA256.sign(jwtRequestNoSignatureData, key: RSAKey.private(pem: privateKey)) else {
+			guard let jwtRequestSignature = try? RSA.SHA256.sign(jwtRequestNoSignatureData, key: RSAKey.private(pem: pemData)) else {
 				throw NSError(domain: "com.happn.officectl.crypto", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."])
 			}
 			return jwtRequestNoSignatureString + "." + jwtRequestSignature.base64EncodedString()
