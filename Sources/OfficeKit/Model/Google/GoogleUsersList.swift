@@ -23,12 +23,4 @@ public struct GoogleUsersList : Codable {
 	public var users: [GoogleUser]
 	public var nextPageToken: String?
 	
-	#if os(Linux)
-		/* We can get rid of this when Linux supports keyDecodingStrategy */
-		private enum CodingKeys : String, CodingKey {
-			case kind, etag
-			case users, nextPageToken = "next_page_token"
-		}
-	#endif
-	
 }
