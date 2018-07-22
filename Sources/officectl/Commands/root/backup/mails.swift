@@ -211,7 +211,9 @@ class OfflineimapRunOperation : RetryingOperation {
 	
 	private func createOfflineimapProcess() throws -> Process {
 		if let offlineimapOutputFileURL = offlineimapOutputFileURL {
-			FileManager.default.createFile(atPath: offlineimapOutputFileURL.path, contents: nil, attributes: nil)
+			guard FileManager.default.createFile(atPath: offlineimapOutputFileURL.path, contents: nil, attributes: nil) else {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot create offlineimap output file"])
+			}
 		}
 		
 		/* About processOutput, an interesting thing to do would be to set it to a
