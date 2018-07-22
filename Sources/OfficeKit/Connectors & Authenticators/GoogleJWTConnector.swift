@@ -6,7 +6,9 @@
  */
 
 import Foundation
-import Security
+#if canImport(Security)
+	import Security
+#endif
 
 import AsyncOperationResult
 import URLRequestOperation
@@ -45,18 +47,9 @@ public class GoogleJWTConnector : Connector, Authenticator {
 			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid service account: the superuser credentials does not have a \"service_account\" type."])
 		}
 		
-		/* Parse the PEM key from the credentials file */
-		var keys: CFArray?
-		guard
-			SecItemImport(Data(superuserCreds.privateKey.utf8) as CFData, nil, nil, nil, [], nil, nil, &keys) == 0,
-			let key = (keys as? [SecKey])?.first
-		else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid service account: cannot read the private key."])
-		}
-		
 		userBehalf = u
-		privateKey = key
 		superuserEmail = superuserCreds.clientEmail
+		privateKey = try Crypto.privateKey(pemData: Data(superuserCreds.privateKey.utf8))
 	}
 	
 	public init(from connector: GoogleJWTConnector, userBehalf u: String?) {
@@ -78,8 +71,8 @@ public class GoogleJWTConnector : Connector, Authenticator {
 			"iat": Int(Date().timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 30).timeIntervalSince1970)
 		]
 		if let subemail = userBehalf {jwtRequestContent["sub"] = subemail}
-		guard let jwtRequest = try? JWT.encode(jwtRequest: jwtRequestContent, privateKey: privateKey) else {
-			handler(NSError(domain: "JWT", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."]))
+		guard let jwtRequest = try? Crypto.createRS256JWT(payload: jwtRequestContent, privateKey: privateKey) else {
+			handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."]))
 			return
 		}
 		

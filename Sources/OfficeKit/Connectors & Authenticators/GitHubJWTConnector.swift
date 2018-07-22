@@ -6,7 +6,9 @@
  */
 
 import Foundation
-import Security
+#if canImport(Security)
+	import Security
+#endif
 
 import AsyncOperationResult
 
@@ -31,19 +33,9 @@ public class GitHubJWTConnector : Connector, Authenticator {
 	public let handlerOperationQueue: HandlerOperationQueue = HandlerOperationQueue(name: "GitHubJWTConnector")
 	
 	public init(appId a: String, installationId i: String, privateKeyURL: URL) throws {
-		/* Parse the PEM key from the credentials file */
-		var keys: CFArray?
-		guard
-			let privateKeyData = try? Data(contentsOf: privateKeyURL),
-			SecItemImport(privateKeyData as CFData, nil, nil, nil, [], nil, nil, &keys) == 0,
-			let key = (keys as? [SecKey])?.first
-		else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot read the private key."])
-		}
-		
 		appId = a
 		installationId = i
-		privateKey = key
+		privateKey = try Crypto.privateKey(pemURL: privateKeyURL)
 	}
 	
 	/* ********************************
@@ -70,8 +62,8 @@ public class GitHubJWTConnector : Connector, Authenticator {
 			"iss": appId,
 			"iat": Int(Date().timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 30).timeIntervalSince1970)
 		]
-		guard let jwtRequest = try? JWT.encode(jwtRequest: jwtRequestContent, privateKey: privateKey) else {
-			handler(NSError(domain: "JWT", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."]))
+		guard let jwtRequest = try? Crypto.createRS256JWT(payload: jwtRequestContent, privateKey: privateKey) else {
+			handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."]))
 			return
 		}
 		
