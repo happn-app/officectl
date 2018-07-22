@@ -115,6 +115,13 @@ public class GoogleJWTConnector : Connector, Authenticator {
 			let accessToken: String
 			let expiresIn: Int
 			
+			#if os(Linux)
+				/* We can get rid of this when Linux supports keyDecodingStrategy */
+				private enum CodingKeys : String, CodingKey {
+					case tokenType = "token_type", accessToken = "access_token", expiresIn = "expires_in"
+				}
+			#endif
+			
 		}
 	}
 	
