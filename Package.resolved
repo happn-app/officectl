@@ -83,12 +83,39 @@
         }
       },
       {
+        "package": "HTTP",
+        "repositoryURL": "https://github.com/vapor/http.git",
+        "state": {
+          "branch": null,
+          "revision": "8123ea00e9858b369cd168d0303d33e7d3804d19",
+          "version": "3.0.7"
+        }
+      },
+      {
+        "package": "Multipart",
+        "repositoryURL": "https://github.com/vapor/multipart.git",
+        "state": {
+          "branch": null,
+          "revision": "e57007c23a52b68e44ebdfc70cbe882a7c4f1ec3",
+          "version": "3.0.2"
+        }
+      },
+      {
         "package": "RetryingOperation",
         "repositoryURL": "git@github.com:happn-app/RetryingOperation.git",
         "state": {
           "branch": null,
           "revision": "9a1bbe89aee28e42fd51553435f35a50b91b0195",
           "version": "1.1.1"
+        }
+      },
+      {
+        "package": "Routing",
+        "repositoryURL": "https://github.com/vapor/routing.git",
+        "state": {
+          "branch": null,
+          "revision": "3219e328491b0853b8554c5a694add344d2c6cfb",
+          "version": "3.0.1"
         }
       },
       {
@@ -191,12 +218,57 @@
         }
       },
       {
+        "package": "TemplateKit",
+        "repositoryURL": "https://github.com/vapor/template-kit.git",
+        "state": {
+          "branch": null,
+          "revision": "43b57b5861d5181b906ac6411d28645e980bb638",
+          "version": "1.0.1"
+        }
+      },
+      {
+        "package": "URLEncodedForm",
+        "repositoryURL": "https://github.com/vapor/url-encoded-form.git",
+        "state": {
+          "branch": null,
+          "revision": "57cf7fb9c1a1014c50bc05123684a9139ad44127",
+          "version": "1.0.3"
+        }
+      },
+      {
         "package": "URLRequestOperation",
         "repositoryURL": "git@github.com:happn-app/URLRequestOperation.git",
         "state": {
           "branch": null,
           "revision": "d7172413a69ece8b05cc06a8023f2ec0459e3db3",
           "version": "1.1.2"
+        }
+      },
+      {
+        "package": "Validation",
+        "repositoryURL": "https://github.com/vapor/validation.git",
+        "state": {
+          "branch": null,
+          "revision": "ab6c5a352d97c8687b91ed4963aef8e7cfe0795b",
+          "version": "2.0.0"
+        }
+      },
+      {
+        "package": "Vapor",
+        "repositoryURL": "https://github.com/vapor/vapor.git",
+        "state": {
+          "branch": null,
+          "revision": "6b07105a3899fbbae194ee3eb82f54debe502221",
+          "version": "3.0.6"
+        }
+      },
+      {
+        "package": "WebSocket",
+        "repositoryURL": "https://github.com/vapor/websocket.git",
+        "state": {
+          "branch": null,
+          "revision": "141cb4d3814dc8062cb0b2f43e72801b5dfcf272",
+          "version": "1.0.1"
         }
       }
     ]

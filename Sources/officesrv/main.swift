@@ -1,0 +1,1 @@
+try app(.detect()).run()
