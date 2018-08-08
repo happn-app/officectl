@@ -7,11 +7,9 @@
 
 import Foundation
 
+import Vapor
 
 
-func run() {
-	let rootCommand = configure()
-	rootCommand.execute()
-}
 
-run()
+do    {try app().run()}
+catch {print("Error creating the App!!"/* to stderr */); exit(255)}

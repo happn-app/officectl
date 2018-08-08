@@ -1,14 +1,24 @@
+/*
+ * app.swift
+ * officectl
+ *
+ * Created by François Lamboley on 06/08/2018.
+ */
+
+import Foundation
+
 import Vapor
 
 
 
-/** Creates an instance of Application. */
-public func app(_ env: Environment) throws -> Application {
+func app() throws -> Application {
+	var env = try Environment.detect(arguments: [CommandLine.arguments[0], "guaka"])
 	var config = Config.default()
-	var env = env
 	var services = Services.default()
 	try configure(&config, &env, &services)
+	
 	let app = try Application(config: config, environment: env, services: services)
 	try boot(app)
+	
 	return app
 }

@@ -8,39 +8,37 @@
 import Foundation
 
 import Guaka
-import NIO
 import RetryingOperation
+import Vapor
 
 import OfficeKit
 
 
 
-func backupMails(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
-	do {
-		let userBehalf = f.getString(name: "google-admin-email")!
-		let usersFilter = (f.getString(name: "emails-to-backup")?.components(separatedBy: ",")).flatMap{ Set($0) }
-		
-		let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
-		let f = googleConnector.connect(scope: GoogleUserSearchOperation.searchScopes, asyncConfig: asyncConfig)
-		.then{ _ -> EventLoopFuture<[GoogleUser]> in
-			let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
-			return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
-		}
-		.then{ happnFrUsers -> EventLoopFuture<[GoogleUser]> in
-			let searchOp = GoogleUserSearchOperation(searchedDomain: "happnambassadeur.com", googleConnector: googleConnector)
-			return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { try happnFrUsers + $0.result.successValueOrThrow() })
-		}
-		.then{ allUsers -> EventLoopFuture<Void> in
-			let filteredUsers = allUsers.filter{ usersFilter?.contains($0.primaryEmail.stringValue) ?? true }
-			let options = BackupMailOptions(flags: f, asyncConfig: asyncConfig, mainConnector: googleConnector, users: filteredUsers)
-			
-			return asyncConfig.eventLoop.future(from: FetchAllMailsOperation(options: options), queue: asyncConfig.defaultOperationQueue, resultRetriever: { if let e = $0.fetchError {throw e} })
-		}
-		/*.then Linkify the backups? */
-		return f
-	} catch {
-		return asyncConfig.eventLoop.newFailedFuture(error: error)
+func backupMails(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+	let asyncConfig: AsyncConfig = try context.container.make()
+	
+	let userBehalf = f.getString(name: "google-admin-email")!
+	let usersFilter = (f.getString(name: "emails-to-backup")?.components(separatedBy: ",")).flatMap{ Set($0) }
+	
+	let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
+	let f = googleConnector.connect(scope: GoogleUserSearchOperation.searchScopes, asyncConfig: asyncConfig)
+	.then{ _ -> EventLoopFuture<[GoogleUser]> in
+		let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
+		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
 	}
+	.then{ happnFrUsers -> EventLoopFuture<[GoogleUser]> in
+		let searchOp = GoogleUserSearchOperation(searchedDomain: "happnambassadeur.com", googleConnector: googleConnector)
+		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try happnFrUsers + $0.result.successValueOrThrow() })
+	}
+	.then{ allUsers -> EventLoopFuture<Void> in
+		let filteredUsers = allUsers.filter{ usersFilter?.contains($0.primaryEmail.stringValue) ?? true }
+		let options = BackupMailOptions(flags: f, asyncConfig: asyncConfig, mainConnector: googleConnector, users: filteredUsers)
+		
+		return asyncConfig.eventLoop.future(from: FetchAllMailsOperation(options: options), queue: asyncConfig.operationQueue, resultRetriever: { if let e = $0.fetchError {throw e} })
+	}
+	/*.then Linkify the backups? */
+	return f
 }
 
 
@@ -99,7 +97,7 @@ class FetchAllMailsOperation : RetryingOperation {
 			})
 			.then { (info: (tokens: [GoogleUser : String], minExpirationDate: Date)) -> EventLoopFuture<Void> in
 				let operation = OfflineimapRunOperation(userTokens: info.tokens, tokensMinExpirationDate: info.minExpirationDate, options: self.options)
-				return self.options.asyncConfig.eventLoop.future(from: operation, queue: self.options.asyncConfig.defaultOperationQueue, resultRetriever: { if let e = $0.runError {throw e} })
+				return self.options.asyncConfig.eventLoop.future(from: operation, queue: self.options.asyncConfig.operationQueue, resultRetriever: { if let e = $0.runError {throw e} })
 			}
 			try f.wait()
 			baseOperationEnded()

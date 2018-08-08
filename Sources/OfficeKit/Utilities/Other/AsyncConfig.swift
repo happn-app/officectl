@@ -8,23 +8,37 @@
 import Foundation
 
 import NIO
+import Vapor
 
 
 
-public struct AsyncConfig {
+public struct AsyncConfig : Service {
 	
-	public var eventLoopGroup: EventLoopGroup
-	public var eventLoop: EventLoop {
-		return eventLoopGroup.next()
+	public var eventLoop: EventLoop
+	public var dispatchQueue: DispatchQueue
+	public var operationQueue: OperationQueue
+	
+	public init(eventLoop el: EventLoop, dispatchQueue dq: DispatchQueue, operationQueue oq: OperationQueue) {
+		eventLoop = el
+		dispatchQueue = dq
+		operationQueue = oq
 	}
 	
-	public var defaultDispatchQueue: DispatchQueue
-	public var defaultOperationQueue: OperationQueue
+}
+
+public struct AsyncConfigFactory : ServiceFactory {
 	
-	public init(eventLoopGroup elg: EventLoopGroup, defaultDispatchQueue dispatchQueue: DispatchQueue, defaultOperationQueue operationQueue: OperationQueue) {
-		eventLoopGroup = elg
-		defaultDispatchQueue = dispatchQueue
-		defaultOperationQueue = operationQueue
+	public let serviceType: Any.Type = AsyncConfig.self
+	public let serviceSupports: [Any.Type] = [AsyncConfig.self]
+	
+	public init() {
+	}
+	
+	public func makeService(for worker: Container) throws -> Any {
+		let oq = OperationQueue()
+		oq.name = "Default Background Operation Queue"
+		let dq = DispatchQueue(label: "Default Background Dispatch Queue")
+		return AsyncConfig(eventLoop: worker.eventLoop, dispatchQueue: dq, operationQueue: oq)
 	}
 	
 }

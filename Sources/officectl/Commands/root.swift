@@ -8,12 +8,12 @@
 import Foundation
 
 import Guaka
-import NIO
+import Vapor
 
 import OfficeKit
 
 
 
-func root(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
-	return asyncConfig.eventLoop.newFailedFuture(error: NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please choose a command verb"]))
+func root(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+	throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please choose a command verb"])
 }

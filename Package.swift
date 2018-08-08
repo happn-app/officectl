@@ -17,9 +17,8 @@ let package = Package(
 		.package(url: "https://github.com/vapor/fluent-sqlite.git", from: "3.0.0")
 	],
 	targets: [
-		.target(name: "OfficeKit", dependencies: ["AsyncOperationResult", "RetryingOperation", "URLRequestOperation", "NIO", "FluentSQLite", "Crypto"]),
-		.target(name: "officectl", dependencies: ["OfficeKit", "Guaka"]),
-		.target(name: "officesrv", dependencies: ["OfficeKit", "Vapor"]),
+		.target(name: "OfficeKit", dependencies: ["AsyncOperationResult", "RetryingOperation", "URLRequestOperation", "NIO", "FluentSQLite", "Crypto", "Vapor"]),
+		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Guaka"]),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"])
 	]	
 )

@@ -8,34 +8,32 @@
 import Foundation
 
 import Guaka
-import NIO
+import Vapor
 
 import OfficeKit
 
 
 
-func listUsers(flags f: Flags, arguments args: [String], asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
-	do {
-		let userBehalf = f.getString(name: "google-admin-email")!
-		let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
-		
-		let f = googleConnector.connect(scope: GoogleUserSearchOperation.searchScopes, asyncConfig: asyncConfig)
-		.then{ _ -> EventLoopFuture<[GoogleUser]> in
-			let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
-			return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.defaultOperationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
-		}
-		.then{ users -> EventLoopFuture<Void> in
-			var i = 1
-			for user in users {
-				print(user.primaryEmail.stringValue + ",", terminator: "")
-				if i == 69 {print(); print(); i = 0}
-				i += 1
-			}
-			print()
-			return asyncConfig.eventLoop.newSucceededFuture(result: ())
-		}
-		return f
-	} catch {
-		return asyncConfig.eventLoop.newFailedFuture(error: error)
+func listUsers(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+	let asyncConfig: AsyncConfig = try context.container.make()
+	
+	let userBehalf = f.getString(name: "google-admin-email")!
+	
+	let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
+	let f = googleConnector.connect(scope: GoogleUserSearchOperation.searchScopes, asyncConfig: asyncConfig)
+	.then{ _ -> EventLoopFuture<[GoogleUser]> in
+		let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
+		return context.container.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
 	}
+	.then{ users -> EventLoopFuture<Void> in
+		var i = 1
+		for user in users {
+			print(user.primaryEmail.stringValue + ",", terminator: "")
+			if i == 69 {print(); print(); i = 0}
+			i += 1
+		}
+		print()
+		return context.container.eventLoop.newSucceededFuture(result: ())
+	}
+	return f
 }
