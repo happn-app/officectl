@@ -26,8 +26,8 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	/* We use the LeafRenderer by default */
 	config.prefer(LeafRenderer.self, for: ViewRenderer.self)
 	
-	/* Register the AsyncConfigFactory */
-	services.register(AsyncConfigFactory())
+	/* Register the AsyncConfig */
+	services.register(AsyncConfig.self)
 	
 	/* Register routes to the router */
 	let router = EngineRouter(caseInsensitive: true)
