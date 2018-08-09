@@ -12,11 +12,6 @@ import Vapor
 
 
 func setup_routes(_ router: Router) throws {
-	/* Basic "Hello, world!" example */
-	router.get("hello") { req in
-		return "Hello, world!"
-	}
-	
 	let resetPasswordController = PasswordResetController()
 	router.get("password-reset", use: resetPasswordController.showUserSelection)
 	router.get("password-reset", PathComponent.parameter("string"), use: resetPasswordController.showResetPage)
