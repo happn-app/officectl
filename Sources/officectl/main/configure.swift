@@ -8,6 +8,7 @@
 import Foundation
 
 import FluentSQLite
+import Leaf
 import URLRequestOperation
 import Vapor
 
@@ -20,14 +21,24 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	
 	/* Register providers first */
 	try services.register(FluentSQLiteProvider())
+	try services.register(LeafProvider())
+	
+	/* We use the LeafRenderer by default */
+	config.prefer(LeafRenderer.self, for: ViewRenderer.self)
+	
+	/* Register the AsyncConfigFactory */
+	services.register(AsyncConfigFactory())
 	
 	/* Register routes to the router */
 	let router = EngineRouter(caseInsensitive: true)
 	try setup_routes(router)
 	services.register(router, as: Router.self)
 	
-	/* Register the AsyncConfigFactory */
-	services.register(AsyncConfigFactory())
+	/* Register middlewares */
+	var middlewares = MiddlewareConfig()
+	middlewares.use(FileMiddleware.self) /* Serves files from the “Public” directory */
+	middlewares.use(ErrorMiddleware.self) /* Catches errors and converts them to HTTP response */
+	services.register(middlewares)
 	
 	/* Now register the Guaka command wrapper. Guaka does the argument parsing
 	 * because Vapor’s sucks :( */

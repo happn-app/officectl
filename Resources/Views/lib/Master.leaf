@@ -1,0 +1,6 @@
+<html>
+    <head>
+        <title>#get(title)</title>
+    </head>
+    <body>#get(body)</body>
+</html>
