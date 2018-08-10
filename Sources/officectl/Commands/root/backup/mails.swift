@@ -268,8 +268,10 @@ class OfflineimapRunOperation : RetryingOperation {
 		let process = Process()
 		process.launchPath = "/usr/local/bin/offlineimap"
 		process.arguments = ["-c", configurationFileURL.path]
-		process.standardInput = FileHandle.nullDevice /* Forces failure of getting user pass from input when auth token expires. */
-		process.standardOutput = processOutput
+		#if !os(Linux)
+			process.standardInput = FileHandle.nullDevice /* Forces failure of getting user pass from input when auth token expires. */
+			process.standardOutput = processOutput
+		#endif
 		
 		return process
 	}

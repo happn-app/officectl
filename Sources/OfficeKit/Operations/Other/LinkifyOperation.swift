@@ -32,7 +32,13 @@ public class LinkifyOperation : RetryingOperation {
 			ec.errors[url] = error
 			return !flag
 		}
-		guard let e = FileManager.default.enumerator(at: folderURL, includingPropertiesForKeys: [.isDirectoryKey], options: .skipsHiddenFiles, errorHandler: handler) else {
+		let options: FileManager.DirectoryEnumerationOptions
+		#if !os(Linux)
+			options = .skipsHiddenFiles
+		#else
+			options = []
+		#endif
+		guard let e = FileManager.default.enumerator(at: folderURL, includingPropertiesForKeys: [.isDirectoryKey], options: options, errorHandler: handler) else {
 			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot enumerate URL \(folderURL)"])
 		}
 		
@@ -49,10 +55,17 @@ public class LinkifyOperation : RetryingOperation {
 				let curFileURL = f as! URL
 				
 				do {
-					/* Let's make sure we are not treating a directory */
-					guard !(try curFileURL.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? true) else {
-						return /* Return from autoreleasepool. Effectively continues to next file from enumerator. */
-					}
+					/* Let's make sure we are not treating a directory. */
+					#if !os(Linux)
+						guard !(try curFileURL.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? true) else {
+							return /* Return from autoreleasepool. Effectively continues to next file from enumerator. */
+						}
+					#else
+						var isDir = ObjCBool(false)
+						guard FileManager.default.fileExists(atPath: curFileURL.path, isDirectory: &isDir), !isDir.boolValue else {
+							return /* Return from autoreleasepool. Effectively continues to next file from enumerator. */
+						}
+					#endif
 					
 					let data = try Data(contentsOf: curFileURL, options: Data.ReadingOptions.mappedIfSafe)
 					let hash = try MD5.hash(data)
