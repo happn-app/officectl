@@ -24,7 +24,7 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 	let gitHubConnector = try GitHubJWTConnector(flags: f)
 	let f = gitHubConnector.connect(scope: (), asyncConfig: asyncConfig)
 	.then{ _ -> EventLoopFuture<[GitHubRepository]> in
-		print("Fetching repositories list from GitHub...")
+		context.console.info("Fetching repositories list from GitHub...")
 		let searchOp = GitHubRepositorySearchOperation(searchedOrganisation: orgName, gitHubConnector: gitHubConnector)
 		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
 	}
@@ -33,21 +33,21 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 		asyncConfig.dispatchQueue.async{
 			let repositoryNames = Set(repositories.map{ $0.fullName })
 			
-			print("Found \(repositoryNames.count) repositories")
-			print("Searching for obsolete backed-up repositories...")
+			context.console.info("Found \(repositoryNames.count) repositories")
+			context.console.info("Searching for obsolete backed-up repositories...")
 			defer {promise.succeed(result: repositoryNames)} /* Even if we can't remove obsolete repositories, we do not fail this promise. */
 			
 			iterateLevel2Sync(in: destinationFolderURL, handler: { (container, folder, currentFolderURL) in
 				guard currentFolderURL.pathExtension == "git" || currentFolderURL.lastPathComponent == ".DS_Store" else {
-					print("warning: found path \"\(currentFolderURL.path)\" which does not have a \"git\" extension; not deleting", to: &stderrStream)
+					context.console.warning("found path \"\(currentFolderURL.path)\" which does not have a \"git\" extension; not deleting"/*, to: &stderrStream*/)
 					return
 				}
 				
 				let repoName = container + "/" + (folder as NSString).deletingPathExtension
 				if !repositoryNames.contains(repoName) {
-					print("   Deleting \(currentFolderURL.path)")
+					context.console.info("   Deleting \(currentFolderURL.path)")
 					if (try? FileManager.default.removeItem(at: currentFolderURL)) == nil {
-						print("error: cannot delete URL \(currentFolderURL)", to: &stderrStream)
+						context.console.error("cannot delete URL \(currentFolderURL)"/*, to: &stderrStream*/)
 					}
 				}
 			})
@@ -55,7 +55,7 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 		return promise.futureResult
 	}
 	.then{ repositoryNames -> EventLoopFuture<(Set<String>, [AsyncOperationResult<Void>])> in
-		print("Updating clones...")
+		context.console.info("Updating clones...")
 		let q = OperationQueue(); q.maxConcurrentOperationCount = 7 /* We do not use the default operation queue from async config. Indeed, we are launching one sub-process per operation. We do not want a configuration suited for threads, we want one suited for launching subprocesses. */
 		let operations = repositoryNames.map{ CloneGitHubRepoOperation(in: destinationFolderURL, repoFullName: $0, accessToken: gitHubConnector.token!) }
 		return asyncConfig.eventLoop.future(from: operations, queue: q, resultRetriever: { o -> Void in if let e = o.cloneError {throw e} }).then{ errors in
@@ -73,7 +73,7 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 		})
 		let missingRepoNames = repositoryNames.subtracting(localRepoNames)
 		if missingRepoNames.count > 0 {
-			print("warning: the following repositories have not been backed up: \(missingRepoNames)", to: &stderrStream)
+			context.console.warning("the following repositories have not been backed up: \(missingRepoNames)"/*, to: &stderrStream*/)
 		}
 		
 		let errors = operationResults.compactMap{ $0.error }
