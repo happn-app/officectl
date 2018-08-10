@@ -45,7 +45,7 @@ public class LinkifyOperation : RetryingOperation {
 		
 		var mustStop = false
 		for f in directoryEnumerator {
-			autoreleasepool{
+			withAutoReleasePool{
 				let curFileURL = f as! URL
 				
 				do {
