@@ -7,6 +7,7 @@
 
 import Foundation
 
+import AsyncOperationResult
 import Guaka
 import RetryingOperation
 import Vapor
@@ -20,24 +21,56 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 	
 	let userBehalf = f.getString(name: "google-admin-email")!
 	let usersFilter = (f.getString(name: "emails-to-backup")?.components(separatedBy: ",")).flatMap{ Set($0) }
+	let linkify = f.getBool(name: "linkify")!
+	let archive = f.getBool(name: "archive")!
 	
 	let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
 	let f = googleConnector.connect(scope: GoogleUserSearchOperation.searchScopes, asyncConfig: asyncConfig)
-	.then{ _ -> EventLoopFuture<[GoogleUser]> in
+	.then{ _ -> EventLoopFuture<[GoogleUser]> in /* Fetch happn.fr users */
 		let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
 		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
 	}
-	.then{ happnFrUsers -> EventLoopFuture<[GoogleUser]> in
+	.then{ happnFrUsers -> EventLoopFuture<[GoogleUser]> in /* Fetch happnambassadeur.com users */
 		let searchOp = GoogleUserSearchOperation(searchedDomain: "happnambassadeur.com", googleConnector: googleConnector)
 		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try happnFrUsers + $0.result.successValueOrThrow() })
 	}
-	.then{ allUsers -> EventLoopFuture<Void> in
+	.then{ allUsers -> EventLoopFuture<[URL]> in /* Backup given mails */
 		let filteredUsers = allUsers.filter{ usersFilter?.contains($0.primaryEmail.stringValue) ?? true }
-		let options = BackupMailOptions(flags: f, asyncConfig: asyncConfig, mainConnector: googleConnector, users: filteredUsers)
+		let options = BackupMailOptions(flags: f, asyncConfig: asyncConfig, console: context.console, mainConnector: googleConnector, users: filteredUsers)
 		
-		return asyncConfig.eventLoop.future(from: FetchAllMailsOperation(options: options), queue: asyncConfig.operationQueue, resultRetriever: { if let e = $0.fetchError {throw e} })
+		return asyncConfig.eventLoop.future(from: FetchAllMailsOperation(options: options), queue: asyncConfig.operationQueue, resultRetriever: {
+			if let e = $0.fetchError {throw e}
+			return $0.options.backedUpDestinations
+		})
 	}
-	/*.then Linkify the backups? */
+	.then{ backedUpFolders -> EventLoopFuture<[URL]> in /* Linkify the backed-up emails */
+		guard linkify else {return asyncConfig.eventLoop.future(backedUpFolders)}
+		
+		context.console.info("Optimizing backups size")
+		let q = OperationQueue()
+		q.maxConcurrentOperationCount = 2 /* No need to spam the hard-drive… */
+		let operations = backedUpFolders.compactMap{ url -> LinkifyOperation? in
+			do    {return try LinkifyOperation(folderURL: url, stopOnErrors: false)}
+			catch {context.console.warning("cannot linkify backup at URL \(url.absoluteString)"); return nil}
+		}
+		let futureFromOperations: EventLoopFuture<[AsyncOperationResult<Void>]> = asyncConfig.eventLoop.future(from: operations, queue: q, resultRetriever: { op -> Void in
+			if op.errors.count > 0 {
+				context.console.warning("got errors when linkifying backup at URL \(op.folderURL.absoluteString):")
+				for (url, error) in op.errors {
+					context.console.warning("   \(url.absoluteString): \(error)")
+				}
+			}
+			return ()
+		})
+		return futureFromOperations.transform(to: backedUpFolders)
+	}
+	.then{ backedUpFolders -> EventLoopFuture<Void> in /* Compressing the backed-up emails */
+		guard archive else {return asyncConfig.eventLoop.future(())}
+		
+		context.console.info("Compressing backups")
+		context.console.info("TODO")
+		return context.container.future(())
+	}
 	return f
 }
 
@@ -52,17 +85,23 @@ struct BackupMailOptions {
 	let offlineimapOutputFileURL: URL?
 	
 	let asyncConfig: AsyncConfig
+	let console: Console
 	
 	let mainConnector: GoogleJWTConnector
 	let users: [GoogleUser]
 	
-	init(flags f: Flags, asyncConfig conf: AsyncConfig, mainConnector c: GoogleJWTConnector, users u: [GoogleUser]) {
+	var backedUpDestinations: [URL] {
+		return users.map{ OfflineimapRunOperation.destinationURL(for: $0, destinationFolderURL: backupDestinationFolder) }
+	}
+	
+	init(flags f: Flags, asyncConfig conf: AsyncConfig, console csl: Console, mainConnector c: GoogleJWTConnector, users u: [GoogleUser]) {
 		offlineimapConfigFileURL = URL(fileURLWithPath: f.getString(name: "offlineimap-config-file")!, isDirectory: false)
 		backupDestinationFolder = URL(fileURLWithPath: f.getString(name: "destination")!, isDirectory: true)
 		maxConcurrentSync = f.getInt(name: "max-concurrent-account-sync")
 		offlineimapOutputFileURL = f.getString(name: "offlineimap-output").map{ URL(fileURLWithPath: $0, isDirectory: false) }
 		
 		asyncConfig = conf
+		console = csl
 		
 		mainConnector = c
 		users = u
@@ -127,7 +166,13 @@ class FetchAllMailsOperation : RetryingOperation {
 
 class OfflineimapRunOperation : RetryingOperation {
 	
+	static func destinationURL(for user: GoogleUser, destinationFolderURL: URL) -> URL {
+		return URL(fileURLWithPath: user.primaryEmail.stringValue, relativeTo: destinationFolderURL)
+	}
+	
 	struct ConfigExpiredError : Error {}
+	
+	let console: Console
 	
 	let tokensMinExpirationDate: Date
 	let userTokens: [GoogleUser: String]
@@ -143,6 +188,7 @@ class OfflineimapRunOperation : RetryingOperation {
 	
 	init(userTokens t: [GoogleUser: String], tokensMinExpirationDate date: Date, options: BackupMailOptions) {
 		userTokens = t
+		console = options.console
 		configurationFileURL = options.offlineimapConfigFileURL
 		destinationFolderURL = options.backupDestinationFolder
 		offlineimapOutputFileURL = options.offlineimapOutputFileURL
@@ -176,7 +222,7 @@ class OfflineimapRunOperation : RetryingOperation {
 			let process = try createOfflineimapProcess()
 			offlineimapProcess = process
 			
-			print("Waiting on offlineimap…")
+			console.info("Waiting on offlineimap…")
 			process.launch()
 			process.waitUntilExit()
 			offlineimapProcess = nil
@@ -193,7 +239,7 @@ class OfflineimapRunOperation : RetryingOperation {
 			if runError == nil {runError = error}
 		}
 		
-		print("Removing offlineimap config file")
+		console.info("Removing offlineimap config file")
 		_ = try? FileManager.default.removeItem(at: configurationFileURL)
 	}
 	
@@ -229,7 +275,7 @@ class OfflineimapRunOperation : RetryingOperation {
 	}
 	
 	private func offlineimapConfigExpired() {
-		print("offlineimap config expired! Stopping offlineimap...")
+		console.info("offlineimap config expired! Stopping offlineimap...")
 		if runError == nil {runError = ConfigExpiredError()}
 		killOfflineimap(terminate: false)
 	}
@@ -290,7 +336,7 @@ class OfflineimapRunOperation : RetryingOperation {
 	- returns: The date after which the configuration file will not be valid
 	anymore (access tokens expired). */
 	private func updateOfflineimapConfig() throws {
-		print("Generating config for offlineimap")
+		console.info("Generating config for offlineimap")
 		
 		guard userTokens.count > 0 else {
 			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "No access tokens…"])
@@ -320,7 +366,7 @@ class OfflineimapRunOperation : RetryingOperation {
 			
 			[Repository LocalRepoID_\(user.id)]
 			type = Maildir
-			localfolders = \(URL(fileURLWithPath: user.primaryEmail.stringValue, relativeTo: destinationFolderURL).path)
+			localfolders = \(OfflineimapRunOperation.destinationURL(for: user, destinationFolderURL: destinationFolderURL).path)
 			
 			[Repository RemoteRepoID_\(user.id)]
 			type = Gmail
