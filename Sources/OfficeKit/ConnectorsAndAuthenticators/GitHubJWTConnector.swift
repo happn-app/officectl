@@ -105,7 +105,12 @@ public class GitHubJWTConnector : Connector, Authenticator {
 		private enum CodingKeys: String, CodingKey {
 			
 			case token
+			/* We can get rid of this when Linux supports keyDecodingStrategy */
+			#if !os(Linux)
 			case expirationDate = "expiresAt"
+			#else
+			case expirationDate = "expires_at"
+			#endif
 			
 		}
 		
