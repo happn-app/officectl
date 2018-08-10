@@ -11,5 +11,9 @@ import Vapor
 
 
 
-do    {try app().run()}
-catch {print("Error creating the App!!"/* to stderr */); exit(255)}
+do {try app().run()}
+catch {
+	print("Error creating or running the App."/* to stderr */)
+	print("   error \(error) (domain \((error as NSError).domain), code \((error as NSError).code))"/* to stderr */)
+	exit(Int32((error as NSError).code))
+}
