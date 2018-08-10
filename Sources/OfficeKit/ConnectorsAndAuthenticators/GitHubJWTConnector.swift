@@ -60,7 +60,7 @@ public class GitHubJWTConnector : Connector, Authenticator {
 		let authURL = URL(string: "https://api.github.com/installations/\(installationId)/access_tokens")!
 		let jwtRequestContent: [String: Any] = [
 			"iss": appId,
-			"iat": Int(Date().timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 30).timeIntervalSince1970)
+			"iat": Int(Date(timeIntervalSinceNow: -90).timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 90).timeIntervalSince1970)
 		]
 		guard let jwtRequest = try? Crypto.createRS256JWT(payload: jwtRequestContent, privateKey: privateKey) else {
 			handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."]))
