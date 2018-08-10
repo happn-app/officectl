@@ -47,9 +47,11 @@ public class CloneGitHubRepoOperation : RetryingOperation {
 		}
 		
 		let process = Process()
-		process.standardInput = FileHandle.nullDevice
-		process.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when git fails... */
-		process.standardOutput = FileHandle.nullDevice
+		#if !os(Linux)
+			process.standardInput = FileHandle.nullDevice
+			process.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when git fails... */
+			process.standardOutput = FileHandle.nullDevice
+		#endif
 		
 		process.launchPath = "/usr/bin/git"
 		if !destinationExists {
@@ -59,9 +61,11 @@ public class CloneGitHubRepoOperation : RetryingOperation {
 			 * the remote for the URL. We could modify the config file directly,
 			 * but let's do things properly and call git for that. */
 			let updateRemoteProcess = Process()
-			updateRemoteProcess.standardInput = FileHandle.nullDevice
-			updateRemoteProcess.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when git fails... */
-			updateRemoteProcess.standardOutput = FileHandle.nullDevice
+			#if !os(Linux)
+				updateRemoteProcess.standardInput = FileHandle.nullDevice
+				updateRemoteProcess.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when git fails... */
+				updateRemoteProcess.standardOutput = FileHandle.nullDevice
+			#endif
 			updateRemoteProcess.launchPath = process.launchPath
 			updateRemoteProcess.arguments = ["-C", destinationURL.path, "remote", "set-url", "origin", repoCloneURL]
 			updateRemoteProcess.launch()
