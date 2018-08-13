@@ -18,7 +18,7 @@ public class CloneGitHubRepoOperation : RetryingOperation {
 	public let destinationURL: URL
 	
 	/** Clone error. Only makes sense when the operation is finished. */
-	public var cloneError: Error?
+	public private(set) var cloneError: Error?
 	
 	public convenience init(in containerURL: URL, repoFullName name: String, accessToken: String) {
 		let url = URL(fileURLWithPath: name.trimmingCharacters(in: CharacterSet(charactersIn: "/")), isDirectory: true, relativeTo: containerURL).appendingPathExtension("git")
@@ -81,8 +81,9 @@ public class CloneGitHubRepoOperation : RetryingOperation {
 		process.launch()
 		process.waitUntilExit()
 		
-		if process.terminationStatus != 0 {
+		guard process.terminationStatus == 0 else {
 			cloneError = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "git exited with code \(process.terminationStatus) for repository \(repoName)"])
+			return
 		}
 	}
 	

@@ -22,7 +22,7 @@ public class LDAPSearchOperation : RetryingOperation {
 	public let ldapConnector: LDAPConnector
 	public let request: LDAPRequest
 	
-	public var results = AsyncOperationResult<(results: [LDAPObject], references: [[String]])>.error(OperationIsNotFinishedError())
+	public private(set) var results = AsyncOperationResult<(results: [LDAPObject], references: [[String]])>.error(OperationIsNotFinishedError())
 	
 	public init(ldapConnector c: LDAPConnector, request r: LDAPRequest) {
 		ldapConnector = c

@@ -19,7 +19,7 @@ public class GoogleUserSearchOperation : RetryingOperation {
 	public let searchedDomain: String
 	public let connector: GoogleJWTConnector
 	
-	public var result = AsyncOperationResult<[GoogleUser]>.error(OperationIsNotFinishedError())
+	public private(set) var result = AsyncOperationResult<[GoogleUser]>.error(OperationIsNotFinishedError())
 	
 	public init(searchedDomain d: String, googleConnector: GoogleJWTConnector) {
 		assert(googleConnector.isConnected)

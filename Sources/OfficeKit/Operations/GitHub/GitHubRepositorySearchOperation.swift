@@ -17,7 +17,7 @@ public class GitHubRepositorySearchOperation : RetryingOperation {
 	public let searchedOrganisation: String
 	public let connector: GitHubJWTConnector
 	
-	public var result = AsyncOperationResult<[GitHubRepository]>.error(OperationIsNotFinishedError())
+	public private(set) var result = AsyncOperationResult<[GitHubRepository]>.error(OperationIsNotFinishedError())
 	
 	public init(searchedOrganisation orgname: String, gitHubConnector: GitHubJWTConnector) {
 		assert(gitHubConnector.isConnected)
