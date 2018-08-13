@@ -68,8 +68,20 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 		guard archive else {return asyncConfig.eventLoop.future(())}
 		
 		context.console.info("Compressing backups")
-		context.console.info("TODO")
-		return context.container.future(())
+		let q = OperationQueue()
+		q.maxConcurrentOperationCount = 4 /* Seems fair on today’s hardware… */
+		let operations = backedUpFolders.map{ TarOperation(sources: [$0.lastPathComponent], relativeTo: $0.deletingLastPathComponent(), destination: $0.appendingPathExtension("tar.bz2"), compress: true, deleteSourcesOnSuccess: true) }
+		let futureFromOperations: EventLoopFuture<[AsyncOperationResult<Void>]> = asyncConfig.eventLoop.future(from: operations, queue: q, resultRetriever: { op -> Void in
+			if let tarError = op.tarError {
+				context.console.warning("could not compress \(op.sources.first!): \(tarError)")
+			}
+			/* We have at most one deletion error because there is only one source.*/
+			if let deletionError = op.sourceDeletionErrors.randomElement() {
+				context.console.warning("could not delete \(deletionError.key): \(deletionError.value)")
+			}
+			return ()
+		})
+		return futureFromOperations.transform(to: ())
 	}
 	return f
 }
