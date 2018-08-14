@@ -19,6 +19,17 @@ import OfficeKit
 func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
 	di.log = nil /* Disable network logs */
 	
+	/* Let’s parse the CL arguments with Guaka (I did not find a way to do what I
+	 * wanted CLI-wise with Vapor :( */
+	let cliParseResults = parse_cli()
+	
+	/* Register the data directory */
+	if let p = cliParseResults.staticDataDir?.path {
+		services.register{ container -> DirectoryConfig in
+			return DirectoryConfig(workDir: p.hasSuffix("/") ? p : p + "/")
+		}
+	}
+	
 	/* Register providers first */
 	try services.register(FluentSQLiteProvider())
 	try services.register(LeafProvider())
@@ -43,6 +54,6 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	/* Now register the Guaka command wrapper. Guaka does the argument parsing
 	 * because Vapor’s sucks :( */
 	var commandConfig = CommandConfig()
-	commandConfig.use(get_guaka_command(), as: "guaka", isDefault: true)
+	commandConfig.use(cliParseResults.wrapperCommand, as: "guaka", isDefault: true)
 	services.register(commandConfig)
 }
