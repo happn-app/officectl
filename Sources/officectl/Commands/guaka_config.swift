@@ -87,8 +87,14 @@ func get_guaka_command() -> VaporWrapperForGuakaCommand {
 	   MARK: server sub-commands
 	   ************************* */
 	
-	let _ = Command(usage: "serve",  flags: [], parent: serverCommand, run: createSetWrapperCommandHandler(serverServe))
-	let _ = Command(usage: "routes", flags: [], parent: serverCommand, run: createSetWrapperCommandHandler(serverRoutes))
+	let serverServeFlags = [
+		Flag(shortName: "H", longName: "hostname", value: "localhost", description: "Set the hostname the server will run on."),
+		Flag(shortName: "p", longName: "port",     value: 8080,        description: "Set the port the server will run on.")
+//		Flag(shortName: "b", longName: "bind",     type: String.self,  description: "Convenience for setting hostname and port together. The hostname and port options have precedence over this option.", required: false)
+	]
+	
+	let _ = Command(usage: "serve",  flags: serverServeFlags, parent: serverCommand, run: createSetWrapperCommandHandler(serverServe))
+	let _ = Command(usage: "routes", flags: [],               parent: serverCommand, run: createSetWrapperCommandHandler(serverRoutes))
 	
 	
 	/* **************************
