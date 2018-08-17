@@ -23,13 +23,13 @@ final class PasswordResetController {
 		let emailStr = try req.parameters.next(String.self)
 		
 		/* Let’s validate the email */
-		guard let email = Email(string: emailStr) else {throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid email"])}
+		guard let email = Email(string: emailStr) else {throw BasicValidationError("Invalid email")}
 		/* Only happn.fr domain supported for now */
-		guard email.domain == "happn.fr" else {throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Only happn.fr emails are supported for now"])}
+		guard email.domain == "happn.fr" else {throw BasicValidationError("Only happn.fr emails are supported for now")}
 		/* Only “regular” username (no fancy characters are allowed) */
 		let regex = try! NSRegularExpression(pattern: "[^0-9a-z_.-]", options: [])
 		guard regex.firstMatch(in: email.username, options: [], range: NSRange(email.username.startIndex..<email.username.endIndex, in: email.username)) == nil else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid character in username"])
+			throw BasicValidationError("Invalid character in username")
 		}
 		
 		return emailStr

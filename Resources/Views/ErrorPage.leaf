@@ -1,0 +1,8 @@
+#set("title") {#get(error_title)}
+
+#set("body") {
+	<h1>Error: #get(error_title)</h1>
+	<p>#get(error_description)</p>
+}
+
+#embed("lib/Master")
