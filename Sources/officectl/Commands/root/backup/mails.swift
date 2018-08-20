@@ -19,7 +19,9 @@ import OfficeKit
 func backupMails(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
 	let asyncConfig: AsyncConfig = try context.container.make()
 	
-	let userBehalf = f.getString(name: "google-admin-email")!
+	guard let userBehalf = f.getString(name: "google-admin-email") else {
+		throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "google-admin-email is required to backup the emails"])
+	}
 	let usersFilter = (f.getString(name: "emails-to-backup")?.components(separatedBy: ",")).flatMap{ Set($0) }
 	let linkify = f.getBool(name: "linkify")!
 	let archive = f.getBool(name: "archive")!
