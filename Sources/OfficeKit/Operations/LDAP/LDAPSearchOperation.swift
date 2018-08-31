@@ -122,9 +122,8 @@ public class LDAPSearchOperation : RetryingOperation {
 			default:
 				print("Got unknown message of type \(ldap_msgtype(currentMessage)). Ignoring.", to: &stderrStream)
 			}
-			
-			results = .success((results: swiftResults, references: swiftReferences))
 		}
+		results = .success((results: swiftResults, references: swiftReferences))
 	}
 	
 	public override var isAsynchronous: Bool {
