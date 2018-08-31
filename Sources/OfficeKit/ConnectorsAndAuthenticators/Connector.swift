@@ -44,8 +44,9 @@ public extension Connector {
 		return currentScope != nil
 	}
 	
-	func connect(scope: ScopeType, handlerQueue: DispatchQueue = .main, handler: @escaping (_ error: Error?) -> Void) {
+	func connect(scope: ScopeType, forceIfAlreadyConnected: Bool = false, handlerQueue: DispatchQueue = .main, handler: @escaping (_ error: Error?) -> Void) {
 		handlerOperationQueue.addToQueue{ stopOperationHandler in
+			guard forceIfAlreadyConnected || !self.isConnected else {handler(nil); return}
 			self.unsafeConnect(scope: scope, handler: { error in
 				handlerQueue.async{
 					handler(error)
@@ -55,8 +56,9 @@ public extension Connector {
 		}
 	}
 	
-	func disconnect(handlerQueue: DispatchQueue = .main, handler: @escaping (_ error: Error?) -> Void) {
+	func disconnect(forceIfAlreadyDisconnected: Bool = false, handlerQueue: DispatchQueue = .main, handler: @escaping (_ error: Error?) -> Void) {
 		handlerOperationQueue.addToQueue{ stopOperationHandler in
+			guard forceIfAlreadyDisconnected || self.isConnected else {handler(nil); return}
 			self.unsafeDisconnect(handler: { error in
 				handlerQueue.async{
 					handler(error)

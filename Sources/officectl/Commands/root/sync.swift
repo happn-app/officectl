@@ -15,7 +15,7 @@ import OfficeKit
 
 
 
-enum Service : String {
+private enum Service : String {
 	
 	case ldap
 	case google

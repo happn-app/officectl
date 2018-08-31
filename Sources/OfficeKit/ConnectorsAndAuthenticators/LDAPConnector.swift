@@ -16,9 +16,9 @@ import COpenLDAP
 /* Most of this class is adapted from https://github.com/PerfectlySoft/Perfect-LDAP/blob/master/Sources/PerfectLDAP/PerfectLDAP.swift */
 
 @available(OSX, deprecated: 10.11) /* TODO: Rewrite a connector that uses OpenDirectory on macOS */
-public class LDAPConnector : Connector {
+public final class LDAPConnector : Connector {
 	
-	public enum LDAPProtocolVersion {
+	public enum LDAPProtocolVersion : Hashable {
 		
 		case v1, v2, v3
 		
@@ -32,9 +32,17 @@ public class LDAPConnector : Connector {
 		
 	}
 	
+	public enum AuthMode : Hashable {
+		
+		case none
+		case userPass(username: String, password: String)
+		
+	}
+	
 	public typealias ScopeType = Void
 	
 	public let ldapURL: URL
+	public let authMode: AuthMode
 	
 	public var currentScope: Void?
 	let ldapPtr: OpaquePointer /* “LDAP*”; Cannot use the LDAP type (not exported to Swift, because opaque in C headers...) */
@@ -48,8 +56,8 @@ public class LDAPConnector : Connector {
 	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, username: String, password: String) throws {
 		try self.init(ldapURL: u, protocolVersion: protocolVersion, authMode: .userPass(username: username, password: password))
 	}
-
-	private init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, authMode a: AuthMode) throws {
+	
+	init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, authMode a: AuthMode) throws {
 		ldapURL = u
 		authMode = a
 		
@@ -83,7 +91,10 @@ public class LDAPConnector : Connector {
 	
 	public func unsafeConnect(scope: Void, handler: @escaping (Error?) -> Void) {
 		switch authMode {
-		case .none: handler(nil)
+		case .none:
+			self.currentScope = scope
+			handler(nil)
+			
 		case .userPass(username: let username, password: let password):
 			guard let cStringPass = password.cString(using: .ascii) else {
 				handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Password cannot be converted to C String using ascii encoding"]))
@@ -114,14 +125,5 @@ public class LDAPConnector : Connector {
 	   *************** */
 	
 	private static let initSemaphore = DispatchSemaphore(value: 1)
-	
-	private let authMode: AuthMode
-	
-	private enum AuthMode {
-		
-		case none
-		case userPass(username: String, password: String)
-		
-	}
 	
 }

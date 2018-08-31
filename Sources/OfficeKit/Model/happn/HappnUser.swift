@@ -7,15 +7,25 @@
 
 import Foundation
 
+import SemiSingleton
+import Vapor
+
 
 
 public struct HappnUser : Hashable {
 	
-	public var uid: String
+	public enum Error : Swift.Error {
+		
+		case operationIsAlreadyExecuting
+		case userNotFound
+		case tooManyUsersFound
+		
+	}
+	
 	public var email: Email
 	
-	public var firstName: String
-	public var lastName: String
+	public var firstName: String?
+	public var lastName: String?
 	
 	public var password: String?
 	
@@ -24,11 +34,10 @@ public struct HappnUser : Hashable {
 	public var sshKey: String?
 	public var gitHubId: String?
 	
-	public init(uid id: String, email e: Email, firstName fn: String, lastName ln: String) {
-		uid = id
+	public init(email e: Email) {
 		email = e
-		firstName = fn
-		lastName = ln
+		firstName = nil
+		lastName = nil
 		ldapDN = nil
 		googleUserId = nil
 		sshKey = nil
@@ -36,7 +45,6 @@ public struct HappnUser : Hashable {
 	}
 	
 	public init(googleUser: GoogleUser) {
-		uid = googleUser.primaryEmail.username
 		email = googleUser.primaryEmail
 		
 		firstName = googleUser.name.givenName
@@ -46,8 +54,7 @@ public struct HappnUser : Hashable {
 	}
 	
 	public init?(ldapInetOrgPerson: LDAPInetOrgPerson) {
-		guard let u = ldapInetOrgPerson.uid, let m = ldapInetOrgPerson.mail?.first, let f = ldapInetOrgPerson.givenName?.first, let l = ldapInetOrgPerson.sn.first else {return nil}
-		uid = u
+		guard let m = ldapInetOrgPerson.mail?.first, let f = ldapInetOrgPerson.givenName?.first, let l = ldapInetOrgPerson.sn.first else {return nil}
 		email = m
 		
 		firstName = f
@@ -57,24 +64,43 @@ public struct HappnUser : Hashable {
 	}
 	
 	public static func ==(_ user1: HappnUser, _ user2: HappnUser) -> Bool {
-		return user1.uid == user2.uid
+		return user1.email == user2.email
 	}
 	
-	#if swift(>=4.2)
 	public func hash(into hasher: inout Hasher) {
-		hasher.combine(uid)
+		hasher.combine(email)
 	}
-	#else
-	public var hashValue: Int {
-		return uid.hashValue
-	}
-	#endif
 	
+	public func existingLDAPUser(container: Container) throws -> Future<LDAPInetOrgPerson> {
+		let asyncConfig = try container.make(AsyncConfig.self)
+		let semiSingletonStore = try container.make(SemiSingletonStore.self)
+		let ldapConnectorConfig = try container.make(LDAPConnector.Settings.self)
+		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
+		let future = ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
+		.then{ _ -> EventLoopFuture<[LDAPObject]> in
+			let op = LDAPSearchOperation(ldapConnector: ldapConnector, request: LDAPRequest(scope: .children, base: "dc=happn,dc=com", searchFilter: "(uid=" + self.email.username.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: ")", with: "\\)") + ")", attributesToFetch: ["userPassword", "objectClass", "sn", "cn"]))
+			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue, resultRetriever: { op in
+				return try op.results.successValueOrThrow().results
+			})
+		}
+		.then{ objects -> Future<LDAPInetOrgPerson> in
+			guard objects.count <= 1 else {
+				return container.future(error: Error.tooManyUsersFound)
+			}
+			guard let inetOrgPerson = objects.first?.inetOrgPerson else {
+				return container.future(error: Error.userNotFound)
+			}
+			return container.future(inetOrgPerson)
+		}
+		return future
+	}
+	
+	@available(*, deprecated)
 	public func ldapInetOrgPerson(baseDN: String) -> LDAPInetOrgPerson {
-		let ret = LDAPInetOrgPerson(dn: "uid=" + uid + ",ou=people," + baseDN, sn: [lastName], cn: [firstName + " " + lastName])
-		ret.givenName = [firstName]
+		let ret = LDAPInetOrgPerson(dn: "uid=" + email.username + ",ou=people," + baseDN, sn: [lastName ?? "<Unknown>"], cn: [(firstName ?? "<Unknown>") + " " + (lastName ?? "<Unknown>")])
+		ret.givenName = [firstName ?? "<Unknown>"]
 		ret.mail = [email]
-		ret.uid = uid
+		ret.uid = email.username
 		ret.userPassword = password
 		return ret
 	}

@@ -8,6 +8,7 @@
 import Foundation
 
 import Guaka
+import Vapor
 
 import OfficeKit
 
@@ -26,6 +27,22 @@ extension LDAPConnector {
 			try self.init(ldapURL: url, protocolVersion: .v3, username: un, password: pass)
 		} else {
 			try self.init(ldapURL: url, protocolVersion: .v3)
+		}
+	}
+	
+}
+
+
+extension LDAPConnector.Settings : Service {
+	
+	init?(flags f: Flags) {
+		guard let host = f.getString(name: "ldap-host"), let url = URL(string: "ldap://" + host) else {
+			return nil
+		}
+		if let un = f.getString(name: "ldap-admin-username"), let pass = f.getString(name: "ldap-admin-password") {
+			self.init(ldapURL: url, protocolVersion: .v3, username: un, password: pass)
+		} else {
+			self.init(ldapURL: url, protocolVersion: .v3)
 		}
 	}
 	

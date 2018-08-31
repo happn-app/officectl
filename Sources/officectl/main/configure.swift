@@ -9,6 +9,7 @@ import Foundation
 
 import FluentSQLite
 import Leaf
+import SemiSingleton
 import URLRequestOperation
 import Vapor
 
@@ -17,12 +18,13 @@ import OfficeKit
 
 
 func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
-	di.log = nil /* Disable network logs */
+//	di.log = nil /* Disable network logs */
 	
 	/* Let’s parse the CL arguments with Guaka (I did not find a way to do what I
 	 * wanted CLI-wise with Vapor :( */
 	let cliParseResults = parse_cli()
-	/* Register the data directory we got from CLI, if any */
+	/* Register the services/configs we got from CLI, if any */
+	cliParseResults.ldapConnectorConfig.flatMap{ services.register($0) }
 	if let p = cliParseResults.staticDataDir?.path {
 		services.register{ container -> DirectoryConfig in
 			return DirectoryConfig(workDir: p.hasSuffix("/") ? p : p + "/")
@@ -37,6 +39,7 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	services.register(AsyncConfig.self)
 	services.register(AsyncErrorMiddleware.self)
 	services.register(HTTPStatusToErrorMiddleware.self)
+	services.register(SemiSingletonStore(forceClassInKeys: false))
 	
 	/* Register routes */
 	let router = EngineRouter(caseInsensitive: true)
@@ -59,6 +62,7 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	commandConfig.use(cliParseResults.wrapperCommand, as: "guaka", isDefault: true)
 	services.register(commandConfig)
 }
+
 
 private func handleOfficectlError(request: Request, error: Error) throws -> EventLoopFuture<Response> {
 	let statusCode = (error as? HTTPStatusToErrorMiddleware.HTTPStatusError)?.originalResponse.status

@@ -8,24 +8,23 @@
 import Foundation
 
 import NIO
-import Vapor
 
 
 
 public extension Connector {
 	
-	func connect(scope: ScopeType, asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
+	func connect(scope: ScopeType, forceIfAlreadyConnected: Bool = false, asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
 		let promise: EventLoopPromise<Void> = asyncConfig.eventLoop.newPromise()
-		connect(scope: scope, handlerQueue: asyncConfig.dispatchQueue, handler: { error in
+		connect(scope: scope, forceIfAlreadyConnected: forceIfAlreadyConnected, handlerQueue: asyncConfig.dispatchQueue, handler: { error in
 			if let error = error {promise.fail(error: error)}
 			else                 {promise.succeed(result: ())}
 		})
 		return promise.futureResult
 	}
 	
-	func disconnect(asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
+	func disconnect(forceIfAlreadyDisconnected: Bool = false, asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
 		let promise: EventLoopPromise<Void> = asyncConfig.eventLoop.newPromise()
-		disconnect(handlerQueue: asyncConfig.dispatchQueue, handler: { error in
+		disconnect(forceIfAlreadyDisconnected: forceIfAlreadyDisconnected, handlerQueue: asyncConfig.dispatchQueue, handler: { error in
 			if let error = error {promise.fail(error: error)}
 			else                 {promise.succeed(result: ())}
 		})

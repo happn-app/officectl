@@ -8,6 +8,7 @@
 import Foundation
 
 import Guaka
+import OfficeKit
 import Vapor
 
 
@@ -15,6 +16,7 @@ import Vapor
 struct GuakaCommandParseResult {
 	
 	let staticDataDir: URL?
+	let ldapConnectorConfig: LDAPConnector.Settings?
 	let wrapperCommand: VaporWrapperForGuakaCommand
 	
 }
@@ -26,6 +28,7 @@ func parse_cli() -> GuakaCommandParseResult {
 		return {
 			result = GuakaCommandParseResult(
 				staticDataDir: $1.getString(name: "static-data-dir").flatMap{ URL(fileURLWithPath: $0, isDirectory: true) },
+				ldapConnectorConfig: LDAPConnector.Settings(flags: $1),
 				wrapperCommand: VaporWrapperForGuakaCommand(guakaCommand: $0, guakaFlags: $1, guakaArgs: $2, run: run)
 			)
 		}

@@ -1,6 +1,7 @@
 <html>
-    <head>
-        <title>#get(title)</title>
-    </head>
-    <body>#get(body)</body>
+	<head>
+		<title>#get(title)</title>
+		#get(additional_head_tags)
+	</head>
+	<body>#get(body)</body>
 </html>

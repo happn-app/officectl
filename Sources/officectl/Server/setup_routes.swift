@@ -7,6 +7,7 @@
 
 import Foundation
 
+import OfficeKit
 import Vapor
 
 
@@ -14,5 +15,6 @@ import Vapor
 func setup_routes(_ router: Router) throws {
 	let resetPasswordController = PasswordResetController()
 	router.get("password-reset", use: resetPasswordController.showUserSelection)
-	router.get("password-reset", PathComponent.parameter("string"), use: resetPasswordController.showResetPage)
+	router.get("password-reset",  HappnUser.parameter, use: resetPasswordController.showResetPage)
+	router.post("password-reset", HappnUser.parameter, use: resetPasswordController.resetPassword)
 }

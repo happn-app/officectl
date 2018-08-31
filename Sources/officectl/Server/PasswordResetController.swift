@@ -7,6 +7,7 @@
 
 import Foundation
 
+import SemiSingleton
 import Vapor
 
 import OfficeKit
@@ -16,23 +17,34 @@ import OfficeKit
 final class PasswordResetController {
 	
 	func showUserSelection(_ req: Request) throws -> Future<View> {
-		return try req.view().render("PasswordResetUserSelection")
+		return try req.view().render("PasswordResetPage")
 	}
 	
-	func showResetPage(_ req: Request) throws -> String {
-		let emailStr = try req.parameters.next(String.self)
-		
-		/* Let’s validate the email */
-		guard let email = Email(string: emailStr) else {throw BasicValidationError("Invalid email")}
-		/* Only happn.fr domain supported for now */
-		guard email.domain == "happn.fr" else {throw BasicValidationError("Only happn.fr emails are supported for now")}
-		/* Only “regular” username (no fancy characters are allowed) */
-		let regex = try! NSRegularExpression(pattern: "[^0-9a-z_.-]", options: [])
-		guard regex.firstMatch(in: email.username, options: [], range: NSRange(email.username.startIndex..<email.username.endIndex, in: email.username)) == nil else {
-			throw BasicValidationError("Invalid character in username")
+	func showResetPage(_ req: Request) throws -> Future<View> {
+		let user = try req.parameters.next(HappnUser.self)
+		let semiSingletonStore = try req.make(SemiSingletonStore.self)
+		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: user) as ResetPasswordAction
+		return try req.view().render("PasswordResetPage", ["user_email": user.email.stringValue])
+	}
+	
+	func resetPassword(_ req: Request) throws -> Future<View> {
+		let view = try req.view()
+		let user = try req.parameters.next(HappnUser.self)
+		let semiSingletonStore = try req.make(SemiSingletonStore.self)
+		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
+		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: user) as ResetPasswordAction
+		return try resetPasswordAction.start(oldPassword: resetPasswordData.oldPass, newPassword: resetPasswordData.newPass, container: req)
+		.then{ _ in
+			assert(resetPasswordAction.isExecuting)
+			return view.render("PasswordResetInProgressPage", ["user_email": user.email.stringValue])
 		}
+	}
+	
+	private struct ResetPasswordData : Decodable {
 		
-		return emailStr
+		var oldPass: String
+		var newPass: String
+		
 	}
 	
 }
