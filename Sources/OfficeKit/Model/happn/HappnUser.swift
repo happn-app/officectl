@@ -71,6 +71,14 @@ public struct HappnUser : Hashable {
 		hasher.combine(email)
 	}
 	
+	public func checkLDAPPassword(container: Container, checkedPassword: String) throws -> Future<Void> {
+		let asyncConfig = try container.make(AsyncConfig.self)
+		var ldapConnectorConfig = try container.make(LDAPConnector.Settings.self)
+		ldapConnectorConfig.authMode = .userPass(username: LDAPDistinguishedName(email: email.happnComVariant()).stringValue, password: checkedPassword)
+		let connector = try LDAPConnector(key: ldapConnectorConfig)
+		return connector.connect(scope: (), forceIfAlreadyConnected: true, asyncConfig: asyncConfig)
+	}
+	
 	public func existingLDAPUser(container: Container) throws -> Future<LDAPInetOrgPerson> {
 		let asyncConfig = try container.make(AsyncConfig.self)
 		let semiSingletonStore = try container.make(SemiSingletonStore.self)

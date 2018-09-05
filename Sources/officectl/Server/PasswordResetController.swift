@@ -24,7 +24,12 @@ final class PasswordResetController {
 		let user = try req.parameters.next(HappnUser.self)
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: user) as ResetPasswordAction
-		return try req.view().render("PasswordResetPage", ["user_email": user.email.stringValue])
+		
+		if !resetPasswordAction.isExecuting {
+			return try req.view().render("PasswordResetPage", ["user_email": user.email.stringValue])
+		} else {
+			return try req.view().render("PasswordResetInProgressPage", ["user_email": user.email.stringValue])
+		}
 	}
 	
 	func resetPassword(_ req: Request) throws -> Future<View> {
@@ -33,6 +38,7 @@ final class PasswordResetController {
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
 		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: user) as ResetPasswordAction
+		
 		return try resetPasswordAction.start(oldPassword: resetPasswordData.oldPass, newPassword: resetPasswordData.newPass, container: req)
 		.then{ _ in
 			assert(resetPasswordAction.isExecuting)

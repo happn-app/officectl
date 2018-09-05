@@ -49,4 +49,25 @@ public struct Email : Hashable, Codable {
 		try value.encode(stringValue)
 	}
 	
+	public func happnFrVariant() -> Email {
+		if domain == "happn.com" {return Email(username: username, domain: "happn.fr")!}
+		return Email(self)
+	}
+	
+	public func happnComVariant() -> Email {
+		if domain == "happn.fr" {return Email(username: username, domain: "happn.com")!}
+		return Email(self)
+	}
+	
+}
+
+
+public extension LDAPDistinguishedName {
+	
+	init(email: Email) {
+		values = [(key: "uid", value: email.username), (key: "ou", value: "people")] + email.domain.split(separator: ".").map{
+			(key: "dc", value: String($0))
+		}
+	}
+	
 }

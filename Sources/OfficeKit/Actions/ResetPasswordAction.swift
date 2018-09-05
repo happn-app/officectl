@@ -43,7 +43,7 @@ public class ResetPasswordAction : SemiSingleton {
 		}
 		
 		/* Let’s check the given old password */
-		return try user.existingLDAPUser(container: container).transform(to: ())
+		return try user.checkLDAPPassword(container: container, checkedPassword: oldPassword)
 	}
 	
 	private let q: DispatchQueue
