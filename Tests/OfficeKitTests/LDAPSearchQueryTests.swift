@@ -5,6 +5,11 @@ import XCTest
 
 class LDAPSearchQueryTests: XCTestCase {
 	
+	func testInvalidAttributeDescriptionInstantiation0() {
+		let attributeDescription = LDAPAttributeDescription(stringOid: "1")
+		XCTAssertNil(attributeDescription)
+	}
+	
 	func testInvalidAttributeDescriptionInstantiation1() {
 		let attributeDescription = LDAPAttributeDescription(stringOid: "1.5.4.00")
 		XCTAssertNil(attributeDescription)
