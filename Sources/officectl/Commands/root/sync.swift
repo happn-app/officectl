@@ -102,7 +102,7 @@ private func happnUsersFromGoogle(connector: GoogleJWTConnector, asyncConfig: As
 }
 
 private func happnUsersFromLDAP(connector: LDAPConnector, asyncConfig: AsyncConfig) -> EventLoopFuture<(Service, [HappnUser])> {
-	let searchOp = LDAPSearchOperation(ldapConnector: connector, request: LDAPRequest(scope: .children, base: "dc=happn,dc=com", searchFilter: nil, attributesToFetch: nil))
+	let searchOp = LDAPSearchOperation(ldapConnector: connector, request: LDAPRequest(scope: .children, base: "dc=happn,dc=com", searchQuery: nil, attributesToFetch: nil))
 	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: {
 		(.ldap, try $0.results.successValueOrThrow().results.compactMap{ $0.inetOrgPerson }.compactMap{ HappnUser(ldapInetOrgPerson: $0) })
 	})

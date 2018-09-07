@@ -9,7 +9,7 @@ import Foundation
 
 
 
-/* RFC: https://docs.ldap.com/specs/rfc4514.txt
+/* RFC: https://www.ietf.org/rfc/rfc4514.txt
  * The RFC is not fully followed… I know Multi-valued RDN are not supported.
  * There are probably other cases that do not correctly implement the RFC. */
 public struct LDAPDistinguishedName {
@@ -30,6 +30,10 @@ public struct LDAPDistinguishedName {
 				"=" +
 				replacements.reduce(curValue.value, { $0.replacingOccurrences(of: $1.0, with: $1.1) })
 		}.joined(separator: ",")
+	}
+	
+	public init(values v: [(key: String, value: String)]) {
+		values = v
 	}
 	
 	public init(string dn: String) throws {
@@ -56,7 +60,7 @@ public struct LDAPDistinguishedName {
 					
 				case .waitEndKeyBackslash:
 					switch c {
-					case .some(let c) where CharacterSet(charactersIn: "0123456789ABCDEFabcdef").contains(c.unicodeScalars.first!):
+					case .some(let c) where CharacterSet.hexadecimalCharacter.contains(c.unicodeScalars.first!):
 						assert(backslashValue.isEmpty)
 						backslashValue = String(c)
 						return .waitEndKeyBackslash2
@@ -71,7 +75,7 @@ public struct LDAPDistinguishedName {
 					
 				case .waitEndKeyBackslash2:
 					switch c {
-					case .some(let c) where CharacterSet(charactersIn: "0123456789ABCDEFabcdef").contains(c.unicodeScalars.first!):
+					case .some(let c) where CharacterSet.hexadecimalCharacter.contains(c.unicodeScalars.first!):
 						assert(backslashValue.count == 1)
 						backslashValue.append(c)
 						defer {backslashValue = ""}
@@ -105,7 +109,7 @@ public struct LDAPDistinguishedName {
 					
 				case .waitEndValueBackslash:
 					switch c {
-					case .some(let c) where CharacterSet(charactersIn: "0123456789ABCDEFabcdef").contains(c.unicodeScalars.first!):
+					case .some(let c) where CharacterSet.hexadecimalCharacter.contains(c.unicodeScalars.first!):
 						assert(backslashValue.isEmpty)
 						backslashValue = String(c)
 						return .waitEndValueBackslash2
@@ -120,7 +124,7 @@ public struct LDAPDistinguishedName {
 					
 				case .waitEndValueBackslash2:
 					switch c {
-					case .some(let c) where CharacterSet(charactersIn: "0123456789ABCDEFabcdef").contains(c.unicodeScalars.first!):
+					case .some(let c) where CharacterSet.hexadecimalCharacter.contains(c.unicodeScalars.first!):
 						assert(backslashValue.count == 1)
 						backslashValue.append(c)
 						defer {backslashValue = ""}
@@ -153,11 +157,12 @@ public struct LDAPDistinguishedName {
 		values = res
 	}
 	
-	public func relativeDistinguishedNameValues(for key: String) -> [String]? {
-		return values.compactMap{ (currentKey, currentValue) in
-			guard currentKey == key else {return nil}
-			return currentValue
-		}
+	public func relativeDistinguishedName(for key: String) -> LDAPDistinguishedName {
+		return LDAPDistinguishedName(values: values.filter{ $0.key == key })
+	}
+	
+	public func relativeDistinguishedNameValues(for key: String) -> [String] {
+		return relativeDistinguishedName(for: key).values.map{ $0.value }
 	}
 	
 }

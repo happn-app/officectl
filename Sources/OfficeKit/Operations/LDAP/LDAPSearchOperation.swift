@@ -42,7 +42,7 @@ public class LDAPSearchOperation : RetryingOperation {
 		let searchResultError = withCArrayOfString(array: request.attributesToFetch){ attributesPtr in
 			return ldap_search_ext_s(
 				ldapConnector.ldapPtr,
-				request.base, request.scope.rawValue, request.searchFilter, attributesPtr,
+				request.base, request.scope.rawValue, request.searchQuery?.stringValue, attributesPtr,
 				0 /* We want attributes and values */, nil /* Server controls */, nil /* Client controls */,
 				nil /* Timeout */, 0 /* Size limit */, &searchResultMessagePtr
 			)
@@ -159,14 +159,14 @@ public struct LDAPRequest {
 	
 	public var scope: Scope
 	public var base: String
-	public var searchFilter: String?
+	public var searchQuery: LDAPSearchQuery?
 	
 	public var attributesToFetch: [String]?
 	
-	public init(scope s: Scope, base b: String, searchFilter sf: String?, attributesToFetch atf: [String]?) {
+	public init(scope s: Scope, base b: String, searchQuery sq: LDAPSearchQuery?, attributesToFetch atf: [String]?) {
 		base = b
 		scope = s
-		searchFilter = sf
+		searchQuery = sq
 		attributesToFetch = atf
 	}
 	
