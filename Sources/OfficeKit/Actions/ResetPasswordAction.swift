@@ -16,7 +16,7 @@ public class ResetPasswordAction : SemiSingleton {
 	
 	public enum Error : Swift.Error {
 		
-		case operationIsAlreadyExecuting
+		case actionIsAlreadyExecuting
 		
 	}
 	
@@ -38,7 +38,7 @@ public class ResetPasswordAction : SemiSingleton {
 	
 	public func start(oldPassword: String, newPassword: String, container: Container) throws -> EventLoopFuture<Void> {
 		try q.sync{
-			guard !self._isExecuting else {throw Error.operationIsAlreadyExecuting}
+			guard !self._isExecuting else {throw Error.actionIsAlreadyExecuting}
 			self._isExecuting = true
 		}
 		
