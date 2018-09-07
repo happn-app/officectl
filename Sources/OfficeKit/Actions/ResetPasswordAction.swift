@@ -26,28 +26,39 @@ public class ResetPasswordAction : SemiSingleton {
 	public private(set) var newPassword: String?
 	
 	public var isExecuting: Bool {
-		return q.sync{ _isExecuting }
+		return syncQueue.sync{ executingWitness != nil }
 	}
 	
 	public required init(key: HappnUser) {
 		user = key
 		newPassword = nil
 		
-		q = DispatchQueue(label: "Reset Password Queue for \(user.email.stringValue)", attributes: [/*serial*/])
+		operationQueue = OperationQueue() /* Concurrent */
+		operationQueue.name = "Reset Password Operation Queue for \(user.email.stringValue)"
+		syncQueue = DispatchQueue(label: "Reset Password Sync Queue for \(user.email.stringValue)", attributes: [/*serial*/])
 	}
 	
 	public func start(oldPassword: String, newPassword: String, container: Container) throws -> EventLoopFuture<Void> {
-		try q.sync{
-			guard !self._isExecuting else {throw Error.actionIsAlreadyExecuting}
-			self._isExecuting = true
+		try syncQueue.sync{
+			guard self.executingWitness == nil else {throw Error.actionIsAlreadyExecuting}
+			self.executingWitness = self
 		}
 		
 		/* Let’s check the given old password */
 		return try user.checkLDAPPassword(container: container, checkedPassword: oldPassword)
+		.thenIfErrorThrowing{ error in
+			self.syncQueue.sync{ self.executingWitness = nil }
+			throw error
+		}
+		.map{
+			/* The password of the user is verified. Let’s launch the resets! */
+			return ()
+		}
 	}
 	
-	private let q: DispatchQueue
+	private let syncQueue: DispatchQueue
+	private let operationQueue: OperationQueue
 	
-	private var _isExecuting = false
+	private var executingWitness: ResetPasswordAction?
 	
 }
