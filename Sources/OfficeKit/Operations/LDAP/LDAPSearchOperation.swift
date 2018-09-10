@@ -37,7 +37,10 @@ public class LDAPSearchOperation : RetryingOperation {
 		 * the async version of the function because it does not have a handler;
 		 * instead one have to poll the results using the ldap_result method,
 		 * which is not convenient nor useful for our use-case compared to the
-		 * synchronous alternative. */
+		 * synchronous alternative. As a downside, we cannot cancel the search
+		 * operation quickly (the search from the libldap has to finish first).
+		 * For our use case it should be fine (actually correct cancellation has
+		 * not even been implemented later). */
 		var searchResultMessagePtr: OpaquePointer? /* “LDAPMessage*”; Cannot use the LDAPMessage type (not exported to Swift, because opaque in C headers...) */
 		let searchResultError = withCArrayOfString(array: request.attributesToFetch){ attributesPtr in
 			return ldap_search_ext_s(
@@ -96,7 +99,7 @@ public class LDAPSearchOperation : RetryingOperation {
 				}
 				swiftResults.append(LDAPObject(distinguishedName: String(cString: dnCString), attributes: swiftAttributesAndValues))
 				
-			case LDAP_RES_SEARCH_REFERENCE: /* UNTESTED (our server does not return search references. A search reference (not sure what this is though...) */
+			case LDAP_RES_SEARCH_REFERENCE: /* UNTESTED (our server does not return search references; not sure what search references are anyway…) */
 				var referrals: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?
 				let err = ldap_parse_reference(ldapConnector.ldapPtr, currentMessage, &referrals, nil /* Server Controls */, 0 /* Do not free the message */)
 				guard err == LDAP_SUCCESS else {
