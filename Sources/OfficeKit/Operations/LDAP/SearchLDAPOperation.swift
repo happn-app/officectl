@@ -1,5 +1,5 @@
 /*
- * LDAPSearchOperation.swift
+ * SearchLDAPOperation.swift
  * officectl
  *
  * Created by François Lamboley on 29/06/2018.
@@ -17,7 +17,7 @@ import COpenLDAP
 /* Most of this class is adapted from https://github.com/PerfectlySoft/Perfect-LDAP/blob/3ec5155c2a3efa7aa64b66353024ed36ae77349b/Sources/PerfectLDAP/PerfectLDAP.swift */
 
 @available(OSX, deprecated: 10.11) /* See LDAPConnector declaration. The core functionalities of this class will have to be rewritten for the OpenDirectory connector if we ever create it. */
-public class LDAPSearchOperation : RetryingOperation {
+public class SearchLDAPOperation : RetryingOperation {
 	
 	public let ldapConnector: LDAPConnector
 	public let request: LDAPRequest
@@ -42,7 +42,7 @@ public class LDAPSearchOperation : RetryingOperation {
 		 * For our use case it should be fine (actually correct cancellation has
 		 * not even been implemented later). */
 		var searchResultMessagePtr: OpaquePointer? /* “LDAPMessage*”; Cannot use the LDAPMessage type (not exported to Swift, because opaque in C headers...) */
-		let searchResultError = withCArrayOfString(array: request.attributesToFetch){ attributesPtr in
+		let searchResultError = withCLDAPArrayOfString(array: request.attributesToFetch){ attributesPtr in
 			return ldap_search_ext_s(
 				ldapConnector.ldapPtr,
 				request.base, request.scope.rawValue, request.searchQuery?.stringValue, attributesPtr,
@@ -131,19 +131,6 @@ public class LDAPSearchOperation : RetryingOperation {
 	
 	public override var isAsynchronous: Bool {
 		return false
-	}
-	
-	/* From https://github.com/PerfectlySoft/Perfect-LDAP/blob/3ec5155c2a3efa7aa64b66353024ed36ae77349b/Sources/PerfectLDAP/Utilities.swift */
-	private func withCArrayOfString<R>(array: [String]?, _ body: (UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?) throws -> R) rethrows -> R {
-		guard let array = array else {
-			return try body(nil)
-		}
-		
-		/* Convert array to NULL-terminated array of pointers */
-		var parr = (array as [String?] + [nil]).map{ $0.flatMap{ ber_strdup($0) } }
-		defer {parr.forEach{ ber_memfree($0) }}
-		
-		return try parr.withUnsafeMutableBufferPointer{ try body($0.baseAddress) }
 	}
 	
 }

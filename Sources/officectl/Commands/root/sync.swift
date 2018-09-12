@@ -84,7 +84,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 }
 
 private func syncFromGoogleToLDAP(users: [Service: [HappnUser]], connectors: Connectors, asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
-	let warning = "temp code"
+	#warning("temp code")
 	let ldapUsers = Set(users[.ldap]!)
 	let googleUsers = Set(users[.google]!)
 	let usersToCreate = googleUsers.subtracting(ldapUsers)
@@ -102,7 +102,7 @@ private func happnUsersFromGoogle(connector: GoogleJWTConnector, asyncConfig: As
 }
 
 private func happnUsersFromLDAP(connector: LDAPConnector, asyncConfig: AsyncConfig) -> EventLoopFuture<(Service, [HappnUser])> {
-	let searchOp = LDAPSearchOperation(ldapConnector: connector, request: LDAPRequest(scope: .children, base: "dc=happn,dc=com", searchQuery: nil, attributesToFetch: nil))
+	let searchOp = SearchLDAPOperation(ldapConnector: connector, request: LDAPRequest(scope: .children, base: "dc=happn,dc=com", searchQuery: nil, attributesToFetch: nil))
 	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: {
 		(.ldap, try $0.results.successValueOrThrow().results.compactMap{ $0.inetOrgPerson }.compactMap{ HappnUser(ldapInetOrgPerson: $0) })
 	})
