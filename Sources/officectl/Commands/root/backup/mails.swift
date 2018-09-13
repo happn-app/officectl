@@ -27,13 +27,13 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 	let archive = f.getBool(name: "archive")!
 	
 	let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
-	let f = googleConnector.connect(scope: GoogleUserSearchOperation.searchScopes, asyncConfig: asyncConfig)
+	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
 	.then{ _ -> EventLoopFuture<[GoogleUser]> in /* Fetch happn.fr users */
-		let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
+		let searchOp = SearchGoogleUsersOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
 		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
 	}
 	.then{ happnFrUsers -> EventLoopFuture<[GoogleUser]> in /* Fetch happnambassadeur.com users */
-		let searchOp = GoogleUserSearchOperation(searchedDomain: "happnambassadeur.com", googleConnector: googleConnector)
+		let searchOp = SearchGoogleUsersOperation(searchedDomain: "happnambassadeur.com", googleConnector: googleConnector)
 		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try happnFrUsers + $0.result.successValueOrThrow() })
 	}
 	.then{ allUsers -> EventLoopFuture<[URL]> in /* Backup given mails */

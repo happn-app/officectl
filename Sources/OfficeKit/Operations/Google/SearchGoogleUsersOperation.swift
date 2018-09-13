@@ -1,5 +1,5 @@
 /*
- * GoogleUserSearchOperation.swift
+ * SearchGoogleUsersOperation.swift
  * OfficeKit
  *
  * Created by François Lamboley on 17/07/2018.
@@ -12,22 +12,23 @@ import RetryingOperation
 
 
 
-public class GoogleUserSearchOperation : RetryingOperation {
+/* https://developers.google.com/admin-sdk/directory/v1/reference/users/list */
+public class SearchGoogleUsersOperation : RetryingOperation {
 	
-	public static let searchScopes = Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly")
+	public static let scopes = Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly")
 	
-	public let searchedDomain: String
 	public let connector: GoogleJWTConnector
+	public let request: GoogleUserSearchRequest
 	
 	public private(set) var result = AsyncOperationResult<[GoogleUser]>.error(OperationIsNotFinishedError())
 	
-	public init(searchedDomain d: String, googleConnector: GoogleJWTConnector) {
-		assert(googleConnector.isConnected)
+	public init(searchedDomain d: String, query: String? = nil, googleConnector: GoogleJWTConnector) {
 		connector = googleConnector
-		searchedDomain = d
+		request = GoogleUserSearchRequest(domain: d, query: query)
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
+		assert(connector.isConnected)
 		fetchNextPage(nextPageToken: nil)
 	}
 	
@@ -43,7 +44,8 @@ public class GoogleUserSearchOperation : RetryingOperation {
 	
 	private func fetchNextPage(nextPageToken: String?) {
 		var urlComponents = URLComponents(string: "https://www.googleapis.com/admin/directory/v1/users")!
-		urlComponents.queryItems = [URLQueryItem(name: "domain", value: searchedDomain)]
+		urlComponents.queryItems = [URLQueryItem(name: "domain", value: request.domain)]
+		if let q = request.query {urlComponents.queryItems!.append(URLQueryItem(name: "query", value: q))}
 		if let t = nextPageToken {urlComponents.queryItems!.append(URLQueryItem(name: "pageToken", value: t))}
 		
 		let decoder = JSONDecoder()
@@ -64,6 +66,22 @@ public class GoogleUserSearchOperation : RetryingOperation {
 			else                       {self.result = .success(self.users); self.baseOperationEnded()}
 		}
 		op.start()
+	}
+	
+}
+
+
+public struct GoogleUserSearchRequest {
+	
+	let domain: String
+	/** The query for the search. If `nil`, the search will return all users in
+	the given domain. No validation on the query is done. The format is described
+	here: https://developers.google.com/admin-sdk/directory/v1/guides/search-users */
+	let query: String?
+	
+	public init(domain d: String, query q: String?) {
+		query = q
+		domain = d
 	}
 	
 }

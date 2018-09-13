@@ -20,9 +20,9 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 	let userBehalf = f.getString(name: "google-admin-email")!
 	
 	let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
-	let f = googleConnector.connect(scope: GoogleUserSearchOperation.searchScopes, asyncConfig: asyncConfig)
+	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
 	.then{ _ -> EventLoopFuture<[GoogleUser]> in
-		let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
+		let searchOp = SearchGoogleUsersOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
 		return context.container.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
 	}
 	.then{ users -> EventLoopFuture<Void> in

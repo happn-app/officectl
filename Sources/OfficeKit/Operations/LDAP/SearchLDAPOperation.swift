@@ -20,16 +20,17 @@ import COpenLDAP
 public class SearchLDAPOperation : RetryingOperation {
 	
 	public let ldapConnector: LDAPConnector
-	public let request: LDAPRequest
+	public let request: LDAPSearchRequest
 	
 	public private(set) var results = AsyncOperationResult<(results: [LDAPObject], references: [[String]])>.error(OperationIsNotFinishedError())
 	
-	public init(ldapConnector c: LDAPConnector, request r: LDAPRequest) {
+	public init(ldapConnector c: LDAPConnector, request r: LDAPSearchRequest) {
 		ldapConnector = c
 		request = r
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
+		assert(ldapConnector.isConnected)
 		defer {baseOperationEnded()}
 		
 		/* We use ldap_search_ext_s (the synchronous version of the function). The
@@ -135,7 +136,7 @@ public class SearchLDAPOperation : RetryingOperation {
 	
 }
 
-public struct LDAPRequest {
+public struct LDAPSearchRequest {
 	
 	public enum Scope : ber_int_t {
 		

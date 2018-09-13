@@ -51,7 +51,7 @@ extension HappnUser {
 		
 		let future = ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
 		.then{ _ -> EventLoopFuture<[LDAPObject]> in
-			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPRequest(scope: .children, base: searchBase, searchQuery: searchQuery, attributesToFetch: attributesToFetch))
+			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: searchBase, searchQuery: searchQuery, attributesToFetch: attributesToFetch))
 			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue, resultRetriever: { op in
 				try print(op.results.successValueOrThrow().results)
 				return try op.results.successValueOrThrow().results

@@ -61,7 +61,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 			let userBehalf = f.getString(name: "google-admin-email")!
 			connectors.googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
 			service2FutureUsers[s] =
-				connectors.googleConnector.connect(scope: GoogleUserSearchOperation.searchScopes, asyncConfig: asyncConfig)
+				connectors.googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
 				.then{ happnUsersFromGoogle(connector: connectors.googleConnector, asyncConfig: asyncConfig) }
 			
 		case .ldap:
@@ -95,14 +95,14 @@ private func syncFromGoogleToLDAP(users: [Service: [HappnUser]], connectors: Con
 }
 
 private func happnUsersFromGoogle(connector: GoogleJWTConnector, asyncConfig: AsyncConfig) -> EventLoopFuture<(Service, [HappnUser])> {
-	let searchOp = GoogleUserSearchOperation(searchedDomain: "happn.fr", googleConnector: connector)
+	let searchOp = SearchGoogleUsersOperation(searchedDomain: "happn.fr", googleConnector: connector)
 	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: {
 		(.google, try $0.result.successValueOrThrow().map{ HappnUser(googleUser: $0) })
 	})
 }
 
 private func happnUsersFromLDAP(connector: LDAPConnector, asyncConfig: AsyncConfig) -> EventLoopFuture<(Service, [HappnUser])> {
-	let searchOp = SearchLDAPOperation(ldapConnector: connector, request: LDAPRequest(scope: .children, base: "dc=happn,dc=com", searchQuery: nil, attributesToFetch: nil))
+	let searchOp = SearchLDAPOperation(ldapConnector: connector, request: LDAPSearchRequest(scope: .children, base: "dc=happn,dc=com", searchQuery: nil, attributesToFetch: nil))
 	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: {
 		(.ldap, try $0.results.successValueOrThrow().results.compactMap{ $0.inetOrgPerson }.compactMap{ HappnUser(ldapInetOrgPerson: $0) })
 	})
