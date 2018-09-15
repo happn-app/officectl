@@ -10,7 +10,9 @@ import Foundation
 import AsyncOperationResult
 import URLRequestOperation
 
-#if canImport(CCommonCrypto)
+#if canImport(CommonCrypto)
+	import CommonCrypto
+#elseif canImport(CCommonCrypto)
 	import CCommonCrypto
 #else
 	import Crypto
