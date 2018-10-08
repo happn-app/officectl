@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/vapor/core.git",
         "state": {
           "branch": null,
-          "revision": "ad776ec35f0a811672128eaf796fb3de10a46d3f",
-          "version": "3.4.2"
+          "revision": "eb876a758733166a4fb20f3f0a17b480c5ea563e",
+          "version": "3.4.3"
         }
       },
       {
@@ -87,8 +87,8 @@
         "repositoryURL": "https://github.com/vapor/http.git",
         "state": {
           "branch": null,
-          "revision": "818d7d48bbb03e87fd5ac682bb6fa47c04148e6c",
-          "version": "3.1.3"
+          "revision": "9e3eff9dfa4df7fc282bf27f801c72b3ffbfd984",
+          "version": "3.1.4"
         }
       },
       {
@@ -114,7 +114,7 @@
         "repositoryURL": "git@github.com:happn-app/RetryingOperation.git",
         "state": {
           "branch": null,
-          "revision": "9a1bbe89aee28e42fd51553435f35a50b91b0195",
+          "revision": "62b7f879e5e22f7d49c7559138e21772f4ea9970",
           "version": "1.1.1"
         }
       },
@@ -132,8 +132,8 @@
         "repositoryURL": "git@github.com:happn-app/SemiSingleton.git",
         "state": {
           "branch": null,
-          "revision": "c738da7064f9c9b4407133f59779e8770396e3c7",
-          "version": "1.1.3"
+          "revision": "e0610bc631878a114bb567da2bd1dbacff63f243",
+          "version": "2.0.0"
         }
       },
       {
@@ -186,8 +186,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "f42c836ba58e3e38688acdb75df986dff02717f1",
-          "version": "1.9.4"
+          "revision": "5d8148c8b45dfb449276557f22120694567dd1d2",
+          "version": "1.9.5"
         }
       },
       {
@@ -195,8 +195,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
         "state": {
           "branch": null,
-          "revision": "6617eb0d3afcb12170594968df01ca63afb58ac5",
-          "version": "1.2.0"
+          "revision": "8380fa29a2af784b067d8ee01c956626ca29f172",
+          "version": "1.3.1"
         }
       },
       {
@@ -240,8 +240,8 @@
         "repositoryURL": "https://github.com/vapor/url-encoded-form.git",
         "state": {
           "branch": null,
-          "revision": "cbfe7ef6301557d3f2d0807a98165232ae06e1c6",
-          "version": "1.0.4"
+          "revision": "932024f363ee5ff59059cf7d67194a1c271d3d0c",
+          "version": "1.0.5"
         }
       },
       {
@@ -249,8 +249,8 @@
         "repositoryURL": "git@github.com:happn-app/URLRequestOperation.git",
         "state": {
           "branch": null,
-          "revision": "d7172413a69ece8b05cc06a8023f2ec0459e3db3",
-          "version": "1.1.2"
+          "revision": "a7de855fefd89a9f5c03ee57ca73bcde42d48b0e",
+          "version": "1.1.3"
         }
       },
       {

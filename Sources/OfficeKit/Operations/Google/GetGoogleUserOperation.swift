@@ -28,6 +28,10 @@ public class GetGoogleUserOperation : RetryingOperation {
 		connector = c
 	}
 	
+	public convenience init(happnUser: HappnUser, connector c: GoogleJWTConnector) {
+		self.init(userKey: happnUser.email.happnFrVariant().stringValue, connector: c)
+	}
+	
 	public override func startBaseOperation(isRetry: Bool) {
 		let urlComponents = URLComponents(url: URL(string: userKey, relativeTo: URL(string: "https://www.googleapis.com/admin/directory/v1/users/")!)!, resolvingAgainstBaseURL: true)!
 		
