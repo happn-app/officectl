@@ -5,3 +5,6 @@
 # SwiftPM
 /Packages/
 /.build/
+
+# Other
+/ask_pass.sh
