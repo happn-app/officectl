@@ -98,7 +98,7 @@ class HappnConnector : Connector, Authenticator {
 			 * field is not empty): "url_path[?url_query];http_body;http_method" */
 			
 			let finalHMAC: Data?
-			#if canImport(CCommonCrypto)
+			#if canImport(CommonCrypto) || canImport(CCommonCrypto)
 				var hmac = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
 				key.withUnsafeBytes{ (keyBytes: UnsafePointer<Int8>) in
 					content.withUnsafeBytes{ (dataBytes: UnsafePointer<Int8>) in
