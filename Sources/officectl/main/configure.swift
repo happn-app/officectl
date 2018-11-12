@@ -39,7 +39,7 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	services.register(AsyncConfig.self)
 	services.register(AsyncErrorMiddleware.self)
 	services.register(HTTPStatusToErrorMiddleware.self)
-	services.register(SemiSingletonStore(forceClassInKeys: false))
+	services.register(SemiSingletonStore(forceClassInKeys: true))
 	
 	/* Register routes */
 	let router = EngineRouter(caseInsensitive: true)

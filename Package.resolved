@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/vapor/console.git",
         "state": {
           "branch": null,
-          "revision": "5b9796d39f201b3dd06800437abd9d774a455e57",
-          "version": "3.0.2"
+          "revision": "d6cf07af59ae63cd95c4b5f98cf1f25627750fd1",
+          "version": "3.1.0"
         }
       },
       {
@@ -60,8 +60,8 @@
         "repositoryURL": "https://github.com/vapor/fluent.git",
         "state": {
           "branch": null,
-          "revision": "8c2d3830a16a624cf004e6a225108f072d7f8ebc",
-          "version": "3.1.1"
+          "revision": "00b81a9362549facb8e2ac93b17d2a78599fce3b",
+          "version": "3.1.2"
         }
       },
       {
@@ -87,8 +87,8 @@
         "repositoryURL": "https://github.com/vapor/http.git",
         "state": {
           "branch": null,
-          "revision": "272b22be8cb3364e42a4701c2e0676e37480ec5a",
-          "version": "3.1.5"
+          "revision": "6973bf50dab8dd00e4daf8cb82ca72b33f5db016",
+          "version": "3.1.6"
         }
       },
       {
@@ -96,8 +96,8 @@
         "repositoryURL": "https://github.com/vapor/leaf.git",
         "state": {
           "branch": null,
-          "revision": "fc6a3938b1c7cfa49dc6b06e54d84179bdf92810",
-          "version": "3.0.1"
+          "revision": "d35f54cbac723e673f9bd5078361eea74049c8d7",
+          "version": "3.0.2"
         }
       },
       {
@@ -107,6 +107,15 @@
           "branch": null,
           "revision": "e57007c23a52b68e44ebdfc70cbe882a7c4f1ec3",
           "version": "3.0.2"
+        }
+      },
+      {
+        "package": "RecursiveSyncDispatch",
+        "repositoryURL": "git@github.com:happn-app/RecursiveSyncDispatch.git",
+        "state": {
+          "branch": null,
+          "revision": "e3b86d417806ad94a7d85ce68988192f54c27868",
+          "version": "1.0.0"
         }
       },
       {
@@ -132,8 +141,8 @@
         "repositoryURL": "git@github.com:happn-app/SemiSingleton.git",
         "state": {
           "branch": null,
-          "revision": "e0610bc631878a114bb567da2bd1dbacff63f243",
-          "version": "2.0.0"
+          "revision": "d6d7349f81893550e89b51f501abc933ff3dcdd9",
+          "version": "2.0.1"
         }
       },
       {
@@ -150,8 +159,8 @@
         "repositoryURL": "https://github.com/vapor/sql.git",
         "state": {
           "branch": null,
-          "revision": "a35cf1dced4ddd32bb2dc8b6e765aea7bcf8d6e0",
-          "version": "2.1.0"
+          "revision": "839cf96eba296d26151ff1d7a746e9fe35053584",
+          "version": "2.2.0"
         }
       },
       {
@@ -186,8 +195,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "176dd6e8564d60e936b76f3a896d667ae3acba31",
-          "version": "1.10.0"
+          "revision": "035962e6b6e03c8721a91a9b96dc084289795cb4",
+          "version": "1.11.0"
         }
       },
       {
@@ -231,8 +240,8 @@
         "repositoryURL": "https://github.com/vapor/template-kit.git",
         "state": {
           "branch": null,
-          "revision": "db35b1c35aabd0f5db3abca0cfda7becfe9c43e2",
-          "version": "1.1.0"
+          "revision": "aff2d6fc65bfd04579b0201b31a8d6720239c1cf",
+          "version": "1.1.1"
         }
       },
       {
@@ -249,8 +258,8 @@
         "repositoryURL": "git@github.com:happn-app/URLRequestOperation.git",
         "state": {
           "branch": null,
-          "revision": "a7de855fefd89a9f5c03ee57ca73bcde42d48b0e",
-          "version": "1.1.3"
+          "revision": "c83ea1efaa86ab42f1b1deab61c2319d13bfa2be",
+          "version": "1.1.4"
         }
       },
       {
@@ -258,8 +267,8 @@
         "repositoryURL": "https://github.com/vapor/validation.git",
         "state": {
           "branch": null,
-          "revision": "156f8adeac3440e868da3757777884efbc6ec0cc",
-          "version": "2.1.0"
+          "revision": "4de213cf319b694e4ce19e5339592601d4dd3ff6",
+          "version": "2.1.1"
         }
       },
       {
