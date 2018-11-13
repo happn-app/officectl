@@ -31,8 +31,8 @@ public class ResetPasswordAction : SemiSingleton {
 	}
 	
 	/* Sub-actions */
-	public var modifyLDAPPasswordAction: ModifyLDAPPasswordsOperation?
-	public var modifyGooglePasswordAction: ResetGooglePasswordAction?
+	public var modifyLDAPPasswordAction: ResetLDAPPasswordAction
+	public var modifyGooglePasswordAction: ResetGooglePasswordAction
 	
 	public required init(key u: HappnUser, additionalInfo: Void, store: SemiSingletonStore) {
 		user = u
@@ -42,6 +42,7 @@ public class ResetPasswordAction : SemiSingleton {
 		operationQueue.name = "Reset Password Operation Queue for \(user.email.stringValue)"
 		syncQueue = DispatchQueue(label: "Reset Password Sync Queue for \(user.email.stringValue)", attributes: [/*serial*/])
 		
+		modifyLDAPPasswordAction = store.semiSingleton(forKey: u)
 		modifyGooglePasswordAction = store.semiSingleton(forKey: u)
 	}
 	
