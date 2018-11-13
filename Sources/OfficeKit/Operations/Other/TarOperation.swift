@@ -49,7 +49,7 @@ public class TarOperation : RetryingOperation {
 		let process = Process()
 		#if !os(Linux)
 			process.standardInput = FileHandle.nullDevice
-			process.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when git fails... */
+			process.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when tar fails... */
 			process.standardOutput = FileHandle.nullDevice
 		#endif
 		

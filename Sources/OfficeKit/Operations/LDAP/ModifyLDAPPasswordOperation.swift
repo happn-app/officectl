@@ -53,7 +53,7 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 				guard let ber = ber_alloc_t(LBER_USE_DER) else {
 					throw NSError(domain: "com.happn.officectl.lber", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot allocate memory"])
 				}
-				defer {ber_free(ber, 1 /* 1 is for “also free buffer (if I understand correctly)” */)}
+				defer {ber_free(ber, 1 /* 1 is for “also free buffer” (if I understand correctly) */)}
 				
 				var bv = berval(bv_len: 0, bv_val: nil)
 				try buildBervalPasswordChangeRequest(dn: object.distinguishedName, newPass: pass, ber: ber, berval: &bv)
