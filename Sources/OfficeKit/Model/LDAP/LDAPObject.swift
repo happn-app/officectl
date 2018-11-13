@@ -9,6 +9,8 @@ import Foundation
 
 
 
+/** A generic LDAP object. Contains the dn and the attributes/values of the
+object. */
 public struct LDAPObject {
 	
 	public let distinguishedName: String
