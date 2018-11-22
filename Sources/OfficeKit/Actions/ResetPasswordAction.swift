@@ -38,8 +38,6 @@ public class ResetPasswordAction : SemiSingleton {
 		user = u
 		newPassword = nil
 		
-		operationQueue = OperationQueue() /* Concurrent */
-		operationQueue.name = "Reset Password Operation Queue for \(user.email.stringValue)"
 		syncQueue = DispatchQueue(label: "Reset Password Sync Queue for \(user.email.stringValue)", attributes: [/*serial*/])
 		
 		modifyLDAPPasswordAction = store.semiSingleton(forKey: u)
@@ -65,7 +63,6 @@ public class ResetPasswordAction : SemiSingleton {
 	}
 	
 	private let syncQueue: DispatchQueue
-	private let operationQueue: OperationQueue
 	
 	private var executingWitness: ResetPasswordAction?
 	
