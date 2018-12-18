@@ -10,6 +10,15 @@ import Foundation
 
 
 public struct OperationIsNotFinishedError : Error {
+	
+	public init() {}
+	
+}
+
+public struct NotImplementedError : Error {
+	
+	public init() {}
+	
 }
 
 public struct InternalError : Error {

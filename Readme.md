@@ -25,7 +25,7 @@ This is a standard `SPM` project, so the sources are in the `Sources` folder, th
 folder named after the target it is a part of. The tests are in the `Tests` folder.
 
 ### The OfficeKit Target
-Contains the library on which is built the `officectl` command line tool.
+Contains the library with which the `officectl` command line tool is built.
 
 #### Model
 The “happn” part of the model is used to represent objects used by OfficeKit directly.

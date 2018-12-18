@@ -79,12 +79,34 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		let (service, users) = newValue
 		currentValue[service] = users
 	})
-	.then{ syncFromGoogleToLDAP(users: $0, connectors: connectors, asyncConfig: asyncConfig) }
+	.then{ (usersByService) -> EventLoopFuture<Void> in
+		do {
+			switch fromService {
+			case .google:
+				let syncFutures = try toServices.map{ (destinationService) -> EventLoopFuture<Void> in
+					switch destinationService {
+					case .github: throw NotImplementedError()
+					case .google: throw BasicValidationError("Cannot sync from Google to Google…")
+					case .ldap: return syncFromGoogleToLDAP(users: usersByService, connectors: connectors, asyncConfig: asyncConfig)
+					}
+				}
+				return EventLoopFuture.reduce(into: (), syncFutures, eventLoop: asyncConfig.eventLoop, { currentValue, newValue in })
+				
+			case .ldap:
+				throw NotImplementedError()
+				
+			case .github:
+				throw BasicValidationError("Cannot sync from GitHub (GitHub’s directory does not have enough information)")
+			}
+		} catch {
+			return asyncConfig.eventLoop.newFailedFuture(error: error)
+		}
+	}
 	return f
 }
 
 private func syncFromGoogleToLDAP(users: [Service: [HappnUser]], connectors: Connectors, asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
-	#warning("temp code")
+	/* TODO: User deletion. Currently we’re append only. */
 	let ldapUsers = Set(users[.ldap]!)
 	let googleUsers = Set(users[.google]!)
 	let usersToCreate = googleUsers.subtracting(ldapUsers)
