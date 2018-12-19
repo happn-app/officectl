@@ -69,13 +69,27 @@ extension HappnUser {
 		return future
 	}
 	
-	@available(*, deprecated)
+	/**
+	Creates an LDAP Inet Org Person from the happn User.
+	
+	The following properties are migrated:
+	- username
+	- email
+	- firstName
+	- lastName
+	
+	The cn of the returned object is infered from the first and last name of the
+	HappnUser. If the first or last name is nil in the HappnUser, it will be set
+	to "<Unknown>".
+	
+	No password will be set in the returned object. */
 	public func ldapInetOrgPerson(baseDN: String) -> LDAPInetOrgPerson {
-		let ret = LDAPInetOrgPerson(dn: "uid=" + email.username + ",ou=people," + baseDN, sn: [lastName ?? "<Unknown>"], cn: [(firstName ?? "<Unknown>") + " " + (lastName ?? "<Unknown>")])
-		ret.givenName = [firstName ?? "<Unknown>"]
+		let firstNameNonOptional = (firstName ?? "<Unknown>")
+		let lastNameNonOptional = (lastName ?? "<Unknown>")
+		let ret = LDAPInetOrgPerson(dn: "uid=" + email.username + ",ou=people," + baseDN, sn: [lastNameNonOptional], cn: [firstNameNonOptional + " " + lastNameNonOptional])
+		ret.givenName = [firstNameNonOptional]
 		ret.mail = [email]
 		ret.uid = email.username
-		ret.userPassword = password
 		return ret
 	}
 	

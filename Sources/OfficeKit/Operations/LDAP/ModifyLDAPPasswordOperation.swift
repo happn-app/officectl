@@ -15,12 +15,18 @@ import COpenLDAP
 
 /* Adapted from ldappasswd source code: https://github.com/openldap/openldap/blob/59e9ff6243465640956b58ad1756a3ede53eca7c/clients/tools/ldappasswd.c*/
 
+/* If the LDAPObject does not contain a password, will set to a randomly
+generated password. */
 @available(OSX, deprecated: 10.11) /* See LDAPConnector declaration. The core functionalities of this class will have to be rewritten for the OpenDirectory connector if we ever create it. */
 public class ModifyLDAPPasswordsOperation : RetryingOperation {
 	
 	public let connector: LDAPConnector
 	
 	public let objects: [LDAPObject]
+	
+	/** Keys are distinguished names, values are passwords. Only set for users
+	whose password was successfully set. */
+	public private(set) var passwords = [String: String]()
 	public private(set) var errors = [Error?]()
 	
 	/** The users must have the new cleartext password set in the `userPassword`
@@ -44,9 +50,7 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 		
 		for object in objects {
 			do {
-				guard let pass = object.firstStringValue(for: "userPassword") else {
-					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "No password provided for user \(object.distinguishedName)"])
-				}
+				let pass = object.firstStringValue(for: "userPassword") ?? generateRandomPassword()
 				
 				/* Let’s build the password change request */
 				
@@ -68,6 +72,7 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 					throw NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])
 				}
 				
+				passwords[object.distinguishedName] = pass
 				errors.append(nil)
 			} catch {
 				errors.append(error)
@@ -112,6 +117,12 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 		guard ber_flatten2(ber, &berval, 0) >= 0 else {
 			throw NSError(domain: "com.happn.officectl.lber", code: 1, userInfo: [NSLocalizedDescriptionKey: "ber_flatten2 returned a value < 0"])
 		}
+	}
+	
+	private func generateRandomPassword() -> String {
+		let length = 13
+		let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		return String((0..<length).map{ _ in chars.randomElement()! })
 	}
 	
 }

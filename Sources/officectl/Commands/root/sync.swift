@@ -87,7 +87,18 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 					switch destinationService {
 					case .github: throw NotImplementedError()
 					case .google: throw BasicValidationError("Cannot sync from Google to Google…")
-					case .ldap: return syncFromGoogleToLDAP(users: usersByService, connectors: connectors, asyncConfig: asyncConfig)
+					case .ldap:
+						let (future, operation) = syncFromGoogleToLDAP(users: usersByService, connectors: connectors, asyncConfig: asyncConfig)
+						return future
+						.catch{ error in
+							context.console.error("Got error while creating users: \(error)")
+						}
+						.always{
+							context.console.print("Generated the following users:")
+							for (dn, password) in operation.passwords {
+								context.console.print("   " + dn + ": " + password)
+							}
+						}
 					}
 				}
 				return EventLoopFuture.reduce(into: (), syncFutures, eventLoop: asyncConfig.eventLoop, { currentValue, newValue in })
@@ -105,15 +116,24 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	return f
 }
 
-private func syncFromGoogleToLDAP(users: [Service: [HappnUser]], connectors: Connectors, asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
+/** - returns: A future and a `ModifyLDAPPasswordsOperation`. You can retrieve
+the dn<->password mappings for created objects from the operation. Use the
+future to know when the objects creation is over. Note that even in case of
+failures, you might still get users created; you should always check the
+operation for passwords. */
+private func syncFromGoogleToLDAP(users: [Service: [HappnUser]], connectors: Connectors, asyncConfig: AsyncConfig) -> (EventLoopFuture<Void>, ModifyLDAPPasswordsOperation) {
 	/* TODO: User deletion. Currently we’re append only. */
 	let ldapUsers = Set(users[.ldap]!)
 	let googleUsers = Set(users[.google]!)
 	let usersToCreate = googleUsers.subtracting(ldapUsers)
 	
 	let ldapUsersToCreate = usersToCreate.compactMap{ $0.ldapInetOrgPerson(baseDN: "dc=happn,dc=com") }
-	let createUsersOperation = CreateLDAPObjectsOperation(users: Array(ldapUsersToCreate), connector: connectors.ldapConnector)
-	return asyncConfig.eventLoop.future(from: createUsersOperation, queue: asyncConfig.operationQueue, resultRetriever: { _ in return () })
+	let createUsersOperation = CreateLDAPObjectsOperation(users: ldapUsersToCreate, connector: connectors.ldapConnector)
+	let changePasswordsOperation = ModifyLDAPPasswordsOperation(users: ldapUsersToCreate, connector: connectors.ldapConnector)
+	changePasswordsOperation.addDependency(createUsersOperation)
+	
+	let f: Future<[Void]> = asyncConfig.eventLoop.future(from: [createUsersOperation, changePasswordsOperation], queue: asyncConfig.operationQueue, resultRetriever: { _ in return () })
+	return (f.transform(to: ()), changePasswordsOperation)
 }
 
 private func happnUsersFromGoogle(connector: GoogleJWTConnector, asyncConfig: AsyncConfig) -> EventLoopFuture<(Service, [HappnUser])> {
