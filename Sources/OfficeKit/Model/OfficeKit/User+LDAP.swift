@@ -1,5 +1,5 @@
 /*
- * HappnUser+LDAP.swift
+ * User+LDAP.swift
  * OfficeKit
  *
  * Created by François Lamboley on 10/09/2018.
@@ -12,29 +12,31 @@ import Vapor
 
 
 
-extension HappnUser {
+extension User {
 	
 	public init?(ldapInetOrgPerson: LDAPInetOrgPerson) {
-		guard let m = ldapInetOrgPerson.mail?.first, let f = ldapInetOrgPerson.givenName?.first, let l = ldapInetOrgPerson.sn.first else {return nil}
-		email = m
+		guard let dn = try? LDAPDistinguishedName(string: ldapInetOrgPerson.dn), let f = ldapInetOrgPerson.givenName?.first, let l = ldapInetOrgPerson.sn.first else {return nil}
+		id = .distinguishedName(dn)
+		
+		distinguishedName = dn
+		googleUserId = nil
+		gitHubId = nil
+		email = ldapInetOrgPerson.mail?.first
 		
 		firstName = f
 		lastName = l
 		
-		password = ldapInetOrgPerson.userPassword
-		
-		ldapDN = nil
 		sshKey = nil
-		googleUserId = nil
-		gitHubId = nil
+		password = ldapInetOrgPerson.userPassword
 	}
 	
 	public func checkLDAPPassword(container: Container, checkedPassword: String) throws -> Future<Void> {
 		guard !checkedPassword.isEmpty else {throw Error.passwordIsEmpty}
 		
+		let dn = try nil2throw(distinguishedName, "dn")
 		let asyncConfig = try container.make(AsyncConfig.self)
 		var ldapConnectorConfig = try container.make(LDAPConnector.Settings.self)
-		ldapConnectorConfig.authMode = .userPass(username: LDAPDistinguishedName(email: email.happnComVariant()).stringValue, password: checkedPassword)
+		ldapConnectorConfig.authMode = .userPass(username: dn.stringValue, password: checkedPassword)
 		let connector = try LDAPConnector(key: ldapConnectorConfig)
 		return connector.connect(scope: (), forceIfAlreadyConnected: true, asyncConfig: asyncConfig)
 	}
@@ -45,9 +47,12 @@ extension HappnUser {
 		let ldapConnectorConfig = try container.make(LDAPConnector.Settings.self)
 		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
 		
-		let searchedDN = LDAPDistinguishedName(email: email.happnComVariant())
-		let searchBase = searchedDN.relativeDistinguishedName(for: "dc").stringValue
-		let searchQuery = LDAPSearchQuery.simple(attribute: LDAPAttributeDescription(stringOid: "uid")!, filtertype: .equal, value: Data(self.email.username.utf8))
+		let searchedDN = try nil2throw(distinguishedName, "dn")
+		let uids = searchedDN.relativeDistinguishedNameValues(for: "uid")
+		guard let uid = uids.first, uids.count == 1 else {throw Error.userNotFound}
+		
+		let searchBase = searchedDN.relativeDistinguishedName(for: "dc")
+		let searchQuery = LDAPSearchQuery.simple(attribute: LDAPAttributeDescription(stringOid: "uid")!, filtertype: .equal, value: Data(uid.utf8))
 		
 		let future = ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
 		.then{ _ -> EventLoopFuture<[LDAPObject]> in
@@ -78,18 +83,25 @@ extension HappnUser {
 	- firstName
 	- lastName
 	
-	The cn of the returned object is infered from the first and last name of the
-	HappnUser. If the first or last name is nil in the HappnUser, it will be set
-	to "<Unknown>".
+	The cn of the returned object is inferred from the first and last name of the
+	User. If the first or last name is nil in the User, it will be set to
+	"<Unknown>".
 	
-	No password will be set in the returned object. */
-	public func ldapInetOrgPerson(baseDN: String) -> LDAPInetOrgPerson {
-		let firstNameNonOptional = (firstName ?? "<Unknown>")
+	No password will be set in the returned object.
+	
+	- parameter baseDN: The base DN in which the returned user will be. Example:
+	`ou=people,dc=example,dc=org`
+	
+	- throws: If there are no emails in the `User`. */
+	public func ldapInetOrgPerson(baseDN: LDAPDistinguishedName) throws -> LDAPInetOrgPerson {
+		let e = try nil2throw(email, "email")
 		let lastNameNonOptional = (lastName ?? "<Unknown>")
-		let ret = LDAPInetOrgPerson(dn: "uid=" + email.username + ",ou=people," + baseDN, sn: [lastNameNonOptional], cn: [firstNameNonOptional + " " + lastNameNonOptional])
+		let firstNameNonOptional = (firstName ?? "<Unknown>")
+		let dn = LDAPDistinguishedName(uid: e.username, baseDN: baseDN)
+		let ret = LDAPInetOrgPerson(dn: dn.stringValue, sn: [lastNameNonOptional], cn: [firstNameNonOptional + " " + lastNameNonOptional])
 		ret.givenName = [firstNameNonOptional]
-		ret.mail = [email]
-		ret.uid = email.username
+		ret.uid = e.username
+		ret.mail = [e]
 		return ret
 	}
 	

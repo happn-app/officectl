@@ -53,7 +53,6 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 				let pass = object.firstStringValue(for: "userPassword") ?? generateRandomPassword()
 				
 				/* Let’s build the password change request */
-				
 				guard let ber = ber_alloc_t(LBER_USE_DER) else {
 					throw NSError(domain: "com.happn.officectl.lber", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot allocate memory"])
 				}
@@ -63,10 +62,13 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 				try buildBervalPasswordChangeRequest(dn: object.distinguishedName, newPass: pass, ber: ber, berval: &bv)
 				assert(bv.bv_val != nil)
 				
+				/* Debug the generated berval data. */
 //				var data = Data()
 //				for i in 0..<bv.bv_len {data.append(UInt8((Int(bv.bv_val.advanced(by: Int(i)).pointee) + 256) % 256))}
 //				print(data.reduce("", { $0 + String(format: "%02x", $1) }))
 				
+				/* We use the synchronous version of the function. See long comment
+				 * in search operation for details. */
 				let r = ldap_extended_operation_s(connector.ldapPtr, LDAP_EXOP_MODIFY_PASSWD, &bv, nil /* Server controls */, nil /* Client controls */, nil, nil)
 				guard r == LDAP_SUCCESS else {
 					throw NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])

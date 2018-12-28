@@ -41,12 +41,15 @@ public class SearchLDAPOperation : RetryingOperation {
 		 * synchronous alternative. As a downside, we cannot cancel the search
 		 * operation quickly (the search from the libldap has to finish first).
 		 * For our use case it should be fine (actually correct cancellation has
-		 * not even been implemented later). */
+		 * not even been implemented later).
+		 * Another (guessed) downside is if we have multiple requests launched on
+		 * the same connection, they won’t be run at the same time, one long
+		 * request potentially blocking another small request. */
 		var searchResultMessagePtr: OpaquePointer? /* “LDAPMessage*”; Cannot use the LDAPMessage type (not exported to Swift, because opaque in C headers...) */
 		let searchResultError = withCLDAPArrayOfString(array: request.attributesToFetch){ attributesPtr in
 			return ldap_search_ext_s(
 				ldapConnector.ldapPtr,
-				request.base, request.scope.rawValue, request.searchQuery?.stringValue, attributesPtr,
+				request.base.stringValue, request.scope.rawValue, request.searchQuery?.stringValue, attributesPtr,
 				0 /* We want attributes and values */, nil /* Server controls */, nil /* Client controls */,
 				nil /* Timeout */, 0 /* Size limit */, &searchResultMessagePtr
 			)
@@ -149,12 +152,12 @@ public struct LDAPSearchRequest {
 	}
 	
 	public var scope: Scope
-	public var base: String
+	public var base: LDAPDistinguishedName
 	public var searchQuery: LDAPSearchQuery?
 	
 	public var attributesToFetch: [String]?
 	
-	public init(scope s: Scope, base b: String, searchQuery sq: LDAPSearchQuery?, attributesToFetch atf: [String]?) {
+	public init(scope s: Scope, base b: LDAPDistinguishedName, searchQuery sq: LDAPSearchQuery?, attributesToFetch atf: [String]?) {
 		base = b
 		scope = s
 		searchQuery = sq

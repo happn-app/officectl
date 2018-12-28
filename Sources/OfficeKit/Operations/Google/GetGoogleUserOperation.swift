@@ -23,13 +23,11 @@ public class GetGoogleUserOperation : RetryingOperation {
 	
 	public private(set) var result = AsyncOperationResult<GoogleUser>.error(OperationIsNotFinishedError())
 	
+	/** Init the operation with the given user key. A user key is either the
+	Google id of the user or the email of the user. */
 	public init(userKey k: String, connector c: GoogleJWTConnector) {
 		userKey = k
 		connector = c
-	}
-	
-	public convenience init(happnUser: HappnUser, connector c: GoogleJWTConnector) {
-		self.init(userKey: happnUser.email.happnFrVariant().stringValue, connector: c)
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {

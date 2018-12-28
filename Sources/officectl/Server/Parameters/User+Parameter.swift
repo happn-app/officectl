@@ -1,5 +1,5 @@
 /*
- * HappnUser+Parameter.swift
+ * User+Parameter.swift
  * officectl
  *
  * Created by François Lamboley on 27/08/2018.
@@ -12,9 +12,9 @@ import Vapor
 
 
 
-extension HappnUser : Parameter {
+extension User : Parameter {
 	
-	public static func resolveParameter(_ emailStr: String, on container: Container) throws -> HappnUser {
+	public static func resolveParameter(_ emailStr: String, on container: Container) throws -> User {
 		/* Let’s validate the email */
 		guard let email = Email(string: emailStr).flatMap({ $0.domain == "happn.com" ? Email(username: $0.username, domain: "happn.fr") : $0 }) else {
 			throw BasicValidationError("Invalid email")
@@ -27,7 +27,7 @@ extension HappnUser : Parameter {
 			throw BasicValidationError("Invalid character in username")
 		}
 		
-		return HappnUser(email: email)
+		return User(id: .email(email))
 	}
 	
 }

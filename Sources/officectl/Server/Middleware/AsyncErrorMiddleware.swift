@@ -20,7 +20,7 @@ final class AsyncErrorMiddleware : Middleware, ServiceType {
 	static func makeService(for worker: Container) throws -> AsyncErrorMiddleware {
 		return AsyncErrorMiddleware{ request, error in
 			/* Simple default error handling. */
-			let response = request.makeResponse(http: HTTPResponse(status: .internalServerError, headers: [:]))
+			let response = request.response(http: HTTPResponse(status: .internalServerError, headers: [:]))
 			response.http.headers.replaceOrAdd(name: .contentType, value: "text/plain; charset=utf-8")
 			response.http.body = HTTPBody(string: "error: " + error.localizedDescription)
 			return request.future(response)
@@ -51,7 +51,7 @@ final class AsyncErrorMiddleware : Middleware, ServiceType {
 	}
 	
 	private func processErrorProcessingError(request: Request, originalError: Error, processingError: Error) -> Response {
-		let response = request.makeResponse(http: HTTPResponse(status: .internalServerError, headers: [:]))
+		let response = request.response(http: HTTPResponse(status: .internalServerError, headers: [:]))
 		response.http.body = HTTPBody(string: "Oops: \(originalError)\n\n\n\nOops processing oops: \(processingError)")
 		response.http.headers.replaceOrAdd(name: .contentType, value: "text/plain; charset=utf-8")
 		return response

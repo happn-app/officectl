@@ -31,9 +31,9 @@ public struct Email : Hashable, Codable {
 		domain = d
 	}
 	
-	init(_ e: Email) {
-		username = e.username
-		domain = e.domain
+	init(_ e: Email, newUsername: String? = nil, newDomain: String? = nil) {
+		username = newUsername ?? e.username
+		domain = newDomain ?? e.domain
 	}
 	
 	public init(from decoder: Decoder) throws {
@@ -49,11 +49,13 @@ public struct Email : Hashable, Codable {
 		try value.encode(stringValue)
 	}
 	
+	@available(*, deprecated, message: "This is happn-specific.")
 	public func happnFrVariant() -> Email {
 		if domain == "happn.com" {return Email(username: username, domain: "happn.fr")!}
 		return Email(self)
 	}
 	
+	@available(*, deprecated, message: "This is happn-specific.")
 	public func happnComVariant() -> Email {
 		if domain == "happn.fr" {return Email(username: username, domain: "happn.com")!}
 		return Email(self)
@@ -64,8 +66,19 @@ public struct Email : Hashable, Codable {
 
 public extension LDAPDistinguishedName {
 	
-	init(email: Email) {
-		values = [(key: "uid", value: email.username), (key: "ou", value: "people")] + email.domain.split(separator: ".").map{
+	/** Create a DN from an email.
+	
+	Result will be of the form:
+	
+	    uid=username,MIDDLE_DN,dc=subdomain1,dc=subdomain2...
+	
+	Example: For `francois.lamboley@happn.fr`, with middle dn `ou=people`, you’ll
+	get:
+	
+	    uid=francois.lamboley,ou=people,dc=happn,dc=com */
+	@available(*, deprecated, message: "This method assumes the DN will be of the form uid=username,MIDDLE_DN,dc=subdomain1,dc=subdomain2... which is a stretch.")
+	init(email: Email, middleDN: LDAPDistinguishedName) {
+		values = [(key: "uid", value: email.username)] + middleDN.values + email.domain.split(separator: ".").map{
 			(key: "dc", value: String($0))
 		}
 	}

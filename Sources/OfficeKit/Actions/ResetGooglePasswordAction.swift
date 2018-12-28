@@ -14,10 +14,10 @@ import Vapor
 
 public class ResetGooglePasswordAction : SemiSingleton {
 	
-	public typealias SemiSingletonKey = HappnUser
+	public typealias SemiSingletonKey = User
 	public typealias SemiSingletonAdditionalInitInfo = Void
 
-	public required init(key u: HappnUser, additionalInfo: Void, store: SemiSingletonStore) {
+	public required init(key u: User, additionalInfo: Void, store: SemiSingletonStore) {
 	}
 	
 }

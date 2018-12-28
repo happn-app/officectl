@@ -28,10 +28,11 @@ folder named after the target it is a part of. The tests are in the `Tests` fold
 Contains the library with which the `officectl` command line tool is built.
 
 #### Model
-The “happn” part of the model is used to represent objects used by OfficeKit directly.
+The “OfficeKit” part of the model is used to represent objects used by OfficeKit directly.
 
 The LDAP model contains a generic `LDAPObject` structure and some utilities. It also contains
-the classes that match the LDAP model we use at happn.
+some classes that match the LDAP schema RFC1274 (cosine) + RFC2798 (inetOrgPerson) and
+the “core” scheme in OpenLDAP.
 
 Other models are straightforward in general and used directly to store the results from different APIs.
 

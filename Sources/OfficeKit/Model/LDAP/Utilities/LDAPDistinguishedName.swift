@@ -12,7 +12,11 @@ import Foundation
 /* RFC: https://www.ietf.org/rfc/rfc4514.txt
  * The RFC is not fully followed… I know Multi-valued RDN are not supported.
  * There are probably other cases that do not correctly implement the RFC. */
-public struct LDAPDistinguishedName {
+public struct LDAPDistinguishedName : Hashable {
+	
+	public static func +(_ left: LDAPDistinguishedName, _ right: LDAPDistinguishedName) -> LDAPDistinguishedName {
+		return LDAPDistinguishedName(values: left.values + right.values)
+	}
 	
 	public var values: [(key: String, value: String)]
 	
@@ -34,6 +38,10 @@ public struct LDAPDistinguishedName {
 	
 	public init(values v: [(key: String, value: String)]) {
 		values = v
+	}
+	
+	public init(uid: String, baseDN: LDAPDistinguishedName) {
+		self.init(values: [(key: "uid", value: uid)] + baseDN.values)
 	}
 	
 	public init(string dn: String) throws {
@@ -163,6 +171,26 @@ public struct LDAPDistinguishedName {
 	
 	public func relativeDistinguishedNameValues(for key: String) -> [String] {
 		return relativeDistinguishedName(for: key).values.map{ $0.value }
+	}
+	
+	/* ****************
+      MARK: - Hashable
+	   **************** */
+	
+	public static func == (lhs: LDAPDistinguishedName, rhs: LDAPDistinguishedName) -> Bool {
+		/* Apparently “(key: String, value: String)” does not conform to equatable
+		 * in Swift 4 :( Does not seem to work on Swift 5 either (tested in REPL). */
+//		return lhs.values == rhs.values
+		guard lhs.values.count == rhs.values.count else {return false}
+		for (l, r) in zip(lhs.values, rhs.values) {
+			guard l == r else {return false}
+		}
+		return true
+	}
+	
+	public func hash(into hasher: inout Hasher) {
+		hasher.combine(values.map{ $0.key })
+		hasher.combine(values.map{ $0.value })
 	}
 	
 }

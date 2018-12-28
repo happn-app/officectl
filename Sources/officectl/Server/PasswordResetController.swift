@@ -21,20 +21,22 @@ final class PasswordResetController {
 	}
 	
 	func showResetPage(_ req: Request) throws -> Future<View> {
-		let user = try req.parameters.next(HappnUser.self)
+		let user = try req.parameters.next(User.self)
+		let email = try nil2throw(user.email, "email")
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: user) as ResetPasswordAction
 		
 		if !resetPasswordAction.isExecuting {
-			return try req.view().render("PasswordResetPage", ["user_email": user.email.stringValue])
+			return try req.view().render("PasswordResetPage", ["user_email": email.stringValue])
 		} else {
-			return try req.view().render("PasswordResetInProgressPage", ["user_email": user.email.stringValue])
+			return try req.view().render("PasswordResetInProgressPage", ["user_email": email.stringValue])
 		}
 	}
 	
 	func resetPassword(_ req: Request) throws -> Future<View> {
 		let view = try req.view()
-		let user = try req.parameters.next(HappnUser.self)
+		let user = try req.parameters.next(User.self)
+		let email = try nil2throw(user.email, "email")
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
 		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: user) as ResetPasswordAction
@@ -42,7 +44,7 @@ final class PasswordResetController {
 		return try resetPasswordAction.start(oldPassword: resetPasswordData.oldPass, newPassword: resetPasswordData.newPass, container: req)
 		.then{ _ in
 			assert(resetPasswordAction.isExecuting)
-			return view.render("PasswordResetInProgressPage", ["user_email": user.email.stringValue])
+			return view.render("PasswordResetInProgressPage", ["user_email": email.stringValue])
 		}
 	}
 	

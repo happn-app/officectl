@@ -52,6 +52,8 @@ public class ModifyLDAPObjectsOperation : RetryingOperation {
 			var ldapModifsRequest = object.attributes.filter{ propertiesToUpdate.contains($0.key) }.map{ v -> UnsafeMutablePointer<LDAPMod>? in ldapModAlloc(method: LDAP_MOD_REPLACE | LDAP_MOD_BVALUES, key: v.key, values: v.value) } + [nil]
 			defer {ldap_mods_free(&ldapModifsRequest, 0)}
 			
+			/* We use the synchronous version of the function. See long comment in
+			 * search operation for details. */
 			let r = ldap_modify_ext_s(connector.ldapPtr, object.distinguishedName, &ldapModifsRequest, nil /* Server controls */, nil /* Client controls */)
 			if r == LDAP_SUCCESS {errors.append(nil)}
 			else                 {errors.append(NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))]))}

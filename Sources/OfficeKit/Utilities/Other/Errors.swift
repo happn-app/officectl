@@ -9,6 +9,16 @@ import Foundation
 
 
 
+public struct MissingFieldError : Error {
+	
+	let fieldName: String
+	
+	public init(_ n: String) {
+		fieldName = n
+	}
+	
+}
+
 public struct OperationIsNotFinishedError : Error {
 	
 	public init() {}
