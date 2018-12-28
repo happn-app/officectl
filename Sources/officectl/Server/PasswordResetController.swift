@@ -23,7 +23,8 @@ final class PasswordResetController {
 	func showResetPage(_ req: Request) throws -> Future<View> {
 		let email = try req.parameters.next(Email.self)
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
-		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(id: .email(email))) as ResetPasswordAction
+		#warning("TODO: We must provide the base DN in a config or via the command line")
+		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, baseDN: LDAPDistinguishedName(values: [(key: "ou", value: "people"), (key: "dc", value: "happn"), (key: "dc", value: "com")]))) as ResetPasswordAction
 		
 		if !resetPasswordAction.isExecuting {
 			return try req.view().render("PasswordResetPage", ["user_email": email.stringValue])
@@ -37,7 +38,8 @@ final class PasswordResetController {
 		let email = try req.parameters.next(Email.self)
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
-		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(id: .email(email))) as ResetPasswordAction
+		#warning("TODO: We must provide the base DN in a config or via the command line")
+		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, baseDN: LDAPDistinguishedName(values: [(key: "ou", value: "people"), (key: "dc", value: "happn"), (key: "dc", value: "com")]))) as ResetPasswordAction
 		
 		return try resetPasswordAction.start(oldPassword: resetPasswordData.oldPass, newPassword: resetPasswordData.newPass, container: req)
 		.then{ _ in

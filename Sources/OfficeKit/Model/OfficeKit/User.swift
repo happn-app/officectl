@@ -48,6 +48,21 @@ public struct User : Hashable {
 		password = nil
 	}
 	
+	public init(email e: Email, baseDN: LDAPDistinguishedName) {
+		id = .email(e)
+		
+		distinguishedName = LDAPDistinguishedName(uid: e.username, baseDN: baseDN)
+		googleUserId = nil
+		gitHubId = nil
+		email = e
+		
+		firstName = nil
+		lastName = nil
+		
+		sshKey = nil
+		password = nil
+	}
+	
 	/* ****************
       MARK: - Hashable
 	   **************** */
