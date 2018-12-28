@@ -50,15 +50,20 @@ public class ResetPasswordAction : SemiSingleton {
 			self.executingWitness = self
 		}
 		
-		/* Let’s check the given old password */
-		return try user.checkLDAPPassword(container: container, checkedPassword: oldPassword)
-		.thenIfErrorThrowing{ error in
-			self.syncQueue.sync{ self.executingWitness = nil }
+		do {
+			/* Let’s check the given old password */
+			return try user.checkLDAPPassword(container: container, checkedPassword: oldPassword)
+			.thenIfErrorThrowing{ error in
+				self.syncQueue.sync{ self.executingWitness = nil }
+				throw error
+			}
+			.map{
+				/* The password of the user is verified. Let’s launch the resets! */
+				return ()
+			}
+		} catch {
+			syncQueue.sync{ self.executingWitness = nil }
 			throw error
-		}
-		.map{
-			/* The password of the user is verified. Let’s launch the resets! */
-			return ()
 		}
 	}
 	
