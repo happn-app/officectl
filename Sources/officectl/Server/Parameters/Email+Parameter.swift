@@ -1,5 +1,5 @@
 /*
- * User+Parameter.swift
+ * Email+Parameter.swift
  * officectl
  *
  * Created by François Lamboley on 27/08/2018.
@@ -12,9 +12,9 @@ import Vapor
 
 
 
-extension User : Parameter {
+extension Email : Parameter {
 	
-	public static func resolveParameter(_ emailStr: String, on container: Container) throws -> User {
+	public static func resolveParameter(_ emailStr: String, on container: Container) throws -> Email {
 		/* Let’s validate the email */
 		guard let email = Email(string: emailStr).flatMap({ $0.domain == "happn.com" ? Email(username: $0.username, domain: "happn.fr") : $0 }) else {
 			throw BasicValidationError("Invalid email")
@@ -27,7 +27,7 @@ extension User : Parameter {
 			throw BasicValidationError("Invalid character in username")
 		}
 		
-		return User(id: .email(email))
+		return email
 	}
 	
 }
