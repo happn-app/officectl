@@ -31,8 +31,8 @@ public class ResetPasswordAction : SemiSingleton {
 	}
 	
 	/* Sub-actions */
-	public var modifyLDAPPasswordAction: ResetLDAPPasswordAction
-	public var modifyGooglePasswordAction: ResetGooglePasswordAction
+	public var resetLDAPPasswordAction: ResetLDAPPasswordAction
+	public var resetGooglePasswordAction: ResetGooglePasswordAction
 	
 	public required init(key u: User, additionalInfo: Void, store: SemiSingletonStore) {
 		user = u
@@ -40,8 +40,8 @@ public class ResetPasswordAction : SemiSingleton {
 		
 		syncQueue = DispatchQueue(label: "Reset Password Sync Queue for \(user.id.stringValue)", attributes: [/*serial*/])
 		
-		modifyLDAPPasswordAction = store.semiSingleton(forKey: u)
-		modifyGooglePasswordAction = store.semiSingleton(forKey: u)
+		resetLDAPPasswordAction = store.semiSingleton(forKey: u)
+		resetGooglePasswordAction = store.semiSingleton(forKey: u)
 	}
 	
 	public func start(oldPassword: String, newPassword: String, container: Container) throws -> EventLoopFuture<Void> {
