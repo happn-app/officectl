@@ -12,7 +12,9 @@ import URLRequestOperation
 
 
 
-public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOperation {
+public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOperation, HasResult {
+	
+	public typealias ResultType = ObjectType
 	
 	public static var defaultDecoder: JSONDecoder {
 		let r = JSONDecoder()
@@ -28,8 +30,8 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 	public let decoder: JSONDecoder
 	
 	public var asyncResult: AsyncOperationResult<ObjectType> = .error(OperationIsNotFinishedError())
-	public var decodedObject: ObjectType? {
-		return asyncResult.successValue
+	public func resultOrThrow() throws -> ObjectType {
+		return try asyncResult.successValueOrThrow()
 	}
 	
 	public convenience init(request: URLRequest, authenticator a: Authenticator?, decoder: JSONDecoder = AuthenticatedJSONOperation<ObjectType>.defaultDecoder) {

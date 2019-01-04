@@ -16,35 +16,35 @@ public enum UserId : Hashable {
 	case gitHubId(String)
 	case email(Email)
 	
-	var distinguishedName: LDAPDistinguishedName? {
+	public var distinguishedName: LDAPDistinguishedName? {
 		switch self {
 		case .distinguishedName(let dn): return dn
 		default:                         return nil
 		}
 	}
 	
-	var googleUserId: String? {
+	public var googleUserId: String? {
 		switch self {
 		case .googleUserId(let id): return id
 		default:                    return nil
 		}
 	}
 	
-	var gitHubId: String? {
+	public var gitHubId: String? {
 		switch self {
 		case .gitHubId(let id): return id
 		default:                return nil
 		}
 	}
 	
-	var email: Email? {
+	public var email: Email? {
 		switch self {
 		case .email(let email): return email
 		default:                return nil
 		}
 	}
 	
-	var stringValue: String {
+	public var stringValue: String {
 		switch self {
 		case .distinguishedName(let dn): return "ldap:" + dn.stringValue
 		case .googleUserId(let id):      return "ggl:" + id

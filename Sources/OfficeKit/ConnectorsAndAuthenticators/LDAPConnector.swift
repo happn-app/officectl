@@ -47,7 +47,7 @@ public final class LDAPConnector : Connector {
 	public var currentScope: Void?
 	let ldapPtr: OpaquePointer /* “LDAP*”; Cannot use the LDAP type (not exported to Swift, because opaque in C headers...) */
 	
-	public let handlerOperationQueue = HandlerOperationQueue(name: "LDAPConnector")
+	public let connectorOperationQueue = SyncOperationQueue(name: "LDAPConnector")
 	
 	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion) throws {
 		try self.init(ldapURL: u, protocolVersion: protocolVersion, authMode: .none)

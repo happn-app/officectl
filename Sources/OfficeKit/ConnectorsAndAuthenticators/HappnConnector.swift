@@ -20,41 +20,41 @@ import URLRequestOperation
 
 
 
-class HappnConnector : Connector, Authenticator {
+public class HappnConnector : Connector, Authenticator {
 	
-	typealias ScopeType = Set<String>
-	typealias RequestType = URLRequest
+	public typealias ScopeType = Set<String>
+	public typealias RequestType = URLRequest
 	
 	let clientId: String
 	let clientSecret: String
 	
-	var currentScope: Set<String>? {
+	public var currentScope: Set<String>? {
 		return auth?.scope
 	}
-	var accessToken: String? {
+	public var accessToken: String? {
 		return auth?.accessToken
 	}
-	var refreshToken: String? {
+	public var refreshToken: String? {
 		return auth?.refreshToken
 	}
 	
-	let handlerOperationQueue = HandlerOperationQueue(name: "HappnConnector")
+	public let connectorOperationQueue = SyncOperationQueue(name: "HappnConnector Connection Queue")
 	
-	init(clientId id: String, clientSecret s: String, username u: String, password p: String) {
+	public init(clientId id: String, clientSecret s: String, username u: String, password p: String) {
 		clientId = id
 		clientSecret = s
 		
 		authMode = .userPass(username: u, password: p)
 	}
 	
-	init(clientId id: String, clientSecret s: String, refreshToken t: String) {
+	public init(clientId id: String, clientSecret s: String, refreshToken t: String) {
 		clientId = id
 		clientSecret = s
 		
 		authMode = .refreshToken(t)
 	}
 	
-	func authenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
+	public func authenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
 		/* Make sure we're connected */
 		guard let auth = auth else {
 			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
@@ -119,7 +119,7 @@ class HappnConnector : Connector, Authenticator {
 		handler(.success(request), nil)
 	}
 	
-	func unsafeConnect(scope: Set<String>, handler: @escaping (Error?) -> Void) {
+	public func unsafeConnect(scope: Set<String>, handler: @escaping (Error?) -> Void) {
 		let url = URL(string: "https://api.happn.fr/connect/oauth/token")!
 		var components = URLComponents()
 		components.queryItems = [
@@ -148,7 +148,7 @@ class HappnConnector : Connector, Authenticator {
 		
 		let op = AuthenticatedJSONOperation<TokenResponse>(request: request, authenticator: nil)
 		op.completionBlock = {
-			guard let o = op.decodedObject else {
+			guard let o = op.result else {
 				handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
 				return
 			}
@@ -179,7 +179,7 @@ class HappnConnector : Connector, Authenticator {
 		}
 	}
 	
-	func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
+	public func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
 		guard let auth = auth else {handler(nil); return}
 		
 		var request = URLRequest(url: URL(string: "https://api.happn.fr/connect/oauth/revoke-token")!)

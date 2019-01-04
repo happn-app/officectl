@@ -30,6 +30,14 @@ extension User {
 		password = ldapInetOrgPerson.userPassword
 	}
 	
+	public func distinguishedNameIdVariant() -> User? {
+		guard let dn = distinguishedName else {return nil}
+		
+		var ret = self
+		ret.id = .distinguishedName(dn)
+		return ret
+	}
+	
 	public func checkLDAPPassword(container: Container, checkedPassword: String) throws -> Future<Void> {
 		guard !checkedPassword.isEmpty else {throw Error.passwordIsEmpty}
 		

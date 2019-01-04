@@ -13,7 +13,9 @@ import RetryingOperation
 
 
 /* https://developers.google.com/admin-sdk/directory/v1/reference/users/get */
-public class GetGoogleUserOperation : RetryingOperation {
+public class GetGoogleUserOperation : RetryingOperation, HasResult {
+	
+	public typealias ResultType = GoogleUser
 	
 	public static let scopes = Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.user")
 	
@@ -22,6 +24,9 @@ public class GetGoogleUserOperation : RetryingOperation {
 	public let userKey: String
 	
 	public private(set) var result = AsyncOperationResult<GoogleUser>.error(OperationIsNotFinishedError())
+	public func resultOrThrow() throws -> GoogleUser {
+		return try result.successValueOrThrow()
+	}
 	
 	/** Init the operation with the given user key. A user key is either the
 	Google id of the user or the email of the user. */
@@ -40,7 +45,7 @@ public class GetGoogleUserOperation : RetryingOperation {
 		#endif
 		let op = AuthenticatedJSONOperation<GoogleUser>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
 		op.completionBlock = {
-			guard let o = op.decodedObject else {
+			guard let o = op.result else {
 				self.result = .error(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the user"]))
 				self.baseOperationEnded()
 				return

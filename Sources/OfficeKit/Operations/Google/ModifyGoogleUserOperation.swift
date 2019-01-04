@@ -12,7 +12,9 @@ import RetryingOperation
 
 
 /* https://developers.google.com/admin-sdk/directory/v1/reference/users/update */
-public class ModifyGoogleUserOperation : RetryingOperation {
+public class ModifyGoogleUserOperation : RetryingOperation, HasResult {
+	
+	public typealias ResultType = Void
 	
 	public static let scopes = Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.user")
 	
@@ -21,6 +23,10 @@ public class ModifyGoogleUserOperation : RetryingOperation {
 	public let user: GoogleUser
 	public let propertiesToUpdate: Set<String>
 	public private(set) var error: Error? = OperationIsNotFinishedError()
+	public func resultOrThrow() throws -> Void {
+		try throwIfError(error)
+		return ()
+	}
 	
 	public init(user u: GoogleUser, propertiesToUpdate ps: Set<String>, connector c: GoogleJWTConnector) {
 		user = u
@@ -54,7 +60,7 @@ public class ModifyGoogleUserOperation : RetryingOperation {
 			#endif
 			let op = AuthenticatedJSONOperation<GoogleUser>(request: urlRequest, authenticator: connector.authenticate, decoder: decoder)
 			op.completionBlock = {
-				guard op.decodedObject != nil else {
+				guard op.result != nil else {
 					self.error = op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the user"])
 					self.baseOperationEnded()
 					return

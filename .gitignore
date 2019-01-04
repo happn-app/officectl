@@ -7,4 +7,5 @@
 /.build/
 
 # Other
+/TestsData/
 /linux_build/

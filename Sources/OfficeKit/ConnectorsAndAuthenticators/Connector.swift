@@ -22,7 +22,7 @@ public protocol Connector {
 	/** A connector should only do one “connection” operation at a time. The
 	handler operation queue given here will be used by default to serialize
 	“unsafe” operations in a queue so they’re executed safely in order. */
-	var handlerOperationQueue: HandlerOperationQueue {get}
+	var connectorOperationQueue: SyncOperationQueue {get}
 	
 	/** `nil` if not connected, otherwise, any non-nil value */
 	var currentScope: ScopeType? {get}
@@ -45,8 +45,9 @@ public extension Connector {
 	}
 	
 	func connect(scope: ScopeType, forceIfAlreadyConnected: Bool = false, handlerQueue: DispatchQueue = .main, handler: @escaping (_ error: Error?) -> Void) {
-		handlerOperationQueue.addToQueue{ stopOperationHandler in
-			guard forceIfAlreadyConnected || !self.isConnected else {handler(nil); return}
+		assert(connectorOperationQueue.maxConcurrentOperationCount == 1)
+		connectorOperationQueue.addAsyncBlock{ stopOperationHandler in
+			guard forceIfAlreadyConnected || !self.isConnected else {handler(nil); stopOperationHandler(); return}
 			self.unsafeConnect(scope: scope, handler: { error in
 				handlerQueue.async{
 					handler(error)
@@ -57,8 +58,9 @@ public extension Connector {
 	}
 	
 	func disconnect(forceIfAlreadyDisconnected: Bool = false, handlerQueue: DispatchQueue = .main, handler: @escaping (_ error: Error?) -> Void) {
-		handlerOperationQueue.addToQueue{ stopOperationHandler in
-			guard forceIfAlreadyDisconnected || self.isConnected else {handler(nil); return}
+		assert(connectorOperationQueue.maxConcurrentOperationCount == 1)
+		connectorOperationQueue.addAsyncBlock{ stopOperationHandler in
+			guard forceIfAlreadyDisconnected || self.isConnected else {handler(nil); stopOperationHandler(); return}
 			self.unsafeDisconnect(handler: { error in
 				handlerQueue.async{
 					handler(error)
@@ -77,12 +79,12 @@ class AnyConnector<ScopeType> : Connector {
 		return currentScopeHandler()
 	}
 	
-	var handlerOperationQueue: HandlerOperationQueue {
-		return handlerOperationQueueHandler()
+	var connectorOperationQueue: SyncOperationQueue {
+		return connectionOperationQueueHandler()
 	}
 	
 	init<C : Connector>(base b: C) where C.ScopeType == ScopeType {
-		handlerOperationQueueHandler = { b.handlerOperationQueue }
+		connectionOperationQueueHandler = { b.connectorOperationQueue }
 		currentScopeHandler = { b.currentScope }
 		
 		connectHandler = b.unsafeConnect
@@ -101,7 +103,7 @@ class AnyConnector<ScopeType> : Connector {
       MARK: - Connector Erasure
 	   ************************* */
 	
-	private let handlerOperationQueueHandler: () -> HandlerOperationQueue
+	private let connectionOperationQueueHandler: () -> SyncOperationQueue
 	
 	private let currentScopeHandler: () -> ScopeType?
 	

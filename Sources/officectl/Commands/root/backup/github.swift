@@ -26,7 +26,7 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 	.then{ _ -> EventLoopFuture<[GitHubRepository]> in
 		context.console.info("Fetching repositories list from GitHub...")
 		let searchOp = GitHubRepositorySearchOperation(searchedOrganisation: orgName, gitHubConnector: gitHubConnector)
-		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
+		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue)
 	}
 	.then{ repositories -> EventLoopFuture<Set<String>> in
 		let promise: EventLoopPromise<Set<String>> = asyncConfig.eventLoop.newPromise()
@@ -54,16 +54,16 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 		}
 		return promise.futureResult
 	}
-	.then{ repositoryNames -> EventLoopFuture<(Set<String>, [AsyncOperationResult<Void>])> in
+	.then{ repositoryNames -> EventLoopFuture<([FutureResult<Void>], Set<String>)> in
 		context.console.info("Updating clones...")
 		let q = OperationQueue(); q.maxConcurrentOperationCount = 7 /* We do not use the default operation queue from async config. Indeed, we are launching one sub-process per operation. We do not want a configuration suited for threads, we want one suited for launching subprocesses. */
 		let operations = repositoryNames.map{ CloneGitHubRepoOperation(in: destinationFolderURL, repoFullName: $0, accessToken: gitHubConnector.token!) }
-		return asyncConfig.eventLoop.future(from: operations, queue: q, resultRetriever: { o -> Void in if let e = o.cloneError {throw e} }).then{ errors in
-			asyncConfig.eventLoop.newSucceededFuture(result: (repositoryNames, errors))
-		}
+		return asyncConfig.eventLoop
+			.executeAll(operations, queue: q, resultRetriever: { o -> Void in try throwIfError(o.cloneError) })
+			.and(result: repositoryNames)
 	}
 	.then{ r -> EventLoopFuture<Void> in
-		let (repositoryNames, operationResults) = r
+		let (operationResults, repositoryNames) = r
 		
 		/* Let's check we have all the repositories backed-up */
 		var localRepoNames = Set<String>()

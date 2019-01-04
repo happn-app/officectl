@@ -14,17 +14,18 @@ import Vapor
 
 public class ResetPasswordAction : SemiSingleton {
 	
-	public enum Error : Swift.Error {
-		
-		case actionIsAlreadyExecuting
-		
-	}
-	
 	public typealias SemiSingletonKey = User
 	public typealias SemiSingletonAdditionalInitInfo = Void
 	
 	public let user: User
 	public private(set) var newPassword: String?
+	
+	public private(set) var ldapResetResult: Future<Void>?
+	public private(set) var googleResetResult: Future<Void>?
+	
+	public var allResults: [Future<Void>] {
+		return [ldapResetResult, googleResetResult].compactMap{ $0 }
+	}
 	
 	public var isExecuting: Bool {
 		return syncQueue.sync{ executingWitness != nil }
@@ -44,31 +45,42 @@ public class ResetPasswordAction : SemiSingleton {
 		resetGooglePasswordAction = store.semiSingleton(forKey: u)
 	}
 	
-	public func start(oldPassword: String, newPassword: String, container: Container) throws -> EventLoopFuture<Void> {
+	public func start(newPassword p: String, container: Container) throws -> Future<Void> {
 		try syncQueue.sync{
-			guard self.executingWitness == nil else {throw Error.actionIsAlreadyExecuting}
+			guard self.executingWitness == nil else {throw OperationAlreadyInProgressError()}
 			self.executingWitness = self
 		}
 		
-		do {
-			/* Let’s check the given old password */
-			return try user.checkLDAPPassword(container: container, checkedPassword: oldPassword)
-			.thenIfErrorThrowing{ error in
-				self.syncQueue.sync{ self.executingWitness = nil }
-				throw error
-			}
-			.map{
-				/* The password of the user is verified. Let’s launch the resets! */
-				return ()
-			}
-		} catch {
-			syncQueue.sync{ self.executingWitness = nil }
-			throw error
-		}
+		let eventLoop = try container.make(AsyncConfig.self).eventLoop
+		let promise: EventLoopPromise<Void> = eventLoop.newPromise()
+		
+		newPassword = p
+		
+		/* Start LDAP reset */
+		startResetForOneService(
+			eventLoop: eventLoop,
+			{ try resetLDAPPasswordAction.start(newPassword: p, container: container) }
+		)
+		
+		return promise.futureResult
 	}
 	
 	private let syncQueue: DispatchQueue
-	
 	private var executingWitness: ResetPasswordAction?
+	
+	private func startResetForOneService(eventLoop: EventLoop, _ startResetBlock: () throws -> Future<Void>) -> Future<Void> {
+		do {
+			let f = try startResetBlock()
+			f.addAwaiter{ result in
+				switch result {
+				case .error(let error): ()
+				case .success: ()
+				}
+			}
+			return f
+		} catch {
+			return eventLoop.newFailedFuture(error: error)
+		}
+	}
 	
 }

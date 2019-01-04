@@ -30,7 +30,7 @@ public class GitHubJWTConnector : Connector, Authenticator {
 		return auth?.token
 	}
 	
-	public let handlerOperationQueue: HandlerOperationQueue = HandlerOperationQueue(name: "GitHubJWTConnector")
+	public let connectorOperationQueue = SyncOperationQueue(name: "GitHubJWTConnector Connection Queue")
 	
 	public init(appId a: String, installationId i: String, privateKeyURL: URL) throws {
 		appId = a
@@ -76,7 +76,7 @@ public class GitHubJWTConnector : Connector, Authenticator {
 		/* Run the URLRequest and parse the response in the TokenResponse object */
 		let op = AuthenticatedJSONOperation<Auth>(request: request, authenticator: nil)
 		op.completionBlock = {
-			guard let o = op.decodedObject else {
+			guard let o = op.result else {
 				handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
 				return
 			}

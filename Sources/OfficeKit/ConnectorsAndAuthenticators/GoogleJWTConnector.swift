@@ -34,7 +34,7 @@ public class GoogleJWTConnector : Connector, Authenticator {
 		return auth?.expirationDate
 	}
 	
-	public let handlerOperationQueue = HandlerOperationQueue(name: "GoogleJWTConnector")
+	public let connectorOperationQueue = SyncOperationQueue(name: "GoogleJWTConnector Connection Queue")
 	
 	public init(jsonCredentialsURL: URL, userBehalf u: String?) throws {
 		/* Decode JSON credentials */
@@ -91,7 +91,7 @@ public class GoogleJWTConnector : Connector, Authenticator {
 		/* Run the URLRequest and parse the response in the TokenResponse object */
 		let op = AuthenticatedJSONOperation<TokenResponse>(request: request, authenticator: nil)
 		op.completionBlock = {
-			guard let o = op.decodedObject else {
+			guard let o = op.result else {
 				handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
 				return
 			}

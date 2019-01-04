@@ -39,18 +39,20 @@ func parse_cli() -> GuakaCommandParseResult {
 	   ****************** */
 	
 	let rootFlags = [
-		Flag(longName: "static-data-dir",             type: String.self, description: "The path to the data dir (containing the static resources for officectl)",       inheritable: true),
+		Flag(longName: "static-data-dir",             type: String.self, description: "The path to the data dir (containing the static resources for officectl)", inheritable: true),
 		
-		Flag(longName: "ldap-host",                   type: String.self, description: "The host of the LDAP. LDAP server is expected to be communicating with LDAPv3.", inheritable: true),
-		Flag(longName: "ldap-admin-username",         type: String.self, description: "The admin username to connect to the LDAP.",                                     inheritable: true),
-		Flag(longName: "ldap-admin-password",         type: String.self, description: "The admin password to connect to the LDAP.",                                     inheritable: true),
-		Flag(longName: "ldap-base-dn",                type: String.self, description: "The base DN when searching or creating objects in LDAP.",                        inheritable: true),
-		Flag(longName: "github-private-key",          type: String.self, description: "The private key to authenticate GitHub.",                                        inheritable: true),
-		Flag(longName: "github-app-id",               type: String.self, description: "The app id to use to authenticate GitHub.",                                      inheritable: true),
-		Flag(longName: "github-install-id",           type: String.self, description: "The install id to use to authenticate GitHub.",                                  inheritable: true),
-		Flag(longName: "google-admin-email",          type: String.self, description: "The email of an admin user in the domain.",                                      inheritable: true),
-		Flag(longName: "google-superuser-json-creds", type: String.self, description: "The path to the json credentials for the superuser.",                            inheritable: true),
-		Flag(longName: "happn-refresh-token",         type: String.self, description: "A refresh token to authenticate happn.",                                         inheritable: true)
+		Flag(longName: "ldap-url",                    type: String.self, description: "The url of the LDAPv3 server.",                            inheritable: true),
+		Flag(longName: "ldap-admin-username",         type: String.self, description: "The admin username to connect to the LDAP.",               inheritable: true),
+		Flag(longName: "ldap-admin-password",         type: String.self, description: "The admin password to connect to the LDAP.",               inheritable: true),
+		Flag(longName: "ldap-base-dn",                type: String.self, description: "The base DN when searching or creating objects in LDAP.",  inheritable: true),
+		Flag(longName: "ldap-people-dn",              type: String.self, description: "The “people” DN (do not include the base, can be empty).", inheritable: true),
+		Flag(longName: "github-private-key",          type: String.self, description: "The private key to authenticate GitHub.",                  inheritable: true),
+		Flag(longName: "github-app-id",               type: String.self, description: "The app id to use to authenticate GitHub.",                inheritable: true),
+		Flag(longName: "github-install-id",           type: String.self, description: "The install id to use to authenticate GitHub.",            inheritable: true),
+		Flag(longName: "google-admin-email",          type: String.self, description: "The email of an admin user in the domain.",                inheritable: true),
+		Flag(longName: "google-superuser-json-creds", type: String.self, description: "The path to the json credentials for the superuser.",      inheritable: true),
+		Flag(longName: "google-domain",               type: String.self, description: "The default domain for Google services.",                  inheritable: true),
+		Flag(longName: "happn-refresh-token",         type: String.self, description: "A refresh token to authenticate happn.",                   inheritable: true)
 	]
 	
 	let rootCommand = Command(usage: "officectl", flags: rootFlags, run: createSetWrapperCommandHandler(root))

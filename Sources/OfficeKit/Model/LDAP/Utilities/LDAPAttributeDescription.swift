@@ -40,12 +40,10 @@ public struct LDAPAttributeDescription : Hashable {
 		self.init(stringOid: split[0], options: Array(split.dropFirst()))
 	}
 	
-	/** Set new options in the attribute description. The method can fail (will
-	return `false` if it does). */
-	public mutating func setOptions(_ newOptions: [String]) -> Bool {
-		guard LDAPAttributeDescription.validateOptions(newOptions) else {return false}
+	/** Set new options in the attribute description. */
+	public mutating func setOptions(_ newOptions: [String]) throws {
+		guard LDAPAttributeDescription.validateOptions(newOptions) else {throw InvalidArgumentError()}
 		options = newOptions
-		return true
 	}
 	
 	private static func validateOptions(_ options: [String]) -> Bool {

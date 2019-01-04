@@ -39,11 +39,16 @@ final class PasswordResetController {
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
 		#warning("TODO: We must provide the base DN in a config or via the command line")
-		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, baseDN: LDAPDistinguishedName(values: [(key: "ou", value: "people"), (key: "dc", value: "happn"), (key: "dc", value: "com")]))) as ResetPasswordAction
+		let user = User(email: email, baseDN: LDAPDistinguishedName(values: [(key: "ou", value: "people"), (key: "dc", value: "happn"), (key: "dc", value: "com")]))
 		
-		return try resetPasswordAction.start(oldPassword: resetPasswordData.oldPass, newPassword: resetPasswordData.newPass, container: req)
-		.then{ _ in
-			assert(resetPasswordAction.isExecuting)
+		return try user.checkLDAPPassword(container: req, checkedPassword: resetPasswordData.oldPass)
+		.thenThrowing{ _ in
+			/* The password of the user is verified. Let’s launch the reset! */
+			let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: user) as ResetPasswordAction
+			_ = try resetPasswordAction.start(newPassword: resetPasswordData.newPass, container: req)
+		}
+		.then{ (_: Void) -> Future<View> in
+//			assert(resetPasswordAction.isExecuting)
 			return view.render("PasswordResetInProgressPage", ["user_email": email.stringValue])
 		}
 	}

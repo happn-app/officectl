@@ -21,8 +21,8 @@ public class TarOperation : RetryingOperation {
 	public let deleteSourcesOnSuccess: Bool
 	
 	public private(set) var tarError: Error?
-	/** Always empty if there was a tar error (sources are not deleted in case of
-	a tar error!) */
+	/** Always empty if there was a tar error! (sources are not deleted in case
+	of a tar error) */
 	public private(set) var sourceDeletionErrors = [URL: Error]()
 	
 	public init(sources s: [String], relativeTo relativeSource: URL, destination d: URL, compress cprs: Bool, deleteSourcesOnSuccess del: Bool) {

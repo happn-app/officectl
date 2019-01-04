@@ -25,9 +25,31 @@ public struct OperationIsNotFinishedError : Error {
 	
 }
 
+public struct OperationAlreadyInProgressError : Error {
+	
+	public init() {}
+	
+}
+
 public struct NotImplementedError : Error {
 	
 	public init() {}
+	
+}
+
+public struct UserAbortedError : Error {
+	
+	public init() {}
+	
+}
+
+public struct InvalidArgumentError : Error {
+	
+	public let message: String?
+	
+	public init(message m: String? = nil) {
+		message = m
+	}
 	
 }
 

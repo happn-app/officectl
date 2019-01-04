@@ -11,14 +11,20 @@ import RetryingOperation
 
 
 
-public class CloneGitHubRepoOperation : RetryingOperation {
+public class CloneGitHubRepoOperation : RetryingOperation, HasResult {
+	
+	public typealias ResultType = Void
 	
 	public let repoName: String
 	public let repoCloneURL: String
 	public let destinationURL: URL
 	
 	/** Clone error. Only makes sense when the operation is finished. */
-	public private(set) var cloneError: Error?
+	public private(set) var cloneError: Error? = OperationIsNotFinishedError()
+	public func resultOrThrow() throws -> Void {
+		try throwIfError(cloneError)
+		return ()
+	}
 	
 	public convenience init(in containerURL: URL, repoFullName name: String, accessToken: String) {
 		let url = URL(fileURLWithPath: name.trimmingCharacters(in: CharacterSet(charactersIn: "/")), isDirectory: true, relativeTo: containerURL).appendingPathExtension("git")
@@ -42,7 +48,6 @@ public class CloneGitHubRepoOperation : RetryingOperation {
 		let destinationExists = FileManager.default.fileExists(atPath: destinationURL.path, isDirectory: &isDir)
 		guard !destinationExists || isDir.boolValue else {
 			cloneError = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Destination \(destinationURL.path) exists and is a file. Cannot use for cloning repository \(repoName)."])
-			baseOperationEnded()
 			return
 		}
 		

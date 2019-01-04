@@ -41,7 +41,7 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 		let options = BackupMailOptions(flags: f, asyncConfig: asyncConfig, console: context.console, mainConnector: googleConnector, users: filteredUsers)
 		
 		return asyncConfig.eventLoop.future(from: FetchAllMailsOperation(options: options), queue: asyncConfig.operationQueue, resultRetriever: {
-			if let e = $0.fetchError {throw e}
+			try throwIfError($0.fetchError)
 			return $0.options.backedUpDestinations
 		})
 	}
@@ -55,7 +55,7 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 			do    {return try LinkifyOperation(folderURL: url, stopOnErrors: false)}
 			catch {context.console.warning("cannot linkify backup at URL \(url.absoluteString)"); return nil}
 		}
-		let futureFromOperations: EventLoopFuture<[AsyncOperationResult<Void>]> = asyncConfig.eventLoop.future(from: operations, queue: q, resultRetriever: { op -> Void in
+		let futureFromOperations: EventLoopFuture<[FutureResult<Void>]> = asyncConfig.eventLoop.executeAll(operations, queue: q, resultRetriever: { op -> Void in
 			if op.errors.count > 0 {
 				context.console.warning("got errors when linkifying backup at URL \(op.folderURL.absoluteString):")
 				for (url, error) in op.errors {
@@ -73,7 +73,7 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 		let q = OperationQueue()
 		q.maxConcurrentOperationCount = 4 /* Seems fair on today’s hardware… */
 		let operations = backedUpFolders.map{ TarOperation(sources: [$0.lastPathComponent], relativeTo: $0.deletingLastPathComponent(), destination: $0.appendingPathExtension("tar.bz2"), compress: true, deleteSourcesOnSuccess: true) }
-		let futureFromOperations: EventLoopFuture<[AsyncOperationResult<Void>]> = asyncConfig.eventLoop.future(from: operations, queue: q, resultRetriever: { op -> Void in
+		let futureFromOperations: EventLoopFuture<[FutureResult<Void>]> = asyncConfig.eventLoop.executeAll(operations, queue: q, resultRetriever: { op -> Void in
 			if let tarError = op.tarError {
 				context.console.warning("could not compress \(op.sources.first!): \(tarError)")
 			}
