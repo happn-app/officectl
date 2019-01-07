@@ -121,22 +121,18 @@ private func syncFromGoogle(to toSourceIds: [SourceId], users: [SourceId: [User]
 	
 	/* To LDAP */
 	if toSourceIds.contains(.ldap) {
-		f = f
-		.then{ syncFromGoogleToLDAP(users: users, baseDN: baseDN, connectors: connectors, asyncConfig: asyncConfig, console: console) }
-		.map{ passwords in
-			console.print("Generated the following users:")
-			for (dn, password) in passwords {
-				console.print("   " + dn + ": " + password)
-			}
-			return ()
-		}
+		f = f.then{ syncFromGoogleToLDAP(users: users, baseDN: baseDN, connectors: connectors, asyncConfig: asyncConfig, console: console) }
 	}
 	
 	return f
 }
 
-/** - returns: The mapping dn<->password that has been created. */
-private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDistinguishedName, connectors: Connectors, asyncConfig: AsyncConfig, console: Console) -> EventLoopFuture<[String: String]> {
+/** Compute the users to create on LDAP, asks for confirmation if some users
+should be created, create them if users says ok, print the created users and
+their passwords after creation.
+
+- returns: The mapping dn<->password that has been created. */
+private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDistinguishedName, connectors: Connectors, asyncConfig: AsyncConfig, console: Console) -> EventLoopFuture<Void> {
 	/* TODO: User deletion. Currently we’re append only. */
 	let ldapUsers = users[.ldap]!
 	let googleUsers = users[.google]!
@@ -147,8 +143,7 @@ private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDisting
 	}
 	
 	let usersToCreate = Set(googleDNUsers).subtracting(Set(ldapDNUsers))
-	let ldapUsersToCreate = usersToCreate.compactMap{ try? $0.ldapInetOrgPerson(baseDN: baseDN) }
-	let createUsersOperation = CreateLDAPObjectsOperation(users: ldapUsersToCreate, connector: connectors.ldapConnector)
+	guard usersToCreate.count > 0 else {return asyncConfig.eventLoop.newSucceededFuture(result: ())}
 	
 	let msg =
 		"Will create the following users on LDAP:" + ConsoleText.newLine +
@@ -158,6 +153,8 @@ private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDisting
 		return asyncConfig.eventLoop.newFailedFuture(error: UserAbortedError())
 	}
 	
+	let ldapUsersToCreate = usersToCreate.compactMap{ try? $0.ldapInetOrgPerson(baseDN: baseDN) }
+	let createUsersOperation = CreateLDAPObjectsOperation(users: ldapUsersToCreate, connector: connectors.ldapConnector)
 	return asyncConfig.eventLoop
 	.future(from: createUsersOperation, queue: asyncConfig.operationQueue, resultRetriever: { op -> [LDAPObject] in
 		let successfulCreationsIndex = op.errors.enumerated().filter{ $0.element == nil }.map{ $0.offset }
@@ -166,6 +163,13 @@ private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDisting
 	.then{ createdLDAPObjects -> Future<[String: String]> in
 		let changePasswordsOperation = ModifyLDAPPasswordsOperation(objects: createdLDAPObjects, connector: connectors.ldapConnector)
 		return asyncConfig.eventLoop.future(from: changePasswordsOperation, queue: asyncConfig.operationQueue, resultRetriever: { op in op.passwords })
+	}
+	.map{ passwords in
+		console.print("Generated the following users on LDAP:")
+		for (dn, password) in passwords {
+			console.print("   " + dn + ": " + password)
+		}
+		return ()
 	}
 }
 

@@ -48,6 +48,7 @@ public struct User : Hashable {
 		password = nil
 	}
 	
+	/** Init a user with an “email” id, and fill the distinguished name too. */
 	public init(email e: Email, baseDN: LDAPDistinguishedName) {
 		id = .email(e)
 		
