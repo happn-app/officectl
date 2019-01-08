@@ -12,7 +12,7 @@ import XCTest
 
 /* Tests must run IN THE CORRECT ORDER (test1, test2, etc.). You must run
  * ./Scripts/start_tests_helpers.sh before starting the tests. */
-class LDAPOperationTests: XCTestCase {
+class LDAPOperationTests : XCTestCase {
 	
 	static let baseDN = try! LDAPDistinguishedName(string: "dc=happn,dc=test")
 	let baseDN = LDAPOperationTests.baseDN

@@ -3,7 +3,7 @@ import XCTest
 
 
 
-class LDAPSearchQueryTests: XCTestCase {
+class LDAPSearchQueryTests : XCTestCase {
 	
 	func testInvalidAttributeDescriptionInstantiation0() {
 		let attributeDescription = LDAPAttributeDescription(stringOid: "1")
