@@ -13,19 +13,36 @@ import OfficeKit
 
 
 
+extension GitHubJWTConnector.Settings {
+	
+	init?(flags f: Flags) {
+		guard let privateKeyURLString = f.getString(name: "github-private-key") else {return nil}
+		guard let appId = f.getString(name: "github-app-id") else {return nil}
+		guard let installId = f.getString(name: "github-install-id") else {return nil}
+		
+		self.init(appId: appId, installationId: installId, privateKeyURL: URL(fileURLWithPath: privateKeyURLString, isDirectory: false))
+	}
+	
+}
+
+extension OfficeKitConfig.GitHubConfig {
+	
+	init?(flags f: Flags) {
+		guard let connectorSettings = GitHubJWTConnector.Settings(flags: f) else {return nil}
+		
+		self.init(connectorSettings: connectorSettings)
+	}
+	
+}
+
+
 extension GitHubJWTConnector {
 	
 	public convenience init(flags f: Flags) throws {
-		guard let privateKeyURLString = f.getString(name: "github-private-key") else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "The github-private-key argument is required for commands dealing with GitHub APIs"])
+		guard let settings = GitHubJWTConnector.Settings(flags: f) else {
+			throw InvalidArgumentError(message: "Cannot load GitHub settings from command line")
 		}
-		guard let appId = f.getString(name: "github-app-id") else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "The github-app-id argument is required for commands dealing with GitHub APIs"])
-		}
-		guard let installId = f.getString(name: "github-install-id") else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "The github-install-id argument is required for commands dealing with GitHub APIs"])
-		}
-		try self.init(appId: appId, installationId: installId, privateKeyURL: URL(fileURLWithPath: privateKeyURLString, isDirectory: false))
+		try self.init(key: settings)
 	}
 	
 }

@@ -28,7 +28,7 @@ public class ModifyLDAPObjectsOperation : RetryingOperation {
 	
 	public let objects: [LDAPObject]
 	public let propertiesToUpdate: [String]
-	public private(set) var errors = [Error?]()
+	public private(set) var errors: [Error?]
 	
 	public convenience init(users: [LDAPInetOrgPerson], propertiesToUpdate: [String], connector c: LDAPConnector) {
 		self.init(objects: users.map{ $0.ldapObject() }, propertiesToUpdate: propertiesToUpdate, connector: c)
@@ -38,6 +38,8 @@ public class ModifyLDAPObjectsOperation : RetryingOperation {
 		objects = o
 		connector = c
 		propertiesToUpdate = ps
+		
+		errors = [Error?](repeating: OperationIsNotFinishedError(), count: o.count)
 	}
 	
 	public override var isAsynchronous: Bool {
@@ -46,8 +48,9 @@ public class ModifyLDAPObjectsOperation : RetryingOperation {
 	
 	public override func startBaseOperation(isRetry: Bool) {
 		assert(connector.isConnected)
+		assert(objects.count == errors.count)
 		
-		for object in objects {
+		for (idx, object) in objects.enumerated() {
 			/* TODO: Check we do not leak. We should not, though. */
 			var ldapModifsRequest = object.attributes.filter{ propertiesToUpdate.contains($0.key) }.map{ v -> UnsafeMutablePointer<LDAPMod>? in ldapModAlloc(method: LDAP_MOD_REPLACE | LDAP_MOD_BVALUES, key: v.key, values: v.value) } + [nil]
 			defer {ldap_mods_free(&ldapModifsRequest, 0)}
@@ -55,8 +58,8 @@ public class ModifyLDAPObjectsOperation : RetryingOperation {
 			/* We use the synchronous version of the function. See long comment in
 			 * search operation for details. */
 			let r = ldap_modify_ext_s(connector.ldapPtr, object.distinguishedName, &ldapModifsRequest, nil /* Server controls */, nil /* Client controls */)
-			if r == LDAP_SUCCESS {errors.append(nil)}
-			else                 {errors.append(NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))]))}
+			if r == LDAP_SUCCESS {errors[idx] = nil}
+			else                 {errors[idx] = NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])}
 		}
 		
 		baseOperationEnded()

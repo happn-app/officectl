@@ -27,7 +27,7 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 	/** Keys are distinguished names, values are passwords. Only set for users
 	whose password was successfully set. */
 	public private(set) var passwords = [String: String]()
-	public private(set) var errors = [Error?]()
+	public private(set) var errors: [Error?]
 	
 	/** The users must have the new cleartext password set in the `userPassword`
 	property. */
@@ -39,6 +39,8 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 	public init(objects o: [LDAPObject], connector c: LDAPConnector) {
 		objects = o
 		connector = c
+		
+		errors = [Error?](repeating: OperationIsNotFinishedError(), count: o.count)
 	}
 	
 	public override var isAsynchronous: Bool {
@@ -47,8 +49,9 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 	
 	public override func startBaseOperation(isRetry: Bool) {
 		assert(connector.isConnected)
+		assert(objects.count == errors.count)
 		
-		for object in objects {
+		for (idx, object) in objects.enumerated() {
 			do {
 				let pass = object.firstStringValue(for: "userPassword") ?? generateRandomPassword()
 				
@@ -75,9 +78,9 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 				}
 				
 				passwords[object.distinguishedName] = pass
-				errors.append(nil)
+				errors[idx] = nil
 			} catch {
-				errors.append(error)
+				errors[idx] = error
 				continue
 			}
 		}

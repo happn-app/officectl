@@ -9,7 +9,7 @@ import Foundation
 
 
 
-public func nil2throw<T>(_ v: T?, _ fieldName: String = "<Unknown>") throws -> T {
+public func nil2throw<T>(_ v: T?, _ fieldName: String = "Unknown") throws -> T {
 	guard let v = v else {throw MissingFieldError(fieldName)}
 	return v
 }

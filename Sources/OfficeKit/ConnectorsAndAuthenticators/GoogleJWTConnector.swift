@@ -6,16 +6,13 @@
  */
 
 import Foundation
-#if canImport(Security)
-	import Security
-#endif
 
 import AsyncOperationResult
 import URLRequestOperation
 
 
 
-public class GoogleJWTConnector : Connector, Authenticator {
+public final class GoogleJWTConnector : Connector, Authenticator {
 	
 	public typealias ScopeType = Set<String>
 	public typealias RequestType = URLRequest

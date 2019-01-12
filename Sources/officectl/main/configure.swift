@@ -24,7 +24,7 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	 * wanted CLI-wise with Vapor) :( */
 	let cliParseResults = parse_cli()
 	/* Register the services/configs we got from CLI, if any */
-	cliParseResults.ldapConnectorConfig.flatMap{ services.register($0) }
+	services.register(cliParseResults.officeKitConfig)
 	if let p = cliParseResults.staticDataDir?.path {
 		services.register{ container -> DirectoryConfig in
 			return DirectoryConfig(workDir: p.hasSuffix("/") ? p : p + "/")

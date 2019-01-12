@@ -9,6 +9,16 @@ import Foundation
 
 
 
+public struct ErrorCollection : Error {
+	
+	let errors: [Error]
+	
+	public init(_ e: [Error]) {
+		errors = e
+	}
+	
+}
+
 public struct MissingFieldError : Error {
 	
 	let fieldName: String

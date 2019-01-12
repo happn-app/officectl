@@ -24,13 +24,9 @@ final class PasswordResetController {
 		let email = try req.parameters.next(Email.self)
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		#warning("TODO: We must provide the base DN in a config or via the command line")
-		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, baseDN: LDAPDistinguishedName(values: [(key: "ou", value: "people"), (key: "dc", value: "happn"), (key: "dc", value: "com")]))) as ResetPasswordAction
+		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, baseDN: LDAPDistinguishedName(values: [(key: "dc", value: "happn"), (key: "dc", value: "test")]))) as ResetPasswordAction
 		
-		if !resetPasswordAction.isExecuting {
-			return try req.view().render("PasswordResetPage", ["user_email": email.stringValue])
-		} else {
-			return try req.view().render("PasswordResetInProgressPage", ["user_email": email.stringValue])
-		}
+		return try renderResetPasswordAction(resetPasswordAction, view: req.view())
 	}
 	
 	func resetPassword(_ req: Request) throws -> Future<View> {
@@ -39,17 +35,15 @@ final class PasswordResetController {
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
 		#warning("TODO: We must provide the base DN in a config or via the command line")
-		let user = User(email: email, baseDN: LDAPDistinguishedName(values: [(key: "ou", value: "people"), (key: "dc", value: "happn"), (key: "dc", value: "com")]))
+		let user = User(email: email, baseDN: LDAPDistinguishedName(values: [(key: "dc", value: "happn"), (key: "dc", value: "test")]))
 		
-		return try user.checkLDAPPassword(container: req, checkedPassword: resetPasswordData.oldPass)
-		.thenThrowing{ _ in
+		return try user
+		.checkLDAPPassword(container: req, checkedPassword: resetPasswordData.oldPass)
+		.then{ _ in
 			/* The password of the user is verified. Let’s launch the reset! */
 			let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: user) as ResetPasswordAction
-			_ = try resetPasswordAction.start(newPassword: resetPasswordData.newPass, container: req)
-		}
-		.then{ (_: Void) -> Future<View> in
-//			assert(resetPasswordAction.isExecuting)
-			return view.render("PasswordResetInProgressPage", ["user_email": email.stringValue])
+			resetPasswordAction.start(config: (newPassword: resetPasswordData.newPass, container: req), weakeningDelay: 3, handler: nil)
+			return self.renderResetPasswordAction(resetPasswordAction, view: view)
 		}
 	}
 	
@@ -58,6 +52,15 @@ final class PasswordResetController {
 		var oldPass: String
 		var newPass: String
 		
+	}
+	
+	private func renderResetPasswordAction(_ resetPasswordAction: ResetPasswordAction, view: ViewRenderer) -> EventLoopFuture<View> {
+		let emailStr = resetPasswordAction.user.email?.stringValue ?? "<unknown>"
+		if !resetPasswordAction.isExecuting {
+			return view.render("PasswordResetPage", ["user_email": emailStr])
+		} else {
+			return view.render("PasswordResetInProgressPage", ["user_email": emailStr])
+		}
 	}
 	
 }

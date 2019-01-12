@@ -43,7 +43,7 @@ extension User {
 		
 		let dn = try nil2throw(distinguishedName, "dn")
 		let asyncConfig = try container.make(AsyncConfig.self)
-		var ldapConnectorConfig = try container.make(LDAPConnector.Settings.self)
+		var ldapConnectorConfig = try container.make(OfficeKitConfig.self).ldapConfigOrThrow().connectorSettings
 		ldapConnectorConfig.authMode = .userPass(username: dn.stringValue, password: checkedPassword)
 		let connector = try LDAPConnector(key: ldapConnectorConfig)
 		return connector.connect(scope: (), forceIfAlreadyConnected: true, asyncConfig: asyncConfig)
@@ -52,7 +52,7 @@ extension User {
 	public func existingLDAPUser(container: Container, attributesToFetch: [String] = ["objectClass", "sn", "cn"]) throws -> Future<LDAPInetOrgPerson> {
 		let asyncConfig = try container.make(AsyncConfig.self)
 		let semiSingletonStore = try container.make(SemiSingletonStore.self)
-		let ldapConnectorConfig = try container.make(LDAPConnector.Settings.self)
+		let ldapConnectorConfig = try container.make(OfficeKitConfig.self).ldapConfigOrThrow().connectorSettings
 		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
 		
 		let searchedDN = try nil2throw(distinguishedName, "dn")

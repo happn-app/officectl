@@ -28,6 +28,7 @@ public class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 		return ()
 	}
 	
+	#warning("TODO: propertiesToUpdate would be better as a Set of User key-path?")
 	public init(user u: GoogleUser, propertiesToUpdate ps: Set<String>, connector c: GoogleJWTConnector) {
 		user = u
 		connector = c

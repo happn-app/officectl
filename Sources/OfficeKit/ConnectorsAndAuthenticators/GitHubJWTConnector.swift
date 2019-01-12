@@ -6,15 +6,12 @@
  */
 
 import Foundation
-#if canImport(Security)
-	import Security
-#endif
 
 import AsyncOperationResult
 
 
 
-public class GitHubJWTConnector : Connector, Authenticator {
+public final class GitHubJWTConnector : Connector, Authenticator {
 	
 	public typealias ScopeType = Void
 	public typealias RequestType = URLRequest

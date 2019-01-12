@@ -14,26 +14,10 @@ import OfficeKit
 
 
 
-extension LDAPConnector {
-	
-	convenience init(flags f: Flags) throws {
-		guard let url = f.getString(name: "ldap-url").flatMap({ URL(string: $0) }) else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "A valid ldap-url argument is required for commands dealing with an LDAP"])
-		}
-		if let un = f.getString(name: "ldap-admin-username"), let pass = f.getString(name: "ldap-admin-password") {
-			try self.init(ldapURL: url, protocolVersion: .v3, username: un, password: pass)
-		} else {
-			try self.init(ldapURL: url, protocolVersion: .v3)
-		}
-	}
-	
-}
-
-
-extension LDAPConnector.Settings : Service {
+extension LDAPConnector.Settings {
 	
 	init?(flags f: Flags) {
-		guard let host = f.getString(name: "ldap-host"), let url = URL(string: "ldap://" + host) else {
+		guard let url = f.getString(name: "ldap-url").flatMap({ URL(string: $0) }) else {
 			return nil
 		}
 		if let un = f.getString(name: "ldap-admin-username"), let pass = f.getString(name: "ldap-admin-password") {
@@ -41,6 +25,30 @@ extension LDAPConnector.Settings : Service {
 		} else {
 			self.init(ldapURL: url, protocolVersion: .v3)
 		}
+	}
+	
+}
+
+extension OfficeKitConfig.LDAPConfig {
+	
+	init?(flags f: Flags) {
+		guard let connectorSettings = LDAPConnector.Settings(flags: f) else {return nil}
+		guard let bdnString = f.getString(name: "ldap-base-dn") else {return nil}
+		let pdnString = f.getString(name: "ldap-people-dn")
+		
+		self.init(connectorSettings: connectorSettings, baseDNString: bdnString, peopleDNString: pdnString)
+	}
+	
+}
+
+
+extension LDAPConnector {
+	
+	convenience init(flags f: Flags) throws {
+		guard let settings = LDAPConnector.Settings(flags: f) else {
+			throw InvalidArgumentError(message: "Cannot load LDAP settings from command line")
+		}
+		try self.init(key: settings)
 	}
 	
 }

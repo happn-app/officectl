@@ -7,12 +7,14 @@
 
 import Foundation
 
+import AsyncOperationResult
 import SemiSingleton
 import Vapor
 
 
 
-public class ResetPasswordAction : SemiSingleton {
+public typealias ResetPasswordActionConfig = (newPassword: String, container: Container)
+public class ResetPasswordAction : Action<ResetPasswordActionConfig, Void>, SemiSingleton {
 	
 	public typealias SemiSingletonKey = User
 	public typealias SemiSingletonAdditionalInitInfo = Void
@@ -20,67 +22,55 @@ public class ResetPasswordAction : SemiSingleton {
 	public let user: User
 	public private(set) var newPassword: String?
 	
-	public private(set) var ldapResetResult: Future<Void>?
-	public private(set) var googleResetResult: Future<Void>?
-	
-	public var allResults: [Future<Void>] {
-		return [ldapResetResult, googleResetResult].compactMap{ $0 }
-	}
-	
-	public var isExecuting: Bool {
-		return syncQueue.sync{ executingWitness != nil }
-	}
-	
 	/* Sub-actions */
 	public var resetLDAPPasswordAction: ResetLDAPPasswordAction
 	public var resetGooglePasswordAction: ResetGooglePasswordAction
+	
+	public var ldapResetResult: AsyncOperationResult<Void>? {
+		return resetLDAPPasswordAction.result
+	}
+	public var googleResetResult: AsyncOperationResult<Void>? {
+		return resetGooglePasswordAction.result
+	}
+	
+	var errors: [Error] {
+		return [self.ldapResetResult?.error].compactMap{ $0 }
+	}
 	
 	public required init(key u: User, additionalInfo: Void, store: SemiSingletonStore) {
 		user = u
 		newPassword = nil
 		
-		syncQueue = DispatchQueue(label: "Reset Password Sync Queue for \(user.id.stringValue)", attributes: [/*serial*/])
-		
 		resetLDAPPasswordAction = store.semiSingleton(forKey: u)
 		resetGooglePasswordAction = store.semiSingleton(forKey: u)
 	}
 	
-	public func start(newPassword p: String, container: Container) throws -> Future<Void> {
-		try syncQueue.sync{
-			guard self.executingWitness == nil else {throw OperationAlreadyInProgressError()}
-			self.executingWitness = self
-		}
-		
-		let eventLoop = try container.make(AsyncConfig.self).eventLoop
-		let promise: EventLoopPromise<Void> = eventLoop.newPromise()
+	public override func unsafeStart(config: ResetPasswordActionConfig, handler: @escaping (AsyncOperationResult<Void>) -> Void) throws {
+		let (p, container) = config
+		let operationQueue = try container.make(AsyncConfig.self).operationQueue
 		
 		newPassword = p
 		
-		/* Start LDAP reset */
-		startResetForOneService(
-			eventLoop: eventLoop,
-			{ try resetLDAPPasswordAction.start(newPassword: p, container: container) }
-		)
-		
-		return promise.futureResult
-	}
-	
-	private let syncQueue: DispatchQueue
-	private var executingWitness: ResetPasswordAction?
-	
-	private func startResetForOneService(eventLoop: EventLoop, _ startResetBlock: () throws -> Future<Void>) -> Future<Void> {
-		do {
-			let f = try startResetBlock()
-			f.addAwaiter{ result in
-				switch result {
-				case .error(let error): ()
-				case .success: ()
-				}
-			}
-			return f
-		} catch {
-			return eventLoop.newFailedFuture(error: error)
+		let ldapOperation = AsyncBlockOperation{ endOperationBlock in
+			self.resetLDAPPasswordAction.start(config: config, weakeningDelay: nil, handler: { result in
+				endOperationBlock()
+			})
 		}
+		let googleOperation = AsyncBlockOperation{ endOperationBlock in
+			self.resetGooglePasswordAction.start(config: config, weakeningDelay: nil, handler: { result in
+				endOperationBlock()
+			})
+		}
+		
+		let endOperation = BlockOperation{
+			let errorCollection = ErrorCollection(self.errors)
+			if errorCollection.errors.isEmpty {handler(.success(()))}
+			else                              {handler(.error(errorCollection))}
+		}
+		endOperation.addDependency(ldapOperation)
+		endOperation.addDependency(googleOperation)
+		
+		operationQueue.addOperations([ldapOperation, googleOperation, endOperation], waitUntilFinished: false)
 	}
 	
 }
