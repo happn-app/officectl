@@ -13,7 +13,7 @@ import Vapor
 
 
 
-public class ResetLDAPPasswordAction : Action<ResetPasswordActionConfig, Void>, SemiSingleton {
+public class ResetLDAPPasswordAction : OldAction<ResetPasswordActionConfig, Void>, SemiSingleton {
 	
 	public typealias SemiSingletonKey = User
 	public typealias SemiSingletonAdditionalInitInfo = Void

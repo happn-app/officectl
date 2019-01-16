@@ -14,7 +14,7 @@ import Vapor
 
 
 public typealias ResetPasswordActionConfig = (newPassword: String, container: Container)
-public class ResetPasswordAction : Action<ResetPasswordActionConfig, Void>, SemiSingleton {
+public class ResetPasswordAction : OldAction<ResetPasswordActionConfig, Void>, SemiSingleton {
 	
 	public typealias SemiSingletonKey = User
 	public typealias SemiSingletonAdditionalInitInfo = Void
