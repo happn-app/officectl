@@ -11,7 +11,7 @@ import NIO
 
 
 
-extension OldAction {
+extension Action {
 	
 	public func start(config: StartConfigType, weakeningDelay: TimeInterval?, eventLoop: EventLoop) -> EventLoopFuture<ResultType> {
 		let promise = eventLoop.newPromise(ResultType.self)

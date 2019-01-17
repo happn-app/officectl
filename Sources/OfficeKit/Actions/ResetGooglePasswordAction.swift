@@ -21,7 +21,7 @@ import Vapor
 
 
 
-public class ResetGooglePasswordAction : OldAction<ResetPasswordActionConfig, Void>, SemiSingleton {
+public class ResetGooglePasswordAction : Action<ResetPasswordActionConfig, Void>, SemiSingleton {
 	
 	public enum Error : Swift.Error {
 		

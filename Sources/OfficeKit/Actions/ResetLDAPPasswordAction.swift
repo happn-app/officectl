@@ -13,7 +13,7 @@ import Vapor
 
 
 
-public class ResetLDAPPasswordAction : OldAction<ResetPasswordActionConfig, Void>, SemiSingleton {
+public class ResetLDAPPasswordAction : Action<ResetPasswordActionConfig, Void>, SemiSingleton {
 	
 	public typealias SemiSingletonKey = User
 	public typealias SemiSingletonAdditionalInitInfo = Void
@@ -27,7 +27,7 @@ public class ResetLDAPPasswordAction : OldAction<ResetPasswordActionConfig, Void
 	}
 	
 	public override func unsafeStart(config: ResetPasswordActionConfig, handler: @escaping (AsyncOperationResult<Void>) -> Void) throws {
-		guard let dn = user.distinguishedName else {return handler(.error(InvalidArgumentError(message: "Got a user with no DN; this is unsupported to reset the LDAP password.")))}
+		guard let dn = user.distinguishedName else {throw InvalidArgumentError(message: "Got a user with no DN; this is unsupported to reset the LDAP password.")}
 		
 		let (p, container) = config
 		let dispatchQueue = try container.make(AsyncConfig.self).dispatchQueue

@@ -8,11 +8,12 @@
 import Foundation
 
 import AsyncOperationResult
+import SemiSingleton
 
 
 
 /** */
-public class OldAction<StartConfigType, ResultType> {
+public class Action<StartConfigType, ResultType> {
 	
 	public var isExecuting: Bool {
 		return stateSyncQueue.sync{ currentState.isRunning }
@@ -108,7 +109,7 @@ public class OldAction<StartConfigType, ResultType> {
 		case idleWeak(result: AsyncOperationResult<ResultType>?)
 		/** The action is not running and has a forced reference to itself (the
 		action keeps a strong reference to itself). */
-		case idleStrong(result: AsyncOperationResult<ResultType>?, weakeningDate: Date, selfReference: OldAction)
+		case idleStrong(result: AsyncOperationResult<ResultType>?, weakeningDate: Date, selfReference: Action)
 		
 		/** The action is running (and has a forced reference to itself). */
 		case running
