@@ -56,6 +56,9 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	/* Set preferred services */
 	config.prefer(LeafRenderer.self, for: ViewRenderer.self)
 	
+	/* Set OfficeKit options */
+	WeakeningMode.defaultMode = .onSuccess(delay: 9/*13*60*/) /* 13 minutes */
+	
 	/* Register the Guaka command wrapper. Guaka does the argument parsing
 	 * because I wasn’t able to do what I wanted with Vapor’s :( */
 	var commandConfig = CommandConfig()

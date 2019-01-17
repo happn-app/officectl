@@ -13,10 +13,10 @@ import NIO
 
 extension Action {
 	
-	public func start(config: StartConfigType, weakeningDelay: TimeInterval?, eventLoop: EventLoop) -> EventLoopFuture<ResultType> {
+	public func start(parameters: ParametersType, weakeningMode: WeakeningMode = WeakeningMode.defaultMode, eventLoop: EventLoop) -> EventLoopFuture<ResultType> {
 		let promise = eventLoop.newPromise(ResultType.self)
 		
-		start(config: config, weakeningDelay: weakeningDelay, handler: { result in
+		start(parameters: parameters, weakeningMode: weakeningMode, handler: { result in
 			switch result {
 			case .success(let r): promise.succeed(result: r)
 			case .error(let e):   promise.fail(error: e)

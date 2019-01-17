@@ -21,7 +21,7 @@ import Vapor
 
 
 
-public class ResetGooglePasswordAction : Action<ResetPasswordActionConfig, Void>, SemiSingleton {
+public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSingleton {
 	
 	public enum Error : Swift.Error {
 		
@@ -31,27 +31,24 @@ public class ResetGooglePasswordAction : Action<ResetPasswordActionConfig, Void>
 	}
 	
 	public typealias SemiSingletonKey = User
-	public typealias SemiSingletonAdditionalInitInfo = Void
+	public typealias SemiSingletonAdditionalInitInfo = Container
 	
-	public let user: User
-	public private(set) var newPassword: String?
+	public let container: Container
 	
-	public required init(key u: User, additionalInfo: Void, store: SemiSingletonStore) {
-		user = u
-		newPassword = nil
+	public required init(key u: User, additionalInfo: Container, store: SemiSingletonStore) {
+		container = additionalInfo
+		
+		super.init(subject: u)
 	}
 	
-	public override func unsafeStart(config: ResetPasswordActionConfig, handler: @escaping (AsyncOperationResult<Void>) -> Void) throws {
-		guard let email = user.email else {return handler(.error(InvalidArgumentError(message: "Got a user with no email; this is unsupported to reset the Google password.")))}
+	public override func unsafeStart(parameters newPassword: String, handler: @escaping (AsyncOperationResult<Void>) -> Void) throws {
+		guard let email = subject.email else {return handler(.error(InvalidArgumentError(message: "Got a user with no email; this is unsupported to reset the Google password.")))}
 		
-		let (p, container) = config
 		let asyncConfig = try container.make(AsyncConfig.self)
 		let singletonStore = try container.make(SemiSingletonStore.self)
 		
 		let googleSettings = try container.make(OfficeKitConfig.self).googleConfigOrThrow()
 		let connector = try singletonStore.semiSingleton(forKey: googleSettings.connectorSettings) as GoogleJWTConnector
-		
-		newPassword = p
 		
 		let f = connector
 		.connect(scope: Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.user"), asyncConfig: asyncConfig)
@@ -64,7 +61,7 @@ public class ResetGooglePasswordAction : Action<ResetPasswordActionConfig, Void>
 			guard users.count == 1 else {throw Error.tooManyUsersFoundForEmail}
 			
 			let digest: Data
-			let passwordData = Data(p.utf8)
+			let passwordData = Data(newPassword.utf8)
 			#if canImport(CommonCrypto) || canImport(CCommonCrypto)
 				var sha1 = Data(count: Int(CC_SHA1_DIGEST_LENGTH))
 				passwordData.withUnsafeBytes{ (passwordDataBytes: UnsafePointer<UInt8>) in

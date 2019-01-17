@@ -23,8 +23,8 @@ final class PasswordResetController {
 	func showResetPage(_ req: Request) throws -> Future<View> {
 		let email = try req.parameters.next(Email.self)
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
-		#warning("TODO: We must provide the base DN in a config or via the command line")
-		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, baseDN: LDAPDistinguishedName(values: [(key: "dc", value: "happn"), (key: "dc", value: "test")]))) as ResetPasswordAction
+		let baseDN = try req.make(OfficeKitConfig.self).ldapConfigOrThrow().baseDN
+		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, baseDN: baseDN), additionalInitInfo: req) as ResetPasswordAction
 		
 		return try renderResetPasswordAction(resetPasswordAction, view: req.view())
 	}
@@ -34,15 +34,15 @@ final class PasswordResetController {
 		let email = try req.parameters.next(Email.self)
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
-		#warning("TODO: We must provide the base DN in a config or via the command line")
-		let user = User(email: email, baseDN: LDAPDistinguishedName(values: [(key: "dc", value: "happn"), (key: "dc", value: "test")]))
+		let baseDN = try req.make(OfficeKitConfig.self).ldapConfigOrThrow().baseDN
+		let user = User(email: email, baseDN: baseDN)
 		
 		return try user
 		.checkLDAPPassword(container: req, checkedPassword: resetPasswordData.oldPass)
 		.then{ _ in
 			/* The password of the user is verified. Let’s launch the reset! */
-			let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: user) as ResetPasswordAction
-			resetPasswordAction.start(config: (newPassword: resetPasswordData.newPass, container: req), weakeningDelay: 3, handler: nil)
+			let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: req) as ResetPasswordAction
+			resetPasswordAction.start(parameters: resetPasswordData.newPass, handler: nil)
 			return self.renderResetPasswordAction(resetPasswordAction, view: view)
 		}
 	}
@@ -55,7 +55,7 @@ final class PasswordResetController {
 	}
 	
 	private func renderResetPasswordAction(_ resetPasswordAction: ResetPasswordAction, view: ViewRenderer) -> EventLoopFuture<View> {
-		let emailStr = resetPasswordAction.user.email?.stringValue ?? "<unknown>"
+		let emailStr = resetPasswordAction.subject.email?.stringValue ?? "<unknown>"
 		if !resetPasswordAction.isExecuting {
 			return view.render("PasswordResetPage", ["user_email": emailStr])
 		} else {

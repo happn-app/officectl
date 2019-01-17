@@ -13,14 +13,12 @@ import Vapor
 
 
 
-public typealias ResetPasswordActionConfig = (newPassword: String, container: Container)
-public class ResetPasswordAction : Action<ResetPasswordActionConfig, Void>, SemiSingleton {
+public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 	
 	public typealias SemiSingletonKey = User
-	public typealias SemiSingletonAdditionalInitInfo = Void
+	public typealias SemiSingletonAdditionalInitInfo = Container
 	
-	public let user: User
-	public private(set) var newPassword: String?
+	public let container: Container
 	
 	/* Sub-actions */
 	public var resetLDAPPasswordAction: ResetLDAPPasswordAction
@@ -34,30 +32,28 @@ public class ResetPasswordAction : Action<ResetPasswordActionConfig, Void>, Semi
 	}
 	
 	var errors: [Error] {
-		return [self.ldapResetResult?.error].compactMap{ $0 }
+		return [self.ldapResetResult?.error, self.googleResetResult?.error].compactMap{ $0 }
 	}
 	
-	public required init(key u: User, additionalInfo: Void, store: SemiSingletonStore) {
-		user = u
-		newPassword = nil
+	public required init(key u: User, additionalInfo: Container, store: SemiSingletonStore) {
+		container = additionalInfo
 		
-		resetLDAPPasswordAction = store.semiSingleton(forKey: u)
-		resetGooglePasswordAction = store.semiSingleton(forKey: u)
+		resetLDAPPasswordAction = store.semiSingleton(forKey: u, additionalInitInfo: additionalInfo)
+		resetGooglePasswordAction = store.semiSingleton(forKey: u, additionalInitInfo: additionalInfo)
+		
+		super.init(subject: u)
 	}
 	
-	public override func unsafeStart(config: ResetPasswordActionConfig, handler: @escaping (AsyncOperationResult<Void>) -> Void) throws {
-		let (p, container) = config
+	public override func unsafeStart(parameters newPassword: String, handler: @escaping (AsyncOperationResult<Void>) -> Void) throws {
 		let operationQueue = try container.make(AsyncConfig.self).operationQueue
 		
-		newPassword = p
-		
 		let ldapOperation = AsyncBlockOperation{ endOperationBlock in
-			self.resetLDAPPasswordAction.start(config: config, weakeningDelay: nil, handler: { result in
+			self.resetLDAPPasswordAction.start(parameters: newPassword, weakeningMode: .alwaysInstantly, handler: { result in
 				endOperationBlock()
 			})
 		}
 		let googleOperation = AsyncBlockOperation{ endOperationBlock in
-			self.resetGooglePasswordAction.start(config: config, weakeningDelay: nil, handler: { result in
+			self.resetGooglePasswordAction.start(parameters: newPassword, weakeningMode: .alwaysInstantly, handler: { result in
 				endOperationBlock()
 			})
 		}
