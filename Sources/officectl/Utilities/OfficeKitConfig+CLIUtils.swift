@@ -17,9 +17,11 @@ import OfficeKit
 extension OfficeKitConfig : Service {
 	
 	init(flags f: Flags) {
-		ldapConfig = LDAPConfig(flags: f)
-		googleConfig = GoogleConfig(flags: f)
-		gitHubConfig = GitHubConfig(flags: f)
+		self.init(
+			ldapConfig: LDAPConfig(flags: f),
+			googleConfig: GoogleConfig(flags: f),
+			gitHubConfig: GitHubConfig(flags: f)
+		)
 	}
 	
 }
