@@ -1,0 +1,35 @@
+---
+version: 1
+
+name: officectl
+description: A tool to manage a directory of people over multiple sources (LDAP, Google, etc.)
+homepage: https://github.com/happn-app/officectl/
+
+maintainer: François Lamboley <francois.lamboley@happn.com>
+
+source:
+  url: NONE
+  arch-mapping:
+    amd64: amd64
+
+control:
+  depends:
+  - libldap-2.4-2
+  - libssl1.0.2
+  - swiftlang-libs (=4.2.1-RELEASE-1~mkdeb1)
+  - zlib1g
+  description: |
+    Not much to say here…
+  section: admin
+
+install:
+  upstream:
+    /usr/bin:
+    - pattern: officectl
+    /usr/share/officectl:
+    - pattern: "*/*"
+
+dirs:
+- /etc/officectl
+
+# vim: ts=2 sw=2 et
