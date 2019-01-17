@@ -91,12 +91,12 @@ public class Action<SubjectType, ParametersType, ResultType> {
 				let weakeningDelay: TimeInterval?
 				switch (weakeningMode, result.isSuccessful) {
 				case (.never, _):                                          weaken = false; weakeningDelay = nil
-				case (.onSuccess(delay: let d), true):                     weaken = true; weakeningDelay = d
+				case (.onSuccess(delay: let d), true):                     weaken = true;  weakeningDelay = d
 				case (.onSuccess, false):                                  weaken = false; weakeningDelay = nil
-				case (.onError(delay: let d), false):                      weaken = true; weakeningDelay = d
+				case (.onError(delay: let d), false):                      weaken = true;  weakeningDelay = d
 				case (.onError, true):                                     weaken = false; weakeningDelay = nil
-				case (.always(successDelay: let d, errorDelay: _), true):  weaken = true; weakeningDelay = d
-				case (.always(successDelay: _, errorDelay: let d), false): weaken = true; weakeningDelay = d
+				case (.always(successDelay: let d, errorDelay: _), true):  weaken = true;  weakeningDelay = d
+				case (.always(successDelay: _, errorDelay: let d), false): weaken = true;  weakeningDelay = d
 				}
 				if weaken {
 					if let delay = weakeningDelay {
