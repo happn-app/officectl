@@ -26,7 +26,8 @@ struct Connectors {
 }
 
 func sync(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	let asyncConfig: AsyncConfig = try context.container.make()
+	let asyncConfig = try context.container.make(AsyncConfig.self)
+	let officeKitConfig = try context.container.make(OfficeKitConfig.self)
 	
 	var connectors = Connectors()
 	var sourceId2FutureUsers = [SourceId: EventLoopFuture<(SourceId, [User])>]()
@@ -47,19 +48,12 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		return s
 	}
 	if fromSourceId == .ldap || toSourceIds.contains(.ldap) {
-		guard let baseDNString = f.getString(name: "ldap-base-dn") else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "The \"ldap-base-dn\" option is required when syncing to or from LDAP"])
-		}
-		guard let peopleDNString = f.getString(name: "ldap-people-dn") else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "The \"ldap-people-dn\" option is required when syncing to or from LDAP"])
-		}
-		let baseDN = try LDAPDistinguishedName(string: baseDNString)
-		if peopleDNString.isEmpty {ldapBasePeopleDN =                                                     baseDN}
-		else                      {ldapBasePeopleDN = try LDAPDistinguishedName(string: peopleDNString) + baseDN}
+		ldapBasePeopleDN = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDN, "People DN")
 	} else {
 		ldapBasePeopleDN = nil
 	}
 	if fromSourceId == .google || toSourceIds.contains(.google) {
+		#warning("TODO")
 		guard let d = f.getString(name: "google-domain") else {
 			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "The \"google-domain\" option is required when syncing to or from Google"])
 		}
@@ -73,21 +67,21 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		guard sourceId2FutureUsers[s] == nil else {continue}
 		switch s {
 		case .google:
-			guard let userBehalf = f.getString(name: "google-admin-email") else {
-				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "The \"google-admin-email\" option is required when syncing Google"])
-			}
-			connectors.googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
+			let googleConfig = try officeKitConfig.googleConfigOrThrow()
+			_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
+			connectors.googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 			sourceId2FutureUsers[s] =
 				connectors.googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
 				.then{ usersFromGoogle(connector: connectors.googleConnector, searchedDomain: googleDomain, baseDN: ldapBasePeopleDN, asyncConfig: asyncConfig) }
 			
 		case .ldap:
-			connectors.ldapConnector = try LDAPConnector(flags: f)
+			connectors.ldapConnector = try LDAPConnector(key: officeKitConfig.ldapConfigOrThrow().connectorSettings)
 			sourceId2FutureUsers[s] =
 				connectors.ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
 				.then{ usersFromLDAP(connector: connectors.ldapConnector, baseDN: ldapBasePeopleDN, asyncConfig: asyncConfig) }
 			
-		case .github: throw NSError(domain: "com.happn.officectl", code: 255, userInfo: [NSLocalizedDescriptionKey: "Not implemented"])
+		case .github:
+			throw NotImplementedError()
 		}
 	}
 	

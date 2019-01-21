@@ -17,8 +17,9 @@ import URLRequestOperation
 
 func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
 	let asyncConfig: AsyncConfig = try context.container.make()
+	let officeKitConfig = try context.container.make(OfficeKitConfig.self)
 	
-//	let c = try GitHubJWTConnector(flags: f)
+//	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)
 //	let f = c.connect(scope: (), asyncConfig: asyncConfig)
 //	.then{ _ -> Future<[GitHubRepository]> in
 //		let op = GitHubRepositorySearchOperation(searchedOrganisation: "happn-app", gitHubConnector: c)
@@ -31,7 +32,11 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 //		return asyncConfig.eventLoop.newSucceededFuture(result: ())
 //	}
 //	return f
-	let c = try GoogleJWTConnector(flags: f, userBehalf: f.getString(name: "google-admin-email")!)
+	
+	let googleConnectorConfig = try officeKitConfig.googleConfigOrThrow().connectorSettings
+	_ = try nil2throw(googleConnectorConfig.userBehalf, "Google User Behalf")
+	
+	let c = try GoogleJWTConnector(key: googleConnectorConfig)
 	let f = c.connect(scope: ModifyGoogleUserOperation.scopes, asyncConfig: asyncConfig)
 	.then{ _ -> EventLoopFuture<GoogleUser> in
 		let searchOp = GetGoogleUserOperation(userKey: "deletion.test@happn.fr", connector: c)

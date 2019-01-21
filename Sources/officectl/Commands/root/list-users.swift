@@ -16,10 +16,11 @@ import OfficeKit
 
 func listUsers(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
 	let asyncConfig: AsyncConfig = try context.container.make()
+	let googleConfig = try context.container.make(OfficeKitConfig.self).googleConfigOrThrow()
 	
-	let userBehalf = f.getString(name: "google-admin-email")!
+	_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
 	
-	let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
+	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
 	.then{ _ -> EventLoopFuture<[GoogleUser]> in
 		let searchOp = SearchGoogleUsersOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)

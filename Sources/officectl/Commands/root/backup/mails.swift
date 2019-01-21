@@ -17,16 +17,15 @@ import OfficeKit
 
 
 func backupMails(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	let asyncConfig: AsyncConfig = try context.container.make()
+	let asyncConfig = try context.container.make(AsyncConfig.self)
+	let googleConfig = try context.container.make(OfficeKitConfig.self).googleConfigOrThrow()
 	
-	guard let userBehalf = f.getString(name: "google-admin-email") else {
-		throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "google-admin-email is required to backup the emails"])
-	}
 	let usersFilter = (f.getString(name: "emails-to-backup")?.components(separatedBy: ",")).flatMap{ Set($0) }
-	let linkify = f.getBool(name: "linkify")!
-	let archive = f.getBool(name: "archive")!
+	_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
+	let linkify = try nil2throw(f.getBool(name: "linkify"), "linkify parameter")
+	let archive = try nil2throw(f.getBool(name: "archive"), "archive parameter")
 	
-	let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
+	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
 	.then{ _ -> EventLoopFuture<[GoogleUser]> in /* Fetch happn.fr users */
 		let searchOp = SearchGoogleUsersOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)

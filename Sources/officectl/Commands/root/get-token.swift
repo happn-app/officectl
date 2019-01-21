@@ -15,12 +15,12 @@ import OfficeKit
 
 
 func getToken(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	let asyncConfig: AsyncConfig = try context.container.make()
+	let asyncConfig = try context.container.make(AsyncConfig.self)
+	let googleConfig = try context.container.make(OfficeKitConfig.self).googleConfigOrThrow()
 	
-	let scopes = f.getString(name: "scopes")!
-	let userBehalf = f.getString(name: "google-admin-email")!
+	let scopes = try nil2throw(f.getString(name: "scopes"), "scopes")
 	
-	let googleConnector = try GoogleJWTConnector(flags: f, userBehalf: userBehalf)
+	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 	let f = googleConnector.connect(scope: Set(scopes.components(separatedBy: ",")), asyncConfig: asyncConfig)
 	.then{ _ -> EventLoopFuture<Void> in
 		print(googleConnector.token!)

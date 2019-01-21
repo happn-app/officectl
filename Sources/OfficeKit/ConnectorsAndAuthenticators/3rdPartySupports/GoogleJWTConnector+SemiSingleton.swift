@@ -16,11 +16,16 @@ extension GoogleJWTConnector : SemiSingletonWithFallibleInit {
 	public struct Settings : Hashable {
 		
 		public var jsonCredentialsURL: URL
-		public var urserBehalf: String?
+		public var userBehalf: String?
 		
 		public init(jsonCredentialsURL url: URL, userBehalf u: String?) {
 			jsonCredentialsURL = url
-			urserBehalf = u
+			userBehalf = u
+		}
+		
+		public init(copying settings: Settings, newUserBehalf u: String?) {
+			jsonCredentialsURL = settings.jsonCredentialsURL
+			userBehalf = u
 		}
 		
 	}
@@ -33,7 +38,7 @@ extension GoogleJWTConnector : SemiSingletonWithFallibleInit {
 	}
 	
 	public convenience init(key s: Settings) throws {
-		try self.init(jsonCredentialsURL: s.jsonCredentialsURL, userBehalf: s.urserBehalf)
+		try self.init(jsonCredentialsURL: s.jsonCredentialsURL, userBehalf: s.userBehalf)
 	}
 	
 }

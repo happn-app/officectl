@@ -15,8 +15,7 @@ import Vapor
 
 struct GuakaCommandParseResult {
 	
-	let staticDataDir: URL?
-	let officeKitConfig: OfficeKitConfig
+	let officectlConfig: OfficectlConfig
 	let wrapperCommand: VaporWrapperForGuakaCommand
 	
 }
@@ -25,11 +24,14 @@ struct GuakaCommandParseResult {
 func parse_cli() -> GuakaCommandParseResult {
 	var result: GuakaCommandParseResult?
 	let createSetWrapperCommandHandler = { (run: @escaping VaporWrapperForGuakaCommand.Run) -> (_ cmd: Guaka.Command, _ flags: Guaka.Flags, _ args: [String]) -> Void in
-		return {
+		return { (_ cmd: Guaka.Command, _ flags: Guaka.Flags, _ args: [String]) -> Void in
+			let officectlConfig: OfficectlConfig
+			do    {officectlConfig = try OfficectlConfig(flags: flags)}
+			catch {cmd.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)}
+			
 			result = GuakaCommandParseResult(
-				staticDataDir: $1.getString(name: "static-data-dir").flatMap{ URL(fileURLWithPath: $0, isDirectory: true) },
-				officeKitConfig: OfficeKitConfig(flags: $1),
-				wrapperCommand: VaporWrapperForGuakaCommand(guakaCommand: $0, guakaFlags: $1, guakaArgs: $2, run: run)
+				officectlConfig: officectlConfig,
+				wrapperCommand: VaporWrapperForGuakaCommand(guakaCommand: cmd, guakaFlags: flags, guakaArgs: args, run: run)
 			)
 		}
 	}

@@ -17,11 +17,12 @@ import OfficeKit
 
 func backupGitHub(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
 	let asyncConfig: AsyncConfig = try context.container.make()
+	let gitHubConfig = try context.container.make(OfficeKitConfig.self).gitHubConfigOrThrow()
 	
-	let orgName = f.getString(name: "orgname")!
-	let destinationFolderURL = URL(fileURLWithPath: f.getString(name: "destination")!, isDirectory: true)
+	let orgName = try nil2throw(f.getString(name: "orgname"), "orgname")
+	let destinationFolderURL = try URL(fileURLWithPath: nil2throw(f.getString(name: "destination"), "destination"), isDirectory: true)
 	
-	let gitHubConnector = try GitHubJWTConnector(flags: f)
+	let gitHubConnector = try GitHubJWTConnector(key: gitHubConfig.connectorSettings)
 	let f = gitHubConnector.connect(scope: (), asyncConfig: asyncConfig)
 	.then{ _ -> EventLoopFuture<[GitHubRepository]> in
 		context.console.info("Fetching repositories list from GitHub...")

@@ -9,6 +9,7 @@ import Foundation
 
 import Guaka
 import Vapor
+import Yaml
 
 import OfficeKit
 
@@ -16,11 +17,11 @@ import OfficeKit
 
 extension OfficeKitConfig : Service {
 	
-	init(flags f: Flags) {
+	init(flags f: Flags, yamlConfig: Yaml?) throws {
 		self.init(
-			ldapConfig: LDAPConfig(flags: f),
-			googleConfig: GoogleConfig(flags: f),
-			gitHubConfig: GitHubConfig(flags: f)
+			ldapConfig: try LDAPConfig(flags: f, yamlConfig: yamlConfig),
+			googleConfig: try GoogleConfig(flags: f, yamlConfig: yamlConfig),
+			gitHubConfig: try GitHubConfig(flags: f, yamlConfig: yamlConfig)
 		)
 	}
 	
