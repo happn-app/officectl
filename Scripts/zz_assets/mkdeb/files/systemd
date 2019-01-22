@@ -1,0 +1,13 @@
+[Unit]
+Description=officectl
+Wants=network-online.target
+After=network.target network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/officectl server serve
+User=officectl
+Group=officectl
+
+[Install]
+WantedBy=multi-user.target
