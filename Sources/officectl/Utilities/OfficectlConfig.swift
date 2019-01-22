@@ -23,7 +23,7 @@ struct OfficectlConfig : Service {
 	init(flags f: Flags) throws {
 		let configYaml: Yaml?
 		let configPathFromFlags = f.getString(name: "config-url")
-		let configPath = configPathFromFlags ?? "/etc/officectl/config.yaml"
+		let configPath = configPathFromFlags ?? "/etc/officectl/officectl.yaml"
 		if FileManager.default.fileExists(atPath: configPath) {
 			let configString = try String(contentsOfFile: configPath, encoding: .utf8)
 			configYaml = try Yaml.load(configString)

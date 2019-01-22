@@ -23,13 +23,15 @@ control:
   section: admin
 
 install:
+  recipe:
+    /etc/officectl:
+    - pattern: default_config.yaml
+      rename: officectl.yaml
+      conffile: true
   upstream:
     /usr/bin:
     - pattern: officectl
     /usr/share/officectl:
     - pattern: "*/*"
-
-dirs:
-- /etc/officectl
 
 # vim: ts=2 sw=2 et

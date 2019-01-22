@@ -1,0 +1,26 @@
+---
+static_data_dir: /usr/share/officectl/
+
+
+#ldap:
+#  url:
+#  admin_username:
+#  admin_password:
+#  base_dn:
+#  people_dn:
+
+
+#github:
+#  private_key:
+#  app_id:
+#  install_id:
+
+
+#google:
+#  admin_email:
+#  superuser_json_creds:
+#  domains:
+
+
+#happn_console:
+#  refresh_token:
