@@ -30,7 +30,7 @@ public struct OfficeKitConfig {
 					pdn = bdn
 				} else {
 					guard let pdnc = try? LDAPDistinguishedName(string: pdnString) else {return nil}
-					pdn = pdnc
+					pdn = pdnc + bdn
 				}
 			} else {
 				pdn = nil
