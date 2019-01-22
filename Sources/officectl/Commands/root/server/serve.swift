@@ -15,11 +15,10 @@ import OfficeKit
 
 
 func serverServe(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	let hostname = f.getString(name: "hostname")!
-	let port = f.getInt(name: "port")!
+	let config = try context.container.make(OfficectlConfig.self)
 	
 	var context = context
-	context.options["port"] = String(port)
-	context.options["hostname"] = hostname
+	context.options["port"] = String(config.serverPort)
+	context.options["hostname"] = config.serverHost
 	return try ServeCommand(server: context.container.make()).run(using: context)
 }

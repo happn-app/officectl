@@ -1,26 +1,39 @@
 ---
-static_data_dir: /usr/share/officectl/
+server:
+  static_data_dir: /usr/share/officectl/
+#  hostname: 127.0.0.1
+#  port: 8080
 
 
+# The LDAP config. All fields are required if you give an LDAP config, except
+# for the people_dn as not all commands using LDAP require it (for commands that
+# do require it, if it is not set, the command will fail, obviously).
+# Important: The people_dn is relative to the base_dn. It can be empty, in which
+#            case, people will be directly in the base dn.
 #ldap:
-#  url:
-#  admin_username:
-#  admin_password:
-#  base_dn:
+#  url: ldaps://your.ldap.server
+#  admin_username: cn=admin,dc=your,dc=domain,dc=org
+#  admin_password: this_password_is_secure
+#  base_dn: dc=your,dc=domain,dc=org
 #  people_dn:
 
 
+# The GitHub config. All fields are required if you give a GitHub config.
 #github:
 #  private_key:
 #  app_id:
 #  install_id:
 
 
+# The Google config. The superuser_json_creds field is required. The admin is
+# needed for commands that requires officectl to become a superadmin (create
+# users, change password, etc.)
 #google:
 #  admin_email:
 #  superuser_json_creds:
 #  domains:
 
 
+# The happn Console config. All fields are required if you give this config.
 #happn_console:
 #  refresh_token:

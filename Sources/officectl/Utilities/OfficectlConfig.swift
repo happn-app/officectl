@@ -18,6 +18,9 @@ import OfficeKit
 struct OfficectlConfig : Service {
 	
 	var staticDataDirURL: URL?
+	var serverHost: String
+	var serverPort: Int
+	
 	var officeKitConfig: OfficeKitConfig
 	
 	init(flags f: Flags) throws {
@@ -40,7 +43,10 @@ struct OfficectlConfig : Service {
 			configYaml = nil
 		}
 		
-		staticDataDirURL = (configYaml?["static_data_dir"].string ?? f.getString(name: "static-data-dir")).flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
+		staticDataDirURL = (f.getString(name: "static-data-dir") ?? configYaml?["server"]["static_data_dir"].string).flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
+		serverHost = f.getString(name: "hostname") ?? configYaml?["server"]["hostname"].string ?? "localhost"
+		serverPort = f.getInt(name: "port") ?? configYaml?["server"]["port"].int ?? 8080
+		
 		officeKitConfig = try OfficeKitConfig(flags: f, yamlConfig: configYaml)
 	}
 	

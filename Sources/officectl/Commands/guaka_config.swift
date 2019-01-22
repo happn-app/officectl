@@ -113,9 +113,9 @@ func parse_cli() -> GuakaCommandParseResult {
 	   ************************* */
 	
 	let serverServeFlags = [
-		Flag(shortName: "H", longName: "hostname", value: "localhost", description: "Set the hostname the server will run on."),
-		Flag(shortName: "p", longName: "port",     value: 8080,        description: "Set the port the server will run on.")
-//		Flag(shortName: "b", longName: "bind",     type: String.self,  description: "Convenience for setting hostname and port together. The hostname and port options have precedence over this option.", required: false)
+		Flag(shortName: "H", longName: "hostname", type: String.self, description: "Set the hostname the server will run on. Defaults to localhost."),
+		Flag(shortName: "p", longName: "port",     type: Int.self,    description: "Set the port the server will run on. Defaults to 8080.")
+//		Flag(shortName: "b", longName: "bind",     type: String.self, description: "Convenience for setting hostname and port together. The hostname and port options have precedence over this option.", required: false)
 	]
 	
 	let _ = Command(usage: "serve",  flags: serverServeFlags, parent: serverCommand, run: createSetWrapperCommandHandler(serverServe))
