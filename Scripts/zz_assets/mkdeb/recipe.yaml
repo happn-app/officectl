@@ -42,6 +42,7 @@ install:
     - pattern: "*/*"
 
 dirs:
+- /var/lib/officectl/
 - /var/log/officectl/
 - /var/run/officectl/
 
