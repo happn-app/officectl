@@ -23,8 +23,8 @@ final class PasswordResetController {
 	func showResetPage(_ req: Request) throws -> Future<View> {
 		let email = try req.parameters.next(Email.self)
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
-		let baseDN = try req.make(OfficeKitConfig.self).ldapConfigOrThrow().baseDN
-		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, baseDN: baseDN), additionalInitInfo: req) as ResetPasswordAction
+		let basePeopleDN = try nil2throw(req.make(OfficeKitConfig.self).ldapConfigOrThrow().peopleBaseDN, "LDAP People Base DN")
+		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, basePeopleDN: basePeopleDN), additionalInitInfo: req) as ResetPasswordAction
 		
 		return try renderResetPasswordAction(resetPasswordAction, view: req.view())
 	}
@@ -34,8 +34,8 @@ final class PasswordResetController {
 		let email = try req.parameters.next(Email.self)
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
-		let baseDN = try req.make(OfficeKitConfig.self).ldapConfigOrThrow().baseDN
-		let user = User(email: email, baseDN: baseDN)
+		let basePeopleDN = try nil2throw(req.make(OfficeKitConfig.self).ldapConfigOrThrow().peopleBaseDN, "LDAP People Base DN")
+		let user = User(email: email, basePeopleDN: basePeopleDN)
 		
 		return try user
 		.checkLDAPPassword(container: req, checkedPassword: resetPasswordData.oldPass)

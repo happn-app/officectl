@@ -49,10 +49,10 @@ public struct User : Hashable {
 	}
 	
 	/** Init a user with an “email” id, and fill the distinguished name too. */
-	public init(email e: Email, baseDN: LDAPDistinguishedName) {
+	public init(email e: Email, basePeopleDN: LDAPDistinguishedName) {
 		id = .email(e)
 		
-		distinguishedName = LDAPDistinguishedName(uid: e.username, baseDN: baseDN)
+		distinguishedName = LDAPDistinguishedName(uid: e.username, baseDN: basePeopleDN)
 		googleUserId = nil
 		gitHubId = nil
 		email = e
