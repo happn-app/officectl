@@ -20,7 +20,7 @@ server:
 
 # The GitHub config. All fields are required if you give a GitHub config.
 #github:
-#  private_key:
+#  private_key_path:
 #  app_id:
 #  install_id:
 

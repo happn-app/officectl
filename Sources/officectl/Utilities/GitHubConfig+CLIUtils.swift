@@ -17,7 +17,7 @@ import OfficeKit
 extension OfficeKitConfig.GitHubConfig {
 	
 	init?(flags f: Flags, yamlConfig: Yaml?) throws {
-		guard let privateKeyURLString = f.getString(name: "github-private-key") else {return nil}
+		guard let privateKeyURLString = f.getString(name: "github-private-key-path") else {return nil}
 		guard let appId = f.getString(name: "github-app-id") else {return nil}
 		guard let installId = f.getString(name: "github-install-id") else {return nil}
 		
