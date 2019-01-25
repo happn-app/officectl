@@ -67,6 +67,7 @@ public class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 					return
 				}
 				
+				self.error = nil
 				self.baseOperationEnded()
 			}
 			op.start()
@@ -78,8 +79,8 @@ public class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 			}
 			print(propertiesToSend)*/
 		} catch let err {
-			baseOperationEnded()
 			error = err
+			baseOperationEnded()
 		}
 	}
 	

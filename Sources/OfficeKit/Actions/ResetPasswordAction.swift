@@ -21,15 +21,11 @@ public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 	public let container: Container
 	
 	/* Sub-actions */
-	public var resetLDAPPasswordAction: ResetLDAPPasswordAction
-	public var resetGooglePasswordAction: ResetGooglePasswordAction
+	public let resetLDAPPasswordAction: ResetLDAPPasswordAction
+	public let resetGooglePasswordAction: ResetGooglePasswordAction
 	
-	public var ldapResetResult: AsyncOperationResult<Void>? {
-		return resetLDAPPasswordAction.result
-	}
-	public var googleResetResult: AsyncOperationResult<Void>? {
-		return resetGooglePasswordAction.result
-	}
+	public private(set) var ldapResetResult: AsyncOperationResult<Void>?
+	public private(set) var googleResetResult: AsyncOperationResult<Void>?
 	
 	var errors: [Error] {
 		return [self.ldapResetResult?.error, self.googleResetResult?.error].compactMap{ $0 }
@@ -49,11 +45,13 @@ public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 		
 		let ldapOperation = AsyncBlockOperation{ endOperationBlock in
 			self.resetLDAPPasswordAction.start(parameters: newPassword, weakeningMode: .alwaysInstantly, handler: { result in
+				self.ldapResetResult = result
 				endOperationBlock()
 			})
 		}
 		let googleOperation = AsyncBlockOperation{ endOperationBlock in
 			self.resetGooglePasswordAction.start(parameters: newPassword, weakeningMode: .alwaysInstantly, handler: { result in
+				self.googleResetResult = result
 				endOperationBlock()
 			})
 		}

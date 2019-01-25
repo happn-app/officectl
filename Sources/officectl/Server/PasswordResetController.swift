@@ -56,10 +56,40 @@ final class PasswordResetController {
 	
 	private func renderResetPasswordAction(_ resetPasswordAction: ResetPasswordAction, view: ViewRenderer) -> EventLoopFuture<View> {
 		let emailStr = resetPasswordAction.subject.email?.stringValue ?? "<unknown>"
-		if !resetPasswordAction.isExecuting {
-			return view.render("PasswordResetPage", ["user_email": emailStr])
+		
+		if !resetPasswordAction.isWeak {
+			/* The action is either executing or finished but with a reachable
+			 * result. */
+			struct ResetPasswordStatusContext : Encodable {
+				struct ServicePasswordResetStatus : Encodable {
+					var isExecuting: Bool
+					var errorStr: String?
+				}
+				var userEmail: String
+				var isExecuting: Bool
+				var isSuccessful: Bool
+				var ldapResetStatus: ServicePasswordResetStatus
+				var googleResetStatus: ServicePasswordResetStatus
+			}
+			
+			let context = ResetPasswordStatusContext(
+				userEmail: emailStr,
+				isExecuting: resetPasswordAction.isExecuting,
+				isSuccessful: resetPasswordAction.strongResult?.isSuccessful ?? false,
+				ldapResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
+					isExecuting: resetPasswordAction.ldapResetResult == nil || resetPasswordAction.resetLDAPPasswordAction.isExecuting,
+					errorStr: resetPasswordAction.ldapResetResult?.error?.localizedDescription
+				),
+				googleResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
+					isExecuting: resetPasswordAction.googleResetResult == nil || resetPasswordAction.resetGooglePasswordAction.isExecuting,
+					errorStr: resetPasswordAction.googleResetResult?.error?.localizedDescription
+				)
+			)
+			return view.render("PasswordResetStatusPage", context)
+			
 		} else {
-			return view.render("PasswordResetInProgressPage", ["user_email": emailStr])
+			return view.render("NewPasswordResetPage", ["user_email": emailStr])
+			
 		}
 	}
 	

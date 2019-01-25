@@ -40,14 +40,25 @@ public class Action<SubjectType, ParametersType, ResultType> {
 		return stateSyncQueue.sync{ currentState.isRunning }
 	}
 	
+	/** Is the operation weak? If not, the action keeps a strong reference to
+	itself, thus preventing itself from being deallocated. This is useful mainly
+	for subclasses that are semi-singletons.
+	
+	The following is true: `if isWeak then !isExecuting`. However, it is
+	possible to have a non executing weak action.
+	
+	A weak action does not have a result. */
+	public var isWeak: Bool {
+		return stateSyncQueue.sync{ currentState.isWeak }
+	}
+	
 	public let subject: SubjectType
 	public var latestParameters: ParametersType?
 	
-	public var result: AsyncOperationResult<ResultType>? {
+	public var strongResult: AsyncOperationResult<ResultType>? {
 		return stateSyncQueue.sync{
 			switch currentState {
-			case .running:                                                        return nil
-			case .idleWeak(result: let r):                                        return r
+			case .running, .idleWeak:                                             return nil
 			case .idleStrong(result: let r, weakeningTimer: _, selfReference: _): return r
 			}
 		}
@@ -55,7 +66,7 @@ public class Action<SubjectType, ParametersType, ResultType> {
 	
 	public init(subject s: SubjectType) {
 		stateSyncQueue = DispatchQueue(label: "State Sync Queue for \(type(of: self))<\(s)>", attributes: [/*serial*/])
-		currentState = .idleWeak(result: nil)
+		currentState = .idleWeak
 		subject = s
 	}
 	
@@ -71,12 +82,18 @@ public class Action<SubjectType, ParametersType, ResultType> {
 	Never assume the handler will be called asynchronously.
 	
 	When the handler is called, the state of the action will either be idleWeak
-	or idleStrong (you decide with the weakeningMode parameter). */
+	or idleStrong (you decide with the weakeningMode parameter).
+	
+	- important: If you weaken the action instantly (`nil` delay, which is the
+	default), the only way to retrieve the result of the action is through the
+	handler given as argument of this method. A weak action always have a `nil`
+	result. */
 	public final func start(parameters: ParametersType, weakeningMode: WeakeningMode = WeakeningMode.defaultMode, handler: ((_ result: AsyncOperationResult<ResultType>) -> Void)?) {
 		/* Set ourselves running if not already running, fail start otherwise. */
 		let wasAlreadyRunning = stateSyncQueue.sync{ () -> Bool in
 			guard !currentState.isRunning else {return true}
 			currentState = .running(selfReference: self)
+			latestParameters = parameters
 			return false
 		}
 		guard !wasAlreadyRunning else {
@@ -101,12 +118,12 @@ public class Action<SubjectType, ParametersType, ResultType> {
 				if weaken {
 					if let delay = weakeningDelay {
 						let timer = DispatchSource.makeTimerSource(flags: [], queue: self.stateSyncQueue)
-						timer.setEventHandler{ self.currentState = .idleWeak(result: result) }
+						timer.setEventHandler{ self.currentState = .idleWeak }
 						timer.schedule(deadline: .now() + delay, leeway: .milliseconds(250))
 						/* Setting the new state will cancel the previous timer if any and resume the new one. */
 						self.currentState = .idleStrong(result: result, weakeningTimer: timer, selfReference: self)
 					} else {
-						self.currentState = .idleWeak(result: result)
+						self.currentState = .idleWeak
 					}
 				} else {
 					self.currentState = .idleStrong(result: result, weakeningTimer: nil, selfReference: self)
@@ -117,12 +134,36 @@ public class Action<SubjectType, ParametersType, ResultType> {
 		}
 		do {
 			/* Start the action */
-			latestParameters = parameters
 			try unsafeStart(parameters: parameters, handler: privateHandler)
 		} catch {
 			/* There was a sync error starting the action; let's call the end
 			 * handler directly. */
 			privateHandler(.error(error))
+		}
+	}
+	
+	/** Try and weaken the opration. If it is running, throws. */
+	public final func weaken() throws {
+		try stateSyncQueue.sync{
+			switch currentState {
+			case .idleWeak:
+				(/*nop*/)
+				
+			case .idleStrong:
+				/* Setting the state cancels the weakening timer if any. */
+				currentState = .idleWeak
+
+			case .running:
+				throw OperationIsNotFinishedError()
+			}
+		}
+	}
+	
+	/** Clears the latestParameters variable. If the action is running, throws. */
+	public final func clearLatestParameters() throws {
+		try stateSyncQueue.sync{
+			guard !currentState.isRunning else {throw OperationIsNotFinishedError()}
+			latestParameters = nil
 		}
 	}
 	
@@ -146,11 +187,11 @@ public class Action<SubjectType, ParametersType, ResultType> {
 	private enum State {
 		
 		/** The action is not running and has no forced reference to itself. */
-		case idleWeak(result: AsyncOperationResult<ResultType>?)
+		case idleWeak
 		/** The action is not running and has a forced reference to itself (the
 		action keeps a strong reference to itself). If the weakening timer is nil,
 		the action will never weaken on its own. */
-		case idleStrong(result: AsyncOperationResult<ResultType>?, weakeningTimer: DispatchSourceTimer?, selfReference: Action)
+		case idleStrong(result: AsyncOperationResult<ResultType>, weakeningTimer: DispatchSourceTimer?, selfReference: Action)
 		
 		/** The action is running (and has a forced reference to itself). */
 		case running(selfReference: Action)
@@ -159,6 +200,13 @@ public class Action<SubjectType, ParametersType, ResultType> {
 			switch self {
 			case .running:               return true
 			case .idleWeak, .idleStrong: return false
+			}
+		}
+		
+		var isWeak: Bool {
+			switch self {
+			case .idleWeak:             return true
+			case .running, .idleStrong: return false
 			}
 		}
 		
