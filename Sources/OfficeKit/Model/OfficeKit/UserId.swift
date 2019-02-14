@@ -9,7 +9,7 @@ import Foundation
 
 
 
-public enum UserId : Hashable {
+public enum UserId {
 	
 	case distinguishedName(LDAPDistinguishedName)
 	case googleUserId(String)
@@ -51,6 +51,19 @@ public enum UserId : Hashable {
 		case .gitHubId(let id):          return "github:" + id
 		case .email(let mail):           return "email:" + mail.stringValue
 		}
+	}
+	
+}
+
+
+extension UserId : Hashable {
+}
+
+
+extension UserId : CustomStringConvertible {
+	
+	public var description: String {
+		return stringValue
 	}
 	
 }

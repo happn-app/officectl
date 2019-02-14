@@ -1,5 +1,5 @@
 /*
- * OperationIsNotFinishedError.swift
+ * Errors.swift
  * OfficeKit
  *
  * Created by François Lamboley on 12/07/2018.
@@ -19,6 +19,7 @@ public struct ErrorCollection : Error {
 	
 }
 
+
 public struct MissingFieldError : Error {
 	
 	let fieldName: String
@@ -29,11 +30,13 @@ public struct MissingFieldError : Error {
 	
 }
 
+
 public struct OperationIsNotFinishedError : Error {
 	
 	public init() {}
 	
 }
+
 
 public struct OperationAlreadyInProgressError : Error {
 	
@@ -41,17 +44,20 @@ public struct OperationAlreadyInProgressError : Error {
 	
 }
 
+
 public struct NotImplementedError : Error {
 	
 	public init() {}
 	
 }
 
+
 public struct UserAbortedError : Error {
 	
 	public init() {}
 	
 }
+
 
 public struct InvalidArgumentError : Error {
 	
@@ -62,6 +68,7 @@ public struct InvalidArgumentError : Error {
 	}
 	
 }
+
 
 public struct InternalError : Error {
 	

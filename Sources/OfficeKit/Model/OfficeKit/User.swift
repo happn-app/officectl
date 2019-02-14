@@ -10,7 +10,7 @@ import Foundation
 
 
 /** Represents a user. */
-public struct User : Hashable {
+public struct User {
 	
 	public enum Error : Swift.Error {
 		
@@ -64,9 +64,10 @@ public struct User : Hashable {
 		password = nil
 	}
 	
-	/* ****************
-      MARK: - Hashable
-	   **************** */
+}
+
+
+extension User : Hashable {
 	
 	public static func ==(_ user1: User, _ user2: User) -> Bool {
 		return user1.id == user2.id
@@ -74,6 +75,29 @@ public struct User : Hashable {
 	
 	public func hash(into hasher: inout Hasher) {
 		hasher.combine(id)
+	}
+	
+}
+
+
+extension User : CustomStringConvertible {
+	
+	public var description: String {
+		var ret = "User{id=\(id)"
+		if let dn = distinguishedName, id.distinguishedName == nil {
+			ret += ", dn=\(dn)"
+		}
+		if let guid = googleUserId, id.googleUserId == nil {
+			ret += ", guid=\(guid)"
+		}
+		if let ghid = gitHubId, id.gitHubId == nil {
+			ret += ", ghid=\(ghid)"
+		}
+		if let email = email, id.email == nil {
+			ret += ", email=\(email)"
+		}
+		ret += "}"
+		return ret
 	}
 	
 }

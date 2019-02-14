@@ -75,7 +75,7 @@ final class PasswordResetController {
 			let context = ResetPasswordStatusContext(
 				userEmail: emailStr,
 				isExecuting: resetPasswordAction.isExecuting,
-				isSuccessful: resetPasswordAction.strongResult?.isSuccessful ?? false,
+				isSuccessful: resetPasswordAction.result?.isSuccessful ?? false,
 				ldapResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
 					isExecuting: resetPasswordAction.ldapResetResult == nil || resetPasswordAction.resetLDAPPasswordAction.isExecuting,
 					errorStr: resetPasswordAction.ldapResetResult?.error?.localizedDescription

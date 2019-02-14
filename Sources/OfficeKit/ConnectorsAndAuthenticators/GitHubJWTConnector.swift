@@ -21,7 +21,11 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 	public let privateKey: SecKey
 	
 	public var currentScope: Void? {
-		return (auth != nil ? () : nil)
+		guard let auth = auth else {return nil}
+		/* We let a 21 secs leeway in which we consider we’re not connected to
+		 * mitigate time difference between the server and our local time. */
+		guard auth.expirationDate.timeIntervalSinceNow > 21 else {return nil}
+		return ()
 	}
 	public var token: String? {
 		return auth?.token
@@ -40,8 +44,11 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 	   ******************************** */
 	
 	public func authenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
-		/* Make sure we're connected */
-		guard let auth = auth else {
+		/* Make sure we're connected. (Note: at the time of writing, it is
+		 * technically impossible for isConnected to be true and auth to be nil.
+		 * We could in theory bang the auth variable, but putting it in the guard
+		 * is more elegant IMHO.) */
+		guard isConnected, let auth = auth else {
 			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
 			return
 		}
@@ -71,7 +78,12 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 		request.httpMethod = "POST"
 		
 		/* Run the URLRequest and parse the response in the TokenResponse object */
-		let op = AuthenticatedJSONOperation<Auth>(request: request, authenticator: nil)
+		let decoder = JSONDecoder()
+		decoder.dateDecodingStrategy = .iso8601
+		#if !os(Linux)
+			decoder.keyDecodingStrategy = .convertFromSnakeCase
+		#endif
+		let op = AuthenticatedJSONOperation<Auth>(request: request, authenticator: nil, decoder: decoder)
 		op.completionBlock = {
 			guard let o = op.result else {
 				handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
@@ -97,16 +109,16 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 	private struct Auth : Codable {
 		
 		var token: String
-		var expirationDate: String
+		var expirationDate: Date
 		
 		private enum CodingKeys: String, CodingKey {
 			
 			case token
 			/* We can get rid of this when Linux supports keyDecodingStrategy */
 			#if !os(Linux)
-			case expirationDate = "expiresAt"
+				case expirationDate = "expiresAt"
 			#else
-			case expirationDate = "expires_at"
+				case expirationDate = "expires_at"
 			#endif
 			
 		}

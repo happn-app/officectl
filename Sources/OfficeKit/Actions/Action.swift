@@ -29,6 +29,7 @@ public enum WeakeningMode {
 	
 }
 
+
 /** An Action is basically an Operation that can be run more than once. It does
 not have all the conveniences the Operations do (dependencies, queues, etc.). An
 Action is not in itself a SemiSingleton, however it is more or less expected
@@ -55,7 +56,7 @@ public class Action<SubjectType, ParametersType, ResultType> {
 	public let subject: SubjectType
 	public var latestParameters: ParametersType?
 	
-	public var strongResult: AsyncOperationResult<ResultType>? {
+	public var result: AsyncOperationResult<ResultType>? {
 		return stateSyncQueue.sync{
 			switch currentState {
 			case .running, .idleWeak:                                             return nil

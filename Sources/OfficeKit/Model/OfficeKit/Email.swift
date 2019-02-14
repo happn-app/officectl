@@ -9,7 +9,7 @@ import Foundation
 
 
 
-public struct Email : Hashable, Codable {
+public struct Email {
 	
 	public var username: String
 	public var domain: String
@@ -36,19 +36,6 @@ public struct Email : Hashable, Codable {
 		domain = newDomain ?? e.domain
 	}
 	
-	public init(from decoder: Decoder) throws {
-		let value = try decoder.singleValueContainer()
-		let emailString = try value.decode(String.self)
-		guard let e = Email(string: emailString) else {throw EncodingError.invalidValue(emailString, EncodingError.Context(codingPath: [], debugDescription: "email is invalid"))}
-		
-		self.init(e)
-	}
-	
-	public func encode(to encoder: Encoder) throws {
-		var value = encoder.singleValueContainer()
-		try value.encode(stringValue)
-	}
-	
 	@available(*, deprecated, message: "This is happn-specific.")
 	public func happnFrVariant() -> Email {
 		if domain == "happn.com" {return Email(username: username, domain: "happn.fr")!}
@@ -62,6 +49,38 @@ public struct Email : Hashable, Codable {
 	}
 	
 }
+
+
+extension Email : Hashable {
+}
+
+
+extension Email : Codable {
+	
+	public init(from decoder: Decoder) throws {
+		let value = try decoder.singleValueContainer()
+		let emailString = try value.decode(String.self)
+		guard let e = Email(string: emailString) else {throw EncodingError.invalidValue(emailString, EncodingError.Context(codingPath: [], debugDescription: "email is invalid"))}
+		
+		self.init(e)
+	}
+	
+	public func encode(to encoder: Encoder) throws {
+		var value = encoder.singleValueContainer()
+		try value.encode(stringValue)
+	}
+	
+}
+
+
+extension Email : CustomStringConvertible {
+	
+	public var description: String {
+		return stringValue
+	}
+	
+}
+
 
 
 public extension LDAPDistinguishedName {

@@ -12,7 +12,7 @@ import Foundation
 /* RFC: https://www.ietf.org/rfc/rfc4514.txt
  * The RFC is not fully followed… I know Multi-valued RDN are not supported.
  * There are probably other cases that do not correctly implement the RFC. */
-public struct LDAPDistinguishedName : Hashable {
+public struct LDAPDistinguishedName {
 	
 	public static func +(_ left: LDAPDistinguishedName, _ right: LDAPDistinguishedName) -> LDAPDistinguishedName {
 		return LDAPDistinguishedName(values: left.values + right.values)
@@ -173,11 +173,12 @@ public struct LDAPDistinguishedName : Hashable {
 		return relativeDistinguishedName(for: key).values.map{ $0.value }
 	}
 	
-	/* ****************
-      MARK: - Hashable
-	   **************** */
+}
+
+
+extension LDAPDistinguishedName : Hashable {
 	
-	public static func == (lhs: LDAPDistinguishedName, rhs: LDAPDistinguishedName) -> Bool {
+	public static func ==(lhs: LDAPDistinguishedName, rhs: LDAPDistinguishedName) -> Bool {
 		/* Apparently “(key: String, value: String)” does not conform to equatable
 		 * in Swift 4 :( Does not seem to work on Swift 5 either (tested in REPL). */
 //		return lhs.values == rhs.values
@@ -191,6 +192,15 @@ public struct LDAPDistinguishedName : Hashable {
 	public func hash(into hasher: inout Hasher) {
 		hasher.combine(values.map{ $0.key })
 		hasher.combine(values.map{ $0.value })
+	}
+	
+}
+
+
+extension LDAPDistinguishedName : CustomStringConvertible {
+	
+	public var description: String {
+		return stringValue
 	}
 	
 }
