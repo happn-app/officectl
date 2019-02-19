@@ -46,7 +46,7 @@ extension User {
 		var ldapConnectorConfig = try container.make(OfficeKitConfig.self).ldapConfigOrThrow().connectorSettings
 		ldapConnectorConfig.authMode = .userPass(username: dn.stringValue, password: checkedPassword)
 		let connector = try LDAPConnector(key: ldapConnectorConfig)
-		return connector.connect(scope: (), forceIfAlreadyConnected: true, asyncConfig: asyncConfig)
+		return connector.connect(scope: (), forceReconnect: true, asyncConfig: asyncConfig)
 	}
 	
 	public func existingLDAPUser(container: Container, attributesToFetch: [String] = ["objectClass", "sn", "cn"]) throws -> Future<LDAPInetOrgPerson> {

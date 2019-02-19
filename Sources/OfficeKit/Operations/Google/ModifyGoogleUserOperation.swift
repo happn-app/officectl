@@ -56,9 +56,7 @@ public class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 			
 			let decoder = JSONDecoder()
 			decoder.dateDecodingStrategy = .customISO8601
-			#if !os(Linux)
-				decoder.keyDecodingStrategy = .useDefaultKeys
-			#endif
+			decoder.keyDecodingStrategy = .useDefaultKeys
 			let op = AuthenticatedJSONOperation<GoogleUser>(request: urlRequest, authenticator: connector.authenticate, decoder: decoder)
 			op.completionBlock = {
 				guard op.result != nil else {

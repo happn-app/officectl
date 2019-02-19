@@ -55,9 +55,7 @@ public class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 		
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .customISO8601
-		#if !os(Linux)
-			decoder.keyDecodingStrategy = .useDefaultKeys
-		#endif
+		decoder.keyDecodingStrategy = .useDefaultKeys
 		let op = AuthenticatedJSONOperation<GoogleUsersList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
 		op.completionBlock = {
 			guard let o = op.result else {

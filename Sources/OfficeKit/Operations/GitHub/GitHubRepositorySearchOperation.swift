@@ -50,9 +50,7 @@ public class GitHubRepositorySearchOperation : RetryingOperation, HasResult {
 		
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .iso8601
-		#if !os(Linux)
-			decoder.keyDecodingStrategy = .convertFromSnakeCase
-		#endif
+		decoder.keyDecodingStrategy = .convertFromSnakeCase
 		let op = AuthenticatedJSONOperation<[GitHubRepository]>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
 		op.completionBlock = {
 			guard let o = op.result else {

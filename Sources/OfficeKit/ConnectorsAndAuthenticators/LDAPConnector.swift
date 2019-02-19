@@ -89,35 +89,41 @@ public final class LDAPConnector : Connector {
 		ldap_unbind_ext_s(ldapPtr, nil, nil)
 	}
 	
-	public func unsafeConnect(scope: Void, handler: @escaping (Error?) -> Void) {
-		switch authMode {
-		case .none:
-			self.currentScope = scope
-			handler(nil)
+	/* ********************************
+	   MARK: - Connector Implementation
+	   ******************************** */
+	
+	public func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<Void>, handler: @escaping (Error?) -> Void) {
+		switch changeType {
+		case .remove, .removeAll:
+			handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Disconnecting an LDAP connection but retaining the connection is not supported by (Open)LDAP"]))
 			
-		case .userPass(username: let username, password: let password):
-			guard let cStringPass = password.cString(using: .ascii) else {
-				handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Password cannot be converted to C String using ascii encoding"]))
-				return
-			}
-			DispatchQueue(label: "LDAP Connector Connect Queue").async{
-				var cred = berval(bv_len: ber_len_t(strlen(cStringPass)), bv_val: ber_strdup(cStringPass))
-				defer {ber_memfree(cred.bv_val)}
-				
-				let r = ldap_sasl_bind_s(self.ldapPtr, username, nil, &cred, nil, nil, nil)
-				guard r == LDAP_SUCCESS else {
-					handler(NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))]))
-					return
-				}
-				
+		case .add(let scope):
+			switch authMode {
+			case .none:
 				self.currentScope = scope
 				handler(nil)
+				
+			case .userPass(username: let username, password: let password):
+				guard let cStringPass = password.cString(using: .ascii) else {
+					handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Password cannot be converted to C String using ascii encoding"]))
+					return
+				}
+				DispatchQueue(label: "LDAP Connector Connect Queue").async{
+					var cred = berval(bv_len: ber_len_t(strlen(cStringPass)), bv_val: ber_strdup(cStringPass))
+					defer {ber_memfree(cred.bv_val)}
+					
+					let r = ldap_sasl_bind_s(self.ldapPtr, username, nil, &cred, nil, nil, nil)
+					guard r == LDAP_SUCCESS else {
+						handler(NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))]))
+						return
+					}
+					
+					self.currentScope = scope
+					handler(nil)
+				}
 			}
 		}
-	}
-	
-	public func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
-		handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Disconnecting an LDAP connection but retaining the connection is not supported by (Open)LDAP"]))
 	}
 	
 	/* ***************

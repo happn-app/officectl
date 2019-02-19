@@ -36,7 +36,7 @@ public class ResetLDAPPasswordAction : Action<User, String, Void>, SemiSingleton
 		let singletonStore = try container.make(SemiSingletonStore.self)
 		let connector = try singletonStore.semiSingleton(forKey: nil2throw(officeKitConfig.ldapConfig?.connectorSettings)) as LDAPConnector
 		
-		connector.connect(scope: (), handlerQueue: dispatchQueue, handler: { error in
+		connector.connect(scope: (), handlerQueue: dispatchQueue, handler: { _, error in
 			if let e = error {return handler(.error(e))}
 			
 			let person = LDAPInetOrgPerson(dn: dn.stringValue, sn: [], cn: [])

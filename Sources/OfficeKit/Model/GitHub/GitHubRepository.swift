@@ -39,18 +39,4 @@ public struct GitHubRepository : Codable {
 	public var createdAt: Date
 	public var updatedAt: Date?
 	
-	#if os(Linux)
-		/* We can get rid of this when Linux supports keyDecodingStrategy */
-		private enum CodingKeys : String, CodingKey {
-			case id, nodeId = "node_id"
-			case name, fullName = "full_name", description
-			case `private`, fork
-			case sshUrl = "ssh_url", defaultBranch = "default_branch"
-			case /*homepage,*/ topics
-			case size, archived
-			case hasIssues = "has_issues", hasWiki = "has_wiki", hasPages = "has_pages", hasDownloads = "has_downloads"
-			case pushedAt = "pushed_at", createdAt = "created_at", updatedAt = "updated_at"
-		}
-	#endif
-	
 }

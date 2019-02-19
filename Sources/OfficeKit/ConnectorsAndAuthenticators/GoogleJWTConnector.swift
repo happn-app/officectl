@@ -22,7 +22,11 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 	public let superuserEmail: String
 	
 	public var currentScope: ScopeType? {
-		return auth?.scope
+		guard let auth = auth else {return nil}
+		/* We let a 21 secs leeway in which we consider we’re not connected to
+		 * mitigate time difference between the server and our local time. */
+		guard auth.expirationDate.timeIntervalSinceNow > 21 else {return nil}
+		return auth.scope
 	}
 	public var token: String? {
 		return auth?.token
@@ -36,9 +40,7 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 	public init(jsonCredentialsURL: URL, userBehalf u: String?) throws {
 		/* Decode JSON credentials */
 		let jsonDecoder = JSONDecoder()
-		#if !os(Linux)
-			jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-		#endif
+		jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
 		let superuserCreds = try jsonDecoder.decode(CredentialsFile.self, from: Data(contentsOf: jsonCredentialsURL))
 		
 		/* We expect to have a service account */
@@ -61,7 +63,75 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unsafeConnect(scope: ScopeType, handler: @escaping (Error?) -> Void) {
+	public func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<Set<String>>, handler: @escaping (Error?) -> Void) {
+		let newScope: Set<String>?
+		
+		switch changeType {
+		case .add(let scope):    newScope = (scope.isEmpty ? currentScope : (currentScope ?? Set()).union(scope))
+		case .remove(let scope): newScope = currentScope?.subtracting(scope)
+		case .removeAll:         newScope = nil
+		}
+		assert(newScope?.isEmpty != true) /* The scope is either nil or non-empty */
+		
+		unsafeDisconnect{ error in
+			if let error = error {
+				/* Got an error at disconnection. We stop here. */
+				return handler(error)
+			}
+			
+			guard let scope = newScope else {
+				/* No new scope: simple disconnection. We stop here. */
+				return handler(nil)
+			}
+			
+			self.unsafeConnect(scope: scope, handler: handler)
+		}
+	}
+	
+	/* ************************************
+	   MARK: - Authenticator Implementation
+	   ************************************ */
+	
+	public func authenticate(request: RequestType, handler: @escaping (AsyncOperationResult<RequestType>, Any?) -> Void) {
+		connectorOperationQueue.addAsyncBlock{ endHandler in
+			self.unsafeAuthenticate(request: request, handler: { (result, userInfo) in
+				endHandler()
+				handler(result, userInfo)
+			})
+		}
+	}
+	
+	/* ***************
+      MARK: - Private
+	   *************** */
+	
+	private var auth: Auth?
+	
+	private struct Auth : Codable {
+		
+		var token: String
+		var expirationDate: Date
+		
+		var scope: Set<String>
+		
+	}
+	
+	private struct CredentialsFile : Decodable {
+		
+		let type: String
+		let projectId: String
+		let privateKeyId: String
+		let privateKey: String
+		let clientEmail: String
+		let clientId: String
+		let authUri: URL
+		let tokenUri: URL
+		let authProviderX509CertUrl: URL
+		let clientX509CertUrl: URL
+		
+	}
+	
+	private func unsafeConnect(scope: ScopeType, handler: @escaping (Error?) -> Void) {
 		/* Retrieve connection information */
 		let authURL = URL(string: "https://www.googleapis.com/oauth2/v4/token")!
 		var jwtRequestContent: [String: Any] = [
@@ -112,17 +182,10 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 			let accessToken: String
 			let expiresIn: Int
 			
-			#if os(Linux)
-				/* We can get rid of this when Linux supports keyDecodingStrategy */
-				private enum CodingKeys : String, CodingKey {
-					case tokenType = "token_type", accessToken = "access_token", expiresIn = "expires_in"
-				}
-			#endif
-			
 		}
 	}
 	
-	public func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
+	private func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
 		guard let auth = auth else {handler(nil); return}
 		
 		var components = URLComponents(string: "https://accounts.google.com/o/oauth2/revoke")!
@@ -135,11 +198,7 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 		op.start()
 	}
 	
-	/* ************************************
-	   MARK: - Authenticator Implementation
-	   ************************************ */
-	
-	public func authenticate(request: RequestType, handler: @escaping (AsyncOperationResult<RequestType>, Any?) -> Void) {
+	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
 		/* Make sure we're connected */
 		guard let auth = auth else {
 			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
@@ -150,47 +209,6 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 		var request = request
 		request.addValue("Bearer \(auth.token)", forHTTPHeaderField: "Authorization")
 		handler(.success(request), nil)
-	}
-	
-	/* ***************
-      MARK: - Private
-	   *************** */
-	
-	private var auth: Auth?
-	
-	private struct Auth : Codable {
-		
-		var token: String
-		var expirationDate: Date
-		
-		var scope: Set<String>
-		
-	}
-	
-	private struct CredentialsFile : Decodable {
-		
-		let type: String
-		let projectId: String
-		let privateKeyId: String
-		let privateKey: String
-		let clientEmail: String
-		let clientId: String
-		let authUri: URL
-		let tokenUri: URL
-		let authProviderX509CertUrl: URL
-		let clientX509CertUrl: URL
-		
-		#if os(Linux)
-			/* We can get rid of this when Linux supports keyDecodingStrategy */
-			private enum CodingKeys : String, CodingKey {
-				case type, projectId = "project_id"
-				case privateKeyId = "private_key_id", privateKey = "private_key"
-				case clientEmail = "client_email", clientId = "client_id"
-				case authUri = "auth_uri", tokenUri = "token_uri"
-				case authProviderX509CertUrl = "auth_provider_x509_cert_url", clientX509CertUrl = "client_x509_cert_url"
-			}
-		#endif
-		
 	}
 	
 }

@@ -13,18 +13,18 @@ import NIO
 
 public extension Connector {
 	
-	func connect(scope: ScopeType, forceIfAlreadyConnected: Bool = false, asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
+	func connect(scope: ScopeType, forceReconnect: Bool = false, asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
 		let promise: EventLoopPromise<Void> = asyncConfig.eventLoop.newPromise()
-		connect(scope: scope, forceIfAlreadyConnected: forceIfAlreadyConnected, handlerQueue: asyncConfig.dispatchQueue, handler: { error in
+		connect(scope: scope, forceReconnect: forceReconnect, handlerQueue: asyncConfig.dispatchQueue, handler: { _, error in
 			if let error = error {promise.fail(error: error)}
 			else                 {promise.succeed(result: ())}
 		})
 		return promise.futureResult
 	}
 	
-	func disconnect(forceIfAlreadyDisconnected: Bool = false, asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
+	func disconnect(scope: ScopeType? = nil, forceDisconnect: Bool = false, asyncConfig: AsyncConfig) -> EventLoopFuture<Void> {
 		let promise: EventLoopPromise<Void> = asyncConfig.eventLoop.newPromise()
-		disconnect(forceIfAlreadyDisconnected: forceIfAlreadyDisconnected, handlerQueue: asyncConfig.dispatchQueue, handler: { error in
+		disconnect(scope: scope, forceDisconnect: forceDisconnect, handlerQueue: asyncConfig.dispatchQueue, handler: { _, error in
 			if let error = error {promise.fail(error: error)}
 			else                 {promise.succeed(result: ())}
 		})

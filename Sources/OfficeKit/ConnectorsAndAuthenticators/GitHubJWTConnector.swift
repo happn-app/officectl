@@ -43,61 +43,58 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func authenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
-		/* Make sure we're connected. (Note: at the time of writing, it is
-		 * technically impossible for isConnected to be true and auth to be nil.
-		 * We could in theory bang the auth variable, but putting it in the guard
-		 * is more elegant IMHO.) */
-		guard isConnected, let auth = auth else {
-			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
-			return
-		}
-		
-		/* Add the “Authorization” header to the request */
-		var request = request
-		request.addValue("token \(auth.token)", forHTTPHeaderField: "Authorization")
-		handler(.success(request), nil)
-	}
-	
-	public func unsafeConnect(scope: Void, handler: @escaping (Error?) -> Void) {
-		/* Retrieve connection information */
-		let authURL = URL(string: "https://api.github.com/installations/\(installationId)/access_tokens")!
-		let jwtRequestContent: [String: Any] = [
-			"iss": appId,
-			"iat": Int(Date(timeIntervalSinceNow: -90).timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 90).timeIntervalSince1970)
-		]
-		guard let jwtRequest = try? Crypto.createRS256JWT(payload: jwtRequestContent, privateKey: privateKey) else {
-			handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."]))
-			return
-		}
-		
-		/* Create the URLRequest for the JWT request */
-		var request = URLRequest(url: authURL)
-		request.addValue("application/vnd.github.machine-man-preview+json", forHTTPHeaderField: "Accept")
-		request.addValue("Bearer \(jwtRequest)", forHTTPHeaderField: "Authorization")
-		request.httpMethod = "POST"
-		
-		/* Run the URLRequest and parse the response in the TokenResponse object */
-		let decoder = JSONDecoder()
-		decoder.dateDecodingStrategy = .iso8601
-		#if !os(Linux)
-			decoder.keyDecodingStrategy = .convertFromSnakeCase
-		#endif
-		let op = AuthenticatedJSONOperation<Auth>(request: request, authenticator: nil, decoder: decoder)
-		op.completionBlock = {
-			guard let o = op.result else {
-				handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
+	public func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<Void>, handler: @escaping (Error?) -> Void) {
+		switch changeType {
+		case .remove, .removeAll:
+			handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not implemented (could not find doc to revoke token...)"]))
+			
+		case .add(_):
+			/* Retrieve connection information */
+			let authURL = URL(string: "https://api.github.com/installations/\(installationId)/access_tokens")!
+			let jwtRequestContent: [String: Any] = [
+				"iss": appId,
+				"iat": Int(Date(timeIntervalSinceNow: -90).timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 90).timeIntervalSince1970)
+			]
+			guard let jwtRequest = try? Crypto.createRS256JWT(payload: jwtRequestContent, privateKey: privateKey) else {
+				handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."]))
 				return
 			}
 			
-			self.auth = o
-			handler(nil)
+			/* Create the URLRequest for the JWT request */
+			var request = URLRequest(url: authURL)
+			request.addValue("application/vnd.github.machine-man-preview+json", forHTTPHeaderField: "Accept")
+			request.addValue("Bearer \(jwtRequest)", forHTTPHeaderField: "Authorization")
+			request.httpMethod = "POST"
+			
+			/* Run the URLRequest and parse the response in the TokenResponse object */
+			let decoder = JSONDecoder()
+			decoder.dateDecodingStrategy = .iso8601
+			decoder.keyDecodingStrategy = .convertFromSnakeCase
+			let op = AuthenticatedJSONOperation<Auth>(request: request, authenticator: nil, decoder: decoder)
+			op.completionBlock = {
+				guard let o = op.result else {
+					handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
+					return
+				}
+				
+				self.auth = o
+				handler(nil)
+			}
+			op.start()
 		}
-		op.start()
 	}
 	
-	public func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
-		handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not implemented (could not find doc to revoke token...)"]))
+	/* ************************************
+	   MARK: - Authenticator Implementation
+	   ************************************ */
+	
+	public func authenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
+		connectorOperationQueue.addAsyncBlock{ endHandler in
+			self.unsafeAuthenticate(request: request, handler: { (result, userInfo) in
+				endHandler()
+				handler(result, userInfo)
+			})
+		}
 	}
 	
 	/* ***************
@@ -114,15 +111,26 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 		private enum CodingKeys: String, CodingKey {
 			
 			case token
-			/* We can get rid of this when Linux supports keyDecodingStrategy */
-			#if !os(Linux)
-				case expirationDate = "expiresAt"
-			#else
-				case expirationDate = "expires_at"
-			#endif
+			case expirationDate = "expiresAt"
 			
 		}
 		
+	}
+	
+	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
+		/* Make sure we're connected. (Note: at the time of writing, it is
+		 * technically impossible for isConnected to be true and auth to be nil.
+		 * We could in theory bang the auth variable, but putting it in the guard
+		 * is more elegant IMHO.) */
+		guard isConnected, let auth = auth else {
+			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
+			return
+		}
+		
+		/* Add the “Authorization” header to the request */
+		var request = request
+		request.addValue("token \(auth.token)", forHTTPHeaderField: "Authorization")
+		handler(.success(request), nil)
 	}
 	
 }

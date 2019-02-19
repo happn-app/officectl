@@ -54,72 +54,75 @@ public class HappnConnector : Connector, Authenticator {
 		authMode = .refreshToken(t)
 	}
 	
-	public func authenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
-		/* Make sure we're connected */
-		guard let auth = auth else {
-			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
-			return
+	/* ********************************
+	   MARK: - Connector Implementation
+	   ******************************** */
+	
+	public func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<Set<String>>, handler: @escaping (Error?) -> Void) {
+		let newScope: Set<String>?
+		
+		switch changeType {
+		case .add(let scope):    newScope = (scope.isEmpty ? currentScope : (currentScope ?? Set()).union(scope))
+		case .remove(let scope): newScope = currentScope?.subtracting(scope)
+		case .removeAll:         newScope = nil
 		}
+		assert(newScope?.isEmpty != true) /* The scope is either nil or non-empty */
 		
-		var request = request
-		
-		/* *** Add the “Authorization” header to the request *** */
-		request.setValue("OAuth=\"\(auth.accessToken)\"", forHTTPHeaderField: "Authorization")
-		
-		/* *** Sign the request *** */
-		let queryData = request.url?.query?.data(using: .ascii)
-		let queryDataLength = queryData?.count ?? 0
-		let bodyDataLength = request.httpBody?.count ?? 0
-		if
-			let clientSecretData = clientSecret.data(using: .ascii),
-			let clientIdData = clientId.data(using: .ascii),
-			let pathData = request.url?.path.data(using: .ascii),
-			let httpMethodData = request.httpMethod?.data(using: .ascii),
-			let backslashData = "\\".data(using: .ascii),
-			let semiColonData = ";".data(using: .ascii)
-		{
-			var key = Data(capacity: clientSecretData.count + clientIdData.count + 1)
-			key.append(clientSecretData)
-			key.append(backslashData)
-			key.append(clientIdData)
-			/* key is: "client_secret\client_id" */
-			
-			var content = Data(capacity: pathData.count + 1 + queryDataLength + 1 + bodyDataLength + 1 + httpMethodData.count)
-			content.append(pathData)
-			if let queryData = queryData, let interrogationPointData = "?".data(using: .ascii) {
-				content.append(interrogationPointData)
-				content.append(queryData)
+		unsafeDisconnect{ error in
+			if let error = error {
+				/* Got an error at disconnection. We stop here. */
+				return handler(error)
 			}
-			content.append(semiColonData)
-			if let body = request.httpBody {content.append(body)}
-			content.append(semiColonData)
-			content.append(httpMethodData)
-			/* content is (the part in brackets is only there if the value of the
-			 * field is not empty): "url_path[?url_query];http_body;http_method" */
 			
-			let finalHMAC: Data?
-			#if canImport(CommonCrypto) || canImport(CCommonCrypto)
-				var hmac = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
-				key.withUnsafeBytes{ (keyBytes: UnsafePointer<Int8>) in
-					content.withUnsafeBytes{ (dataBytes: UnsafePointer<Int8>) in
-						hmac.withUnsafeMutableBytes{ (hmacBytes: UnsafeMutablePointer<Int8>) in
-							CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA256), keyBytes, key.count, dataBytes, content.count, hmacBytes)
-						}
-					}
-				}
-				finalHMAC = hmac
-			#else
-				finalHMAC = try? HMAC.SHA256.authenticate(content, key: key)
-			#endif
-			if let hmac = finalHMAC {
-				request.setValue(hmac.reduce("", { $0 + String(format: "%02x", $1) }), forHTTPHeaderField: "Signature")
+			guard let scope = newScope else {
+				/* No new scope: simple disconnection. We stop here. */
+				return handler(nil)
 			}
+			
+			self.unsafeConnect(scope: scope, authMode: self.authMode, handler: handler)
 		}
-		
-		handler(.success(request), nil)
 	}
 	
-	public func unsafeConnect(scope: Set<String>, handler: @escaping (Error?) -> Void) {
+	/* ************************************
+	   MARK: - Authenticator Implementation
+	   ************************************ */
+	
+	public func authenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
+		connectorOperationQueue.addAsyncBlock{ endHandler in
+			self.unsafeAuthenticate(request: request, handler: { (result, userInfo) in
+				endHandler()
+				handler(result, userInfo)
+			})
+		}
+	}
+	
+	/* ***************
+      MARK: - Private
+	   *************** */
+	
+	private var auth: Auth?
+	private let authMode: AuthMode
+	
+	private struct Auth {
+		
+		let scope: Set<String>
+		let userId: String
+		
+		let accessToken: String
+		let refreshToken: String
+		
+		let expirationDate: Date
+		
+	}
+	
+	private enum AuthMode {
+		
+		case userPass(username: String, password: String)
+		case refreshToken(String)
+		
+	}
+	
+	private func unsafeConnect(scope: Set<String>, authMode: AuthMode, handler: @escaping (Error?) -> Void) {
 		let url = URL(string: "https://api.happn.fr/connect/oauth/token")!
 		var components = URLComponents()
 		components.queryItems = [
@@ -192,30 +195,69 @@ public class HappnConnector : Connector, Authenticator {
 		op.start()
 	}
 	
-	/* ***************
-      MARK: - Private
-	   *************** */
-	
-	private var auth: Auth?
-	private let authMode: AuthMode
-	
-	private struct Auth {
+	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
+		/* Make sure we're connected */
+		guard let auth = auth else {
+			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
+			return
+		}
 		
-		let scope: Set<String>
-		let userId: String
+		var request = request
 		
-		let accessToken: String
-		let refreshToken: String
+		/* *** Add the “Authorization” header to the request *** */
+		request.setValue("OAuth=\"\(auth.accessToken)\"", forHTTPHeaderField: "Authorization")
 		
-		let expirationDate: Date
+		/* *** Sign the request *** */
+		let queryData = request.url?.query?.data(using: .ascii)
+		let queryDataLength = queryData?.count ?? 0
+		let bodyDataLength = request.httpBody?.count ?? 0
+		if
+			let clientSecretData = clientSecret.data(using: .ascii),
+			let clientIdData = clientId.data(using: .ascii),
+			let pathData = request.url?.path.data(using: .ascii),
+			let httpMethodData = request.httpMethod?.data(using: .ascii),
+			let backslashData = "\\".data(using: .ascii),
+			let semiColonData = ";".data(using: .ascii)
+		{
+			var key = Data(capacity: clientSecretData.count + clientIdData.count + 1)
+			key.append(clientSecretData)
+			key.append(backslashData)
+			key.append(clientIdData)
+			/* key is: "client_secret\client_id" */
+			
+			var content = Data(capacity: pathData.count + 1 + queryDataLength + 1 + bodyDataLength + 1 + httpMethodData.count)
+			content.append(pathData)
+			if let queryData = queryData, let interrogationPointData = "?".data(using: .ascii) {
+				content.append(interrogationPointData)
+				content.append(queryData)
+			}
+			content.append(semiColonData)
+			if let body = request.httpBody {content.append(body)}
+			content.append(semiColonData)
+			content.append(httpMethodData)
+			/* content is (the part in brackets is only there if the value of the
+			 * field is not empty): "url_path[?url_query];http_body;http_method" */
+			
+			let finalHMAC: Data?
+			#if canImport(CommonCrypto) || canImport(CCommonCrypto)
+				var hmac = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
+				key.withUnsafeBytes{ (keyBytes: UnsafePointer<Int8>) in
+					content.withUnsafeBytes{ (dataBytes: UnsafePointer<Int8>) in
+						hmac.withUnsafeMutableBytes{ (hmacBytes: UnsafeMutablePointer<Int8>) in
+							CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA256), keyBytes, key.count, dataBytes, content.count, hmacBytes)
+						}
+					}
+				}
+				finalHMAC = hmac
+			#else
+				finalHMAC = try? HMAC.SHA256.authenticate(content, key: key)
+			#endif
+			if let hmac = finalHMAC {
+				request.setValue(hmac.reduce("", { $0 + String(format: "%02x", $1) }), forHTTPHeaderField: "Signature")
+			}
+		}
 		
-	}
-	
-	private enum AuthMode {
-		
-		case userPass(username: String, password: String)
-		case refreshToken(String)
-		
+		handler(.success(request), nil)
 	}
 	
 }
