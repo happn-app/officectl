@@ -59,7 +59,7 @@ class LDAPOperationTests : XCTestCase {
 		/* We use the semi-singleton init, but purposefully not init via a
 		 * semi-singleton store. */
 		let connector = try LDAPConnector(key: ldapSettings)
-		connector.connect(scope: (), handler: { error in
+		connector.connect(scope: (), handler: { _, error in
 			expectationObject.error = error
 		})
 		XCTWaiter().wait(for: [expectation], timeout: 3)
