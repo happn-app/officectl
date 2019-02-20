@@ -21,6 +21,8 @@ struct OfficectlConfig : Service {
 	var serverHost: String
 	var serverPort: Int
 	
+	var verbose: Bool
+	
 	var officeKitConfig: OfficeKitConfig
 	
 	init(flags f: Flags) throws {
@@ -46,6 +48,8 @@ struct OfficectlConfig : Service {
 		staticDataDirURL = (f.getString(name: "static-data-dir") ?? configYaml?["server"]["static_data_dir"].string).flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
 		serverHost = f.getString(name: "hostname") ?? configYaml?["server"]["hostname"].string ?? "localhost"
 		serverPort = f.getInt(name: "port") ?? configYaml?["server"]["port"].int ?? 8080
+		
+		verbose = f.getBool(name: "verbose") ?? configYaml?["verbose"].bool ?? false
 		
 		officeKitConfig = try OfficeKitConfig(flags: f, yamlConfig: configYaml)
 	}

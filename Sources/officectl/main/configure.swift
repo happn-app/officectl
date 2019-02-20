@@ -18,11 +18,11 @@ import OfficeKit
 
 
 func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
-//	di.log = nil /* Disable network logs */
-	
 	/* Let’s parse the CL arguments with Guaka (I did not find a way to do what I
 	 * wanted CLI-wise with Vapor) :( */
 	let cliParseResults = parse_cli()
+	configureSemiSingleton(cliParseResults.officectlConfig)
+	configureURLRequestOperation(cliParseResults.officectlConfig)
 	/* Register the services/configs we got from CLI, if any */
 	services.register(cliParseResults.officectlConfig)
 	services.register(cliParseResults.officectlConfig.officeKitConfig)
