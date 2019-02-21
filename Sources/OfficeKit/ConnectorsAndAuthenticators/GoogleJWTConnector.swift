@@ -192,8 +192,11 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 		components.queryItems = [URLQueryItem(name: "token", value: auth.token)]
 		let op = URLRequestOperation(url: components.url!)
 		op.completionBlock = {
-			if op.finalError == nil {self.auth = nil}
-			handler(op.finalError)
+			/* We consider the 400 status code to be normal (usually it will be an
+			 * invalid token, which we don’t care about as we’re disconnecting). */
+			let error = (op.statusCode == 400 ? nil : op.finalError)
+			if error == nil {self.auth = nil}
+			handler(error)
 		}
 		op.start()
 	}
