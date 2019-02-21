@@ -18,7 +18,7 @@ rendering a template properly! Hence this middleware. */
 final class AsyncErrorMiddleware : Middleware, ServiceType {
 	
 	static func makeService(for worker: Container) throws -> AsyncErrorMiddleware {
-		return AsyncErrorMiddleware{ request, error in
+		return AsyncErrorMiddleware{ request, responder, error in
 			/* Simple default error handling. */
 			let response = request.response(http: HTTPResponse(status: .internalServerError, headers: [:]))
 			response.http.headers.replaceOrAdd(name: .contentType, value: "text/plain; charset=utf-8")
@@ -27,11 +27,11 @@ final class AsyncErrorMiddleware : Middleware, ServiceType {
 		}
 	}
 	
-	init(processErrorHandler h: @escaping (_ request: Request, _ error: Error) throws -> EventLoopFuture<Response>) {
+	init(processErrorHandler h: @escaping (_ request: Request, _ responder: Responder, _ error: Error) throws -> EventLoopFuture<Response>) {
 		processErrorHandler = h
 	}
 	
-	let processErrorHandler: (_ request: Request, _ error: Error) throws -> EventLoopFuture<Response>
+	let processErrorHandler: (_ request: Request, _ responder: Responder, _ error: Error) throws -> EventLoopFuture<Response>
 	
 	func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
 		let futureResponse: Future<Response>
@@ -41,7 +41,7 @@ final class AsyncErrorMiddleware : Middleware, ServiceType {
 		return futureResponse.thenIfError{ error in
 //			log.report(error: error, verbose: !environment.isRelease)
 			do {
-				return try self.processErrorHandler(request, error).thenIfError{ processingError in
+				return try self.processErrorHandler(request, next, error).thenIfError{ processingError in
 					return request.future(self.processErrorProcessingError(request: request, originalError: error, processingError: processingError))
 				}
 			} catch let processingError {
