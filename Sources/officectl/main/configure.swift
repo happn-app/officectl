@@ -39,7 +39,6 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	/* Register Services */
 	services.register(AsyncConfig.self)
 	services.register(AsyncErrorMiddleware.self)
-	services.register(HTTPStatusToErrorMiddleware.self)
 	services.register(SemiSingletonStore(forceClassInKeys: true))
 	
 	/* Register routes */
@@ -51,7 +50,6 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	var middlewares = MiddlewareConfig()
 	middlewares.use(AsyncErrorMiddleware(processErrorHandler: handleOfficectlError)) /* Catches errors and converts them to HTTP response */
 	middlewares.use(FileMiddleware.self) /* Serves files from the “Public” directory */
-	middlewares.use(HTTPStatusToErrorMiddleware.self) /* Convert “error” http status code from valid responses to actual errors */
 	services.register(middlewares)
 	
 	/* Set preferred services */
@@ -69,13 +67,13 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 
 
 private func handleOfficectlError(request: Request, error: Error) throws -> EventLoopFuture<Response> {
-	let statusCode = (error as? HTTPStatusToErrorMiddleware.HTTPStatusError)?.originalResponse.status
-	let is404 = statusCode?.code == 404
+	let status = (error as? Abort)?.status
+	let is404 = status?.code == 404
 	let context = [
 		"error_title": is404 ? "Page Not Found" : "Unknown Error",
 		"error_description": is404 ? "This page was not found. Please go away!" : "\(error)"
 	]
 	return try request.view().render("ErrorPage", context).then{ view in
-		return view.encode(status: statusCode ?? .internalServerError, for: request)
+		return view.encode(status: status ?? .internalServerError, for: request)
 	}
 }
