@@ -49,7 +49,7 @@ struct OfficectlConfig : Service {
 		serverHost = f.getString(name: "hostname") ?? configYaml?["server"]["hostname"].string ?? "localhost"
 		serverPort = f.getInt(name: "port") ?? configYaml?["server"]["port"].int ?? 8080
 		
-		verbose = f.getBool(name: "verbose") ?? configYaml?["verbose"].bool ?? false
+		verbose = f.getBool(name: "verbose") ?? false
 		
 		officeKitConfig = try OfficeKitConfig(flags: f, yamlConfig: configYaml)
 	}
