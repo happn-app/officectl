@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Vapor
+
 
 
 struct ApiError : Codable {
@@ -22,9 +24,30 @@ struct ApiError : Codable {
 	}
 	
 	init(error: Error) {
-		code = (error as NSError).code
+		/* Got base from ErrorMiddleWare */
+		let theCode: Int
+		let reason: String
+		
+		switch error {
+		case let abort as AbortError:
+			/* This is an abort error, we should use its status, reason, and
+			 * headers */
+			reason = abort.reason
+			theCode = Int(abort.status.code)
+		case let validation as ValidationError:
+			/* This is a validation error */
+			reason = validation.reason
+			theCode = Int(HTTPResponseStatus.badRequest.code)
+		default:
+			/* Not an abort error, and not debuggable or in dev mode, just deliver
+			 * a generic 500 to avoid exposing any sensitive error info. */
+			reason = "Something went wrong."
+			theCode = (error as NSError).code
+		}
+		
+		code = theCode
 		domain = (error as NSError).domain
-		message = error.localizedDescription
+		message = reason
 	}
 	
 }
