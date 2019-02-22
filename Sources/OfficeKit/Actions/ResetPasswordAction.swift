@@ -43,28 +43,30 @@ public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (AsyncOperationResult<Void>) -> Void) throws {
 		let operationQueue = try container.make(AsyncConfig.self).operationQueue
 		
+		ldapResetResult = nil
 		let ldapOperation = AsyncBlockOperation{ endOperationBlock in
 			self.resetLDAPPasswordAction.start(parameters: newPassword, weakeningMode: .alwaysInstantly, handler: { result in
 				self.ldapResetResult = result
 				endOperationBlock()
 			})
 		}
+		googleResetResult = nil
 		let googleOperation = AsyncBlockOperation{ endOperationBlock in
 			self.resetGooglePasswordAction.start(parameters: newPassword, weakeningMode: .alwaysInstantly, handler: { result in
 				self.googleResetResult = result
 				endOperationBlock()
 			})
 		}
+		let resetOperations = [ldapOperation, googleOperation]
 		
 		let endOperation = BlockOperation{
 			let errorCollection = ErrorCollection(self.errors)
 			if errorCollection.errors.isEmpty {handler(.success(()))}
 			else                              {handler(.error(errorCollection))}
 		}
-		endOperation.addDependency(ldapOperation)
-		endOperation.addDependency(googleOperation)
+		resetOperations.forEach{ endOperation.addDependency($0) }
 		
-		operationQueue.addOperations([ldapOperation, googleOperation, endOperation], waitUntilFinished: false)
+		operationQueue.addOperations(resetOperations + [endOperation], waitUntilFinished: false)
 	}
 	
 }
