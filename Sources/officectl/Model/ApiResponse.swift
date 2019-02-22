@@ -7,12 +7,18 @@
 
 import Foundation
 
+import Vapor
+
 
 
 enum ApiResponse<ObjectType : Encodable> : Encodable {
 	
 	case error(ApiError)
 	case data(ObjectType)
+	
+	init(error: Error, environment: Environment) {
+		self = .error(ApiError(error: error, environment: environment))
+	}
 	
 	func encode(to encoder: Encoder) throws {
 		switch self {
@@ -35,11 +41,22 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 	
 }
 
+extension ApiResponse : ResponseEncodable {
+	
+	func encode(for req: Request) throws -> EventLoopFuture<Response> {
+		let encoder = JSONEncoder()
+		encoder.dateEncodingStrategy = .iso8601
+		encoder.keyEncodingStrategy = .convertToSnakeCase
+		return try req.future(req.response(encoder.encode(self), as: .json))
+	}
+	
+}
+
 
 extension Error {
 	
-	var asApiResponse: ApiResponse<String> {
-		return ApiResponse<String>.error(ApiError(error: self))
+	func asApiResponse(environment: Environment) -> ApiResponse<String> {
+		return ApiResponse<String>.error(ApiError(error: self, environment: environment))
 	}
 	
 }

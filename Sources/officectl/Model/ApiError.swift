@@ -23,7 +23,7 @@ struct ApiError : Codable {
 		message = m
 	}
 	
-	init(error: Error) {
+	init(error: Error, environment: Environment) {
 		/* Got base from ErrorMiddleWare */
 		let theCode: Int
 		let reason: String
@@ -34,14 +34,16 @@ struct ApiError : Codable {
 			 * headers */
 			reason = abort.reason
 			theCode = Int(abort.status.code)
+			
 		case let validation as ValidationError:
 			/* This is a validation error */
 			reason = validation.reason
 			theCode = Int(HTTPResponseStatus.badRequest.code)
+			
 		default:
 			/* Not an abort error, and not debuggable or in dev mode, just deliver
 			 * a generic 500 to avoid exposing any sensitive error info. */
-			reason = "Something went wrong."
+			reason = (environment.isRelease ? "Something went wrong." : error.localizedDescription)
 			theCode = (error as NSError).code
 		}
 		

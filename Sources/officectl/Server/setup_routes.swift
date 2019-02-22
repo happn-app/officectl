@@ -13,8 +13,12 @@ import Vapor
 
 
 func setup_routes(_ router: Router) throws {
-	let resetPasswordController = PasswordResetController()
-	router.get("password-reset", use: resetPasswordController.showUserSelection)
-	router.get("password-reset",  Email.parameter, use: resetPasswordController.showResetPage)
-	router.post("password-reset", Email.parameter, use: resetPasswordController.resetPassword)
+	let loginController = LoginController()
+	let passwordResetController = PasswordResetController()
+
+	router.post("api", "auth", "login", use: loginController.login)
+	
+	router.get("password-reset", use: passwordResetController.showUserSelection)
+	router.get("password-reset",  Email.parameter, use: passwordResetController.showResetPage)
+	router.post("password-reset", Email.parameter, use: passwordResetController.resetPassword)
 }

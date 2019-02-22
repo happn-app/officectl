@@ -78,7 +78,7 @@ private func handleOfficectlError(request: Request, chainingTo next: Responder, 
 		let response = try request.response(http: HTTPResponse(
 			status: status ?? .internalServerError,
 			headers: (error as? Abort)?.headers ?? [:],
-			body: JSONEncoder().encode(error.asApiResponse)
+			body: JSONEncoder().encode(error.asApiResponse(environment: request.environment))
 		))
 		return request.future(response)
 	} else {
