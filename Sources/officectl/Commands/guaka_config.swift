@@ -47,6 +47,7 @@ func parse_cli() -> GuakaCommandParseResult {
 		
 		Flag(longName: "static-data-dir",             type: String.self, description: "The path to the data dir (containing the static resources for officectl).", inheritable: true),
 		
+		Flag(longName: "jwt-secret",                  type: String.self, description: "The secret to use for generating the JWT tokens.",         inheritable: true),
 		Flag(longName: "ldap-url",                    type: String.self, description: "The url of the LDAPv3 server.",                            inheritable: true),
 		Flag(longName: "ldap-admin-username",         type: String.self, description: "The admin username to connect to the LDAP.",               inheritable: true),
 		Flag(longName: "ldap-admin-password",         type: String.self, description: "The admin password to connect to the LDAP.",               inheritable: true),

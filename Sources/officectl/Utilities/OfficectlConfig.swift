@@ -21,6 +21,8 @@ struct OfficectlConfig : Service {
 	var serverHost: String
 	var serverPort: Int
 	
+	var jwtSecret: String
+	
 	var verbose: Bool
 	
 	var officeKitConfig: OfficeKitConfig
@@ -48,6 +50,11 @@ struct OfficectlConfig : Service {
 		staticDataDirURL = (f.getString(name: "static-data-dir") ?? configYaml?["server"]["static_data_dir"].string).flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
 		serverHost = f.getString(name: "hostname") ?? configYaml?["server"]["hostname"].string ?? "localhost"
 		serverPort = f.getInt(name: "port") ?? configYaml?["server"]["port"].int ?? 8080
+		
+		guard let jSecret = f.getString(name: "jwt-secret") ?? configYaml?["server"]["jwt_secret"].string else {
+			throw MissingFieldError("JWT Secret")
+		}
+		jwtSecret = jSecret
 		
 		verbose = f.getBool(name: "verbose") ?? false
 		

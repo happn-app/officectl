@@ -17,7 +17,9 @@ class LoginController {
 	
 	func login(_ req: Request) throws -> Future<ApiResponse<ApiAuth>> {
 		let loginData = try req.content.syncDecode(LoginData.self)
-		let adminGroups = try req.make(OfficectlConfig.self).officeKitConfig.ldapConfigOrThrow().adminGroupsDN
+		
+		let config = try req.make(OfficectlConfig.self)
+		let adminGroups = try config.officeKitConfig.ldapConfigOrThrow().adminGroupsDN
 		
 		let dn = loginData.username
 		let user = User(id: .distinguishedName(loginData.username))
@@ -32,7 +34,7 @@ class LoginController {
 			/* The password of the user is verified. Let’s return the relevant
 			 * data. */
 			let token = ApiAuth.Token(dn: dn, admin: isAdmin, validityDuration: 30*60) /* 30 minutes */
-			guard let tokenString = String(data: try JWT(payload: token).sign(using: .hs256(key: "secret")), encoding: .utf8) else {
+			guard let tokenString = String(data: try JWT(payload: token).sign(using: .hs256(key: config.jwtSecret)), encoding: .utf8) else {
 				throw Abort(.internalServerError)
 			}
 			
