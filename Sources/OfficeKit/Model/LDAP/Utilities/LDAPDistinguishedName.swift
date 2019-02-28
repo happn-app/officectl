@@ -173,6 +173,18 @@ public struct LDAPDistinguishedName {
 		return relativeDistinguishedName(for: key).values.map{ $0.value }
 	}
 	
+	public func relativeTrailingDistinguishedName(for key: String) -> LDAPDistinguishedName {
+		var foundEnd = false
+		return LDAPDistinguishedName(values: values.reversed().filter{
+			guard !foundEnd else {return false}
+			guard $0.key == key else {
+				foundEnd = true
+				return false
+			}
+			return true
+		}.reversed())
+	}
+	
 	public var uid: String? {
 		let uids = relativeDistinguishedNameValues(for: "uid")
 		guard let uid = uids.first, uids.count == 1 else {return nil}
@@ -181,15 +193,7 @@ public struct LDAPDistinguishedName {
 	}
 	
 	public var dc: LDAPDistinguishedName {
-		var foundMarvel = false /* Have we found a non-dc DN part? */
-		return LDAPDistinguishedName(values: values.reversed().filter{
-			guard !foundMarvel else {return false}
-			guard $0.key == "dc" else {
-				foundMarvel = true
-				return false
-			}
-			return true
-		}.reversed())
+		return relativeTrailingDistinguishedName(for: "dc")
 	}
 	
 }
