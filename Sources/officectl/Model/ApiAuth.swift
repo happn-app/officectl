@@ -31,6 +31,8 @@ struct ApiAuth : Codable {
 		/** The audience of the token. Should always be “officectl”. */
 		var aud = "officectl"
 		
+		var jti = UUID().uuidString
+		
 		/** The dn of the authenticated person. */
 		var sub: String
 		
@@ -48,6 +50,7 @@ struct ApiAuth : Codable {
 		
 		func verify(using signer: JWTSigner) throws {
 			guard aud == "officectl" else {throw Abort(.unauthorized)}
+			guard exp.timeIntervalSinceNow > 0 else {throw Abort(.unauthorized)}
 		}
 		
 	}
