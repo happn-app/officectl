@@ -45,19 +45,19 @@ public indirect enum LDAPSearchQuery {
 			
 		case .extensibleWithAttribute(attribute: let attribute, dnAttribute: let hasDN, matchingRule: let matchingRule, value: let value):
 			let matchingRuleString = (matchingRule.flatMap{ ":" + $0.stringValue } ?? "")
-			return attribute.stringValue + (hasDN ? ":dn" : "") + matchingRuleString + ":=" + dataToStr(value)
+			ret = attribute.stringValue + (hasDN ? ":dn" : "") + matchingRuleString + ":=" + dataToStr(value)
 			
 		case .extensibleWithoutAttribute(dnAttribute: let hasDN, matchingRule: let matchingRule, value: let value):
-			return (hasDN ? ":dn" : "") + ":" + matchingRule.stringValue + ":=" + dataToStr(value)
+			ret = (hasDN ? ":dn" : "") + ":" + matchingRule.stringValue + ":=" + dataToStr(value)
 			
 		case .and(let subsearches):
-			return "&" + subsearches.reduce("", { $0 + $1.stringValue })
+			ret = "&" + subsearches.reduce("", { $0 + $1.stringValue })
 			
 		case .or(let subsearches):
-			return "|" + subsearches.reduce("", { $0 + $1.stringValue })
+			ret = "|" + subsearches.reduce("", { $0 + $1.stringValue })
 			
 		case .not(let subsearch):
-			return "!" + subsearch.stringValue
+			ret = "!" + subsearch.stringValue
 		}
 		return "(" + ret + ")"
 	}
