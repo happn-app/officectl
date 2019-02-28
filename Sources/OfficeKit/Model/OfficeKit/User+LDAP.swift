@@ -56,15 +56,13 @@ extension User {
 		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
 		
 		let searchedDN = try nil2throw(distinguishedName, "dn")
-		let uids = searchedDN.relativeDistinguishedNameValues(for: "uid")
-		guard let uid = uids.first, uids.count == 1 else {throw Error.userNotFound}
+		let uid = try nil2throw(searchedDN.uid, "searchedDN.uid")
 		
-		let searchBase = searchedDN.relativeDistinguishedName(for: "dc")
-		let searchQuery = LDAPSearchQuery.simple(attribute: LDAPAttributeDescription(stringOid: "uid")!, filtertype: .equal, value: Data(uid.utf8))
+		let searchQuery = LDAPSearchQuery.simple(attribute: .uid, filtertype: .equal, value: Data(uid.utf8))
 		
 		let future = ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
 		.then{ _ -> EventLoopFuture<[LDAPObject]> in
-			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: searchBase, searchQuery: searchQuery, attributesToFetch: attributesToFetch))
+			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: searchedDN.dc, searchQuery: searchQuery, attributesToFetch: attributesToFetch))
 			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.results }
 		}
 		.thenThrowing{ objects -> LDAPInetOrgPerson in
@@ -88,20 +86,18 @@ extension User {
 		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
 		
 		let searchedDN = try nil2throw(distinguishedName, "dn")
-		let uids = searchedDN.relativeDistinguishedNameValues(for: "uid")
-		guard let uid = uids.first, uids.count == 1 else {throw InternalError(message: "uid not present in dn")}
+		let uid = try nil2throw(searchedDN.uid, "searchedDN.uid")
 		
-		let searchBase = searchedDN.relativeDistinguishedName(for: "dc")
 		let searchQuery = LDAPSearchQuery.and([
-			LDAPSearchQuery.simple(attribute: LDAPAttributeDescription(string: "uid")!, filtertype: .equal, value: Data(uid.utf8)),
+			LDAPSearchQuery.simple(attribute: .uid, filtertype: .equal, value: Data(uid.utf8)),
 			LDAPSearchQuery.or(groupsDN.map{
-				LDAPSearchQuery.simple(attribute: LDAPAttributeDescription(string: "memberof")!, filtertype: .equal, value: Data($0.stringValue.utf8))
+				LDAPSearchQuery.simple(attribute: .memberof, filtertype: .equal, value: Data($0.stringValue.utf8))
 			})
 		])
 		
 		let future = ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
 		.then{ _ -> EventLoopFuture<[LDAPObject]> in
-			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: searchBase, searchQuery: searchQuery, attributesToFetch: nil))
+			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: searchedDN.dc, searchQuery: searchQuery, attributesToFetch: nil))
 			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.results }
 		}
 		.thenThrowing{ objects -> Bool in
