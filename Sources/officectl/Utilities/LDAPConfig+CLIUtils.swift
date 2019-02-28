@@ -34,8 +34,12 @@ extension OfficeKitConfig.LDAPConfig {
 		
 		guard let bdnString = f.getString(name: "ldap-base-dn") ?? yamlLDAPConfig?["base_dn"].string else {return nil}
 		let pdnString = f.getString(name: "ldap-people-dn") ?? yamlLDAPConfig?["people_dn"].string
+		let adnString =
+			f.getString(name: "ldap-admin-groups-dn")?.split(separator: ";").map(String.init) ??
+			(try? yamlLDAPConfig?["admin_groups_dn"].array?.map{ y -> String in guard let dn = y.string else {throw InternalError()}; return dn }).flatMap{ $0 } ?? /* Last flatMap on the line should be able to be dropped w/ Swift 5 */
+			[]
 		
-		self.init(connectorSettings: connectorSettings, baseDNString: bdnString, peopleDNString: pdnString)
+		self.init(connectorSettings: connectorSettings, baseDNString: bdnString, peopleDNString: pdnString, adminGroupsDNString: adnString)
 	}
 	
 }

@@ -7,6 +7,10 @@
 
 import Foundation
 
+import JWT
+import OfficeKit
+import Vapor
+
 
 
 struct ApiAuth : Codable {
@@ -20,6 +24,32 @@ struct ApiAuth : Codable {
 		token = t
 		expirationDate = d
 		isAdmin = a
+	}
+	
+	struct Token : JWTPayload {
+		
+		/** The audience of the token. Should always be “officectl”. */
+		var aud = "officectl"
+		
+		/** The dn of the authenticated person. */
+		var sub: String
+		
+		/** The expiration time of the token. */
+		var exp: Date
+		
+		/** Is the user admin? */
+		var adm: Bool
+		
+		init(dn: LDAPDistinguishedName, admin: Bool, validityDuration: TimeInterval) {
+			adm = admin
+			sub = dn.stringValue
+			exp = Date(timeIntervalSinceNow: validityDuration)
+		}
+		
+		func verify(using signer: JWTSigner) throws {
+			guard aud == "officectl" else {throw Abort(.unauthorized)}
+		}
+		
 	}
 	
 }

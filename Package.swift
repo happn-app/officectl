@@ -17,11 +17,12 @@ let package = Package(
 		.package(url: "https://github.com/vapor/vapor.git", from: "3.0.0"),
 		.package(url: "https://github.com/vapor/crypto.git", from: "3.0.0"),
 		.package(url: "https://github.com/vapor/fluent-sqlite.git", from: "3.0.0"),
-		.package(url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0")
+		.package(url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
+		.package(url: "https://github.com/vapor/jwt.git", from: "3.0.0")
 	],
 	targets: [
-		.target(name: "OfficeKit", dependencies: ["AsyncOperationResult", "RetryingOperation", "URLRequestOperation", "SemiSingleton", "NIO", "FluentSQLite", "Crypto", "Vapor"]),
-		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "Guaka", "Yaml"]),
+		.target(name: "OfficeKit", dependencies: ["AsyncOperationResult", "RetryingOperation", "URLRequestOperation", "SemiSingleton", "NIO", "FluentSQLite", "Crypto", "Vapor", "JWT"]),
+		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "Guaka", "Yaml", "JWT"]),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"])
 	]	
 )

@@ -16,12 +16,13 @@ public struct OfficeKitConfig {
 		public var connectorSettings: LDAPConnector.Settings
 		public var baseDN: LDAPDistinguishedName
 		public var peopleBaseDN: LDAPDistinguishedName?
+		public var adminGroupsDN: [LDAPDistinguishedName]
 		
 		/**
 		- parameter peopleDNString: The DN for the people, **relative to the base
 		DN**. This is a different than the `peopleBaseDN` var in this struct, as
 		the var contains the full people DN. */
-		public init?(connectorSettings c: LDAPConnector.Settings, baseDNString: String, peopleDNString: String?) {
+		public init?(connectorSettings c: LDAPConnector.Settings, baseDNString: String, peopleDNString: String?, adminGroupsDNString: [String]) {
 			guard let bdn = try? LDAPDistinguishedName(string: baseDNString) else {return nil}
 			
 			let pdn: LDAPDistinguishedName?
@@ -36,13 +37,18 @@ public struct OfficeKitConfig {
 				pdn = nil
 			}
 			
-			self.init(connectorSettings: c, baseDN: bdn, peopleBaseDN: pdn)
+			guard let adn = try? adminGroupsDNString.map({ try LDAPDistinguishedName(string: $0) }) else {
+				return nil
+			}
+			
+			self.init(connectorSettings: c, baseDN: bdn, peopleBaseDN: pdn, adminGroupsDN: adn)
 		}
 		
-		public init(connectorSettings c: LDAPConnector.Settings, baseDN bdn: LDAPDistinguishedName, peopleBaseDN pbdn: LDAPDistinguishedName?) {
+		public init(connectorSettings c: LDAPConnector.Settings, baseDN bdn: LDAPDistinguishedName, peopleBaseDN pbdn: LDAPDistinguishedName?, adminGroupsDN agdn: [LDAPDistinguishedName]) {
 			connectorSettings = c
 			baseDN = bdn
 			peopleBaseDN = pbdn
+			adminGroupsDN = agdn
 		}
 		
 	}

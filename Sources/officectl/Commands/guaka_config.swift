@@ -52,6 +52,7 @@ func parse_cli() -> GuakaCommandParseResult {
 		Flag(longName: "ldap-admin-password",         type: String.self, description: "The admin password to connect to the LDAP.",               inheritable: true),
 		Flag(longName: "ldap-base-dn",                type: String.self, description: "The base DN when searching or creating objects in LDAP.",  inheritable: true),
 		Flag(longName: "ldap-people-dn",              type: String.self, description: "The “people” DN (do not include the base, can be empty).", inheritable: true),
+		Flag(longName: "ldap-admin-groups-dn",        type: String.self, description: "The groups whose members are admin.",                      inheritable: true),
 		Flag(longName: "github-private-key-path",     type: String.self, description: "The path to the private key to authenticate GitHub.",      inheritable: true),
 		Flag(longName: "github-app-id",               type: String.self, description: "The app id to use to authenticate GitHub.",                inheritable: true),
 		Flag(longName: "github-install-id",           type: String.self, description: "The install id to use to authenticate GitHub.",            inheritable: true),
