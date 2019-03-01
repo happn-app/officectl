@@ -14,6 +14,13 @@ import Vapor
 
 extension User {
 	
+	public init?(ldapObject: LDAPObject) {
+		guard let inetOrgPerson = ldapObject.inetOrgPerson else {return nil}
+		self.init(ldapInetOrgPerson: inetOrgPerson)
+		
+		sshKey = ldapObject.firstStringValue(for: "sshPublicKey")
+	}
+	
 	public init?(ldapInetOrgPerson: LDAPInetOrgPerson) {
 		guard let dn = try? LDAPDistinguishedName(string: ldapInetOrgPerson.dn), let f = ldapInetOrgPerson.givenName?.first, let l = ldapInetOrgPerson.sn.first else {return nil}
 		id = .distinguishedName(dn)

@@ -11,10 +11,10 @@ import Foundation
 
 extension User {
 	
-	public init(googleUser: GoogleUser, baseDN: LDAPDistinguishedName) {
+	public init(googleUser: GoogleUser, baseDN: LDAPDistinguishedName? = nil) {
 		id = .googleUserId(googleUser.id)
 		
-		distinguishedName = LDAPDistinguishedName(uid: googleUser.primaryEmail.username, baseDN: baseDN)
+		distinguishedName = baseDN.flatMap{ LDAPDistinguishedName(uid: googleUser.primaryEmail.username, baseDN: $0 ) }
 		googleUserId = googleUser.id
 		gitHubId = nil
 		email = googleUser.primaryEmail
