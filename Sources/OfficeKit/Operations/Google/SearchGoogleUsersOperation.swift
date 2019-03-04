@@ -64,7 +64,7 @@ public class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 				return
 			}
 			
-			self.users.append(contentsOf: o.users)
+			self.users.append(contentsOf: o.users ?? [])
 			if let t = o.nextPageToken {self.fetchNextPage(nextPageToken: t)}
 			else                       {self.result = .success(self.users); self.baseOperationEnded()}
 		}

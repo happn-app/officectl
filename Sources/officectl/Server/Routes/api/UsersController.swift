@@ -46,20 +46,20 @@ class UsersController {
 		.then{ _ in
 			let searchLDAPRequest = LDAPSearchRequest(scope: .children, base: baseDN, searchQuery: nil, attributesToFetch: ["objectClass", "uid", "givenName", "mail", "sn", "cn", "sshPublicKey"])
 			let searchLDAPOperation = SearchLDAPOperation(ldapConnector: ldapConnector, request: searchLDAPRequest)
-			let searchLDAPFuture = req.eventLoop.future(from: searchLDAPOperation, queue: asyncConfig.operationQueue).map{ $0.results }
+			let searchLDAPFuture = req.eventLoop.future(from: searchLDAPOperation, queue: asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } }
 			
 			let searchGoogleOperation = SearchGoogleUsersOperation(searchedDomain: googleDomain, query: "isSuspended=false", googleConnector: googleConnector)
 			let searchGoogleFuture = req.eventLoop.future(from: searchGoogleOperation, queue: asyncConfig.operationQueue)
 			
 			return searchLDAPFuture.and(searchGoogleFuture)
 		}
-		.then{ (ldapUsers: [LDAPObject], googleUsers: [GoogleUser]) -> Future<ApiResponse<[User]>> in
+		.then{ (ldapUsers: [LDAPInetOrgPersonWithObject], googleUsers: [GoogleUser]) -> Future<ApiResponse<[User]>> in
 			var googleUsers = googleUsers
 			
 			/* Let’s build the merge of the LDAP and Google users objects. */
 			/* First take all LDAP objects and merge w/ Google objects. */
 			var users = ldapUsers.compactMap{ ldapObject -> User? in
-				guard var user = User(ldapObject: ldapObject) else {return nil}
+				guard var user = User(ldapInetOrgPersonWithObject: ldapObject) else {return nil}
 				
 				user.googleUserId = googleUsers.first(where: { $0.primaryEmail.happnFrVariant() == user.email?.happnFrVariant() })?.id
 				googleUsers.removeAll(where: { $0.primaryEmail.happnFrVariant() == user.email?.happnFrVariant() })
@@ -69,6 +69,42 @@ class UsersController {
 			users += googleUsers.map{ User(googleUser: $0) }
 			
 			return req.future(ApiResponse.data(users))
+		}
+	}
+	
+	func getUser(_ req: Request) throws -> Future<ApiResponse<User>> {
+		let dn = try req.parameters.next(LDAPDistinguishedName.self)
+		
+		let officectlConfig = try req.make(OfficectlConfig.self)
+		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
+		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
+		
+		/* Can only show user if connected user is the same or connected user is admin. */
+		guard token.payload.sub == dn.stringValue || token.payload.adm else {
+			throw Abort(.forbidden)
+		}
+		
+		var u = User(id: .distinguishedName(dn))
+		u.email = try Email(username: nil2throw(dn.uid, "uid in DN"), domain: "happn.fr")
+		
+		let ldapUserFuture = try u.existingLDAPUser(container: req, attributesToFetch: ["objectClass", "uid", "givenName", "mail", "sn", "cn", "sshPublicKey"])
+		let googleUserFuture = try u.existingGoogleUser(container: req)
+		
+		return ldapUserFuture.and(googleUserFuture)
+		.thenThrowing{
+			let (inetOrgPerson, googleUser) = $0
+			
+			let ret: User
+			if let inetOrgPerson = inetOrgPerson, var u = User(ldapInetOrgPersonWithObject: inetOrgPerson) {
+				u.googleUserId = googleUser?.id
+				ret = u
+			} else if let googleUser = googleUser {
+				ret = User(googleUser: googleUser)
+			} else {
+				throw Vapor.Abort(.notFound)
+			}
+			
+			return ApiResponse.data(ret)
 		}
 	}
 	

@@ -14,11 +14,10 @@ import Vapor
 
 extension User {
 	
-	public init?(ldapObject: LDAPObject) {
-		guard let inetOrgPerson = ldapObject.inetOrgPerson else {return nil}
-		self.init(ldapInetOrgPerson: inetOrgPerson)
+	public init?(ldapInetOrgPersonWithObject p: LDAPInetOrgPersonWithObject) {
+		self.init(ldapInetOrgPerson: p.inetOrgPerson)
 		
-		sshKey = ldapObject.firstStringValue(for: "sshPublicKey")
+		sshKey = p.object.firstStringValue(for: "sshPublicKey")
 	}
 	
 	public init?(ldapInetOrgPerson: LDAPInetOrgPerson) {
@@ -56,7 +55,9 @@ extension User {
 		return connector.connect(scope: (), forceReconnect: true, asyncConfig: asyncConfig)
 	}
 	
-	public func existingLDAPUser(container: Container, attributesToFetch: [String] = ["objectClass", "sn", "cn"]) throws -> Future<LDAPInetOrgPerson> {
+	/* Returns nil if the user was not found but there was no error processing
+	 * the request. */
+	public func existingLDAPUser(container: Container, attributesToFetch: [String] = ["objectClass", "sn", "cn"]) throws -> Future<LDAPInetOrgPersonWithObject?> {
 		let asyncConfig = try container.make(AsyncConfig.self)
 		let semiSingletonStore = try container.make(SemiSingletonStore.self)
 		let ldapConnectorConfig = try container.make(OfficeKitConfig.self).ldapConfigOrThrow().connectorSettings
@@ -68,18 +69,15 @@ extension User {
 		let searchQuery = LDAPSearchQuery.simple(attribute: .uid, filtertype: .equal, value: Data(uid.utf8))
 		
 		let future = ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
-		.then{ _ -> EventLoopFuture<[LDAPObject]> in
+		.then{ _ -> EventLoopFuture<[LDAPInetOrgPersonWithObject]> in
 			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: searchedDN.dc, searchQuery: searchQuery, attributesToFetch: attributesToFetch))
-			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.results }
+			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } }
 		}
-		.thenThrowing{ objects -> LDAPInetOrgPerson in
+		.thenThrowing{ objects -> LDAPInetOrgPersonWithObject? in
 			guard objects.count <= 1 else {
 				throw Error.tooManyUsersFound
 			}
-			guard let inetOrgPerson = objects.first?.inetOrgPerson else {
-				throw Error.userNotFound
-			}
-			return inetOrgPerson
+			return objects.first
 		}
 		return future
 	}
@@ -103,18 +101,18 @@ extension User {
 		])
 		
 		let future = ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
-		.then{ _ -> EventLoopFuture<[LDAPObject]> in
+		.then{ _ -> EventLoopFuture<[LDAPInetOrgPersonWithObject]> in
 			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: searchedDN.dc, searchQuery: searchQuery, attributesToFetch: nil))
-			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.results }
+			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } }
 		}
 		.thenThrowing{ objects -> Bool in
 			guard objects.count <= 1 else {
 				throw Error.tooManyUsersFound
 			}
-			guard let inetOrgPerson = objects.first?.inetOrgPerson else {
+			guard let inetOrgPerson = objects.first else {
 				return false
 			}
-			return inetOrgPerson.ldapObject().parsedDistinguishedName == searchedDN
+			return inetOrgPerson.object.parsedDistinguishedName == searchedDN
 		}
 		return future
 	}

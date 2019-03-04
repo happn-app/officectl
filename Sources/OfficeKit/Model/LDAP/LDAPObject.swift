@@ -47,16 +47,4 @@ public struct LDAPObject {
 		return singleValue(for: key).flatMap{ String(data: $0, encoding: .utf8) }
 	}
 	
-	public var inetOrgPerson: LDAPInetOrgPerson? {
-		guard stringValues(for: "objectClass")?.contains("inetOrgPerson") ?? false else {return nil}
-		guard let sn = stringValues(for: "sn"), let cn = stringValues(for: "cn") else {return nil}
-		
-		let ret = LDAPInetOrgPerson(dn: distinguishedName, sn: sn, cn: cn)
-		ret.uid = singleStringValue(for: "uid")
-		ret.givenName = stringValues(for: "givenName")
-		ret.userPassword = singleStringValue(for: "userPassword")
-		ret.mail = stringValues(for: "mail")?.compactMap{ Email(string: $0) }
-		return ret
-	}
-	
 }

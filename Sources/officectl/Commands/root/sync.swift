@@ -176,7 +176,7 @@ private func usersFromGoogle(connector: GoogleJWTConnector, searchedDomain: Stri
 
 private func usersFromLDAP(connector: LDAPConnector, baseDN: LDAPDistinguishedName, asyncConfig: AsyncConfig) -> EventLoopFuture<(SourceId, [User])> {
 	let searchOp = SearchLDAPOperation(ldapConnector: connector, request: LDAPSearchRequest(scope: .children, base: baseDN, searchQuery: nil, attributesToFetch: nil))
-	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: {
-		(.ldap, try $0.results.successValueOrThrow().results.compactMap{ $0.inetOrgPerson }.compactMap{ User(ldapInetOrgPerson: $0) })
-	})
+	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue).map{
+		(.ldap, $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) }.compactMap{ User(ldapInetOrgPersonWithObject: $0) })
+	}
 }
