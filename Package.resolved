@@ -3,11 +3,11 @@
     "pins": [
       {
         "package": "AsyncOperationResult",
-        "repositoryURL": "git@github.com:happn-app/AsyncOperationResult.git",
+        "repositoryURL": "git@github.com:happn-tech/AsyncOperationResult.git",
         "state": {
           "branch": null,
-          "revision": "27a69817521f7a47a1f466cd094bbc2e4ad4e099",
-          "version": "1.0.4"
+          "revision": "98aaf624ca0a2f4374d9a36a5710d2fd4b978eb3",
+          "version": "1.0.5"
         }
       },
       {
@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/vapor/core.git",
         "state": {
           "branch": null,
-          "revision": "1794ff138bd669175a2528d27695028d7cb30471",
-          "version": "3.5.0"
+          "revision": "7fe113f5e857c690b25960ccd6d9430cd34d038d",
+          "version": "3.7.1"
         }
       },
       {
@@ -48,7 +48,7 @@
       },
       {
         "package": "DummyLinuxOSLog",
-        "repositoryURL": "git@github.com:happn-app/DummyLinuxOSLog.git",
+        "repositoryURL": "git@github.com:happn-tech/DummyLinuxOSLog.git",
         "state": {
           "branch": null,
           "revision": "47333c87665e0f9e957246148965418c9a4ad823",
@@ -60,8 +60,8 @@
         "repositoryURL": "https://github.com/vapor/fluent.git",
         "state": {
           "branch": null,
-          "revision": "00b81a9362549facb8e2ac93b17d2a78599fce3b",
-          "version": "3.1.2"
+          "revision": "3776a0f623e08b413e878f282a70e8952651c91f",
+          "version": "3.1.3"
         }
       },
       {
@@ -78,8 +78,8 @@
         "repositoryURL": "https://github.com/klaas/Guaka.git",
         "state": {
           "branch": null,
-          "revision": "629e9b55f23f182e0c40df806a1a2191d9c8b130",
-          "version": "0.3.5"
+          "revision": "c27796e4ba4079a4e35f6fe5bfc97d69f002f159",
+          "version": "0.3.10"
         }
       },
       {
@@ -87,8 +87,8 @@
         "repositoryURL": "https://github.com/vapor/http.git",
         "state": {
           "branch": null,
-          "revision": "b57005e0de30ba36372ac41bfce1ac12b2bc3272",
-          "version": "3.1.8"
+          "revision": "24282b07c5b6fab13b7f2248eec45bc4e4e46eff",
+          "version": "3.1.10"
         }
       },
       {
@@ -123,17 +123,17 @@
         "repositoryURL": "git@github.com:happn-app/RecursiveSyncDispatch.git",
         "state": {
           "branch": null,
-          "revision": "e3b86d417806ad94a7d85ce68988192f54c27868",
+          "revision": "4c4cda3cd81010c2870222a16825512048515f86",
           "version": "1.0.0"
         }
       },
       {
         "package": "RetryingOperation",
-        "repositoryURL": "git@github.com:happn-app/RetryingOperation.git",
+        "repositoryURL": "git@github.com:happn-tech/RetryingOperation.git",
         "state": {
           "branch": null,
-          "revision": "62b7f879e5e22f7d49c7559138e21772f4ea9970",
-          "version": "1.1.1"
+          "revision": "01d9db0da1c18fdfe5a129317c6d94f214a4eff1",
+          "version": "1.1.2"
         }
       },
       {
@@ -147,11 +147,11 @@
       },
       {
         "package": "SemiSingleton",
-        "repositoryURL": "git@github.com:happn-app/SemiSingleton.git",
+        "repositoryURL": "git@github.com:happn-tech/SemiSingleton.git",
         "state": {
           "branch": null,
-          "revision": "d6d7349f81893550e89b51f501abc933ff3dcdd9",
-          "version": "2.0.1"
+          "revision": "d9e5de03c11392db18de2021c2361d4d64e5a87e",
+          "version": "2.0.2"
         }
       },
       {
@@ -183,11 +183,11 @@
       },
       {
         "package": "StringScanner",
-        "repositoryURL": "https://github.com/klaas/StringScanner",
+        "repositoryURL": "https://github.com/getGuaka/StringScanner.git",
         "state": {
           "branch": null,
-          "revision": "576ed0725055966b1e59a14edd99945640c55e3a",
-          "version": "0.3.2"
+          "revision": "c2cf5c81dade9486386f1cacd917c03e959a3005",
+          "version": "0.3.0"
         }
       },
       {
@@ -204,8 +204,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "98434c1f1d687ff5a24d2cabfbd19b5c7d2d7a2f",
-          "version": "1.13.0"
+          "revision": "29a9f2aca71c8afb07e291336f1789337ce235dd",
+          "version": "1.13.2"
         }
       },
       {
@@ -264,11 +264,11 @@
       },
       {
         "package": "URLRequestOperation",
-        "repositoryURL": "git@github.com:happn-app/URLRequestOperation.git",
+        "repositoryURL": "git@github.com:happn-tech/URLRequestOperation.git",
         "state": {
           "branch": null,
-          "revision": "c83ea1efaa86ab42f1b1deab61c2319d13bfa2be",
-          "version": "1.1.4"
+          "revision": "70e4fc28925d05af6f50e967bb2de8c7dd8df29f",
+          "version": "1.1.5"
         }
       },
       {
@@ -285,8 +285,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "6c7284681c3432fee29c268babf954be6816cbfb",
-          "version": "3.2.2"
+          "revision": "c86ada59b31c69f08a6abd4f776537cba48d5df6",
+          "version": "3.3.0"
         }
       },
       {
