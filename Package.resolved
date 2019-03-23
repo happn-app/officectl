@@ -3,7 +3,7 @@
     "pins": [
       {
         "package": "AsyncOperationResult",
-        "repositoryURL": "git@github.com:happn-tech/AsyncOperationResult.git",
+        "repositoryURL": "https://github.com/happn-tech/AsyncOperationResult.git",
         "state": {
           "branch": null,
           "revision": "98aaf624ca0a2f4374d9a36a5710d2fd4b978eb3",
@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/vapor/console.git",
         "state": {
           "branch": null,
-          "revision": "d6cf07af59ae63cd95c4b5f98cf1f25627750fd1",
-          "version": "3.1.0"
+          "revision": "74cfbea629d4aac34a97cead2447a6870af1950b",
+          "version": "3.1.1"
         }
       },
       {
@@ -129,7 +129,7 @@
       },
       {
         "package": "RetryingOperation",
-        "repositoryURL": "git@github.com:happn-tech/RetryingOperation.git",
+        "repositoryURL": "https://github.com/happn-tech/RetryingOperation.git",
         "state": {
           "branch": null,
           "revision": "01d9db0da1c18fdfe5a129317c6d94f214a4eff1",
@@ -147,7 +147,7 @@
       },
       {
         "package": "SemiSingleton",
-        "repositoryURL": "git@github.com:happn-tech/SemiSingleton.git",
+        "repositoryURL": "https://github.com/happn-tech/SemiSingleton.git",
         "state": {
           "branch": null,
           "revision": "d9e5de03c11392db18de2021c2361d4d64e5a87e",
@@ -264,7 +264,7 @@
       },
       {
         "package": "URLRequestOperation",
-        "repositoryURL": "git@github.com:happn-tech/URLRequestOperation.git",
+        "repositoryURL": "https://github.com/happn-tech/URLRequestOperation.git",
         "state": {
           "branch": null,
           "revision": "70e4fc28925d05af6f50e967bb2de8c7dd8df29f",

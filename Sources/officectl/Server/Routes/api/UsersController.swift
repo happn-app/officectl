@@ -16,19 +16,21 @@ import Vapor
 
 class UsersController {
 	
-	func getUsers(_ req: Request) throws -> Future<ApiResponse<[User]>> {
+	func searchUsers(_ req: Request) throws -> Future<ApiResponse<[User]>> {
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
 		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
 		
-		/* Only admins are allowed to list users. */
+		/* Only admins are allowed to search for users. */
 		guard token.payload.adm else {
 			throw Abort(.forbidden)
 		}
 		
+		throw NotImplementedError()
+		/*
 		let asyncConfig = try req.make(AsyncConfig.self)
 		let officeKitConfig = officectlConfig.officeKitConfig
-		let baseDN = try officeKitConfig.ldapConfigOrThrow().baseDN
+		let baseDNs = try officeKitConfig.ldapConfigOrThrow().allBaseDNs
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let ldapConnectorConfig = try officeKitConfig.ldapConfigOrThrow().connectorSettings
 		let googleConnectorConfig = try officeKitConfig.googleConfigOrThrow().connectorSettings
@@ -67,6 +69,57 @@ class UsersController {
 			}
 			/* Then add Google objects that were not in LDAP. */
 			users += googleUsers.map{ User(googleUser: $0) }
+			
+			return req.future(ApiResponse.data(users))
+		}*/
+	}
+	
+	func getUsers(_ req: Request) throws -> Future<ApiResponse<[User]>> {
+		let officectlConfig = try req.make(OfficectlConfig.self)
+		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
+		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
+		
+		/* Only admins are allowed to list users. */
+		guard token.payload.adm else {
+			throw Abort(.forbidden)
+		}
+		
+		let asyncConfig = try req.make(AsyncConfig.self)
+		let officeKitConfig = officectlConfig.officeKitConfig
+		let semiSingletonStore = try req.make(SemiSingletonStore.self)
+		let baseDNs = try officeKitConfig.ldapConfigOrThrow().allBaseDNs
+		let ldapConnectorConfig = try officeKitConfig.ldapConfigOrThrow().connectorSettings
+		let googleConnectorConfig = try officeKitConfig.googleConfigOrThrow().connectorSettings
+		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
+		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: googleConnectorConfig)
+		
+		return EventLoopFuture<Void>.andAll([
+			ldapConnector.connect(scope: (), asyncConfig: asyncConfig),
+			googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
+		], eventLoop: req.eventLoop)
+		.then{ _ in
+			let searchLDAPOperations = baseDNs
+				.map{ LDAPSearchRequest(scope: .children, base: $0, searchQuery: nil, attributesToFetch: ["objectClass", "uid", "givenName", "mail", "sn", "cn", "sshPublicKey"]) }
+				.map{ SearchLDAPOperation(ldapConnector: ldapConnector, request: $0) }
+			let searchLDAPFutures = searchLDAPOperations
+				.map{ req.eventLoop.future(from: $0, queue: asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } } }
+			
+			return Future.reduce([], searchLDAPFutures, eventLoop: req.eventLoop, +)
+		}
+		.then{ (ldapUsers: [LDAPInetOrgPersonWithObject]) -> Future<ApiResponse<[User]>> in
+//			var googleUsers = googleUsers
+			
+			/* Let’s build the merge of the LDAP and Google users objects. */
+			/* First take all LDAP objects and merge w/ Google objects. */
+			var users = ldapUsers.compactMap{ ldapObject -> User? in
+				guard var user = User(ldapInetOrgPersonWithObject: ldapObject) else {return nil}
+				
+//				user.googleUserId = googleUsers.first(where: { $0.primaryEmail.happnFrVariant() == user.email?.happnFrVariant() })?.id
+//				googleUsers.removeAll(where: { $0.primaryEmail.happnFrVariant() == user.email?.happnFrVariant() })
+				return user
+			}
+			/* Then add Google objects that were not in LDAP. */
+//			users += googleUsers.map{ User(googleUser: $0) }
 			
 			return req.future(ApiResponse.data(users))
 		}

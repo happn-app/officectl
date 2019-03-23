@@ -26,6 +26,7 @@ struct Connectors {
 }
 
 func sync(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+	#warning("TODO: Manage multiple domains")
 	let asyncConfig = try context.container.make(AsyncConfig.self)
 	let officeKitConfig = try context.container.make(OfficeKitConfig.self)
 	
@@ -48,16 +49,20 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		return s
 	}
 	if fromSourceId == .ldap || toSourceIds.contains(.ldap) {
-		ldapBasePeopleDN = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDN, "People DN")
+		let baseDNs = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDNPerDomain?.values, "People DN")
+		guard baseDNs.count == 1 else {
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Only one LDAP domain supported for now"])
+		}
+		ldapBasePeopleDN = baseDNs.first!
 	} else {
 		ldapBasePeopleDN = nil
 	}
 	if fromSourceId == .google || toSourceIds.contains(.google) {
-		#warning("TODO")
-		guard let d = f.getString(name: "google-domain") else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "The \"google-domain\" option is required when syncing to or from Google"])
+		let domains = try nil2throw(officeKitConfig.googleConfigOrThrow().primaryDomains, "Google Domains")
+		guard domains.count == 1 else {
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Only one Google domain supported for now"])
 		}
-		googleDomain = d
+		googleDomain = domains.first!
 	} else {
 		googleDomain = nil
 	}

@@ -41,26 +41,37 @@ func parse_cli() -> GuakaCommandParseResult {
 	   ****************** */
 	
 	let rootFlags = [
-		Flag(shortName: "v", longName: "verbose",     value: false,      description: "Asks to be more verbose.", inheritable: true),
+		Flag(shortName: "v", longName: "verbose", value: false,      description: "Asks to be more verbose.", inheritable: true),
 		
-		Flag(longName: "config-file",                 type: String.self, description: "The path to an officectl config file. Defaults to /etc/officectl/officectl.yaml.", inheritable: true),
+		Flag(longName: "config-file", type: String.self, description: "The path to an officectl config file. Defaults to /etc/officectl/officectl.yaml.", inheritable: true),
 		
-		Flag(longName: "static-data-dir",             type: String.self, description: "The path to the data dir (containing the static resources for officectl).", inheritable: true),
+		/* For the website */
+		Flag(longName: "static-data-dir", type: String.self, description: "The path to the data dir (containing the static resources for officectl).", inheritable: true),
 		
-		Flag(longName: "jwt-secret",                  type: String.self, description: "The secret to use for generating the JWT tokens.",         inheritable: true),
-		Flag(longName: "ldap-url",                    type: String.self, description: "The url of the LDAPv3 server.",                            inheritable: true),
-		Flag(longName: "ldap-admin-username",         type: String.self, description: "The admin username to connect to the LDAP.",               inheritable: true),
-		Flag(longName: "ldap-admin-password",         type: String.self, description: "The admin password to connect to the LDAP.",               inheritable: true),
-		Flag(longName: "ldap-base-dn",                type: String.self, description: "The base DN when searching or creating objects in LDAP.",  inheritable: true),
-		Flag(longName: "ldap-people-dn",              type: String.self, description: "The “people” DN (do not include the base, can be empty).", inheritable: true),
-		Flag(longName: "ldap-admin-groups-dn",        type: String.self, description: "The groups whose members are admin.",                      inheritable: true),
-		Flag(longName: "github-private-key-path",     type: String.self, description: "The path to the private key to authenticate GitHub.",      inheritable: true),
-		Flag(longName: "github-app-id",               type: String.self, description: "The app id to use to authenticate GitHub.",                inheritable: true),
-		Flag(longName: "github-install-id",           type: String.self, description: "The install id to use to authenticate GitHub.",            inheritable: true),
-		Flag(longName: "google-admin-email",          type: String.self, description: "The email of an admin user in the domain.",                inheritable: true),
-		Flag(longName: "google-superuser-json-creds", type: String.self, description: "The path to the json credentials for the superuser.",      inheritable: true),
-		Flag(longName: "google-domain",               type: String.self, description: "The default domain for Google services.",                  inheritable: true),
-		Flag(longName: "happn-refresh-token",         type: String.self, description: "A refresh token to authenticate happn.",                   inheritable: true)
+		/* Global options */
+		Flag(longName: "jwt-secret",     type: String.self, description: "The secret to use for generating the JWT tokens.",       inheritable: true),
+		Flag(longName: "domain-aliases", type: String.self, description: "The domain aliases, w/ format “alias:actualvalue;...”.", inheritable: true),
+		
+		/* LDAP options */
+		Flag(longName: "ldap-url",                type: String.self, description: "The url of the LDAPv3 server.",                                 inheritable: true),
+		Flag(longName: "ldap-admin-username",     type: String.self, description: "The admin username to connect to the LDAP.",                    inheritable: true),
+		Flag(longName: "ldap-admin-password",     type: String.self, description: "The admin password to connect to the LDAP.",                    inheritable: true),
+		Flag(longName: "ldap-base-dn-per-domain", type: String.self, description: "The base DN per domain; same format as domain aliases.",        inheritable: true),
+		Flag(longName: "ldap-people-dn",          type: String.self, description: "The “people” DN (do not include the base, can be empty).",      inheritable: true),
+		Flag(longName: "ldap-admin-groups-dn",    type: String.self, description: "The groups whose members are admin, separated by a semicolon.", inheritable: true),
+		
+		/* GitHub options */
+		Flag(longName: "github-private-key-path", type: String.self, description: "The path to the private key to authenticate GitHub.", inheritable: true),
+		Flag(longName: "github-app-id",           type: String.self, description: "The app id to use to authenticate GitHub.",           inheritable: true),
+		Flag(longName: "github-install-id",       type: String.self, description: "The install id to use to authenticate GitHub.",       inheritable: true),
+		
+		/* Google options */
+		Flag(longName: "google-admin-email",          type: String.self, description: "The email of an admin user in the domain.",                     inheritable: true),
+		Flag(longName: "google-superuser-json-creds", type: String.self, description: "The path to the json credentials for the superuser.",           inheritable: true),
+		Flag(longName: "google-domains",              type: String.self, description: "The primary domains for the Google account (comma-separated).", inheritable: true),
+		
+		/* happn options */
+		Flag(longName: "happn-refresh-token", type: String.self, description: "A refresh token to authenticate happn.", inheritable: true)
 	]
 	
 	let rootCommand = Command(usage: "officectl", flags: rootFlags, run: createSetWrapperCommandHandler(root))
