@@ -165,8 +165,8 @@ extension Email {
 			componentDomain: ""
 		]
 		var atomList = [ /* For the dot-atom elements of the address */
-			componentLocalpart: [""],
-			componentDomain: [""]
+			componentLocalpart: [Int: String](),
+			componentDomain: [Int: String]()
 		]
 		var elementCount = 0
 		var elementLen = 0
@@ -233,7 +233,7 @@ extension Email {
 					elementLen = 0
 					elementCount += 1
 					parseData[componentLocalpart, default: ""] += token
-					atomList[componentLocalpart, default: [""]][elementCount] = ""
+					atomList[componentLocalpart, default: [:]][elementCount] = ""
 					
 				/* Quoted string */
 				case stringDQuote:
@@ -244,7 +244,7 @@ extension Email {
 						returnStatus.append(elementCount == 0 ? .rfc5321QuotedString : .deprecatedLocalPart)
 						
 						parseData[componentLocalpart, default: ""] += token
-						atomList[componentLocalpart, default: [""]][elementCount] += token
+						atomList[componentLocalpart, default: [:]][elementCount, default: ""] += token
 						elementLen += 1
 						endOrDie = true /* Quoted string must be the entire element */
 						contextStack.append(context)
@@ -277,7 +277,7 @@ extension Email {
 				/* @ */
 				case stringAt:
 					/* At this point we should have a valid local-part */
-					assert(contextStack.count != 1, "Unexpected item on context stack")
+					assert(contextStack.count == 1, "Unexpected item on context stack")
 					
 					if parseData[componentLocalpart, default: ""].isEmpty {
 						returnStatus.append(.errNoLocalPart) /* Fatal error */
@@ -341,7 +341,7 @@ extension Email {
 						}
 						
 						parseData[componentLocalpart, default: ""] += token
-						atomList[componentLocalpart, default: [""]][elementCount] += token
+						atomList[componentLocalpart, default: [:]][elementCount, default: ""] += token
 						elementLen += 1
 					}
 				}
@@ -437,7 +437,7 @@ extension Email {
 					endOrDie = false /* CFWS is OK again now we're at the beginning of an element (although it may be obsolete CFWS) */
 					elementLen = 0
 					elementCount += 1
-					atomList[componentDomain, default: [""]][elementCount] = ""
+					atomList[componentDomain, default: [:]][elementCount] = ""
 					parseData[componentDomain, default: ""] += token
 					
 				/* Domain literal */
@@ -448,7 +448,7 @@ extension Email {
 						contextStack.append(context)
 						context = componentLiteral
 						parseData[componentDomain, default: ""] += token
-						atomList[componentDomain, default: [""]][elementCount] += token
+						atomList[componentDomain, default: [:]][elementCount, default: ""] += token
 						parseData[componentLiteral] = ""
 					} else {
 						returnStatus.append(.errExpectingAText) /* Fatal error */
@@ -529,7 +529,7 @@ extension Email {
 					}
 					
 					parseData[componentDomain, default: ""] += token
-					atomList[componentDomain, default: [""]][elementCount] += token
+					atomList[componentDomain, default: [:]][elementCount, default: ""] += token
 					elementLen += 1
 				}
 				
@@ -684,7 +684,7 @@ extension Email {
 					}
 					
 					parseData[componentDomain, default: ""] += token
-					atomList[componentDomain, default: [""]][elementCount] += token
+					atomList[componentDomain, default: [:]][elementCount, default: ""] += token
 					elementLen += 1
 					contextPrior = context
 					context = contextStack.removeLast()
@@ -738,7 +738,7 @@ extension Email {
 					
 					parseData[componentLiteral, default: ""] += token
 					parseData[componentDomain, default: ""] += token
-					atomList[componentDomain, default: [""]][elementCount] += token
+					atomList[componentDomain, default: [:]][elementCount, default: ""] += token
 					elementLen += 1
 				}
 				
@@ -779,7 +779,7 @@ extension Email {
 					 *   the CRLF in any FWS/CFWS that appears within the quoted-string [is]
 					 *   semantically "invisible" and therefore not part of the quoted-string */
 					parseData[componentLocalpart, default: ""] += stringSpace
-					atomList[componentLocalpart, default: [""]][elementCount] += stringSpace
+					atomList[componentLocalpart, default: [:]][elementCount, default: ""] += stringSpace
 					elementLen += 1
 					
 					returnStatus.append(.cfwsFWS)
@@ -790,7 +790,7 @@ extension Email {
 				/* End of quoted string */
 				case stringDQuote:
 					parseData[componentLocalpart, default: ""] += token
-					atomList[componentLocalpart, default: [""]][elementCount] += token
+					atomList[componentLocalpart, default: [:]][elementCount, default: ""] += token
 					elementLen += 1
 					contextPrior = context
 					context = contextStack.removeLast()
@@ -820,7 +820,7 @@ extension Email {
 					}
 					
 					parseData[componentLocalpart, default: ""] += token
-					atomList[componentLocalpart, default: [""]][elementCount] += token
+					atomList[componentLocalpart, default: [:]][elementCount, default: ""] += token
 					elementLen += 1
 				}
 				
@@ -875,11 +875,11 @@ extension Email {
 				case contextComment: (/*nop*/)
 				case contextQuotedstring:
 					parseData[componentLocalpart, default: ""] += token
-					atomList[componentLocalpart, default: [""]][elementCount] += token
+					atomList[componentLocalpart, default: [:]][elementCount, default: ""] += token
 					elementLen += 2 /* The maximum sizes specified by RFC 5321 are octet counts, so we must include the backslash */
 				case componentLiteral:
 					parseData[componentDomain, default: ""] += token
-					atomList[componentDomain, default: [""]][elementCount] += token
+					atomList[componentDomain, default: [:]][elementCount, default: ""] += token
 					elementLen += 2 /* The maximum sizes specified by RFC 5321 are octet counts, so we must include the backslash */
 				default:
 					fatalError("Quoted pair logic invoked in an invalid context: \(context)")
@@ -916,7 +916,7 @@ extension Email {
 					 * for RFC 5321.
 					 * 			if context == componentLocalpart || context == componentDomain {
 					 * 				parseData[context, default: ""] += stringSpace
-					 * 				atomList[context, default: [""]][elementCount] += stringSpace
+					 * 				atomList[context, default: [:]][elementCount, default: ""] += stringSpace
 					 * 				elementLen += 1
 					 * 			} */
 					
@@ -1034,7 +1034,7 @@ extension Email {
 					 * for RFC 5321.
 					 * 			if context == componentLocalpart || context == componentDomain {
 					 * 				parseData[context, default: ""] += stringSpace
-					 * 				atomList[context, default: [""]][elementCount] += stringSpace
+					 * 				atomList[context, default: [:]][elementCount, default: ""] += stringSpace
 					 * 				elementLen += 1
 					 * 			} */
 					
@@ -1169,7 +1169,7 @@ extension Email {
 		if !dnsChecked && returnStatus.max(by: { $0.rawValue < $1.rawValue })!.rawValue < ValidationCategory.dnsWarn.rawValue {
 			if elementCount == 0 {returnStatus.append(.rfc5321TLD)}
 			
-			if Int(String(atomList[componentDomain, default: [""]][elementCount].first!)) != nil {
+			if Int(String(atomList[componentDomain, default: [:]][elementCount, default: ""].first!)) != nil {
 				returnStatus.append(.rfc5321TLDNumeric)
 			}
 		}
