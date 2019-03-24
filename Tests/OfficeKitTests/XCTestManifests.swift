@@ -1,5 +1,11 @@
 import XCTest
 
+extension EmailTests {
+    static let __allTests = [
+        ("testSimpleEmail", testSimpleEmail),
+    ]
+}
+
 extension FutureTests {
     static let __allTests = [
         ("testWaitAll1", testWaitAll1),
@@ -28,6 +34,7 @@ extension LDAPSearchQueryTests {
 #if !os(macOS)
 public func __allTests() -> [XCTestCaseEntry] {
     return [
+        testCase(EmailTests.__allTests),
         testCase(FutureTests.__allTests),
         testCase(LDAPOperationTests.__allTests),
         testCase(LDAPSearchQueryTests.__allTests),
