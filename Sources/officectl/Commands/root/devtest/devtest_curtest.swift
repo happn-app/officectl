@@ -19,7 +19,7 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 	let asyncConfig: AsyncConfig = try context.container.make()
 	let officeKitConfig = try context.container.make(OfficeKitConfig.self)
 	
-	print(Email.isValidEmail("toto@example.com", checkDNS: false))
+	print(Email.evaluateEmail("toto@example.com", checkDNS: false))
 	return context.container.future(())
 	
 //	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)
