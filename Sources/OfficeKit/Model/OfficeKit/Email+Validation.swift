@@ -97,7 +97,7 @@ extension Email {
 		var i = email.startIndex
 		while i < email.endIndex {
 			var token = String(email[i])
-			defer {i = email.index(after: i)}
+			defer {if i < email.endIndex {i = email.index(after: i)}}
 			
 			switch context {
 			/* **********
@@ -583,11 +583,11 @@ extension Email {
 							
 							/* Revision 2.7: Daniel Marschall's new IPv6 testing strategy */
 							let index0 = ipv6.startIndex
-							let index1 = ipv6.index(after: index0)
-							let index2 = ipv6.index(after: index1)
+							let index1 = ipv6.index(index0, offsetBy: 1, limitedBy: ipv6.endIndex) ?? ipv6.endIndex
+							let index2 = ipv6.index(index0, offsetBy: 2, limitedBy: ipv6.endIndex) ?? ipv6.endIndex
 							let indexN0 = ipv6.endIndex
-							let indexN1 = ipv6.index(before: indexN0)
-							let indexN2 = ipv6.index(before: indexN1)
+							let indexN1 = ipv6.index(indexN0, offsetBy: -1, limitedBy: ipv6.startIndex) ?? ipv6.startIndex
+							let indexN2 = ipv6.index(indexN0, offsetBy: -2, limitedBy: ipv6.startIndex) ?? ipv6.startIndex
 							let regex = try! NSRegularExpression(pattern: "^[0-9A-Fa-f]{0,4}$", options: [])
 							if ipv6[index0..<index1] == String(charColon) && ipv6[index1..<index2] != String(charColon) {
 								returnStatus.append(.rfc5322Ipv6Colonstrt) /* Address starts with a single colon */

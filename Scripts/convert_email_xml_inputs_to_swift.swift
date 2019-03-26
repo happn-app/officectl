@@ -31,6 +31,13 @@ dateFormatter.locale = Locale(identifier: "en_US")
 dateFormatter.dateStyle = .short
 dateFormatter.timeStyle = .none
 
+/* Needed later when converting the tests. */
+var transforms = (
+	[(#"\u240d\u240a"#, #"\015\012"#)] + (0..<32).map{ i in (#"\u\#(String(format: "%04x", 0x2400 + i))"#, #"\0\#(String(format: "%02o", i))"#) }
+).map{ t in
+	(String(data: Data(t.0.utf8), encoding: .nonLossyASCII)!, String(data: Data(t.1.utf8), encoding: .nonLossyASCII)!)
+}
+
 
 
 class StandardErrorOutputStream: TextOutputStream {
@@ -73,9 +80,6 @@ extension String {
 	}
 	
 	func stringInGeneratedSwift() -> String {
-		print(self)
-		print(String(data: data(using: .nonLossyASCII)!, encoding: .ascii)!)
-		print(String(data: data(using: .nonLossyASCII)!, encoding: .ascii)!.replacingOccurrences(of: "\"", with: nonLossyASCIIDoubleQuote))
 		return ##"String(data: Data(#""## + String(data: data(using: .nonLossyASCII)!, encoding: .ascii)!
 			.replacingOccurrences(of: "\r", with: nonLossyASCIICarriageReturn)
 			.replacingOccurrences(of: "\"", with: nonLossyASCIIDoubleQuote)
@@ -445,7 +449,7 @@ for test in testsDocRoot.elements(forName: "test") {
 		print("warning: skipping a test which does not have an id; here is it’s string representation: \(test)", to: &mx_stderr)
 		continue
 	}
-	guard let address = test.elements(forName: "address").singleElement?.stringValue else {
+	guard let addressTransformed = test.elements(forName: "address").singleElement?.stringValue else {
 		print("warning: skipping test \(testId) which does not have or have multiple addresses (expected exactly one)", to: &mx_stderr)
 		continue
 	}
@@ -474,6 +478,9 @@ for test in testsDocRoot.elements(forName: "test") {
 		print("warning: test \(testId) have no or multiple source links (expected exactly one); test won’t have its source link in the generated file", to: &mx_stderr)
 	}
 	
+	/* We must transform the address a bit per tests.php source code */
+	let address = transforms.reduce(addressTransformed, { $0.replacingOccurrences(of: $1.0, with: $1.1) })
+	
 	let fullSource: String
 	switch (source, sourcelink) {
 	case (.some(let source), .some(let sourcelink)): fullSource = "From " + source + " (" + sourcelink + ")"
@@ -496,7 +503,6 @@ for test in testsDocRoot.elements(forName: "test") {
 	
 	/* Note: We assume that 1/ there won’t be two tests with the same id 2/ the
 	 *       ids will never contain an invalid char in a function name. */
-	print(testId)
 	swiftEmailTestsFileContent += #"""
 	\#t
 		/* \#(fullSource.replacingOccurrences(of: "/*", with: "/​*").replacingOccurrences(of: "*/", with: "*​/")) */
