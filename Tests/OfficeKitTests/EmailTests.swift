@@ -17,8 +17,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId1() {
-		let nonLossyASCIIEmail = ""
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#""#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errNodomain)
@@ -26,8 +25,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId2() {
-		let nonLossyASCIIEmail = "test"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errNodomain)
@@ -35,8 +33,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId3() {
-		let nonLossyASCIIEmail = "@"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"@"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errNolocalpart)
@@ -44,8 +41,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId4() {
-		let nonLossyASCIIEmail = "test@"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errNodomain)
@@ -53,8 +49,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId5() {
-		let nonLossyASCIIEmail = "test@io"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@io"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -62,8 +57,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId6() {
-		let nonLossyASCIIEmail = "@io"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"@io"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errNolocalpart)
@@ -71,8 +65,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId7() {
-		let nonLossyASCIIEmail = "@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errNolocalpart)
@@ -80,8 +73,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId8() {
-		let nonLossyASCIIEmail = "test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -89,8 +81,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId9() {
-		let nonLossyASCIIEmail = "test@nominet.org.uk"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@nominet.org.uk"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -98,8 +89,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId10() {
-		let nonLossyASCIIEmail = "test@about.museum"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@about.museum"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -107,8 +97,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId11() {
-		let nonLossyASCIIEmail = "a@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"a@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -116,8 +105,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId12() {
-		let nonLossyASCIIEmail = "test@e.com"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@e.com"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -125,8 +113,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId13() {
-		let nonLossyASCIIEmail = "test@iana.a"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.a"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -134,8 +121,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId14() {
-		let nonLossyASCIIEmail = "test.test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test.test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -143,8 +129,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId15() {
-		let nonLossyASCIIEmail = ".test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#".test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errDotStart)
@@ -152,8 +137,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId16() {
-		let nonLossyASCIIEmail = "test.@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test.@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errDotEnd)
@@ -161,8 +145,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId17() {
-		let nonLossyASCIIEmail = "test..iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test..iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errConsecutivedots)
@@ -170,8 +153,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId18() {
-		let nonLossyASCIIEmail = "test_exa-mple.com"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test_exa-mple.com"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errNodomain)
@@ -179,8 +161,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId19() {
-		let nonLossyASCIIEmail = "!#$%&`*+/=?^`{|}~@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"!\043$%&`*+/=?^`{|}~@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -188,8 +169,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId20() {
-		let nonLossyASCIIEmail = "test\\\\@test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test\\@test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingAtext)
@@ -197,8 +177,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId21() {
-		let nonLossyASCIIEmail = "123@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"123@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -206,8 +185,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId22() {
-		let nonLossyASCIIEmail = "test@123.com"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@123.com"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -215,8 +193,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId23() {
-		let nonLossyASCIIEmail = "test@iana.123"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.123"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Tldnumeric)
@@ -224,8 +201,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId24() {
-		let nonLossyASCIIEmail = "test@255.255.255.255"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@255.255.255.255"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Tldnumeric)
@@ -233,8 +209,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId25() {
-		let nonLossyASCIIEmail = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghiklm@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghiklm@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -242,8 +217,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId26() {
-		let nonLossyASCIIEmail = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghiklmn@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghiklmn@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322LocalToolong)
@@ -251,8 +225,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId27() {
-		let nonLossyASCIIEmail = "test@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.com"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.com"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -260,8 +233,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId28() {
-		let nonLossyASCIIEmail = "test@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghiklm.com"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghiklm.com"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322LabelToolong)
@@ -269,8 +241,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId29() {
-		let nonLossyASCIIEmail = "test@mason-dixon.com"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@mason-dixon.com"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -278,8 +249,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId30() {
-		let nonLossyASCIIEmail = "test@-iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@-iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errDomainhyphenstart)
@@ -287,8 +257,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId31() {
-		let nonLossyASCIIEmail = "test@iana-.com"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana-.com"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errDomainhyphenend)
@@ -296,8 +265,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId32() {
-		let nonLossyASCIIEmail = "test@c--n.com"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@c--n.com"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -305,8 +273,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId33() {
-		let nonLossyASCIIEmail = "test@iana.co-uk"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.co-uk"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -314,8 +281,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId34() {
-		let nonLossyASCIIEmail = "test@.iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@.iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errDotStart)
@@ -323,8 +289,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId35() {
-		let nonLossyASCIIEmail = "test@iana.org."
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org."#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errDotEnd)
@@ -332,8 +297,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId36() {
-		let nonLossyASCIIEmail = "test@iana..com"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana..com"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errConsecutivedots)
@@ -341,8 +305,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId37() {
-		let nonLossyASCIIEmail = "a@a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"a@a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -350,8 +313,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId38() {
-		let nonLossyASCIIEmail = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghiklm@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghi"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghiklm@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghi"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -359,8 +321,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId39() {
-		let nonLossyASCIIEmail = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghiklm@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghij"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghiklm@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghij"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Toolong)
@@ -368,8 +329,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId40() {
-		let nonLossyASCIIEmail = "a@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefg.hij"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"a@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefg.hij"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Toolong)
@@ -377,8 +337,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId41() {
-		let nonLossyASCIIEmail = "a@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefg.hijk"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"a@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefg.hijk"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322DomainToolong)
@@ -386,8 +345,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId42() {
-		let nonLossyASCIIEmail = "\"test\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042test\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Quotedstring)
@@ -395,8 +353,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId43() {
-		let nonLossyASCIIEmail = "\"\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Quotedstring)
@@ -404,8 +361,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId44() {
-		let nonLossyASCIIEmail = "\"\"\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\042\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingAtext)
@@ -413,8 +369,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId45() {
-		let nonLossyASCIIEmail = "\"\\\\a\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\\a\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Quotedstring)
@@ -422,8 +377,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId46() {
-		let nonLossyASCIIEmail = "\"\\\\\"\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\\\042\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Quotedstring)
@@ -431,8 +385,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId47() {
-		let nonLossyASCIIEmail = "\"\\\\\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\\\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errUnclosedquotedstr)
@@ -440,8 +393,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId48() {
-		let nonLossyASCIIEmail = "\"\\\\\\\\\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\\\\\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Quotedstring)
@@ -449,8 +401,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId49() {
-		let nonLossyASCIIEmail = "test\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingAtext)
@@ -458,8 +409,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId50() {
-		let nonLossyASCIIEmail = "\"test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errUnclosedquotedstr)
@@ -467,8 +417,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId51() {
-		let nonLossyASCIIEmail = "\"test\"test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042test\042test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errAtextAfterQs)
@@ -476,8 +425,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId52() {
-		let nonLossyASCIIEmail = "test\"text\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test\042text\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingAtext)
@@ -485,8 +433,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId53() {
-		let nonLossyASCIIEmail = "\"test\"\"test\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042test\042\042test\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingAtext)
@@ -494,8 +441,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId54() {
-		let nonLossyASCIIEmail = "\"test\".\"test\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042test\042.\042test\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecLocalpart)
@@ -503,8 +449,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId55() {
-		let nonLossyASCIIEmail = "\"test\\\\ test\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042test\\ test\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Quotedstring)
@@ -512,8 +457,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId56() {
-		let nonLossyASCIIEmail = "\"test\".test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042test\042.test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecLocalpart)
@@ -521,8 +465,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId57() {
-		let nonLossyASCIIEmail = "\"test\\u2400\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042test\u2400\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingQtext)
@@ -530,8 +473,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId58() {
-		let nonLossyASCIIEmail = "\"test\\\\\\u2400\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042test\\\u2400\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecQp)
@@ -539,8 +481,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId59() {
-		let nonLossyASCIIEmail = "\"abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefghj\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefghj\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322LocalToolong)
@@ -548,8 +489,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId60() {
-		let nonLossyASCIIEmail = "\"abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefg\\\\h\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042abcdefghijklmnopqrstuvwxyz abcdefghijklmnopqrstuvwxyz abcdefg\\h\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322LocalToolong)
@@ -557,8 +497,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId61() {
-		let nonLossyASCIIEmail = "test@[255.255.255.255]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[255.255.255.255]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Addressliteral)
@@ -566,8 +505,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId62() {
-		let nonLossyASCIIEmail = "test@a[255.255.255.255]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@a[255.255.255.255]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingAtext)
@@ -575,8 +513,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId63() {
-		let nonLossyASCIIEmail = "test@[255.255.255]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[255.255.255]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Domainliteral)
@@ -584,8 +521,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId64() {
-		let nonLossyASCIIEmail = "test@[255.255.255.255.255]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[255.255.255.255.255]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Domainliteral)
@@ -593,8 +529,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId65() {
-		let nonLossyASCIIEmail = "test@[255.255.255.256]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[255.255.255.256]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Domainliteral)
@@ -602,8 +537,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId66() {
-		let nonLossyASCIIEmail = "test@[1111:2222:3333:4444:5555:6666:7777:8888]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[1111:2222:3333:4444:5555:6666:7777:8888]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Domainliteral)
@@ -611,8 +545,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId67() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444:5555:6666:7777]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444:5555:6666:7777]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Ipv6Grpcount)
@@ -620,8 +553,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId68() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444:5555:6666:7777:8888]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444:5555:6666:7777:8888]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Addressliteral)
@@ -629,8 +561,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId69() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444:5555:6666:7777:8888:9999]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444:5555:6666:7777:8888:9999]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Ipv6Grpcount)
@@ -638,8 +569,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId70() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444:5555:6666:7777:888G]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444:5555:6666:7777:888G]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Ipv6Badchar)
@@ -647,8 +577,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId71() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444:5555:6666::8888]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444:5555:6666::8888]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .rfc5321Ipv6Deprecated)
@@ -656,8 +585,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId72() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444:5555::8888]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444:5555::8888]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Addressliteral)
@@ -665,8 +593,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId73() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444:5555:6666::7777:8888]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444:5555:6666::7777:8888]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Ipv6Maxgrps)
@@ -674,8 +601,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId74() {
-		let nonLossyASCIIEmail = "test@[IPv6::3333:4444:5555:6666:7777:8888]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6::3333:4444:5555:6666:7777:8888]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Ipv6Colonstrt)
@@ -683,8 +609,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId75() {
-		let nonLossyASCIIEmail = "test@[IPv6:::3333:4444:5555:6666:7777:8888]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:::3333:4444:5555:6666:7777:8888]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Addressliteral)
@@ -692,8 +617,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId76() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111::4444:5555::8888]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111::4444:5555::8888]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Ipv62X2Xcolon)
@@ -701,8 +625,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId77() {
-		let nonLossyASCIIEmail = "test@[IPv6:::]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:::]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Addressliteral)
@@ -710,8 +633,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId78() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444:5555:255.255.255.255]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444:5555:255.255.255.255]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Ipv6Grpcount)
@@ -719,8 +641,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId79() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444:5555:6666:255.255.255.255]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444:5555:6666:255.255.255.255]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Addressliteral)
@@ -728,8 +649,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId80() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444:5555:6666:7777:255.255.255.255]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444:5555:6666:7777:255.255.255.255]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Ipv6Grpcount)
@@ -737,8 +657,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId81() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444::255.255.255.255]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444::255.255.255.255]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Addressliteral)
@@ -746,8 +665,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId82() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444:5555:6666::255.255.255.255]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444:5555:6666::255.255.255.255]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Ipv6Maxgrps)
@@ -755,8 +673,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId83() {
-		let nonLossyASCIIEmail = "test@[IPv6:1111:2222:3333:4444:::255.255.255.255]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1111:2222:3333:4444:::255.255.255.255]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Ipv62X2Xcolon)
@@ -764,8 +681,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId84() {
-		let nonLossyASCIIEmail = "test@[IPv6::255.255.255.255]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6::255.255.255.255]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Ipv6Colonstrt)
@@ -773,8 +689,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId85() {
-		let nonLossyASCIIEmail = " test @iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#" test @iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecCfwsNearAt)
@@ -782,8 +697,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId86() {
-		let nonLossyASCIIEmail = "test@ iana .com"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@ iana .com"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecCfwsNearAt)
@@ -791,8 +705,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId87() {
-		let nonLossyASCIIEmail = "test . test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test . test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecFws)
@@ -800,8 +713,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId88() {
-		let nonLossyASCIIEmail = "\\u240d\\u240a test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\u240d\u240a test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .cfws)
 		XCTAssertEqual(validationResult, .cfwsFws)
@@ -809,8 +721,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId89() {
-		let nonLossyASCIIEmail = "\\u240d\\u240a \\u240d\\u240a test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\u240d\u240a \u240d\u240a test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecFws)
@@ -818,8 +729,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId90() {
-		let nonLossyASCIIEmail = "(comment)test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"(comment)test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .cfws)
 		XCTAssertEqual(validationResult, .cfwsComment)
@@ -827,8 +737,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId91() {
-		let nonLossyASCIIEmail = "((comment)test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"((comment)test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errUnclosedcomment)
@@ -836,8 +745,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId92() {
-		let nonLossyASCIIEmail = "(comment(comment))test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"(comment(comment))test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .cfws)
 		XCTAssertEqual(validationResult, .cfwsComment)
@@ -845,8 +753,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId93() {
-		let nonLossyASCIIEmail = "test@(comment)iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@(comment)iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecCfwsNearAt)
@@ -854,8 +761,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId94() {
-		let nonLossyASCIIEmail = "test(comment)test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test(comment)test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errAtextAfterCfws)
@@ -863,8 +769,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId95() {
-		let nonLossyASCIIEmail = "test@(comment)[255.255.255.255]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@(comment)[255.255.255.255]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecCfwsNearAt)
@@ -872,8 +777,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId96() {
-		let nonLossyASCIIEmail = "(comment)abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghiklm@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"(comment)abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghiklm@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .cfws)
 		XCTAssertEqual(validationResult, .cfwsComment)
@@ -881,8 +785,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId97() {
-		let nonLossyASCIIEmail = "test@(comment)abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.com"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@(comment)abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghikl.com"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecCfwsNearAt)
@@ -890,8 +793,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId98() {
-		let nonLossyASCIIEmail = "(comment)test@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghik.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghik.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijk.abcdefghijklmnopqrstuvwxyzabcdefghijk.abcdefghijklmnopqrstu"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"(comment)test@abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghik.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghik.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijk.abcdefghijklmnopqrstuvwxyzabcdefghijk.abcdefghijklmnopqrstu"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .cfws)
 		XCTAssertEqual(validationResult, .cfwsComment)
@@ -899,8 +801,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId99() {
-		let nonLossyASCIIEmail = "test@iana.org\\u240a"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org\u240a"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingAtext)
@@ -908,8 +809,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId100() {
-		let nonLossyASCIIEmail = "test@xn--hxajbheg2az3al.xn--jxalpdlp"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@xn--hxajbheg2az3al.xn--jxalpdlp"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -917,8 +817,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId101() {
-		let nonLossyASCIIEmail = "xn--test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"xn--test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -926,8 +825,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId102() {
-		let nonLossyASCIIEmail = "test@iana.org-"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org-"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errDomainhyphenend)
@@ -935,8 +833,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId103() {
-		let nonLossyASCIIEmail = "\"test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errUnclosedquotedstr)
@@ -944,8 +841,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId104() {
-		let nonLossyASCIIEmail = "(test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"(test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errUnclosedcomment)
@@ -953,8 +849,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId105() {
-		let nonLossyASCIIEmail = "test@(iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@(iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errUnclosedcomment)
@@ -962,8 +857,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId106() {
-		let nonLossyASCIIEmail = "test@[1.2.3.4"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[1.2.3.4"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errUncloseddomlit)
@@ -971,8 +865,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId107() {
-		let nonLossyASCIIEmail = "\"test\\\\\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042test\\\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errUnclosedquotedstr)
@@ -980,8 +873,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId108() {
-		let nonLossyASCIIEmail = "(comment\\\\)test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"(comment\\)test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errUnclosedcomment)
@@ -989,8 +881,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId109() {
-		let nonLossyASCIIEmail = "test@iana.org(comment\\\\)"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org(comment\\)"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errUnclosedcomment)
@@ -998,8 +889,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId110() {
-		let nonLossyASCIIEmail = "test@iana.org(comment\\\\"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org(comment\\"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errBackslashend)
@@ -1007,8 +897,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId112() {
-		let nonLossyASCIIEmail = "test@[RFC-5322-domain-literal]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[RFC-5322-domain-literal]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Domainliteral)
@@ -1016,8 +905,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId113() {
-		let nonLossyASCIIEmail = "test@[RFC-5322]-domain-literal]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[RFC-5322]-domain-literal]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errAtextAfterDomlit)
@@ -1025,8 +913,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId114() {
-		let nonLossyASCIIEmail = "test@[RFC-5322-[domain-literal]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[RFC-5322-[domain-literal]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingDtext)
@@ -1034,8 +921,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId115() {
-		let nonLossyASCIIEmail = "test@[RFC-5322-\\\\\\u2407-domain-literal]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[RFC-5322-\\\u2407-domain-literal]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322DomlitObsdtext)
@@ -1043,8 +929,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId116() {
-		let nonLossyASCIIEmail = "test@[RFC-5322-\\\\\\u2409-domain-literal]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[RFC-5322-\\\u2409-domain-literal]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322DomlitObsdtext)
@@ -1052,8 +937,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId117() {
-		let nonLossyASCIIEmail = "test@[RFC-5322-\\\\]-domain-literal]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[RFC-5322-\\]-domain-literal]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322DomlitObsdtext)
@@ -1061,8 +945,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId118() {
-		let nonLossyASCIIEmail = "test@[RFC-5322-domain-literal\\\\]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[RFC-5322-domain-literal\\]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errUncloseddomlit)
@@ -1070,8 +953,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId119() {
-		let nonLossyASCIIEmail = "test@[RFC-5322-domain-literal\\\\"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[RFC-5322-domain-literal\\"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errBackslashend)
@@ -1079,8 +961,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId120() {
-		let nonLossyASCIIEmail = "test@[RFC 5322 domain literal]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[RFC 5322 domain literal]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Domainliteral)
@@ -1088,8 +969,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId121() {
-		let nonLossyASCIIEmail = "test@[RFC-5322-domain-literal] (comment)"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[RFC-5322-domain-literal] (comment)"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Domainliteral)
@@ -1097,8 +977,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId122() {
-		let nonLossyASCIIEmail = "\\177@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\177@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingAtext)
@@ -1106,8 +985,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId123() {
-		let nonLossyASCIIEmail = "test@\\177.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@\177.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingAtext)
@@ -1115,8 +993,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId124() {
-		let nonLossyASCIIEmail = "\"\\177\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\177\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecQtext)
@@ -1124,8 +1001,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId125() {
-		let nonLossyASCIIEmail = "\"\\\\\\177\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\\\177\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecQp)
@@ -1133,8 +1009,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId126() {
-		let nonLossyASCIIEmail = "(\\177)test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"(\177)test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecCtext)
@@ -1142,8 +1017,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId127() {
-		let nonLossyASCIIEmail = "test@iana.org\\u240d"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org\u240d"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errCrNoLf)
@@ -1151,8 +1025,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId128() {
-		let nonLossyASCIIEmail = "\\u240dtest@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\u240dtest@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errCrNoLf)
@@ -1160,8 +1033,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId129() {
-		let nonLossyASCIIEmail = "\"\\u240dtest\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\u240dtest\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errCrNoLf)
@@ -1169,8 +1041,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId130() {
-		let nonLossyASCIIEmail = "(\\u240d)test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"(\u240d)test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errCrNoLf)
@@ -1178,8 +1049,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId131() {
-		let nonLossyASCIIEmail = "test@iana.org(\\u240d)"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org(\u240d)"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errCrNoLf)
@@ -1187,8 +1057,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
 	func testXMLTestId132() {
-		let nonLossyASCIIEmail = "\\u240atest@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\u240atest@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingAtext)
@@ -1196,8 +1065,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId133() {
-		let nonLossyASCIIEmail = "\"\\u240a\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\u240a\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingQtext)
@@ -1205,8 +1073,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId134() {
-		let nonLossyASCIIEmail = "\"\\\\\\u240a\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\\\u240a\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecQp)
@@ -1214,8 +1081,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId135() {
-		let nonLossyASCIIEmail = "(\\u240a)test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"(\u240a)test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingCtext)
@@ -1223,8 +1089,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId136() {
-		let nonLossyASCIIEmail = "\\u2407@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\u2407@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingAtext)
@@ -1232,8 +1097,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId137() {
-		let nonLossyASCIIEmail = "test@\\u2407.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@\u2407.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingAtext)
@@ -1241,8 +1105,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId138() {
-		let nonLossyASCIIEmail = "\"\\u2407\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\u2407\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecQtext)
@@ -1250,8 +1113,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId139() {
-		let nonLossyASCIIEmail = "\"\\\\\\u2407\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042\\\u2407\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecQp)
@@ -1259,8 +1121,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId140() {
-		let nonLossyASCIIEmail = "(\\u2407)test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"(\u2407)test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecCtext)
@@ -1268,8 +1129,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId141() {
-		let nonLossyASCIIEmail = "\\u240d\\u240atest@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\u240d\u240atest@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errFwsCrlfEnd)
@@ -1277,8 +1137,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId142() {
-		let nonLossyASCIIEmail = "\\u240d\\u240a \\u240d\\u240atest@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\u240d\u240a \u240d\u240atest@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errFwsCrlfEnd)
@@ -1286,8 +1145,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId143() {
-		let nonLossyASCIIEmail = " \\u240d\\u240atest@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#" \u240d\u240atest@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errFwsCrlfEnd)
@@ -1295,8 +1153,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId144() {
-		let nonLossyASCIIEmail = " \\u240d\\u240a test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#" \u240d\u240a test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .cfws)
 		XCTAssertEqual(validationResult, .cfwsFws)
@@ -1304,8 +1161,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId145() {
-		let nonLossyASCIIEmail = " \\u240d\\u240a \\u240d\\u240atest@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#" \u240d\u240a \u240d\u240atest@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errFwsCrlfEnd)
@@ -1313,8 +1169,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId146() {
-		let nonLossyASCIIEmail = " \\u240d\\u240a\\u240d\\u240atest@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#" \u240d\u240a\u240d\u240atest@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errFwsCrlfX2)
@@ -1322,8 +1177,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId147() {
-		let nonLossyASCIIEmail = " \\u240d\\u240a\\u240d\\u240a test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#" \u240d\u240a\u240d\u240a test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errFwsCrlfX2)
@@ -1331,8 +1185,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId148() {
-		let nonLossyASCIIEmail = "test@iana.org\\u240d\\u240a "
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org\u240d\u240a "#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .cfws)
 		XCTAssertEqual(validationResult, .cfwsFws)
@@ -1340,8 +1193,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId149() {
-		let nonLossyASCIIEmail = "test@iana.org\\u240d\\u240a \\u240d\\u240a "
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org\u240d\u240a \u240d\u240a "#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecFws)
@@ -1349,8 +1201,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId150() {
-		let nonLossyASCIIEmail = "test@iana.org\\u240d\\u240a"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org\u240d\u240a"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errFwsCrlfEnd)
@@ -1358,8 +1209,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId151() {
-		let nonLossyASCIIEmail = "test@iana.org\\u240d\\u240a \\u240d\\u240a"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org\u240d\u240a \u240d\u240a"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errFwsCrlfEnd)
@@ -1367,8 +1217,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId152() {
-		let nonLossyASCIIEmail = "test@iana.org \\u240d\\u240a"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org \u240d\u240a"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errFwsCrlfEnd)
@@ -1376,8 +1225,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId153() {
-		let nonLossyASCIIEmail = "test@iana.org \\u240d\\u240a "
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org \u240d\u240a "#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .cfws)
 		XCTAssertEqual(validationResult, .cfwsFws)
@@ -1385,8 +1233,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId154() {
-		let nonLossyASCIIEmail = "test@iana.org \\u240d\\u240a \\u240d\\u240a"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org \u240d\u240a \u240d\u240a"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errFwsCrlfEnd)
@@ -1394,8 +1241,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId155() {
-		let nonLossyASCIIEmail = "test@iana.org \\u240d\\u240a\\u240d\\u240a"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org \u240d\u240a\u240d\u240a"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errFwsCrlfX2)
@@ -1403,8 +1249,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId156() {
-		let nonLossyASCIIEmail = "test@iana.org \\u240d\\u240a\\u240d\\u240a "
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org \u240d\u240a\u240d\u240a "#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errFwsCrlfX2)
@@ -1412,8 +1257,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId157() {
-		let nonLossyASCIIEmail = " test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#" test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .cfws)
 		XCTAssertEqual(validationResult, .cfwsFws)
@@ -1421,8 +1265,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId158() {
-		let nonLossyASCIIEmail = "test@iana.org "
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana.org "#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .cfws)
 		XCTAssertEqual(validationResult, .cfwsFws)
@@ -1430,8 +1273,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId159() {
-		let nonLossyASCIIEmail = "test@[IPv6:1::2:]"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@[IPv6:1::2:]"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Ipv6Colonend)
@@ -1439,8 +1281,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId160() {
-		let nonLossyASCIIEmail = "\"test\\\\\\251\"@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"\042test\\\251\042@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .err)
 		XCTAssertEqual(validationResult, .errExpectingQpair)
@@ -1448,8 +1289,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId161() {
-		let nonLossyASCIIEmail = "test@iana/icann.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@iana/icann.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5322)
 		XCTAssertEqual(validationResult, .rfc5322Domain)
@@ -1457,8 +1297,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId165() {
-		let nonLossyASCIIEmail = "test.(comment)test@iana.org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test.(comment)test@iana.org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .deprec)
 		XCTAssertEqual(validationResult, .deprecComment)
@@ -1466,8 +1305,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId166() {
-		let nonLossyASCIIEmail = "test@org"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@org"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .rfc5321)
 		XCTAssertEqual(validationResult, .rfc5321Tld)
@@ -1475,8 +1313,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId167() {
-		let nonLossyASCIIEmail = "test@test.com"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@test.com"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)
@@ -1484,8 +1321,7 @@ class EmailTests : XCTestCase {
 	
 	/* From Dominic Sayers (https://isemail.info) */
 	func testXMLTestId168() {
-		let nonLossyASCIIEmail = "test@nic.no"
-		let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+		let email = String(data: Data(#"test@nic.no"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
 		XCTAssertEqual(validationResult.category, .validCategory)
 		XCTAssertEqual(validationResult, .valid)

@@ -3,6 +3,20 @@
 
 import Foundation
 
+
+let nonLossyASCIITab = #"\011"#
+let nonLossyASCIINewLine = #"\012"#
+let nonLossyASCIIOctothorpe = #"\043"#
+let nonLossyASCIIDoubleQuote = #"\042"#
+let nonLossyASCIICarriageReturn = #"\015"#
+/* We use these fact later; let’s be sure… */
+assert(String(data: Data(nonLossyASCIITab.utf8), encoding: .nonLossyASCII)! == "\t")
+assert(String(data: Data(nonLossyASCIINewLine.utf8), encoding: .nonLossyASCII)! == "\n")
+assert(String(data: Data(nonLossyASCIIOctothorpe.utf8), encoding: .nonLossyASCII)! == "#")
+assert(String(data: Data(nonLossyASCIIDoubleQuote.utf8), encoding: .nonLossyASCII)! == "\"")
+assert(String(data: Data(nonLossyASCIICarriageReturn.utf8), encoding: .nonLossyASCII)! == "\r")
+
+
 let isEmailPrefix = "ISEMAIL_"
 
 let scriptURL = URL(fileURLWithPath: CommandLine.arguments[0], isDirectory: false)
@@ -56,6 +70,18 @@ extension String {
 		}
 		let withoutPrefix = self[index(startIndex, offsetBy: xmlPrefix.count)...]
 		return withoutPrefix.split(separator: "-").map(String.init).reduce(swiftPrefix, { $0 + ($0.isEmpty ? $1.lowercased() : $1.capitalized) })
+	}
+	
+	func stringInGeneratedSwift() -> String {
+		print(self)
+		print(String(data: data(using: .nonLossyASCII)!, encoding: .ascii)!)
+		print(String(data: data(using: .nonLossyASCII)!, encoding: .ascii)!.replacingOccurrences(of: "\"", with: nonLossyASCIIDoubleQuote))
+		return ##"String(data: Data(#""## + String(data: data(using: .nonLossyASCII)!, encoding: .ascii)!
+			.replacingOccurrences(of: "\r", with: nonLossyASCIICarriageReturn)
+			.replacingOccurrences(of: "\"", with: nonLossyASCIIDoubleQuote)
+			.replacingOccurrences(of: "#",  with: nonLossyASCIIOctothorpe)
+			.replacingOccurrences(of: "\n", with: nonLossyASCIINewLine)
+			.replacingOccurrences(of: "\t", with: nonLossyASCIITab) + ##""#.utf8), encoding: .nonLossyASCII)!"##
 	}
 	
 }
@@ -122,15 +148,12 @@ for category in categories.elements(forName: "item") {
 		exit(1)
 	}
 	
-	/* Note: We assume everything is mostly ok: no actual verification of the id,
-	 *       or the description. Things will be better when we’re allowed to
-	 *       generate Swift5 as we’ll be able to use the #""# quotes. */
-	swiftEmailValidationCodesFileContent += """
-			public static let \(categoryId) = ValidationCategory(value: \(value), xmlId: "\(categoryIdXML)", description: \"""
-			\(description)
-			\""")
-	
-	"""
+	/* Note: We don’t check the id to be a valid string for a Swift variable. */
+	swiftEmailValidationCodesFileContent += #"\#t\#tpublic static let \#(categoryId) = ValidationCategory("#
+	swiftEmailValidationCodesFileContent +=    #"value: \#(value), "#
+	swiftEmailValidationCodesFileContent +=    #"xmlId: \#(categoryIdXML.stringInGeneratedSwift()), "#
+	swiftEmailValidationCodesFileContent +=    #"description: \#(description.stringInGeneratedSwift())"#
+	swiftEmailValidationCodesFileContent += ")\n"
 }
 swiftEmailValidationCodesFileContent += """
 \t\t
@@ -189,15 +212,12 @@ for smtp in allSMTP.elements(forName: "item") {
 		exit(1)
 	}
 	
-	/* Note: We assume everything is mostly ok: no actual verification of the id,
-	 *       or the description. Things will be better when we’re allowed to
-	 *       generate Swift5 as we’ll be able to use the #""# quotes. */
-	swiftEmailValidationCodesFileContent += """
-			public static let \(id) = ValidationSMTPInfo(value: "\(value)", xmlId: "\(xmlId)", text: \"""
-	\(text)
-	\""")
-	
-	"""
+	/* Note: We don’t check the id to be a valid string for a Swift variable. */
+	swiftEmailValidationCodesFileContent += #"\#t\#tpublic static let \#(id) = ValidationSMTPInfo("#
+	swiftEmailValidationCodesFileContent +=    #"value: \#(value.stringInGeneratedSwift()), "#
+	swiftEmailValidationCodesFileContent +=    #"xmlId: \#(xmlId.stringInGeneratedSwift()), "#
+	swiftEmailValidationCodesFileContent +=    #"text: \#(text.stringInGeneratedSwift())"#
+	swiftEmailValidationCodesFileContent += ")\n"
 }
 swiftEmailValidationCodesFileContent += """
 \t\t
@@ -259,15 +279,13 @@ for reference in references.elements(forName: "item") {
 		exit(1)
 	}
 	
-	/* Note: We assume everything is mostly ok: no actual verification of the id,
-	 *       or the description. Things will be better when we’re allowed to
-	 *       generate Swift5 as we’ll be able to use the #""# quotes. */
-	swiftEmailValidationCodesFileContent += """
-			public static let \(id) = ValidationReference(xmlId: "\(xmlId)", blockQuoteName: "\(blockQuoteName)", blockQuoteURL: URL(string: "\(blockQuoteURL)")!, blockQuote: \"""
-			\(blockQuote)
-	\""")
-	
-	"""
+	/* Note: We don’t check the id to be a valid string for a Swift variable. */
+	swiftEmailValidationCodesFileContent += #"\#t\#tpublic static let \#(id) = ValidationReference("#
+	swiftEmailValidationCodesFileContent +=    #"xmlId: \#(xmlId.stringInGeneratedSwift()), "#
+	swiftEmailValidationCodesFileContent +=    #"blockQuoteName: \#(blockQuoteName.stringInGeneratedSwift()), "#
+	swiftEmailValidationCodesFileContent +=    #"blockQuoteURL: URL(string: \#(blockQuoteURL.absoluteString.stringInGeneratedSwift()))!, "#
+	swiftEmailValidationCodesFileContent +=    #"blockQuote: \#(blockQuote.stringInGeneratedSwift())"#
+	swiftEmailValidationCodesFileContent += ")\n"
 }
 swiftEmailValidationCodesFileContent += """
 \t\t
@@ -357,15 +375,15 @@ for diagnosis in diagnoses.elements(forName: "item") {
 		exit(1)
 	}
 	
-	/* Note: We assume everything is mostly ok: no actual verification of the id,
-	 *       or the description. Things will be better when we’re allowed to
-	 *       generate Swift5 as we’ll be able to use the #""# quotes. */
-	swiftEmailValidationCodesFileContent += """
-			public static let \(id) = ValidationDiagnosis(xmlId: "\(xmlId)", value: \(value), category: .\(category), smtpInfo: .\(smtpReference), references: [\(references.map{ "." + $0 }.joined(separator: ", "))], description: \"""
-	\(description)
-	\""")
-	
-	"""
+	/* Note: We don’t check the id to be a valid string for a Swift variable. */
+	swiftEmailValidationCodesFileContent += #"\#t\#tpublic static let \#(id) = ValidationDiagnosis("#
+	swiftEmailValidationCodesFileContent +=    #"xmlId: \#(xmlId.stringInGeneratedSwift()), "#
+	swiftEmailValidationCodesFileContent +=    #"value: \#(value), "#
+	swiftEmailValidationCodesFileContent +=    #"category: .\#(category), "#
+	swiftEmailValidationCodesFileContent +=    #"smtpInfo: .\#(smtpReference), "#
+	swiftEmailValidationCodesFileContent +=    #"references: [\#(references.map{ "." + $0 }.joined(separator: ", "))], "#
+	swiftEmailValidationCodesFileContent +=    #"description: \#(description.stringInGeneratedSwift())"#
+	swiftEmailValidationCodesFileContent += ")\n"
 }
 swiftEmailValidationCodesFileContent += """
 \t\t
@@ -456,7 +474,6 @@ for test in testsDocRoot.elements(forName: "test") {
 		print("warning: test \(testId) have no or multiple source links (expected exactly one); test won’t have its source link in the generated file", to: &mx_stderr)
 	}
 	
-	let nonLossyASCIIAddress = String(data: address.data(using: .nonLossyASCII)!, encoding: .ascii)!
 	let fullSource: String
 	switch (source, sourcelink) {
 	case (.some(let source), .some(let sourcelink)): fullSource = "From " + source + " (" + sourcelink + ")"
@@ -479,19 +496,18 @@ for test in testsDocRoot.elements(forName: "test") {
 	
 	/* Note: We assume that 1/ there won’t be two tests with the same id 2/ the
 	 *       ids will never contain an invalid char in a function name. */
-	/* TODO: When the project is in Swift5 too, we’ll be able to use the new quotes instead of backslashing everything: #""# */
-	swiftEmailTestsFileContent += """
-	\t
-		/* \(fullSource.replacingOccurrences(of: "/*", with: "/​*").replacingOccurrences(of: "*/", with: "*​/")) */
-		func testXMLTestId\(testId)() {
-			let nonLossyASCIIEmail = "\(nonLossyASCIIAddress.replacingOccurrences(of: #"\"#, with: #"\\"#).replacingOccurrences(of: "\"", with: #"\""#))"
-			let email = String(data: Data(nonLossyASCIIEmail.utf8), encoding: .nonLossyASCII)!
+	print(testId)
+	swiftEmailTestsFileContent += #"""
+	\#t
+		/* \#(fullSource.replacingOccurrences(of: "/*", with: "/​*").replacingOccurrences(of: "*/", with: "*​/")) */
+		func testXMLTestId\#(testId)() {
+			let email = \#(address.stringInGeneratedSwift())
 			let validationResult = Email.evaluateEmail(email, checkDNS: false)
-			XCTAssertEqual(validationResult.category, .\(actualCategory))
-			XCTAssertEqual(validationResult, .\(actualDiagnosis))
+			XCTAssertEqual(validationResult.category, .\#(actualCategory))
+			XCTAssertEqual(validationResult, .\#(actualDiagnosis))
 		}
 	
-	"""
+	"""#
 }
 
 /* Test file footer. */

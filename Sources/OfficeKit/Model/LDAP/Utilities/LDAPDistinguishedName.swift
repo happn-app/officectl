@@ -202,9 +202,7 @@ public struct LDAPDistinguishedName {
 extension LDAPDistinguishedName : Hashable {
 	
 	public static func ==(lhs: LDAPDistinguishedName, rhs: LDAPDistinguishedName) -> Bool {
-		/* Apparently “(key: String, value: String)” does not conform to equatable
-		 * in Swift 4 :( Does not seem to work on Swift 5 beta either (tested in
-		 * REPL). */
+		/* Apparently “(key: String, value: String)” does not conform to equatable :( */
 //		return lhs.values == rhs.values
 		guard lhs.values.count == rhs.values.count else {return false}
 		for (l, r) in zip(lhs.values, rhs.values) {
