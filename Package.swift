@@ -1,9 +1,12 @@
-// swift-tools-version:4.2
+// swift-tools-version:5.0
 import PackageDescription
 
 
 let package = Package(
 	name: "officectl",
+	platforms: [
+		.macOS(.v10_13)
+	],
 	dependencies: [
 		.package(url: "https://github.com/happn-tech/AsyncOperationResult.git", from: "1.0.4"),
 		.package(url: "https://github.com/happn-tech/URLRequestOperation.git", from: "1.1.2"),

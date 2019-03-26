@@ -47,15 +47,6 @@
         }
       },
       {
-        "package": "DummyLinuxOSLog",
-        "repositoryURL": "git@github.com:happn-tech/DummyLinuxOSLog.git",
-        "state": {
-          "branch": null,
-          "revision": "47333c87665e0f9e957246148965418c9a4ad823",
-          "version": "1.0.0"
-        }
-      },
-      {
         "package": "Fluent",
         "repositoryURL": "https://github.com/vapor/fluent.git",
         "state": {
