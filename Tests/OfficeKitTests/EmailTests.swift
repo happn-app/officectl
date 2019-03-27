@@ -51,8 +51,8 @@ class EmailTests : XCTestCase {
 	func testXMLTestId5() {
 		let email = String(data: Data(#"test@io"#.utf8), encoding: .nonLossyASCII)!
 		let validationResult = Email.evaluateEmail(email, checkDNS: false)
-//		XCTAssertEqual(validationResult.category, .validCategory) /* On the original test set, the category is sometimes not correct. We _cannot_ fail the category (linked with diagnosis by autogeneration), so we don’t test that. */
-		XCTAssertEqual(validationResult, .valid)
+//		XCTAssertEqual(validationResult.category, .rfc5321) /* On the original test set, the category is sometimes not correct. We _cannot_ fail the category (linked with diagnosis by autogeneration), so we don’t test that. */
+		XCTAssertEqual(validationResult, .rfc5321Tld)
 	}
 	
 	/* From Michael Rushton (https://squiloople.com/tag/email/) */
