@@ -109,9 +109,9 @@ extension Email {
 		
 		/* Parse the address into components, character by character. */
 		let rawLength = email.count-1
-		var context = componentLocalpart /* Where we are */
+		var context = EngineState.componentLocalpart /* Where we are */
+		var contextPrior = EngineState.componentLocalpart /* Where we just came from */
 		var contextStack = [context] /* Where we have been */
-		var contextPrior = componentLocalpart /* Where we just came from */
 		var token = CChar(0) /* The current character */
 		var tokenPrior = CChar(0) /* The previous character */
 		var parseData = ParseData()
@@ -130,7 +130,7 @@ extension Email {
 			/* **********
 			   Local Part
 			   ********** */
-			case componentLocalpart:
+			case .componentLocalpart:
 				/* https://tools.ietf.org/html/rfc5322#section-3.4.1
 				 *   local-part      =   dot-atom / quoted-string / obs-local-part
 				 *
@@ -159,7 +159,7 @@ extension Email {
 					}
 					
 					contextStack.append(context)
-					context = contextComment
+					context = .contextComment
 					
 				/* Next dot-atom element */
 				case charDot:
@@ -196,7 +196,7 @@ extension Email {
 						elementLen += 1
 						endOrDie = true /* Quoted string must be the entire element */
 						contextStack.append(context)
-						context = contextQuotedstring
+						context = .contextQuotedstring
 					} else {
 						returnStatuses.append(.errExpectingAtext) /* Fatal error */
 					}
@@ -219,7 +219,7 @@ extension Email {
 					}
 					
 					contextStack.append(context)
-					context = contextFws
+					context = .contextFws
 					tokenPrior = token
 					
 				/* @ */
@@ -236,7 +236,7 @@ extension Email {
 						 *   The maximum total length of a user name or other local-part is 64
 						 *   octets. */
 						returnStatuses.append(.rfc5322LocalToolong)
-					} else if (contextPrior == contextComment) || (contextPrior == contextFws) {
+					} else if (contextPrior == .contextComment) || (contextPrior == .contextFws) {
 						/* https://tools.ietf.org/html/rfc5322#section-3.4.1
 						 *   Comments and folding white space
 						 *   SHOULD NOT be used around the "@" in the addr-spec.
@@ -251,7 +251,7 @@ extension Email {
 					}
 					
 					/* Clear everything down for the domain parsing */
-					context = componentDomain /* Where we are */
+					context = .componentDomain /* Where we are */
 					contextStack = [context]  /* Where we have been */
 					elementCount = 0
 					elementLen = 0
@@ -274,9 +274,9 @@ extension Email {
 					if endOrDie {
 						/* We have encountered atext where it is no longer valid */
 						switch contextPrior {
-						case contextComment:      fallthrough
-						case contextFws:          returnStatuses.append(.errAtextAfterCfws)
-						case contextQuotedstring: returnStatuses.append(.errAtextAfterQs)
+						case .contextComment:      fallthrough
+						case .contextFws:          returnStatuses.append(.errAtextAfterCfws)
+						case .contextQuotedstring: returnStatuses.append(.errAtextAfterQs)
 						default:                  fatalError("More atext found where none is allowed, but unrecognised prior context: \(contextPrior)")
 						}
 					} else {
@@ -297,7 +297,7 @@ extension Email {
 			/* ******
 			   Domain
 			   ****** */
-			case componentDomain:
+			case .componentDomain:
 				/* https://tools.ietf.org/html/rfc5322#section-3.4.1
 				 *   domain          =   dot-atom / domain-literal / obs-domain
 				 *
@@ -352,7 +352,7 @@ extension Email {
 					}
 					
 					contextStack.append(context)
-					context = contextComment
+					context = .contextComment
 					
 				/* Next dot-atom element */
 				case charDot:
@@ -394,7 +394,7 @@ extension Email {
 						endOrDie = true /* Domain literal must be the only component */
 						elementLen += 1
 						contextStack.append(context)
-						context = componentLiteral
+						context = .componentLiteral
 						parseData.domain.append(token)
 						atomList.domain[elementCount, default: []].append(token)
 						parseData.literal = []
@@ -421,7 +421,7 @@ extension Email {
 					}
 					
 					contextStack.append(context)
-					context = contextFws
+					context = .contextFws
 					tokenPrior = token
 					
 				/* AText */
@@ -451,9 +451,9 @@ extension Email {
 					if endOrDie {
 						/* We have encountered atext where it is no longer valid */
 						switch contextPrior {
-						case contextComment:   fallthrough
-						case contextFws:       returnStatuses.append(.errAtextAfterCfws)
-						case componentLiteral: returnStatuses.append(.errAtextAfterDomlit)
+						case .contextComment:   fallthrough
+						case .contextFws:       returnStatuses.append(.errAtextAfterCfws)
+						case .componentLiteral: returnStatuses.append(.errAtextAfterDomlit)
 						default:               fatalError("More atext found where none is allowed, but unrecognised prior context: \(contextPrior)")
 						}
 					}
@@ -484,7 +484,7 @@ extension Email {
 			/* **************
 			   Domain Literal
 			   ************** */
-			case componentLiteral:
+			case .componentLiteral:
 				/* https://tools.ietf.org/html/rfc5322#section-3.4.1
 				 *   domain-literal  =   [CFWS] "[" *([FWS] dtext) [FWS] "]" [CFWS]
 				 *
@@ -640,7 +640,7 @@ extension Email {
 				case charBackslash:
 					returnStatuses.append(.rfc5322DomlitObsdtext)
 					contextStack.append(context)
-					context = contextQuotedpair
+					context = .contextQuotedpair
 					
 				/* Folding White Space */
 				case charCR:
@@ -656,7 +656,7 @@ extension Email {
 					returnStatuses.append(.cfwsFws)
 					
 					contextStack.append(context)
-					context = contextFws
+					context = .contextFws
 					tokenPrior = token
 					
 				/* DText */
@@ -693,7 +693,7 @@ extension Email {
 			/* *************
 			   Quoted String
 			   ************* */
-			case contextQuotedstring:
+			case .contextQuotedstring:
 				/* https://tools.ietf.org/html/rfc5322#section-3.2.4
 				 *   quoted-string   =   [CFWS]
 				 *                       DQUOTE *([FWS] qcontent) [FWS] DQUOTE
@@ -704,7 +704,7 @@ extension Email {
 				/* Quoted pair */
 				case charBackslash:
 					contextStack.append(context)
-					context = contextQuotedpair
+					context = .contextQuotedpair
 					
 				/* Folding White Space
 				 * Inside a quoted string, spaces are allowed as regular characters.
@@ -732,7 +732,7 @@ extension Email {
 					
 					returnStatuses.append(.cfwsFws)
 					contextStack.append(context)
-					context = contextFws
+					context = .contextFws
 					tokenPrior = token
 					
 				/* End of quoted string */
@@ -782,7 +782,7 @@ extension Email {
 			/* ***********
 			   Quoted Pair
 			   *********** */
-			case contextQuotedpair:
+			case .contextQuotedpair:
 				/* https://tools.ietf.org/html/rfc5322#section-3.2.1
 				 *   quoted-pair     =   ("\" (VCHAR / WSP)) / obs-qp
 				 *
@@ -817,14 +817,14 @@ extension Email {
 				context = contextStack.removeLast() /* End of qpair */
 				
 				switch context {
-				case contextComment: (/*nop*/)
-				case contextQuotedstring:
+				case .contextComment: (/*nop*/)
+				case .contextQuotedstring:
 					parseData.localPart.append(charBackslash)
 					parseData.localPart.append(token)
 					atomList.localPart[elementCount, default: []].append(charBackslash)
 					atomList.localPart[elementCount, default: []].append(token)
 					elementLen += 2 /* The maximum sizes specified by RFC 5321 are octet counts, so we must include the backslash */
-				case componentLiteral:
+				case .componentLiteral:
 					parseData.domain.append(charBackslash)
 					parseData.domain.append(token)
 					atomList.domain[elementCount, default: []].append(charBackslash)
@@ -837,7 +837,7 @@ extension Email {
 			/* *******
 			   Comment
 			   ******* */
-			case contextComment:
+			case .contextComment:
 				/* https://tools.ietf.org/html/rfc5322#section-3.2.2
 				 *   comment         =   "(" *([FWS] ccontent) [FWS] ")"
 				 *
@@ -847,7 +847,7 @@ extension Email {
 				case charOpenParenthesis:
 					/* Nested comments are OK */
 					contextStack.append(context)
-					context = contextComment
+					context = .contextComment
 					
 				/* End of comment */
 				case charCloseParenthesis:
@@ -872,7 +872,7 @@ extension Email {
 				/* Quoted pair */
 				case charBackslash:
 					contextStack.append(context)
-					context = contextQuotedpair
+					context = .contextQuotedpair
 					
 				/* Folding White Space */
 				case charCR:
@@ -888,7 +888,7 @@ extension Email {
 					returnStatuses.append(.cfwsFws)
 					
 					contextStack.append(context)
-					context = contextFws
+					context = .contextFws
 					tokenPrior = token
 					
 				/* CText */
@@ -919,7 +919,7 @@ extension Email {
 			/* *******************
 			   Folding White Space
 			   ******************* */
-			case contextFws:
+			case .contextFws:
 				/* https://tools.ietf.org/html/rfc5322#section-3.2.2
 				 *   FWS             =   ([*WSP CRLF] 1*WSP) /  obs-FWS
 				 *                                          ; Folding white space */
@@ -1006,14 +1006,14 @@ extension Email {
 		
 		/* FLFL: Is the bang on the line below valid? */
 		if returnStatuses.max(by: { $0.value < $1.value })!.value < ValidationCategory.rfc5322.value {
-			if      context == contextQuotedstring {returnStatuses.append(.errUnclosedquotedstr) /* Fatal error */}
-			else if context == contextQuotedpair   {returnStatuses.append(.errBackslashend) /* Fatal error */}
-			else if context == contextComment      {returnStatuses.append(.errUnclosedcomment) /* Fatal error */}
-			else if context == componentLiteral    {returnStatuses.append(.errUncloseddomlit) /* Fatal error */}
-			else if token   == charCR              {returnStatuses.append(.errFwsCrlfEnd) /* Fatal error */}
-			else if parseData.domain.isEmpty       {returnStatuses.append(.errNodomain) /* Fatal error */}
-			else if elementLen == 0                {returnStatuses.append(.errDotEnd) /* Fatal error */}
-			else if hyphenFlag                     {returnStatuses.append(.errDomainhyphenend) /* Fatal error */}
+			if      context == .contextQuotedstring {returnStatuses.append(.errUnclosedquotedstr) /* Fatal error */}
+			else if context == .contextQuotedpair   {returnStatuses.append(.errBackslashend) /* Fatal error */}
+			else if context == .contextComment      {returnStatuses.append(.errUnclosedcomment) /* Fatal error */}
+			else if context == .componentLiteral    {returnStatuses.append(.errUncloseddomlit) /* Fatal error */}
+			else if token   == charCR               {returnStatuses.append(.errFwsCrlfEnd) /* Fatal error */}
+			else if parseData.domain.isEmpty        {returnStatuses.append(.errNodomain) /* Fatal error */}
+			else if elementLen == 0                 {returnStatuses.append(.errDotEnd) /* Fatal error */}
+			else if hyphenFlag                      {returnStatuses.append(.errDomainhyphenend) /* Fatal error */}
 			/* https://tools.ietf.org/html/rfc5321#section-4.5.3.1.2
 			 *   The maximum total length of a domain name or number is 255 octets. */
 			else if parseData.domain.count > 255 {returnStatuses.append(.rfc5322DomainToolong)}
@@ -1127,16 +1127,18 @@ extension Email {
 		return finalStatus
 	}
 	
-	private static let treshold = 16
-	
 	/* Email parts */
-	private static let componentLocalpart = 0
-	private static let componentDomain = 1
-	private static let componentLiteral = 2
-	private static let contextComment = 3
-	private static let contextFws = 4
-	private static let contextQuotedstring = 5
-	private static let contextQuotedpair = 6
+	private enum EngineState {
+		
+		case componentLocalpart
+		case componentDomain
+		case componentLiteral
+		case contextComment
+		case contextFws
+		case contextQuotedstring
+		case contextQuotedpair
+		
+	}
 	
 	/* Miscellaneous string constants */
 	private static let charAt = "@".utf8CString[0]
