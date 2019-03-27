@@ -72,32 +72,37 @@ extension Email {
 		 *    - https://tools.ietf.org/html/rfc1123#section-2.1
 		 *    - https://tools.ietf.org/html/rfc3696 (guidance only) */
 		
+		/* We’ll iterate on the bytes directly! We do not want to iterate on the
+		 * extended grapheme clusters (for instance \r\n is a single cluster,
+		 * which is not convenient…) */
+		let email = email.utf8CString
+		
 		var returnStatus = [ValidationDiagnosis.valid]
 		
 		/* Parse the address into components, character by character. */
-		let rawLength = email.count
+		let rawLength = email.count-1
 		var context = componentLocalpart /* Where we are */
 		var contextStack = [context] /* Where we have been */
 		var contextPrior = componentLocalpart /* Where we just came from */
-		var token = "" /* The current character */
-		var tokenPrior = "" /* The previous character */
+		var token = CChar(0) /* The current character */
+		var tokenPrior = CChar(0) /* The previous character */
 		var parseData = [ /* The components of the address */
-			componentLocalpart: "",
-			componentDomain: ""
+			componentLocalpart: [CChar](),
+			componentDomain: [CChar]()
 		]
 		var atomList = [ /* For the dot-atom elements of the address */
-			componentLocalpart: [Int: String](),
-			componentDomain: [Int: String]()
+			componentLocalpart: [Int: [CChar]](),
+			componentDomain: [Int: [CChar]]()
 		]
 		var elementCount = 0
 		var elementLen = 0
 		var crlfCount: Int?
 		var hyphenFlag = false /* Hyphen cannot occur at the end of a subdomain */
 		var endOrDie = false /* CFWS can only appear at the end of the element */
-		var i = email.startIndex
-		while i < email.endIndex {
-			token = String(email[i])
-			defer {if i < email.endIndex {i = email.index(after: i)}}
+		var i = 0
+		while i < rawLength {
+			token = email[i]
+			defer {i += 1}
 			
 			switch context {
 			/* **********
@@ -122,7 +127,7 @@ extension Email {
 				 *   atom            =   [CFWS] 1*atext [CFWS] */
 				switch token {
 				/* Comment */
-				case stringOpenParenthesis:
+				case charOpenParenthesis:
 					if elementLen == 0 {
 						/* Comments are OK at the beginning of an element */
 						returnStatus.append(elementCount == 0 ? .cfwsComment : .deprecComment)
@@ -135,7 +140,7 @@ extension Email {
 					context = contextComment
 					
 				/* Next dot-atom element */
-				case stringDot:
+				case charDot:
 					if elementLen == 0 {
 						/* Another dot, already? */
 						returnStatus.append(elementCount == 0 ? .errDotStart : .errConsecutivedots) /* Fatal error */
@@ -153,19 +158,19 @@ extension Email {
 					endOrDie = false /* CFWS & quoted strings are OK again now we're at the beginning of an element (although they are obsolete forms) */
 					elementLen = 0
 					elementCount += 1
-					parseData[componentLocalpart, default: ""] += token
-					atomList[componentLocalpart, default: [:]][elementCount] = ""
+					parseData[componentLocalpart, default: []].append(token)
+					atomList[componentLocalpart, default: [:]][elementCount] = []
 					
 				/* Quoted string */
-				case stringDQuote:
+				case charDQuote:
 					if elementLen == 0 {
 						/* The entire local-part can be a quoted string for RFC 5321
 						 * If it's just one atom that is quoted then it's an RFC 5322
 						 * obsolete form */
 						returnStatus.append(elementCount == 0 ? .rfc5321Quotedstring : .deprecLocalpart)
 						
-						parseData[componentLocalpart, default: ""] += token
-						atomList[componentLocalpart, default: [:]][elementCount, default: ""] += token
+						parseData[componentLocalpart, default: []].append(token)
+						atomList[componentLocalpart, default: [:]][elementCount, default: []].append(token)
 						elementLen += 1
 						endOrDie = true /* Quoted string must be the entire element */
 						contextStack.append(context)
@@ -175,17 +180,16 @@ extension Email {
 					}
 					
 				/* Folding White Space */
-				case stringCR:
+				case charCR:
 					i = email.index(after: i)
-					guard i < email.endIndex && String(email[i]) == stringLF else {
+					guard i < email.endIndex && email[i] == charLF else {
 						returnStatus.append(.errCrNoLf) /* Fatal error */
 						break
 					}
 					fallthrough
 					
-				case stringCRLF: fallthrough /* This case is not possible in PHP, but in Swift, because grapheme clusters, it is. */
-				case stringSpace: fallthrough
-				case stringHTab:
+				case charSpace: fallthrough
+				case charHTab:
 					if elementLen == 0 {
 						returnStatus.append(elementCount == 0 ? .cfwsFws : .deprecFws)
 					} else {
@@ -197,15 +201,15 @@ extension Email {
 					tokenPrior = token
 					
 				/* @ */
-				case stringAt:
+				case charAt:
 					/* At this point we should have a valid local-part */
 					assert(contextStack.count == 1, "Unexpected item on context stack")
 					
-					if parseData[componentLocalpart, default: ""].isEmpty {
+					if parseData[componentLocalpart, default: []].isEmpty {
 						returnStatus.append(.errNolocalpart) /* Fatal error */
 					} else if elementLen == 0 {
 						returnStatus.append(.errDotEnd) /* Fatal error */
-					} else if parseData[componentLocalpart, default: ""].count > 64 {
+					} else if parseData[componentLocalpart, default: []].count > 64 {
 						/* https://tools.ietf.org/html/rfc5321#section-4.5.3.1.1
 						 *   The maximum total length of a user name or other local-part is 64
 						 *   octets. */
@@ -255,15 +259,15 @@ extension Email {
 						}
 					} else {
 						contextPrior = context
-						let scalar = token.first!.unicodeScalars.first!
-						let ord = scalar.value
+						let ord = UInt8(bitPattern: token)
+						let scalar = UnicodeScalar(ord)
 						
-						if ord < 33 || ord > 126 || ord == 10 || stringSpecials.contains(scalar) {
+						if ord < 33 || ord > 126 || ord == 10 || specials.contains(scalar) {
 							returnStatus.append(.errExpectingAtext) /* Fatal error */
 						}
 						
-						parseData[componentLocalpart, default: ""] += token
-						atomList[componentLocalpart, default: [:]][elementCount, default: ""] += token
+						parseData[componentLocalpart, default: []].append(token)
+						atomList[componentLocalpart, default: [:]][elementCount, default: []].append(token)
 						elementLen += 1
 					}
 				}
@@ -314,7 +318,7 @@ extension Email {
 				 * invisible" must comply only with RFC 5322. */
 				switch token {
 				/* Comment */
-				case stringOpenParenthesis:
+				case charOpenParenthesis:
 					if elementLen == 0 {
 						/* Comments at the start of the domain are deprecated in the text
 						 * Comments at the start of a subdomain are obs-domain
@@ -329,7 +333,7 @@ extension Email {
 					context = contextComment
 					
 				/* Next dot-atom element */
-				case stringDot:
+				case charDot:
 					if elementLen == 0 {
 						/* Another dot, already? */
 						returnStatus.append(elementCount == 0 ? .errDotStart : .errConsecutivedots) /* Fatal error */
@@ -359,35 +363,34 @@ extension Email {
 					endOrDie = false /* CFWS is OK again now we're at the beginning of an element (although it may be obsolete CFWS) */
 					elementLen = 0
 					elementCount += 1
-					atomList[componentDomain, default: [:]][elementCount] = ""
-					parseData[componentDomain, default: ""] += token
+					atomList[componentDomain, default: [:]][elementCount] = []
+					parseData[componentDomain, default: []].append(token)
 					
 				/* Domain literal */
-				case stringOpenSquareBracket:
-					if parseData[componentDomain, default: ""] == "" {
+				case charOpenSquareBracket:
+					if parseData[componentDomain, default: []] == [] {
 						endOrDie = true /* Domain literal must be the only component */
 						elementLen += 1
 						contextStack.append(context)
 						context = componentLiteral
-						parseData[componentDomain, default: ""] += token
-						atomList[componentDomain, default: [:]][elementCount, default: ""] += token
-						parseData[componentLiteral] = ""
+						parseData[componentDomain, default: []].append(token)
+						atomList[componentDomain, default: [:]][elementCount, default: []].append(token)
+						parseData[componentLiteral] = []
 					} else {
 						returnStatus.append(.errExpectingAtext) /* Fatal error */
 					}
 					
 				/* Folding White Space */
-				case stringCR:
+				case charCR:
 					i = email.index(after: i)
-					guard i < email.endIndex && String(email[i]) == stringLF else {
+					guard i < email.endIndex && email[i] == charLF else {
 						returnStatus.append(.errCrNoLf) /* Fatal error */
 						break
 					}
 					fallthrough
 					
-				case stringCRLF: fallthrough /* This case is not possible in PHP, but in Swift, because grapheme clusters, it is. */
-				case stringSpace: fallthrough
-				case stringHTab:
+				case charSpace: fallthrough
+				case charHTab:
 					if elementLen == 0 {
 						returnStatus.append(elementCount == 0 ? .deprecCfwsNearAt : .deprecFws)
 					} else {
@@ -433,13 +436,13 @@ extension Email {
 						}
 					}
 					
-					let scalar = token.first!.unicodeScalars.first!
-					let ord = scalar.value
+					let ord = UInt8(bitPattern: token)
+					let scalar = UnicodeScalar(ord)
 					hyphenFlag = false /* Assume this token isn't a hyphen unless we discover it is */
-
-					if ord < 33 || ord > 126 || stringSpecials.contains(scalar) {
+					
+					if ord < 33 || ord > 126 || specials.contains(scalar) {
 						returnStatus.append(.errExpectingAtext) /* Fatal error */
-					} else if token == stringHyphen {
+					} else if token == charHyphen {
 						if elementLen == 0 {
 							/* Hyphens can't be at the beginning of a subdomain */
 							returnStatus.append(.errDomainhyphenstart) /* Fatal error */
@@ -451,8 +454,8 @@ extension Email {
 						returnStatus.append(.rfc5322Domain)
 					}
 					
-					parseData[componentDomain, default: ""] += token
-					atomList[componentDomain, default: [:]][elementCount, default: ""] += token
+					parseData[componentDomain, default: []].append(token)
+					atomList[componentDomain, default: [:]][elementCount, default: []].append(token)
 					elementLen += 1
 				}
 				
@@ -470,7 +473,7 @@ extension Email {
 				 *   obs-dtext       =   obs-NO-WS-CTL / quoted-pair */
 				switch token {
 				/* End of domain literal */
-				case stringCloseSquareBracket:
+				case charCloseSquareBracket:
 					/* FLFL: Is the bang on the line below valid? */
 					if returnStatus.max(by: { $0.value < $1.value })!.value < ValidationCategory.deprec.value {
 						/* Could be a valid RFC 5321 address literal, so let's check */
@@ -531,7 +534,7 @@ extension Email {
 						 *       let’s do what the original author did. */
 						var maxGroups = 8
 						var index: String.Index?
-						var addressLiteral = parseData[componentLiteral]!
+						var addressLiteral = String(cString: parseData[componentLiteral]! + [0])
 						
 						/* FLFL: I’m not so sure about the validity of the algorithm
 						 *       to parse the IPs. Nevertheless, I copied it from the
@@ -606,29 +609,28 @@ extension Email {
 						returnStatus.append(.rfc5322Domainliteral)
 					}
 					
-					parseData[componentDomain, default: ""] += token
-					atomList[componentDomain, default: [:]][elementCount, default: ""] += token
+					parseData[componentDomain, default: []].append(token)
+					atomList[componentDomain, default: [:]][elementCount, default: []].append(token)
 					elementLen += 1
 					contextPrior = context
 					context = contextStack.removeLast()
 					
-				case stringBackslash:
+				case charBackslash:
 					returnStatus.append(.rfc5322DomlitObsdtext)
 					contextStack.append(context)
 					context = contextQuotedpair
 					
 				/* Folding White Space */
-				case stringCR:
+				case charCR:
 					i = email.index(after: i)
-					guard i < email.endIndex && String(email[i]) == stringLF else {
+					guard i < email.endIndex && email[i] == charLF else {
 						returnStatus.append(.errCrNoLf) /* Fatal error */
 						break
 					}
 					fallthrough
 
-				case stringCRLF: fallthrough /* This case is not possible in PHP, but in Swift, because grapheme clusters, it is. */
-				case stringSpace: fallthrough
-				case stringHTab:
+				case charSpace: fallthrough
+				case charHTab:
 					returnStatus.append(.cfwsFws)
 					
 					contextStack.append(context)
@@ -649,20 +651,19 @@ extension Email {
 					 *                       %d12 /             ;  include the carriage
 					 *                       %d14-31 /          ;  return, line feed, and
 					 *                       %d127              ;  white space characters */
-					let scalar = token.first!.unicodeScalars.first!
-					let ord = scalar.value
+					let ord = token
 					
 					/* CR, LF, SP & HTAB have already been parsed above */
-					if ord > 127 || ord == 0 || token == stringOpenSquareBracket {
+					if ord > 127 || ord == 0 || token == charOpenSquareBracket {
 						returnStatus.append(.errExpectingDtext) /* Fatal error */
 						break
 					} else if ord < 33 || ord == 127 {
 						returnStatus.append(.rfc5322DomlitObsdtext)
 					}
 					
-					parseData[componentLiteral, default: ""] += token
-					parseData[componentDomain, default: ""] += token
-					atomList[componentDomain, default: [:]][elementCount, default: ""] += token
+					parseData[componentLiteral, default: []].append(token)
+					parseData[componentDomain, default: []].append(token)
+					atomList[componentDomain, default: [:]][elementCount, default: []].append(token)
 					elementLen += 1
 				}
 				
@@ -678,23 +679,22 @@ extension Email {
 				 *   qcontent        =   qtext / quoted-pair */
 				switch token {
 				/* Quoted pair */
-				case stringBackslash:
+				case charBackslash:
 					contextStack.append(context)
 					context = contextQuotedpair
 					
 				/* Folding White Space
 				 * Inside a quoted string, spaces are allowed as regular characters.
 				 * It's only FWS if we include HTAB or CRLF */
-				case stringCR:
+				case charCR:
 					i = email.index(after: i)
-					guard i < email.endIndex && String(email[i]) == stringLF else {
+					guard i < email.endIndex && email[i] == charLF else {
 						returnStatus.append(.errCrNoLf) /* Fatal error */
 						break
 					}
 					fallthrough
 					
-				case stringCRLF: fallthrough /* This case is not possible in PHP, but in Swift, because grapheme clusters, it is. */
-				case stringHTab:
+				case charHTab:
 					/* https://tools.ietf.org/html/rfc5322#section-3.2.2
 					 *   Runs of FWS, comment, or CFWS that occur between lexical tokens in a
 					 *   structured header field are semantically interpreted as a single
@@ -703,8 +703,8 @@ extension Email {
 					/* https://tools.ietf.org/html/rfc5322#section-3.2.4
 					 *   the CRLF in any FWS/CFWS that appears within the quoted-string [is]
 					 *   semantically "invisible" and therefore not part of the quoted-string */
-					parseData[componentLocalpart, default: ""] += stringSpace
-					atomList[componentLocalpart, default: [:]][elementCount, default: ""] += stringSpace
+					parseData[componentLocalpart, default: []].append(charSpace)
+					atomList[componentLocalpart, default: [:]][elementCount, default: []].append(charSpace)
 					elementLen += 1
 					
 					returnStatus.append(.cfwsFws)
@@ -713,9 +713,9 @@ extension Email {
 					tokenPrior = token
 					
 				/* End of quoted string */
-				case stringDQuote:
-					parseData[componentLocalpart, default: ""] += token
-					atomList[componentLocalpart, default: [:]][elementCount, default: ""] += token
+				case charDQuote:
+					parseData[componentLocalpart, default: []].append(token)
+					atomList[componentLocalpart, default: [:]][elementCount, default: []].append(token)
 					elementLen += 1
 					contextPrior = context
 					context = contextStack.removeLast()
@@ -735,8 +735,7 @@ extension Email {
 					 *                       %d12 /             ;  include the carriage
 					 *                       %d14-31 /          ;  return, line feed, and
 					 *                       %d127              ;  white space characters */
-					let scalar = token.first!.unicodeScalars.first!
-					let ord = scalar.value
+					let ord = UInt8(bitPattern: token)
 					
 					if ord > 127 || ord == 0 || ord == 10 {
 						returnStatus.append(.errExpectingQtext) /* Fatal error */
@@ -744,8 +743,8 @@ extension Email {
 						returnStatus.append(.deprecQtext)
 					}
 					
-					parseData[componentLocalpart, default: ""] += token
-					atomList[componentLocalpart, default: [:]][elementCount, default: ""] += token
+					parseData[componentLocalpart, default: []].append(token)
+					atomList[componentLocalpart, default: [:]][elementCount, default: []].append(token)
 					elementLen += 1
 				}
 				
@@ -776,9 +775,8 @@ extension Email {
 				 *                       %d127              ;  white space characters
 				 *
 				 * i.e. obs-qp       =  "\" (%d0-8, %d10-31 / %d127) */
-				let scalar = token.first!.unicodeScalars.first!
-				let ord = scalar.value
-
+				let ord = UInt8(bitPattern: token)
+				
 				if	ord > 127 {
 					returnStatus.append(.errExpectingQpair) /* Fatal error */
 				} else if (ord < 31 && ord != 9) || (ord == 127) /* SP & HTAB are allowed */ {
@@ -794,17 +792,20 @@ extension Email {
 				 * To do: check whether the character needs to be quoted (escaped) in this context */
 				contextPrior = context
 				context = contextStack.removeLast() /* End of qpair */
-				token = stringBackslash + token
 				
 				switch context {
 				case contextComment: (/*nop*/)
 				case contextQuotedstring:
-					parseData[componentLocalpart, default: ""] += token
-					atomList[componentLocalpart, default: [:]][elementCount, default: ""] += token
+					parseData[componentLocalpart, default: []].append(charBackslash)
+					parseData[componentLocalpart, default: []].append(token)
+					atomList[componentLocalpart, default: [:]][elementCount, default: []].append(charBackslash)
+					atomList[componentLocalpart, default: [:]][elementCount, default: []].append(token)
 					elementLen += 2 /* The maximum sizes specified by RFC 5321 are octet counts, so we must include the backslash */
 				case componentLiteral:
-					parseData[componentDomain, default: ""] += token
-					atomList[componentDomain, default: [:]][elementCount, default: ""] += token
+					parseData[componentDomain, default: []].append(charBackslash)
+					parseData[componentDomain, default: []].append(token)
+					atomList[componentDomain, default: [:]][elementCount, default: []].append(charBackslash)
+					atomList[componentDomain, default: [:]][elementCount, default: []].append(token)
 					elementLen += 2 /* The maximum sizes specified by RFC 5321 are octet counts, so we must include the backslash */
 				default:
 					fatalError("Quoted pair logic invoked in an invalid context: \(context)")
@@ -820,13 +821,13 @@ extension Email {
 				 *   ccontent        =   ctext / quoted-pair / comment */
 				switch token {
 				/* Nested comment */
-				case stringOpenParenthesis:
+				case charOpenParenthesis:
 					/* Nested comments are OK */
 					contextStack.append(context)
 					context = contextComment
 					
 				/* End of comment */
-				case stringCloseParenthesis:
+				case charCloseParenthesis:
 					contextPrior = context
 					context = contextStack.removeLast()
 					
@@ -840,28 +841,27 @@ extension Email {
 					 * any addr-spec that had CFWS outside a quoted string being invalid
 					 * for RFC 5321.
 					 * 			if context == componentLocalpart || context == componentDomain {
-					 * 				parseData[context, default: ""] += stringSpace
-					 * 				atomList[context, default: [:]][elementCount, default: ""] += stringSpace
+					 * 				parseData[context, default: []] += charSpace
+					 * 				atomList[context, default: [:]][elementCount, default: []] += charSpace
 					 * 				elementLen += 1
 					 * 			} */
 					
 				/* Quoted pair */
-				case stringBackslash:
+				case charBackslash:
 					contextStack.append(context)
 					context = contextQuotedpair
 					
 				/* Folding White Space */
-				case stringCR:
+				case charCR:
 					i = email.index(after: i)
-					guard i < email.endIndex && String(email[i]) == stringLF else {
+					guard i < email.endIndex && email[i] == charLF else {
 						returnStatus.append(.errCrNoLf) /* Fatal error */
 						break
 					}
 					fallthrough
 					
-				case stringCRLF: fallthrough /* This case is not possible in PHP, but in Swift, because grapheme clusters, it is. */
-				case stringSpace: fallthrough
-				case stringHTab:
+				case charSpace: fallthrough
+				case charHTab:
 					returnStatus.append(.cfwsFws)
 					
 					contextStack.append(context)
@@ -883,8 +883,7 @@ extension Email {
 					 *                       %d12 /             ;  include the carriage
 					 *                       %d14-31 /          ;  return, line feed, and
 					 *                       %d127              ;  white space characters */
-					let scalar = token.first!.unicodeScalars.first!
-					let ord = scalar.value
+					let ord = UInt8(bitPattern: token)
 					
 					if ord > 127 || ord == 0 || ord == 10 {
 						returnStatus.append(.errExpectingCtext) /* Fatal error */
@@ -911,8 +910,8 @@ extension Email {
 				 *   field could be composed entirely of white space.
 				 *
 				 *   obs-FWS         =   1*([CRLF] WSP) */
-				if tokenPrior == stringCR || tokenPrior == stringCRLF {
-					if token == stringCR || token == stringCRLF {
+				if tokenPrior == charCR {
+					if token == charCR {
 						returnStatus.append(.errFwsCrlfX2) /* Fatal error */
 						break
 					}
@@ -928,19 +927,18 @@ extension Email {
 				}
 				
 				switch token {
-				case stringCR:
+				case charCR:
 					i = email.index(after: i)
-					guard i < email.endIndex && String(email[i]) == stringLF else {
+					guard i < email.endIndex && email[i] == charLF else {
 						returnStatus.append(.errCrNoLf) /* Fatal error */
 						break
 					}
 					fallthrough
 					
-				case stringCRLF: fallthrough /* This case is not possible in PHP, but in Swift, because grapheme clusters, it is. */
-				case stringSpace: fallthrough
-				case stringHTab: (/*nop*/)
+				case charSpace: fallthrough
+				case charHTab: (/*nop*/)
 				default:
-					guard tokenPrior != stringCR && tokenPrior != stringCRLF else {
+					guard tokenPrior != charCR else {
 						returnStatus.append(.errFwsCrlfEnd) /* Fatal error */
 						break
 					}
@@ -960,8 +958,8 @@ extension Email {
 					 * any addr-spec that had CFWS outside a quoted string being invalid
 					 * for RFC 5321.
 					 * 			if context == componentLocalpart || context == componentDomain {
-					 * 				parseData[context, default: ""] += stringSpace
-					 * 				atomList[context, default: [:]][elementCount, default: ""] += stringSpace
+					 * 				parseData[context, default: []] += charSpace
+					 * 				atomList[context, default: [:]][elementCount, default: []] += charSpace
 					 * 				elementLen += 1
 					 * 			} */
 					
@@ -989,13 +987,13 @@ extension Email {
 			else if context == contextQuotedpair                    {returnStatus.append(.errBackslashend) /* Fatal error */}
 			else if context == contextComment                       {returnStatus.append(.errUnclosedcomment) /* Fatal error */}
 			else if context == componentLiteral                     {returnStatus.append(.errUncloseddomlit) /* Fatal error */}
-			else if token   == stringCR || token == stringCRLF      {returnStatus.append(.errFwsCrlfEnd) /* Fatal error */}
-			else if parseData[componentDomain, default: ""].isEmpty {returnStatus.append(.errNodomain) /* Fatal error */}
+			else if token   == charCR                               {returnStatus.append(.errFwsCrlfEnd) /* Fatal error */}
+			else if parseData[componentDomain, default: []].isEmpty {returnStatus.append(.errNodomain) /* Fatal error */}
 			else if elementLen == 0                                 {returnStatus.append(.errDotEnd) /* Fatal error */}
 			else if hyphenFlag                                      {returnStatus.append(.errDomainhyphenend) /* Fatal error */}
 			/* https://tools.ietf.org/html/rfc5321#section-4.5.3.1.2
 			 *   The maximum total length of a domain name or number is 255 octets. */
-			else if parseData[componentDomain, default: ""].count > 255 {returnStatus.append(.rfc5322DomainToolong)}
+			else if parseData[componentDomain, default: []].count > 255 {returnStatus.append(.rfc5322DomainToolong)}
 			/* https://tools.ietf.org/html/rfc5321#section-4.1.2
 			 *   Forward-path   = Path
 			 *
@@ -1014,7 +1012,7 @@ extension Email {
 			 *   address in MAIL and RCPT commands of 254 characters.  Since addresses
 			 *   that do not fit in those fields are not normally useful, the upper
 			 *   limit on address lengths should normally be considered to be 254. */
-			else if (parseData[componentLocalpart, default: ""] + stringAt + parseData[componentDomain, default: ""]).count > 254 {returnStatus.append(.rfc5322Toolong)}
+			else if (parseData[componentLocalpart, default: []].count + 1 /* @ */ + parseData[componentDomain, default: []].count) > 254 {returnStatus.append(.rfc5322Toolong)}
 			/* https://tools.ietf.org/html/rfc1035#section-2.3.4
 			 * labels          63 octets or less */
 			else if elementLen > 63 {returnStatus.append(.rfc5322LabelToolong)}
@@ -1096,7 +1094,8 @@ extension Email {
 		if !dnsChecked && returnStatus.max(by: { $0.value < $1.value })!.value < ValidationCategory.dnswarn.value {
 			if elementCount == 0 {returnStatus.append(.rfc5321Tld)}
 			
-			if Int(String(atomList[componentDomain, default: [:]][elementCount, default: ""].first!)) != nil {
+			let scalar = UnicodeScalar(UInt8(bitPattern: atomList[componentDomain, default: [:]][elementCount, default: []].first!))
+			if Int(String(scalar)) != nil {
 				returnStatus.append(.rfc5321Tldnumeric)
 			}
 		}
@@ -1117,24 +1116,23 @@ extension Email {
 	private static let contextQuotedpair = 6
 	
 	/* Miscellaneous string constants */
-	private static let stringAt = "@"
-	private static let stringBackslash = "\\"
-	private static let stringDot = "."
-	private static let stringDQuote = "\""
-	private static let stringOpenParenthesis = "("
-	private static let stringCloseParenthesis = ")"
-	private static let stringOpenSquareBracket = "["
-	private static let stringCloseSquareBracket = "]"
-	private static let stringHyphen = "-"
+	private static let charAt = "@".utf8CString[0]
+	private static let charBackslash = "\\".utf8CString[0]
+	private static let charDot = ".".utf8CString[0]
+	private static let charDQuote = "\"".utf8CString[0]
+	private static let charOpenParenthesis = "(".utf8CString[0]
+	private static let charCloseParenthesis = ")".utf8CString[0]
+	private static let charOpenSquareBracket = "[".utf8CString[0]
+	private static let charCloseSquareBracket = "]".utf8CString[0]
+	private static let charHyphen = "-".utf8CString[0]
 	private static let charColon = Character(":")
 	private static let stringDoubleColon = "::"
-	private static let stringSpace = " "
-	private static let stringHTab = "\t"
-	private static let stringCR = "\r"
-	private static let stringLF = "\n"
-	private static let stringCRLF = "\r\n"
+	private static let charSpace = " ".utf8CString[0]
+	private static let charHTab = "\t".utf8CString[0]
+	private static let charCR = "\r".utf8CString[0]
+	private static let charLF = "\n".utf8CString[0]
 	private static let stringIPv6Tag = "IPv6:"
 	/* US-ASCII visible characters not valid for atext (https://tools.ietf.org/html/rfc5322#section-3.2.3) */
-	private static let stringSpecials = CharacterSet(charactersIn: "()<>[]:;@\\,.\"")
+	private static let specials = CharacterSet(charactersIn: "()<>[]:;@\\,.\"")
 	
 }
