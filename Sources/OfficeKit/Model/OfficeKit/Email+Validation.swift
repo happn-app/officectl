@@ -183,6 +183,7 @@ extension Email {
 					}
 					fallthrough
 					
+				case stringCRLF: fallthrough /* This case is not possible in PHP, but in Swift, because grapheme clusters, it is. */
 				case stringSpace: fallthrough
 				case stringHTab:
 					if elementLen == 0 {
@@ -384,6 +385,7 @@ extension Email {
 					}
 					fallthrough
 					
+				case stringCRLF: fallthrough /* This case is not possible in PHP, but in Swift, because grapheme clusters, it is. */
 				case stringSpace: fallthrough
 				case stringHTab:
 					if elementLen == 0 {
@@ -624,6 +626,7 @@ extension Email {
 					}
 					fallthrough
 
+				case stringCRLF: fallthrough /* This case is not possible in PHP, but in Swift, because grapheme clusters, it is. */
 				case stringSpace: fallthrough
 				case stringHTab:
 					returnStatus.append(.cfwsFws)
@@ -690,6 +693,7 @@ extension Email {
 					}
 					fallthrough
 					
+				case stringCRLF: fallthrough /* This case is not possible in PHP, but in Swift, because grapheme clusters, it is. */
 				case stringHTab:
 					/* https://tools.ietf.org/html/rfc5322#section-3.2.2
 					 *   Runs of FWS, comment, or CFWS that occur between lexical tokens in a
@@ -855,6 +859,7 @@ extension Email {
 					}
 					fallthrough
 					
+				case stringCRLF: fallthrough /* This case is not possible in PHP, but in Swift, because grapheme clusters, it is. */
 				case stringSpace: fallthrough
 				case stringHTab:
 					returnStatus.append(.cfwsFws)
@@ -906,8 +911,8 @@ extension Email {
 				 *   field could be composed entirely of white space.
 				 *
 				 *   obs-FWS         =   1*([CRLF] WSP) */
-				if tokenPrior == stringCR {
-					if token == stringCR {
+				if tokenPrior == stringCR || tokenPrior == stringCRLF {
+					if token == stringCR || token == stringCRLF {
 						returnStatus.append(.errFwsCrlfX2) /* Fatal error */
 						break
 					}
@@ -931,10 +936,11 @@ extension Email {
 					}
 					fallthrough
 					
+				case stringCRLF: fallthrough /* This case is not possible in PHP, but in Swift, because grapheme clusters, it is. */
 				case stringSpace: fallthrough
 				case stringHTab: (/*nop*/)
 				default:
-					guard tokenPrior != stringCR else {
+					guard tokenPrior != stringCR && tokenPrior != stringCRLF else {
 						returnStatus.append(.errFwsCrlfEnd) /* Fatal error */
 						break
 					}
@@ -983,7 +989,7 @@ extension Email {
 			else if context == contextQuotedpair                    {returnStatus.append(.errBackslashend) /* Fatal error */}
 			else if context == contextComment                       {returnStatus.append(.errUnclosedcomment) /* Fatal error */}
 			else if context == componentLiteral                     {returnStatus.append(.errUncloseddomlit) /* Fatal error */}
-			else if token   == stringCR                             {returnStatus.append(.errFwsCrlfEnd) /* Fatal error */}
+			else if token   == stringCR || token == stringCRLF      {returnStatus.append(.errFwsCrlfEnd) /* Fatal error */}
 			else if parseData[componentDomain, default: ""].isEmpty {returnStatus.append(.errNodomain) /* Fatal error */}
 			else if elementLen == 0                                 {returnStatus.append(.errDotEnd) /* Fatal error */}
 			else if hyphenFlag                                      {returnStatus.append(.errDomainhyphenend) /* Fatal error */}
@@ -1126,6 +1132,7 @@ extension Email {
 	private static let stringHTab = "\t"
 	private static let stringCR = "\r"
 	private static let stringLF = "\n"
+	private static let stringCRLF = "\r\n"
 	private static let stringIPv6Tag = "IPv6:"
 	/* US-ASCII visible characters not valid for atext (https://tools.ietf.org/html/rfc5322#section-3.2.3) */
 	private static let stringSpecials = CharacterSet(charactersIn: "()<>[]:;@\\,.\"")
