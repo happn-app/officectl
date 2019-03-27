@@ -22,7 +22,8 @@ let isEmailPrefix = "ISEMAIL_"
 let scriptURL = URL(fileURLWithPath: CommandLine.arguments[0], isDirectory: false)
 let projectDirURL = scriptURL.deletingLastPathComponent().deletingLastPathComponent()
 let xmlEmailMetaURL = URL(fileURLWithPath: "docs/isemail-php/test/meta.xml", isDirectory: false, relativeTo: projectDirURL)
-let xmlEmailTestsURL = URL(fileURLWithPath: "docs/isemail-php/test/tests.xml", isDirectory: false, relativeTo: projectDirURL)
+let xmlEmailTests1URL = URL(fileURLWithPath: "docs/isemail-php/test/tests.xml", isDirectory: false, relativeTo: projectDirURL)
+let xmlEmailTests2URL = URL(fileURLWithPath: "docs/isemail-php/test/tests-original.xml", isDirectory: false, relativeTo: projectDirURL)
 let swiftEmailTestsURL = URL(fileURLWithPath: "Tests/OfficeKitTests/EmailTests.swift", isDirectory: false, relativeTo: projectDirURL)
 let swiftEmailMetaURL = URL(fileURLWithPath: "Sources/OfficeKit/Model/OfficeKit/Email+ValidationCodes.swift", isDirectory: false, relativeTo: projectDirURL)
 
@@ -440,11 +441,15 @@ class EmailTests : XCTestCase {
 """
 
 /* Test file content, from XML. */
-guard let testsDocRoot = try? XMLDocument(contentsOf: xmlEmailTestsURL, options: []).rootElement() else {
-	print("error: cannot read XML input at \(xmlEmailTestsURL)", to: &mx_stderr)
+guard let tests1DocRoot = try? XMLDocument(contentsOf: xmlEmailTests1URL, options: []).rootElement() else {
+	print("error: cannot read XML input at \(xmlEmailTests1URL)", to: &mx_stderr)
 	exit(1)
 }
-for test in testsDocRoot.elements(forName: "test") {
+guard let tests2DocRoot = try? XMLDocument(contentsOf: xmlEmailTests2URL, options: []).rootElement() else {
+	print("error: cannot read XML input at \(xmlEmailTests2URL)", to: &mx_stderr)
+	exit(1)
+}
+for (id, test) in (tests1DocRoot.elements(forName: "test").map({ ("", $0) }) + tests2DocRoot.elements(forName: "test").map({ ("Original", $0) })) {
 	guard let testId = test.attribute(forName: "id")?.stringValue else {
 		print("warning: skipping a test which does not have an id; here is it’s string representation: \(test)", to: &mx_stderr)
 		continue
@@ -506,10 +511,10 @@ for test in testsDocRoot.elements(forName: "test") {
 	swiftEmailTestsFileContent += #"""
 	\#t
 		/* \#(fullSource.replacingOccurrences(of: "/*", with: "/​*").replacingOccurrences(of: "*/", with: "*​/")) */
-		func testXMLTestId\#(testId)() {
+		func testXMLTestId\#(id)\#(testId)() {
 			let email = \#(address.stringInGeneratedSwift())
 			let validationResult = Email.evaluateEmail(email, checkDNS: false)
-			XCTAssertEqual(validationResult.category, .\#(actualCategory))
+	//		XCTAssertEqual(validationResult.category, .\#(actualCategory)) /* On the original test set, the category is sometimes not correct. We _cannot_ fail the category (linked with diagnosis by autogeneration), so we don’t test that. */
 			XCTAssertEqual(validationResult, .\#(actualDiagnosis))
 		}
 	
