@@ -540,11 +540,11 @@ extension Email {
 						 *       It will always be time to change things later if we
 						 *       have issues. */
 						/* Extract IPv4 part from the end of the address-literal (if there is one) */
-						let regex = try! NSRegularExpression(pattern: "\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", options: [])
+						let regex = try! NSRegularExpression(pattern: #"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"#, options: [])
 						let matchesIP = regex.matches(in: addressLiteral, options: [], range: NSRange(location: 0, length: (addressLiteral as NSString).length))
 						if let matchIP = matchesIP.first {
 							let matched = (addressLiteral as NSString).substring(with: matchIP.range)
-							let i = addressLiteral.range(of: matched)!.lowerBound
+							let i = addressLiteral.range(of: matched, options: String.CompareOptions.backwards)!.lowerBound
 							if i != addressLiteral.startIndex {
 								addressLiteral = addressLiteral[..<i] + "0:0" /* Convert IPv4 part to IPv6 format for further testing */
 							}
@@ -558,7 +558,7 @@ extension Email {
 							returnStatus.append(.rfc5322Domainliteral)
 						} else {
 							let ipv6 = addressLiteral[addressLiteral.index(addressLiteral.startIndex, offsetBy: 5)...]
-							let matchesIP = ipv6.split(separator: charColon).map(String.init) /* Revision 2.7: Daniel Marschall's new IPv6 testing strategy */
+							let matchesIP = ipv6.split(separator: charColon, omittingEmptySubsequences: false).map(String.init) /* Revision 2.7: Daniel Marschall's new IPv6 testing strategy */
 							let groupCount = matchesIP.count
 							index = ipv6.range(of: stringDoubleColon)?.lowerBound
 							
