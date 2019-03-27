@@ -96,7 +96,7 @@ extension Email {
 		var endOrDie = false /* CFWS can only appear at the end of the element */
 		var i = email.startIndex
 		while i < email.endIndex {
-			var token = String(email[i])
+			token = String(email[i])
 			defer {if i < email.endIndex {i = email.index(after: i)}}
 			
 			switch context {
