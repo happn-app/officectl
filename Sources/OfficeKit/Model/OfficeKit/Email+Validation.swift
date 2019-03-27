@@ -53,6 +53,34 @@ import Foundation
 
 extension Email {
 	
+	private struct ParseData {
+		
+		var localPart: [CChar]
+		var domain: [CChar]
+		
+		var literal: [CChar]?
+		
+		init() {
+			localPart = []
+			domain = []
+			
+			literal = nil
+		}
+		
+	}
+	
+	private struct AtomList {
+		
+		var localPart: [Int: [CChar]]
+		var domain: [Int: [CChar]]
+		
+		init() {
+			localPart = [:]
+			domain = [:]
+		}
+		
+	}
+	
 	/** Check that an email address conforms to RFCs 5321, 5322 and others.
 	
 	As of Version 3.0, we are now distinguishing clearly between a Mailbox as
@@ -77,7 +105,7 @@ extension Email {
 		 * which is not convenient…) */
 		let email = email.utf8CString
 		
-		var returnStatus = [ValidationDiagnosis.valid]
+		var returnStatuses = [ValidationDiagnosis.valid]
 		
 		/* Parse the address into components, character by character. */
 		let rawLength = email.count-1
@@ -86,14 +114,8 @@ extension Email {
 		var contextPrior = componentLocalpart /* Where we just came from */
 		var token = CChar(0) /* The current character */
 		var tokenPrior = CChar(0) /* The previous character */
-		var parseData = [ /* The components of the address */
-			componentLocalpart: [CChar](),
-			componentDomain: [CChar]()
-		]
-		var atomList = [ /* For the dot-atom elements of the address */
-			componentLocalpart: [Int: [CChar]](),
-			componentDomain: [Int: [CChar]]()
-		]
+		var parseData = ParseData()
+		var atomList = AtomList()
 		var elementCount = 0
 		var elementLen = 0
 		var crlfCount: Int?
@@ -130,9 +152,9 @@ extension Email {
 				case charOpenParenthesis:
 					if elementLen == 0 {
 						/* Comments are OK at the beginning of an element */
-						returnStatus.append(elementCount == 0 ? .cfwsComment : .deprecComment)
+						returnStatuses.append(elementCount == 0 ? .cfwsComment : .deprecComment)
 					} else {
-						returnStatus.append(.cfwsComment)
+						returnStatuses.append(.cfwsComment)
 						endOrDie = true /* We can't start a comment in the middle of an element, so this better be the end */
 					}
 					
@@ -143,13 +165,13 @@ extension Email {
 				case charDot:
 					if elementLen == 0 {
 						/* Another dot, already? */
-						returnStatus.append(elementCount == 0 ? .errDotStart : .errConsecutivedots) /* Fatal error */
+						returnStatuses.append(elementCount == 0 ? .errDotStart : .errConsecutivedots) /* Fatal error */
 					} else {
 						/* The entire local-part can be a quoted string for RFC 5321
 						 * If it's just one atom that is quoted then it's an RFC 5322
 						 * obsolete form */
 						if endOrDie {
-							returnStatus.append(.deprecLocalpart)
+							returnStatuses.append(.deprecLocalpart)
 						}
 					}
 					
@@ -158,8 +180,8 @@ extension Email {
 					endOrDie = false /* CFWS & quoted strings are OK again now we're at the beginning of an element (although they are obsolete forms) */
 					elementLen = 0
 					elementCount += 1
-					parseData[componentLocalpart, default: []].append(token)
-					atomList[componentLocalpart, default: [:]][elementCount] = []
+					parseData.localPart.append(token)
+					atomList.localPart[elementCount] = []
 					
 				/* Quoted string */
 				case charDQuote:
@@ -167,23 +189,23 @@ extension Email {
 						/* The entire local-part can be a quoted string for RFC 5321
 						 * If it's just one atom that is quoted then it's an RFC 5322
 						 * obsolete form */
-						returnStatus.append(elementCount == 0 ? .rfc5321Quotedstring : .deprecLocalpart)
+						returnStatuses.append(elementCount == 0 ? .rfc5321Quotedstring : .deprecLocalpart)
 						
-						parseData[componentLocalpart, default: []].append(token)
-						atomList[componentLocalpart, default: [:]][elementCount, default: []].append(token)
+						parseData.localPart.append(token)
+						atomList.localPart[elementCount, default: []].append(token)
 						elementLen += 1
 						endOrDie = true /* Quoted string must be the entire element */
 						contextStack.append(context)
 						context = contextQuotedstring
 					} else {
-						returnStatus.append(.errExpectingAtext) /* Fatal error */
+						returnStatuses.append(.errExpectingAtext) /* Fatal error */
 					}
 					
 				/* Folding White Space */
 				case charCR:
 					i = email.index(after: i)
 					guard i < email.endIndex && email[i] == charLF else {
-						returnStatus.append(.errCrNoLf) /* Fatal error */
+						returnStatuses.append(.errCrNoLf) /* Fatal error */
 						break
 					}
 					fallthrough
@@ -191,7 +213,7 @@ extension Email {
 				case charSpace: fallthrough
 				case charHTab:
 					if elementLen == 0 {
-						returnStatus.append(elementCount == 0 ? .cfwsFws : .deprecFws)
+						returnStatuses.append(elementCount == 0 ? .cfwsFws : .deprecFws)
 					} else {
 						endOrDie = true /* We can't start FWS in the middle of an element, so this better be the end */
 					}
@@ -205,15 +227,15 @@ extension Email {
 					/* At this point we should have a valid local-part */
 					assert(contextStack.count == 1, "Unexpected item on context stack")
 					
-					if parseData[componentLocalpart, default: []].isEmpty {
-						returnStatus.append(.errNolocalpart) /* Fatal error */
+					if parseData.localPart.isEmpty {
+						returnStatuses.append(.errNolocalpart) /* Fatal error */
 					} else if elementLen == 0 {
-						returnStatus.append(.errDotEnd) /* Fatal error */
-					} else if parseData[componentLocalpart, default: []].count > 64 {
+						returnStatuses.append(.errDotEnd) /* Fatal error */
+					} else if parseData.localPart.count > 64 {
 						/* https://tools.ietf.org/html/rfc5321#section-4.5.3.1.1
 						 *   The maximum total length of a user name or other local-part is 64
 						 *   octets. */
-						returnStatus.append(.rfc5322LocalToolong)
+						returnStatuses.append(.rfc5322LocalToolong)
 					} else if (contextPrior == contextComment) || (contextPrior == contextFws) {
 						/* https://tools.ietf.org/html/rfc5322#section-3.4.1
 						 *   Comments and folding white space
@@ -225,7 +247,7 @@ extension Email {
 						 *    particular behavior is acceptable or even useful, but the full
 						 *    implications should be understood and the case carefully weighed
 						 *    before implementing any behavior described with this label. */
-						returnStatus.append(.deprecCfwsNearAt)
+						returnStatuses.append(.deprecCfwsNearAt)
 					}
 					
 					/* Clear everything down for the domain parsing */
@@ -253,8 +275,8 @@ extension Email {
 						/* We have encountered atext where it is no longer valid */
 						switch contextPrior {
 						case contextComment:      fallthrough
-						case contextFws:          returnStatus.append(.errAtextAfterCfws)
-						case contextQuotedstring: returnStatus.append(.errAtextAfterQs)
+						case contextFws:          returnStatuses.append(.errAtextAfterCfws)
+						case contextQuotedstring: returnStatuses.append(.errAtextAfterQs)
 						default:                  fatalError("More atext found where none is allowed, but unrecognised prior context: \(contextPrior)")
 						}
 					} else {
@@ -263,11 +285,11 @@ extension Email {
 						let scalar = UnicodeScalar(ord)
 						
 						if ord < 33 || ord > 126 || ord == 10 || specials.contains(scalar) {
-							returnStatus.append(.errExpectingAtext) /* Fatal error */
+							returnStatuses.append(.errExpectingAtext) /* Fatal error */
 						}
 						
-						parseData[componentLocalpart, default: []].append(token)
-						atomList[componentLocalpart, default: [:]][elementCount, default: []].append(token)
+						parseData.localPart.append(token)
+						atomList.localPart[elementCount, default: []].append(token)
 						elementLen += 1
 					}
 				}
@@ -323,9 +345,9 @@ extension Email {
 						/* Comments at the start of the domain are deprecated in the text
 						 * Comments at the start of a subdomain are obs-domain
 						 * (https://tools.ietf.org/html/rfc5322#section-3.4.1) */
-						returnStatus.append(elementCount == 0 ? .deprecCfwsNearAt : .deprecComment)
+						returnStatuses.append(elementCount == 0 ? .deprecCfwsNearAt : .deprecComment)
 					} else {
-						returnStatus.append(.cfwsComment)
+						returnStatuses.append(.cfwsComment)
 						endOrDie = true /* We can't start a comment in the middle of an element, so this better be the end */
 					}
 					
@@ -336,10 +358,10 @@ extension Email {
 				case charDot:
 					if elementLen == 0 {
 						/* Another dot, already? */
-						returnStatus.append(elementCount == 0 ? .errDotStart : .errConsecutivedots) /* Fatal error */
+						returnStatuses.append(elementCount == 0 ? .errDotStart : .errConsecutivedots) /* Fatal error */
 					} else if hyphenFlag {
 						/* Previous subdomain ended in a hyphen */
-						returnStatus.append(.errDomainhyphenend) /* Fatal error */
+						returnStatuses.append(.errDomainhyphenend) /* Fatal error */
 					} else {
 						/* Nowhere in RFC 5321 does it say explicitly that the domain
 						 * part of a Mailbox must be a valid domain according to the
@@ -354,7 +376,7 @@ extension Email {
 						 * https://tools.ietf.org/html/rfc1035#section-2.3.4
 						 * labels          63 octets or less */
 						if elementLen > 63 {
-							returnStatus.append(.rfc5322LabelToolong)
+							returnStatuses.append(.rfc5322LabelToolong)
 						}
 					}
 					
@@ -363,28 +385,28 @@ extension Email {
 					endOrDie = false /* CFWS is OK again now we're at the beginning of an element (although it may be obsolete CFWS) */
 					elementLen = 0
 					elementCount += 1
-					atomList[componentDomain, default: [:]][elementCount] = []
-					parseData[componentDomain, default: []].append(token)
+					atomList.domain[elementCount] = []
+					parseData.domain.append(token)
 					
 				/* Domain literal */
 				case charOpenSquareBracket:
-					if parseData[componentDomain, default: []] == [] {
+					if parseData.domain.isEmpty {
 						endOrDie = true /* Domain literal must be the only component */
 						elementLen += 1
 						contextStack.append(context)
 						context = componentLiteral
-						parseData[componentDomain, default: []].append(token)
-						atomList[componentDomain, default: [:]][elementCount, default: []].append(token)
-						parseData[componentLiteral] = []
+						parseData.domain.append(token)
+						atomList.domain[elementCount, default: []].append(token)
+						parseData.literal = []
 					} else {
-						returnStatus.append(.errExpectingAtext) /* Fatal error */
+						returnStatuses.append(.errExpectingAtext) /* Fatal error */
 					}
 					
 				/* Folding White Space */
 				case charCR:
 					i = email.index(after: i)
 					guard i < email.endIndex && email[i] == charLF else {
-						returnStatus.append(.errCrNoLf) /* Fatal error */
+						returnStatuses.append(.errCrNoLf) /* Fatal error */
 						break
 					}
 					fallthrough
@@ -392,9 +414,9 @@ extension Email {
 				case charSpace: fallthrough
 				case charHTab:
 					if elementLen == 0 {
-						returnStatus.append(elementCount == 0 ? .deprecCfwsNearAt : .deprecFws)
+						returnStatuses.append(elementCount == 0 ? .deprecCfwsNearAt : .deprecFws)
 					} else {
-						returnStatus.append(.cfwsFws)
+						returnStatuses.append(.cfwsFws)
 						endOrDie = true /* We can't start FWS in the middle of an element, so this better be the end */
 					}
 					
@@ -430,8 +452,8 @@ extension Email {
 						/* We have encountered atext where it is no longer valid */
 						switch contextPrior {
 						case contextComment:   fallthrough
-						case contextFws:       returnStatus.append(.errAtextAfterCfws)
-						case componentLiteral: returnStatus.append(.errAtextAfterDomlit)
+						case contextFws:       returnStatuses.append(.errAtextAfterCfws)
+						case componentLiteral: returnStatuses.append(.errAtextAfterDomlit)
 						default:               fatalError("More atext found where none is allowed, but unrecognised prior context: \(contextPrior)")
 						}
 					}
@@ -441,21 +463,21 @@ extension Email {
 					hyphenFlag = false /* Assume this token isn't a hyphen unless we discover it is */
 					
 					if ord < 33 || ord > 126 || specials.contains(scalar) {
-						returnStatus.append(.errExpectingAtext) /* Fatal error */
+						returnStatuses.append(.errExpectingAtext) /* Fatal error */
 					} else if token == charHyphen {
 						if elementLen == 0 {
 							/* Hyphens can't be at the beginning of a subdomain */
-							returnStatus.append(.errDomainhyphenstart) /* Fatal error */
+							returnStatuses.append(.errDomainhyphenstart) /* Fatal error */
 						}
 						
 						hyphenFlag = true
 					} else if !((ord > 47 && ord < 58) || (ord > 64 && ord < 91) || (ord > 96 && ord < 123)) {
 						/* Not an RFC 5321 subdomain, but still OK by RFC 5322 */
-						returnStatus.append(.rfc5322Domain)
+						returnStatuses.append(.rfc5322Domain)
 					}
 					
-					parseData[componentDomain, default: []].append(token)
-					atomList[componentDomain, default: [:]][elementCount, default: []].append(token)
+					parseData.domain.append(token)
+					atomList.domain[elementCount, default: []].append(token)
 					elementLen += 1
 				}
 				
@@ -475,7 +497,7 @@ extension Email {
 				/* End of domain literal */
 				case charCloseSquareBracket:
 					/* FLFL: Is the bang on the line below valid? */
-					if returnStatus.max(by: { $0.value < $1.value })!.value < ValidationCategory.deprec.value {
+					if returnStatuses.max(by: { $0.value < $1.value })!.value < ValidationCategory.deprec.value {
 						/* Could be a valid RFC 5321 address literal, so let's check */
 						
 						/* https://tools.ietf.org/html/rfc5321#section-4.1.2
@@ -534,7 +556,7 @@ extension Email {
 						 *       let’s do what the original author did. */
 						var maxGroups = 8
 						var index: String.Index?
-						var addressLiteral = String(cString: parseData[componentLiteral]! + [0])
+						var addressLiteral = String(cString: parseData.literal! + [0])
 						
 						/* FLFL: I’m not so sure about the validity of the algorithm
 						 *       to parse the IPs. Nevertheless, I copied it from the
@@ -556,9 +578,9 @@ extension Email {
 						
 						if index == addressLiteral.startIndex {
 							/* Nothing there except a valid IPv4 address, so... */
-							returnStatus.append(.rfc5321Addressliteral)
+							returnStatuses.append(.rfc5321Addressliteral)
 						} else if !addressLiteral.hasPrefix(stringIPv6Tag) {
-							returnStatus.append(.rfc5322Domainliteral)
+							returnStatuses.append(.rfc5322Domainliteral)
 						} else {
 							let ipv6 = addressLiteral[addressLiteral.index(addressLiteral.startIndex, offsetBy: 5)...]
 							let matchesIP = ipv6.split(separator: charColon, omittingEmptySubsequences: false).map(String.init) /* Revision 2.7: Daniel Marschall's new IPv6 testing strategy */
@@ -567,22 +589,22 @@ extension Email {
 							
 							if let index = index {
 								if index != ipv6.range(of: stringDoubleColon, options: String.CompareOptions.backwards)?.lowerBound {
-									returnStatus.append(.rfc5322Ipv62X2Xcolon)
+									returnStatuses.append(.rfc5322Ipv62X2Xcolon)
 								} else {
 									if index == ipv6.startIndex || index == ipv6.index(ipv6.endIndex, offsetBy: -2) {
 										maxGroups += 1 /* RFC 4291 allows :: at the start or end of an address with 7 other groups in addition */
 									}
 									
 									if groupCount > maxGroups {
-										returnStatus.append(.rfc5322Ipv6Maxgrps)
+										returnStatuses.append(.rfc5322Ipv6Maxgrps)
 									} else if groupCount == maxGroups {
-										returnStatus.append(.rfc5321Ipv6Deprecated) /* Eliding a single "::" */
+										returnStatuses.append(.rfc5321Ipv6Deprecated) /* Eliding a single "::" */
 									}
 								}
 							} else {
 								/* We need exactly the right number of groups */
 								if groupCount != maxGroups {
-									returnStatus.append(.rfc5322Ipv6Grpcount)
+									returnStatuses.append(.rfc5322Ipv6Grpcount)
 								}
 							}
 							
@@ -595,28 +617,28 @@ extension Email {
 							let indexN2 = ipv6.index(indexN0, offsetBy: -2, limitedBy: ipv6.startIndex) ?? ipv6.startIndex
 							let regex = try! NSRegularExpression(pattern: "^[0-9A-Fa-f]{0,4}$", options: [])
 							if ipv6[index0..<index1] == String(charColon) && ipv6[index1..<index2] != String(charColon) {
-								returnStatus.append(.rfc5322Ipv6Colonstrt) /* Address starts with a single colon */
+								returnStatuses.append(.rfc5322Ipv6Colonstrt) /* Address starts with a single colon */
 							} else if ipv6[indexN1..<indexN0] == String(charColon) && ipv6[indexN2..<indexN1] != String(charColon) {
-								returnStatus.append(.rfc5322Ipv6Colonend) /* Address ends with a single colon */
+								returnStatuses.append(.rfc5322Ipv6Colonend) /* Address ends with a single colon */
 							} else if matchesIP.first(where: { regex.numberOfMatches(in: $0, options: [], range: NSRange(location: 0, length: ($0 as NSString).length)) == 0 }) != nil {
 								/* FLFL: We have one element in returnStatus that do **not** match the regex. */
-								returnStatus.append(.rfc5322Ipv6Badchar) /* Check for unmatched characters */
+								returnStatuses.append(.rfc5322Ipv6Badchar) /* Check for unmatched characters */
 							} else {
-								returnStatus.append(.rfc5321Addressliteral)
+								returnStatuses.append(.rfc5321Addressliteral)
 							}
 						}
 					} else {
-						returnStatus.append(.rfc5322Domainliteral)
+						returnStatuses.append(.rfc5322Domainliteral)
 					}
 					
-					parseData[componentDomain, default: []].append(token)
-					atomList[componentDomain, default: [:]][elementCount, default: []].append(token)
+					parseData.domain.append(token)
+					atomList.domain[elementCount, default: []].append(token)
 					elementLen += 1
 					contextPrior = context
 					context = contextStack.removeLast()
 					
 				case charBackslash:
-					returnStatus.append(.rfc5322DomlitObsdtext)
+					returnStatuses.append(.rfc5322DomlitObsdtext)
 					contextStack.append(context)
 					context = contextQuotedpair
 					
@@ -624,14 +646,14 @@ extension Email {
 				case charCR:
 					i = email.index(after: i)
 					guard i < email.endIndex && email[i] == charLF else {
-						returnStatus.append(.errCrNoLf) /* Fatal error */
+						returnStatuses.append(.errCrNoLf) /* Fatal error */
 						break
 					}
 					fallthrough
 
 				case charSpace: fallthrough
 				case charHTab:
-					returnStatus.append(.cfwsFws)
+					returnStatuses.append(.cfwsFws)
 					
 					contextStack.append(context)
 					context = contextFws
@@ -655,15 +677,16 @@ extension Email {
 					
 					/* CR, LF, SP & HTAB have already been parsed above */
 					if ord > 127 || ord == 0 || token == charOpenSquareBracket {
-						returnStatus.append(.errExpectingDtext) /* Fatal error */
+						returnStatuses.append(.errExpectingDtext) /* Fatal error */
 						break
 					} else if ord < 33 || ord == 127 {
-						returnStatus.append(.rfc5322DomlitObsdtext)
+						returnStatuses.append(.rfc5322DomlitObsdtext)
 					}
 					
-					parseData[componentLiteral, default: []].append(token)
-					parseData[componentDomain, default: []].append(token)
-					atomList[componentDomain, default: [:]][elementCount, default: []].append(token)
+					if parseData.literal == nil {parseData.literal = []}
+					parseData.literal!.append(token)
+					parseData.domain.append(token)
+					atomList.domain[elementCount, default: []].append(token)
 					elementLen += 1
 				}
 				
@@ -689,7 +712,7 @@ extension Email {
 				case charCR:
 					i = email.index(after: i)
 					guard i < email.endIndex && email[i] == charLF else {
-						returnStatus.append(.errCrNoLf) /* Fatal error */
+						returnStatuses.append(.errCrNoLf) /* Fatal error */
 						break
 					}
 					fallthrough
@@ -703,19 +726,19 @@ extension Email {
 					/* https://tools.ietf.org/html/rfc5322#section-3.2.4
 					 *   the CRLF in any FWS/CFWS that appears within the quoted-string [is]
 					 *   semantically "invisible" and therefore not part of the quoted-string */
-					parseData[componentLocalpart, default: []].append(charSpace)
-					atomList[componentLocalpart, default: [:]][elementCount, default: []].append(charSpace)
+					parseData.localPart.append(charSpace)
+					atomList.domain[elementCount, default: []].append(charSpace)
 					elementLen += 1
 					
-					returnStatus.append(.cfwsFws)
+					returnStatuses.append(.cfwsFws)
 					contextStack.append(context)
 					context = contextFws
 					tokenPrior = token
 					
 				/* End of quoted string */
 				case charDQuote:
-					parseData[componentLocalpart, default: []].append(token)
-					atomList[componentLocalpart, default: [:]][elementCount, default: []].append(token)
+					parseData.localPart.append(token)
+					atomList.localPart[elementCount, default: []].append(token)
 					elementLen += 1
 					contextPrior = context
 					context = contextStack.removeLast()
@@ -738,13 +761,13 @@ extension Email {
 					let ord = UInt8(bitPattern: token)
 					
 					if ord > 127 || ord == 0 || ord == 10 {
-						returnStatus.append(.errExpectingQtext) /* Fatal error */
+						returnStatuses.append(.errExpectingQtext) /* Fatal error */
 					} else if ord < 32 || ord == 127 {
-						returnStatus.append(.deprecQtext)
+						returnStatuses.append(.deprecQtext)
 					}
 					
-					parseData[componentLocalpart, default: []].append(token)
-					atomList[componentLocalpart, default: [:]][elementCount, default: []].append(token)
+					parseData.localPart.append(token)
+					atomList.localPart[elementCount, default: []].append(token)
 					elementLen += 1
 				}
 				
@@ -778,9 +801,9 @@ extension Email {
 				let ord = UInt8(bitPattern: token)
 				
 				if	ord > 127 {
-					returnStatus.append(.errExpectingQpair) /* Fatal error */
+					returnStatuses.append(.errExpectingQpair) /* Fatal error */
 				} else if (ord < 31 && ord != 9) || (ord == 127) /* SP & HTAB are allowed */ {
-					returnStatus.append(.deprecQp)
+					returnStatuses.append(.deprecQp)
 				}
 				
 				/* At this point we know where this qpair occurred so
@@ -796,16 +819,16 @@ extension Email {
 				switch context {
 				case contextComment: (/*nop*/)
 				case contextQuotedstring:
-					parseData[componentLocalpart, default: []].append(charBackslash)
-					parseData[componentLocalpart, default: []].append(token)
-					atomList[componentLocalpart, default: [:]][elementCount, default: []].append(charBackslash)
-					atomList[componentLocalpart, default: [:]][elementCount, default: []].append(token)
+					parseData.localPart.append(charBackslash)
+					parseData.localPart.append(token)
+					atomList.localPart[elementCount, default: []].append(charBackslash)
+					atomList.localPart[elementCount, default: []].append(token)
 					elementLen += 2 /* The maximum sizes specified by RFC 5321 are octet counts, so we must include the backslash */
 				case componentLiteral:
-					parseData[componentDomain, default: []].append(charBackslash)
-					parseData[componentDomain, default: []].append(token)
-					atomList[componentDomain, default: [:]][elementCount, default: []].append(charBackslash)
-					atomList[componentDomain, default: [:]][elementCount, default: []].append(token)
+					parseData.domain.append(charBackslash)
+					parseData.domain.append(token)
+					atomList.domain[elementCount, default: []].append(charBackslash)
+					atomList.domain[elementCount, default: []].append(token)
 					elementLen += 2 /* The maximum sizes specified by RFC 5321 are octet counts, so we must include the backslash */
 				default:
 					fatalError("Quoted pair logic invoked in an invalid context: \(context)")
@@ -855,14 +878,14 @@ extension Email {
 				case charCR:
 					i = email.index(after: i)
 					guard i < email.endIndex && email[i] == charLF else {
-						returnStatus.append(.errCrNoLf) /* Fatal error */
+						returnStatuses.append(.errCrNoLf) /* Fatal error */
 						break
 					}
 					fallthrough
 					
 				case charSpace: fallthrough
 				case charHTab:
-					returnStatus.append(.cfwsFws)
+					returnStatuses.append(.cfwsFws)
 					
 					contextStack.append(context)
 					context = contextFws
@@ -886,10 +909,10 @@ extension Email {
 					let ord = UInt8(bitPattern: token)
 					
 					if ord > 127 || ord == 0 || ord == 10 {
-						returnStatus.append(.errExpectingCtext) /* Fatal error */
+						returnStatuses.append(.errExpectingCtext) /* Fatal error */
 						break
 					} else if ord < 32 || ord == 127 {
-						returnStatus.append(.deprecCtext)
+						returnStatuses.append(.deprecCtext)
 					}
 				}
 				
@@ -912,13 +935,13 @@ extension Email {
 				 *   obs-FWS         =   1*([CRLF] WSP) */
 				if tokenPrior == charCR {
 					if token == charCR {
-						returnStatus.append(.errFwsCrlfX2) /* Fatal error */
+						returnStatuses.append(.errFwsCrlfX2) /* Fatal error */
 						break
 					}
 					
 					if let c = crlfCount {
 						if c > 0 {
-							returnStatus.append(.deprecFws) /* Multiple folds = obsolete FWS */
+							returnStatuses.append(.deprecFws) /* Multiple folds = obsolete FWS */
 						}
 						crlfCount = c + 1
 					} else {
@@ -930,7 +953,7 @@ extension Email {
 				case charCR:
 					i = email.index(after: i)
 					guard i < email.endIndex && email[i] == charLF else {
-						returnStatus.append(.errCrNoLf) /* Fatal error */
+						returnStatuses.append(.errCrNoLf) /* Fatal error */
 						break
 					}
 					fallthrough
@@ -939,7 +962,7 @@ extension Email {
 				case charHTab: (/*nop*/)
 				default:
 					guard tokenPrior != charCR else {
-						returnStatus.append(.errFwsCrlfEnd) /* Fatal error */
+						returnStatuses.append(.errFwsCrlfEnd) /* Fatal error */
 						break
 					}
 					
@@ -976,24 +999,24 @@ extension Email {
 			}
 			
 			/* FLFL: Is the bang on the line below valid? */
-			guard returnStatus.max(by: { $0.value < $1.value })!.value <= ValidationCategory.rfc5322.value else {
+			guard returnStatuses.max(by: { $0.value < $1.value })!.value <= ValidationCategory.rfc5322.value else {
 				break /* No point going on if we've got a fatal error */
 			}
 		}
 		
 		/* FLFL: Is the bang on the line below valid? */
-		if returnStatus.max(by: { $0.value < $1.value })!.value < ValidationCategory.rfc5322.value {
-			if      context == contextQuotedstring                  {returnStatus.append(.errUnclosedquotedstr) /* Fatal error */}
-			else if context == contextQuotedpair                    {returnStatus.append(.errBackslashend) /* Fatal error */}
-			else if context == contextComment                       {returnStatus.append(.errUnclosedcomment) /* Fatal error */}
-			else if context == componentLiteral                     {returnStatus.append(.errUncloseddomlit) /* Fatal error */}
-			else if token   == charCR                               {returnStatus.append(.errFwsCrlfEnd) /* Fatal error */}
-			else if parseData[componentDomain, default: []].isEmpty {returnStatus.append(.errNodomain) /* Fatal error */}
-			else if elementLen == 0                                 {returnStatus.append(.errDotEnd) /* Fatal error */}
-			else if hyphenFlag                                      {returnStatus.append(.errDomainhyphenend) /* Fatal error */}
+		if returnStatuses.max(by: { $0.value < $1.value })!.value < ValidationCategory.rfc5322.value {
+			if      context == contextQuotedstring {returnStatuses.append(.errUnclosedquotedstr) /* Fatal error */}
+			else if context == contextQuotedpair   {returnStatuses.append(.errBackslashend) /* Fatal error */}
+			else if context == contextComment      {returnStatuses.append(.errUnclosedcomment) /* Fatal error */}
+			else if context == componentLiteral    {returnStatuses.append(.errUncloseddomlit) /* Fatal error */}
+			else if token   == charCR              {returnStatuses.append(.errFwsCrlfEnd) /* Fatal error */}
+			else if parseData.domain.isEmpty       {returnStatuses.append(.errNodomain) /* Fatal error */}
+			else if elementLen == 0                {returnStatuses.append(.errDotEnd) /* Fatal error */}
+			else if hyphenFlag                     {returnStatuses.append(.errDomainhyphenend) /* Fatal error */}
 			/* https://tools.ietf.org/html/rfc5321#section-4.5.3.1.2
 			 *   The maximum total length of a domain name or number is 255 octets. */
-			else if parseData[componentDomain, default: []].count > 255 {returnStatus.append(.rfc5322DomainToolong)}
+			else if parseData.domain.count > 255 {returnStatuses.append(.rfc5322DomainToolong)}
 			/* https://tools.ietf.org/html/rfc5321#section-4.1.2
 			 *   Forward-path   = Path
 			 *
@@ -1012,15 +1035,15 @@ extension Email {
 			 *   address in MAIL and RCPT commands of 254 characters.  Since addresses
 			 *   that do not fit in those fields are not normally useful, the upper
 			 *   limit on address lengths should normally be considered to be 254. */
-			else if (parseData[componentLocalpart, default: []].count + 1 /* @ */ + parseData[componentDomain, default: []].count) > 254 {returnStatus.append(.rfc5322Toolong)}
+			else if (parseData.localPart.count + 1 /* @ */ + parseData.domain.count) > 254 {returnStatuses.append(.rfc5322Toolong)}
 			/* https://tools.ietf.org/html/rfc1035#section-2.3.4
 			 * labels          63 octets or less */
-			else if elementLen > 63 {returnStatus.append(.rfc5322LabelToolong)}
+			else if elementLen > 63 {returnStatuses.append(.rfc5322LabelToolong)}
 		}
 		
 		let dnsChecked = false
 		/* FLFL: Is the bang on the line below valid? */
-		if checkDNS && returnStatus.max(by: { $0.value < $1.value })!.value < ValidationCategory.dnswarn.value/* && function_exists('dns_get_record'))*/ {
+		if checkDNS && returnStatuses.max(by: { $0.value < $1.value })!.value < ValidationCategory.dnswarn.value/* && function_exists('dns_get_record'))*/ {
 			/* https://tools.ietf.org/html/rfc5321#section-2.3.5
 			 *   Names that can
 			 *   be resolved to MX RRs or address (i.e., A or AAAA) RRs (as discussed
@@ -1091,16 +1114,16 @@ extension Email {
 		 *   form #.#.#.#, since this change does not permit the highest-level
 		 *   component label to start with a digit even if it is not all-numeric. */
 		/* FLFL: Is the bang on the line below valid? */
-		if !dnsChecked && returnStatus.max(by: { $0.value < $1.value })!.value < ValidationCategory.dnswarn.value {
-			if elementCount == 0 {returnStatus.append(.rfc5321Tld)}
+		if !dnsChecked && returnStatuses.max(by: { $0.value < $1.value })!.value < ValidationCategory.dnswarn.value {
+			if elementCount == 0 {returnStatuses.append(.rfc5321Tld)}
 			
-			let scalar = UnicodeScalar(UInt8(bitPattern: atomList[componentDomain, default: [:]][elementCount, default: []].first!))
+			let scalar = UnicodeScalar(UInt8(bitPattern: atomList.domain[elementCount, default: []].first!))
 			if Int(String(scalar)) != nil {
-				returnStatus.append(.rfc5321Tldnumeric)
+				returnStatuses.append(.rfc5321Tldnumeric)
 			}
 		}
 		
-		let finalStatus = returnStatus.max(by: { $0.value < $1.value })!
+		let finalStatus = returnStatuses.max(by: { $0.value < $1.value })!
 		return finalStatus
 	}
 	
