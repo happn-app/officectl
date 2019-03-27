@@ -511,7 +511,7 @@ for (id, test) in (tests1DocRoot.elements(forName: "test").map({ ("", $0) }) + t
 	swiftEmailTestsFileContent += #"""
 	\#t
 		/* \#(fullSource.replacingOccurrences(of: "/*", with: "/​*").replacingOccurrences(of: "*/", with: "*​/")) */
-		func testXMLTestId\#(id)\#(testId)() {
+		func testXMLTest\#(id)\#(testId)() {
 			let email = \#(address.stringInGeneratedSwift())
 			let validationResult = Email.evaluateEmail(email, checkDNS: false)
 	//		XCTAssertEqual(validationResult.category, .\#(actualCategory)) /* On the original test set, the category is sometimes not correct. We _cannot_ fail the category (linked with diagnosis by autogeneration), so we don’t test that. */
