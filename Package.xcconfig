@@ -1,2 +1,0 @@
-// Set macOS deployment target to 10.13 for our project
-MACOSX_DEPLOYMENT_TARGET = 10.13
