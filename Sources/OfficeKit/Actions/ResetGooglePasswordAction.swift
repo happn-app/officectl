@@ -7,7 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
 import SemiSingleton
 import Vapor
 
@@ -41,8 +40,8 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 		super.init(subject: u)
 	}
 	
-	public override func unsafeStart(parameters newPassword: String, handler: @escaping (AsyncOperationResult<Void>) -> Void) throws {
-		guard let email = subject.email else {return handler(.error(InvalidArgumentError(message: "Got a user with no email; this is unsupported to reset the Google password.")))}
+	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
+		guard let email = subject.email else {return handler(.failure(InvalidArgumentError(message: "Got a user with no email; this is unsupported to reset the Google password.")))}
 		
 		let asyncConfig = try container.make(AsyncConfig.self)
 		let singletonStore = try container.make(SemiSingletonStore.self)
@@ -90,7 +89,7 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 		}
 		f.whenFailure{ error in
 			/* Error. Let’s call the handler. */
-			handler(.error(error))
+			handler(.failure(error))
 		}
 	}
 	

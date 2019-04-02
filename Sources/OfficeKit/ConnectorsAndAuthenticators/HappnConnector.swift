@@ -7,7 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
 import URLRequestOperation
 
 #if canImport(CommonCrypto)
@@ -87,7 +86,7 @@ public class HappnConnector : Connector, Authenticator {
 	   MARK: - Authenticator Implementation
 	   ************************************ */
 	
-	public func authenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
+	public func authenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
 		connectorOperationQueue.addAsyncBlock{ endHandler in
 			self.unsafeAuthenticate(request: request, handler: { (result, userInfo) in
 				endHandler()
@@ -195,10 +194,10 @@ public class HappnConnector : Connector, Authenticator {
 		op.start()
 	}
 	
-	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
+	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
 		/* Make sure we're connected */
 		guard let auth = auth else {
-			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
+			handler(RError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."]), nil)
 			return
 		}
 		

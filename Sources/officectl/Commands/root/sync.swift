@@ -7,7 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
 import Guaka
 import Vapor
 
@@ -175,7 +174,7 @@ private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDisting
 private func usersFromGoogle(connector: GoogleJWTConnector, searchedDomain: String, baseDN: LDAPDistinguishedName, asyncConfig: AsyncConfig) -> EventLoopFuture<(SourceId, [User])> {
 	let searchOp = SearchGoogleUsersOperation(searchedDomain: searchedDomain, query: "isSuspended=false", googleConnector: connector)
 	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: {
-		(.google, try $0.result.successValueOrThrow().map{ User(googleUser: $0, baseDN: baseDN) })
+		(.google, try $0.result.get().map{ User(googleUser: $0, baseDN: baseDN) })
 	})
 }
 

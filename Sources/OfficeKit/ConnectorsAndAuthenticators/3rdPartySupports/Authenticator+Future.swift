@@ -21,7 +21,7 @@ public extension Authenticator {
 		authenticate(request: request, handler: { result, userInfo in
 			switch result {
 			case .success(let success): promise.succeed(result: (result: success, userInfo: userInfo))
-			case .error(let error):     promise.fail(error: error)
+			case .failure(let error):   promise.fail(error: error)
 			}
 		})
 		return promise.futureResult

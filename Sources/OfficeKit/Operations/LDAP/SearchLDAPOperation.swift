@@ -7,7 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
 import RetryingOperation
 
 import COpenLDAP
@@ -24,9 +23,9 @@ public class SearchLDAPOperation : RetryingOperation, HasResult {
 	public let ldapConnector: LDAPConnector
 	public let request: LDAPSearchRequest
 	
-	public private(set) var results = AsyncOperationResult<ResultType>.error(OperationIsNotFinishedError())
+	public private(set) var results = Result<ResultType, Error>.failure(OperationIsNotFinishedError())
 	public func resultOrThrow() throws -> ResultType {
-		return try results.successValueOrThrow()
+		return try results.get()
 	}
 	
 	public init(ldapConnector c: LDAPConnector, request r: LDAPSearchRequest) {
@@ -63,7 +62,7 @@ public class SearchLDAPOperation : RetryingOperation, HasResult {
 		
 		guard searchResultError == LDAP_SUCCESS else {
 //			print("Cannot search LDAP: \(String(cString: ldap_err2string(searchResultError)))", to: &stderrStream)
-			results = AORError(domain: "com.happn.officectl.openldap", code: Int(searchResultError), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(searchResultError))])
+			results = RError(domain: "com.happn.officectl.openldap", code: Int(searchResultError), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(searchResultError))])
 			return
 		}
 		

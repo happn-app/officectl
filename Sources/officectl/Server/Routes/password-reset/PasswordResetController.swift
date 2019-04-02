@@ -80,11 +80,11 @@ final class PasswordResetController {
 				isSuccessful: resetPasswordAction.result?.isSuccessful ?? false,
 				ldapResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
 					isExecuting: resetPasswordAction.ldapResetResult == nil || resetPasswordAction.resetLDAPPasswordAction.isExecuting,
-					errorStr: resetPasswordAction.ldapResetResult?.error?.localizedDescription
+					errorStr: resetPasswordAction.ldapResetResult?.failureValue?.localizedDescription
 				),
 				googleResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
 					isExecuting: resetPasswordAction.googleResetResult == nil || resetPasswordAction.resetGooglePasswordAction.isExecuting,
-					errorStr: resetPasswordAction.googleResetResult?.error?.localizedDescription
+					errorStr: resetPasswordAction.googleResetResult?.failureValue?.localizedDescription
 				)
 			)
 			return view.render("PasswordResetStatusPage", context)

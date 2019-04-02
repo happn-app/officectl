@@ -7,8 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
-
 
 
 /** The weakening mode for an Action. When the `TimeInterval` is `nil`, the
@@ -56,7 +54,7 @@ public class Action<SubjectType, ParametersType, ResultType> {
 	public let subject: SubjectType
 	public var latestParameters: ParametersType?
 	
-	public var result: AsyncOperationResult<ResultType>? {
+	public var result: Result<ResultType, Error>? {
 		return stateSyncQueue.sync{
 			switch currentState {
 			case .running, .idleWeak:                                             return nil
@@ -89,7 +87,7 @@ public class Action<SubjectType, ParametersType, ResultType> {
 	default), the only way to retrieve the result of the action is through the
 	handler given as argument of this method. A weak action always have a `nil`
 	result. */
-	public final func start(parameters: ParametersType, weakeningMode: WeakeningMode = WeakeningMode.defaultMode, handler: ((_ result: AsyncOperationResult<ResultType>) -> Void)?) {
+	public final func start(parameters: ParametersType, weakeningMode: WeakeningMode = WeakeningMode.defaultMode, handler: ((_ result: Result<ResultType, Error>) -> Void)?) {
 		/* Set ourselves running if not already running, fail start otherwise. */
 		let wasAlreadyRunning = stateSyncQueue.sync{ () -> Bool in
 			guard !currentState.isRunning else {return true}
@@ -98,23 +96,23 @@ public class Action<SubjectType, ParametersType, ResultType> {
 			return false
 		}
 		guard !wasAlreadyRunning else {
-			handler?(.error(OperationAlreadyInProgressError()))
+			handler?(.failure(OperationAlreadyInProgressError()))
 			return
 		}
 		
 		/* Handler when the action is over. */
-		let privateHandler = { (result: AsyncOperationResult<ResultType>) -> Void in
+		let privateHandler = { (result: Result<ResultType, Error>) -> Void in
 			self.stateSyncQueue.sync{
 				let weaken: Bool
 				let weakeningDelay: TimeInterval?
-				switch (weakeningMode, result.isSuccessful) {
-				case (.never, _):                                          weaken = false; weakeningDelay = nil
-				case (.onSuccess(delay: let d), true):                     weaken = true;  weakeningDelay = d
-				case (.onSuccess, false):                                  weaken = false; weakeningDelay = nil
-				case (.onError(delay: let d), false):                      weaken = true;  weakeningDelay = d
-				case (.onError, true):                                     weaken = false; weakeningDelay = nil
-				case (.always(successDelay: let d, errorDelay: _), true):  weaken = true;  weakeningDelay = d
-				case (.always(successDelay: _, errorDelay: let d), false): weaken = true;  weakeningDelay = d
+				switch (weakeningMode, result) {
+				case (.never, _):                                             weaken = false; weakeningDelay = nil
+				case (.onSuccess(delay: let d), .success):                    weaken = true;  weakeningDelay = d
+				case (.onSuccess, .failure):                                  weaken = false; weakeningDelay = nil
+				case (.onError(delay: let d), .failure):                      weaken = true;  weakeningDelay = d
+				case (.onError, .success):                                    weaken = false; weakeningDelay = nil
+				case (.always(successDelay: let d, errorDelay: _), .success): weaken = true;  weakeningDelay = d
+				case (.always(successDelay: _, errorDelay: let d), .failure): weaken = true;  weakeningDelay = d
 				}
 				if weaken {
 					if let delay = weakeningDelay {
@@ -139,7 +137,7 @@ public class Action<SubjectType, ParametersType, ResultType> {
 		} catch {
 			/* There was a sync error starting the action; let's call the end
 			 * handler directly. */
-			privateHandler(.error(error))
+			privateHandler(.failure(error))
 		}
 	}
 	
@@ -178,7 +176,7 @@ public class Action<SubjectType, ParametersType, ResultType> {
 	
 	Call the handler when the action is done. You can call the handler
 	synchronously or asynchronously. */
-	public /* protected */ func unsafeStart(parameters: ParametersType, handler: @escaping (_ result: AsyncOperationResult<ResultType>) -> Void) throws {
+	public /* protected */ func unsafeStart(parameters: ParametersType, handler: @escaping (_ result: Result<ResultType, Error>) -> Void) throws {
 	}
 	
 	/* ***************
@@ -192,7 +190,7 @@ public class Action<SubjectType, ParametersType, ResultType> {
 		/** The action is not running and has a forced reference to itself (the
 		action keeps a strong reference to itself). If the weakening timer is nil,
 		the action will never weaken on its own. */
-		case idleStrong(result: AsyncOperationResult<ResultType>, weakeningTimer: DispatchSourceTimer?, selfReference: Action)
+		case idleStrong(result: Result<ResultType, Error>, weakeningTimer: DispatchSourceTimer?, selfReference: Action)
 		
 		/** The action is running (and has a forced reference to itself). */
 		case running(selfReference: Action)

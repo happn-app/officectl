@@ -26,7 +26,7 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 //	let f = c.connect(scope: (), asyncConfig: asyncConfig)
 //	.then{ _ -> Future<[GitHubRepository]> in
 //		let op = GitHubRepositorySearchOperation(searchedOrganisation: "happn-app", gitHubConnector: c)
-//		return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
+//		return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.get() })
 //	}
 //	.then{ repositories -> Future<[FutureResult<[Hook]>]> in
 //		let ops = repositories.map{ rep -> AuthenticatedJSONOperation<[Hook]> in
@@ -72,7 +72,7 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 //	let f = c.connect(scope: ModifyGoogleUserOperation.scopes, asyncConfig: asyncConfig)
 //	.then{ _ -> EventLoopFuture<GoogleUser> in
 //		let searchOp = GetGoogleUserOperation(userKey: "deletion.test@happn.fr", connector: c)
-//		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
+//		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.get() })
 //	}
 //	.then{ user -> EventLoopFuture<Void> in
 //		var user = user

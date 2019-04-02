@@ -7,7 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
 import SemiSingleton
 import Vapor
 
@@ -24,11 +23,11 @@ public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 	public let resetLDAPPasswordAction: ResetLDAPPasswordAction
 	public let resetGooglePasswordAction: ResetGooglePasswordAction
 	
-	public private(set) var ldapResetResult: AsyncOperationResult<Void>?
-	public private(set) var googleResetResult: AsyncOperationResult<Void>?
+	public private(set) var ldapResetResult: Result<Void, Error>?
+	public private(set) var googleResetResult: Result<Void, Error>?
 	
 	var errors: [Error] {
-		return [self.ldapResetResult?.error, self.googleResetResult?.error].compactMap{ $0 }
+		return [self.ldapResetResult?.failureValue, self.googleResetResult?.failureValue].compactMap{ $0 }
 	}
 	
 	public required init(key u: User, additionalInfo: Container, store: SemiSingletonStore) {
@@ -40,7 +39,7 @@ public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 		super.init(subject: u)
 	}
 	
-	public override func unsafeStart(parameters newPassword: String, handler: @escaping (AsyncOperationResult<Void>) -> Void) throws {
+	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Error>) -> Void) throws {
 		let operationQueue = try container.make(AsyncConfig.self).operationQueue
 		
 		ldapResetResult = nil
@@ -62,7 +61,7 @@ public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 		let endOperation = BlockOperation{
 			let errorCollection = ErrorCollection(self.errors)
 			if errorCollection.errors.isEmpty {handler(.success(()))}
-			else                              {handler(.error(errorCollection))}
+			else                              {handler(.failure(errorCollection))}
 		}
 		resetOperations.forEach{ endOperation.addDependency($0) }
 		

@@ -7,7 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
 import Guaka
 import RetryingOperation
 import Vapor
@@ -29,11 +28,11 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
 	.then{ _ -> EventLoopFuture<[GoogleUser]> in /* Fetch happn.fr users */
 		let searchOp = SearchGoogleUsersOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
-		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
+		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.get() })
 	}
 	.then{ happnFrUsers -> EventLoopFuture<[GoogleUser]> in /* Fetch happnambassadeur.com users */
 		let searchOp = SearchGoogleUsersOperation(searchedDomain: "happnambassadeur.com", googleConnector: googleConnector)
-		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try happnFrUsers + $0.result.successValueOrThrow() })
+		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try happnFrUsers + $0.result.get() })
 	}
 	.then{ allUsers -> EventLoopFuture<[URL]> in /* Backup given mails */
 		let filteredUsers = allUsers.filter{ usersFilter?.contains($0.primaryEmail.stringValue) ?? true }

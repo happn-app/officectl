@@ -7,7 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
 import Guaka
 import Vapor
 

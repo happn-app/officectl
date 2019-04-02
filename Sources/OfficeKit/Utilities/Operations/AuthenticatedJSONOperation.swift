@@ -22,7 +22,7 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 		return r
 	}
 	
-	public typealias Authenticator = (_ request: URLRequest, _ handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) -> Void
+	public typealias Authenticator = (_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void
 	public let authenticator: Authenticator?
 	
 	public let decoder: JSONDecoder
@@ -56,7 +56,7 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 			return
 		}
 		
-		authenticator(originalRequest, { r, _ in handler(r) })
+		authenticator(originalRequest, { r, _ in handler(r.asyncOperationResult) })
 	}
 	
 	public override func computeRetryInfo(sourceError error: Error?, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {

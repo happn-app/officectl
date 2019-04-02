@@ -7,8 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
-
 
 
 public final class GitHubJWTConnector : Connector, Authenticator {
@@ -88,7 +86,7 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 	   MARK: - Authenticator Implementation
 	   ************************************ */
 	
-	public func authenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
+	public func authenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
 		connectorOperationQueue.addAsyncBlock{ endHandler in
 			self.unsafeAuthenticate(request: request, handler: { (result, userInfo) in
 				endHandler()
@@ -117,13 +115,13 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 		
 	}
 	
-	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
+	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
 		/* Make sure we're connected. (Note: at the time of writing, it is
 		 * technically impossible for isConnected to be true and auth to be nil.
 		 * We could in theory bang the auth variable, but putting it in the guard
 		 * is more elegant IMHO.) */
 		guard isConnected, let auth = auth else {
-			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
+			handler(RError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."]), nil)
 			return
 		}
 		
