@@ -9,7 +9,7 @@ import Foundation
 
 
 
-public extension OperationQueue {
+extension OperationQueue {
 	
 	public convenience init(name n: String) {
 		self.init()

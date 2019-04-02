@@ -63,8 +63,10 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 			let passwordData = Data(newPassword.utf8)
 			#if canImport(CommonCrypto) || canImport(CCommonCrypto)
 				var sha1 = Data(count: Int(CC_SHA1_DIGEST_LENGTH))
-				passwordData.withUnsafeBytes{ (passwordDataBytes: UnsafePointer<UInt8>) in
-					sha1.withUnsafeMutableBytes{ (sha1Bytes: UnsafeMutablePointer<UInt8>) in
+				passwordData.withUnsafeBytes{ (passwordDataBytes: UnsafeRawBufferPointer) in
+					let passwordDataBytes = passwordDataBytes.bindMemory(to: UInt8.self).baseAddress!
+					sha1.withUnsafeMutableBytes{ (sha1Bytes: UnsafeMutableRawBufferPointer) in
+						let sha1Bytes = sha1Bytes.bindMemory(to: UInt8.self).baseAddress!
 						/* The call below should returns sha1Bytes (says the man). */
 						_ = CC_SHA1(passwordDataBytes, CC_LONG(passwordData.count), sha1Bytes)
 					}

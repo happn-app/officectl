@@ -14,7 +14,7 @@ import Vapor
 
 public extension EventLoopFuture {
 	
-	public static func waitAll(_ futures: [EventLoopFuture<T>], eventLoop: EventLoop) -> EventLoopFuture<[FutureResult<T>]> {
+	static func waitAll(_ futures: [EventLoopFuture<T>], eventLoop: EventLoop) -> EventLoopFuture<[FutureResult<T>]> {
 		/* No need for this assert, we hop the future to the event loop. */
 //		assert(futures.reduce(true, { val, future in val && future.eventLoop === eventLoop }))
 		let f0 = eventLoop.newSucceededFuture(result: [FutureResult<T>]())

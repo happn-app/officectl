@@ -240,9 +240,12 @@ public class HappnConnector : Connector, Authenticator {
 			let finalHMAC: Data?
 			#if canImport(CommonCrypto) || canImport(CCommonCrypto)
 				var hmac = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
-				key.withUnsafeBytes{ (keyBytes: UnsafePointer<Int8>) in
-					content.withUnsafeBytes{ (dataBytes: UnsafePointer<Int8>) in
-						hmac.withUnsafeMutableBytes{ (hmacBytes: UnsafeMutablePointer<Int8>) in
+				key.withUnsafeBytes{ (keyBytes: UnsafeRawBufferPointer) in
+					let keyBytes = keyBytes.bindMemory(to: Int8.self).baseAddress!
+					content.withUnsafeBytes{ (dataBytes: UnsafeRawBufferPointer) in
+						let dataBytes = dataBytes.bindMemory(to: Int8.self).baseAddress!
+						hmac.withUnsafeMutableBytes{ (hmacBytes: UnsafeMutableRawBufferPointer) in
+							let hmacBytes = hmacBytes.bindMemory(to: Int8.self).baseAddress!
 							CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA256), keyBytes, key.count, dataBytes, content.count, hmacBytes)
 						}
 					}
