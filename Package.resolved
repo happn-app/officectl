@@ -56,6 +56,15 @@
         }
       },
       {
+        "package": "EmailValidator",
+        "repositoryURL": "https://github.com/happn-tech/EmailValidator.git",
+        "state": {
+          "branch": "master",
+          "revision": "edc15729e10f920cd8da7091d27d50637fbf537b",
+          "version": null
+        }
+      },
+      {
         "package": "Fluent",
         "repositoryURL": "https://github.com/vapor/fluent.git",
         "state": {
