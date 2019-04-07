@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/vapor/core.git",
         "state": {
           "branch": null,
-          "revision": "727ae2905ebdca162c5da5bfe187c406555859e2",
-          "version": "3.7.3"
+          "revision": "02f1d0d0eabe68f10d1efa0decdfa0e6e737e985",
+          "version": "3.8.0"
         }
       },
       {
@@ -96,8 +96,8 @@
         "repositoryURL": "https://github.com/vapor/http.git",
         "state": {
           "branch": null,
-          "revision": "8da7d475a1a060714766d9ad4b24eb0dae243aab",
-          "version": "3.1.11"
+          "revision": "254a0a0cbf22a02b697a075a0d2ddbb448bb7c87",
+          "version": "3.2.0"
         }
       },
       {
@@ -141,8 +141,8 @@
         "repositoryURL": "https://github.com/happn-tech/RetryingOperation.git",
         "state": {
           "branch": null,
-          "revision": "6dcf5c46a1fc0bd45475b4b9ae827e6b640bfe6d",
-          "version": "1.1.2"
+          "revision": "3174f54bf598c58eb0953dcc4f07bdb2ba2a7a4d",
+          "version": "1.1.3"
         }
       },
       {
@@ -312,8 +312,8 @@
         "repositoryURL": "https://github.com/behrang/YamlSwift.git",
         "state": {
           "branch": null,
-          "revision": "978901aed4025e36ebf60c040c9000c559d7c3e0",
-          "version": "3.4.3"
+          "revision": "287f5cab7da0d92eb947b5fd8151b203ae04a9a3",
+          "version": "3.4.4"
         }
       }
     ]
