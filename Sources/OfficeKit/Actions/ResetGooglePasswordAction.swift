@@ -82,7 +82,7 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 			return user
 		}
 		.then{ user -> Future<Void> in
-			let modifyUserOperation = ModifyGoogleUserOperation(user: user, propertiesToUpdate: Set(arrayLiteral: "hashFunction", "password", "changePasswordAtNextLogin"), connector: connector)
+			let modifyUserOperation = ModifyGoogleUserOperation(user: user, propertiesToUpdate: Set(arrayLiteral: .hashFunction, .password, .changePasswordAtNextLogin), connector: connector)
 			return asyncConfig.eventLoop.future(from: modifyUserOperation, queue: asyncConfig.operationQueue)
 		}
 		f.whenSuccess{ _ in

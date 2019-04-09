@@ -83,6 +83,15 @@
         }
       },
       {
+        "package": "GenericJSON",
+        "repositoryURL": "https://github.com/zoul/generic-json-swift.git",
+        "state": {
+          "branch": "release/1.2.0",
+          "revision": "ac8962de3011d1a1623895abe8e25aeadcfce3ba",
+          "version": null
+        }
+      },
+      {
         "package": "Guaka",
         "repositoryURL": "https://github.com/klaas/Guaka.git",
         "state": {
