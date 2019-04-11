@@ -29,7 +29,7 @@ extension OfficeKitConfig.GoogleConfig {
 		let userBehalf = f.getString(name: "google-admin-email") ?? yamlGoogleConfig?["admin_email"].string
 		let connectorSettings = GoogleJWTConnector.Settings(jsonCredentialsURL: URL(fileURLWithPath: credsURLString, isDirectory: false), userBehalf: userBehalf)
 		
-		self.init(connectorSettings: connectorSettings, primaryDomains: domains)
+		self.init(connectorSettings: connectorSettings, primaryDomains: Set(domains))
 	}
 	
 }

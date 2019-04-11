@@ -18,8 +18,12 @@ public struct OfficeKitConfig {
 		public var peopleBaseDNPerDomain: [String: LDAPDistinguishedName]?
 		public var adminGroupsDN: [LDAPDistinguishedName]
 		
-		public var allBaseDNs: [LDAPDistinguishedName] {
-			return Array(baseDNPerDomain.values)
+		public var allBaseDNs: Set<LDAPDistinguishedName> {
+			return Set(baseDNPerDomain.values)
+		}
+		
+		public var allDomains: Set<String> {
+			return Set(baseDNPerDomain.keys)
 		}
 		
 		/**
@@ -60,9 +64,9 @@ public struct OfficeKitConfig {
 	public struct GoogleConfig {
 		
 		public var connectorSettings: GoogleJWTConnector.Settings
-		public var primaryDomains: [String]
+		public var primaryDomains: Set<String>
 		
-		public init(connectorSettings c: GoogleJWTConnector.Settings, primaryDomains d: [String]) {
+		public init(connectorSettings c: GoogleJWTConnector.Settings, primaryDomains d: Set<String>) {
 			connectorSettings = c
 			primaryDomains = d
 		}

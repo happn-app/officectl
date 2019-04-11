@@ -87,10 +87,13 @@ class UsersController {
 		let asyncConfig = try req.make(AsyncConfig.self)
 		let officeKitConfig = officectlConfig.officeKitConfig
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
-		let baseDNs = try officeKitConfig.ldapConfigOrThrow().allBaseDNs
-		let ldapConnectorConfig = try officeKitConfig.ldapConfigOrThrow().connectorSettings
-		let googleConnectorConfig = try officeKitConfig.googleConfigOrThrow().connectorSettings
+		
+		let ldapConfig = try officeKitConfig.ldapConfigOrThrow()
+		let ldapConnectorConfig = ldapConfig.connectorSettings
 		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
+		
+		let googleConfig = try officeKitConfig.googleConfigOrThrow()
+		let googleConnectorConfig = googleConfig.connectorSettings
 		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: googleConnectorConfig)
 		
 		return EventLoopFuture<Void>.andAll([
@@ -98,28 +101,29 @@ class UsersController {
 			googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
 		], eventLoop: req.eventLoop)
 		.then{ _ in
-			let searchLDAPOperations = baseDNs
+			let searchLDAPOperations = ldapConfig.allBaseDNs
 				.map{ LDAPSearchRequest(scope: .children, base: $0, searchQuery: nil, attributesToFetch: ["objectClass", "uid", "givenName", "mail", "sn", "cn", "sshPublicKey"]) }
 				.map{ SearchLDAPOperation(ldapConnector: ldapConnector, request: $0) }
 			let searchLDAPFutures = searchLDAPOperations
 				.map{ req.eventLoop.future(from: $0, queue: asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } } }
+			let searchLDAPFuture = Future.reduce([], searchLDAPFutures, eventLoop: req.eventLoop, +)
 			
-			return Future.reduce([], searchLDAPFutures, eventLoop: req.eventLoop, +)
+			let searchGoogleOperations = googleConfig.primaryDomains.intersection(ldapConfig.allDomains)
+				.map{ SearchGoogleUsersOperation(searchedDomain: $0, query: "isSuspended=false", googleConnector: googleConnector) }
+			let searchGoogleFutures = searchGoogleOperations
+				.map{ req.eventLoop.future(from: $0, queue: asyncConfig.operationQueue) }
+			let searchGoogleFuture = Future.reduce([], searchGoogleFutures, eventLoop: req.eventLoop, +)
+			
+			return searchLDAPFuture.and(searchGoogleFuture)
 		}
-		.then{ (ldapUsers: [LDAPInetOrgPersonWithObject]) -> Future<ApiResponse<[User]>> in
-//			var googleUsers = googleUsers
-			
-			/* Let’s build the merge of the LDAP and Google users objects. */
-			/* First take all LDAP objects and merge w/ Google objects. */
-			var users = ldapUsers.compactMap{ ldapObject -> User? in
+		.then{ (ldapUsers: [LDAPInetOrgPersonWithObject], googleUsers: [GoogleUser]) -> Future<ApiResponse<[User]>> in
+			/* Let’s take all LDAP objects and merge them w/ Google objects. */
+			let users = ldapUsers.compactMap{ ldapObject -> User? in
 				guard var user = User(ldapInetOrgPersonWithObject: ldapObject) else {return nil}
 				
-//				user.googleUserId = googleUsers.first(where: { $0.primaryEmail.happnFrVariant() == user.email?.happnFrVariant() })?.id
-//				googleUsers.removeAll(where: { $0.primaryEmail.happnFrVariant() == user.email?.happnFrVariant() })
+				user.googleUserId = googleUsers.first(where: { $0.primaryEmail.happnFrVariant() == user.email?.happnFrVariant() })?.id
 				return user
 			}
-			/* Then add Google objects that were not in LDAP. */
-//			users += googleUsers.map{ User(googleUser: $0) }
 			
 			return req.future(ApiResponse.data(users))
 		}
