@@ -30,11 +30,15 @@ class UsersController {
 		/*
 		let asyncConfig = try req.make(AsyncConfig.self)
 		let officeKitConfig = officectlConfig.officeKitConfig
-		let baseDNs = try officeKitConfig.ldapConfigOrThrow().allBaseDNs
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
-		let ldapConnectorConfig = try officeKitConfig.ldapConfigOrThrow().connectorSettings
-		let googleConnectorConfig = try officeKitConfig.googleConfigOrThrow().connectorSettings
+		let aliases = officeKitConfig.domainAliases
+		
+		let ldapConfig = try officeKitConfig.ldapConfigOrThrow()
+		let ldapConnectorConfig = ldapConfig.connectorSettings
 		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
+		
+		let googleConfig = try officeKitConfig.googleConfigOrThrow()
+		let googleConnectorConfig = googleConfig.connectorSettings
 		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: googleConnectorConfig)
 		
 		#warning("TODO")
@@ -63,8 +67,8 @@ class UsersController {
 			var users = ldapUsers.compactMap{ ldapObject -> User? in
 				guard var user = User(ldapInetOrgPersonWithObject: ldapObject) else {return nil}
 				
-				user.googleUserId = googleUsers.first(where: { $0.primaryEmail.happnFrVariant() == user.email?.happnFrVariant() })?.id
-				googleUsers.removeAll(where: { $0.primaryEmail.happnFrVariant() == user.email?.happnFrVariant() })
+				user.googleUserId = googleUsers.first(where: { $0.primaryEmail.primaryDomainVariant(aliasMap: aliases) == user.email?.primaryDomainVariant(aliasMap: aliases) })?.id
+				googleUsers.removeAll(where: { $0.primaryEmail.primaryDomainVariant(aliasMap: aliases) == user.email?.primaryDomainVariant(aliasMap: aliases) })
 				return user
 			}
 			/* Then add Google objects that were not in LDAP. */
@@ -87,6 +91,7 @@ class UsersController {
 		let asyncConfig = try req.make(AsyncConfig.self)
 		let officeKitConfig = officectlConfig.officeKitConfig
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
+		let aliases = officeKitConfig.domainAliases
 		
 		let ldapConfig = try officeKitConfig.ldapConfigOrThrow()
 		let ldapConnectorConfig = ldapConfig.connectorSettings
@@ -121,7 +126,7 @@ class UsersController {
 			let users = ldapUsers.compactMap{ ldapObject -> User? in
 				guard var user = User(ldapInetOrgPersonWithObject: ldapObject) else {return nil}
 				
-				user.googleUserId = googleUsers.first(where: { $0.primaryEmail.happnFrVariant() == user.email?.happnFrVariant() })?.id
+				user.googleUserId = googleUsers.first(where: { $0.primaryEmail.primaryDomainVariant(aliasMap: aliases) == user.email?.primaryDomainVariant(aliasMap: aliases) })?.id
 				return user
 			}
 			

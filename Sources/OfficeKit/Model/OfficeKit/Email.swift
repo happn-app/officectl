@@ -21,8 +21,9 @@ public struct Email {
 	}
 	
 	public init?(string: String) {
-		/* For the time being we only do this validation. In a future tine,
-		 * EmailValidator will return thw full, parsed email (getting rid of
+		#warning("TODO: Proper mail validation")
+		/* For the time being we only do this validation. In a future time,
+		 * EmailValidator will return the full, parsed email (getting rid of
 		 * comments, etc.). */
 		guard EmailValidator(string: string).evaluateEmail().category.value < EmailValidator.ValidationCategory.err.value else {
 			return nil
@@ -34,6 +35,7 @@ public struct Email {
 	}
 	
 	public init?(username un: String, domain d: String) {
+		#warning("TODO: Proper mail validation")
 		guard !un.isEmpty, !d.isEmpty else {return nil}
 		username = un
 		domain = d
@@ -44,16 +46,11 @@ public struct Email {
 		domain = newDomain ?? e.domain
 	}
 	
-	@available(*, deprecated, message: "This is happn-specific.")
-	public func happnFrVariant() -> Email {
-		if domain == "happn.com" {return Email(username: username, domain: "happn.fr")!}
-		return Email(self)
-	}
-	
-	@available(*, deprecated, message: "This is happn-specific.")
-	public func happnComVariant() -> Email {
-		if domain == "happn.fr" {return Email(username: username, domain: "happn.com")!}
-		return Email(self)
+	public func primaryDomainVariant(aliasMap: [String: String]) -> Email {
+		if let primary = aliasMap[domain] {
+			return Email(self, newDomain: primary)
+		}
+		return self
 	}
 	
 }
