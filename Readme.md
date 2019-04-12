@@ -1,15 +1,137 @@
 # officectl
 
+## REST API
+
+### Basics
+
+All requests (except the auth request) must contain the following header:
+```
+Authorization: Bearer <token>
+```
+
+All responses are formatted as such:
+```
+{
+   "error": ErrorObject or null
+   "data": CallTypeDependentObject or null
+}
+If error is null, data won’t be null and vice-versa.
+```
+
+### Object Types
+
+The `Error` Object:
+```
+   "code": Int
+   "domain": String
+   "message": String
+```
+
+The `PasswordReset` Object:
+```
+{
+   "id": String (Always a valid LDAP DN)
+   "is_executing": Bool
+   "services": [
+      ServicePasswordResetObject,
+      ServicePasswordResetObject,
+      ...
+   ]
+}
+```
+
+The `ServicePasswordReset` Object:
+```
+{
+   "ldap_id": String (Always a valid LDAP DN)
+   "service_id": String
+   "is_executing": Bool
+   "error": Error or null
+}
+```
+
+### Endpoints
+
+**POST** `/auth/login`
+```
+Description: Retrieve a new access token.
+
+Parameters:
+   username: String (Must be a valid DN)
+   password: String
+
+Returns an object with the following properties:
+   expiration_date: String (Alway a valid ISO 8601 Date)
+   token: String
+   is_admin: Bool
+```
+
+**POST** `/auth/logout`
+```
+Description: Revoke an access token.
+
+Returns: The string "ok".
+
+Note: Currently the logout does not do anything. It might in the future
+actually disable the token.
+```
+
+**GET** `/api/users/[:ldap_id]`
+```
+Description: List all users in the LDAP, or fetch a specific user. Only an
+admin is allowed to list the users. Normal users are only allowed to fetch
+themselves.
+
+Returns an object or a collection of objects with the following properties:
+   ldap_id: String or null
+   first_name: String or null
+   last_name: String or null
+   ssh_key: String or null
+   github_id: String or null
+   google_id: String or null
+```
+
+**GET** `/api/password-resets/[:ldap_dn]`
+```
+Description: List all password resets in progress. Only an admin is
+allowed to list the resets. Normal users are only allowed to fetch the
+reset concerning their own account.
+
+Returns a PasswordReset, or a collection of PasswordReset.
+```
+
+**POST** `/api/password-resets/`
+```
+Description: Create a new password reset. Only admins are allowed to reset
+the password of somebody else than themselves and without specifying the
+current password.
+
+Parameters:
+   username: String (Must be a valid DN)
+   old_password: String or null
+   new_password: String
+
+Returns a PasswordReset.
+```
+
+**DELETE** `/api/password-resets/:ldap_dn`
+```
+Description: Delete a password reset.
+
+Returns: The string "ok".
+```
+
 ## Compilation On macOS
 
 **For macOS**
 ```bash
 Scripts/build_for_macos.sh
 ```
+Builds the repo directly.
 
 **For Linux**
 ```bash
-Scripts/build_for_linux_on_macos.sh
+Scripts/build_for_linux_on_macos.sh [treeish]
 ```
 You’ll need to have Docker running.
 I did not find a way to have ssh re-use the SSH auth sock of macOS, so I mounted the ssh private
