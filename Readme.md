@@ -20,6 +20,14 @@ If error is null, data won’t be null and vice-versa.
 
 ### Object Types
 
+The `OfficectlId` Object:
+```
+   This is a string with the following format:
+     service_id + ":" + id_of_object_for_given_service
+   
+   Obviously the service_id cannot contain a colon. The id on the service might though.
+```
+
 The `Error` Object:
 ```
    "code": Int
@@ -27,11 +35,28 @@ The `Error` Object:
    "message": String
 ```
 
+The `User` Object:
+```
+{
+   "id": OfficectlUserId
+   
+   "ldap_id": String or null
+   "github_id": String or null
+   "google_id": String or null
+   
+   "first_name": String or null
+   "last_name": String or null
+   
+   "ssh_key": String or null
+}
+```
+
 The `PasswordReset` Object:
 ```
 {
-   "id": String (Always a valid LDAP DN)
-   "is_executing": Bool
+   "user_id": OfficectlUserId
+   
+   "is_executing": Bool (true if any service password reset is executing)
    "services": [
       ServicePasswordResetObject,
       ServicePasswordResetObject,
@@ -43,8 +68,12 @@ The `PasswordReset` Object:
 The `ServicePasswordReset` Object:
 ```
 {
-   "ldap_id": String (Always a valid LDAP DN)
    "service_id": String
+   
+   "user_id": OfficectlUserId
+   "service_user_id": String or null (The service id (GitHub ID, etc.) of
+                      the user whose pass is being reset; null if not found yet)
+   
    "is_executing": Bool
    "error": Error or null
 }
@@ -57,7 +86,7 @@ The `ServicePasswordReset` Object:
 Description: Retrieve a new access token.
 
 Parameters:
-   username: String (Must be a valid DN)
+   username: String (Must be a valid *LDAP DN*)
    password: String
 
 Returns an object with the following properties:
@@ -76,22 +105,16 @@ Note: Currently the logout does not do anything. It might in the future
 actually disable the token.
 ```
 
-**GET** `/api/users/[:ldap_id]`
+**GET** `/api/users/[:officectl_user_id]`
 ```
 Description: List all users in the LDAP, or fetch a specific user. Only an
 admin is allowed to list the users. Normal users are only allowed to fetch
 themselves.
 
-Returns an object or a collection of objects with the following properties:
-   ldap_id: String or null
-   first_name: String or null
-   last_name: String or null
-   ssh_key: String or null
-   github_id: String or null
-   google_id: String or null
+Returns a User, or a collection of User.
 ```
 
-**GET** `/api/password-resets/[:ldap_dn]`
+**GET** `/api/password-resets/[:officectl_user_id]`
 ```
 Description: List all password resets in progress. Only an admin is
 allowed to list the resets. Normal users are only allowed to fetch the
@@ -100,21 +123,22 @@ reset concerning their own account.
 Returns a PasswordReset, or a collection of PasswordReset.
 ```
 
-**POST** `/api/password-resets/`
+**PUT** `/api/password-resets/[:officectl_user_id]`
 ```
 Description: Create a new password reset. Only admins are allowed to reset
 the password of somebody else than themselves and without specifying the
 current password.
+If a password reset was already in progress for the given user, the call
+will fail. 
 
 Parameters:
-   username: String (Must be a valid DN)
    old_password: String or null
    new_password: String
 
 Returns a PasswordReset.
 ```
 
-**DELETE** `/api/password-resets/:ldap_dn`
+**DELETE** `/api/password-resets/:officectl_user_id`
 ```
 Description: Delete a password reset.
 
