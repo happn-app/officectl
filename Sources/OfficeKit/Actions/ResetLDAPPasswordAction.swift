@@ -35,6 +35,8 @@ public class ResetLDAPPasswordAction : Action<User, String, Void>, SemiSingleton
 		let singletonStore = try container.make(SemiSingletonStore.self)
 		let connector = try singletonStore.semiSingleton(forKey: nil2throw(officeKitConfig.ldapConfig?.connectorSettings)) as LDAPConnector
 		
+		/* Note: To be symmetrical with the reset google user action, we could use
+		 *       the existingLDAPUser method. */
 		connector.connect(scope: (), handlerQueue: dispatchQueue, handler: { _, error in
 			if let e = error {return handler(.failure(e))}
 			

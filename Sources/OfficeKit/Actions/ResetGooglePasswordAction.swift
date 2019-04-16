@@ -34,6 +34,10 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 	
 	public let container: Container
 	
+	/* Contains the Google user id as soon as the user is found (after the
+	 * operation is started). */
+	public var googleUserId: String?
+	
 	public required init(key u: User, additionalInfo: Container, store: SemiSingletonStore) {
 		container = additionalInfo
 		
@@ -41,7 +45,7 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
-		guard let email = subject.email else {return handler(.failure(InvalidArgumentError(message: "Got a user with no email; this is unsupported to reset the Google password.")))}
+		googleUserId = nil /* We re-search for the user, so we clear the current user id we have */
 		
 		let asyncConfig = try container.make(AsyncConfig.self)
 		let singletonStore = try container.make(SemiSingletonStore.self)
@@ -49,15 +53,16 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 		let googleSettings = try container.make(OfficeKitConfig.self).googleConfigOrThrow()
 		let connector = try singletonStore.semiSingleton(forKey: googleSettings.connectorSettings) as GoogleJWTConnector
 		
-		let f = connector
+		let f = try connector
 		.connect(scope: Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.user"), asyncConfig: asyncConfig)
-		.then{ _ -> Future<[GoogleUser]> in
-			let findUserOperation = SearchGoogleUsersOperation(searchedDomain: email.domain, query: "email=\(email.stringValue)", googleConnector: connector)
-			return asyncConfig.eventLoop.future(from: findUserOperation, queue: asyncConfig.operationQueue)
+		.and(subject.existingGoogleUser(container: container))
+		.thenThrowing{ (_, googleUser) -> GoogleUser in
+			let u = try nil2throw(googleUser, "No Google user found for given user")
+			self.googleUserId = u.id /* We set the user id as soon as we have it. */
+			return u
 		}
-		.map{ users -> GoogleUser in
-			guard var user = users.first else {throw Error.noUsersFoundForEmail}
-			guard users.count == 1 else {throw Error.tooManyUsersFoundForEmail}
+		.then{ googleUser -> Future<Void> in
+			var googleUser = googleUser
 			
 			let digest: Data
 			let passwordData = Data(newPassword.utf8)
@@ -75,14 +80,11 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 			#else
 				digest = try SHA1.hash(passwordData)
 			#endif
-			user.password = digest.reduce("", { $0 + String(format: "%02x", $1) })
-			user.hashFunction = .sha1
-			user.changePasswordAtNextLogin = false
+			googleUser.password = digest.reduce("", { $0 + String(format: "%02x", $1) })
+			googleUser.hashFunction = .sha1
+			googleUser.changePasswordAtNextLogin = false
 			
-			return user
-		}
-		.then{ user -> Future<Void> in
-			let modifyUserOperation = ModifyGoogleUserOperation(user: user, propertiesToUpdate: Set(arrayLiteral: .hashFunction, .password, .changePasswordAtNextLogin), connector: connector)
+			let modifyUserOperation = ModifyGoogleUserOperation(user: googleUser, propertiesToUpdate: Set(arrayLiteral: .hashFunction, .password, .changePasswordAtNextLogin), connector: connector)
 			return asyncConfig.eventLoop.future(from: modifyUserOperation, queue: asyncConfig.operationQueue)
 		}
 		f.whenSuccess{ _ in

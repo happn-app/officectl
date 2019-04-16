@@ -37,9 +37,7 @@ public class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 	
 	public override func startBaseOperation(isRetry: Bool) {
 		do {
-			/* Not elegant, but I don’t have a better idea right now… (There is the
-			 * start of an alternative commented at the end of the method, but this
-			 * does not seem viable.) */
+			/* Not elegant, but I don’t have a better idea. */
 			let userJSON = try JSON(encodable: user).objectValue!
 			let toSend = userJSON.filter{ propertiesToUpdate.contains($0.key) }
 			let dataToSend = try JSONEncoder().encode(toSend)

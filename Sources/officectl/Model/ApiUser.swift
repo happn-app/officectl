@@ -16,6 +16,8 @@ extension User : Encodable {
 	public func encode(to encoder: Encoder) throws {
 		var container = encoder.container(keyedBy: User.CodingKeys.self)
 		
+		try container.encode(id, forKey: .id)
+		
 		try container.encode(distinguishedName, forKey: .ldap_id)
 		try container.encode(gitHubId, forKey: .github_id)
 		try container.encode(googleUserId, forKey: .google_id)
@@ -27,6 +29,8 @@ extension User : Encodable {
 	}
 	
 	private enum CodingKeys: String, CodingKey {
+		
+		case id
 		
 		case ldap_id
 		case github_id
