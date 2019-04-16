@@ -18,7 +18,7 @@ func setup_routes(_ router: Router) throws {
 	
 	let usersController = UsersController()
 	router.get("api", "users", use: usersController.getUsers)
-	router.get("api", "users", LDAPDistinguishedName.parameter, use: usersController.getUser)
+	router.get("api", "users", UserId.parameter, use: usersController.getUser)
 	
 	/* ******** Temporary password reset page ******** */
 	

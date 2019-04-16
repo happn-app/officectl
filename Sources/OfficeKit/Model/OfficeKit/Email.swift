@@ -96,10 +96,10 @@ public extension LDAPDistinguishedName {
 	
 	    uid=username,MIDDLE_DN,dc=subdomain1,dc=subdomain2...
 	
-	Example: For `francois.lamboley@happn.fr`, with middle dn `ou=people`, you’ll
-	get:
+	Example: For `francois.lamboley@example.com`, with middle dn `ou=people`,
+	you’ll get:
 	
-	    uid=francois.lamboley,ou=people,dc=happn,dc=com */
+	    uid=francois.lamboley,ou=people,dc=example,dc=com */
 	@available(*, deprecated, message: "This method assumes the DN will be of the form uid=username,MIDDLE_DN,dc=subdomain1,dc=subdomain2... which is a stretch.")
 	init(email: Email, middleDN: LDAPDistinguishedName) {
 		values = [(key: "uid", value: email.username)] + middleDN.values + email.domain.split(separator: ".").map{

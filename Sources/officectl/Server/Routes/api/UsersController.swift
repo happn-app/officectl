@@ -135,22 +135,22 @@ class UsersController {
 	}
 	
 	func getUser(_ req: Request) throws -> Future<ApiResponse<User>> {
-		let dn = try req.parameters.next(LDAPDistinguishedName.self)
+		let userId = try req.parameters.next(UserId.self)
 		
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
 		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
 		
 		/* Can only show user if connected user is the same or connected user is admin. */
-		guard token.payload.sub == dn.stringValue || token.payload.adm else {
+		#warning("TODO: If the given userId is not a DN, the check below is mostly useless (but harmless, worst is a user that should be authorized is not)")
+		#warning("      We should fetch the dn directly before doing anything else? Not sure, we can spec the behaviour above too, it is not that crazy")
+		guard token.payload.adm || token.payload.sub == userId.distinguishedName?.stringValue else {
 			throw Abort(.forbidden)
 		}
 		
-		var u = User(id: .distinguishedName(dn))
-		u.email = try Email(username: nil2throw(dn.uid, "uid in DN"), domain: "happn.fr")
-		
-		let ldapUserFuture = try u.existingLDAPUser(container: req, attributesToFetch: ["objectClass", "uid", "givenName", "mail", "sn", "cn", "sshPublicKey"])
-		let googleUserFuture = try u.existingGoogleUser(container: req)
+		let user = User(id: userId)
+		let ldapUserFuture = try user.existingLDAPUser(container: req, attributesToFetch: ["objectClass", "uid", "givenName", "mail", "sn", "cn", "sshPublicKey"])
+		let googleUserFuture = try user.existingGoogleUser(container: req)
 		
 		return ldapUserFuture.and(googleUserFuture)
 		.thenThrowing{

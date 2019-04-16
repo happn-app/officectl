@@ -15,7 +15,7 @@ import Vapor
 extension LDAPDistinguishedName : Parameter {
 	
 	public static func resolveParameter(_ parameter: String, on container: Container) throws -> LDAPDistinguishedName {
-		/* Let’s validate the email */
+		/* Let’s validate the dn */
 		guard let dn = try? LDAPDistinguishedName(string: parameter) else {
 			throw BasicValidationError("Invalid dn")
 		}

@@ -35,6 +35,7 @@ extension User {
 		let googleConnectorConfig = try container.make(OfficeKitConfig.self).googleConfigOrThrow().connectorSettings
 		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: googleConnectorConfig)
 		
+		#warning("TODO: Fallback to other search terms if the email is not available")
 		let searchedEmail = try nil2throw(email, "email")
 		
 		let future = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)

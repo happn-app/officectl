@@ -63,6 +63,7 @@ extension User {
 		let ldapConnectorConfig = try container.make(OfficeKitConfig.self).ldapConfigOrThrow().connectorSettings
 		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
 		
+		#warning("TODO: Fallback to other search terms if the dn is not available")
 		let searchedDN = try nil2throw(distinguishedName, "dn")
 		let uid = try nil2throw(searchedDN.uid, "searchedDN.uid")
 		
