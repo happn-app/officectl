@@ -115,4 +115,12 @@ public struct OfficeKitConfig {
 		return domain
 	}
 	
+	public func equivalentDomains(for domain: String) -> Set<String> {
+		let base = mainDomain(for: domain)
+		return domainAliases.reduce([base], { currentResult, keyval in
+			if keyval.value == base {return currentResult.union([keyval.key])}
+			return currentResult
+		})
+	}
+	
 }

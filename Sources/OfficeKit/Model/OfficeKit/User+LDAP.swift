@@ -55,23 +55,35 @@ extension User {
 		return connector.connect(scope: (), forceReconnect: true, asyncConfig: asyncConfig)
 	}
 	
+	public func bestLDAPSearchRequest(officeKitConfig: OfficeKitConfig, attributesToFetch: [String]) throws -> LDAPSearchRequest {
+		if let dn = distinguishedName, let uid = dn.uid {
+			let query = LDAPSearchQuery.simple(attribute: .uid, filtertype: .equal, value: Data(uid.utf8))
+			return LDAPSearchRequest(scope: .children, base: dn.dc, searchQuery: query, attributesToFetch: attributesToFetch)
+		}
+		if let email = email {
+			let mainDomain = officeKitConfig.mainDomain(for: email.domain)
+			let domains = officeKitConfig.equivalentDomains(for: email.domain)
+			let emails = domains.map{ Email(email, newDomain: $0) }
+			let query = LDAPSearchQuery.or(emails.map{ LDAPSearchQuery.simple(attribute: .mail, filtertype: .equal, value: Data($0.stringValue.utf8)) })
+			return LDAPSearchRequest(scope: .children, base: LDAPDistinguishedName(domain: mainDomain), searchQuery: query, attributesToFetch: attributesToFetch)
+		}
+		throw InvalidArgumentError(message: "Cannot find an LDAP query to fetch user with id “\(id)”")
+	}
+	
 	/* Returns nil if the user was not found but there was no error processing
 	 * the request. */
 	public func existingLDAPUser(container: Container, attributesToFetch: [String] = ["objectClass", "sn", "cn"]) throws -> Future<LDAPInetOrgPersonWithObject?> {
 		let asyncConfig = try container.make(AsyncConfig.self)
+		let officeKitConfig = try container.make(OfficeKitConfig.self)
 		let semiSingletonStore = try container.make(SemiSingletonStore.self)
-		let ldapConnectorConfig = try container.make(OfficeKitConfig.self).ldapConfigOrThrow().connectorSettings
+		let ldapConnectorConfig = try officeKitConfig.ldapConfigOrThrow().connectorSettings
 		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
 		
-		#warning("TODO: Fallback to other search terms if the dn is not available")
-		let searchedDN = try nil2throw(distinguishedName, "dn")
-		let uid = try nil2throw(searchedDN.uid, "searchedDN.uid")
-		
-		let searchQuery = LDAPSearchQuery.simple(attribute: .uid, filtertype: .equal, value: Data(uid.utf8))
+		let searchRequest = try bestLDAPSearchRequest(officeKitConfig: officeKitConfig, attributesToFetch: attributesToFetch)
 		
 		let future = ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
 		.then{ _ -> EventLoopFuture<[LDAPInetOrgPersonWithObject]> in
-			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: searchedDN.dc, searchQuery: searchQuery, attributesToFetch: attributesToFetch))
+			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: searchRequest)
 			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } }
 		}
 		.thenThrowing{ objects -> LDAPInetOrgPersonWithObject? in

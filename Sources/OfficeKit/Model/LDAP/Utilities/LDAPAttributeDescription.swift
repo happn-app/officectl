@@ -13,6 +13,7 @@ import Foundation
 public struct LDAPAttributeDescription : Hashable {
 	
 	public static let uid = LDAPAttributeDescription(string: "uid")!
+	public static let mail = LDAPAttributeDescription(string: "mail")!
 	public static let memberof = LDAPAttributeDescription(string: "memberof")!
 	
 	public var oid: LDAPObjectID

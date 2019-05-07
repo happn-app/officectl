@@ -44,6 +44,10 @@ public struct LDAPDistinguishedName {
 		self.init(values: [(key: "uid", value: uid)] + baseDN.values)
 	}
 	
+	public init(domain: String) {
+		self.init(values: domain.split(separator: ".", omittingEmptySubsequences: false).map{ (key: "dc", value: String($0)) })
+	}
+	
 	public init(string dn: String) throws {
 		enum Engine {
 			
