@@ -14,7 +14,7 @@ import OfficeKit
 
 
 
-final class PasswordResetController {
+final class WebPasswordResetController {
 	
 	func showUserSelection(_ req: Request) throws -> Future<View> {
 		return try req.view().render("NewPasswordResetPage")

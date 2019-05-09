@@ -22,8 +22,8 @@ func setup_routes(_ router: Router) throws {
 	
 	/* ******** Temporary password reset page ******** */
 	
-	let passwordResetController = PasswordResetController()
-	router.get("password-reset", use: passwordResetController.showUserSelection)
-	router.get("password-reset",  Email.parameter, use: passwordResetController.showResetPage)
-	router.post("password-reset", Email.parameter, use: passwordResetController.resetPassword)
+	let webPasswordResetController = WebPasswordResetController()
+	router.get("password-reset", use: webPasswordResetController.showUserSelection)
+	router.get("password-reset",  Email.parameter, use: webPasswordResetController.showResetPage)
+	router.post("password-reset", Email.parameter, use: webPasswordResetController.resetPassword)
 }
