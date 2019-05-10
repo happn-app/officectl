@@ -13,6 +13,15 @@ import Vapor
 
 
 func setup_routes(_ router: Router) throws {
+	router.get("api", "services", use: { _ in
+		ApiResponse.data([
+			ApiService(serviceId: "ldap",   serviceFullName: "LDAP", serviceDescription: "An LDAP server (tested with OpenLDAP)"),
+			ApiService(serviceId: "ggl",    serviceFullName: "Google Apps", serviceDescription: "Google Apps Service"),
+			ApiService(serviceId: "github", serviceFullName: "GitHub", serviceDescription: "GitHub (non-enterprise)"),
+			ApiService(serviceId: "email",  serviceFullName: "Simple Email", serviceDescription: "To identify users via their email"),
+		])
+	})
+	
 	router.post("api", "auth", "login",  use: LoginController().login)
 	router.post("api", "auth", "logout", use: LogoutController().logout)
 	
