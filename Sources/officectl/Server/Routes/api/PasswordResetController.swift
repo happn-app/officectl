@@ -68,6 +68,7 @@ class PasswordResetController {
 		return authFuture.map{ _ in
 			/* The password of the user is verified. Let’s launch the reset! */
 			let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: req) as ResetPasswordAction
+			guard !resetPasswordAction.isExecuting else {throw OperationAlreadyInProgressError()}
 			resetPasswordAction.start(parameters: passChangeData.newPassword, handler: nil)
 			return ApiResponse.data(ApiPasswordReset(passwordReset: resetPasswordAction))
 		}

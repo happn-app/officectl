@@ -197,7 +197,8 @@ An object can be both a connector and an authenticator at the same time. For ins
 `GitHubJWTConnector` is both.
 
 #### Operations
-They are standard Foundation’s `Operation`s. For more information see below.
+They are standard Foundation’s `Operation`s. For more information see below, otherwise you
+can skip this §.
 
 An operation represents a single unit of work, synchronous or asynchronous. The work can only
 be executed once. The configuration can be done at init time, or after the init, but before the operation
