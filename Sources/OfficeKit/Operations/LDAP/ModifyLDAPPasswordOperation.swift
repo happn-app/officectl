@@ -17,7 +17,6 @@ import COpenLDAP
 
 /* If the LDAPObject does not contain a password, will set to a randomly
 generated password. */
-@available(OSX, deprecated: 10.11) /* See LDAPConnector declaration. The core functionalities of this class will have to be rewritten for the OpenDirectory connector if we ever create it. */
 public class ModifyLDAPPasswordsOperation : RetryingOperation {
 	
 	public let connector: LDAPConnector

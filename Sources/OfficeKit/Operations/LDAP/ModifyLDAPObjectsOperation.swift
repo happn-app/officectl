@@ -21,7 +21,6 @@ import COpenLDAP
 but it is recommended to use the `ModifyLDAPPasswordsOperation` instead because
 it uses the extended “modify password” LDAP operation which makes sure the
 password is properly hashed in the LDAP db. */
-@available(OSX, deprecated: 10.11) /* See LDAPConnector declaration. The core functionalities of this class will have to be rewritten for the OpenDirectory connector if we ever create it. */
 public class ModifyLDAPObjectsOperation : RetryingOperation {
 	
 	public let connector: LDAPConnector
