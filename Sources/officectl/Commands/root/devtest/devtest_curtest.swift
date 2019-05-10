@@ -6,6 +6,7 @@
  */
 
 import Foundation
+import OpenDirectory
 
 import Guaka
 import Vapor
@@ -20,7 +21,25 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 	let officeKitConfig = try context.container.make(OfficeKitConfig.self)
 	
 	/* Connect to OpenDirectory */
-	return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	/* This helps: https://github.com/aosm/OpenDirectory/blob/master/Tests/TestApp.m */
+	let op = AsyncBlockOperation{ finishBlock in
+		do {
+			let session = try ODSession(options: [
+				kODSessionProxyAddress: "od1.happn.private",
+				kODSessionProxyUsername: "happn",
+				kODSessionProxyPassword: "REDACTED"
+			])
+			let node = try ODNode(session: session, type: ODNodeType(kODNodeTypeAuthentication))
+			let query = try ODQuery(node: node, forRecordTypes: kODRecordTypeUsers, attribute: nil, matchType: ODMatchType(kODMatchEqualTo), queryValues: "ldap.test", returnAttributes: nil, maximumResults: 0)
+			for r in try query.resultsAllowingPartial(false) {
+				print(r)
+			}
+		} catch {
+			print("got error: \(error)")
+		}
+		finishBlock()
+	}
+	return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue, resultRetriever: { _ in () })
 	
 	/* List all GitHub project’s hooks */
 //	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)
