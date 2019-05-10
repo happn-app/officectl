@@ -56,9 +56,8 @@ extension User {
 	}
 	
 	public func bestLDAPSearchRequest(officeKitConfig: OfficeKitConfig, attributesToFetch: [String]) throws -> LDAPSearchRequest {
-		if let dn = distinguishedName, let uid = dn.uid {
-			let query = LDAPSearchQuery.simple(attribute: .uid, filtertype: .equal, value: Data(uid.utf8))
-			return LDAPSearchRequest(scope: .children, base: dn.dc, searchQuery: query, attributesToFetch: attributesToFetch)
+		if let dn = distinguishedName {
+			return LDAPSearchRequest(scope: .base, base: dn, searchQuery: nil, attributesToFetch: attributesToFetch)
 		}
 		if let email = email {
 			let mainDomain = officeKitConfig.mainDomain(for: email.domain)
@@ -104,18 +103,13 @@ extension User {
 		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
 		
 		let searchedDN = try nil2throw(distinguishedName, "dn")
-		let uid = try nil2throw(searchedDN.uid, "searchedDN.uid")
-		
-		let searchQuery = LDAPSearchQuery.and([
-			LDAPSearchQuery.simple(attribute: .uid, filtertype: .equal, value: Data(uid.utf8)),
-			LDAPSearchQuery.or(groupsDN.map{
-				LDAPSearchQuery.simple(attribute: .memberof, filtertype: .equal, value: Data($0.stringValue.utf8))
-			})
-		])
+		let searchQuery = LDAPSearchQuery.or(groupsDN.map{
+			LDAPSearchQuery.simple(attribute: .memberof, filtertype: .equal, value: Data($0.stringValue.utf8))
+		})
 		
 		let future = ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
 		.then{ _ -> EventLoopFuture<[LDAPInetOrgPersonWithObject]> in
-			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: searchedDN.dc, searchQuery: searchQuery, attributesToFetch: nil))
+			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .subtree, base: searchedDN, searchQuery: searchQuery, attributesToFetch: nil))
 			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } }
 		}
 		.thenThrowing{ objects -> Bool in
