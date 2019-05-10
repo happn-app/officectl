@@ -18,4 +18,13 @@ struct ApiPasswordReset : Codable {
 	var isExecuting: Bool
 	var services: [ApiServicePasswordReset]
 	
+	init(passwordReset: ResetPasswordAction) {
+		userId = passwordReset.subject.id
+		isExecuting = passwordReset.isExecuting
+		services = [
+			ApiServicePasswordReset(ldapPasswordReset: passwordReset.resetLDAPPasswordAction),
+			ApiServicePasswordReset(googlePasswordReset: passwordReset.resetGooglePasswordAction)
+		]
+	}
+	
 }

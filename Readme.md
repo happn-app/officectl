@@ -123,7 +123,7 @@ reset concerning their own account.
 Returns a PasswordReset, or a collection of PasswordReset.
 ```
 
-**PUT** `/api/password-resets/[:officectl_user_id]`
+**PUT** `/api/password-resets/:officectl_user_id`
 ```
 Description: Create a new password reset. Only admins are allowed to reset
 the password of somebody else than themselves and without specifying the

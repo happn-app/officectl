@@ -21,6 +21,15 @@ struct ApiServicePasswordReset : Codable {
 	var isExecuting: Bool
 	var error: ApiError?
 	
+	init(ldapPasswordReset: ResetLDAPPasswordAction) {
+		serviceId = "LDAP"
+		userId = ldapPasswordReset.subject.id
+		serviceUserId = ldapPasswordReset.subject.distinguishedName?.stringValue
+		
+		isExecuting = ldapPasswordReset.isExecuting
+		error = ldapPasswordReset.result?.failureValue.flatMap{ ApiError(error: $0, environment: ldapPasswordReset.container.environment) }
+	}
+	
 	init(googlePasswordReset: ResetGooglePasswordAction) {
 		serviceId = "Google"
 		userId = googlePasswordReset.subject.id

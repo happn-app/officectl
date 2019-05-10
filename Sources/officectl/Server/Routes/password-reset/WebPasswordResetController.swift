@@ -25,7 +25,7 @@ final class WebPasswordResetController {
 		let officeKitConfig = try req.make(OfficeKitConfig.self)
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let basePeopleDN = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDNPerDomain?[officeKitConfig.mainDomain(for: email.domain)], "LDAP People Base DN")
-		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, basePeopleDN: basePeopleDN), additionalInitInfo: req) as ResetPasswordAction
+		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, basePeopleDN: basePeopleDN, setMainIdToLDAP: true), additionalInitInfo: req) as ResetPasswordAction
 		
 		return try renderResetPasswordAction(resetPasswordAction, view: req.view())
 	}
@@ -37,7 +37,7 @@ final class WebPasswordResetController {
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
 		let basePeopleDN = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDNPerDomain?[officeKitConfig.mainDomain(for: email.domain)], "LDAP People Base DN")
-		let user = User(email: email, basePeopleDN: basePeopleDN)
+		let user = User(email: email, basePeopleDN: basePeopleDN, setMainIdToLDAP: true)
 		
 		return try user
 		.checkLDAPPassword(container: req, checkedPassword: resetPasswordData.oldPass)

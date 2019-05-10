@@ -49,10 +49,12 @@ public struct User {
 	}
 	
 	/** Init a user with an “email” id, and fill the distinguished name too. */
-	public init(email e: Email, basePeopleDN: LDAPDistinguishedName) {
-		id = .email(e)
+	public init(email e: Email, basePeopleDN: LDAPDistinguishedName, setMainIdToLDAP: Bool) {
+		let dn = LDAPDistinguishedName(uid: e.username, baseDN: basePeopleDN)
 		
-		distinguishedName = LDAPDistinguishedName(uid: e.username, baseDN: basePeopleDN)
+		id = (!setMainIdToLDAP ? .email(e) : .distinguishedName(dn))
+		
+		distinguishedName = dn
 		googleUserId = nil
 		gitHubId = nil
 		email = e
