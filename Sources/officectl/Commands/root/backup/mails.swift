@@ -233,7 +233,7 @@ class OfflineimapRunOperation : RetryingOperation {
 			offlineimapProcess = process
 			
 			console.info("Waiting on offlineimap…")
-			process.launch()
+			try process.run()
 			process.waitUntilExit()
 			offlineimapProcess = nil
 			
@@ -276,7 +276,7 @@ class OfflineimapRunOperation : RetryingOperation {
 		processOutput.seekToEndOfFile(); processOutput.write(Data("***** \(Date()): NEW OFFLINEIMAP RUN!\n".utf8))
 		
 		let process = Process()
-		process.launchPath = "/usr/local/bin/offlineimap"
+		process.executableURL = URL(fileURLWithPath: "/usr/local/bin/offlineimap")
 		process.arguments = ["-c", configurationFileURL.path]
 		#if !os(Linux)
 			process.standardInput = FileHandle.nullDevice /* Forces failure of getting user pass from input when auth token expires. */
