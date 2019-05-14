@@ -5,25 +5,39 @@
  * Created by François Lamboley on 6/26/18.
  */
 
-import DirectoryService
 import Foundation
-import OpenDirectory
 
 import Guaka
 import Vapor
 
 import OfficeKit
+import SemiSingleton
 import URLRequestOperation
+
+#if canImport(DirectoryService) && canImport(OpenDirectory)
+	import DirectoryService
+	import OpenDirectory
+#endif
 
 
 
 func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
 	let asyncConfig: AsyncConfig = try context.container.make()
-	let officeKitConfig = try context.container.make(OfficeKitConfig.self)
+	let officeKitConfig: OfficeKitConfig = try context.container.make()
+	let semiSingletonStore: SemiSingletonStore = try context.container.make()
+	
+	/* Try and change OpenDirectory password via LDAP connection */
+//	let ldapConnector = try LDAPConnector(ldapURL: URL(string: "ldap://od1.happn.private")!, protocolVersion: .v3, username: "uid=diradmin,cn=users,dc=office2,dc=happn,dc=private", password: "REDACTED")
+//	return ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
+//	.then{
+//		let op = try! ResetLDAPPasswordAction(key: User(id: UserId.distinguishedName(LDAPDistinguishedName(string: "uid=ldap.test,cn=users,dc=office2,dc=happn,dc=private"))), additionalInfo: context.container, store: semiSingletonStore)
+//		return op.start(parameters: "toto", eventLoop: asyncConfig.eventLoop)
+//	}
 	
 	/* Connect to OpenDirectory */
 	/* This helps: https://github.com/aosm/OpenDirectory/blob/master/Tests/TestApp.m */
-	let op = AsyncBlockOperation{ finishBlock in
+	#if canImport(DirectoryService) && canImport(OpenDirectory)
+	let op = BlockOperation{
 		do {
 			let session = try ODSession(options: [
 				kODSessionProxyAddress: "od1.happn.private",
@@ -46,9 +60,11 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 		} catch {
 			print("got error: \(error)")
 		}
-		finishBlock()
 	}
 	return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue, resultRetriever: { _ in () })
+	#else
+	return asyncConfig.eventLoop.newFailedFuture(error: NotAvailableOnThisPlatformError())
+	#endif
 	
 	/* List all GitHub project’s hooks */
 //	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)
