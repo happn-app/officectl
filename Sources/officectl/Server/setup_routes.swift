@@ -28,6 +28,7 @@ func setup_routes(_ router: Router) throws {
 	let usersController = UsersController()
 	router.get("api", "users", use: usersController.getUsers)
 	router.get("api", "users", UserId.parameter, use: usersController.getUser)
+	router.get("api", "search-users", use: usersController.searchUsers)
 	
 	let passwordResetController = PasswordResetController()
 	router.get("api", "password-resets", use: passwordResetController.getResets)
