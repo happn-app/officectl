@@ -39,6 +39,8 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 	#if canImport(DirectoryService) && canImport(OpenDirectory)
 	let op = BlockOperation{
 		do {
+			let testDN = try! LDAPDistinguishedName(string: "uid=ldap.test,cn=users,dc=office2,dc=happn,dc=private")
+			
 			let session = try ODSession(options: [
 				kODSessionProxyAddress: "od1.happn.private",
 				kODSessionProxyUsername: "happn",
@@ -46,13 +48,16 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 			])
 			let node = try ODNode(session: session, type: ODNodeType(kODNodeTypeAuthentication))
 //			try node.setCredentialsWithRecordType(kDSStdRecordTypeUsers, recordName: "diradmin", password: "REDACTED")
-			let query = try ODQuery(node: node, forRecordTypes: kODRecordTypeUsers, attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: "ldap.test", returnAttributes: nil, maximumResults: 0)
+			/* Searching with the kODAttributeTypeMetaRecordName attribute does not
+			 * seem to work for whatever reason… */
+			let query = try ODQuery(node: node, forRecordTypes: kODRecordTypeUsers, attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues:testDN.uid!, returnAttributes: nil, maximumResults: 0)
 			for r in try query.resultsAllowingPartial(false) {
 				print(r)
 				if let r = r as? ODRecord {
 					try print(r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName]))
 					if let _ = try? r.verifyPassword("toto") {print("ok")}
 					else                                     {print("ko")}
+					guard try r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName])[kODAttributeTypeMetaRecordName] as? String == testDN.stringValue else {continue}
 					try r.setNodeCredentials("diradmin", password: "REDACTED")
 					try r.changePassword(nil, toPassword: "toto")
 				}
