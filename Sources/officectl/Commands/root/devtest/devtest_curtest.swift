@@ -5,6 +5,7 @@
  * Created by François Lamboley on 6/26/18.
  */
 
+import DirectoryService
 import Foundation
 import OpenDirectory
 
@@ -30,9 +31,17 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 				kODSessionProxyPassword: "REDACTED"
 			])
 			let node = try ODNode(session: session, type: ODNodeType(kODNodeTypeAuthentication))
-			let query = try ODQuery(node: node, forRecordTypes: kODRecordTypeUsers, attribute: nil, matchType: ODMatchType(kODMatchEqualTo), queryValues: "ldap.test", returnAttributes: nil, maximumResults: 0)
+//			try node.setCredentialsWithRecordType(kDSStdRecordTypeUsers, recordName: "diradmin", password: "REDACTED")
+			let query = try ODQuery(node: node, forRecordTypes: kODRecordTypeUsers, attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: "ldap.test", returnAttributes: nil, maximumResults: 0)
 			for r in try query.resultsAllowingPartial(false) {
 				print(r)
+				if let r = r as? ODRecord {
+					try print(r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName]))
+					if let _ = try? r.verifyPassword("toto") {print("ok")}
+					else                                     {print("ko")}
+					try r.setNodeCredentials("diradmin", password: "REDACTED")
+					try r.changePassword(nil, toPassword: "toto")
+				}
 			}
 		} catch {
 			print("got error: \(error)")
