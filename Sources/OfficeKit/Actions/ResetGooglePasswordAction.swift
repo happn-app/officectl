@@ -47,6 +47,23 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
 		googleUserId = nil /* We re-search for the user, so we clear the current user id we have */
 		
+		let newPasswordHash: Data
+		let passwordData = Data(newPassword.utf8)
+		#if canImport(CommonCrypto) || canImport(CCommonCrypto)
+			var sha1 = Data(count: Int(CC_SHA1_DIGEST_LENGTH))
+			passwordData.withUnsafeBytes{ (passwordDataBytes: UnsafeRawBufferPointer) in
+				let passwordDataBytes = passwordDataBytes.bindMemory(to: UInt8.self).baseAddress!
+				sha1.withUnsafeMutableBytes{ (sha1Bytes: UnsafeMutableRawBufferPointer) in
+					let sha1Bytes = sha1Bytes.bindMemory(to: UInt8.self).baseAddress!
+					/* The call below should returns sha1Bytes (says the man). */
+					_ = CC_SHA1(passwordDataBytes, CC_LONG(passwordData.count), sha1Bytes)
+				}
+			}
+			newPasswordHash = sha1
+		#else
+			newPasswordHash = try SHA1.hash(passwordData)
+		#endif
+		
 		let asyncConfig = try container.make(AsyncConfig.self)
 		let singletonStore = try container.make(SemiSingletonStore.self)
 		
@@ -64,23 +81,7 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 		.then{ googleUser -> Future<Void> in
 			var googleUser = googleUser
 			
-			let digest: Data
-			let passwordData = Data(newPassword.utf8)
-			#if canImport(CommonCrypto) || canImport(CCommonCrypto)
-				var sha1 = Data(count: Int(CC_SHA1_DIGEST_LENGTH))
-				passwordData.withUnsafeBytes{ (passwordDataBytes: UnsafeRawBufferPointer) in
-					let passwordDataBytes = passwordDataBytes.bindMemory(to: UInt8.self).baseAddress!
-					sha1.withUnsafeMutableBytes{ (sha1Bytes: UnsafeMutableRawBufferPointer) in
-						let sha1Bytes = sha1Bytes.bindMemory(to: UInt8.self).baseAddress!
-						/* The call below should returns sha1Bytes (says the man). */
-						_ = CC_SHA1(passwordDataBytes, CC_LONG(passwordData.count), sha1Bytes)
-					}
-				}
-				digest = sha1
-			#else
-				digest = try SHA1.hash(passwordData)
-			#endif
-			googleUser.password = digest.reduce("", { $0 + String(format: "%02x", $1) })
+			googleUser.password = newPasswordHash.reduce("", { $0 + String(format: "%02x", $1) })
 			googleUser.hashFunction = .sha1
 			googleUser.changePasswordAtNextLogin = false
 			
