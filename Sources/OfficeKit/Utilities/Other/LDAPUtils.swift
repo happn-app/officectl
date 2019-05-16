@@ -14,7 +14,8 @@ import COpenLDAP
 func ldapModAlloc(method: Int32, key: String, values: [Data]) -> UnsafeMutablePointer<LDAPMod> {
 	var bervalValues = (values as [Data?] + [nil]).map{ value -> UnsafeMutablePointer<berval>? in
 		guard let value = value else {return nil}
-		return value.withUnsafeBytes{ (valueBytes: UnsafePointer<Int8>) -> UnsafeMutablePointer<berval> in
+		return value.withUnsafeBytes{ (valueBytes: UnsafeRawBufferPointer) -> UnsafeMutablePointer<berval> in
+			let valueBytes = valueBytes.bindMemory(to: Int8.self).baseAddress!
 			return ber_mem2bv(valueBytes, ber_len_t(value.count), 1 /* Duplicate the bytes */, nil /* Where to copy to. If nil, allocates a new berval. */)
 		}
 	}
