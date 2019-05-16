@@ -11,8 +11,6 @@ import URLRequestOperation
 
 #if canImport(CommonCrypto)
 	import CommonCrypto
-#elseif canImport(CCommonCrypto)
-	import CCommonCrypto
 #else
 	import Crypto
 #endif
@@ -238,7 +236,7 @@ public class HappnConnector : Connector, Authenticator {
 			 * field is not empty): "url_path[?url_query];http_body;http_method" */
 			
 			let finalHMAC: Data?
-			#if canImport(CommonCrypto) || canImport(CCommonCrypto)
+			#if canImport(CommonCrypto)
 				var hmac = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
 				key.withUnsafeBytes{ (keyBytes: UnsafeRawBufferPointer) in
 					let keyBytes = keyBytes.bindMemory(to: Int8.self).baseAddress!

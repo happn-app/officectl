@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/vapor/core.git",
         "state": {
           "branch": null,
-          "revision": "57368d4092f92df3131e5968c8ed24a3c7361ec0",
-          "version": "3.8.1"
+          "revision": "2731f8ba0cf274a61c9bd6ab43550f692ffaf879",
+          "version": "3.9.0"
         }
       },
       {
@@ -209,15 +209,6 @@
         }
       },
       {
-        "package": "CCommonCrypto",
-        "repositoryURL": "git@github.com:happn-app/Swift-CommonCrypto.git",
-        "state": {
-          "branch": null,
-          "revision": "e1838baa8855499844b22f2f1cae634ee3339d8d",
-          "version": "1.0.0"
-        }
-      },
-      {
         "package": "swift-nio",
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
@@ -254,21 +245,12 @@
         }
       },
       {
-        "package": "COpenLDAP",
-        "repositoryURL": "git@github.com:happn-app/Swift-OpenLDAP.git",
-        "state": {
-          "branch": null,
-          "revision": "dc899ea63a7037bb4d1ac6d5ebcb86cdf781d79b",
-          "version": "1.0.0"
-        }
-      },
-      {
         "package": "TemplateKit",
         "repositoryURL": "https://github.com/vapor/template-kit.git",
         "state": {
           "branch": null,
-          "revision": "4b1073d74be9f5c6a5bc63a07a84e83efec26229",
-          "version": "1.1.2"
+          "revision": "121ae51433df94cf6e15c09e1f1b0f7c77ff8d5c",
+          "version": "1.2.0"
         }
       },
       {
@@ -285,8 +267,8 @@
         "repositoryURL": "https://github.com/happn-tech/URLRequestOperation.git",
         "state": {
           "branch": null,
-          "revision": "fa45578ca98efce8e11655088b13e568c521b2b9",
-          "version": "1.1.5"
+          "revision": "6e15958f4b3ab6685ed44ec65c802be14e043382",
+          "version": "1.1.6"
         }
       },
       {

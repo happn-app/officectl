@@ -12,8 +12,6 @@ import Vapor
 
 #if canImport(CommonCrypto)
 	import CommonCrypto
-#elseif canImport(CCommonCrypto)
-	import CCommonCrypto
 #else
 	import Crypto
 #endif
@@ -49,7 +47,7 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 		
 		let newPasswordHash: Data
 		let passwordData = Data(newPassword.utf8)
-		#if canImport(CommonCrypto) || canImport(CCommonCrypto)
+		#if canImport(CommonCrypto)
 			var sha1 = Data(count: Int(CC_SHA1_DIGEST_LENGTH))
 			passwordData.withUnsafeBytes{ (passwordDataBytes: UnsafeRawBufferPointer) in
 				let passwordDataBytes = passwordDataBytes.bindMemory(to: UInt8.self).baseAddress!
