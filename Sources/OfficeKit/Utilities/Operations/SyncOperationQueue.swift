@@ -18,6 +18,13 @@ public class SyncOperationQueue : OperationQueue {
 		super.maxConcurrentOperationCount = 1
 	}
 	
+	/* This is needed because of Linux Swift. See OperationQueueUtils.swift */
+	public convenience init(name n: String) {
+		self.init()
+		
+		name = n
+	}
+	
 	public override var maxConcurrentOperationCount: Int {
 		get {
 			return super.maxConcurrentOperationCount
