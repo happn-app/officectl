@@ -23,8 +23,8 @@ import URLRequestOperation
 
 func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
 	let asyncConfig: AsyncConfig = try context.container.make()
-	let officeKitConfig: OfficeKitConfig = try context.container.make()
-	let semiSingletonStore: SemiSingletonStore = try context.container.make()
+//	let officeKitConfig: OfficeKitConfig = try context.container.make()
+//	let semiSingletonStore: SemiSingletonStore = try context.container.make()
 	
 	/* Try and change OpenDirectory password via LDAP connection */
 //	let ldapConnector = try LDAPConnector(ldapURL: URL(string: "ldap://od1.happn.private")!, protocolVersion: .v3, username: "uid=diradmin,cn=users,dc=office2,dc=happn,dc=private", password: "REDACTED")
