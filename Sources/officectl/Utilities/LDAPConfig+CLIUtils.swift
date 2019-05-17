@@ -39,7 +39,7 @@ extension OfficeKitConfig.LDAPConfig {
 		let pdnString = f.getString(name: "ldap-people-dn") ?? yamlLDAPConfig?["people_dn"].string
 		let adnString =
 			f.getString(name: "ldap-admin-groups-dn")?.split(separator: ";").map(String.init) ??
-			(try? yamlLDAPConfig?["admin_groups_dn"].array?.map{ y -> String in guard let dn = y.string else {throw InternalError()}; return dn }) ??
+			(try? yamlLDAPConfig?["admin_groups_dn"].array?.map{ y -> String in guard let dn = y.string else {throw InvalidArgumentError(message: "Invalid admin_groups_dn config in LDAP config")}; return dn }) ??
 			[]
 		
 		self.init(connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)
