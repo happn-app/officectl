@@ -1,15 +1,161 @@
 # officectl
 
+## REST API
+
+### Basics
+
+All requests (except the auth request) must contain the following header:
+```
+Authorization: Bearer <token>
+```
+
+All responses are formatted as such:
+```
+{
+   "error": ErrorObject or null
+   "data": CallTypeDependentObject or null
+}
+If error is null, data won’t be null and vice-versa.
+```
+
+### Object Types
+
+The `OfficectlId` Object:
+```
+   This is a string with the following format:
+     service_id + ":" + id_of_object_for_given_service
+   
+   Obviously the service_id cannot contain a colon. The id on the service might though.
+```
+
+The `Error` Object:
+```
+   "code": Int
+   "domain": String
+   "message": String
+```
+
+The `User` Object:
+```
+{
+   "id": OfficectlUserId
+   
+   "ldap_id": String or null
+   "github_id": String or null
+   "google_id": String or null
+   
+   "first_name": String or null
+   "last_name": String or null
+   
+   "ssh_key": String or null
+}
+```
+
+The `PasswordReset` Object:
+```
+{
+   "user_id": OfficectlUserId
+   
+   "is_executing": Bool (true if any service password reset is executing)
+   "services": [
+      ServicePasswordResetObject,
+      ServicePasswordResetObject,
+      ...
+   ]
+}
+```
+
+The `ServicePasswordReset` Object:
+```
+{
+   "service_id": String
+   
+   "user_id": OfficectlUserId
+   "service_user_id": String or null (The service id (GitHub ID, etc.) of
+                      the user whose pass is being reset; null if not found yet)
+   
+   "is_executing": Bool
+   "error": Error or null
+}
+```
+
+### Endpoints
+
+**POST** `/auth/login`
+```
+Description: Retrieve a new access token.
+
+Parameters:
+   username: String (Must be a valid *LDAP DN*)
+   password: String
+
+Returns an object with the following properties:
+   expiration_date: String (Alway a valid ISO 8601 Date)
+   token: String
+   is_admin: Bool
+```
+
+**POST** `/auth/logout`
+```
+Description: Revoke an access token.
+
+Returns: The string "ok".
+
+Note: Currently the logout does not do anything. It might in the future
+actually disable the token.
+```
+
+**GET** `/api/users/[:officectl_user_id]`
+```
+Description: List all users in the LDAP, or fetch a specific user. Only an
+admin is allowed to list the users. Normal users are only allowed to fetch
+themselves.
+
+Returns a User, or a collection of User.
+```
+
+**GET** `/api/password-resets/[:officectl_user_id]`
+```
+Description: List all password resets in progress. Only an admin is
+allowed to list the resets. Normal users are only allowed to fetch the
+reset concerning their own account.
+
+Returns a PasswordReset, or a collection of PasswordReset.
+```
+
+**PUT** `/api/password-resets/:officectl_user_id`
+```
+Description: Create a new password reset. Only admins are allowed to reset
+the password of somebody else than themselves and without specifying the
+current password.
+If a password reset was already in progress for the given user, the call
+will fail. 
+
+Parameters:
+   old_password: String or null
+   new_password: String
+
+Returns a PasswordReset.
+```
+
+**DELETE** `/api/password-resets/:officectl_user_id`
+```
+Description: Delete a password reset.
+
+Returns: The string "ok".
+```
+
 ## Compilation On macOS
 
 **For macOS**
 ```bash
 Scripts/build_for_macos.sh
 ```
+Builds the repo directly.
 
 **For Linux**
 ```bash
-Scripts/build_for_linux_on_macos.sh
+Scripts/build_for_linux_on_macos.sh [treeish]
 ```
 You’ll need to have Docker running.
 I did not find a way to have ssh re-use the SSH auth sock of macOS, so I mounted the ssh private
@@ -51,7 +197,8 @@ An object can be both a connector and an authenticator at the same time. For ins
 `GitHubJWTConnector` is both.
 
 #### Operations
-They are standard Foundation’s `Operation`s. For more information see below.
+They are standard Foundation’s `Operation`s. For more information see below, otherwise you
+can skip this §.
 
 An operation represents a single unit of work, synchronous or asynchronous. The work can only
 be executed once. The configuration can be done at init time, or after the init, but before the operation

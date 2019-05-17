@@ -12,6 +12,10 @@ import Foundation
 /* https://tools.ietf.org/html/rfc4512#section-1.4 */
 public struct LDAPAttributeDescription : Hashable {
 	
+	public static let uid = LDAPAttributeDescription(string: "uid")!
+	public static let mail = LDAPAttributeDescription(string: "mail")!
+	public static let memberof = LDAPAttributeDescription(string: "memberof")!
+	
 	public var oid: LDAPObjectID
 	/** Each option must be one or more keychar (alphanumeric or a hyphen). The
 	options must be changed via the `setOptions` method. This is to have a

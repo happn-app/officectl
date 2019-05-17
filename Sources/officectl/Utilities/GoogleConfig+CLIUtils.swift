@@ -23,11 +23,13 @@ extension OfficeKitConfig.GoogleConfig {
 		guard let credsURLString = f.getString(name: "google-superuser-json-creds") ?? yamlGoogleConfig?["superuser_json_creds"].string else {
 			return nil
 		}
+		guard let domains = try f.getString(name: "google-domains")?.split(separator: ",").map(String.init) ?? yamlGoogleConfig?["domains"].arrayOfStringOrThrow() else {
+			return nil
+		}
 		let userBehalf = f.getString(name: "google-admin-email") ?? yamlGoogleConfig?["admin_email"].string
 		let connectorSettings = GoogleJWTConnector.Settings(jsonCredentialsURL: URL(fileURLWithPath: credsURLString, isDirectory: false), userBehalf: userBehalf)
 		
-		#warning("TODO: domains")
-		self.init(connectorSettings: connectorSettings, domains: [])
+		self.init(connectorSettings: connectorSettings, primaryDomains: Set(domains))
 	}
 	
 }

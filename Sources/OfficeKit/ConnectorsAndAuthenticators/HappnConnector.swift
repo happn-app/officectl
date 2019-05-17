@@ -7,13 +7,10 @@
 
 import Foundation
 
-import AsyncOperationResult
 import URLRequestOperation
 
 #if canImport(CommonCrypto)
 	import CommonCrypto
-#elseif canImport(CCommonCrypto)
-	import CCommonCrypto
 #else
 	import Crypto
 #endif
@@ -87,7 +84,7 @@ public class HappnConnector : Connector, Authenticator {
 	   MARK: - Authenticator Implementation
 	   ************************************ */
 	
-	public func authenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
+	public func authenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
 		connectorOperationQueue.addAsyncBlock{ endHandler in
 			self.unsafeAuthenticate(request: request, handler: { (result, userInfo) in
 				endHandler()
@@ -195,10 +192,10 @@ public class HappnConnector : Connector, Authenticator {
 		op.start()
 	}
 	
-	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) {
+	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
 		/* Make sure we're connected */
 		guard let auth = auth else {
-			handler(.error(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."])), nil)
+			handler(RError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."]), nil)
 			return
 		}
 		
@@ -239,11 +236,14 @@ public class HappnConnector : Connector, Authenticator {
 			 * field is not empty): "url_path[?url_query];http_body;http_method" */
 			
 			let finalHMAC: Data?
-			#if canImport(CommonCrypto) || canImport(CCommonCrypto)
+			#if canImport(CommonCrypto)
 				var hmac = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
-				key.withUnsafeBytes{ (keyBytes: UnsafePointer<Int8>) in
-					content.withUnsafeBytes{ (dataBytes: UnsafePointer<Int8>) in
-						hmac.withUnsafeMutableBytes{ (hmacBytes: UnsafeMutablePointer<Int8>) in
+				key.withUnsafeBytes{ (keyBytes: UnsafeRawBufferPointer) in
+					let keyBytes = keyBytes.bindMemory(to: Int8.self).baseAddress!
+					content.withUnsafeBytes{ (dataBytes: UnsafeRawBufferPointer) in
+						let dataBytes = dataBytes.bindMemory(to: Int8.self).baseAddress!
+						hmac.withUnsafeMutableBytes{ (hmacBytes: UnsafeMutableRawBufferPointer) in
+							let hmacBytes = hmacBytes.bindMemory(to: Int8.self).baseAddress!
 							CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA256), keyBytes, key.count, dataBytes, content.count, hmacBytes)
 						}
 					}

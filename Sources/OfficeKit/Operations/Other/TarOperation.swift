@@ -55,15 +55,16 @@ public class TarOperation : RetryingOperation {
 		
 		#if !os(Linux)
 			/* BSD tar */
-			process.launchPath = "/usr/bin/tar"
+			process.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
 			process.arguments = ["-C", sourceBase.path, "-c" + (compress ? "j" : "") + "f", destinationPath] + sources
 		#else
 			/* GNU tar */
-			process.launchPath = "/bin/tar"
+			process.executableURL = URL(fileURLWithPath: "/bin/tar")
 			process.arguments = ["-C", sourceBase.path, "-c" + (compress ? "j" : "") + "f", destinationPath] + sources
 		#endif
 		
-		process.launch()
+		do {try process.run()}
+		catch {tarError = error; return}
 		process.waitUntilExit()
 		
 		guard process.terminationStatus == 0 else {

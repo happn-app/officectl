@@ -7,7 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
 import RetryingOperation
 
 
@@ -19,9 +18,9 @@ public class GitHubRepositorySearchOperation : RetryingOperation, HasResult {
 	public let searchedOrganisation: String
 	public let connector: GitHubJWTConnector
 	
-	public private(set) var result = AsyncOperationResult<[GitHubRepository]>.error(OperationIsNotFinishedError())
+	public private(set) var result = Result<[GitHubRepository], Error>.failure(OperationIsNotFinishedError())
 	public func resultOrThrow() throws -> [GitHubRepository] {
-		return try result.successValueOrThrow()
+		return try result.get()
 	}
 	
 	public init(searchedOrganisation orgname: String, gitHubConnector: GitHubJWTConnector) {
@@ -54,7 +53,7 @@ public class GitHubRepositorySearchOperation : RetryingOperation, HasResult {
 		let op = AuthenticatedJSONOperation<[GitHubRepository]>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
 		op.completionBlock = {
 			guard let o = op.result else {
-				self.result = .error(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the repositories"]))
+				self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the repositories"]))
 				self.baseOperationEnded()
 				return
 			}

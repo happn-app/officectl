@@ -7,15 +7,13 @@
 
 import Foundation
 
-import AsyncOperationResult
-
 
 
 public protocol Authenticator {
 	
 	associatedtype RequestType
 	
-	func authenticate(request: RequestType, handler: @escaping (_ result: AsyncOperationResult<RequestType>, _ userInfo: Any?) -> Void)
+	func authenticate(request: RequestType, handler: @escaping (_ result: Result<RequestType, Error>, _ userInfo: Any?) -> Void)
 	
 }
 
@@ -26,7 +24,7 @@ public class AnyAuthenticator<RequestType> : Authenticator {
 		authenticateHandler = b.authenticate
 	}
 	
-	public func authenticate(request: RequestType, handler: @escaping (AsyncOperationResult<RequestType>, Any?) -> Void) {
+	public func authenticate(request: RequestType, handler: @escaping (Result<RequestType, Error>, Any?) -> Void) {
 		authenticateHandler(request, handler)
 	}
 	
@@ -34,6 +32,6 @@ public class AnyAuthenticator<RequestType> : Authenticator {
 	   MARK: - Connector Erasure
 	   ************************* */
 	
-	private let authenticateHandler: (_ request: RequestType, _ handler: @escaping (_ result: AsyncOperationResult<RequestType>, _ userInfo: Any?) -> Void) -> Void
+	private let authenticateHandler: (_ request: RequestType, _ handler: @escaping (_ result: Result<RequestType, Error>, _ userInfo: Any?) -> Void) -> Void
 	
 }

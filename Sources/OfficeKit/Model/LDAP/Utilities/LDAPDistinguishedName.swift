@@ -44,6 +44,10 @@ public struct LDAPDistinguishedName {
 		self.init(values: [(key: "uid", value: uid)] + baseDN.values)
 	}
 	
+	public init(domain: String) {
+		self.init(values: domain.split(separator: ".", omittingEmptySubsequences: false).map{ (key: "dc", value: String($0)) })
+	}
+	
 	public init(string dn: String) throws {
 		enum Engine {
 			
@@ -173,14 +177,36 @@ public struct LDAPDistinguishedName {
 		return relativeDistinguishedName(for: key).values.map{ $0.value }
 	}
 	
+	public func relativeTrailingDistinguishedName(for key: String) -> LDAPDistinguishedName {
+		var foundEnd = false
+		return LDAPDistinguishedName(values: values.reversed().filter{
+			guard !foundEnd else {return false}
+			guard $0.key == key else {
+				foundEnd = true
+				return false
+			}
+			return true
+		}.reversed())
+	}
+	
+	public var uid: String? {
+		let uids = relativeDistinguishedNameValues(for: "uid")
+		guard let uid = uids.first, uids.count == 1 else {return nil}
+		
+		return uid
+	}
+	
+	public var dc: LDAPDistinguishedName {
+		return relativeTrailingDistinguishedName(for: "dc")
+	}
+	
 }
 
 
 extension LDAPDistinguishedName : Hashable {
 	
 	public static func ==(lhs: LDAPDistinguishedName, rhs: LDAPDistinguishedName) -> Bool {
-		/* Apparently “(key: String, value: String)” does not conform to equatable
-		 * in Swift 4 :( Does not seem to work on Swift 5 either (tested in REPL). */
+		/* Apparently “(key: String, value: String)” does not conform to equatable :( */
 //		return lhs.values == rhs.values
 		guard lhs.values.count == rhs.values.count else {return false}
 		for (l, r) in zip(lhs.values, rhs.values) {
@@ -201,6 +227,21 @@ extension LDAPDistinguishedName : CustomStringConvertible {
 	
 	public var description: String {
 		return stringValue
+	}
+	
+}
+
+
+extension LDAPDistinguishedName : Codable {
+	
+	public init(from decoder: Decoder) throws {
+		let container = try decoder.singleValueContainer()
+		try self.init(string: container.decode(String.self))
+	}
+	
+	public func encode(to encoder: Encoder) throws {
+		var container = encoder.singleValueContainer()
+		try container.encode(stringValue)
 	}
 	
 }

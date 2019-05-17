@@ -20,7 +20,7 @@ public struct GoogleUsersList : Codable {
 	public var kind: Kind
 	public var etag: String
 	
-	public var users: [GoogleUser]
+	public var users: [GoogleUser]?
 	public var nextPageToken: String?
 	
 }

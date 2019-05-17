@@ -22,14 +22,18 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 		return r
 	}
 	
-	public typealias Authenticator = (_ request: URLRequest, _ handler: @escaping (AsyncOperationResult<URLRequest>, Any?) -> Void) -> Void
+	public typealias Authenticator = (_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void
 	public let authenticator: Authenticator?
 	
 	public let decoder: JSONDecoder
 	
-	public var asyncResult: AsyncOperationResult<ObjectType> = .error(OperationIsNotFinishedError())
+	public var fetchedObject: ObjectType?
 	public func resultOrThrow() throws -> ObjectType {
-		return try asyncResult.successValueOrThrow()
+		switch (fetchedObject, finalError) {
+		case (nil,               nil):              throw OperationIsNotFinishedError()
+		case (.some(let object), _):                return object
+		case (_,                 .some(let error)): throw error
+		}
 	}
 	
 	public convenience init(request: URLRequest, authenticator a: Authenticator?, decoder: JSONDecoder = AuthenticatedJSONOperation<ObjectType>.defaultDecoder) {
@@ -52,7 +56,7 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 			return
 		}
 		
-		authenticator(originalRequest, { r, _ in handler(r) })
+		authenticator(originalRequest, { r, _ in handler(r.asyncOperationResult) })
 	}
 	
 	public override func computeRetryInfo(sourceError error: Error?, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {
@@ -63,11 +67,10 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 		}
 		
 		do {
-			asyncResult = .success(try decoder.decode(ObjectType.self, from: fetchedData))
+			fetchedObject = try decoder.decode(ObjectType.self, from: fetchedData)
 			completionHandler(.doNotRetry, currentURLRequest, nil)
 		} catch {
 			print("Cannot decode JSON; error \(error) \(fetchedData.reduce("", { $0 + String(format: "%02x", $1) }))", to: &stderrStream)
-			asyncResult = .error(error)
 			completionHandler(.doNotRetry, currentURLRequest, error)
 		}
 	}

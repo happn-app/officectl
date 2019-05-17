@@ -24,7 +24,6 @@ You should access the errors array to get the errors that happened while
 creating the objects. There is one optional error per object created. If the
 error is nil for a given object, it means the object has successfully been
 created, otherwise the error tells you what went wrong. */
-@available(OSX, deprecated: 10.11) /* See LDAPConnector declaration. The core functionalities of this class will have to be rewritten for the OpenDirectory connector if we ever create it. */
 public class CreateLDAPObjectsOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = [LDAPObject]

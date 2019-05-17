@@ -15,18 +15,9 @@ import Vapor
 extension Email : Parameter {
 	
 	public static func resolveParameter(_ emailStr: String, on container: Container) throws -> Email {
-		/* Let’s validate the email */
-		guard let email = Email(string: emailStr).flatMap({ $0.domain == "happn.com" ? Email(username: $0.username, domain: "happn.fr") : $0 }) else {
+		guard let email = Email(string: emailStr) else {
 			throw BasicValidationError("Invalid email")
 		}
-		/* Only happn.fr domain supported for now */
-		guard email.domain == "happn.fr" else {throw BasicValidationError("Only happn.fr emails are supported for now")}
-		/* Only “regular” username (no fancy characters are allowed) */
-		let regex = try! NSRegularExpression(pattern: "[^0-9a-z_.-]", options: [])
-		guard regex.firstMatch(in: email.username, options: [], range: NSRange(email.username.startIndex..<email.username.endIndex, in: email.username)) == nil else {
-			throw BasicValidationError("Invalid character in username")
-		}
-		
 		return email
 	}
 	

@@ -58,7 +58,7 @@ public class CloneGitHubRepoOperation : RetryingOperation, HasResult {
 			process.standardOutput = FileHandle.nullDevice
 		#endif
 		
-		process.launchPath = "/usr/bin/git"
+		process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
 		if !destinationExists {
 			process.arguments = ["clone", "--quiet", "--mirror", repoCloneURL, destinationURL.path]
 		} else {
@@ -71,9 +71,10 @@ public class CloneGitHubRepoOperation : RetryingOperation, HasResult {
 				updateRemoteProcess.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when git fails... */
 				updateRemoteProcess.standardOutput = FileHandle.nullDevice
 			#endif
-			updateRemoteProcess.launchPath = process.launchPath
+			updateRemoteProcess.executableURL = process.executableURL
 			updateRemoteProcess.arguments = ["-C", destinationURL.path, "remote", "set-url", "origin", repoCloneURL]
-			updateRemoteProcess.launch()
+			do {try updateRemoteProcess.run()}
+			catch {cloneError = error; return}
 			updateRemoteProcess.waitUntilExit()
 			guard updateRemoteProcess.terminationStatus == 0 else {
 				cloneError = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "git exited with code \(updateRemoteProcess.terminationStatus) when updating the remote for repository \(repoName)"])
@@ -83,7 +84,8 @@ public class CloneGitHubRepoOperation : RetryingOperation, HasResult {
 			process.arguments = ["-C", destinationURL.path, "remote", "update", "--prune"]
 		}
 		
-		process.launch()
+		do {try process.run()}
+		catch {cloneError = error; return}
 		process.waitUntilExit()
 		
 		guard process.terminationStatus == 0 else {

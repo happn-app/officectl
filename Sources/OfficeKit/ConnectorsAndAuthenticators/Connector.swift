@@ -11,8 +11,6 @@ import Foundation
 	import UIKit
 #endif
 
-import AsyncOperationResult
-
 
 
 public enum ConnectionMode {

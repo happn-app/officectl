@@ -7,6 +7,7 @@
 
 import Foundation
 
+import GenericJSON
 import RetryingOperation
 
 
@@ -28,25 +29,18 @@ public class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 		return ()
 	}
 	
-	#warning("TODO: propertiesToUpdate would be better as a Set of User key-path?")
-	public init(user u: GoogleUser, propertiesToUpdate ps: Set<String>, connector c: GoogleJWTConnector) {
+	public init(user u: GoogleUser, propertiesToUpdate ps: Set<GoogleUser.CodingKeys>, connector c: GoogleJWTConnector) {
 		user = u
 		connector = c
-		propertiesToUpdate = ps
+		propertiesToUpdate = Set(ps.map{ $0.rawValue })
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
 		do {
-			/* Not elegant, but I don’t have a better idea right now… (There is the
-			 * start of an alternative commented at the end of the method, but this
-			 * does not seem viable.) */
-			let jsonEncoder = JSONEncoder()
-			let jsonData = try jsonEncoder.encode(user)
-			guard let userDictionary = try JSONSerialization.jsonObject(with: jsonData, options: []) as? [String: Any] else {
-				throw InternalError()
-			}
-			let toSend = userDictionary.filter{ propertiesToUpdate.contains($0.key) }
-			let dataToSend = try JSONSerialization.data(withJSONObject: toSend, options: [])
+			/* Not elegant, but I don’t have a better idea. */
+			let userJSON = try JSON(encodable: user).objectValue!
+			let toSend = userJSON.filter{ propertiesToUpdate.contains($0.key) }
+			let dataToSend = try JSONEncoder().encode(toSend)
 			
 			let urlComponents = URLComponents(url: URL(string: user.id, relativeTo: URL(string: "https://www.googleapis.com/admin/directory/v1/users/")!)!, resolvingAgainstBaseURL: true)!
 			var urlRequest = URLRequest(url: urlComponents.url!)
@@ -69,13 +63,6 @@ public class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 				self.baseOperationEnded()
 			}
 			op.start()
-			
-			/*var propertiesToSend = [String: Any]()
-			Mirror(reflecting: user).children.forEach{
-				guard let l = $0.label, propertiesToUpdate.contains(l) else {return}
-				propertiesToSend[l] = $0.value
-			}
-			print(propertiesToSend)*/
 		} catch let err {
 			error = err
 			baseOperationEnded()

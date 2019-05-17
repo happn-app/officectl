@@ -14,7 +14,7 @@ import OfficeKit
 
 
 
-final class PasswordResetController {
+final class WebPasswordResetController {
 	
 	func showUserSelection(_ req: Request) throws -> Future<View> {
 		return try req.view().render("NewPasswordResetPage")
@@ -22,9 +22,10 @@ final class PasswordResetController {
 	
 	func showResetPage(_ req: Request) throws -> Future<View> {
 		let email = try req.parameters.next(Email.self)
+		let officeKitConfig = try req.make(OfficeKitConfig.self)
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
-		let basePeopleDN = try nil2throw(req.make(OfficeKitConfig.self).ldapConfigOrThrow().peopleBaseDN, "LDAP People Base DN")
-		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, basePeopleDN: basePeopleDN), additionalInitInfo: req) as ResetPasswordAction
+		let basePeopleDN = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDNPerDomain?[officeKitConfig.mainDomain(for: email.domain)], "LDAP People Base DN")
+		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, basePeopleDN: basePeopleDN, setMainIdToLDAP: true), additionalInitInfo: req) as ResetPasswordAction
 		
 		return try renderResetPasswordAction(resetPasswordAction, view: req.view())
 	}
@@ -32,10 +33,11 @@ final class PasswordResetController {
 	func resetPassword(_ req: Request) throws -> Future<View> {
 		let view = try req.view()
 		let email = try req.parameters.next(Email.self)
+		let officeKitConfig = try req.make(OfficeKitConfig.self)
 		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
-		let basePeopleDN = try nil2throw(req.make(OfficeKitConfig.self).ldapConfigOrThrow().peopleBaseDN, "LDAP People Base DN")
-		let user = User(email: email, basePeopleDN: basePeopleDN)
+		let basePeopleDN = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDNPerDomain?[officeKitConfig.mainDomain(for: email.domain)], "LDAP People Base DN")
+		let user = User(email: email, basePeopleDN: basePeopleDN, setMainIdToLDAP: true)
 		
 		return try user
 		.checkLDAPPassword(container: req, checkedPassword: resetPasswordData.oldPass)
@@ -78,11 +80,11 @@ final class PasswordResetController {
 				isSuccessful: resetPasswordAction.result?.isSuccessful ?? false,
 				ldapResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
 					isExecuting: resetPasswordAction.ldapResetResult == nil || resetPasswordAction.resetLDAPPasswordAction.isExecuting,
-					errorStr: resetPasswordAction.ldapResetResult?.error?.localizedDescription
+					errorStr: resetPasswordAction.ldapResetResult?.failureValue?.localizedDescription
 				),
 				googleResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
 					isExecuting: resetPasswordAction.googleResetResult == nil || resetPasswordAction.resetGooglePasswordAction.isExecuting,
-					errorStr: resetPasswordAction.googleResetResult?.error?.localizedDescription
+					errorStr: resetPasswordAction.googleResetResult?.failureValue?.localizedDescription
 				)
 			)
 			return view.render("PasswordResetStatusPage", context)

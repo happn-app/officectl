@@ -7,7 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
 import Guaka
 import RetryingOperation
 import Vapor
@@ -27,13 +26,11 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 	
 	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
-	.then{ _ -> EventLoopFuture<[GoogleUser]> in /* Fetch happn.fr users */
-		let searchOp = SearchGoogleUsersOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
-		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
-	}
-	.then{ happnFrUsers -> EventLoopFuture<[GoogleUser]> in /* Fetch happnambassadeur.com users */
-		let searchOp = SearchGoogleUsersOperation(searchedDomain: "happnambassadeur.com", googleConnector: googleConnector)
-		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try happnFrUsers + $0.result.successValueOrThrow() })
+	.then{ _ -> EventLoopFuture<[GoogleUser]> in /* Fetch users */
+		let searchFutures = googleConfig.primaryDomains.map{ domain in
+			return asyncConfig.eventLoop.future(from: SearchGoogleUsersOperation(searchedDomain: domain, googleConnector: googleConnector), queue: asyncConfig.operationQueue)
+		}
+		return Future.reduce([], searchFutures, eventLoop: asyncConfig.eventLoop, +)
 	}
 	.then{ allUsers -> EventLoopFuture<[URL]> in /* Backup given mails */
 		let filteredUsers = allUsers.filter{ usersFilter?.contains($0.primaryEmail.stringValue) ?? true }
@@ -236,7 +233,7 @@ class OfflineimapRunOperation : RetryingOperation {
 			offlineimapProcess = process
 			
 			console.info("Waiting on offlineimap…")
-			process.launch()
+			try process.run()
 			process.waitUntilExit()
 			offlineimapProcess = nil
 			
@@ -279,7 +276,7 @@ class OfflineimapRunOperation : RetryingOperation {
 		processOutput.seekToEndOfFile(); processOutput.write(Data("***** \(Date()): NEW OFFLINEIMAP RUN!\n".utf8))
 		
 		let process = Process()
-		process.launchPath = "/usr/local/bin/offlineimap"
+		process.executableURL = URL(fileURLWithPath: "/usr/local/bin/offlineimap")
 		process.arguments = ["-c", configurationFileURL.path]
 		#if !os(Linux)
 			process.standardInput = FileHandle.nullDevice /* Forces failure of getting user pass from input when auth token expires. */

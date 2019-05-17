@@ -24,7 +24,7 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
 	.then{ _ -> EventLoopFuture<[GoogleUser]> in
 		let searchOp = SearchGoogleUsersOperation(searchedDomain: "happn.fr", googleConnector: googleConnector)
-		return context.container.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.successValueOrThrow() })
+		return context.container.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.get() })
 	}
 	.then{ users -> EventLoopFuture<Void> in
 		var i = 1

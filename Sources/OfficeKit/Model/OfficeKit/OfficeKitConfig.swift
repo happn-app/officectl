@@ -14,35 +14,49 @@ public struct OfficeKitConfig {
 	public struct LDAPConfig {
 		
 		public var connectorSettings: LDAPConnector.Settings
-		public var baseDN: LDAPDistinguishedName
-		public var peopleBaseDN: LDAPDistinguishedName?
+		public var baseDNPerDomain: [String: LDAPDistinguishedName]
+		public var peopleBaseDNPerDomain: [String: LDAPDistinguishedName]?
+		public var adminGroupsDN: [LDAPDistinguishedName]
+		
+		public var allBaseDNs: Set<LDAPDistinguishedName> {
+			return Set(baseDNPerDomain.values)
+		}
+		
+		public var allDomains: Set<String> {
+			return Set(baseDNPerDomain.keys)
+		}
 		
 		/**
 		- parameter peopleDNString: The DN for the people, **relative to the base
 		DN**. This is a different than the `peopleBaseDN` var in this struct, as
 		the var contains the full people DN. */
-		public init?(connectorSettings c: LDAPConnector.Settings, baseDNString: String, peopleDNString: String?) {
-			guard let bdn = try? LDAPDistinguishedName(string: baseDNString) else {return nil}
+		public init?(connectorSettings c: LDAPConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?, adminGroupsDNString: [String]) {
+			guard let bdn = try? baseDNPerDomainString.mapValues({ try LDAPDistinguishedName(string: $0) }) else {return nil}
 			
-			let pdn: LDAPDistinguishedName?
+			let pdn: [String: LDAPDistinguishedName]?
 			if let pdnString = peopleDNString {
 				if pdnString.isEmpty {
 					pdn = bdn
 				} else {
 					guard let pdnc = try? LDAPDistinguishedName(string: pdnString) else {return nil}
-					pdn = pdnc + bdn
+					pdn = bdn.mapValues{ pdnc + $0 }
 				}
 			} else {
 				pdn = nil
 			}
 			
-			self.init(connectorSettings: c, baseDN: bdn, peopleBaseDN: pdn)
+			guard let adn = try? adminGroupsDNString.map({ try LDAPDistinguishedName(string: $0) }) else {
+				return nil
+			}
+			
+			self.init(connectorSettings: c, baseDNPerDomain: bdn, peopleBaseDNPerDomain: pdn, adminGroupsDN: adn)
 		}
 		
-		public init(connectorSettings c: LDAPConnector.Settings, baseDN bdn: LDAPDistinguishedName, peopleBaseDN pbdn: LDAPDistinguishedName?) {
+		public init(connectorSettings c: LDAPConnector.Settings, baseDNPerDomain bdn: [String: LDAPDistinguishedName], peopleBaseDNPerDomain pbdn: [String: LDAPDistinguishedName]?, adminGroupsDN agdn: [LDAPDistinguishedName]) {
 			connectorSettings = c
-			baseDN = bdn
-			peopleBaseDN = pbdn
+			baseDNPerDomain = bdn
+			peopleBaseDNPerDomain = pbdn
+			adminGroupsDN = agdn
 		}
 		
 	}
@@ -50,11 +64,11 @@ public struct OfficeKitConfig {
 	public struct GoogleConfig {
 		
 		public var connectorSettings: GoogleJWTConnector.Settings
-		public var domains: [String]
+		public var primaryDomains: Set<String>
 		
-		public init(connectorSettings c: GoogleJWTConnector.Settings, domains d: [String]) {
+		public init(connectorSettings c: GoogleJWTConnector.Settings, primaryDomains d: Set<String>) {
 			connectorSettings = c
-			domains = d
+			primaryDomains = d
 		}
 		
 	}
@@ -70,8 +84,11 @@ public struct OfficeKitConfig {
 	}
 	
 	/* *************************
-      MARK: - Connector Configs
+	   MARK: - Connector Configs
 	   ************************* */
+	
+	/** Key is a domain alias, value is the actual domain */
+	public var domainAliases: [String: String]
 	
 	public var ldapConfig: LDAPConfig?
 	public func ldapConfigOrThrow() throws -> LDAPConfig {return try nil2throw(ldapConfig, "LDAP Config")}
@@ -86,10 +103,24 @@ public struct OfficeKitConfig {
       MARK: - Init
 	   ************ */
 	
-	public init(ldapConfig ldap: LDAPConfig?, googleConfig google: GoogleConfig?, gitHubConfig gitHub: GitHubConfig?) {
+	public init(domainAliases da: [String: String], ldapConfig ldap: LDAPConfig?, googleConfig google: GoogleConfig?, gitHubConfig gitHub: GitHubConfig?) {
+		domainAliases = da
 		ldapConfig = ldap
 		googleConfig = google
 		gitHubConfig = gitHub
+	}
+	
+	public func mainDomain(for domain: String) -> String {
+		if let d = domainAliases[domain] {return d}
+		return domain
+	}
+	
+	public func equivalentDomains(for domain: String) -> Set<String> {
+		let base = mainDomain(for: domain)
+		return domainAliases.reduce([base], { currentResult, keyval in
+			if keyval.value == base {return currentResult.union([keyval.key])}
+			return currentResult
+		})
 	}
 	
 }

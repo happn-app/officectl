@@ -79,3 +79,10 @@ public struct InternalError : Error {
 	}
 	
 }
+
+
+public struct NotAvailableOnThisPlatformError : Error {
+	
+	public init() {}
+	
+}

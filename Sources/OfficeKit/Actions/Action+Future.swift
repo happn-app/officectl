@@ -19,7 +19,7 @@ extension Action {
 		start(parameters: parameters, weakeningMode: weakeningMode, handler: { result in
 			switch result {
 			case .success(let r): promise.succeed(result: r)
-			case .error(let e):   promise.fail(error: e)
+			case .failure(let e): promise.fail(error: e)
 			}
 		})
 		

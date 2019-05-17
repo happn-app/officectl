@@ -7,7 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
 import Guaka
 import Vapor
 
@@ -26,6 +25,7 @@ struct Connectors {
 }
 
 func sync(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+	#warning("TODO: Manage multiple domains")
 	let asyncConfig = try context.container.make(AsyncConfig.self)
 	let officeKitConfig = try context.container.make(OfficeKitConfig.self)
 	
@@ -48,16 +48,20 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		return s
 	}
 	if fromSourceId == .ldap || toSourceIds.contains(.ldap) {
-		ldapBasePeopleDN = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDN, "People DN")
+		let baseDNs = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDNPerDomain?.values, "People DN")
+		guard baseDNs.count == 1 else {
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Only one LDAP domain supported for now"])
+		}
+		ldapBasePeopleDN = baseDNs.first!
 	} else {
 		ldapBasePeopleDN = nil
 	}
 	if fromSourceId == .google || toSourceIds.contains(.google) {
-		#warning("TODO")
-		guard let d = f.getString(name: "google-domain") else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "The \"google-domain\" option is required when syncing to or from Google"])
+		let domains = try nil2throw(officeKitConfig.googleConfigOrThrow().primaryDomains, "Google Domains")
+		guard domains.count == 1 else {
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Only one Google domain supported for now"])
 		}
-		googleDomain = d
+		googleDomain = domains.first!
 	} else {
 		googleDomain = nil
 	}
@@ -170,13 +174,13 @@ private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDisting
 private func usersFromGoogle(connector: GoogleJWTConnector, searchedDomain: String, baseDN: LDAPDistinguishedName, asyncConfig: AsyncConfig) -> EventLoopFuture<(SourceId, [User])> {
 	let searchOp = SearchGoogleUsersOperation(searchedDomain: searchedDomain, query: "isSuspended=false", googleConnector: connector)
 	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: {
-		(.google, try $0.result.successValueOrThrow().map{ User(googleUser: $0, baseDN: baseDN) })
+		(.google, try $0.result.get().map{ User(googleUser: $0, baseDN: baseDN) })
 	})
 }
 
 private func usersFromLDAP(connector: LDAPConnector, baseDN: LDAPDistinguishedName, asyncConfig: AsyncConfig) -> EventLoopFuture<(SourceId, [User])> {
 	let searchOp = SearchLDAPOperation(ldapConnector: connector, request: LDAPSearchRequest(scope: .children, base: baseDN, searchQuery: nil, attributesToFetch: nil))
-	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: {
-		(.ldap, try $0.results.successValueOrThrow().results.compactMap{ $0.inetOrgPerson }.compactMap{ User(ldapInetOrgPerson: $0) })
-	})
+	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue).map{
+		(.ldap, $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) }.compactMap{ User(ldapInetOrgPersonWithObject: $0) })
+	}
 }

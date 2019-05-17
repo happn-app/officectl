@@ -14,6 +14,12 @@ import Vapor
 
 extension User {
 	
+	public init?(ldapInetOrgPersonWithObject p: LDAPInetOrgPersonWithObject) {
+		self.init(ldapInetOrgPerson: p.inetOrgPerson)
+		
+		sshKey = p.object.firstStringValue(for: "sshPublicKey")
+	}
+	
 	public init?(ldapInetOrgPerson: LDAPInetOrgPerson) {
 		guard let dn = try? LDAPDistinguishedName(string: ldapInetOrgPerson.dn), let f = ldapInetOrgPerson.givenName?.first, let l = ldapInetOrgPerson.sn.first else {return nil}
 		id = .distinguishedName(dn)
@@ -49,35 +55,71 @@ extension User {
 		return connector.connect(scope: (), forceReconnect: true, asyncConfig: asyncConfig)
 	}
 	
-	public func existingLDAPUser(container: Container, attributesToFetch: [String] = ["objectClass", "sn", "cn"]) throws -> Future<LDAPInetOrgPerson> {
+	public func bestLDAPSearchRequest(officeKitConfig: OfficeKitConfig, attributesToFetch: [String]) throws -> LDAPSearchRequest {
+		if let dn = distinguishedName {
+			return LDAPSearchRequest(scope: .base, base: dn, searchQuery: nil, attributesToFetch: attributesToFetch)
+		}
+		if let email = email {
+			let mainDomain = officeKitConfig.mainDomain(for: email.domain)
+			let domains = officeKitConfig.equivalentDomains(for: email.domain)
+			let emails = domains.map{ Email(email, newDomain: $0) }
+			let query = LDAPSearchQuery.or(emails.map{ LDAPSearchQuery.simple(attribute: .mail, filtertype: .equal, value: Data($0.stringValue.utf8)) })
+			return LDAPSearchRequest(scope: .children, base: LDAPDistinguishedName(domain: mainDomain), searchQuery: query, attributesToFetch: attributesToFetch)
+		}
+		throw InvalidArgumentError(message: "Cannot find an LDAP query to fetch user with id “\(id)”")
+	}
+	
+	/* Returns nil if the user was not found but there was no error processing
+	 * the request. */
+	public func existingLDAPUser(container: Container, attributesToFetch: [String] = ["objectClass", "sn", "cn"]) throws -> Future<LDAPInetOrgPersonWithObject?> {
+		let asyncConfig = try container.make(AsyncConfig.self)
+		let officeKitConfig = try container.make(OfficeKitConfig.self)
+		let semiSingletonStore = try container.make(SemiSingletonStore.self)
+		let ldapConnectorConfig = try officeKitConfig.ldapConfigOrThrow().connectorSettings
+		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
+		
+		let searchRequest = try bestLDAPSearchRequest(officeKitConfig: officeKitConfig, attributesToFetch: attributesToFetch)
+		
+		let future = ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
+		.then{ _ -> EventLoopFuture<[LDAPInetOrgPersonWithObject]> in
+			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: searchRequest)
+			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } }
+		}
+		.thenThrowing{ objects -> LDAPInetOrgPersonWithObject? in
+			guard objects.count <= 1 else {
+				throw Error.tooManyUsersFound
+			}
+			return objects.first
+		}
+		return future
+	}
+	
+	public func isMemberOf(anyGroup groupsDN: [LDAPDistinguishedName], container: Container) throws -> Future<Bool> {
+		guard groupsDN.count > 0 else {return container.future(false)}
+		
 		let asyncConfig = try container.make(AsyncConfig.self)
 		let semiSingletonStore = try container.make(SemiSingletonStore.self)
 		let ldapConnectorConfig = try container.make(OfficeKitConfig.self).ldapConfigOrThrow().connectorSettings
 		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
 		
 		let searchedDN = try nil2throw(distinguishedName, "dn")
-		let uids = searchedDN.relativeDistinguishedNameValues(for: "uid")
-		guard let uid = uids.first, uids.count == 1 else {throw Error.userNotFound}
-		
-		let searchBase = searchedDN.relativeDistinguishedName(for: "dc")
-		let searchQuery = LDAPSearchQuery.simple(attribute: LDAPAttributeDescription(stringOid: "uid")!, filtertype: .equal, value: Data(uid.utf8))
+		let searchQuery = LDAPSearchQuery.or(groupsDN.map{
+			LDAPSearchQuery.simple(attribute: .memberof, filtertype: .equal, value: Data($0.stringValue.utf8))
+		})
 		
 		let future = ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
-		.then{ _ -> EventLoopFuture<[LDAPObject]> in
-			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: searchBase, searchQuery: searchQuery, attributesToFetch: attributesToFetch))
-			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue, resultRetriever: { op in
-				try print(op.results.successValueOrThrow().results)
-				return try op.results.successValueOrThrow().results
-			})
+		.then{ _ -> EventLoopFuture<[LDAPInetOrgPersonWithObject]> in
+			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .subtree, base: searchedDN, searchQuery: searchQuery, attributesToFetch: nil))
+			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } }
 		}
-		.thenThrowing{ objects -> LDAPInetOrgPerson in
+		.thenThrowing{ objects -> Bool in
 			guard objects.count <= 1 else {
 				throw Error.tooManyUsersFound
 			}
-			guard let inetOrgPerson = objects.first?.inetOrgPerson else {
-				throw Error.userNotFound
+			guard let inetOrgPerson = objects.first else {
+				return false
 			}
-			return inetOrgPerson
+			return inetOrgPerson.object.parsedDistinguishedName == searchedDN
 		}
 		return future
 	}

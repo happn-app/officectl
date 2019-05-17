@@ -7,7 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
 import RetryingOperation
 
 
@@ -22,9 +21,9 @@ public class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 	public let connector: GoogleJWTConnector
 	public let request: GoogleUserSearchRequest
 	
-	public private(set) var result = AsyncOperationResult<[GoogleUser]>.error(OperationIsNotFinishedError())
+	public private(set) var result = Result<[GoogleUser], Error>.failure(OperationIsNotFinishedError())
 	public func resultOrThrow() throws -> [GoogleUser] {
-		return try result.successValueOrThrow()
+		return try result.get()
 	}
 	
 	public init(searchedDomain d: String, query: String? = nil, googleConnector: GoogleJWTConnector) {
@@ -59,12 +58,12 @@ public class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 		let op = AuthenticatedJSONOperation<GoogleUsersList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
 		op.completionBlock = {
 			guard let o = op.result else {
-				self.result = .error(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the users"]))
+				self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the users"]))
 				self.baseOperationEnded()
 				return
 			}
 			
-			self.users.append(contentsOf: o.users)
+			self.users.append(contentsOf: o.users ?? [])
 			if let t = o.nextPageToken {self.fetchNextPage(nextPageToken: t)}
 			else                       {self.result = .success(self.users); self.baseOperationEnded()}
 		}

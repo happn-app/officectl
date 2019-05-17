@@ -49,7 +49,7 @@ public extension OperationQueue {
 	synchronously or asynchronously).
 	
 	- parameter startHandler: The handler that starts your work. */
-	public func addAsyncBlock(startHandler: @escaping AsyncBlockOperation.StartHandler) {
+	func addAsyncBlock(startHandler: @escaping AsyncBlockOperation.StartHandler) {
 		addOperation(AsyncBlockOperation(startHandler: startHandler))
 	}
 	

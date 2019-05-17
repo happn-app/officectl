@@ -16,6 +16,27 @@ public enum UserId {
 	case gitHubId(String)
 	case email(Email)
 	
+	public init(string: String) throws {
+		let split = string.split(separator: ":", omittingEmptySubsequences: false)
+		let serviceId = split[0] /* We do not omit empty subsequences, thus we know there will be at min 1 elmt in the resulting array */
+		let objectIdStr = split.dropFirst().joined(separator: ":")
+		
+		switch serviceId {
+		case "ldap":   try self = .distinguishedName(LDAPDistinguishedName(string: objectIdStr))
+		case "ggl":        self = .googleUserId(objectIdStr)
+		case "github":     self = .gitHubId(objectIdStr)
+		case "email":  try self = .email(nil2throw(Email(string: objectIdStr), "Invalid email"))
+		default: throw InvalidArgumentError(message: "Unknown service id “\(serviceId)”")
+		}
+	}
+	
+	public var isDistinguishedName: Bool {
+		switch self {
+		case .distinguishedName: return true
+		default:                 return false
+		}
+	}
+	
 	public var distinguishedName: LDAPDistinguishedName? {
 		switch self {
 		case .distinguishedName(let dn): return dn
@@ -64,6 +85,21 @@ extension UserId : CustomStringConvertible {
 	
 	public var description: String {
 		return stringValue
+	}
+	
+}
+
+
+extension UserId : Codable {
+	
+	public init(from decoder: Decoder) throws {
+		let container = try decoder.singleValueContainer()
+		try self.init(string: container.decode(String.self))
+	}
+	
+	public func encode(to encoder: Encoder) throws {
+		var container = encoder.singleValueContainer()
+		try container.encode(stringValue)
 	}
 	
 }

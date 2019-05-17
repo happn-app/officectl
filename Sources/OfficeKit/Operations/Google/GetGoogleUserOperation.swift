@@ -7,7 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
 import RetryingOperation
 
 
@@ -23,9 +22,9 @@ public class GetGoogleUserOperation : RetryingOperation, HasResult {
 	
 	public let userKey: String
 	
-	public private(set) var result = AsyncOperationResult<GoogleUser>.error(OperationIsNotFinishedError())
+	public private(set) var result = Result<GoogleUser, Error>.failure(OperationIsNotFinishedError())
 	public func resultOrThrow() throws -> GoogleUser {
-		return try result.successValueOrThrow()
+		return try result.get()
 	}
 	
 	/** Init the operation with the given user key. A user key is either the
@@ -44,7 +43,7 @@ public class GetGoogleUserOperation : RetryingOperation, HasResult {
 		let op = AuthenticatedJSONOperation<GoogleUser>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
 		op.completionBlock = {
 			guard let o = op.result else {
-				self.result = .error(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the user"]))
+				self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the user"]))
 				self.baseOperationEnded()
 				return
 			}

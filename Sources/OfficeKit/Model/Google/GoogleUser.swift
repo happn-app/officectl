@@ -66,4 +66,20 @@ public struct GoogleUser : Hashable, Codable {
 		hasher.combine(id)
 	}
 	
+	/** The `CodingKeys` for the `GoogleUser`. We give a public access to this
+	enum in order to be able to pass it to `ModifyGoogleUserOperation`.
+	
+	- Note: Sadly this implies that this enum must be modified whenever a new
+	property is added/removed from `GoogleUser`. And the compiler won’t notify
+	you… */
+	public enum CodingKeys : String, CodingKey {
+		case kind, etag
+		case id, customerId
+		case name
+		case primaryEmail, aliases, nonEditableAliases, includeInGlobalAddressList
+		case isAdmin, isDelegatedAdmin
+		case lastLoginTime, creationTime, agreedToTerms
+		case suspended, hashFunction, password, changePasswordAtNextLogin
+	}
+	
 }
