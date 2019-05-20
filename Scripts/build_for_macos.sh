@@ -10,9 +10,20 @@ SANDBOX_FLAGS=
 #fi
 
 
+# Let’s find Homebrew’s OpenLDAP
+SWIFT_BUILD_OPENLDAP_OPTIONS=
+for b in "/usr/local/opt/openldap" "${HOME}/usr/homebrew/opt/openldap"; do
+	lib_dir="$b/lib"
+	include_dir="$b/include"
+	if [ -d "$lib_dir" -a -d "$include_dir" ]; then
+		SWIFT_BUILD_OPENLDAP_OPTIONS=("-Xcc" "-I$include_dir" "-Xlinker" "-L$lib_dir")
+		break
+	fi
+done
+
+
 cd "$(dirname "$0")/.."
 
 PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/local/opt/openssl/lib/pkgconfig:${HOME}/usr/homebrew/opt/openssl/lib/pkgconfig" \
 	swift build $SANDBOX_FLAGS -c release \
-	-Xcc "-I/usr/local/opt/openldap/include" -Xlinker "-L/usr/local/opt/openldap/lib" \
-	-Xcc "-I${HOME}/usr/homebrew/opt/openldap/include" -Xlinker "-L${HOME}/usr/homebrew/opt/openldap/lib"
+	"${SWIFT_BUILD_OPENLDAP_OPTIONS[@]}"
