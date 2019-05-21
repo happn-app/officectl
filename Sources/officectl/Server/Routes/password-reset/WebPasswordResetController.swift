@@ -72,6 +72,7 @@ final class WebPasswordResetController {
 				var isSuccessful: Bool
 				var ldapResetStatus: ServicePasswordResetStatus
 				var googleResetStatus: ServicePasswordResetStatus
+				var openDirectoryResetStatus: ServicePasswordResetStatus
 			}
 			
 			let context = ResetPasswordStatusContext(
@@ -85,6 +86,10 @@ final class WebPasswordResetController {
 				googleResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
 					isExecuting: resetPasswordAction.googleResetResult == nil || resetPasswordAction.resetGooglePasswordAction.isExecuting,
 					errorStr: resetPasswordAction.googleResetResult?.failureValue?.localizedDescription
+				),
+				openDirectoryResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
+					isExecuting: resetPasswordAction.openDirectoryResetResult == nil || resetPasswordAction.resetOpenDirectoryPasswordAction.isExecuting,
+					errorStr: resetPasswordAction.openDirectoryResetResult?.failureValue?.localizedDescription
 				)
 			)
 			return view.render("PasswordResetStatusPage", context)

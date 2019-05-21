@@ -39,6 +39,7 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 	#if canImport(DirectoryService) && canImport(OpenDirectory)
 	let op = BlockOperation{
 		do {
+//			If needed, we have this equality that’s true (verified at runtime once…): kODRecordTypeUsers == kDSStdRecordTypeUsers
 			let testDN = try! LDAPDistinguishedName(string: "uid=ldap.test,cn=users,dc=office2,dc=happn,dc=private")
 			
 			let session = try ODSession(options: [
@@ -47,17 +48,22 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 				kODSessionProxyPassword: "REDACTED"
 			])
 			let node = try ODNode(session: session, type: ODNodeType(kODNodeTypeAuthentication))
-//			try node.setCredentialsWithRecordType(kDSStdRecordTypeUsers, recordName: "diradmin", password: "REDACTED")
+//			try node.setCredentialsWithRecordType(kODRecordTypeUsers, recordName: "diradmin", password: "REDACTED")
 			/* Searching with the kODAttributeTypeMetaRecordName attribute does not
 			 * seem to work for whatever reason… */
-			let query = try ODQuery(node: node, forRecordTypes: kODRecordTypeUsers, attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues:testDN.uid!, returnAttributes: nil, maximumResults: 0)
+			let query = try ODQuery(node: node, forRecordTypes: kODRecordTypeUsers, attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: testDN.uid!, returnAttributes: nil, maximumResults: 0)
 			for r in try query.resultsAllowingPartial(false) {
-				print(r)
+				print("current result: \(r)")
 				if let r = r as? ODRecord {
-					try print(r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName]))
+					let detailsForMetaRecordName = try r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName])
+					print("kODAttributeTypeMetaRecordName: \(detailsForMetaRecordName)")
 					if let _ = try? r.verifyPassword("toto") {print("ok")}
 					else                                     {print("ko")}
-					guard try r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName])[kODAttributeTypeMetaRecordName] as? String == testDN.stringValue else {continue}
+					guard try (r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName])[kODAttributeTypeMetaRecordName] as? [String])?.first == testDN.stringValue else {
+						print("NOT trying to set the password")
+						continue
+					}
+					print("Trying to set the password")
 					try r.setNodeCredentials("diradmin", password: "REDACTED")
 					try r.changePassword(nil, toPassword: "toto")
 				}

@@ -74,7 +74,20 @@ func parse_cli() -> GuakaCommandParseResult {
 		Flag(longName: "happn-refresh-token", type: String.self, description: "A refresh token to authenticate happn.", inheritable: true)
 	]
 	
-	let rootCommand = Command(usage: "officectl", flags: rootFlags, run: createSetWrapperCommandHandler(root))
+	#if canImport(DirectoryService) && canImport(OpenDirectory)
+	/* Root flags for OpenDirectory. Only supported on macOS. */
+	let rootOpenDirectoryFlags = [
+		Flag(longName: "od-server",              type: String.self, description: "The domain or IP address of the OpenDirectory server.",                         inheritable: true),
+		Flag(longName: "od-admin-username",      type: String.self, description: "An admin username for the OpenDirectory.",                                      inheritable: true),
+		Flag(longName: "od-admin-password",      type: String.self, description: "The pass for the OpenDirectory admin.",                                         inheritable: true),
+		Flag(longName: "od-ldap-admin-username", type: String.self, description: "An admin username for the Directory part of OpenDirectory (node credentials).", inheritable: true),
+		Flag(longName: "od-ldap-admin-password", type: String.self, description: "The pass for the admin of the Directory part of OpenDirectory.",                inheritable: true),
+	]
+	#else
+	let rootOpenDirectoryFlags = [Flag]()
+	#endif
+	
+	let rootCommand = Command(usage: "officectl", flags: rootFlags + rootOpenDirectoryFlags, run: createSetWrapperCommandHandler(root))
 	
 	
 	/* ***********************

@@ -23,7 +23,8 @@ extension OfficeKitConfig : Service {
 			domainAliases: domainAliases,
 			ldapConfig: try LDAPConfig(flags: f, yamlConfig: yamlConfig),
 			googleConfig: try GoogleConfig(flags: f, yamlConfig: yamlConfig),
-			gitHubConfig: try GitHubConfig(flags: f, yamlConfig: yamlConfig)
+			gitHubConfig: try GitHubConfig(flags: f, yamlConfig: yamlConfig),
+			openDirectoryConfig: try OpenDirectoryConfig(flags: f, yamlConfig: yamlConfig)
 		)
 	}
 	
