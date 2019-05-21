@@ -75,6 +75,12 @@ final class WebPasswordResetController {
 				var openDirectoryResetStatus: ServicePasswordResetStatus
 			}
 			
+			let isOpenDirectoryBeingReset: Bool
+			#if canImport(DirectoryService) && canImport(OpenDirectory)
+			isOpenDirectoryBeingReset = resetPasswordAction.resetOpenDirectoryPasswordAction.isExecuting
+			#else
+			isOpenDirectoryBeingReset = false
+			#endif
 			let context = ResetPasswordStatusContext(
 				userEmail: emailStr,
 				isExecuting: resetPasswordAction.isExecuting,
@@ -88,7 +94,7 @@ final class WebPasswordResetController {
 					errorStr: resetPasswordAction.googleResetResult?.failureValue?.localizedDescription
 				),
 				openDirectoryResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
-					isExecuting: resetPasswordAction.openDirectoryResetResult == nil || resetPasswordAction.resetOpenDirectoryPasswordAction.isExecuting,
+					isExecuting: resetPasswordAction.openDirectoryResetResult == nil || isOpenDirectoryBeingReset,
 					errorStr: resetPasswordAction.openDirectoryResetResult?.failureValue?.localizedDescription
 				)
 			)

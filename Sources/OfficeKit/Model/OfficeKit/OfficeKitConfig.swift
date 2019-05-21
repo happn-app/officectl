@@ -122,6 +122,14 @@ public struct OfficeKitConfig {
       MARK: - Init
 	   ************ */
 	
+	public init(domainAliases da: [String: String], ldapConfig ldap: LDAPConfig?, googleConfig google: GoogleConfig?, gitHubConfig gitHub: GitHubConfig?) {
+		domainAliases = da
+		ldapConfig = ldap
+		googleConfig = google
+		gitHubConfig = gitHub
+	}
+	
+	#if canImport(DirectoryService) && canImport(OpenDirectory)
 	public init(domainAliases da: [String: String], ldapConfig ldap: LDAPConfig?, googleConfig google: GoogleConfig?, gitHubConfig gitHub: GitHubConfig?, openDirectoryConfig openDirectory: OpenDirectoryConfig?) {
 		domainAliases = da
 		ldapConfig = ldap
@@ -129,6 +137,7 @@ public struct OfficeKitConfig {
 		gitHubConfig = gitHub
 		openDirectoryConfig = openDirectory
 	}
+	#endif
 	
 	public func mainDomain(for domain: String) -> String {
 		if let d = domainAliases[domain] {return d}

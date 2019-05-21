@@ -22,7 +22,9 @@ public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 	/* Sub-actions */
 	public let resetLDAPPasswordAction: ResetLDAPPasswordAction
 	public let resetGooglePasswordAction: ResetGooglePasswordAction
+	#if canImport(DirectoryService) && canImport(OpenDirectory)
 	public let resetOpenDirectoryPasswordAction: ResetOpenDirectoryPasswordAction
+	#endif
 	
 	public private(set) var ldapResetResult: Result<Void, Error>?
 	public private(set) var googleResetResult: Result<Void, Error>?
@@ -37,7 +39,9 @@ public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 		
 		resetLDAPPasswordAction = store.semiSingleton(forKey: u, additionalInitInfo: additionalInfo)
 		resetGooglePasswordAction = store.semiSingleton(forKey: u, additionalInitInfo: additionalInfo)
+		#if canImport(DirectoryService) && canImport(OpenDirectory)
 		resetOpenDirectoryPasswordAction = store.semiSingleton(forKey: u, additionalInitInfo: additionalInfo)
+		#endif
 		
 		super.init(subject: u)
 	}
@@ -59,6 +63,7 @@ public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 				endOperationBlock()
 			})
 		}
+		#if canImport(DirectoryService) && canImport(OpenDirectory)
 		openDirectoryResetResult = nil
 		let resetOpenDirectoryOperation = AsyncBlockOperation{ endOperationBlock in
 			self.resetOpenDirectoryPasswordAction.start(parameters: newPassword, weakeningMode: .alwaysInstantly, handler: { result in
@@ -66,6 +71,11 @@ public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 				endOperationBlock()
 			})
 		}
+		#else
+		let resetOpenDirectoryOperation = AsyncBlockOperation{ endOperationBlock in
+			self.openDirectoryResetResult = .failure(NotAvailableOnThisPlatformError())
+		}
+		#endif
 		let resetOperations = [ldapOperation, googleOperation, resetOpenDirectoryOperation]
 		
 		let endOperation = BlockOperation{
