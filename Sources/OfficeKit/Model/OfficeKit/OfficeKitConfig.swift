@@ -83,6 +83,20 @@ public struct OfficeKitConfig {
 		
 	}
 	
+	#if canImport(DirectoryService) && canImport(OpenDirectory)
+	public struct OpenDirectoryConfig {
+		
+		public var connectorSettings: OpenDirectoryConnector.Settings
+		public var authenticatorSettings: OpenDirectoryRecordAuthenticator.Settings
+		
+		public init(connectorSettings c: OpenDirectoryConnector.Settings, authenticatorSettings a: OpenDirectoryRecordAuthenticator.Settings) {
+			connectorSettings = c
+			authenticatorSettings = a
+		}
+		
+	}
+	#endif
+	
 	/* *************************
 	   MARK: - Connector Configs
 	   ************************* */
@@ -99,6 +113,11 @@ public struct OfficeKitConfig {
 	public var gitHubConfig: GitHubConfig?
 	public func gitHubConfigOrThrow() throws -> GitHubConfig {return try nil2throw(gitHubConfig, "GitHub Config")}
 	
+	#if canImport(DirectoryService) && canImport(OpenDirectory)
+	public var openDirectoryConfig: OpenDirectoryConfig?
+	public func openDirectoryConfigOrThrow() throws -> OpenDirectoryConfig {return try nil2throw(openDirectoryConfig, "OpenDirectory Config")}
+	#endif
+	
 	/* ************
       MARK: - Init
 	   ************ */
@@ -109,6 +128,16 @@ public struct OfficeKitConfig {
 		googleConfig = google
 		gitHubConfig = gitHub
 	}
+	
+	#if canImport(DirectoryService) && canImport(OpenDirectory)
+	public init(domainAliases da: [String: String], ldapConfig ldap: LDAPConfig?, googleConfig google: GoogleConfig?, gitHubConfig gitHub: GitHubConfig?, openDirectoryConfig openDirectory: OpenDirectoryConfig?) {
+		domainAliases = da
+		ldapConfig = ldap
+		googleConfig = google
+		gitHubConfig = gitHub
+		openDirectoryConfig = openDirectory
+	}
+	#endif
 	
 	public func mainDomain(for domain: String) -> String {
 		if let d = domainAliases[domain] {return d}
