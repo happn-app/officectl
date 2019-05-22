@@ -1,9 +1,19 @@
 ---
 server:
+  # The path to the static resources for officectl (deprecated; for the reset
+  # password page of officectl). Can be overridden with the --static-data-dir
+  # command line option.
   static_data_dir: /usr/share/officectl/
+  # The secret used to sign the JWT authentication token. Can be overridden with
+  # the --jwt-secret command line option.
   jwt_secret: awesome_secret
+  # The hostname to bind to for listening. Defaults to localhost if not set.
+  # Can be overridden using the --hostname command line option.
 #  hostname: 127.0.0.1
+  # The port to bind to for listening. Defaults to 8080 if not set.
+  # Can be overridden using the --port command line option.
 #  port: 8080
+
 
 
 # Optional: This is an alias to main domain mapping.
@@ -15,7 +25,7 @@ server:
 # only an “internal_openldap” directory type is supported.
 #auth_service_id: ldap
 
-# The list of services you support through officectl.
+# The list of services supported through officectl.
 services:
   # The LDAP config. All fields are required, except for the people_dn as not
   # all commands using LDAP require it (for commands that do require it, if it

@@ -17,8 +17,8 @@ import OfficeKit
 
 extension OfficeKitConfig : Service {
 	
-	init(flags f: Flags, yamlConfig: Yaml?) throws {
-		let domainAliases = try OfficectlConfig.stringStringDicFrom(flags: f, yamlConfig: yamlConfig, flagName: "domain-aliases", yamlName: "domain_aliases") ?? [:]
+	init(flags f: Flags, yamlConfig: Yaml) throws {
+		let domainAliases = (try? OfficectlConfig.stringStringDicFrom(yamlConfig: yamlConfig, yamlName: "domain_aliases")) ?? [:]
 		
 		#if canImport(DirectoryService) && canImport(OpenDirectory)
 		self.init(

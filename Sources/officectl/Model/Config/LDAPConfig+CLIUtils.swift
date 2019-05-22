@@ -17,30 +17,25 @@ import OfficeKit
 
 extension OfficeKitConfig.LDAPConfig {
 	
-	init?(flags f: Flags, yamlConfig: Yaml?) throws {
-		let yamlLDAPConfig = yamlConfig?["ldap"]
+	init?(flags f: Flags, yamlConfig: Yaml) throws {
+		guard let yamlLDAPConfig = yamlConfig["ldap"].dictionary else {return nil}
 		
 		let connectorSettings: LDAPConnector.Settings
-		guard let url = (f.getString(name: "ldap-url") ?? yamlLDAPConfig?["url"].string).flatMap({ URL(string: $0) }) else {
+		guard let url = yamlLDAPConfig["url"]?.string.flatMap({ URL(string: $0) }) else {
 			return nil
 		}
-		if let un = f.getString(name: "ldap-admin-username") ?? yamlLDAPConfig?["admin_username"].string,
-			let pass = f.getString(name: "ldap-admin-password") ?? yamlLDAPConfig?["admin_password"].string
-		{
+		if let un = yamlLDAPConfig["admin_username"]?.string, let pass = yamlLDAPConfig["admin_password"]?.string {
 			connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3, username: un, password: pass)
 		} else {
 			connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3)
 		}
 		
-		guard let bdnDic = try OfficectlConfig.stringStringDicFrom(flags: f, yamlConfig: yamlLDAPConfig, flagName: "ldap-base-dn-per-domain", yamlName: "base_dn_per_domains") else {
+		guard let bdnDic = try? OfficectlConfig.stringStringDicFrom(yamlConfig: Yaml.dictionary(yamlLDAPConfig), yamlName: "base_dn_per_domains") else {
 			return nil
 		}
 		
-		let pdnString = f.getString(name: "ldap-people-dn") ?? yamlLDAPConfig?["people_dn"].string
-		let adnString =
-			f.getString(name: "ldap-admin-groups-dn")?.split(separator: ";").map(String.init) ??
-			(try? yamlLDAPConfig?["admin_groups_dn"].array?.map{ y -> String in guard let dn = y.string else {throw InvalidArgumentError(message: "Invalid admin_groups_dn config in LDAP config")}; return dn }) ??
-			[]
+		let pdnString = yamlLDAPConfig["people_dn"]?.string
+		let adnString = (try? OfficectlConfig.stringArrayFrom(yamlConfig: yamlLDAPConfig, yamlName: "admin_groups_dn")) ?? []
 		
 		self.init(connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)
 	}

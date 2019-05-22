@@ -17,16 +17,16 @@ import OfficeKit
 
 extension OfficeKitConfig.GoogleConfig {
 	
-	init?(flags f: Flags, yamlConfig: Yaml?) throws {
-		let yamlGoogleConfig = yamlConfig?["google"]
+	init?(flags f: Flags, yamlConfig: Yaml) throws {
+		guard let yamlGoogleConfig = yamlConfig["google"].dictionary else {return nil}
 		
-		guard let credsURLString = f.getString(name: "google-superuser-json-creds") ?? yamlGoogleConfig?["superuser_json_creds"].string else {
+		guard let credsURLString = yamlGoogleConfig["superuser_json_creds"]?.string else {
 			return nil
 		}
-		guard let domains = try f.getString(name: "google-domains")?.split(separator: ",").map(String.init) ?? yamlGoogleConfig?["domains"].arrayOfStringOrThrow() else {
+		guard let domains = try yamlGoogleConfig["domains"]?.arrayOfStringOrThrow() else {
 			return nil
 		}
-		let userBehalf = f.getString(name: "google-admin-email") ?? yamlGoogleConfig?["admin_email"].string
+		let userBehalf = yamlGoogleConfig["admin_email"]?.string
 		let connectorSettings = GoogleJWTConnector.Settings(jsonCredentialsURL: URL(fileURLWithPath: credsURLString, isDirectory: false), userBehalf: userBehalf)
 		
 		self.init(connectorSettings: connectorSettings, primaryDomains: Set(domains))
