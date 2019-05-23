@@ -176,7 +176,8 @@ class WebCertificateRenewController {
 			defer {BIO_free(bio)}
 			
 			let nullTerminatedData = pemData.convertToData() + Data([0])
-			_ = nullTerminatedData.withUnsafeBytes{ key in
+			_ = nullTerminatedData.withUnsafeBytes{ (key: UnsafeRawBufferPointer) -> Int32 in
+				let key = key.bindMemory(to: Int8.self).baseAddress!
 				return BIO_puts(bio, key)
 			}
 			
