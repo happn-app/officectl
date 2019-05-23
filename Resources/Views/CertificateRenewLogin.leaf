@@ -1,0 +1,24 @@
+#set("title") {
+	Certificate Renewal
+}
+
+#set("additional_head_tags") {
+	<script type="text/javascript" src="/js/CertificateRenewal.js"></script>
+}
+
+#set("body") {
+	<h1>Certificate Renewal</h1>
+	<form onsubmit="return form_action(this)" id="form">
+		<label>Your email or id:</label>
+		<input type="text" id="form_input_user_id" onKeyUp="show_input_errors()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+		<input type="text" name="username" id="form_input_user_id_clean" hidden="hidden"/>
+		<br/>
+		<label>Password:</label>
+		<input type="password" name="password" id="form_input_pass" onKeyUp="show_input_errors()"/>
+		<br/>
+		<input disabled="disabled" type="submit" value="Submit" id="form_submit">
+	</form>
+	<p id="error" style="color: red;"></p>
+}
+
+#embed("lib/Master")

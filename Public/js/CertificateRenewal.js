@@ -1,4 +1,4 @@
-/* Copied in CertificateRenewal basically. */
+/* Copied from PasswordReset basically. */
 
 function show_validation_error(error) {
 	/* Get the error element */
@@ -31,17 +31,8 @@ function show_input_errors() {
 	if (get_full_user_email(show_validation_error) == null) {return}
 	
 	/* Get the passwords fields values */
-	var old_password = get_input_value("form_input_old_pass", show_validation_error)
-	if (old_password == null) {return}
-	
-	var new_password = get_input_value("form_input_new_pass", show_validation_error)
-	if (new_password == null) {return}
-	
-	var new_password2 = get_input_value("form_input_new_pass2", show_validation_error)
-	if (new_password2 == null) {return}
-	
-	/* Validate the passwords fields */
-	if (new_password != new_password2) {show_validation_error("New password and verification must match"); return}
+	var password = get_input_value("form_input_pass", show_validation_error)
+	if (password == null) {return}
 	
 	submit_button.disabled = false
 }
@@ -49,6 +40,9 @@ function show_input_errors() {
 function get_full_user_email(show_error_function) {
 	var nameValue = get_input_value("form_input_user_id", show_error_function)
 	if (nameValue == null) {return null}
+	/* Get the cleaned email input element */
+	var inputClean = document.getElementById("form_input_user_id_clean")
+	if (typeof inputClean === "undefined" || inputClean === null) {show_error_function("Internal error: cannot get input named “form_input_user_id_clean”"); return null}
 	
 	/* For empty names we do nothing */
 	if (nameValue.length == 0) {show_error_function("Username is mandatory"); return null}
@@ -64,23 +58,23 @@ function get_full_user_email(show_error_function) {
 	/* Validate the username */
 	if (userId.match(/[^0-9a-z_.-]/) !== null) {show_error_function("Invalid username"); return null}
 	
-	return userId + "@" + domain
+	emailClean = userId + "@" + domain
+	inputClean.value = emailClean
+	
+	return emailClean
 }
 
 function form_action(form) {
 	var email = get_full_user_email(show_validation_error)
 	if (email == null) {return false}
 	
-	var old_password = get_input_value("form_input_old_pass", show_validation_error)
-	if (old_password == null) {return false}
-	
-	var new_password = get_input_value("form_input_new_pass", show_validation_error)
-	if (new_password == null) {return false}
+	var password = get_input_value("form_input_pass", show_validation_error)
+	if (password == null) {return false}
 	
 	var form = document.getElementById("form")
 	if (typeof form === "undefined" || form === null) {show_validation_error("Internal error: cannot get the form element"); return false}
 	
-	form.action = "/password-reset/" + email
+	form.action = "/certificate-renew/"
 	form.method = "post"
 	
 	return true

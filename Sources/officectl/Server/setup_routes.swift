@@ -42,4 +42,10 @@ func setup_routes(_ router: Router) throws {
 	router.get("password-reset", use: webPasswordResetController.showUserSelection)
 	router.get("password-reset",  Email.parameter, use: webPasswordResetController.showResetPage)
 	router.post("password-reset", Email.parameter, use: webPasswordResetController.resetPassword)
+	
+	/* ******** Temporary certificate renew page ******** */
+	
+	let webCertificateRenewController = WebCertificateRenewController()
+	router.get("certificate-renew", use: webCertificateRenewController.showLogin)
+	router.post("certificate-renew", use: webCertificateRenewController.renewCertificate)
 }
