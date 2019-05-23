@@ -17,10 +17,6 @@ import GenericJSON
 
 class WebCertificateRenewController {
 	
-	let issuerName = "happn_intermediate"
-	let token = "REDACTED"
-	let baseURL = URL(string: "http://localhost:8200/v1/")!
-	
 	func showLogin(_ req: Request) throws -> Future<View> {
 		return try req.view().render("CertificateRenewLogin")
 	}
@@ -30,25 +26,36 @@ class WebCertificateRenewController {
 		let renewedCommonName = renewCertificateData.email.username
 		
 		let asyncConfig = try req.make(AsyncConfig.self)
+		let officectlConfig = try req.make(OfficectlConfig.self)
 		let officeKitConfig = try req.make(OfficeKitConfig.self)
 		let basePeopleDN = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDNPerDomain?[officeKitConfig.mainDomain(for: renewCertificateData.email.domain)], "LDAP People Base DN")
 		let user = User(email: renewCertificateData.email, basePeopleDN: basePeopleDN, setMainIdToLDAP: true)
+		
+		let baseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
+		let issuerName = try nil2throw(officectlConfig.tmpVaultIssuerName)
+		let token = try nil2throw(officectlConfig.tmpVaultToken)
+		
+		func authenticate(_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void {
+			var request = request
+			request.addValue(token, forHTTPHeaderField: "X-Vault-Token")
+			handler(.success(request), nil)
+		}
 		
 		return try user
 		.checkLDAPPassword(container: req, checkedPassword: renewCertificateData.password)
 		.then{ _ -> Future<CertificateSerialsList> in
 			/* Now the user is authenticated, let’s fetch the list of current
 			 * certificates in the vault */
-			var urlRequest = URLRequest(url: self.baseURL.appendingPathComponent(self.issuerName).appendingPathComponent("certs"))
+			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("certs"))
 			urlRequest.httpMethod = "LIST"
-			let op = AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>(request: urlRequest, authenticator: self.authenticate)
+			let op = AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>(request: urlRequest, authenticator: authenticate)
 			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.data }
 		}
 		.then{ certificatesList -> Future<[String?]> in
 			/* Get the list of certificates to revoke */
 			let futures = certificatesList.keys.map{ id -> Future<String?> in
-				let urlRequest = URLRequest(url: self.baseURL.appendingPathComponent(self.issuerName).appendingPathComponent("cert").appendingPathComponent(id))
-				let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: self.authenticate)
+				let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent(id))
+				let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
 				return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ certificateResponse in
 					guard certificateResponse.data.certificate.commonName == renewedCommonName else {return nil}
 					return id
@@ -61,22 +68,22 @@ class WebCertificateRenewController {
 		.then{ certificateIdsToRevoke -> Future<Void> in
 			/* Revoke the certificates to revoke */
 			let futures = certificateIdsToRevoke.compactMap{ $0 }.map{ id -> Future<Void> in
-				var urlRequest = URLRequest(url: self.baseURL.appendingPathComponent(self.issuerName).appendingPathComponent("revoke"))
+				var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("revoke"))
 				urlRequest.httpMethod = "POST"
 				let json = JSON(dictionaryLiteral: ("serial_number", JSON(stringLiteral: id)))
 				urlRequest.httpBody = try! JSONEncoder().encode(json)
-				let op = AuthenticatedJSONOperation<VaultResponse<RevocationResult>>(request: urlRequest, authenticator: self.authenticate)
+				let op = AuthenticatedJSONOperation<VaultResponse<RevocationResult>>(request: urlRequest, authenticator: authenticate)
 				return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ _ in return () }
 			}
 			return EventLoopFuture.reduce((), futures, eventLoop: asyncConfig.eventLoop, { _, _ in () })
 		}
 		.then{ _ -> Future<NewCertificate> in
 			/* Create the new certificate */
-			var urlRequest = URLRequest(url: self.baseURL.appendingPathComponent(self.issuerName).appendingPathComponent("issue").appendingPathComponent("client"))
+			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("issue").appendingPathComponent("client"))
 			urlRequest.httpMethod = "POST"
 			let json = JSON(dictionaryLiteral: ("common_name", JSON(stringLiteral: renewedCommonName)))
 			urlRequest.httpBody = try! JSONEncoder().encode(json)
-			let op = AuthenticatedJSONOperation<VaultResponse<NewCertificate>>(request: urlRequest, authenticator: self.authenticate)
+			let op = AuthenticatedJSONOperation<VaultResponse<NewCertificate>>(request: urlRequest, authenticator: authenticate)
 			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.data }
 		}
 		.then{ newCertificate -> Future<URL> in
@@ -117,12 +124,6 @@ class WebCertificateRenewController {
 		.map{ data in
 			return req.response(data, as: .tar)
 		}
-	}
-	
-	private func authenticate(_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void {
-		var request = request
-		request.addValue(token, forHTTPHeaderField: "X-Vault-Token")
-		handler(.success(request), nil)
 	}
 	
 	private struct RenewCertificateData : Decodable {

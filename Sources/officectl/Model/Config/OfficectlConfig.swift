@@ -25,6 +25,10 @@ struct OfficectlConfig : Service {
 	
 	var verbose: Bool
 	
+	var tmpVaultBaseURL: URL?
+	var tmpVaultIssuerName: String?
+	var tmpVaultToken: String?
+
 	var officeKitConfig: OfficeKitConfig
 	
 	init(flags f: Flags) throws {
@@ -40,6 +44,10 @@ struct OfficectlConfig : Service {
 		jwtSecret = jSecret
 		
 		verbose = f.getBool(name: "verbose") ?? false
+		
+		tmpVaultBaseURL = configYaml["vault"]["base_url"].string.flatMap{ URL(string: $0) }
+		tmpVaultIssuerName = configYaml["vault"]["issuer_name"].string
+		tmpVaultToken = configYaml["vault"]["token"].string
 		
 		officeKitConfig = try OfficeKitConfig(flags: f, yamlConfig: configYaml)
 	}
