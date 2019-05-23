@@ -24,8 +24,9 @@ let package = Package(
 	],
 	targets: [
 		.systemLibrary(name: "COpenLDAP", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])]),
+		.systemLibrary(name: "COpenSSL", pkgConfig: "openssl", providers: [.apt(["openssl", "libssl-dev"]), .brew(["openssl@1.1"])]),
 		
-		.target(name: "OfficeKit", dependencies: ["COpenLDAP", "RetryingOperation", "URLRequestOperation", "SemiSingleton", "NIO", "FluentSQLite", "Crypto", "Vapor", "JWT", "EmailValidator", "GenericJSON"]),
+		.target(name: "OfficeKit", dependencies: ["COpenLDAP", "COpenSSL", "RetryingOperation", "URLRequestOperation", "SemiSingleton", "NIO", "FluentSQLite", "Crypto", "Vapor", "JWT", "EmailValidator", "GenericJSON"]),
 		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "Guaka", "Yaml", "JWT"]),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"])
 	]	

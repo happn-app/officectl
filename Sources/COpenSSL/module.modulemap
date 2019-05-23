@@ -1,0 +1,6 @@
+module COpenSSL [system] {
+	header "openssl.h"
+	link "crypto"
+	link "ssl"
+	export *
+}
