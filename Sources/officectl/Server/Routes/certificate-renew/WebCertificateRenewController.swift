@@ -79,12 +79,43 @@ class WebCertificateRenewController {
 			let op = AuthenticatedJSONOperation<VaultResponse<NewCertificate>>(request: urlRequest, authenticator: self.authenticate)
 			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.data }
 		}
-		.then{ newCertificate -> Future<Void> in
-			print(newCertificate)
-			return asyncConfig.eventLoop.newSucceededFuture(result: ())
+		.then{ newCertificate -> Future<URL> in
+			let randomId = UUID().uuidString
+			let baseName = renewedCommonName + "_" + randomId
+			let baseURL = FileManager.default.temporaryDirectory
+			
+			let keyURL = baseURL.appendingPathComponent(baseName).appendingPathExtension("key")
+			let certifURL = baseURL.appendingPathComponent(baseName).appendingPathExtension("pem")
+			let caURL = baseURL.appendingPathComponent("ca_" + randomId).appendingPathExtension("pem")
+			
+			var failure: Error?
+			let op = BlockOperation{
+				do {
+					let caData = Data(newCertificate.issuingCa.utf8)
+					let keyData = Data(newCertificate.privateKey.utf8)
+					let certifData = Data(newCertificate.certificate.utf8)
+					
+					try caData.write(to: caURL)
+					try keyData.write(to: keyURL)
+					try certifData.write(to: certifURL)
+				} catch {
+					failure = error
+				}
+			}
+			
+			let tarURL = baseURL.appendingPathComponent(randomId).appendingPathExtension("tar.bz2")
+			let tarOp = TarOperation(sources: [keyURL.path, certifURL.path, caURL.path], relativeTo: baseURL, destination: tarURL, compress: true, deleteSourcesOnSuccess: true)
+			tarOp.addDependency(op)
+			
+			asyncConfig.operationQueue.addOperation(op)
+			return asyncConfig.eventLoop.future(from: tarOp, queue: asyncConfig.operationQueue, resultRetriever: { _ in if let error = failure {throw error}; return tarURL })
 		}
-		.map{ _ in
-			return req.response(Data(), as: .binary)
+		.flatMap(to: Data.self, { url in
+			let fileio = try req.fileio()
+			return fileio.read(file: url.path)
+		})
+		.map{ data in
+			return req.response(data, as: .tar)
 		}
 	}
 	
