@@ -34,6 +34,7 @@ class WebCertificateRenewController {
 		let baseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
 		let issuerName = try nil2throw(officectlConfig.tmpVaultIssuerName)
 		let token = try nil2throw(officectlConfig.tmpVaultToken)
+		let ttl = try nil2throw(officectlConfig.tmpVaultTTL)
 		
 		func authenticate(_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void {
 			var request = request
@@ -81,7 +82,7 @@ class WebCertificateRenewController {
 			/* Create the new certificate */
 			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("issue").appendingPathComponent("client"))
 			urlRequest.httpMethod = "POST"
-			let json = JSON(dictionaryLiteral: ("common_name", JSON(stringLiteral: renewedCommonName)))
+			let json = JSON(dictionaryLiteral: ("common_name", JSON(stringLiteral: renewedCommonName)), ("ttl", JSON(stringLiteral: ttl)))
 			urlRequest.httpBody = try! JSONEncoder().encode(json)
 			let op = AuthenticatedJSONOperation<VaultResponse<NewCertificate>>(request: urlRequest, authenticator: authenticate)
 			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.data }

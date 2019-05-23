@@ -28,7 +28,8 @@ struct OfficectlConfig : Service {
 	var tmpVaultBaseURL: URL?
 	var tmpVaultIssuerName: String?
 	var tmpVaultToken: String?
-
+	var tmpVaultTTL: String?
+	
 	var officeKitConfig: OfficeKitConfig
 	
 	init(flags f: Flags) throws {
@@ -48,6 +49,7 @@ struct OfficectlConfig : Service {
 		tmpVaultBaseURL = configYaml["vault"]["base_url"].string.flatMap{ URL(string: $0) }
 		tmpVaultIssuerName = configYaml["vault"]["issuer_name"].string
 		tmpVaultToken = configYaml["vault"]["token"].string
+		tmpVaultTTL = configYaml["vault"]["ttl"].string
 		
 		officeKitConfig = try OfficeKitConfig(flags: f, yamlConfig: configYaml)
 	}
