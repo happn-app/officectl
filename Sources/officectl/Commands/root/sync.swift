@@ -143,9 +143,11 @@ private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDisting
 	let usersToCreate = Set(googleDNUsers).subtracting(Set(ldapDNUsers))
 	guard usersToCreate.count > 0 else {return asyncConfig.eventLoop.newSucceededFuture(result: ())}
 	
+	let usersToCreateAsText = usersToCreate
+		.reduce("".consoleText(), { $0 + "   ".consoleText() + ($1.email?.stringValue ?? "<Unknown email>").consoleText() + ConsoleText.newLine })
 	let msg =
 		"Will create the following users on LDAP:" + ConsoleText.newLine +
-		usersToCreate.reduce("".consoleText(), { $0 + "   ".consoleText() + ($1.email?.stringValue ?? "<Unknown email>").consoleText() + ConsoleText.newLine }) +
+		 usersToCreateAsText +
 		"Do you want to continue?"
 	guard console.confirm(msg) else {
 		return asyncConfig.eventLoop.newFailedFuture(error: UserAbortedError())
