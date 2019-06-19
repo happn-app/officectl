@@ -245,3 +245,7 @@ extension LDAPDistinguishedName : Codable {
 	}
 	
 }
+
+
+extension LDAPDistinguishedName : FallibleStringInitable {
+}

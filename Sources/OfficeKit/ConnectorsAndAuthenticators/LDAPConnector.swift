@@ -15,6 +15,11 @@ import COpenLDAP
 
 public final class LDAPConnector : Connector {
 	
+	public static func isInvalidPassError(_ error: Error) -> Bool {
+		let nsError = error as NSError
+		return nsError.code == LDAP_INVALID_CREDENTIALS && nsError.domain == "com.happn.officectl.openldap"
+	}
+	
 	public enum LDAPProtocolVersion : Hashable {
 		
 		case v1, v2, v3
