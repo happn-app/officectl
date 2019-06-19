@@ -12,20 +12,8 @@ import Foundation
 /** Represents a user. */
 public struct User {
 	
-	public enum Error : Swift.Error {
-		
-		case userNotFound
-		case tooManyUsersFound
-		
-		case passwordIsEmpty
-		
-	}
-	
-	public var id: UserId
-	public var distinguishedName: LDAPDistinguishedName?
-	public var googleUserId: String?
-	public var gitHubId: String?
-	public var email: Email?
+	public var id: TaggedId
+	public var linkedIds: [TaggedId]
 	
 	public var firstName: String?
 	public var lastName: String?
@@ -33,13 +21,9 @@ public struct User {
 	public var sshKey: String?
 	public var password: String?
 	
-	public init(id userId: UserId) {
+	public init(id userId: TaggedId) {
 		id = userId
-		
-		distinguishedName = userId.distinguishedName
-		googleUserId = userId.googleUserId
-		gitHubId = userId.gitHubId
-		email = userId.email
+		linkedIds = []
 		
 		firstName = nil
 		lastName = nil
@@ -49,15 +33,12 @@ public struct User {
 	}
 	
 	/** Init a user with an “email” id, and fill the distinguished name too. */
-	public init(email e: Email, basePeopleDN: LDAPDistinguishedName, setMainIdToLDAP: Bool) {
+	public init(email e: Email, basePeopleDN: LDAPDistinguishedName) {
+		#warning("TODO: Review this method…")
 		let dn = LDAPDistinguishedName(uid: e.username, baseDN: basePeopleDN)
 		
-		id = (!setMainIdToLDAP ? .email(e) : .distinguishedName(dn))
-		
-		distinguishedName = dn
-		googleUserId = nil
-		gitHubId = nil
-		email = e
+		id = TaggedId(tag: LDAPService.id, id: dn.stringValue)
+		linkedIds = []
 		
 		firstName = nil
 		lastName = nil
@@ -85,21 +66,11 @@ extension User : Hashable {
 extension User : CustomStringConvertible {
 	
 	public var description: String {
-		var ret = "User{id=\(id)"
-		if let dn = distinguishedName, id.distinguishedName == nil {
-			ret += ", dn=\(dn)"
-		}
-		if let guid = googleUserId, id.googleUserId == nil {
-			ret += ", guid=\(guid)"
-		}
-		if let ghid = gitHubId, id.gitHubId == nil {
-			ret += ", ghid=\(ghid)"
-		}
-		if let email = email, id.email == nil {
-			ret += ", email=\(email)"
-		}
-		ret += "}"
-		return ret
+		return (
+			"User{mainId=\"\(id)\"" +
+			linkedIds.reduce("", { $0 + ",linkedId=\"\($1)\"" }) +
+			"}"
+		)
 	}
 	
 }

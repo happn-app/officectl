@@ -11,11 +11,15 @@ import Async
 
 
 
-public protocol DirectoryService {
+public protocol Service {
 	
 	static var id: String {get}
 	
 	var serviceName: String {get}
+	
+}
+
+public protocol DirectoryService {
 	
 	associatedtype UserIdType : Hashable & FallibleStringInitable
 	
