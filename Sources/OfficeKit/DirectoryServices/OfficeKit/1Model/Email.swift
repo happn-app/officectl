@@ -46,6 +46,7 @@ public struct Email {
 		domain = newDomain ?? e.domain
 	}
 	
+	/** Key of the alias map is a domain alias, value is the actual domain. */
 	public func primaryDomainVariant(aliasMap: [String: String]) -> Email {
 		if let primary = aliasMap[domain] {
 			return Email(self, newDomain: primary)

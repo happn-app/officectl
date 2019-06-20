@@ -49,7 +49,7 @@ public class SearchLDAPOperation : RetryingOperation, HasResult {
 		 * the same connection, they won’t be run at the same time, one long
 		 * request potentially blocking another small request. */
 		var searchResultMessagePtr: OpaquePointer? /* “LDAPMessage*”; Cannot use the LDAPMessage type (not exported to Swift, because opaque in C headers...) */
-		let searchResultError = withCLDAPArrayOfString(array: request.attributesToFetch){ attributesPtr in
+		let searchResultError = withCLDAPArrayOfString(array: request.attributesToFetch.flatMap{ Array($0) }){ attributesPtr in
 			return ldap_search_ext_s(
 				ldapConnector.ldapPtr,
 				request.base.stringValue, request.scope.rawValue, request.searchQuery?.stringValue, attributesPtr,
@@ -158,9 +158,9 @@ public struct LDAPSearchRequest {
 	public var base: LDAPDistinguishedName
 	public var searchQuery: LDAPSearchQuery?
 	
-	public var attributesToFetch: [String]?
+	public var attributesToFetch: Set<String>?
 	
-	public init(scope s: Scope, base b: LDAPDistinguishedName, searchQuery sq: LDAPSearchQuery?, attributesToFetch atf: [String]?) {
+	public init(scope s: Scope, base b: LDAPDistinguishedName, searchQuery sq: LDAPSearchQuery?, attributesToFetch atf: Set<String>?) {
 		base = b
 		scope = s
 		searchQuery = sq

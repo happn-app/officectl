@@ -18,28 +18,23 @@ import Vapor
 
 
 
-public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSingleton {
+public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, SemiSingleton {
 	
-	public enum Error : Swift.Error {
-		
-		case noUsersFoundForEmail
-		case tooManyUsersFoundForEmail
-		
+	public static func additionalInfo(from container: Container) throws -> (AsyncConfig, GoogleJWTConnector) {
+		return try (container.make(), container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()))
 	}
 	
-	public typealias SemiSingletonKey = User
-	public typealias SemiSingletonAdditionalInitInfo = Container
-	
-	public let container: Container
+	public typealias SemiSingletonKey = GoogleUser
+	public typealias SemiSingletonAdditionalInitInfo = (AsyncConfig, GoogleJWTConnector)
 	
 	/* Contains the Google user id as soon as the user is found (after the
 	 * operation is started). */
 	public var googleUserId: String?
 	
-	public required init(key u: User, additionalInfo: Container, store: SemiSingletonStore) {
-		container = additionalInfo
+	public required init(key id: GoogleUser, additionalInfo: (AsyncConfig, GoogleJWTConnector), store: SemiSingletonStore) {
+		deps = Dependencies(asyncConfig: additionalInfo.0, connector: additionalInfo.1)
 		
-		super.init(subject: u)
+		super.init(subject: id)
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
@@ -62,29 +57,17 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 			newPasswordHash = try SHA1.hash(passwordData)
 		#endif
 		
-		let asyncConfig = try container.make(AsyncConfig.self)
-		let singletonStore = try container.make(SemiSingletonStore.self)
-		
-		let googleSettings = try container.make(OfficeKitConfig.self).googleConfigOrThrow()
-		let connector = try singletonStore.semiSingleton(forKey: googleSettings.connectorSettings) as GoogleJWTConnector
-		
-		let f = try connector
-		.connect(scope: Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.user"), asyncConfig: asyncConfig)
-		.and(subject.existingGoogleUser(container: container))
-		.thenThrowing{ (_, googleUser) -> GoogleUser in
-			let u = try nil2throw(googleUser, "No Google user found for given user")
-			self.googleUserId = u.id /* We set the user id as soon as we have it. */
-			return u
-		}
+		let f = deps.connector
+		.connect(scope: Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.user"), asyncConfig: deps.asyncConfig)
 		.then{ googleUser -> Future<Void> in
-			var googleUser = googleUser
+			var googleUser = self.subject
 			
 			googleUser.password = newPasswordHash.reduce("", { $0 + String(format: "%02x", $1) })
 			googleUser.hashFunction = .sha1
 			googleUser.changePasswordAtNextLogin = false
 			
-			let modifyUserOperation = ModifyGoogleUserOperation(user: googleUser, propertiesToUpdate: Set(arrayLiteral: .hashFunction, .password, .changePasswordAtNextLogin), connector: connector)
-			return asyncConfig.eventLoop.future(from: modifyUserOperation, queue: asyncConfig.operationQueue)
+			let modifyUserOperation = ModifyGoogleUserOperation(user: googleUser, propertiesToUpdate: Set(arrayLiteral: .hashFunction, .password, .changePasswordAtNextLogin), connector: self.deps.connector)
+			return self.deps.asyncConfig.eventLoop.future(from: modifyUserOperation, queue: self.deps.asyncConfig.operationQueue)
 		}
 		f.whenSuccess{ _ in
 			/* Success! Let’s call the handler. */
@@ -95,5 +78,14 @@ public class ResetGooglePasswordAction : Action<User, String, Void>, SemiSinglet
 			handler(.failure(error))
 		}
 	}
+	
+	private struct Dependencies {
+		
+		var asyncConfig: AsyncConfig
+		var connector: GoogleJWTConnector
+		
+	}
+	
+	private let deps: Dependencies
 	
 }

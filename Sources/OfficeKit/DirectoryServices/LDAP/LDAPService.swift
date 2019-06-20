@@ -16,12 +16,16 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 	
 	public enum Error : Swift.Error {
 		
+		case invalidEmailInLDAP
+		
 		case userNotFound
 		case tooManyUsersFound
 		
 		case passwordIsEmpty
 		
 		case unsupportedServiceUserIdConversion
+		
+		case internalError
 		
 	}
 	
@@ -34,15 +38,17 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 	
 	public let serviceName: String
 	public let asyncConfig: AsyncConfig
+	public let domainAliases: [String: String]
 	public let ldapConfig: OfficeKitConfig.LDAPConfig
 	public let semiSingletonStore: SemiSingletonStore
 	
 	public let ldapConnector: LDAPConnector
 	
-	public init(name: String, ldapConfig config: OfficeKitConfig.LDAPConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+	public init(name: String, ldapConfig config: OfficeKitConfig.LDAPConfig, domainAliases aliases: [String: String], semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		asyncConfig = ac
 		serviceName = name
 		ldapConfig = config
+		domainAliases = aliases
 		semiSingletonStore = sms
 		
 		ldapConnector = try sms.semiSingleton(forKey: config.connectorSettings)
@@ -97,6 +103,38 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 				return false
 			}
 			return inetOrgPerson.object.parsedDistinguishedName == user
+		}
+	}
+	
+	public func fetchProperties(_ properties: Set<String>?, from dn: LDAPDistinguishedName) -> Future<[String: [Data]]> {
+		let searchRequest = LDAPSearchRequest(scope: .singleLevel, base: dn, searchQuery: nil, attributesToFetch: properties)
+		let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: searchRequest)
+		return ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
+		.then{ _ in
+			return self.asyncConfig.eventLoop.future(from: op, queue: self.asyncConfig.operationQueue).map{ $0.results }
+		}
+		.thenThrowing{ ldapObjects in
+			guard ldapObjects.count <= 1             else {throw Error.tooManyUsersFound}
+			guard let ldapObject = ldapObjects.first else {throw Error.userNotFound}
+			return ldapObject.attributes
+		}
+	}
+	
+	public func fetchUniqueEmails(from dn: LDAPDistinguishedName, deduplicateAliases: Bool = true) -> Future<Set<Email>> {
+		return fetchProperties([LDAPInetOrgPerson.propNameMail], from: dn)
+		.map{ properties in
+			guard let emailDataArray = properties[LDAPInetOrgPerson.propNameMail] else {
+				throw Error.internalError
+			}
+			let emails = try emailDataArray.map{ emailData -> Email in
+				guard let emailStr = String(data: emailData, encoding: .utf8), let email = Email(string: emailStr) else {
+					throw Error.invalidEmailInLDAP
+				}
+				return email
+			}
+			/* Deduplication */
+			if !deduplicateAliases {return Set(emails)}
+			return Set(emails.map{ $0.primaryDomainVariant(aliasMap: self.domainAliases) })
 		}
 	}
 	

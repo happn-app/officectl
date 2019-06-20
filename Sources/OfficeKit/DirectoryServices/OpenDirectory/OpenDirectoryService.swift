@@ -51,35 +51,42 @@ public class OpenDirectoryService : DirectoryService {
 	}
 	
 	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> Future<ODRecord?> where T : DirectoryService {
-		do {
+		asyncConfig.eventLoop.future()
+		.flatMap{ _ in
 			switch (service, userId) {
 			case let (_ as LDAPService, dn as LDAPService.UserIdType):
-				guard let uid = dn.uid else {throw UserIdConversionError.uidMissingInDN}
-				
-				let future = openDirectoryConnector.connect(scope: (), asyncConfig: asyncConfig)
-				.then{ _ -> Future<[ODRecord]> in
-					let request = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(uid.utf8)], returnAttributes: nil, maximumResults: 2)
-					let op = SearchOpenDirectoryOperation(openDirectoryConnector: self.openDirectoryConnector, request: request)
-					return self.asyncConfig.eventLoop.future(from: op, queue: self.asyncConfig.operationQueue)
-				}
-				.thenThrowing{ objects -> ODRecord? in
-					guard objects.count <= 1 else {
-						throw UserIdConversionError.tooManyUsersFound
-					}
-					return objects.first
-				}
-				return future
+				return try self.existingRecord(fromLDAP: dn)
 				
 			default:
 				throw UserIdConversionError.unsupportedServiceUserIdConversion
 			}
-		} catch {
-			return asyncConfig.eventLoop.newFailedFuture(error: error)
 		}
 	}
 	
 	public func changePasswordAction(for user: ODRecord) throws -> Action<ODRecord, String, Void> {
 		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: (asyncConfig, openDirectoryConnector, openDirectoryRecordAuthenticator)) as ResetOpenDirectoryPasswordAction
+	}
+	
+	/* ***************
+	   MARK: - Private
+	   *************** */
+	
+	private func existingRecord(fromLDAP dn: LDAPDistinguishedName) throws -> Future<ODRecord?> {
+		guard let uid = dn.uid else {throw UserIdConversionError.uidMissingInDN}
+		
+		let future = openDirectoryConnector.connect(scope: (), asyncConfig: asyncConfig)
+		.then{ _ -> Future<[ODRecord]> in
+			let request = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(uid.utf8)], returnAttributes: nil, maximumResults: 2)
+			let op = SearchOpenDirectoryOperation(openDirectoryConnector: self.openDirectoryConnector, request: request)
+			return self.asyncConfig.eventLoop.future(from: op, queue: self.asyncConfig.operationQueue)
+		}
+		.thenThrowing{ objects -> ODRecord? in
+			guard objects.count <= 1 else {
+				throw UserIdConversionError.tooManyUsersFound
+			}
+			return objects.first
+		}
+		return future
 	}
 	
 }

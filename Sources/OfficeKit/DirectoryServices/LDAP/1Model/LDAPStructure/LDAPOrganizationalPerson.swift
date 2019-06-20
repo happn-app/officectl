@@ -14,7 +14,7 @@ public class LDAPOrganizationalPerson : LDAPPerson {
 	
 	public override func ldapObject() -> LDAPObject {
 		var ret = super.ldapObject()
-		ret.attributes["objectClass"] = [Data("organizationalPerson".utf8)] /* We override the superclass’s value because it is implicit. */
+		ret.attributes[LDAPTop.propNameObjectClass] = [Data("organizationalPerson".utf8)] /* We override the superclass’s value because it is implicit. */
 		return ret
 	}
 	
