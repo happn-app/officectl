@@ -15,46 +15,27 @@ import Vapor
 
 
 
-public class ResetOpenDirectoryPasswordAction : Action<User, String, Void>, SemiSingleton {
+public class ResetOpenDirectoryPasswordAction : Action<ODRecord, String, Void>, SemiSingleton {
 	
-	public typealias SemiSingletonKey = User
-	public typealias SemiSingletonAdditionalInitInfo = Container
+	public static func additionalInfo(from container: Container) throws -> (AsyncConfig, OpenDirectoryConnector) {
+		return try (container.make(), container.make())
+	}
 	
-	public let container: Container
+	public typealias SemiSingletonKey = ODRecord
+	public typealias SemiSingletonAdditionalInitInfo = (AsyncConfig, OpenDirectoryConnector, OpenDirectoryRecordAuthenticator)
 	
-	/* Contains the OpenDirectory user id as soon as the user is found (after the
-	 * operation is started). */
-	public var openDirectoryUserId: LDAPDistinguishedName?
-	
-	public required init(key u: User, additionalInfo: Container, store: SemiSingletonStore) {
-		container = additionalInfo
+	public required init(key u: ODRecord, additionalInfo: (AsyncConfig, OpenDirectoryConnector, OpenDirectoryRecordAuthenticator), store: SemiSingletonStore) {
+		deps = Dependencies(asyncConfig: additionalInfo.0, connector: additionalInfo.1, authenticator: additionalInfo.2)
 		
 		super.init(subject: u)
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Error>) -> Void) throws {
-		openDirectoryUserId = nil /* We re-search for the user, so we clear the current user id we have */
-		
-		let asyncConfig = try container.make(AsyncConfig.self)
-		let singletonStore = try container.make(SemiSingletonStore.self)
-		
-		let openDirectorySettings = try container.make(OfficeKitConfig.self).openDirectoryConfigOrThrow()
-		let connector = try singletonStore.semiSingleton(forKey: openDirectorySettings.connectorSettings) as OpenDirectoryConnector
-		let authenticator = try singletonStore.semiSingleton(forKey: openDirectorySettings.authenticatorSettings) as OpenDirectoryRecordAuthenticator
-		
-		let f = try connector
-		.connect(scope: (), asyncConfig: asyncConfig)
-		.and(subject.existingOpenDirectoryUser(container: container))
-		.thenThrowing{ (_, openDirectoryRecord) -> ODRecord in
-			let u = try nil2throw(openDirectoryRecord, "No Google user found for given user")
-			let attributes = try u.recordDetails(forAttributes: nil)
-			let id = try nil2throw((attributes[kODAttributeTypeMetaRecordName] as? [String])?.first)
-			self.openDirectoryUserId = try LDAPDistinguishedName(string: id) /* We set the user id as soon as we have it. */
-			return u
-		}
-		.then{ openDirectoryRecord -> Future<Void> in
-			let modifyUserOperation = ModifyOpenDirectoryPasswordOperation(record: openDirectoryRecord, newPassword: newPassword, authenticator: authenticator)
-			return asyncConfig.eventLoop.future(from: modifyUserOperation, queue: asyncConfig.operationQueue)
+		let f = deps.connector
+		.connect(scope: (), asyncConfig: deps.asyncConfig)
+		.then{ _ -> Future<Void> in
+			let modifyUserOperation = ModifyOpenDirectoryPasswordOperation(record: self.subject, newPassword: newPassword, authenticator: self.deps.authenticator)
+			return self.deps.asyncConfig.eventLoop.future(from: modifyUserOperation, queue: self.deps.asyncConfig.operationQueue)
 		}
 		f.whenSuccess{ _ in
 			/* Success! Let’s call the handler. */
@@ -65,6 +46,16 @@ public class ResetOpenDirectoryPasswordAction : Action<User, String, Void>, Semi
 			handler(.failure(error))
 		}
 	}
+	
+	private struct Dependencies {
+		
+		var asyncConfig: AsyncConfig
+		var connector: OpenDirectoryConnector
+		var authenticator: OpenDirectoryRecordAuthenticator
+		
+	}
+	
+	private let deps: Dependencies
 	
 }
 

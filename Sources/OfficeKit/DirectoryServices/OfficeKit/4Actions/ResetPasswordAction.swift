@@ -11,7 +11,7 @@ import SemiSingleton
 import Vapor
 
 
-
+#if false
 public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 	
 	public typealias SemiSingletonKey = User
@@ -89,3 +89,4 @@ public class ResetPasswordAction : Action<User, String, Void>, SemiSingleton {
 	}
 	
 }
+#endif

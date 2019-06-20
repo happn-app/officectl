@@ -21,10 +21,12 @@ public protocol Service {
 
 public protocol DirectoryService {
 	
-	associatedtype UserIdType : Hashable & FallibleStringInitable
+	associatedtype UserIdType : Hashable
 	
 	var supportsPasswordChange: Bool {get}
 	func changePasswordAction(for user: UserIdType) throws -> Action<UserIdType, String, Void>
+	
+	func existingUserId<T: DirectoryService>(from userId: T.UserIdType, in service: T) -> Future<UserIdType?>
 	
 }
 

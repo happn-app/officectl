@@ -21,6 +21,8 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 		
 		case passwordIsEmpty
 		
+		case unsupportedServiceUserIdConversion
+		
 	}
 	
 	static public let id = "ldap"
@@ -44,6 +46,10 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 		semiSingletonStore = sms
 		
 		ldapConnector = try sms.semiSingleton(forKey: config.connectorSettings)
+	}
+	
+	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> EventLoopFuture<LDAPDistinguishedName?> where T : DirectoryService {
+		return asyncConfig.eventLoop.newFailedFuture(error: Error.unsupportedServiceUserIdConversion)
 	}
 	
 	public func changePasswordAction(for user: LDAPDistinguishedName) throws -> Action<LDAPDistinguishedName, String, Void> {
