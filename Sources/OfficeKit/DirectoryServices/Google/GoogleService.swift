@@ -35,12 +35,12 @@ public class GoogleService : DirectoryService {
 	public let serviceId: String
 	public let serviceName: String
 	public let asyncConfig: AsyncConfig
-	public let googleConfig: OfficeKitConfig.GoogleConfig
+	public let googleConfig: GoogleServiceConfig
 	public let semiSingletonStore: SemiSingletonStore
 	
 	public let googleConnector: GoogleJWTConnector
 	
-	public init(id: String, name: String, googleConfig config: OfficeKitConfig.GoogleConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+	public init(id: String, name: String, googleConfig config: GoogleServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		serviceId = id
 		asyncConfig = ac
 		serviceName = name

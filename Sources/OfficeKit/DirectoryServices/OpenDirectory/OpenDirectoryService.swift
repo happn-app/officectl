@@ -35,13 +35,13 @@ public class OpenDirectoryService : DirectoryService {
 	public let serviceId: String
 	public let serviceName: String
 	public let asyncConfig: AsyncConfig
-	public let openDirectoryConfig: OfficeKitConfig.OpenDirectoryConfig
+	public let openDirectoryConfig: OpenDirectoryServiceConfig
 	public let semiSingletonStore: SemiSingletonStore
 	
 	public let openDirectoryConnector: OpenDirectoryConnector
 	public let openDirectoryRecordAuthenticator: OpenDirectoryRecordAuthenticator
 	
-	public init(id: String, name: String, ldapConfig config: OfficeKitConfig.OpenDirectoryConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+	public init(id: String, name: String, ldapConfig config: OpenDirectoryServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		serviceId = id
 		asyncConfig = ac
 		serviceName = name

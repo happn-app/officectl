@@ -39,13 +39,13 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 	public let serviceId: String
 	public let serviceName: String
 	public let asyncConfig: AsyncConfig
+	public let ldapConfig: LDAPServiceConfig
 	public let domainAliases: [String: String]
-	public let ldapConfig: OfficeKitConfig.LDAPConfig
 	public let semiSingletonStore: SemiSingletonStore
 	
 	public let ldapConnector: LDAPConnector
 	
-	public init(id: String, name: String, ldapConfig config: OfficeKitConfig.LDAPConfig, domainAliases aliases: [String: String], semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+	public init(id: String, name: String, ldapConfig config: LDAPServiceConfig, domainAliases aliases: [String: String], semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		serviceId = id
 		asyncConfig = ac
 		serviceName = name
