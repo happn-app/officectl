@@ -46,6 +46,10 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 		ldapConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
+	public func changePasswordAction(for user: LDAPDistinguishedName) throws -> Action<LDAPDistinguishedName, String, Void> {
+		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: (asyncConfig, ldapConnector)) as ResetLDAPPasswordAction
+	}
+	
 	public func authenticate(user dn: LDAPDistinguishedName, challenge checkedPassword: String) -> Future<Bool> {
 		asyncConfig.eventLoop.future()
 		.thenThrowing{ _ in
@@ -88,10 +92,6 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 			}
 			return inetOrgPerson.object.parsedDistinguishedName == user
 		}
-	}
-	
-	public func changePasswordAction(for user: LDAPDistinguishedName) throws -> Action<LDAPDistinguishedName, String, Void> {
-		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: (asyncConfig, ldapConnector)) as ResetLDAPPasswordAction
 	}
 	
 }

@@ -11,7 +11,9 @@ import SemiSingleton
 import Vapor
 
 
+#warning("This file should not be needed anymore.")
 
+#if false
 extension User {
 	
 	public init(googleUser: GoogleUser, baseDN: LDAPDistinguishedName? = nil) {
@@ -70,3 +72,4 @@ extension User {
 	}
 	
 }
+#endif

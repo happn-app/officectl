@@ -9,6 +9,8 @@ import Foundation
 
 import NIO
 
+import Authenticator
+
 
 
 public extension Authenticator {

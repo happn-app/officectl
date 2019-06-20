@@ -14,7 +14,9 @@ import SemiSingleton
 import Vapor
 
 
+#warning("This file should not be needed anymore.")
 
+#if false
 extension User {
 	
 	public func bestOpenDirectorySearchQuery(officeKitConfig: OfficeKitConfig) throws -> OpenDirectorySearchRequest {
@@ -52,4 +54,5 @@ extension User {
 	
 }
 
+#endif
 #endif

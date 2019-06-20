@@ -3,8 +3,9 @@
 *.xcodeproj/
 
 # SwiftPM
-/Packages/
 /.build/
+/.swiftpm/
+/Packages/
 
 # Other
 /TestsData/

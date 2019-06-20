@@ -11,7 +11,9 @@ import SemiSingleton
 import Vapor
 
 
+#warning("This file should not be needed anymore.")
 
+#if false
 extension User {
 	
 	public init?(ldapInetOrgPersonWithObject p: LDAPInetOrgPersonWithObject) {
@@ -156,3 +158,4 @@ extension User {
 	}
 	
 }
+#endif
