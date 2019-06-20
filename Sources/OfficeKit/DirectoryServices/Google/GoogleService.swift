@@ -26,12 +26,13 @@ public class GoogleService : DirectoryService {
 		
 	}
 	
-	static public let id = "ggl"
+	public static let id = "internal_google"
 	
 	public typealias UserIdType = GoogleUser
 	
 	public let supportsPasswordChange = true
 	
+	public let serviceId: String
 	public let serviceName: String
 	public let asyncConfig: AsyncConfig
 	public let googleConfig: OfficeKitConfig.GoogleConfig
@@ -39,7 +40,8 @@ public class GoogleService : DirectoryService {
 	
 	public let googleConnector: GoogleJWTConnector
 	
-	public init(name: String, googleConfig config: OfficeKitConfig.GoogleConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+	public init(id: String, name: String, googleConfig config: OfficeKitConfig.GoogleConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+		serviceId = id
 		asyncConfig = ac
 		serviceName = name
 		googleConfig = config

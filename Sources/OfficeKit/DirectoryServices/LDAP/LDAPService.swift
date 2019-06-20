@@ -29,13 +29,14 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 		
 	}
 	
-	static public let id = "ldap"
+	public static let id = "internal_openldap"
 	
 	public typealias UserIdType = LDAPDistinguishedName
 	public typealias AuthenticationChallenge = String
 	
 	public let supportsPasswordChange = true
 	
+	public let serviceId: String
 	public let serviceName: String
 	public let asyncConfig: AsyncConfig
 	public let domainAliases: [String: String]
@@ -44,7 +45,8 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 	
 	public let ldapConnector: LDAPConnector
 	
-	public init(name: String, ldapConfig config: OfficeKitConfig.LDAPConfig, domainAliases aliases: [String: String], semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+	public init(id: String, name: String, ldapConfig config: OfficeKitConfig.LDAPConfig, domainAliases aliases: [String: String], semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+		serviceId = id
 		asyncConfig = ac
 		serviceName = name
 		ldapConfig = config

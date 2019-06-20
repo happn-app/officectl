@@ -25,13 +25,14 @@ public class OpenDirectoryService : DirectoryService {
 		
 	}
 	
-	static public let id = "od"
+	public static let id = "internal_opendirectory"
 	
 	public typealias UserIdType = ODRecord
 	public typealias AuthenticationChallenge = String
 	
 	public let supportsPasswordChange = true
 	
+	public let serviceId: String
 	public let serviceName: String
 	public let asyncConfig: AsyncConfig
 	public let openDirectoryConfig: OfficeKitConfig.OpenDirectoryConfig
@@ -40,7 +41,8 @@ public class OpenDirectoryService : DirectoryService {
 	public let openDirectoryConnector: OpenDirectoryConnector
 	public let openDirectoryRecordAuthenticator: OpenDirectoryRecordAuthenticator
 	
-	public init(name: String, ldapConfig config: OfficeKitConfig.OpenDirectoryConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+	public init(id: String, name: String, ldapConfig config: OfficeKitConfig.OpenDirectoryConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+		serviceId = id
 		asyncConfig = ac
 		serviceName = name
 		openDirectoryConfig = config

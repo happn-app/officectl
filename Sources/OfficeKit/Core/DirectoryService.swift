@@ -11,15 +11,16 @@ import Async
 
 
 
-public protocol Service {
+public protocol OfficeKitService {
 	
 	static var id: String {get}
 	
+	var serviceId: String {get}
 	var serviceName: String {get}
 	
 }
 
-public protocol DirectoryService {
+public protocol DirectoryService : OfficeKitService {
 	
 	associatedtype UserIdType : Hashable
 	
