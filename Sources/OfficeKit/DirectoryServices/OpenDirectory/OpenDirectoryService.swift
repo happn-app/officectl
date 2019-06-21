@@ -53,7 +53,9 @@ public class OpenDirectoryService : DirectoryService {
 	}
 	
 	public func existingUserId(from email: Email) -> Future<ODRecord?> {
-		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+		let request = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(email.username.utf8)], returnAttributes: nil, maximumResults: 2)
+		return asyncConfig.eventLoop.future()
+			.flatMap{ _ in try self.existingRecord(fromSearchRequest: request)}
 	}
 	
 	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> Future<ODRecord?> where T : DirectoryService {
@@ -61,7 +63,9 @@ public class OpenDirectoryService : DirectoryService {
 		.flatMap{ _ in
 			switch (service, userId) {
 			case let (_ as LDAPService, dn as LDAPService.UserIdType):
-				return try self.existingRecord(fromLDAP: dn)
+				guard let uid = dn.uid else {throw UserIdConversionError.uidMissingInDN}
+				let request = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(uid.utf8)], returnAttributes: nil, maximumResults: 2)
+				return try self.existingRecord(fromSearchRequest: request)
 				
 			default:
 				throw UserIdConversionError.unsupportedServiceUserIdConversion
@@ -77,12 +81,10 @@ public class OpenDirectoryService : DirectoryService {
 	   MARK: - Private
 	   *************** */
 	
-	private func existingRecord(fromLDAP dn: LDAPDistinguishedName) throws -> Future<ODRecord?> {
-		guard let uid = dn.uid else {throw UserIdConversionError.uidMissingInDN}
+	private func existingRecord(fromSearchRequest request: OpenDirectorySearchRequest) throws -> Future<ODRecord?> {
 		
 		let future = openDirectoryConnector.connect(scope: (), asyncConfig: asyncConfig)
 		.then{ _ -> Future<[ODRecord]> in
-			let request = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(uid.utf8)], returnAttributes: nil, maximumResults: 2)
 			let op = SearchOpenDirectoryOperation(openDirectoryConnector: self.openDirectoryConnector, request: request)
 			return self.asyncConfig.eventLoop.future(from: op, queue: self.asyncConfig.operationQueue)
 		}
