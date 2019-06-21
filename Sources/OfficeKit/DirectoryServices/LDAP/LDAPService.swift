@@ -56,8 +56,12 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 		ldapConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
+	public func existingUserId(from email: Email) -> EventLoopFuture<LDAPDistinguishedName?> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	}
+	
 	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> EventLoopFuture<LDAPDistinguishedName?> where T : DirectoryService {
-		return asyncConfig.eventLoop.newFailedFuture(error: Error.unsupportedServiceUserIdConversion)
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
 	public func changePasswordAction(for user: LDAPDistinguishedName) throws -> Action<LDAPDistinguishedName, String, Void> {

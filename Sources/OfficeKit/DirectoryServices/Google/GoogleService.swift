@@ -50,6 +50,22 @@ public class GoogleService : DirectoryService {
 		googleConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
+	public func existingUserId(from email: Email) -> EventLoopFuture<GoogleUser?> {
+		/* Note: We do **NOT** map the email to the main domain. Maybe we should? */
+		let future = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
+		.then{ _ -> EventLoopFuture<[GoogleUser]> in
+			let op = SearchGoogleUsersOperation(searchedDomain: email.domain, query: #"email="\#(email.stringValue)""#, googleConnector: self.googleConnector)
+			return self.asyncConfig.eventLoop.future(from: op, queue: self.asyncConfig.operationQueue)
+		}
+		.thenThrowing{ objects -> GoogleUser? in
+			guard objects.count <= 1 else {
+				throw UserIdConversionError.tooManyUsersFound
+			}
+			return objects.first
+		}
+		return future
+	}
+	
 	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> Future<GoogleUser?> where T : DirectoryService {
 		asyncConfig.eventLoop.future()
 		.flatMap{ _ in
@@ -72,23 +88,13 @@ public class GoogleService : DirectoryService {
 	   *************** */
 	
 	private func existingGoogleUser(fromLDAP dn: LDAPDistinguishedName, ldapService: LDAPService) throws -> Future<GoogleUser?> {
-		let future = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
-		.then{ _ -> Future<Email> in
-			ldapService.fetchUniqueEmails(from: dn).map{ emails in
-				guard emails.count <= 1 else {throw UserIdConversionError.multipleEmailInLDAP}
-				guard let email = emails.first else {throw UserIdConversionError.noEmailInLDAP}
-				return email
-			}
+		let future = ldapService.fetchUniqueEmails(from: dn).map{ emails in
+			guard emails.count <= 1 else {throw UserIdConversionError.multipleEmailInLDAP}
+			guard let email = emails.first else {throw UserIdConversionError.noEmailInLDAP}
+			return email
 		}
-		.then{ email -> EventLoopFuture<[GoogleUser]> in
-			let op = SearchGoogleUsersOperation(searchedDomain: email.domain, query: #"email="\#(email.stringValue)""#, googleConnector: self.googleConnector)
-			return self.asyncConfig.eventLoop.future(from: op, queue: self.asyncConfig.operationQueue)
-		}
-		.thenThrowing{ objects -> GoogleUser? in
-			guard objects.count <= 1 else {
-				throw UserIdConversionError.tooManyUsersFound
-			}
-			return objects.first
+		.then{ email -> EventLoopFuture<GoogleUser?> in
+			return self.existingUserId(from: email)
 		}
 		return future
 	}

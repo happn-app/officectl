@@ -27,6 +27,7 @@ public protocol DirectoryService : OfficeKitService {
 	var supportsPasswordChange: Bool {get}
 	func changePasswordAction(for user: UserIdType) throws -> Action<UserIdType, String, Void>
 	
+	func existingUserId(from email: Email) -> Future<UserIdType?>
 	func existingUserId<T: DirectoryService>(from userId: T.UserIdType, in service: T) -> Future<UserIdType?>
 	
 }

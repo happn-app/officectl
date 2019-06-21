@@ -52,6 +52,10 @@ public class OpenDirectoryService : DirectoryService {
 		openDirectoryRecordAuthenticator = try sms.semiSingleton(forKey: config.authenticatorSettings)
 	}
 	
+	public func existingUserId(from email: Email) -> Future<ODRecord?> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	}
+	
 	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> Future<ODRecord?> where T : DirectoryService {
 		asyncConfig.eventLoop.future()
 		.flatMap{ _ in

@@ -44,12 +44,16 @@ public class GitHubService : DirectoryService {
 		gitHubConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
-	public func changePasswordAction(for user: String) throws -> Action<String, String, Void> {
-		throw Error.notSupported
+	public func existingUserId(from email: Email) -> EventLoopFuture<String?> {
+		return asyncConfig.eventLoop.newFailedFuture(error: Error.notSupported)
 	}
 	
 	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> Future<String?> where T : DirectoryService {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
-
+	
+	public func changePasswordAction(for user: String) throws -> Action<String, String, Void> {
+		throw Error.notSupported
+	}
+	
 }
