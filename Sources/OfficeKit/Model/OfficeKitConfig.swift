@@ -30,6 +30,24 @@ public struct OfficeKitConfig {
 		return services[id] as? ServiceType
 	}
 	
+	public func getLDAPService(with id: String) -> LDAPService? {
+		return getService(with: id)
+	}
+	
+	public func getGitHubService(with id: String) -> GitHubService? {
+		return getService(with: id)
+	}
+	
+	public func getGoogleService(with id: String) -> GoogleService? {
+		return getService(with: id)
+	}
+	
+	#if canImport(DirectoryService) && canImport(OpenDirectory)
+	public func getOpenDirectoryService(with id: String) -> OpenDirectoryService? {
+		return getService(with: id)
+	}
+	#endif
+	
 	public func mainDomain(for domain: String) -> String {
 		if let d = domainAliases[domain] {return d}
 		return domain

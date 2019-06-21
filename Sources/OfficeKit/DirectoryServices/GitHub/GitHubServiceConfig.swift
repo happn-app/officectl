@@ -8,7 +8,7 @@
 import Foundation
 
 
-public struct GitHubConfig {
+public struct GitHubServiceConfig {
 	
 	public var connectorSettings: GitHubJWTConnector.Settings
 	

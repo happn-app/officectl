@@ -12,16 +12,16 @@ import Async
 
 
 
-public extension EventLoopFuture {
+public extension Future {
 	
-	static func waitAll(_ futures: [EventLoopFuture<T>], eventLoop: EventLoop) -> EventLoopFuture<[FutureResult<T>]> {
+	static func waitAll(_ futures: [Future<T>], eventLoop: EventLoop) -> Future<[FutureResult<T>]> {
 		/* No need for this assert, we hop the future to the event loop. */
 //		assert(futures.reduce(true, { val, future in val && future.eventLoop === eventLoop }))
 		let f0 = eventLoop.newSucceededFuture(result: [FutureResult<T>]())
 		
 		let body = futures
 		.map{ $0.hopTo(eventLoop: eventLoop) }
-		.reduce(f0, { (result: EventLoopFuture<[FutureResult<T>]>, newFuture: EventLoopFuture<T>) -> EventLoopFuture<[FutureResult<T>]> in
+		.reduce(f0, { (result: Future<[FutureResult<T>]>, newFuture: Future<T>) -> Future<[FutureResult<T>]> in
 			return result
 			.then{ results in
 				newFuture

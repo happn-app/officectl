@@ -17,6 +17,7 @@ public protocol HasResult {
 	
 }
 
+
 public extension HasResult {
 	
 	var result: ResultType? {
