@@ -16,4 +16,14 @@ public struct GitHubServiceConfig {
 		connectorSettings = c
 	}
 	
+//	public init(dictionary: [String : Any?]) throws {
+//		let domain = "GitHubConfig"
+//		let privateKeyURLString: String = try OpenDirectoryServiceConfig.getConfigValue(from: dictionary, key: "private_key_path", domain: domain)
+//		let appId: String               = try OpenDirectoryServiceConfig.getConfigValue(from: dictionary, key: "app_id",           domain: domain)
+//		let installId: String           = try OpenDirectoryServiceConfig.getConfigValue(from: dictionary, key: "install_id",       domain: domain)
+//		
+//		let connectorSettings = GitHubJWTConnector.Settings(appId: appId, installationId: installId, privateKeyURL: URL(fileURLWithPath: privateKeyURLString, isDirectory: false))
+//		self.init(connectorSettings: connectorSettings)
+//	}
+	
 }

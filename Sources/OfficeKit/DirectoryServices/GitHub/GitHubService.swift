@@ -28,17 +28,14 @@ public class GitHubService : DirectoryService {
 	
 	public let serviceId: String
 	public let serviceName: String
-	public let asyncConfig: AsyncConfig
-	public let gitHubConfig: GitHubServiceConfig
-	public let semiSingletonStore: SemiSingletonStore
+	public let serviceConfig: GitHubServiceConfig
 	
-	public let gitHubConnector: GitHubJWTConnector
-	
-	public init(id: String, name: String, googleConfig config: GitHubServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+	public init(id: String, name: String, config: GitHubServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		serviceId = id
-		asyncConfig = ac
 		serviceName = name
-		gitHubConfig = config
+		serviceConfig = config
+		
+		asyncConfig = ac
 		semiSingletonStore = sms
 		
 		gitHubConnector = try sms.semiSingleton(forKey: config.connectorSettings)
@@ -55,5 +52,14 @@ public class GitHubService : DirectoryService {
 	public func changePasswordAction(for user: String) throws -> Action<String, String, Void> {
 		throw Error.notSupported
 	}
+	
+	/* ***************
+	   MARK: - Private
+	   *************** */
+	
+	private let asyncConfig: AsyncConfig
+	private let semiSingletonStore: SemiSingletonStore
+	
+	private let gitHubConnector: GitHubJWTConnector
 	
 }

@@ -34,18 +34,14 @@ public class OpenDirectoryService : DirectoryService {
 	
 	public let serviceId: String
 	public let serviceName: String
-	public let asyncConfig: AsyncConfig
-	public let openDirectoryConfig: OpenDirectoryServiceConfig
-	public let semiSingletonStore: SemiSingletonStore
+	public let serviceConfig: OpenDirectoryServiceConfig
 	
-	public let openDirectoryConnector: OpenDirectoryConnector
-	public let openDirectoryRecordAuthenticator: OpenDirectoryRecordAuthenticator
-	
-	public init(id: String, name: String, ldapConfig config: OpenDirectoryServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+	public init(id: String, name: String, config: OpenDirectoryServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		serviceId = id
 		asyncConfig = ac
+		serviceConfig = config
+		
 		serviceName = name
-		openDirectoryConfig = config
 		semiSingletonStore = sms
 		
 		openDirectoryConnector = try sms.semiSingleton(forKey: config.connectorSettings)
@@ -80,6 +76,12 @@ public class OpenDirectoryService : DirectoryService {
 	/* ***************
 	   MARK: - Private
 	   *************** */
+	
+	private let asyncConfig: AsyncConfig
+	private let semiSingletonStore: SemiSingletonStore
+	
+	private let openDirectoryConnector: OpenDirectoryConnector
+	private let openDirectoryRecordAuthenticator: OpenDirectoryRecordAuthenticator
 	
 	private func existingRecord(fromSearchRequest request: OpenDirectorySearchRequest) throws -> Future<ODRecord?> {
 		

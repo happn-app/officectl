@@ -34,17 +34,14 @@ public class GoogleService : DirectoryService {
 	
 	public let serviceId: String
 	public let serviceName: String
-	public let asyncConfig: AsyncConfig
-	public let googleConfig: GoogleServiceConfig
-	public let semiSingletonStore: SemiSingletonStore
+	public let serviceConfig: GoogleServiceConfig
 	
-	public let googleConnector: GoogleJWTConnector
-	
-	public init(id: String, name: String, googleConfig config: GoogleServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+	public init(id: String, name: String, config: GoogleServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		serviceId = id
-		asyncConfig = ac
 		serviceName = name
-		googleConfig = config
+		serviceConfig = config
+		
+		asyncConfig = ac
 		semiSingletonStore = sms
 		
 		googleConnector = try sms.semiSingleton(forKey: config.connectorSettings)
@@ -86,6 +83,11 @@ public class GoogleService : DirectoryService {
 	/* ***************
 	   MARK: - Private
 	   *************** */
+	
+	private let asyncConfig: AsyncConfig
+	private let semiSingletonStore: SemiSingletonStore
+	
+	private let googleConnector: GoogleJWTConnector
 	
 	private func existingGoogleUser(fromLDAP dn: LDAPDistinguishedName, ldapService: LDAPService) throws -> Future<GoogleUser?> {
 		let future = ldapService.fetchUniqueEmails(from: dn).map{ emails in

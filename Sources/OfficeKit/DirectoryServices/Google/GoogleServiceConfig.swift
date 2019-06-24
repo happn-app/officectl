@@ -19,4 +19,14 @@ public struct GoogleServiceConfig {
 		primaryDomains = d
 	}
 	
+//	public init(dictionary: [String : Any?]) throws {
+//		let domain = "GoogleConfig"
+//		let credsURLString: String = try OpenDirectoryServiceConfig.getConfigValue(from: dictionary, key: "superuser_json_creds", domain: domain)
+//		let domains: [String]      = try OpenDirectoryServiceConfig.getConfigValue(from: dictionary, key: "domains",              domain: domain)
+//		let userBehalf: String?    = try OpenDirectoryServiceConfig.getConfigValue(from: dictionary, key: "admin_email",          domain: domain)
+//		
+//		let connectorSettings = GoogleJWTConnector.Settings(jsonCredentialsURL: URL(fileURLWithPath: credsURLString, isDirectory: false), userBehalf: userBehalf)
+//		self.init(connectorSettings: connectorSettings, primaryDomains: Set(domains))
+//	}
+	
 }
