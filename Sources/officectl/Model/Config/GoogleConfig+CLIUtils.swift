@@ -8,27 +8,20 @@
 import Foundation
 
 import Guaka
-import Vapor
 import Yaml
 
 import OfficeKit
 
 
 
-extension OfficeKitConfig.GoogleConfig {
+extension GoogleServiceConfig {
 	
-	init?(flags f: Flags, yamlConfig: Yaml) throws {
-		guard let yamlGoogleConfig = yamlConfig["google"].dictionary else {return nil}
+	init(flags f: Flags, yamlConfig: Yaml) throws {
+		let credsURLString = try yamlConfig.string(for: "superuser_json_creds")
+		let domains        = try yamlConfig.arrayOfString(for: "domains")
+		let userBehalf     = try yamlConfig.optionalString(for: "admin_email")
 		
-		guard let credsURLString = yamlGoogleConfig["superuser_json_creds"]?.string else {
-			return nil
-		}
-		guard let domains = try yamlGoogleConfig["domains"]?.arrayOfStringOrThrow() else {
-			return nil
-		}
-		let userBehalf = yamlGoogleConfig["admin_email"]?.string
 		let connectorSettings = GoogleJWTConnector.Settings(jsonCredentialsURL: URL(fileURLWithPath: credsURLString, isDirectory: false), userBehalf: userBehalf)
-		
 		self.init(connectorSettings: connectorSettings, primaryDomains: Set(domains))
 	}
 	

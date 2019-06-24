@@ -18,24 +18,26 @@ import OfficeKit
 extension OfficeKitConfig : Service {
 	
 	init(flags f: Flags, yamlConfig: Yaml) throws {
-		let domainAliases = (try? OfficectlConfig.stringStringDicFrom(yamlConfig: yamlConfig, yamlName: "domain_aliases")) ?? [:]
+		let domainAliases = try yamlConfig.optionalStringStringDic(for: "domain_aliases") ?? [:]
 		
-		#if canImport(DirectoryService) && canImport(OpenDirectory)
-		self.init(
-			domainAliases: domainAliases,
-			ldapConfig: try LDAPConfig(flags: f, yamlConfig: yamlConfig),
-			googleConfig: try GoogleConfig(flags: f, yamlConfig: yamlConfig),
-			gitHubConfig: try GitHubConfig(flags: f, yamlConfig: yamlConfig),
-			openDirectoryConfig: try OpenDirectoryConfig(flags: f, yamlConfig: yamlConfig)
-		)
-		#else
-		self.init(
-			domainAliases: domainAliases,
-			ldapConfig: try LDAPConfig(flags: f, yamlConfig: yamlConfig),
-			googleConfig: try GoogleConfig(flags: f, yamlConfig: yamlConfig),
-			gitHubConfig: try GitHubConfig(flags: f, yamlConfig: yamlConfig)
-		)
-		#endif
+		let authServiceId = try yamlConfig.string(for: "auth_service_id")
+//		let services
+//		#if canImport(DirectoryService) && canImport(OpenDirectory)
+//		self.init(
+//			domainAliases: domainAliases,
+//			ldapConfig: try LDAPConfig(flags: f, yamlConfig: yamlConfig),
+//			googleConfig: try GoogleConfig(flags: f, yamlConfig: yamlConfig),
+//			gitHubConfig: try GitHubConfig(flags: f, yamlConfig: yamlConfig),
+//			openDirectoryConfig: try OpenDirectoryConfig(flags: f, yamlConfig: yamlConfig)
+//		)
+//		#else
+//		self.init(
+//			domainAliases: domainAliases,
+//			ldapConfig: try LDAPConfig(flags: f, yamlConfig: yamlConfig),
+//			googleConfig: try GoogleConfig(flags: f, yamlConfig: yamlConfig),
+//			gitHubConfig: try GitHubConfig(flags: f, yamlConfig: yamlConfig)
+//		)
+//		#endif
 	}
 	
 }

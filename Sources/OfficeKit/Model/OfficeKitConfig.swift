@@ -16,7 +16,7 @@ public struct OfficeKitConfig {
 	public var domainAliases: [String: String]
 	
 	/* ************
-      MARK: - Init
+	   MARK: - Init
 	   ************ */
 	
 	/** It is a programmer error to give an array of services containing two or

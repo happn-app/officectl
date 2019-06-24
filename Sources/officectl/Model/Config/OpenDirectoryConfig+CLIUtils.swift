@@ -17,16 +17,14 @@ import OfficeKit
 
 
 
-extension OfficeKitConfig.OpenDirectoryConfig {
+extension OpenDirectoryServiceConfig {
 	
-	init?(flags f: Flags, yamlConfig: Yaml) throws {
-		guard let yamlOpenDirectoryConfig = yamlConfig["opendirectory"].dictionary else {return nil}
-		
-		guard let hostnameString = yamlOpenDirectoryConfig["server"]?.string else {return nil}
-		guard let adminUsernameString = yamlOpenDirectoryConfig["admin_username"]?.string else {return nil}
-		guard let adminPasswordString = yamlOpenDirectoryConfig["admin_password"]?.string else {return nil}
-		guard let ldapAdminUsernameString = yamlOpenDirectoryConfig["ldap_admin_username"]?.string else {return nil}
-		guard let ldapAdminPasswordString = yamlOpenDirectoryConfig["ldap_admin_password"]?.string else {return nil}
+	init(flags f: Flags, yamlConfig: Yaml) throws {
+		let hostnameString = try yamlConfig.string(for: "server")
+		let adminUsernameString = try yamlConfig.string(for: "admin_username")
+		let adminPasswordString = try yamlConfig.string(for: "admin_password")
+		let ldapAdminUsernameString = try yamlConfig.string(for: "ldap_admin_username")
+		let ldapAdminPasswordString = try yamlConfig.string(for: "ldap_admin_password")
 		
 		let connectorSettings = OpenDirectoryConnector.Settings(serverHostname: hostnameString, username: adminUsernameString, password: adminPasswordString, nodeType: ODNodeType(kODNodeTypeAuthentication))
 		let authenticatorSettings = OpenDirectoryRecordAuthenticator.Settings(username: ldapAdminUsernameString, password: ldapAdminPasswordString)

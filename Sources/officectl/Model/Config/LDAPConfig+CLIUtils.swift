@@ -8,36 +8,37 @@
 import Foundation
 
 import Guaka
-import Vapor
 import Yaml
 
 import OfficeKit
 
 
 
-extension OfficeKitConfig.LDAPConfig {
+extension LDAPServiceConfig {
 	
-	init?(flags f: Flags, yamlConfig: Yaml) throws {
-		guard let yamlLDAPConfig = yamlConfig["ldap"].dictionary else {return nil}
+	init(flags f: Flags, yamlConfig: Yaml) throws {
+		let url = try yamlConfig.url(for: "url")
+		let adminUsername = try yamlConfig.optionalString(for: "admin_username")
+		let adminPassword = try yamlConfig.optionalString(for: "admin_password")
+		
+		let bdnDic    = try yamlConfig.stringStringDic(for: "base_dn_per_domains")
+		let pdnString = try yamlConfig.optionalString(for: "people_dn")
+		let adnString = try yamlConfig.optionalStringArray(for: "admin_groups_dn") ?? []
+		
 		
 		let connectorSettings: LDAPConnector.Settings
-		guard let url = yamlLDAPConfig["url"]?.string.flatMap({ URL(string: $0) }) else {
-			return nil
-		}
-		if let un = yamlLDAPConfig["admin_username"]?.string, let pass = yamlLDAPConfig["admin_password"]?.string {
-			connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3, username: un, password: pass)
-		} else {
+		switch (adminUsername, adminPassword) {
+		case (.some, .none), (.none, .some):
+			throw InvalidArgumentError(message: "Invalid config in yaml: neither both or none of admin_username & admin_password defined in an LDAP config")
+			
+		case (.none, .none):
 			connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3)
+			
+		case let (username?, password?):
+			connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3, username: username, password: password)
 		}
 		
-		guard let bdnDic = try? OfficectlConfig.stringStringDicFrom(yamlConfig: Yaml.dictionary(yamlLDAPConfig), yamlName: "base_dn_per_domains") else {
-			return nil
-		}
-		
-		let pdnString = yamlLDAPConfig["people_dn"]?.string
-		let adnString = (try? OfficectlConfig.stringArrayFrom(yamlConfig: yamlLDAPConfig, yamlName: "admin_groups_dn")) ?? []
-		
-		self.init(connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)
+		try self.init(connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)
 	}
 	
 }

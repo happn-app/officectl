@@ -14,14 +14,12 @@ import OfficeKit
 
 
 
-extension OfficeKitConfig.GitHubConfig {
+extension GitHubServiceConfig {
 	
-	init?(flags f: Flags, yamlConfig: Yaml) throws {
-		guard let yamlGitHubConfig = yamlConfig["github"].dictionary else {return nil}
-		
-		guard let privateKeyURLString = yamlGitHubConfig["private_key_path"]?.string else {return nil}
-		guard let appId = yamlGitHubConfig["app_id"]?.string else {return nil}
-		guard let installId = yamlGitHubConfig["install_id"]?.string else {return nil}
+	init(flags f: Flags, yamlConfig: Yaml) throws {
+		let privateKeyURLString = try yamlConfig.string(for: "private_key_path")
+		let appId               = try yamlConfig.string(for: "app_id")
+		let installId           = try yamlConfig.string(for: "install_id")
 		
 		let connectorSettings = GitHubJWTConnector.Settings(appId: appId, installationId: installId, privateKeyURL: URL(fileURLWithPath: privateKeyURLString, isDirectory: false))
 		self.init(connectorSettings: connectorSettings)
