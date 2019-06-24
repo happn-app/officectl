@@ -14,7 +14,7 @@ import OfficeKit
 
 
 
-func getToken(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+func getToken(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
 	let asyncConfig = try context.container.make(AsyncConfig.self)
 	let googleConfig = try context.container.make(OfficeKitConfig.self).googleConfigOrThrow()
 	
@@ -22,7 +22,7 @@ func getToken(flags f: Flags, arguments args: [String], context: CommandContext)
 	
 	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 	let f = googleConnector.connect(scope: Set(scopes.components(separatedBy: ",")), asyncConfig: asyncConfig)
-	.then{ _ -> EventLoopFuture<Void> in
+	.then{ _ -> Future<Void> in
 		print(googleConnector.token!)
 		return asyncConfig.eventLoop.newSucceededFuture(result: ())
 	}

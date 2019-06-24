@@ -14,7 +14,7 @@ import OfficeKit
 
 
 
-func serverServe(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+func serverServe(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
 	let config = try context.container.make(OfficectlConfig.self)
 	
 	var context = context

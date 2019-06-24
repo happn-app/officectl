@@ -50,10 +50,10 @@ public class GoogleService : DirectoryService {
 		googleConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
-	public func existingUserId(from email: Email) -> EventLoopFuture<GoogleUser?> {
+	public func existingUserId(from email: Email) -> Future<GoogleUser?> {
 		/* Note: We do **NOT** map the email to the main domain. Maybe we should? */
 		let future = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
-		.then{ _ -> EventLoopFuture<[GoogleUser]> in
+		.then{ _ -> Future<[GoogleUser]> in
 			let op = SearchGoogleUsersOperation(searchedDomain: email.domain, query: #"email="\#(email.stringValue)""#, googleConnector: self.googleConnector)
 			return self.asyncConfig.eventLoop.future(from: op, queue: self.asyncConfig.operationQueue)
 		}
@@ -93,7 +93,7 @@ public class GoogleService : DirectoryService {
 			guard let email = emails.first else {throw UserIdConversionError.noEmailInLDAP}
 			return email
 		}
-		.then{ email -> EventLoopFuture<GoogleUser?> in
+		.then{ email -> Future<GoogleUser?> in
 			return self.existingUserId(from: email)
 		}
 		return future

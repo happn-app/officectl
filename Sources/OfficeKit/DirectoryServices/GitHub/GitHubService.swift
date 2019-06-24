@@ -44,7 +44,7 @@ public class GitHubService : DirectoryService {
 		gitHubConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
-	public func existingUserId(from email: Email) -> EventLoopFuture<String?> {
+	public func existingUserId(from email: Email) -> Future<String?> {
 		return asyncConfig.eventLoop.newFailedFuture(error: Error.notSupported)
 	}
 	

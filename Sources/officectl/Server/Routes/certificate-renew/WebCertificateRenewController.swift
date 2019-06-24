@@ -62,7 +62,7 @@ class WebCertificateRenewController {
 					return id
 				}
 			}
-			return EventLoopFuture.reduce([String?](), futures, eventLoop: asyncConfig.eventLoop, { full, new in
+			return Future.reduce([String?](), futures, eventLoop: asyncConfig.eventLoop, { full, new in
 				return full + [new]
 			})
 		}
@@ -76,7 +76,7 @@ class WebCertificateRenewController {
 				let op = AuthenticatedJSONOperation<VaultResponse<RevocationResult>>(request: urlRequest, authenticator: authenticate)
 				return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ _ in return () }
 			}
-			return EventLoopFuture.reduce((), futures, eventLoop: asyncConfig.eventLoop, { _, _ in () })
+			return Future.reduce((), futures, eventLoop: asyncConfig.eventLoop, { _, _ in () })
 		}
 		.then{ _ -> Future<NewCertificate> in
 			/* Create the new certificate */

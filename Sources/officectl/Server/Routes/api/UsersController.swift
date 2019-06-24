@@ -45,7 +45,7 @@ class UsersController {
 //		let googleDomain = try nil2throw(officeKitConfig.googleConfig?.domains.first, "Google Domain in Config")
 		let googleDomain = "happn.fr"
 		
-		return EventLoopFuture<Void>.andAll([
+		return Future<Void>.andAll([
 			ldapConnector.connect(scope: (), asyncConfig: asyncConfig),
 			googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
 		], eventLoop: req.eventLoop)
@@ -101,7 +101,7 @@ class UsersController {
 		let googleConnectorConfig = googleConfig.connectorSettings
 		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: googleConnectorConfig)
 		
-		return EventLoopFuture<Void>.andAll([
+		return Future<Void>.andAll([
 			ldapConnector.connect(scope: (), asyncConfig: asyncConfig),
 			googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
 		], eventLoop: req.eventLoop)

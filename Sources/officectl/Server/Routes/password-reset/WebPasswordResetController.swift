@@ -56,7 +56,7 @@ final class WebPasswordResetController {
 		
 	}
 	
-	private func renderResetPasswordAction(_ resetPasswordAction: ResetPasswordAction, view: ViewRenderer) -> EventLoopFuture<View> {
+	private func renderResetPasswordAction(_ resetPasswordAction: ResetPasswordAction, view: ViewRenderer) -> Future<View> {
 		let emailStr = resetPasswordAction.subject.email?.stringValue ?? "<unknown>"
 		
 		if !resetPasswordAction.isWeak {

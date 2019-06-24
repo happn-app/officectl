@@ -56,11 +56,11 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 		ldapConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
-	public func existingUserId(from email: Email) -> EventLoopFuture<LDAPDistinguishedName?> {
+	public func existingUserId(from email: Email) -> Future<LDAPDistinguishedName?> {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
-	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> EventLoopFuture<LDAPDistinguishedName?> where T : DirectoryService {
+	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> Future<LDAPDistinguishedName?> where T : DirectoryService {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
@@ -97,7 +97,7 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 		})
 		
 		return ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
-		.then{ _ -> EventLoopFuture<[LDAPInetOrgPersonWithObject]> in
+		.then{ _ -> Future<[LDAPInetOrgPersonWithObject]> in
 			let op = SearchLDAPOperation(ldapConnector: self.ldapConnector, request: LDAPSearchRequest(scope: .subtree, base: user, searchQuery: searchQuery, attributesToFetch: nil))
 			return self.asyncConfig.eventLoop.future(from: op, queue: self.asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } }
 		}

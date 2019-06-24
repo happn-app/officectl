@@ -24,13 +24,13 @@ struct Connectors {
 	
 }
 
-func sync(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+func sync(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
 	#warning("TODO: Manage multiple domains")
 	let asyncConfig = try context.container.make(AsyncConfig.self)
 	let officeKitConfig = try context.container.make(OfficeKitConfig.self)
 	
 	var connectors = Connectors()
-	var sourceId2FutureUsers = [SourceId: EventLoopFuture<(SourceId, [User])>]()
+	var sourceId2FutureUsers = [SourceId: Future<(SourceId, [User])>]()
 	
 	
 	/* *** Parse command line options *** */
@@ -90,11 +90,11 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	}
 	
 	/* *** Launch sync *** */
-	let f = EventLoopFuture.reduce(into: [SourceId: [User]](), Array(sourceId2FutureUsers.values), eventLoop: asyncConfig.eventLoop, { currentValue, newValue in
+	let f = Future.reduce(into: [SourceId: [User]](), Array(sourceId2FutureUsers.values), eventLoop: asyncConfig.eventLoop, { currentValue, newValue in
 		let (sourceId, users) = newValue
 		currentValue[sourceId] = users
 	})
-	.then{ usersBySourceId -> EventLoopFuture<Void> in
+	.then{ usersBySourceId -> Future<Void> in
 		switch fromSourceId {
 		case .google: return syncFromGoogle(to: toSourceIds, users: usersBySourceId, baseDN: ldapBasePeopleDN, connectors: connectors, asyncConfig: asyncConfig, console: context.console)
 		case .ldap:   return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
@@ -104,7 +104,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	return f
 }
 
-private func syncFromGoogle(to toSourceIds: [SourceId], users: [SourceId: [User]], baseDN: LDAPDistinguishedName, connectors: Connectors, asyncConfig: AsyncConfig, console: Console) -> EventLoopFuture<Void> {
+private func syncFromGoogle(to toSourceIds: [SourceId], users: [SourceId: [User]], baseDN: LDAPDistinguishedName, connectors: Connectors, asyncConfig: AsyncConfig, console: Console) -> Future<Void> {
 	var f = asyncConfig.eventLoop.newSucceededFuture(result: ())
 	
 	/* To Google */
@@ -130,7 +130,7 @@ should be created, create them if users says ok, print the created users and
 their passwords after creation.
 
 - returns: The mapping dn<->password that has been created. */
-private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDistinguishedName, connectors: Connectors, asyncConfig: AsyncConfig, console: Console) -> EventLoopFuture<Void> {
+private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDistinguishedName, connectors: Connectors, asyncConfig: AsyncConfig, console: Console) -> Future<Void> {
 	/* TODO: User deletion. Currently we’re append only. */
 	let ldapUsers = users[.ldap]!
 	let googleUsers = users[.google]!
@@ -173,14 +173,14 @@ private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDisting
 	}
 }
 
-private func usersFromGoogle(connector: GoogleJWTConnector, searchedDomain: String, baseDN: LDAPDistinguishedName, asyncConfig: AsyncConfig) -> EventLoopFuture<(SourceId, [User])> {
+private func usersFromGoogle(connector: GoogleJWTConnector, searchedDomain: String, baseDN: LDAPDistinguishedName, asyncConfig: AsyncConfig) -> Future<(SourceId, [User])> {
 	let searchOp = SearchGoogleUsersOperation(searchedDomain: searchedDomain, query: "isSuspended=false", googleConnector: connector)
 	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: {
 		(.google, try $0.result.get().map{ User(googleUser: $0, baseDN: baseDN) })
 	})
 }
 
-private func usersFromLDAP(connector: LDAPConnector, baseDN: LDAPDistinguishedName, asyncConfig: AsyncConfig) -> EventLoopFuture<(SourceId, [User])> {
+private func usersFromLDAP(connector: LDAPConnector, baseDN: LDAPDistinguishedName, asyncConfig: AsyncConfig) -> Future<(SourceId, [User])> {
 	let searchOp = SearchLDAPOperation(ldapConnector: connector, request: LDAPSearchRequest(scope: .children, base: baseDN, searchQuery: nil, attributesToFetch: nil))
 	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue).map{
 		(.ldap, $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) }.compactMap{ User(ldapInetOrgPersonWithObject: $0) })

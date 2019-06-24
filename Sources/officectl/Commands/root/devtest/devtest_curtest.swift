@@ -21,7 +21,7 @@ import URLRequestOperation
 
 
 
-func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
 	let asyncConfig: AsyncConfig = try context.container.make()
 //	let officeKitConfig: OfficeKitConfig = try context.container.make()
 //	let semiSingletonStore: SemiSingletonStore = try context.container.make()
@@ -96,7 +96,7 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 //		}
 //		return asyncConfig.eventLoop.executeAll(ops, queue: asyncConfig.operationQueue)
 //	}
-//	.then{ hooks -> EventLoopFuture<Void> in
+//	.then{ hooks -> Future<Void> in
 //		let hooks = Set(hooks.flatMap{ $0.result ?? [] }.filter{ $0.config.url.absoluteString.contains("email") })
 //		let hooksStr = Data(hooks.reduce("", { $0 + $1.url.absoluteString + "\n" }).utf8)
 //		_ = try? hooksStr.write(to: URL(fileURLWithPath: "/Users/frizlab/Desktop/toto.txt"))
@@ -127,11 +127,11 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 //
 //	let c = try GoogleJWTConnector(key: googleConnectorConfig)
 //	let f = c.connect(scope: ModifyGoogleUserOperation.scopes, asyncConfig: asyncConfig)
-//	.then{ _ -> EventLoopFuture<GoogleUser> in
+//	.then{ _ -> Future<GoogleUser> in
 //		let searchOp = GetGoogleUserOperation(userKey: "deletion.test@happn.fr", connector: c)
 //		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.get() })
 //	}
-//	.then{ user -> EventLoopFuture<Void> in
+//	.then{ user -> Future<Void> in
 //		var user = user
 //		user.name.familyName = "SuperTest"
 //		let modifyUserOp = ModifyGoogleUserOperation(user: user, propertiesToUpdate: ["name"], connector: c)
