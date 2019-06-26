@@ -11,7 +11,9 @@ import Foundation
 
 public struct OfficeKitConfig {
 	
+	public var authServiceId: String
 	public var services: [String: OfficeKitService]
+	
 	/** Key is a domain alias, value is the actual domain */
 	public var domainAliases: [String: String]
 	
@@ -21,8 +23,9 @@ public struct OfficeKitConfig {
 	
 	/** It is a programmer error to give an array of services containing two or
 	more services with the same id. */
-	public init(domainAliases da: [String: String], services s: [OfficeKitService]) {
+	public init(services s: [OfficeKitService], authServiceId asid: String, domainAliases da: [String: String]) throws {
 		domainAliases = da
+		authServiceId = asid
 		services = [String: OfficeKitService](uniqueKeysWithValues: zip(s.map{ $0.serviceId }, s))
 	}
 	

@@ -25,8 +25,6 @@ public class OpenDirectoryService : DirectoryService {
 		
 	}
 	
-	public static let id = "internal_opendirectory"
-	
 	public typealias UserIdType = ODRecord
 	public typealias AuthenticationChallenge = String
 	

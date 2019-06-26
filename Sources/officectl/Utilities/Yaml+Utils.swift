@@ -91,4 +91,72 @@ extension Yaml {
 		return result
 	}
 	
+	var stringYamlDic: [String: Yaml]? {
+		switch self {
+		case .dictionary(let dic):
+			var result = [String: Yaml]()
+			for (k, v) in dic {
+				guard let keyStr = k.string else {return nil}
+				result[keyStr] = v
+			}
+			return result
+			
+		default:
+			return nil
+		}
+	}
+	
+	func stringYamlDic(for key: String) throws -> [String: Yaml] {
+		guard let dic = try optionalStringYamlDic(for: key) else {
+			throw InvalidArgumentError(message: "Missing value in yaml for key \(key)")
+		}
+		return dic
+	}
+	
+	func optionalStringYamlDic(for key: String) throws -> [String: Yaml]? {
+		let value = self[Yaml.string(key)]
+		if case .null = value {return nil}
+		
+		guard let confDic = value.dictionary else {
+			throw InvalidArgumentError(message: "Invalid value (not a dictionary) in yaml for key \(key)")
+		}
+		
+		var result = [String: Yaml]()
+		for (k, v) in confDic {
+			guard let keyStr = k.string else {
+				throw InvalidArgumentError(message: "Invalid value in yaml for key \(key) (one of the key is not a string)")
+			}
+			result[keyStr] = v
+		}
+		return result
+	}
+	
+	func stringStringYamlDic(for key: String) throws -> [String: [String: Yaml]] {
+		guard let dic = try optionalStringStringYamlDic(for: key) else {
+			throw InvalidArgumentError(message: "Missing value in yaml for key \(key)")
+		}
+		return dic
+	}
+	
+	func optionalStringStringYamlDic(for key: String) throws -> [String: [String: Yaml]]? {
+		let value = self[Yaml.string(key)]
+		if case .null = value {return nil}
+		
+		guard let confDic = value.dictionary else {
+			throw InvalidArgumentError(message: "Invalid value (not a dictionary) in yaml for key \(key)")
+		}
+		
+		var result = [String: [String: Yaml]]()
+		for (k, v) in confDic {
+			guard let keyStr = k.string else {
+				throw InvalidArgumentError(message: "Invalid value in yaml for key \(key) (one of the key is not a string)")
+			}
+			guard let valueDic = v.stringYamlDic else {
+				throw InvalidArgumentError(message: "Invalid value in yaml for key \(key) (one of the value is not a string/yaml dictionary)")
+			}
+			result[keyStr] = valueDic
+		}
+		return result
+	}
+	
 }

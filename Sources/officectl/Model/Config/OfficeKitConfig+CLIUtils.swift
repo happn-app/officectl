@@ -21,23 +21,46 @@ extension OfficeKitConfig : Service {
 		let domainAliases = try yamlConfig.optionalStringStringDic(for: "domain_aliases") ?? [:]
 		
 		let authServiceId = try yamlConfig.string(for: "auth_service_id")
-//		let services
-//		#if canImport(DirectoryService) && canImport(OpenDirectory)
-//		self.init(
-//			domainAliases: domainAliases,
-//			ldapConfig: try LDAPConfig(flags: f, yamlConfig: yamlConfig),
-//			googleConfig: try GoogleConfig(flags: f, yamlConfig: yamlConfig),
-//			gitHubConfig: try GitHubConfig(flags: f, yamlConfig: yamlConfig),
-//			openDirectoryConfig: try OpenDirectoryConfig(flags: f, yamlConfig: yamlConfig)
-//		)
-//		#else
-//		self.init(
-//			domainAliases: domainAliases,
-//			ldapConfig: try LDAPConfig(flags: f, yamlConfig: yamlConfig),
-//			googleConfig: try GoogleConfig(flags: f, yamlConfig: yamlConfig),
-//			gitHubConfig: try GitHubConfig(flags: f, yamlConfig: yamlConfig)
-//		)
-//		#endif
+		let yamlServices = try yamlConfig.stringYamlDic(for: "services")
+		
+		var services = [OfficeKitService]()
+		for (serviceId, serviceInfo) in yamlServices {
+			let serviceName = try serviceInfo.string(for: "name")
+			let provider = try serviceInfo.string(for: "provider")
+			let providerConfig = try serviceInfo.stringYamlDic(for: "provider_config")
+			
+			switch provider {
+			case "internal_openldap":
+				()
+				
+			case "internal_google":
+				()
+				
+			case "internal_github":
+				()
+				
+			case "internal_opendirectory":
+				#if canImport(DirectoryService) && canImport(OpenDirectory)
+				()
+				#else
+				fallthrough
+				#endif
+				
+			case "internal_happn":
+				fallthrough
+
+			case "internal_vault":
+				fallthrough
+				
+			case "http_service_v1":
+				fallthrough
+				
+			default:
+				throw InvalidArgumentError(message: "Unknown or unsupported service provider \(provider)")
+			}
+		}
+		
+		try self.init(services: services, authServiceId: authServiceId, domainAliases: domainAliases)
 	}
 	
 }

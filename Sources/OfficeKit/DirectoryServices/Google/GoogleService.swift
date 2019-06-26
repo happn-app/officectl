@@ -26,8 +26,6 @@ public class GoogleService : DirectoryService {
 		
 	}
 	
-	public static let id = "internal_google"
-	
 	public typealias UserIdType = GoogleUser
 	
 	public let supportsPasswordChange = true

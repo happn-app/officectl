@@ -20,14 +20,11 @@ public class GitHubService : DirectoryService {
 		
 	}
 	
-	public static let id = "internal_github"
-	
 	public typealias UserIdType = String
 	
 	public let supportsPasswordChange = false
 	
 	public let serviceId: String
-	public let serviceName: String
 	public let serviceConfig: GitHubServiceConfig
 	
 	public init(id: String, name: String, config: GitHubServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {

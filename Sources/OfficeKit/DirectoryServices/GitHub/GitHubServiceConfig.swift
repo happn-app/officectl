@@ -8,22 +8,31 @@
 import Foundation
 
 
-public struct GitHubServiceConfig {
+
+public struct GitHubServiceConfig : OfficeKitServiceConfig {
+	
+	public static let providerId = "internal_github"
+	
+	public var serviceId: String
+	public var serviceName: String
 	
 	public var connectorSettings: GitHubJWTConnector.Settings
 	
-	public init(connectorSettings c: GitHubJWTConnector.Settings) {
+	public init(serviceId id: String, serviceName name: String, connectorSettings c: GitHubJWTConnector.Settings) {
+		serviceId = id
+		serviceName = name
+		
 		connectorSettings = c
 	}
 	
-//	public init(dictionary: [String : Any?]) throws {
-//		let domain = "GitHubConfig"
-//		let privateKeyURLString: String = try OpenDirectoryServiceConfig.getConfigValue(from: dictionary, key: "private_key_path", domain: domain)
-//		let appId: String               = try OpenDirectoryServiceConfig.getConfigValue(from: dictionary, key: "app_id",           domain: domain)
-//		let installId: String           = try OpenDirectoryServiceConfig.getConfigValue(from: dictionary, key: "install_id",       domain: domain)
-//		
-//		let connectorSettings = GitHubJWTConnector.Settings(appId: appId, installationId: installId, privateKeyURL: URL(fileURLWithPath: privateKeyURLString, isDirectory: false))
-//		self.init(connectorSettings: connectorSettings)
-//	}
+	public init(serviceId id: String, serviceName name: String, genericConfig: GenericConfig) throws {
+		let domain = "GitHub Config"
+		let appId               = try genericConfig.string(for: "app_id",           domain: domain)
+		let installId           = try genericConfig.string(for: "install_id",       domain: domain)
+		let privateKeyURLString = try genericConfig.string(for: "private_key_path", domain: domain)
+		
+		let connectorSettings = GitHubJWTConnector.Settings(appId: appId, installationId: installId, privateKeyURL: URL(fileURLWithPath: privateKeyURLString, isDirectory: false))
+		self.init(serviceId: id, serviceName: name, connectorSettings: connectorSettings)
+	}
 	
 }

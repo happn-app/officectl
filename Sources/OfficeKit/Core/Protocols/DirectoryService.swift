@@ -11,14 +11,12 @@ import Async
 
 
 
-public protocol DirectoryService : OfficeKitService {
-	
-	associatedtype UserIdType : Hashable
+public protocol DirectoryService {
 	
 	var supportsPasswordChange: Bool {get}
-	func changePasswordAction(for user: UserIdType) throws -> Action<UserIdType, String, Void>
+	func changePasswordAction(for user: TaggedId) throws -> some Action<Hashable, String, Void>
 	
-	func existingUserId(from email: Email) -> Future<UserIdType?>
-	func existingUserId<T: DirectoryService>(from userId: T.UserIdType, in service: T) -> Future<UserIdType?>
+	func existingUserId(from email: Email) -> some Future<Hashable?>
+	func existingUserId(from userId: TaggedId, in service: DirectoryService) -> some Future<Hashable?>
 	
 }
