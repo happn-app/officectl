@@ -23,13 +23,9 @@ public class GitHubService : DirectoryService {
 	public typealias UserIdType = String
 	
 	public let supportsPasswordChange = false
-	
-	public let serviceId: String
 	public let serviceConfig: GitHubServiceConfig
 	
-	public init(id: String, name: String, config: GitHubServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
-		serviceId = id
-		serviceName = name
+	public init(config: GitHubServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		serviceConfig = config
 		
 		asyncConfig = ac

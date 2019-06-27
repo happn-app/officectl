@@ -29,14 +29,9 @@ public class GoogleService : DirectoryService {
 	public typealias UserIdType = GoogleUser
 	
 	public let supportsPasswordChange = true
-	
-	public let serviceId: String
-	public let serviceName: String
 	public let serviceConfig: GoogleServiceConfig
 	
-	public init(id: String, name: String, config: GoogleServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
-		serviceId = id
-		serviceName = name
+	public init(config: GoogleServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		serviceConfig = config
 		
 		asyncConfig = ac

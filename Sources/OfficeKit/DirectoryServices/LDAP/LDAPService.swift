@@ -35,22 +35,15 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 	public typealias AuthenticationChallenge = String
 	
 	public let supportsPasswordChange = true
-	
-	public let serviceId: String
-	public let serviceName: String
-	public let asyncConfig: AsyncConfig
 	public let ldapConfig: LDAPServiceConfig
+	
 	public let domainAliases: [String: String]
-	public let semiSingletonStore: SemiSingletonStore
 	
-	public let ldapConnector: LDAPConnector
-	
-	public init(id: String, name: String, ldapConfig config: LDAPServiceConfig, domainAliases aliases: [String: String], semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
-		serviceId = id
-		asyncConfig = ac
-		serviceName = name
+	public init(ldapConfig config: LDAPServiceConfig, domainAliases aliases: [String: String], semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		ldapConfig = config
 		domainAliases = aliases
+		
+		asyncConfig = ac
 		semiSingletonStore = sms
 		
 		ldapConnector = try sms.semiSingleton(forKey: config.connectorSettings)
@@ -69,7 +62,7 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 	}
 	
 	public func authenticate(user dn: LDAPDistinguishedName, challenge checkedPassword: String) -> Future<Bool> {
-		asyncConfig.eventLoop.future()
+		return asyncConfig.eventLoop.future()
 		.thenThrowing{ _ in
 			guard !checkedPassword.isEmpty else {throw Error.passwordIsEmpty}
 			
@@ -143,5 +136,10 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 			return Set(emails.map{ $0.primaryDomainVariant(aliasMap: self.domainAliases) })
 		}
 	}
+	
+	private let asyncConfig: AsyncConfig
+	private let semiSingletonStore: SemiSingletonStore
+	
+	private let ldapConnector: LDAPConnector
 	
 }

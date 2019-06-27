@@ -29,17 +29,12 @@ public class OpenDirectoryService : DirectoryService {
 	public typealias AuthenticationChallenge = String
 	
 	public let supportsPasswordChange = true
-	
-	public let serviceId: String
-	public let serviceName: String
 	public let serviceConfig: OpenDirectoryServiceConfig
 	
-	public init(id: String, name: String, config: OpenDirectoryServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
-		serviceId = id
-		asyncConfig = ac
+	public init(config: OpenDirectoryServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		serviceConfig = config
 		
-		serviceName = name
+		asyncConfig = ac
 		semiSingletonStore = sms
 		
 		openDirectoryConnector = try sms.semiSingleton(forKey: config.connectorSettings)
