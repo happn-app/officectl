@@ -15,7 +15,7 @@ public protocol DirectoryServiceAuthenticator : DirectoryService {
 	
 	associatedtype AuthenticationChallenge
 	
-	func authenticate(user: UserIdType, challenge: AuthenticationChallenge) -> Future<Bool>
-	func isAdmin(_ user: UserIdType) -> Future<Bool>
+	func authenticate(user: UserType, challenge: AuthenticationChallenge) -> Future<Bool>
+	func isAdmin(_ user: UserType) -> Future<Bool>
 	
 }

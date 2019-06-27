@@ -9,6 +9,14 @@ import Foundation
 
 
 
+public enum ActionError : Error {
+	
+	case alreadyRunning
+	case notFinished
+	
+}
+
+
 /** The weakening mode for an Action. When the `TimeInterval` is `nil`, the
 action is weakened before the handler is called, otherwise, whatever the time
 interval value, the weakening is done asynchronously after the handler is
@@ -33,9 +41,9 @@ not have all the conveniences the Operations do (dependencies, queues, etc.). An
 Action is not in itself a SemiSingleton, however it is more or less expected
 that subclasses are. In particular, an Action has an option to keep a strong
 reference to itself, and automatically clear it at a given point in time. */
-public class Action<SubjectType, ParametersType, ResultType> {
+open class Action<SubjectType, ParametersType, ResultType> {
 	
-	public var isExecuting: Bool {
+	public final var isExecuting: Bool {
 		return stateSyncQueue.sync{ currentState.isRunning }
 	}
 	
@@ -47,14 +55,14 @@ public class Action<SubjectType, ParametersType, ResultType> {
 	possible to have a non executing weak action.
 	
 	A weak action does not have a result. */
-	public var isWeak: Bool {
+	public final var isWeak: Bool {
 		return stateSyncQueue.sync{ currentState.isWeak }
 	}
 	
 	public let subject: SubjectType
-	public var latestParameters: ParametersType?
+	public final var latestParameters: ParametersType?
 	
-	public var result: Result<ResultType, Error>? {
+	public final var result: Result<ResultType, Error>? {
 		return stateSyncQueue.sync{
 			switch currentState {
 			case .running, .idleWeak:                                             return nil
@@ -96,7 +104,7 @@ public class Action<SubjectType, ParametersType, ResultType> {
 			return false
 		}
 		guard !wasAlreadyRunning else {
-			handler?(.failure(OperationAlreadyInProgressError()))
+			handler?(.failure(ActionError.alreadyRunning))
 			return
 		}
 		
@@ -151,9 +159,9 @@ public class Action<SubjectType, ParametersType, ResultType> {
 			case .idleStrong:
 				/* Setting the state cancels the weakening timer if any. */
 				currentState = .idleWeak
-
+				
 			case .running:
-				throw OperationIsNotFinishedError()
+				throw ActionError.notFinished
 			}
 		}
 	}
@@ -161,13 +169,13 @@ public class Action<SubjectType, ParametersType, ResultType> {
 	/** Clears the latestParameters variable. If the action is running, throws. */
 	public final func clearLatestParameters() throws {
 		try stateSyncQueue.sync{
-			guard !currentState.isRunning else {throw OperationIsNotFinishedError()}
+			guard !currentState.isRunning else {throw ActionError.notFinished}
 			latestParameters = nil
 		}
 	}
 	
 	/* **********************
-      MARK: - For Subclasses
+	   MARK: - For Subclasses
 	   ********************** */
 	
 	/** This method is reserved for subclasses; do **not** call it directly.
@@ -180,7 +188,7 @@ public class Action<SubjectType, ParametersType, ResultType> {
 	}
 	
 	/* ***************
-      MARK: - Private
+	   MARK: - Private
 	   *************** */
 	
 	private enum State {

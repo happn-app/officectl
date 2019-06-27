@@ -9,14 +9,14 @@ import Foundation
 
 
 
-#if false
 extension Action where SubjectType : Hashable {
 	
 	func eraseToAnyHashableSubject() -> AnyHashableErasedAction<ParametersType, ResultType> {
-		AnyHashableErasedAction<ParametersType, ResultType>(erasedAction: self)
+		return AnyHashableErasedAction<ParametersType, ResultType>(erasedAction: self)
 	}
 	
 }
+
 
 class AnyHashableErasedAction<ParametersType, ResultType> : Action<AnyHashable, ParametersType, ResultType> {
 	
@@ -32,4 +32,3 @@ class AnyHashableErasedAction<ParametersType, ResultType> : Action<AnyHashable, 
 	}
 	
 }
-#endif

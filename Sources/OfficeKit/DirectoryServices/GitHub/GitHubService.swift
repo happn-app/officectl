@@ -20,16 +20,11 @@ public class GitHubService : DirectoryService {
 		
 	}
 	
-	public typealias UserIdType = String
-	
 	public let supportsPasswordChange = false
 	
-	public let serviceId: String
 	public let serviceConfig: GitHubServiceConfig
 	
-	public init(id: String, name: String, config: GitHubServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
-		serviceId = id
-		serviceName = name
+	public init(config: GitHubServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		serviceConfig = config
 		
 		asyncConfig = ac
@@ -38,16 +33,17 @@ public class GitHubService : DirectoryService {
 		gitHubConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
-	public func existingUserId(from email: Email) -> Future<String?> {
+	public func existingUserId(from email: Email) -> some Future<Hashable?> {
 		return asyncConfig.eventLoop.newFailedFuture(error: Error.notSupported)
 	}
 	
-	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> Future<String?> where T : DirectoryService {
+	public func existingUserId(from userId: TaggedId, in service: DirectoryService) -> some EventLoopFuture<Hashable?> {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
-	public func changePasswordAction(for user: String) throws -> Action<String, String, Void> {
+	public func changePasswordAction(for user: TaggedId) throws -> some Action<Hashable, String, Void> {
 		throw Error.notSupported
+		return Action<Int, String, Void>(subject: 0)
 	}
 	
 	/* ***************

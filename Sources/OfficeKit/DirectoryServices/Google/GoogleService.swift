@@ -26,17 +26,11 @@ public class GoogleService : DirectoryService {
 		
 	}
 	
-	public typealias UserIdType = GoogleUser
-	
 	public let supportsPasswordChange = true
 	
-	public let serviceId: String
-	public let serviceName: String
 	public let serviceConfig: GoogleServiceConfig
 	
-	public init(id: String, name: String, config: GoogleServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
-		serviceId = id
-		serviceName = name
+	public init(config: GoogleServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
 		serviceConfig = config
 		
 		asyncConfig = ac
@@ -45,7 +39,7 @@ public class GoogleService : DirectoryService {
 		googleConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
-	public func existingUserId(from email: Email) -> Future<GoogleUser?> {
+	public func existingUserId(from email: Email) -> some EventLoopFuture<Hashable?> {
 		/* Note: We do **NOT** map the email to the main domain. Maybe we should? */
 		let future = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
 		.then{ _ -> Future<[GoogleUser]> in

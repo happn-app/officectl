@@ -13,10 +13,12 @@ import Async
 
 public protocol DirectoryService {
 	
-	var supportsPasswordChange: Bool {get}
-	func changePasswordAction(for user: TaggedId) throws -> some Action<Hashable, String, Void>
+	associatedtype UserType : Hashable
 	
-	func existingUserId(from email: Email) -> some Future<Hashable?>
-	func existingUserId(from userId: TaggedId, in service: DirectoryService) -> some Future<Hashable?>
+	var supportsPasswordChange: Bool {get}
+	func changePasswordAction(for user: UserType) throws -> Action<UserType, String, Void>
+	
+	func existingUserId(from email: Email) -> Future<UserType?>
+	func existingUserId<T : DirectoryService>(from user: T.UserType, in service: T) -> Future<UserType?>
 	
 }
