@@ -12,6 +12,7 @@ import Vapor
 
 
 
+#if false
 extension UserId : Parameter {
 	
 	public static func resolveParameter(_ parameter: String, on container: Container) throws -> UserId {
@@ -23,3 +24,4 @@ extension UserId : Parameter {
 	}
 	
 }
+#endif

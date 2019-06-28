@@ -15,6 +15,7 @@ import GenericJSON
 
 
 
+#if false
 class WebCertificateRenewController {
 	
 	func showLogin(_ req: Request) throws -> Future<View> {
@@ -212,3 +213,4 @@ class WebCertificateRenewController {
 	}
 	
 }
+#endif

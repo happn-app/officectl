@@ -15,6 +15,7 @@ import OfficeKit
 
 
 func backupGitHub(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
+	#if false
 	let asyncConfig: AsyncConfig = try context.container.make()
 	let gitHubConfig = try context.container.make(OfficeKitConfig.self).gitHubConfigOrThrow()
 	
@@ -84,6 +85,8 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 		return asyncConfig.eventLoop.newSucceededFuture(result: ())
 	}
 	return f
+	#endif
+	throw NotImplementedError()
 }
 
 /// Iterate over paths matching the "\*/\*" glob in baseFolder.

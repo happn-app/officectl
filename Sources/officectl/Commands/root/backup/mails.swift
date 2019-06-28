@@ -16,6 +16,7 @@ import OfficeKit
 
 
 func backupMails(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
+	#if false
 	let asyncConfig = try context.container.make(AsyncConfig.self)
 	let googleConfig = try context.container.make(OfficeKitConfig.self).googleConfigOrThrow()
 	
@@ -82,6 +83,8 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 		return futureFromOperations.transform(to: ())
 	}
 	return f
+	#endif
+	throw NotImplementedError()
 }
 
 

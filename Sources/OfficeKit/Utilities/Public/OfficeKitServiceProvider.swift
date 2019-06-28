@@ -12,6 +12,9 @@ import Vapor
 
 
 
+/* Note: I’m not a fan of keeping a reference to the Container inside the
+ * provider, though it kind of make sense because it’s a provider…
+ * To be thought over. */
 public class OfficeKitServiceProvider {
 	
 	init(officeKitConfig cfg: OfficeKitConfig, container c: Container) {

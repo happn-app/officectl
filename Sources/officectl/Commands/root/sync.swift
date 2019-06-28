@@ -26,6 +26,7 @@ struct Connectors {
 
 func sync(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
 	#warning("TODO: Manage multiple domains")
+	#if false
 	let asyncConfig = try context.container.make(AsyncConfig.self)
 	let officeKitConfig = try context.container.make(OfficeKitConfig.self)
 	
@@ -102,8 +103,11 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		}
 	}
 	return f
+	#endif
+	throw NotImplementedError()
 }
 
+#if false
 private func syncFromGoogle(to toSourceIds: [SourceId], users: [SourceId: [User]], baseDN: LDAPDistinguishedName, connectors: Connectors, asyncConfig: AsyncConfig, console: Console) -> Future<Void> {
 	var f = asyncConfig.eventLoop.newSucceededFuture(result: ())
 	
@@ -186,3 +190,4 @@ private func usersFromLDAP(connector: LDAPConnector, baseDN: LDAPDistinguishedNa
 		(.ldap, $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) }.compactMap{ User(ldapInetOrgPersonWithObject: $0) })
 	}
 }
+#endif

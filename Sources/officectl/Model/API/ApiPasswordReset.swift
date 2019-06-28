@@ -11,6 +11,7 @@ import OfficeKit
 
 
 
+#if false
 struct ApiPasswordReset : Codable {
 	
 	var userId: TaggedId
@@ -28,3 +29,4 @@ struct ApiPasswordReset : Codable {
 	}
 	
 }
+#endif

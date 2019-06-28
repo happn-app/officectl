@@ -15,6 +15,7 @@ import OfficeKit
 
 
 func listUsers(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
+	#if false
 	let asyncConfig: AsyncConfig = try context.container.make()
 	let googleConfig = try context.container.make(OfficeKitConfig.self).googleConfigOrThrow()
 	
@@ -37,4 +38,6 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 		return context.container.eventLoop.newSucceededFuture(result: ())
 	}
 	return f
+	#endif
+	throw NotImplementedError()
 }

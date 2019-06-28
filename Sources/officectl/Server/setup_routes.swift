@@ -13,6 +13,7 @@ import Vapor
 
 
 func setup_routes(_ router: Router) throws {
+	#if false
 	router.get("api", "services", use: { _ in
 		ApiResponse.data([
 			ApiService(serviceId: "ldap",   serviceFullName: "LDAP", serviceDescription: "An LDAP server (tested with OpenLDAP)"),
@@ -48,4 +49,5 @@ func setup_routes(_ router: Router) throws {
 	let webCertificateRenewController = WebCertificateRenewController()
 	router.get("certificate-renew", use: webCertificateRenewController.showLogin)
 	router.post("certificate-renew", use: webCertificateRenewController.renewCertificate)
+	#endif
 }

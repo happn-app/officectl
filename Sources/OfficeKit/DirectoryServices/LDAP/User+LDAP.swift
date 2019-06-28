@@ -8,7 +8,6 @@
 import Foundation
 
 import SemiSingleton
-import Vapor
 
 
 #warning("This file should not be needed anymore.")

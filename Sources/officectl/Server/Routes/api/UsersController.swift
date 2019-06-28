@@ -14,6 +14,7 @@ import Vapor
 
 
 
+#if false
 class UsersController {
 	
 	func searchUsers(_ req: Request) throws -> Future<ApiResponse<[User]>> {
@@ -171,3 +172,4 @@ class UsersController {
 	}
 	
 }
+#endif

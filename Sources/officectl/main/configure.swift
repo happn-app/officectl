@@ -25,7 +25,6 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	configureURLRequestOperation(cliParseResults.officectlConfig)
 	/* Register the services/configs we got from CLI, if any */
 	services.register(cliParseResults.officectlConfig)
-	services.register(cliParseResults.officectlConfig.officeKitConfig)
 	if let p = cliParseResults.officectlConfig.staticDataDirURL?.path {
 		services.register{ container -> DirectoryConfig in
 			return DirectoryConfig(workDir: p.hasSuffix("/") ? p : p + "/")

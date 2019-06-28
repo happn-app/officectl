@@ -14,6 +14,7 @@ import OfficeKit
 
 
 
+#if false
 final class WebPasswordResetController {
 	
 	func showUserSelection(_ req: Request) throws -> Future<View> {
@@ -107,3 +108,4 @@ final class WebPasswordResetController {
 	}
 	
 }
+#endif

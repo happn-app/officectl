@@ -14,6 +14,7 @@ import Vapor
 
 
 
+#if false
 class PasswordResetController {
 	
 	func getResets(_ req: Request) throws -> Future<ApiResponse<[ApiPasswordReset]>> {
@@ -93,3 +94,4 @@ class PasswordResetController {
 	}
 	
 }
+#endif

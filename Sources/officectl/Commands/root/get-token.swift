@@ -15,6 +15,7 @@ import OfficeKit
 
 
 func getToken(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
+	#if false
 	let asyncConfig = try context.container.make(AsyncConfig.self)
 	let googleConfig = try context.container.make(OfficeKitConfig.self).googleConfigOrThrow()
 	
@@ -27,4 +28,6 @@ func getToken(flags f: Flags, arguments args: [String], context: CommandContext)
 		return asyncConfig.eventLoop.newSucceededFuture(result: ())
 	}
 	return f
+	#endif
+	throw NotImplementedError()
 }

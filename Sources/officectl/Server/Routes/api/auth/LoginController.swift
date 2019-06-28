@@ -13,6 +13,7 @@ import Vapor
 
 
 
+#if false
 class LoginController {
 	
 	func login(_ req: Request) throws -> Future<ApiResponse<ApiAuth>> {
@@ -50,3 +51,4 @@ class LoginController {
 	}
 	
 }
+#endif
