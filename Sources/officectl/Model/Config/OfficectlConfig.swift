@@ -51,7 +51,7 @@ struct OfficectlConfig : Service {
 		tmpVaultToken = configYaml["vault"]["token"].string
 		tmpVaultTTL = configYaml["vault"]["ttl"].string
 		
-		officeKitConfig = try OfficeKitConfig(flags: f, yamlConfig: configYaml)
+		officeKitConfig = try OfficeKitConfig(genericConfig: configYaml)
 	}
 	
 	private static func readYamlConfig(forcedConfigFilePath: String?) throws -> Yaml {
