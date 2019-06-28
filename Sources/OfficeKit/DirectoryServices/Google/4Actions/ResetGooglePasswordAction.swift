@@ -18,7 +18,7 @@ import Vapor
 
 
 
-public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, SemiSingleton {
+public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, ResetPasswordAction, SemiSingleton {
 	
 	public static func additionalInfo(from container: Container) throws -> (AsyncConfig, GoogleJWTConnector) {
 		return try (container.make(), container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()))

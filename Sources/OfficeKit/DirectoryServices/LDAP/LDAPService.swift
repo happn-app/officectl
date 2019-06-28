@@ -12,7 +12,7 @@ import SemiSingleton
 
 
 
-public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
+public final class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 	
 	public enum Error : Swift.Error {
 		
@@ -28,8 +28,6 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 		case internalError
 		
 	}
-	
-	public static let id = "internal_openldap"
 	
 	public typealias UserIdType = LDAPDistinguishedName
 	public typealias AuthenticationChallenge = String
@@ -53,11 +51,11 @@ public class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
-	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> Future<LDAPDistinguishedName?> where T : DirectoryService {
+	public func existingUserId<T : DirectoryService>(from userId: T.UserIdType, in service: T) -> Future<LDAPDistinguishedName?> {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
-	public func changePasswordAction(for user: LDAPDistinguishedName) throws -> Action<LDAPDistinguishedName, String, Void> {
+	public func changePasswordAction(for user: LDAPDistinguishedName) throws -> ResetPasswordAction {
 		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: (asyncConfig, ldapConnector)) as ResetLDAPPasswordAction
 	}
 	

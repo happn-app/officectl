@@ -12,7 +12,7 @@ import SemiSingleton
 
 
 
-public class GoogleService : DirectoryService {
+public final class GoogleService : DirectoryService {
 	
 	public enum UserIdConversionError : Error {
 		
@@ -56,7 +56,7 @@ public class GoogleService : DirectoryService {
 		return future
 	}
 	
-	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> Future<GoogleUser?> where T : DirectoryService {
+	public func existingUserId<T : DirectoryService>(from userId: T.UserIdType, in service: T) -> Future<GoogleUser?> {
 		asyncConfig.eventLoop.future()
 		.flatMap{ _ in
 			switch (service, userId) {
@@ -69,7 +69,7 @@ public class GoogleService : DirectoryService {
 		}
 	}
 	
-	public func changePasswordAction(for user: GoogleUser) throws -> Action<GoogleUser, String, Void> {
+	public func changePasswordAction(for user: GoogleUser) throws -> ResetPasswordAction {
 		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: (asyncConfig, googleConnector)) as ResetGooglePasswordAction
 	}
 	

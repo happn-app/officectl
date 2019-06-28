@@ -15,7 +15,7 @@ import SemiSingleton
 
 
 
-public class OpenDirectoryService : DirectoryService {
+public final class OpenDirectoryService : DirectoryService {
 	
 	public enum UserIdConversionError : Error {
 		
@@ -47,7 +47,7 @@ public class OpenDirectoryService : DirectoryService {
 			.flatMap{ _ in try self.existingRecord(fromSearchRequest: request)}
 	}
 	
-	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> Future<ODRecord?> where T : DirectoryService {
+	public func existingUserId<T : DirectoryService>(from userId: T.UserIdType, in service: T) -> Future<ODRecord?> {
 		asyncConfig.eventLoop.future()
 		.flatMap{ _ in
 			switch (service, userId) {
@@ -62,7 +62,7 @@ public class OpenDirectoryService : DirectoryService {
 		}
 	}
 	
-	public func changePasswordAction(for user: ODRecord) throws -> Action<ODRecord, String, Void> {
+	public func changePasswordAction(for user: ODRecord) throws -> ResetPasswordAction {
 		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: (asyncConfig, openDirectoryConnector, openDirectoryRecordAuthenticator)) as ResetOpenDirectoryPasswordAction
 	}
 	

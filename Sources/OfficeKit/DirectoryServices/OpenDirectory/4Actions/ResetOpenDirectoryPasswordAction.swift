@@ -15,7 +15,7 @@ import Vapor
 
 
 
-public class ResetOpenDirectoryPasswordAction : Action<ODRecord, String, Void>, SemiSingleton {
+public class ResetOpenDirectoryPasswordAction : Action<ODRecord, String, Void>, ResetPasswordAction, SemiSingleton {
 	
 	public static func additionalInfo(from container: Container) throws -> (AsyncConfig, OpenDirectoryConnector, OpenDirectoryRecordAuthenticator) {
 		return try (container.make(), container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()), container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()))

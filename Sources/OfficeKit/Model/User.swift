@@ -37,7 +37,7 @@ public struct User {
 		#warning("TODO: Review this method…")
 		let dn = LDAPDistinguishedName(uid: e.username, baseDN: basePeopleDN)
 		
-		id = TaggedId(tag: LDAPService.id, id: dn.stringValue)
+		id = TaggedId(tag: LDAPServiceConfig.providerId, id: dn.stringValue)
 		linkedIds = []
 		
 		firstName = nil

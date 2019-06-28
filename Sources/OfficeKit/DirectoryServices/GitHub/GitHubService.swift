@@ -12,7 +12,7 @@ import SemiSingleton
 
 
 
-public class GitHubService : DirectoryService {
+public final class GitHubService : DirectoryService {
 	
 	enum Error : Swift.Error {
 		
@@ -38,11 +38,11 @@ public class GitHubService : DirectoryService {
 		return asyncConfig.eventLoop.newFailedFuture(error: Error.notSupported)
 	}
 	
-	public func existingUserId<T>(from userId: T.UserIdType, in service: T) -> Future<String?> where T : DirectoryService {
+	public func existingUserId<T : DirectoryService>(from userId: T.UserIdType, in service: T) -> Future<String?> {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
-	public func changePasswordAction(for user: String) throws -> Action<String, String, Void> {
+	public func changePasswordAction(for user: String) throws -> ResetPasswordAction {
 		throw Error.notSupported
 	}
 	

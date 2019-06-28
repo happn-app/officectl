@@ -27,6 +27,9 @@ public protocol GenericConfig {
 	func string(for key: String, domain: String?) throws -> String
 	func optionalString(for key: String, domain: String?) throws -> String?
 	
+	func url(for key: String, domain: String?) throws -> URL
+	func optionalURL(for key: String, domain: String?) throws -> URL?
+	
 	func arrayOfString(for key: String, domain: String?) throws -> [String]
 	func optionalStringArray(for key: String, domain: String?) throws -> [String]?
 	
@@ -48,7 +51,5 @@ public protocol OfficeKitServiceConfig : Hashable {
 	caller. */
 	var serviceId: String {get}
 	var serviceName: String {get}
-	
-	init(serviceId: String, serviceName: String, genericConfig: GenericConfig) throws
 	
 }

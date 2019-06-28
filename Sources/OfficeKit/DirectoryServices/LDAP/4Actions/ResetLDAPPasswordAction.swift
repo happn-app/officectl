@@ -12,7 +12,7 @@ import Vapor
 
 
 
-public class ResetLDAPPasswordAction : Action<LDAPDistinguishedName, String, Void>, SemiSingleton {
+public class ResetLDAPPasswordAction : Action<LDAPDistinguishedName, String, Void>, ResetPasswordAction, SemiSingleton {
 	
 	public static func additionalInfo(from container: Container) throws -> (AsyncConfig, LDAPConnector) {
 		return try (container.make(), container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()))
