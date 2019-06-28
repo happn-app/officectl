@@ -21,7 +21,8 @@ let package = Package(
 		.package(url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
 		.package(url: "https://github.com/vapor/jwt.git", from: "3.0.0"),
 		.package(url: "https://github.com/happn-tech/EmailValidator.git", .branch("master")),
-		.package(url: "https://github.com/zoul/generic-json-swift.git", from: "1.2.0")
+		.package(url: "https://github.com/zoul/generic-json-swift.git", from: "1.2.0"),
+		.package(url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0")
 	],
 	targets: [
 		.systemLibrary(name: "COpenLDAP", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])]),
@@ -37,6 +38,6 @@ let package = Package(
 		]),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
 		
-		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "Guaka", "Yaml", "JWT"])
+		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "Guaka", "Yaml", "JWT", "LegibleError"])
 	]
 )

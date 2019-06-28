@@ -7,6 +7,7 @@
 
 import Foundation
 
+import LegibleError
 import Vapor
 
 
@@ -14,6 +15,6 @@ import Vapor
 do {try app().run()}
 catch {
 	print("Error creating or running the App."/* to stderr */)
-	print("   error \(error) (domain \((error as NSError).domain), code \((error as NSError).code))"/* to stderr */)
+	print("   error \(error.legibleLocalizedDescription)"/* to stderr */)
 	exit(Int32((error as NSError).code))
 }

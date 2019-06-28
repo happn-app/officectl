@@ -27,7 +27,7 @@ func parse_cli() -> GuakaCommandParseResult {
 		return { (_ cmd: Guaka.Command, _ flags: Guaka.Flags, _ args: [String]) -> Void in
 			let officectlConfig: OfficectlConfig
 			do    {officectlConfig = try OfficectlConfig(flags: flags)}
-			catch {cmd.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)}
+			catch {cmd.fail(statusCode: (error as NSError).code, errorMessage: error.legibleLocalizedDescription)}
 			
 			result = GuakaCommandParseResult(
 				officectlConfig: officectlConfig,

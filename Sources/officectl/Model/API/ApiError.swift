@@ -43,7 +43,7 @@ struct ApiError : Codable {
 		default:
 			/* Not an abort error, and not debuggable or in dev mode, just deliver
 			 * a generic 500 to avoid exposing any sensitive error info. */
-			reason = (environment.isRelease ? "Something went wrong." : error.localizedDescription)
+			reason = (environment.isRelease ? "Something went wrong." : error.legibleLocalizedDescription)
 			theCode = (error as NSError).code
 		}
 		
