@@ -57,7 +57,7 @@ public final class GoogleService : DirectoryService {
 	}
 	
 	public func existingUserId<T : DirectoryService>(from userId: T.UserIdType, in service: T) -> Future<GoogleUser?> {
-		asyncConfig.eventLoop.future()
+		return asyncConfig.eventLoop.future()
 		.flatMap{ _ in
 			switch (service, userId) {
 			case let (ldapService as LDAPService, dn as LDAPService.UserIdType):

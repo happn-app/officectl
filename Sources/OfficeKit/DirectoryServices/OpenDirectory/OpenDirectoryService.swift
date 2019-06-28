@@ -48,7 +48,7 @@ public final class OpenDirectoryService : DirectoryService {
 	}
 	
 	public func existingUserId<T : DirectoryService>(from userId: T.UserIdType, in service: T) -> Future<ODRecord?> {
-		asyncConfig.eventLoop.future()
+		return asyncConfig.eventLoop.future()
 		.flatMap{ _ in
 			switch (service, userId) {
 			case let (_ as LDAPService, dn as LDAPService.UserIdType):
@@ -77,7 +77,6 @@ public final class OpenDirectoryService : DirectoryService {
 	private let openDirectoryRecordAuthenticator: OpenDirectoryRecordAuthenticator
 	
 	private func existingRecord(fromSearchRequest request: OpenDirectorySearchRequest) throws -> Future<ODRecord?> {
-		
 		let future = openDirectoryConnector.connect(scope: (), asyncConfig: asyncConfig)
 		.then{ _ -> Future<[ODRecord]> in
 			let op = SearchOpenDirectoryOperation(openDirectoryConnector: self.openDirectoryConnector, request: request)
