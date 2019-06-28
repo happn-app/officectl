@@ -27,6 +27,13 @@ public class OfficeKitServiceProvider {
 		return Array(servicesCache.values)
 	}
 	
+	public func getDirectoryService(with id: String) throws -> AnyDirectoryService {
+		guard let config = officeKitConfig.serviceConfigs[id] else {
+			throw InvalidArgumentError(message: "No service configured with id \(id)")
+		}
+		return try directoryService(with: config)
+	}
+	
 	public func directoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyDirectoryService {
 		let ac = try container.make(AsyncConfig.self)
 		let sms = try container.make(SemiSingletonStore.self)
