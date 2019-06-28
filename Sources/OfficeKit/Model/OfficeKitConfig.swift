@@ -11,7 +11,7 @@ import Foundation
 
 public struct OfficeKitConfig {
 	
-	public var authServiceId: String
+	public var authServiceConfig: AnyOfficeKitServiceConfig
 	public var serviceConfigs: [String: AnyOfficeKitServiceConfig]
 	
 	/** Key is a domain alias, value is the actual domain */
@@ -23,10 +23,14 @@ public struct OfficeKitConfig {
 	
 	/** It is a programmer error to give an array of services containing two or
 	more services with the same id. */
-	public init(serviceConfigs s: [AnyOfficeKitServiceConfig], authServiceId asid: String, domainAliases da: [String: String]) throws {
+	public init(serviceConfigs s: [AnyOfficeKitServiceConfig], authServiceId: String, domainAliases da: [String: String]) throws {
 		domainAliases = da
-		authServiceId = asid
 		serviceConfigs = [String: AnyOfficeKitServiceConfig](uniqueKeysWithValues: zip(s.map{ $0.serviceId }, s))
+		
+		guard let c = serviceConfigs[authServiceId] else {
+			throw InvalidArgumentError(message: "The auth service id does not correspond to a config")
+		}
+		authServiceConfig = c
 	}
 	
 	public func mainDomain(for domain: String) -> String {

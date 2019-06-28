@@ -12,7 +12,7 @@ import SemiSingleton
 
 
 
-public final class LDAPService : DirectoryService, DirectoryServiceAuthenticator {
+public final class LDAPService : DirectoryService, DirectoryAuthenticatorService {
 	
 	public enum Error : Swift.Error {
 		
@@ -79,7 +79,7 @@ public final class LDAPService : DirectoryService, DirectoryServiceAuthenticator
 		}
 	}
 	
-	public func isAdmin(_ user: LDAPDistinguishedName) -> Future<Bool> {
+	public func isUserAdmin(_ user: LDAPDistinguishedName) -> Future<Bool> {
 		let adminGroupsDN = ldapConfig.adminGroupsDN
 		guard adminGroupsDN.count > 0 else {return asyncConfig.eventLoop.future(false)}
 		

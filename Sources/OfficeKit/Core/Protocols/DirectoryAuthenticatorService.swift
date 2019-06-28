@@ -1,5 +1,5 @@
 /*
- * DirectoryServiceAuthenticator.swift
+ * DirectoryAuthenticatorService.swift
  * OfficeKit
  *
  * Created by François Lamboley on 24/06/2019.
@@ -11,11 +11,12 @@ import Async
 
 
 
-public protocol DirectoryServiceAuthenticator : DirectoryService {
+public protocol DirectoryAuthenticatorService {
 	
+	associatedtype UserIdType : Hashable
 	associatedtype AuthenticationChallenge
 	
 	func authenticate(user: UserIdType, challenge: AuthenticationChallenge) -> Future<Bool>
-	func isAdmin(_ user: UserIdType) -> Future<Bool>
+	func isUserAdmin(_ user: UserIdType) -> Future<Bool>
 	
 }

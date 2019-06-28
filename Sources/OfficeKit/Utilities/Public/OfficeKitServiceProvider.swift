@@ -34,6 +34,10 @@ public class OfficeKitServiceProvider {
 		return try directoryService(with: config)
 	}
 	
+	public func getDirectoryAuthenticatorService() throws -> AnyDirectoryAuthenticatorService {
+		return try directoryAuthenticatorService(with: officeKitConfig.authServiceConfig)
+	}
+	
 	public func directoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyDirectoryService {
 		let ac = try container.make(AsyncConfig.self)
 		let sms = try container.make(SemiSingletonStore.self)
@@ -67,6 +71,20 @@ public class OfficeKitServiceProvider {
 			)
 		}
 		#endif
+		
+		throw InvalidArgumentError(message: "Unknown directory service config type")
+	}
+	
+	public func directoryAuthenticatorService(with config: AnyOfficeKitServiceConfig) throws -> AnyDirectoryAuthenticatorService {
+		let ac = try container.make(AsyncConfig.self)
+		let sms = try container.make(SemiSingletonStore.self)
+		
+		if let cfg: LDAPServiceConfig = config.unwrapped() {
+			return try AnyDirectoryAuthenticatorService(
+				LDAPService(ldapConfig: cfg, domainAliases: officeKitConfig.domainAliases, semiSingletonStore: sms, asyncConfig: ac),
+				asyncConfig: ac
+			)
+		}
 		
 		throw InvalidArgumentError(message: "Unknown directory service config type")
 	}

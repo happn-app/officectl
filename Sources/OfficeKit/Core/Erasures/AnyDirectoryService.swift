@@ -8,7 +8,6 @@
 import Foundation
 
 import Async
-import Vapor
 
 
 
@@ -47,7 +46,6 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 
 public struct AnyDirectoryService : DirectoryService {
 	
-	public typealias ConfigType = AnyOfficeKitServiceConfig
 	public typealias UserIdType = AnyHashable
 	
 	public let asyncConfig: AsyncConfig
