@@ -79,7 +79,7 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 		
 		let errors = operationResults.compactMap{ $0.error }
 		guard errors.count == 0 else {
-			return asyncConfig.eventLoop.newFailedFuture(error: NSError(domain: "com.happn.officectl", code: 3, userInfo: [NSLocalizedDescriptionKey: "Got the following errors while backing up the repositories" + errors.reduce("", { $0 + "\n   " + $1.localizedDescription })]))
+			return asyncConfig.eventLoop.newFailedFuture(error: NSError(domain: "com.happn.officectl", code: 3, userInfo: [NSLocalizedDescriptionKey: "Got the following errors while backing up the repositories" + errors.reduce("", { $0 + "\n   " + $1.legibleLocalizedDescription })]))
 		}
 		
 		return asyncConfig.eventLoop.newSucceededFuture(result: ())

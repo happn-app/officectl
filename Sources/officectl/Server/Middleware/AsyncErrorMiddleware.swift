@@ -22,7 +22,7 @@ final class AsyncErrorMiddleware : Middleware, ServiceType {
 			/* Simple default error handling. */
 			let response = request.response(http: HTTPResponse(status: .internalServerError, headers: [:]))
 			response.http.headers.replaceOrAdd(name: .contentType, value: "text/plain; charset=utf-8")
-			response.http.body = HTTPBody(string: "error: " + error.localizedDescription)
+			response.http.body = HTTPBody(string: "error: " + error.legibleLocalizedDescription)
 			return request.future(response)
 		}
 	}

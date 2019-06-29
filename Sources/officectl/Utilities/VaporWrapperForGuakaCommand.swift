@@ -35,7 +35,7 @@ struct VaporWrapperForGuakaCommand : Vapor.Command {
 	
 	func run(using context: CommandContext) throws -> Future<Void> {
 		do    {return try run(guakaFlags, guakaArgs, context)}
-		catch {guakaCommand.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)}
+		catch {guakaCommand.fail(statusCode: (error as NSError).code, errorMessage: error.legibleLocalizedDescription)}
 	}
 	
 }

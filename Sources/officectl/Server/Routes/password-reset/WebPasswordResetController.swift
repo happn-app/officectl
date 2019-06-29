@@ -88,15 +88,15 @@ final class WebPasswordResetController {
 				isSuccessful: resetPasswordAction.result?.isSuccessful ?? false,
 				ldapResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
 					isExecuting: resetPasswordAction.ldapResetResult == nil || resetPasswordAction.resetLDAPPasswordAction.isExecuting,
-					errorStr: resetPasswordAction.ldapResetResult?.failureValue?.localizedDescription
+					errorStr: resetPasswordAction.ldapResetResult?.failureValue?.legibleLocalizedDescription
 				),
 				googleResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
 					isExecuting: resetPasswordAction.googleResetResult == nil || resetPasswordAction.resetGooglePasswordAction.isExecuting,
-					errorStr: resetPasswordAction.googleResetResult?.failureValue?.localizedDescription
+					errorStr: resetPasswordAction.googleResetResult?.failureValue?.legibleLocalizedDescription
 				),
 				openDirectoryResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
 					isExecuting: resetPasswordAction.openDirectoryResetResult == nil || isOpenDirectoryBeingReset,
-					errorStr: resetPasswordAction.openDirectoryResetResult?.failureValue?.localizedDescription
+					errorStr: resetPasswordAction.openDirectoryResetResult?.failureValue?.legibleLocalizedDescription
 				)
 			)
 			return view.render("PasswordResetStatusPage", context)
