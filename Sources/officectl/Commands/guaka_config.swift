@@ -88,7 +88,8 @@ func parse_cli() -> GuakaCommandParseResult {
 		Flag(longName: "max-concurrent-account-sync", type: Int.self,    description: "The maximum number of concurrent sync that will be done by offlineimap.", required: false),
 		Flag(longName: "offlineimap-output",          type: String.self, description: "A path to a file in which the offlineimap output will be written.", required: false),
 		Flag(longName: "linkify",                     value: false,      description: "Whether to “linkify” the backups. Linkifying consists in scanning the backup for duplicate files and de-duplicating the files by replacing the duplicate with a hard link."),
-		Flag(longName: "archive",                     value: false,      description: "Whether to archive the backup (create a tar bz2 file and remove the directory).")
+		Flag(longName: "archive",                     value: false,      description: "Whether to archive the backup (create a tar bz2 file and remove the directory)."),
+		Flag(longName: "service-id",                  type: String.self, description: "The id of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.", required: false)
 	]
 	
 	let backupGitHubFlags = [

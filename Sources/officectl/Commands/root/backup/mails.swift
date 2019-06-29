@@ -16,9 +16,11 @@ import OfficeKit
 
 
 func backupMails(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	#if false
 	let asyncConfig = try context.container.make(AsyncConfig.self)
-	let googleConfig = try context.container.make(OfficeKitConfig.self).googleConfigOrThrow()
+	let officeKitServiceProvider: OfficeKitServiceProvider = try context.container.make()
+	
+	let googleService: GoogleService = try officeKitServiceProvider.getDirectoryService(id: f.getString(name: "service-id"), container: context.container)
+	let googleConfig = googleService.serviceConfig
 	
 	let usersFilter = (f.getString(name: "emails-to-backup")?.components(separatedBy: ",")).flatMap{ Set($0) }
 	_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
@@ -83,8 +85,6 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 		return futureFromOperations.transform(to: ())
 	}
 	return f
-	#endif
-	throw NotImplementedError()
 }
 
 
@@ -147,7 +147,7 @@ class FetchAllMailsOperation : RetryingOperation {
 				currentResult.minExpirationDate = min(currentResult.minExpirationDate, newResult.2)
 				currentResult.tokens[newResult.0] = newResult.1
 			})
-			.then { (info: (tokens: [GoogleUser : String], minExpirationDate: Date)) -> Future<Void> in
+			.then{ (info: (tokens: [GoogleUser : String], minExpirationDate: Date)) -> Future<Void> in
 				let operation = OfflineimapRunOperation(userTokens: info.tokens, tokensMinExpirationDate: info.minExpirationDate, options: self.options)
 				return self.options.asyncConfig.eventLoop.future(from: operation, queue: self.options.asyncConfig.operationQueue, resultRetriever: { if let e = $0.runError {throw e} })
 			}
@@ -235,8 +235,11 @@ class OfflineimapRunOperation : RetryingOperation {
 			let process = try createOfflineimapProcess()
 			offlineimapProcess = process
 			
+			/* Launching offlineimap */
+			do    {try process.run()}
+			catch {offlineimapProcess = nil; throw error}
+			
 			console.info("Waiting on offlineimap…")
-			try process.run()
 			process.waitUntilExit()
 			offlineimapProcess = nil
 			
