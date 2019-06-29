@@ -33,6 +33,21 @@ public class OfficeKitServiceProvider {
 		return try directoryService(with: config, container: container)
 	}
 	
+	public func getDirectoryService<DirectoryServiceType : DirectoryService>(id: String?, container: Container) throws -> DirectoryServiceType {
+		if let id = id {
+			guard let directoryService: DirectoryServiceType = try getDirectoryService(id: id, container: container).unwrapped() else {
+				throw InvalidArgumentError(message: "Service with id \(id) does not have the correct type")
+			}
+			return directoryService
+		} else {
+			let configs = officeKitConfig.serviceConfigs.values.filter{ $0.providerId == DirectoryServiceType.providerId }
+			guard let config = configs.first, configs.count == 1 else {
+				throw InvalidArgumentError(message: "No or too many directory services found for type \(DirectoryServiceType.providerId)")
+			}
+			return try directoryService(with: config, container: container).unwrapped()!
+		}
+	}
+	
 	public func getDirectoryAuthenticatorService(container: Container) throws -> AnyDirectoryAuthenticatorService {
 		return try directoryAuthenticatorService(with: officeKitConfig.authServiceConfig, container: container)
 	}

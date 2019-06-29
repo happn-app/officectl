@@ -15,9 +15,11 @@ import OfficeKit
 
 
 func backupGitHub(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	#if false
 	let asyncConfig: AsyncConfig = try context.container.make()
-	let gitHubConfig = try context.container.make(OfficeKitConfig.self).gitHubConfigOrThrow()
+	let officeKitServiceProvider: OfficeKitServiceProvider = try context.container.make()
+	
+	let gitHubService: GitHubService = try officeKitServiceProvider.getDirectoryService(id: f.getString(name: "service-id"), container: context.container)
+	let gitHubConfig = gitHubService.serviceConfig
 	
 	let orgName = try nil2throw(f.getString(name: "orgname"), "orgname")
 	let destinationFolderURL = try URL(fileURLWithPath: nil2throw(f.getString(name: "destination"), "destination"), isDirectory: true)
@@ -85,8 +87,6 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 		return asyncConfig.eventLoop.newSucceededFuture(result: ())
 	}
 	return f
-	#endif
-	throw NotImplementedError()
 }
 
 /// Iterate over paths matching the "\*/\*" glob in baseFolder.

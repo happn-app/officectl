@@ -92,7 +92,8 @@ func parse_cli() -> GuakaCommandParseResult {
 	]
 	
 	let backupGitHubFlags = [
-		Flag(longName: "orgname", type: String.self, description: "The organisation name from which to backup the repositories from.", required: true)
+		Flag(longName: "orgname",    type: String.self, description: "The organisation name from which to backup the repositories from.", required: true),
+		Flag(longName: "service-id", type: String.self, description: "The id of the GitHub service to use to do the backup. Required if there are more than one GitHub service in officectl conf, otherwise the only GitHub service is used.", required: false)
 	]
 	
 	let _ = Command(usage: "mails",  flags: backupMailsFlags,  parent: backupCommand, run: createSetWrapperCommandHandler(backupMails))
