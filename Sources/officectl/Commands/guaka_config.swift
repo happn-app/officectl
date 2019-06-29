@@ -57,7 +57,7 @@ func parse_cli() -> GuakaCommandParseResult {
 	   *********************** */
 	
 	let getTokenFlags = [
-		Flag(longName: "scopes",     type: String.self, description: "A comma-separated list of scopes.",                       required: true),
+		Flag(longName: "scopes",     type: String.self, description: "A comma-separated list of scopes.",                       required: false),
 		Flag(longName: "service-id", type: String.self, description: "The id of the service from which to retrieve the token.", required: true)
 	]
 	
