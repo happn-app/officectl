@@ -61,21 +61,26 @@ func parse_cli() -> GuakaCommandParseResult {
 		Flag(longName: "service-id", type: String.self, description: "The id of the service from which to retrieve the token.", required: true)
 	]
 	
+	let listUsersFlags = [
+		Flag(longName: "include-suspended-users", value: false,      description: "For the directory services that supports it, do we filter out the suspended users?"),
+		Flag(longName: "service-id",              type: String.self, description: "The id of the directory service from which to retrieve the list of users.", required: false)
+	]
+	
 	let backupFlags = [
 		Flag(longName: "destination", type: String.self, description: "The enclosing folder destination for the backup.", required: true, inheritable: true)
 	]
 	
 	let syncFlags = [
-		Flag(longName: "from", type: String.self, description: "The source service from which to sync the directories from.", required: true),
+		Flag(longName: "from", type: String.self, description: "The source service from which to sync the directories from.",                                  required: true),
 		Flag(longName: "to",   type: String.self, description: "The services to which the directory will be synchronized to. This is a comma-separated list.", required: true)
 	]
 	
-	let devtestCommand = Command(usage: "devtest",    flags: [],            parent: rootCommand, run: createSetWrapperCommandHandler(devTest))
-	let _              = Command(usage: "get-token",  flags: getTokenFlags, parent: rootCommand, run: createSetWrapperCommandHandler(getToken))
-	let _              = Command(usage: "list-users", flags: [],            parent: rootCommand, run: createSetWrapperCommandHandler(listUsers))
-	let backupCommand  = Command(usage: "backup",     flags: backupFlags,   parent: rootCommand, run: createSetWrapperCommandHandler(backup))
-	let _              = Command(usage: "sync",       flags: syncFlags,     parent: rootCommand, run: createSetWrapperCommandHandler(sync))
-	let serverCommand  = Command(usage: "server",     flags: [],            parent: rootCommand, run: createSetWrapperCommandHandler(server))
+	let devtestCommand = Command(usage: "devtest",    flags: [],             parent: rootCommand, run: createSetWrapperCommandHandler(devTest))
+	let _              = Command(usage: "get-token",  flags: getTokenFlags,  parent: rootCommand, run: createSetWrapperCommandHandler(getToken))
+	let _              = Command(usage: "list-users", flags: listUsersFlags, parent: rootCommand, run: createSetWrapperCommandHandler(listUsers))
+	let backupCommand  = Command(usage: "backup",     flags: backupFlags,    parent: rootCommand, run: createSetWrapperCommandHandler(backup))
+	let _              = Command(usage: "sync",       flags: syncFlags,      parent: rootCommand, run: createSetWrapperCommandHandler(sync))
+	let serverCommand  = Command(usage: "server",     flags: [],             parent: rootCommand, run: createSetWrapperCommandHandler(server))
 	
 	
 	/* *************************

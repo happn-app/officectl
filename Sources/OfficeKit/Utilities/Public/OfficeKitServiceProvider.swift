@@ -26,10 +26,8 @@ public class OfficeKitServiceProvider {
 		return Array(servicesCache.values)
 	}
 	
-	public func getDirectoryService(id: String, container: Container) throws -> AnyDirectoryService {
-		guard let config = officeKitConfig.serviceConfigs[id] else {
-			throw InvalidArgumentError(message: "No service configured with id \(id)")
-		}
+	public func getDirectoryService(id: String?, container: Container) throws -> AnyDirectoryService {
+		let config = try officeKitConfig.getServiceConfig(id: id)
 		return try directoryService(with: config, container: container)
 	}
 	
@@ -59,8 +57,19 @@ public class OfficeKitServiceProvider {
 	private let officeKitConfig: OfficeKitConfig
 	
 	private var servicesCache = [String: AnyDirectoryService]()
+	private var directoryAuthenticatorServiceCache: AnyDirectoryAuthenticatorService?
 	
 	private func directoryService(with config: AnyOfficeKitServiceConfig, container: Container) throws -> AnyDirectoryService {
+		if let service = servicesCache[config.serviceId] {
+			return service
+		}
+		
+		let service = try createDirectoryService(with: config, container: container)
+		servicesCache[config.serviceId] = service
+		return service
+	}
+	
+	private func createDirectoryService(with config: AnyOfficeKitServiceConfig, container: Container) throws -> AnyDirectoryService {
 		let ac = try container.make(AsyncConfig.self)
 		let sms = try container.make(SemiSingletonStore.self)
 		
@@ -97,6 +106,16 @@ public class OfficeKitServiceProvider {
 	}
 	
 	private func directoryAuthenticatorService(with config: AnyOfficeKitServiceConfig, container: Container) throws -> AnyDirectoryAuthenticatorService {
+		if let authenticator = directoryAuthenticatorServiceCache {
+			return authenticator
+		}
+		
+		let authenticator = try createDirectoryAuthenticatorService(with: config, container: container)
+		directoryAuthenticatorServiceCache = authenticator
+		return authenticator
+	}
+	
+	private func createDirectoryAuthenticatorService(with config: AnyOfficeKitServiceConfig, container: Container) throws -> AnyDirectoryAuthenticatorService {
 		let ac = try container.make(AsyncConfig.self)
 		let sms = try container.make(SemiSingletonStore.self)
 		
@@ -108,7 +127,7 @@ public class OfficeKitServiceProvider {
 			)
 			
 		default:
-			throw InvalidArgumentError(message: "Unknown or unsupported service provider \(config.providerId)")
+			throw InvalidArgumentError(message: "Unknown or unsupported service authenticator provider \(config.providerId)")
 		}
 	}
 	
