@@ -22,6 +22,7 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	 * wanted CLI-wise with Vapor) :( */
 	let cliParseResults = parse_cli()
 	configureSemiSingleton(cliParseResults.officectlConfig)
+	configureRetryingOperation(cliParseResults.officectlConfig)
 	configureURLRequestOperation(cliParseResults.officectlConfig)
 	/* Register the services/configs we got from CLI, if any */
 	services.register(cliParseResults.officectlConfig)
