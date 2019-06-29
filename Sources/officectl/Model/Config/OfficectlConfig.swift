@@ -33,9 +33,9 @@ struct OfficectlConfig : Service {
 	var officeKitConfig: OfficeKitConfig
 	
 	init(flags f: Flags) throws {
-		let configYaml = try OfficectlConfig.readYamlConfig(forcedConfigFilePath: f.getString(name: "config-file"))
+		let (configURL, configYaml) = try OfficectlConfig.readYamlConfig(forcedConfigFilePath: f.getString(name: "config-file"))
 		
-		staticDataDirURL = (f.getString(name: "static-data-dir") ?? configYaml["server"]["static_data_dir"].string).flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
+		staticDataDirURL = (f.getString(name: "static-data-dir") ?? configYaml["server"]["static_data_dir"].string).flatMap{ URL(fileURLWithPath: $0, isDirectory: true, relativeTo: configURL) }
 		serverHost = f.getString(name: "hostname") ?? configYaml["server"]["hostname"].string ?? "localhost"
 		serverPort = f.getInt(name: "port") ?? configYaml["server"]["port"].int ?? 8080
 		
@@ -51,10 +51,10 @@ struct OfficectlConfig : Service {
 		tmpVaultToken = configYaml["vault"]["token"].string
 		tmpVaultTTL = configYaml["vault"]["ttl"].string
 		
-		officeKitConfig = try OfficeKitConfig(genericConfig: configYaml)
+		officeKitConfig = try OfficeKitConfig(genericConfig: configYaml, pathsRelativeTo: configURL)
 	}
 	
-	private static func readYamlConfig(forcedConfigFilePath: String?) throws -> Yaml {
+	private static func readYamlConfig(forcedConfigFilePath: String?) throws -> (URL, Yaml) {
 		let configURL: URL
 		var isDir: ObjCBool = false
 		let fm = FileManager.default
@@ -76,7 +76,7 @@ struct OfficectlConfig : Service {
 		}
 		
 		let configString = try String(contentsOf: configURL, encoding: .utf8)
-		return try Yaml.load(configString)
+		return try (configURL, Yaml.load(configString))
 	}
 	
 }

@@ -44,9 +44,8 @@ public protocol GenericConfig {
 
 public protocol OfficeKitServiceConfig : Hashable {
 	
-	/** The id of the linked provider, e.g. "internal_openldap". Those are static
-	in OfficeKit. */
-	static var providerId: String {get}
+	/** The provider id for which the config is for. */
+	var providerId: String {get}
 	
 	/** The id of the instance of the provider, e.g. "happn_ldap". Defined by the
 	caller. */

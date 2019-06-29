@@ -59,6 +59,8 @@ public struct AnyDirectoryService : DirectoryService {
 		return (box as? ConcreteDirectoryBox<DirectoryType>)?.originalDirectory
 	}
 	
+	public static let providerId = "__OfficeKitInternal_OfficeKitServiceConfig_Erasure__"
+	
 	public var supportsPasswordChange: Bool {
 		return box.supportsPasswordChange
 	}

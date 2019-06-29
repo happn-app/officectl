@@ -22,8 +22,7 @@ private protocol OfficeKitServiceConfigBox {
 	
 	/* *** OfficeKitServiceConfig *** */
 	
-	static var providerId: String {get}
-	
+	var providerId: String {get}
 	var serviceId: String {get}
 	var serviceName: String {get}
 	
@@ -46,8 +45,8 @@ private struct ConcreteOfficeKitServiceConfigBox<Base : OfficeKitServiceConfig> 
 		return otherAsBase == originalConfig
 	}
 	
-	static var providerId: String {
-		return Base.providerId
+	var providerId: String {
+		return originalConfig.providerId
 	}
 	
 	var serviceId: String {
@@ -78,7 +77,9 @@ public struct AnyOfficeKitServiceConfig : OfficeKitServiceConfig {
 		return lhs.box.isEqual(rhs.box)
 	}
 	
-	public static var providerId = "__OfficeKitInternal_OfficeKitServiceConfig_Erasure__"
+	public var providerId: String {
+		return box.providerId
+	}
 	
 	public var serviceId: String {
 		return box.serviceId

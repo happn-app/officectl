@@ -20,6 +20,8 @@ public final class GitHubService : DirectoryService {
 		
 	}
 	
+	public static let providerId = "internal_github"
+	
 	public typealias UserIdType = String
 	
 	public let supportsPasswordChange = false

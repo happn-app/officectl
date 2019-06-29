@@ -17,6 +17,8 @@ import SemiSingleton
 
 public final class OpenDirectoryService : DirectoryService {
 	
+	public static let providerId = "internal_opendirectory"
+	
 	public enum UserIdConversionError : Error {
 		
 		case uidMissingInDN

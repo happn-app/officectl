@@ -13,6 +13,10 @@ import Async
 
 public protocol DirectoryService {
 	
+	/** The id of the linked provider, e.g. "internal_openldap". Those are static
+	in OfficeKit. */
+	static var providerId: String {get}
+	
 	associatedtype UserIdType : Hashable
 	
 	var supportsPasswordChange: Bool {get}

@@ -11,7 +11,7 @@ import Foundation
 
 public struct LDAPServiceConfig : OfficeKitServiceConfig {
 	
-	public static var providerId = "internal_openldap"
+	public var providerId: String
 	
 	public var serviceId: String
 	public var serviceName: String
@@ -33,7 +33,7 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 	- parameter peopleDNString: The DN for the people, **relative to the base
 	DN**. This is a different than the `peopleBaseDN` var in this struct, as
 	the var contains the full people DN. */
-	public init(serviceId id: String, serviceName name: String, connectorSettings c: LDAPConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?, adminGroupsDNString: [String]) throws {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: LDAPConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?, adminGroupsDNString: [String]) throws {
 		guard let bdn = try? baseDNPerDomainString.mapValues({ try LDAPDistinguishedName(string: $0) }) else {
 			throw InvalidArgumentError(message: "Invalid DN found in the base DN per domain config")
 		}
@@ -56,10 +56,11 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 			throw InvalidArgumentError(message: "Invalid DN found for the admin groups DN config")
 		}
 		
-		self.init(serviceId: id, serviceName: name, connectorSettings: c, baseDNPerDomain: bdn, peopleBaseDNPerDomain: pdn, adminGroupsDN: adn)
+		self.init(providerId: pId, serviceId: id, serviceName: name, connectorSettings: c, baseDNPerDomain: bdn, peopleBaseDNPerDomain: pdn, adminGroupsDN: adn)
 	}
 	
-	public init(serviceId id: String, serviceName name: String, connectorSettings c: LDAPConnector.Settings, baseDNPerDomain bdn: [String: LDAPDistinguishedName], peopleBaseDNPerDomain pbdn: [String: LDAPDistinguishedName]?, adminGroupsDN agdn: [LDAPDistinguishedName]) {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: LDAPConnector.Settings, baseDNPerDomain bdn: [String: LDAPDistinguishedName], peopleBaseDNPerDomain pbdn: [String: LDAPDistinguishedName]?, adminGroupsDN agdn: [LDAPDistinguishedName]) {
+		providerId = pId
 		serviceId = id
 		serviceName = name
 		
@@ -69,7 +70,7 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 		adminGroupsDN = agdn
 	}
 	
-	public init(serviceId id: String, serviceName name: String, genericConfig: GenericConfig) throws {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
 		let domain = "Google Config"
 		
 		let url = try genericConfig.url(for: "url", domain: domain)
@@ -89,7 +90,7 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 			throw InvalidArgumentError(message: "Invalid config in yaml: neither both or none of admin_username & admin_password defined in an LDAP config")
 		}
 		
-		try self.init(serviceId: id, serviceName: name, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)
+		try self.init(providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)
 	}
 	
 }

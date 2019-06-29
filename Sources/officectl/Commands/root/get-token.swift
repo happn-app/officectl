@@ -15,19 +15,22 @@ import OfficeKit
 
 
 func getToken(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	#if false
 	let asyncConfig = try context.container.make(AsyncConfig.self)
-	let googleConfig = try context.container.make(OfficeKitConfig.self).googleConfigOrThrow()
+	let officeKitServiceProvider = try context.container.make(OfficeKitServiceProvider.self)
 	
 	let scopes = try nil2throw(f.getString(name: "scopes"), "scopes")
+	let serviceId = try nil2throw(f.getString(name: "service-id"), "service-id")
 	
-	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-	let f = googleConnector.connect(scope: Set(scopes.components(separatedBy: ",")), asyncConfig: asyncConfig)
-	.then{ _ -> Future<Void> in
-		print(googleConnector.token!)
-		return asyncConfig.eventLoop.newSucceededFuture(result: ())
+	let directoryService = try officeKitServiceProvider.getDirectoryService(id: serviceId, container: context.container)
+	if let googleService: GoogleService = directoryService.unwrapped() {
+		let googleConnector = try GoogleJWTConnector(key: googleService.serviceConfig.connectorSettings)
+		let f = googleConnector.connect(scope: Set(scopes.components(separatedBy: ",")), asyncConfig: asyncConfig)
+			.then{ _ -> Future<Void> in
+				print(googleConnector.token!)
+				return asyncConfig.eventLoop.newSucceededFuture(result: ())
+		}
+		return f
 	}
-	return f
-	#endif
-	throw NotImplementedError()
+	
+	throw InvalidArgumentError(message: "Unsupported service to get a token from.")
 }

@@ -39,6 +39,7 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	services.register(AsyncConfig.self)
 	services.register(ErrorMiddleware.self)
 	services.register(SemiSingletonStore(forceClassInKeys: true))
+	services.register(OfficeKitServiceProvider(config: cliParseResults.officectlConfig.officeKitConfig))
 	
 	/* Register routes */
 	let router = EngineRouter(caseInsensitive: true)

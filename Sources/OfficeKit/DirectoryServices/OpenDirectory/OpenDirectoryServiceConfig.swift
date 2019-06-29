@@ -14,7 +14,7 @@ import OpenDirectory
 
 public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 	
-	public static let providerId = "internal_opendirectory"
+	public var providerId: String
 	
 	public var serviceId: String
 	public var serviceName: String
@@ -22,7 +22,8 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 	public var connectorSettings: OpenDirectoryConnector.Settings
 	public var authenticatorSettings: OpenDirectoryRecordAuthenticator.Settings
 	
-	public init(serviceId id: String, serviceName name: String, connectorSettings c: OpenDirectoryConnector.Settings, authenticatorSettings a: OpenDirectoryRecordAuthenticator.Settings) {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: OpenDirectoryConnector.Settings, authenticatorSettings a: OpenDirectoryRecordAuthenticator.Settings) {
+		providerId = pId
 		serviceId = id
 		serviceName = name
 		
@@ -30,7 +31,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		authenticatorSettings = a
 	}
 	
-	public init(serviceId id: String, serviceName name: String, genericConfig: GenericConfig) throws {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
 		let domain = "OpenDirectory Config"
 		let hostnameString = try genericConfig.string(for: "server", domain: domain)
 		let adminUsernameString = try genericConfig.string(for: "admin_username", domain: domain)
@@ -40,7 +41,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		
 		let connectorSettings = OpenDirectoryConnector.Settings(serverHostname: hostnameString, username: adminUsernameString, password: adminPasswordString, nodeType: ODNodeType(kODNodeTypeAuthentication))
 		let authenticatorSettings = OpenDirectoryRecordAuthenticator.Settings(username: ldapAdminUsernameString, password: ldapAdminPasswordString)
-		self.init(serviceId: id, serviceName: name, connectorSettings: connectorSettings, authenticatorSettings: authenticatorSettings)
+		self.init(providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings, authenticatorSettings: authenticatorSettings)
 	}
 	
 }

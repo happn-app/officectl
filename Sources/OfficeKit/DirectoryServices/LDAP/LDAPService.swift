@@ -14,6 +14,8 @@ import SemiSingleton
 
 public final class LDAPService : DirectoryService, DirectoryAuthenticatorService {
 	
+	public static var providerId = "internal_openldap"
+	
 	public enum Error : Swift.Error {
 		
 		case invalidEmailInLDAP

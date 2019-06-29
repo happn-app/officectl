@@ -14,6 +14,8 @@ import SemiSingleton
 
 public final class GoogleService : DirectoryService {
 	
+	public static let providerId = "internal_google"
+	
 	public enum UserIdConversionError : Error {
 		
 		case noEmailInLDAP

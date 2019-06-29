@@ -21,7 +21,7 @@ public struct OfficeKitConfig {
 	   MARK: - Init
 	   ************ */
 	
-	public init(genericConfig: GenericConfig) throws {
+	public init(genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
 		let domain = "OfficeKit Config"
 		let domainAliases = try genericConfig.optionalStringStringDic(for: "domain_aliases", domain: domain) ?? [:]
 		
@@ -36,50 +36,47 @@ public struct OfficeKitConfig {
 			let providerConfig = try serviceInfo.genericConfig(for: "provider_config", domain: domain)
 			
 			switch provider {
-			case "internal_openldap":
+			case LDAPService.providerId:
 				let config = try LDAPServiceConfig(
+					providerId: provider,
 					serviceId: serviceId,
 					serviceName: serviceName,
-					genericConfig: providerConfig
+					genericConfig: providerConfig,
+					pathsRelativeTo: baseURL
 				)
 				serviceConfigsBuilding.append(AnyOfficeKitServiceConfig(config))
 				
-			case "internal_google":
+			case GoogleService.providerId:
 				let config = try GoogleServiceConfig(
+					providerId: provider,
 					serviceId: serviceId,
 					serviceName: serviceName,
-					genericConfig: providerConfig
+					genericConfig: providerConfig,
+					pathsRelativeTo: baseURL
 				)
 				serviceConfigsBuilding.append(AnyOfficeKitServiceConfig(config))
 				
-			case "internal_github":
+			case GitHubService.providerId:
 				let config = try GitHubServiceConfig(
+					providerId: provider,
 					serviceId: serviceId,
 					serviceName: serviceName,
-					genericConfig: providerConfig
+					genericConfig: providerConfig,
+					pathsRelativeTo: baseURL
 				)
 				serviceConfigsBuilding.append(AnyOfficeKitServiceConfig(config))
 				
-			case "internal_opendirectory":
-				#if canImport(DirectoryService) && canImport(OpenDirectory)
+			#if canImport(DirectoryService) && canImport(OpenDirectory)
+			case OpenDirectoryService.providerId:
 				let config = try OpenDirectoryServiceConfig(
+					providerId: provider,
 					serviceId: serviceId,
 					serviceName: serviceName,
-					genericConfig: providerConfig
+					genericConfig: providerConfig,
+					pathsRelativeTo: baseURL
 				)
 				serviceConfigsBuilding.append(AnyOfficeKitServiceConfig(config))
-				#else
-				fallthrough
-				#endif
-				
-			case "internal_happn":
-				fallthrough
-				
-			case "internal_vault":
-				fallthrough
-				
-			case "http_service_v1":
-				fallthrough
+			#endif
 				
 			default:
 				throw InvalidArgumentError(message: "Unknown or unsupported service provider \(provider)")
