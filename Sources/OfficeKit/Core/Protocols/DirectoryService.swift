@@ -19,10 +19,10 @@ public protocol DirectoryService {
 	
 	associatedtype UserIdType : Hashable
 	
-	var supportsPasswordChange: Bool {get}
-	func changePasswordAction(for user: UserIdType) throws -> ResetPasswordAction
-	
 	func existingUserId(from email: Email) -> Future<UserIdType?>
 	func existingUserId<T: DirectoryService>(from userId: T.UserIdType, in service: T) -> Future<UserIdType?>
+	
+	var supportsPasswordChange: Bool {get}
+	func changePasswordAction(for user: UserIdType) throws -> ResetPasswordAction
 	
 }
