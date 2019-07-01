@@ -16,10 +16,10 @@ import OfficeKit
 
 func backupGitHub(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
 	let asyncConfig: AsyncConfig = try context.container.make()
-	let officeKitServiceProvider: OfficeKitServiceProvider = try context.container.make()
+	let officeKitConfig = try context.container.make(OfficectlConfig.self).officeKitConfig
 	
-	let gitHubService: GitHubService = try officeKitServiceProvider.getDirectoryService(id: f.getString(name: "service-id"), container: context.container)
-	let gitHubConfig = gitHubService.serviceConfig
+	let serviceId = f.getString(name: "service-id")
+	let gitHubConfig: GitHubServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
 	
 	let orgName = try nil2throw(f.getString(name: "orgname"), "orgname")
 	let destinationFolderURL = try URL(fileURLWithPath: nil2throw(f.getString(name: "destination"), "destination"), isDirectory: true)

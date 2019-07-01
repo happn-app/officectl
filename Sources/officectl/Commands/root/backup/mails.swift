@@ -17,10 +17,10 @@ import OfficeKit
 
 func backupMails(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
 	let asyncConfig = try context.container.make(AsyncConfig.self)
-	let officeKitServiceProvider: OfficeKitServiceProvider = try context.container.make()
+	let officeKitConfig = try context.container.make(OfficectlConfig.self).officeKitConfig
 	
-	let googleService: GoogleService = try officeKitServiceProvider.getDirectoryService(id: f.getString(name: "service-id"), container: context.container)
-	let googleConfig = googleService.serviceConfig
+	let serviceId = f.getString(name: "service-id")
+	let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
 	
 	let usersFilter = (f.getString(name: "emails-to-backup")?.components(separatedBy: ",")).flatMap{ Set($0) }
 	_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
