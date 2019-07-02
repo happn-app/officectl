@@ -45,6 +45,10 @@ public final class GitHubService : DirectoryService {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
+	public func listAllUsers() -> Future<[GitHubUser]> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	}
+	
 	public let supportsUserCreation = true
 	public func createUser(_ user: GitHubUser) -> Future<GitHubUser> {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
@@ -56,7 +60,7 @@ public final class GitHubService : DirectoryService {
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: GitHubUser) -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: GitHubUser) -> Future<Void> {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	

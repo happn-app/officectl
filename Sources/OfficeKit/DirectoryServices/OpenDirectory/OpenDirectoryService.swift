@@ -72,6 +72,10 @@ public final class OpenDirectoryService : DirectoryService {
 		}
 	}
 	
+	public func listAllUsers() -> Future<[ODRecord]> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	}
+	
 	public let supportsUserCreation = true
 	public func createUser(_ user: ODRecord) -> Future<ODRecord> {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())

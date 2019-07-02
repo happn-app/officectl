@@ -19,6 +19,8 @@ private protocol DirectoryServiceBox {
 	func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<AnyDirectoryUser?>
 	func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<AnyDirectoryUser?>
 	
+	func listAllUsers() -> Future<[AnyDirectoryUser]>
+	
 	var supportsUserCreation: Bool {get}
 	func createUser(_ user: AnyDirectoryUser, eventLoop: EventLoop) -> Future<AnyDirectoryUser>
 	
@@ -51,6 +53,10 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	
 	func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<AnyDirectoryUser?> {
 		return originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch).map{ $0.flatMap{ AnyDirectoryUser($0) } }
+	}
+	
+	func listAllUsers() -> Future<[AnyDirectoryUser]> {
+		return originalDirectory.listAllUsers().map{ $0.map{ AnyDirectoryUser($0) } }
 	}
 	
 	var supportsUserCreation: Bool {return originalDirectory.supportsUserCreation}
@@ -123,6 +129,10 @@ public struct AnyDirectoryService : DirectoryService {
 		return box.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch)
 	}
 	
+	public func listAllUsers() -> Future<[AnyDirectoryUser]> {
+		return box.listAllUsers()
+	}
+	
 	public var supportsUserCreation: Bool {return box.supportsUserCreation}
 	public func createUser(_ user: AnyDirectoryUser) -> Future<AnyDirectoryUser> {
 		return box.createUser(user, eventLoop: asyncConfig.eventLoop)
@@ -134,7 +144,7 @@ public struct AnyDirectoryService : DirectoryService {
 	}
 	
 	public var supportsUserDeletion: Bool {return box.supportsUserDeletion}
-	public func deleteUser(_ user: AnyDirectoryUser) -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: AnyDirectoryUser) -> Future<Void> {
 		return box.deleteUser(user, eventLoop: asyncConfig.eventLoop)
 	}
 	

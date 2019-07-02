@@ -63,6 +63,10 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
+	public func listAllUsers() -> Future<[LDAPInetOrgPersonWithObject]> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	}
+	
 	public let supportsUserCreation = true
 	public func createUser(_ user: LDAPInetOrgPersonWithObject) -> Future<LDAPInetOrgPersonWithObject> {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())

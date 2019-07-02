@@ -79,6 +79,10 @@ public final class GoogleService : DirectoryService {
 		}
 	}
 	
+	public func listAllUsers() -> Future<[GoogleUser]> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	}
+	
 	public let supportsUserCreation = true
 	public func createUser(_ user: GoogleUser) -> Future<GoogleUser> {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())

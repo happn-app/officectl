@@ -48,6 +48,8 @@ public protocol DirectoryService {
 	return a succeeded future with a `nil` user. */
 	func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<UserType?>
 	
+	func listAllUsers() -> Future<[UserType]>
+	
 	var supportsUserCreation: Bool {get}
 	func createUser(_ user: UserType) -> Future<UserType>
 	
