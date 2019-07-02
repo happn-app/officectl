@@ -90,7 +90,7 @@ public struct AnyOfficeKitServiceConfig : OfficeKitServiceConfig {
 	}
 	
 	public func unwrapped<ConfigType : OfficeKitServiceConfig>() -> ConfigType? {
-		return (box as? ConcreteOfficeKitServiceConfigBox<ConfigType>)?.originalConfig
+		return (box as? ConcreteOfficeKitServiceConfigBox<ConfigType>)?.originalConfig ?? (box as? ConcreteOfficeKitServiceConfigBox<AnyOfficeKitServiceConfig>)?.originalConfig.unwrapped()
 	}
 	
 	private let box: OfficeKitServiceConfigBox

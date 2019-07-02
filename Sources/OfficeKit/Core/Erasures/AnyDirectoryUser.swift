@@ -73,7 +73,7 @@ public struct AnyDirectoryUser : DirectoryUser {
 	}
 	
 	public func unwrapped<UserType : DirectoryUser>() -> UserType? {
-		return (box as? ConcreteUserBox<UserType>)?.originalUser
+		return (box as? ConcreteUserBox<UserType>)?.originalUser ?? (box as? ConcreteUserBox<AnyDirectoryUser>)?.originalUser.unwrapped()
 	}
 	
 	public var id: AnyHashable {
@@ -95,5 +95,18 @@ public struct AnyDirectoryUser : DirectoryUser {
 	}
 	
 	private let box: DirectoryUserBox
+	
+}
+
+
+public extension DirectoryUser {
+	
+	func erased() -> AnyDirectoryUser {
+		if let erased = self as? AnyDirectoryUser {
+			return erased
+		}
+		
+		return AnyDirectoryUser(self)
+	}
 	
 }

@@ -51,7 +51,7 @@ public struct AnyDirectoryAuthenticatorService : DirectoryAuthenticatorService {
 	}
 	
 	public func unwrapped<DirectoryType : DirectoryAuthenticatorService>() -> DirectoryType? {
-		return (box as? ConcreteDirectoryAuthenticatorBox<DirectoryType>)?.originalAuthenticator
+		return (box as? ConcreteDirectoryAuthenticatorBox<DirectoryType>)?.originalAuthenticator ?? (box as? ConcreteDirectoryAuthenticatorBox<AnyDirectoryAuthenticatorService>)?.originalAuthenticator.unwrapped()
 	}
 	
 	public func authenticate(user: AnyHashable, challenge: Any) -> Future<Bool> {

@@ -16,6 +16,10 @@ public enum RemoteProperty<T> {
 	case unsupported
 	
 	func erased() -> RemoteProperty<Any?> {
+		if let p = self as? RemoteProperty<Any?> {
+			return p
+		}
+		
 		switch self {
 		case .unfetched:      return .unfetched
 		case .unsupported:    return .unsupported
