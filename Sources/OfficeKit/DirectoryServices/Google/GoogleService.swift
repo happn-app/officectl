@@ -81,7 +81,15 @@ public final class GoogleService : DirectoryService {
 	}
 	
 	public func listAllUsers() -> Future<[GoogleUser]> {
-		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+		return googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
+		.then{ _ in
+			let futures = self.config.primaryDomains.map{ domain -> Future<[GoogleUser]> in
+				let searchOp = SearchGoogleUsersOperation(searchedDomain: domain, query: "isSuspended=false", googleConnector: self.googleConnector)
+				return self.asyncConfig.eventLoop.future(from: searchOp, queue: self.asyncConfig.operationQueue)
+			}
+			/* Merging all the users from all the domains. */
+			return Future.reduce([GoogleUser](), futures, eventLoop: self.asyncConfig.eventLoop, +)
+		}
 	}
 	
 	public let supportsUserCreation = true

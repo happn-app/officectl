@@ -65,7 +65,17 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	}
 	
 	public func listAllUsers() -> Future<[LDAPInetOrgPersonWithObject]> {
-		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+		return ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
+		.then{ _ in
+			let futures = self.config.allBaseDNs.map{ dn -> Future<[LDAPInetOrgPersonWithObject]> in
+				let searchOp = SearchLDAPOperation(ldapConnector: self.ldapConnector, request: LDAPSearchRequest(scope: .children, base: dn, searchQuery: nil, attributesToFetch: nil))
+				return self.asyncConfig.eventLoop.future(from: searchOp, queue: self.asyncConfig.operationQueue).map{
+					$0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) }
+				}
+			}
+			/* Merging all the users from all the domains. */
+			return Future.reduce([LDAPInetOrgPersonWithObject](), futures, eventLoop: self.asyncConfig.eventLoop, +)
+		}
 	}
 	
 	public let supportsUserCreation = true
