@@ -52,6 +52,17 @@ public struct NotImplementedError : Error {
 }
 
 
+public struct NotSupportedError : Error {
+	
+	public let message: String?
+	
+	public init(message m: String? = nil) {
+		message = m
+	}
+	
+}
+
+
 public struct UserAbortedError : Error {
 	
 	public init() {}

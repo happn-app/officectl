@@ -44,7 +44,7 @@ public class DeleteLDAPObjectsOperation : RetryingOperation {
 		for (idx, object) in objects.enumerated() {
 			/* We use the synchronous version of the function. See long comment in
 			 * search operation for details. */
-			let r = ldap_delete_ext_s(connector.ldapPtr, object.distinguishedName, nil /* Server controls */, nil /* Client controls */)
+			let r = ldap_delete_ext_s(connector.ldapPtr, object.distinguishedName.stringValue, nil /* Server controls */, nil /* Client controls */)
 			if r == LDAP_SUCCESS {errors[idx] = nil}
 			else                 {errors[idx] = NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])}
 		}

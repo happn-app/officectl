@@ -25,7 +25,7 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 	
 	/** Keys are distinguished names, values are passwords. Only set for users
 	whose password was successfully set. */
-	public private(set) var passwords = [String: String]()
+	public private(set) var passwords = [LDAPDistinguishedName: String]()
 	public private(set) var errors: [Error?]
 	
 	/** The users must have the new cleartext password set in the `userPassword`
@@ -61,7 +61,7 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 				defer {ber_free(ber, 1 /* 1 is for “also free buffer” (if I understand correctly) */)}
 				
 				var bv = berval(bv_len: 0, bv_val: nil)
-				try buildBervalPasswordChangeRequest(dn: object.distinguishedName, newPass: pass, ber: ber, berval: &bv)
+				try buildBervalPasswordChangeRequest(dn: object.distinguishedName.stringValue, newPass: pass, ber: ber, berval: &bv)
 				assert(bv.bv_val != nil)
 				
 				/* Debug the generated berval data. */

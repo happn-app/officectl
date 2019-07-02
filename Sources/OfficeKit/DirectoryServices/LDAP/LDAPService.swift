@@ -31,12 +31,10 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		
 	}
 	
-	public typealias UserIdType = LDAPDistinguishedName
+	public typealias UserType = LDAPInetOrgPersonWithObject
 	public typealias AuthenticationChallenge = String
 	
-	public let supportsPasswordChange = true
 	public let ldapConfig: LDAPServiceConfig
-	
 	public let domainAliases: [String: String]
 	
 	public init(ldapConfig config: LDAPServiceConfig, domainAliases aliases: [String: String], semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
@@ -49,16 +47,40 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		ldapConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
-	public func existingUserId(from email: Email) -> Future<LDAPDistinguishedName?> {
+	public func logicalUser(from email: Email) throws -> LDAPInetOrgPersonWithObject {
+		throw NotImplementedError()
+	}
+	
+	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> LDAPInetOrgPersonWithObject {
+		throw NotImplementedError()
+	}
+	
+	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<LDAPInetOrgPersonWithObject?> {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
-	public func existingUserId<T : DirectoryService>(from userId: T.UserIdType, in service: T) -> Future<LDAPDistinguishedName?> {
+	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<LDAPInetOrgPersonWithObject?> {
 		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
-	public func changePasswordAction(for user: LDAPDistinguishedName) throws -> ResetPasswordAction {
-		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: (asyncConfig, ldapConnector)) as ResetLDAPPasswordAction
+	public let supportsUserCreation = true
+	public func createUser(_ user: LDAPInetOrgPersonWithObject) -> Future<LDAPInetOrgPersonWithObject> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	}
+	
+	public let supportsUserUpdate = true
+	public func updateUser(_ user: LDAPInetOrgPersonWithObject, propertiesToUpdate: Set<DirectoryUserProperty>) -> Future<LDAPInetOrgPersonWithObject> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	}
+	
+	public let supportsUserDeletion = true
+	public func deleteUser(_ user: LDAPInetOrgPersonWithObject) -> Future<Void> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	}
+	
+	public let supportsPasswordChange = true
+	public func changePasswordAction(for user: LDAPInetOrgPersonWithObject) throws -> ResetPasswordAction {
+		return semiSingletonStore.semiSingleton(forKey: user.id, additionalInitInfo: (asyncConfig, ldapConnector)) as ResetLDAPPasswordAction
 	}
 	
 	public func authenticate(user dn: LDAPDistinguishedName, challenge checkedPassword: String) -> Future<Bool> {
@@ -101,7 +123,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			guard let inetOrgPerson = objects.first else {
 				return false
 			}
-			return inetOrgPerson.object.parsedDistinguishedName == user
+			return inetOrgPerson.id == user
 		}
 	}
 	
@@ -119,8 +141,9 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		}
 	}
 	
-	public func fetchUniqueEmails(from dn: LDAPDistinguishedName, deduplicateAliases: Bool = true) -> Future<Set<Email>> {
-		return fetchProperties([LDAPInetOrgPerson.propNameMail], from: dn)
+	public func fetchUniqueEmails(from user: LDAPInetOrgPersonWithObject, deduplicateAliases: Bool = true) -> Future<Set<Email>> {
+		#warning("TODO: Consider whether we want to use the emails already in the user (if applicable)")
+		return fetchProperties([LDAPInetOrgPerson.propNameMail], from: user.id)
 		.map{ properties in
 			guard let emailDataArray = properties[LDAPInetOrgPerson.propNameMail] else {
 				throw Error.internalError

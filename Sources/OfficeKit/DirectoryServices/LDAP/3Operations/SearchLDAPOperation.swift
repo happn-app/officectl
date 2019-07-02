@@ -104,7 +104,12 @@ public class SearchLDAPOperation : RetryingOperation, HasResult {
 					ldap_value_free_len(valueSetPtr)
 					swiftAttributesAndValues[currentAttributeString] = swiftValues
 				}
-				swiftResults.append(LDAPObject(distinguishedName: String(cString: dnCString), attributes: swiftAttributesAndValues))
+				let dnString = String(cString: dnCString)
+				guard let dn = try? LDAPDistinguishedName(string: dnString) else {
+					results = .failure(InternalError(message: "Got malformed dn '\(dnString)' from LDAP. Aborting search."))
+					return
+				}
+				swiftResults.append(LDAPObject(distinguishedName: dn, attributes: swiftAttributesAndValues))
 				
 			case LDAP_RES_SEARCH_REFERENCE: /* UNTESTED (our server does not return search references; not sure what search references are anyway…) */
 				var referrals: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?

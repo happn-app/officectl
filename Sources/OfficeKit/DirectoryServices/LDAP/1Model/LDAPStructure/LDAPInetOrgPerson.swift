@@ -43,22 +43,3 @@ public class LDAPInetOrgPerson : LDAPOrganizationalPerson {
 	}
 	
 }
-
-public struct LDAPInetOrgPersonWithObject {
-	
-	let inetOrgPerson: LDAPInetOrgPerson
-	let object: LDAPObject
-	
-	public init?(object o: LDAPObject) {
-		guard let p = LDAPInetOrgPerson(object: o) else {return nil}
-		
-		inetOrgPerson = p
-		object = o
-	}
-	
-	public init(inetOrgPerson p: LDAPInetOrgPerson) {
-		inetOrgPerson = p
-		object = p.ldapObject()
-	}
-	
-}

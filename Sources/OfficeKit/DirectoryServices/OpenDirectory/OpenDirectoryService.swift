@@ -30,7 +30,6 @@ public final class OpenDirectoryService : DirectoryService {
 	public typealias UserIdType = ODRecord
 	public typealias AuthenticationChallenge = String
 	
-	public let supportsPasswordChange = true
 	public let serviceConfig: OpenDirectoryServiceConfig
 	
 	public init(config: OpenDirectoryServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
@@ -43,18 +42,27 @@ public final class OpenDirectoryService : DirectoryService {
 		openDirectoryRecordAuthenticator = try sms.semiSingleton(forKey: config.authenticatorSettings)
 	}
 	
-	public func existingUserId(from email: Email) -> Future<ODRecord?> {
+	public func logicalUser(from email: Email) throws -> ODRecord {
+		throw NotImplementedError()
+	}
+	
+	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> ODRecord {
+		throw NotImplementedError()
+	}
+	
+	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<ODRecord?> {
+		#warning("TODO: Implement propertiesToFetch")
 		let request = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(email.username.utf8)], returnAttributes: nil, maximumResults: 2)
 		return asyncConfig.eventLoop.future()
 			.flatMap{ _ in try self.existingRecord(fromSearchRequest: request)}
 	}
 	
-	public func existingUserId<T : DirectoryService>(from userId: T.UserIdType, in service: T) -> Future<ODRecord?> {
+	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<ODRecord?> {
 		return asyncConfig.eventLoop.future()
 		.flatMap{ _ in
-			switch (service, userId) {
-			case let (_ as LDAPService, dn as LDAPService.UserIdType):
-				guard let uid = dn.uid else {throw UserIdConversionError.uidMissingInDN}
+			switch (service, user) {
+			case let (_ as LDAPService, ldapUser as LDAPService.UserType):
+				guard let uid = ldapUser.id.uid else {throw UserIdConversionError.uidMissingInDN}
 				let request = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(uid.utf8)], returnAttributes: nil, maximumResults: 2)
 				return try self.existingRecord(fromSearchRequest: request)
 				
@@ -64,6 +72,22 @@ public final class OpenDirectoryService : DirectoryService {
 		}
 	}
 	
+	public let supportsUserCreation = true
+	public func createUser(_ user: ODRecord) -> Future<ODRecord> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	}
+	
+	public let supportsUserUpdate = true
+	public func updateUser(_ user: ODRecord, propertiesToUpdate: Set<DirectoryUserProperty>) -> Future<ODRecord> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	}
+	
+	public let supportsUserDeletion = true
+	public func deleteUser(_ user: ODRecord) -> Future<Void> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	}
+	
+	public let supportsPasswordChange = true
 	public func changePasswordAction(for user: ODRecord) throws -> ResetPasswordAction {
 		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: (asyncConfig, openDirectoryConnector, openDirectoryRecordAuthenticator)) as ResetOpenDirectoryPasswordAction
 	}

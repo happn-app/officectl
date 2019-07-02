@@ -21,7 +21,11 @@ public class LDAPPerson : LDAPTop {
 	
 	public var userPassword: String? /* 2.5.4.35 — The password of the user. Can be hashed. */
 	
-	public init(dn dname: String, sn surname: [String], cn commonName: [String]) {
+	public convenience init(dnString: String, sn surname: [String], cn commonName: [String]) throws {
+		try self.init(dn: LDAPDistinguishedName(string: dnString), sn: surname, cn: commonName)
+	}
+	
+	public init(dn dname: LDAPDistinguishedName, sn surname: [String], cn commonName: [String]) {
 		sn = surname
 		cn = commonName
 		

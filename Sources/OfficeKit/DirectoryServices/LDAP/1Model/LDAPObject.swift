@@ -13,16 +13,15 @@ import Foundation
 object. */
 public struct LDAPObject {
 	
-	public let distinguishedName: String
-	public let parsedDistinguishedName: LDAPDistinguishedName?
+	public let distinguishedName: LDAPDistinguishedName
 	public var attributes: [String: [Data]]
 	
-	public var hasValidDistinguishedName: Bool {
-		return parsedDistinguishedName != nil
+	public init(distinguishedNameString dn: String, attributes attrs: [String: [Data]]) throws {
+		distinguishedName = try LDAPDistinguishedName(string: dn)
+		attributes = attrs
 	}
 	
-	public init(distinguishedName dn: String, attributes attrs: [String: [Data]]) {
-		parsedDistinguishedName = try? LDAPDistinguishedName(string: dn)
+	public init(distinguishedName dn: LDAPDistinguishedName, attributes attrs: [String: [Data]]) {
 		distinguishedName = dn
 		attributes = attrs
 	}

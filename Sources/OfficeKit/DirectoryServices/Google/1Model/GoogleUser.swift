@@ -82,4 +82,28 @@ public struct GoogleUser : Hashable, Codable {
 		case suspended, hashFunction, password, changePasswordAtNextLogin
 	}
 	
+	let objectCreationDate = Date()
+	
+}
+
+extension GoogleUser : DirectoryUser {
+	
+	public typealias IdType = String
+	
+	public var emails: RemoteProperty<[Email]> {
+		return .fetched([primaryEmail] + (aliases ?? []))
+	}
+	
+	public var firstName: RemoteProperty<String?> {
+		return .fetched(name.givenName)
+	}
+	
+	public var lastName: RemoteProperty<String?> {
+		return .fetched(name.familyName)
+	}
+	
+	public var nickname: RemoteProperty<String?> {
+		return .unsupported
+	}
+	
 }

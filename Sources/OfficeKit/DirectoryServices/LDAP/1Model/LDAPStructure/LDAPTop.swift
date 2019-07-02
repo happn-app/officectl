@@ -14,9 +14,13 @@ public class LDAPTop {
 	
 	public static let propNameObjectClass = "objectClass"
 	
-	public var dn: String
+	public var dn: LDAPDistinguishedName
 	
-	public init(dn dname: String) {
+	public init(dnString: String) throws {
+		dn = try LDAPDistinguishedName(string: dnString)
+	}
+	
+	public init(dn dname: LDAPDistinguishedName) {
 		dn = dname
 	}
 	
