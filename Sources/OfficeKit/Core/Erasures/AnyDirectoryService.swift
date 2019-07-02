@@ -13,6 +13,8 @@ import Async
 
 private protocol DirectoryServiceBox {
 	
+	var config: AnyOfficeKitServiceConfig {get}
+	
 	func logicalUser(from email: Email) throws -> AnyDirectoryUser
 	func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, eventLoop: EventLoop) throws -> AnyDirectoryUser
 	
@@ -38,6 +40,10 @@ private protocol DirectoryServiceBox {
 private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceBox {
 	
 	let originalDirectory: Base
+	
+	var config: AnyOfficeKitServiceConfig {
+		return originalDirectory.config.erased()
+	}
 	
 	func logicalUser(from email: Email) throws -> AnyDirectoryUser {
 		return try AnyDirectoryUser(originalDirectory.logicalUser(from: email))
@@ -150,7 +156,8 @@ public struct AnyDirectoryService : DirectoryService {
 		return "__OfficeKitInternal_OfficeKitServiceConfig_Erasure__"
 	}
 	
-	public typealias UserId = AnyDirectoryUser
+	public typealias ConfigType = AnyOfficeKitServiceConfig
+	public typealias UserType = AnyDirectoryUser
 	
 	public let asyncConfig: AsyncConfig
 	
@@ -161,6 +168,10 @@ public struct AnyDirectoryService : DirectoryService {
 	
 	public func unwrapped<DirectoryType : DirectoryService>() -> DirectoryType? {
 		return (box as? ConcreteDirectoryBox<DirectoryType>)?.originalDirectory ?? (box as? ConcreteDirectoryBox<AnyDirectoryService>)?.originalDirectory.unwrapped()
+	}
+	
+	public var config: AnyOfficeKitServiceConfig {
+		return box.config
 	}
 	
 	public func logicalUser(from email: Email) throws -> AnyDirectoryUser {

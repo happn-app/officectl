@@ -27,19 +27,20 @@ public final class OpenDirectoryService : DirectoryService {
 		
 	}
 	
+	public typealias ConfigType = OpenDirectoryServiceConfig
 	public typealias UserIdType = ODRecord
 	public typealias AuthenticationChallenge = String
 	
-	public let serviceConfig: OpenDirectoryServiceConfig
+	public let config: OpenDirectoryServiceConfig
 	
-	public init(config: OpenDirectoryServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
-		serviceConfig = config
+	public init(config c: OpenDirectoryServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+		config = c
 		
 		asyncConfig = ac
 		semiSingletonStore = sms
 		
-		openDirectoryConnector = try sms.semiSingleton(forKey: config.connectorSettings)
-		openDirectoryRecordAuthenticator = try sms.semiSingleton(forKey: config.authenticatorSettings)
+		openDirectoryConnector = try sms.semiSingleton(forKey: c.connectorSettings)
+		openDirectoryRecordAuthenticator = try sms.semiSingleton(forKey: c.authenticatorSettings)
 	}
 	
 	public func logicalUser(from email: Email) throws -> ODRecord {

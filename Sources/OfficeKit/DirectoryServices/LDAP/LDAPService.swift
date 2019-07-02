@@ -31,14 +31,15 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		
 	}
 	
+	public typealias ConfigType = LDAPServiceConfig
 	public typealias UserType = LDAPInetOrgPersonWithObject
 	public typealias AuthenticationChallenge = String
 	
-	public let ldapConfig: LDAPServiceConfig
+	public let config: LDAPServiceConfig
 	public let domainAliases: [String: String]
 	
-	public init(ldapConfig config: LDAPServiceConfig, domainAliases aliases: [String: String], semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
-		ldapConfig = config
+	public init(config c: LDAPServiceConfig, domainAliases aliases: [String: String], semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+		config = c
 		domainAliases = aliases
 		
 		asyncConfig = ac
@@ -92,7 +93,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		.thenThrowing{ _ in
 			guard !checkedPassword.isEmpty else {throw Error.passwordIsEmpty}
 			
-			var ldapConnectorConfig = self.ldapConfig.connectorSettings
+			var ldapConnectorConfig = self.config.connectorSettings
 			ldapConnectorConfig.authMode = .userPass(username: dn.stringValue, password: checkedPassword)
 			return try LDAPConnector(key: ldapConnectorConfig)
 		}
@@ -108,7 +109,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	}
 	
 	public func isUserAdmin(_ user: LDAPDistinguishedName) -> Future<Bool> {
-		let adminGroupsDN = ldapConfig.adminGroupsDN
+		let adminGroupsDN = config.adminGroupsDN
 		guard adminGroupsDN.count > 0 else {return asyncConfig.eventLoop.future(false)}
 		
 		let searchQuery = LDAPSearchQuery.or(adminGroupsDN.map{

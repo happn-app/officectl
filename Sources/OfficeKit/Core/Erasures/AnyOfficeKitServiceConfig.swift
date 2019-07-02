@@ -96,3 +96,16 @@ public struct AnyOfficeKitServiceConfig : OfficeKitServiceConfig {
 	private let box: OfficeKitServiceConfigBox
 	
 }
+
+
+public extension OfficeKitServiceConfig {
+	
+	func erased() -> AnyOfficeKitServiceConfig {
+		if let erased = self as? AnyOfficeKitServiceConfig {
+			return erased
+		}
+		
+		return AnyOfficeKitServiceConfig(self)
+	}
+	
+}

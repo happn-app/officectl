@@ -28,12 +28,13 @@ public final class GoogleService : DirectoryService {
 		
 	}
 	
+	public typealias ConfigType = GoogleServiceConfig
 	public typealias UserType = GoogleUser
 	
-	public let serviceConfig: GoogleServiceConfig
+	public let config: GoogleServiceConfig
 	
-	public init(config: GoogleServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
-		serviceConfig = config
+	public init(config c: GoogleServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+		config = c
 		
 		asyncConfig = ac
 		semiSingletonStore = sms

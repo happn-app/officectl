@@ -76,7 +76,7 @@ public class OfficeKitServiceProvider {
 		switch config.providerId {
 		case LDAPService.providerId:
 			return try AnyDirectoryService(
-				LDAPService(ldapConfig: config.unwrapped()!, domainAliases: officeKitConfig.domainAliases, semiSingletonStore: sms, asyncConfig: ac),
+				LDAPService(config: config.unwrapped()!, domainAliases: officeKitConfig.domainAliases, semiSingletonStore: sms, asyncConfig: ac),
 				asyncConfig: ac
 			)
 			
@@ -122,7 +122,7 @@ public class OfficeKitServiceProvider {
 		switch config.providerId {
 		case LDAPService.providerId:
 			return try AnyDirectoryAuthenticatorService(
-				LDAPService(ldapConfig: config.unwrapped()!, domainAliases: officeKitConfig.domainAliases, semiSingletonStore: sms, asyncConfig: ac),
+				LDAPService(config: config.unwrapped()!, domainAliases: officeKitConfig.domainAliases, semiSingletonStore: sms, asyncConfig: ac),
 				asyncConfig: ac
 			)
 			

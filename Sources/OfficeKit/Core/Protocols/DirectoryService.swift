@@ -17,7 +17,10 @@ public protocol DirectoryService {
 	in OfficeKit. */
 	static var providerId: String {get}
 	
+	associatedtype ConfigType : OfficeKitServiceConfig
 	associatedtype UserType : DirectoryUser
+	
+	var config: ConfigType {get}
 	
 	/** If possible, convert the given email to a user with as much information
 	as possible in your directory.

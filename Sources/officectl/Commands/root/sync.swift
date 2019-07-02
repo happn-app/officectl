@@ -14,97 +14,35 @@ import OfficeKit
 
 
 
-struct Connectors {
-	
-	var ldapConnector: LDAPConnector!
-	var googleConnector: GoogleJWTConnector!
-	
-	init() {
-	}
-	
-}
-
 func sync(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
 	#warning("TODO: Manage multiple domains")
-	#if false
 	let asyncConfig = try context.container.make(AsyncConfig.self)
-	let officeKitConfig = try context.container.make(OfficeKitConfig.self)
+	let officeKitServiceProvider = try context.container.make(OfficeKitServiceProvider.self)
 	
-	var connectors = Connectors()
-	var sourceId2FutureUsers = [SourceId: Future<(SourceId, [User])>]()
-	
-	
-	/* *** Parse command line options *** */
-	let googleDomain: String!
-	let fromStr = f.getString(name: "from")!
-	let ldapBasePeopleDN: LDAPDistinguishedName!
-	guard let fromSourceId = SourceId(rawValue: fromStr) else {
-		throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid \"from\" value for syncing directories: \(fromStr)"])
-	}
-	let toSourceIds = try f.getString(name: "to")!.split(separator: ",").map{ substr -> SourceId in
-		let strSourceId = String(substr)
-		guard let s = SourceId(rawValue: strSourceId) else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid \"to\" value for syncing directories: \(strSourceId)"])
-		}
-		return s
-	}
-	if fromSourceId == .ldap || toSourceIds.contains(.ldap) {
-		let baseDNs = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDNPerDomain?.values, "People DN")
-		guard baseDNs.count == 1 else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Only one LDAP domain supported for now"])
-		}
-		ldapBasePeopleDN = baseDNs.first!
-	} else {
-		ldapBasePeopleDN = nil
-	}
-	if fromSourceId == .google || toSourceIds.contains(.google) {
-		let domains = try nil2throw(officeKitConfig.googleConfigOrThrow().primaryDomains, "Google Domains")
-		guard domains.count == 1 else {
-			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Only one Google domain supported for now"])
-		}
-		googleDomain = domains.first!
-	} else {
-		googleDomain = nil
-	}
+	let fromDirectory = try officeKitServiceProvider.getDirectoryService(id: f.getString(name: "from")!, container: context.container)
+	let toDirectories = try Set(f.getString(name: "to")!.split(separator: ",")).map{ try officeKitServiceProvider.getDirectoryService(id: String($0), container: context.container) }
 	
 	/* *** Connect sources connectors and retrieve all (future) users from required sources *** */
-	for s in [fromSourceId] + toSourceIds {
-		guard sourceId2FutureUsers[s] == nil else {continue}
-		switch s {
-		case .google:
-			let googleConfig = try officeKitConfig.googleConfigOrThrow()
-			_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
-			connectors.googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-			sourceId2FutureUsers[s] =
-				connectors.googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
-				.then{ usersFromGoogle(connector: connectors.googleConnector, searchedDomain: googleDomain, baseDN: ldapBasePeopleDN, asyncConfig: asyncConfig) }
-			
-		case .ldap:
-			connectors.ldapConnector = try LDAPConnector(key: officeKitConfig.ldapConfigOrThrow().connectorSettings)
-			sourceId2FutureUsers[s] =
-				connectors.ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
-				.then{ usersFromLDAP(connector: connectors.ldapConnector, baseDN: ldapBasePeopleDN, asyncConfig: asyncConfig) }
-			
-		case .github:
-			throw NotImplementedError()
-		}
+	var serviceId2FutureUsers = [String: Future<(String, [AnyDirectoryUser])>]()
+	for s in [fromDirectory] + toDirectories {
+		guard serviceId2FutureUsers[s.config.serviceId] == nil else {continue}
+		serviceId2FutureUsers[s.config.serviceId] = s.listAllUsers().map{ (s.config.serviceId, $0) }
 	}
 	
 	/* *** Launch sync *** */
-	let f = Future.reduce(into: [SourceId: [User]](), Array(sourceId2FutureUsers.values), eventLoop: asyncConfig.eventLoop, { currentValue, newValue in
+	let f = Future.reduce(into: [String: [AnyDirectoryUser]](), Array(serviceId2FutureUsers.values), eventLoop: asyncConfig.eventLoop, { currentValue, newValue in
 		let (sourceId, users) = newValue
 		currentValue[sourceId] = users
 	})
 	.then{ usersBySourceId -> Future<Void> in
-		switch fromSourceId {
-		case .google: return syncFromGoogle(to: toSourceIds, users: usersBySourceId, baseDN: ldapBasePeopleDN, connectors: connectors, asyncConfig: asyncConfig, console: context.console)
-		case .ldap:   return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
-		case .github: return asyncConfig.eventLoop.newFailedFuture(error: BasicValidationError("Cannot sync from GitHub (GitHub’s directory does not have enough information)"))
-		}
+		return asyncConfig.eventLoop.future()
+//		switch fromDirectory.config.serviceId {
+//		case .google: return syncFromGoogle(to: toSourceIds, users: usersBySourceId, baseDN: ldapBasePeopleDN, connectors: connectors, asyncConfig: asyncConfig, console: context.console)
+//		case .ldap:   return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+//		case .github: return asyncConfig.eventLoop.newFailedFuture(error: BasicValidationError("Cannot sync from GitHub (GitHub’s directory does not have enough information)"))
+//		}
 	}
 	return f
-	#endif
-	throw NotImplementedError()
 }
 
 #if false
@@ -174,20 +112,6 @@ private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDisting
 			console.print("   " + dn + ": " + password)
 		}
 		return ()
-	}
-}
-
-private func usersFromGoogle(connector: GoogleJWTConnector, searchedDomain: String, baseDN: LDAPDistinguishedName, asyncConfig: AsyncConfig) -> Future<(SourceId, [User])> {
-	let searchOp = SearchGoogleUsersOperation(searchedDomain: searchedDomain, query: "isSuspended=false", googleConnector: connector)
-	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: {
-		(.google, try $0.result.get().map{ User(googleUser: $0, baseDN: baseDN) })
-	})
-}
-
-private func usersFromLDAP(connector: LDAPConnector, baseDN: LDAPDistinguishedName, asyncConfig: AsyncConfig) -> Future<(SourceId, [User])> {
-	let searchOp = SearchLDAPOperation(ldapConnector: connector, request: LDAPSearchRequest(scope: .children, base: baseDN, searchQuery: nil, attributesToFetch: nil))
-	return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue).map{
-		(.ldap, $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) }.compactMap{ User(ldapInetOrgPersonWithObject: $0) })
 	}
 }
 #endif

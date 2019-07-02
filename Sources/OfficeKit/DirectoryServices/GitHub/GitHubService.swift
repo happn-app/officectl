@@ -16,12 +16,13 @@ public final class GitHubService : DirectoryService {
 	
 	public static let providerId = "internal_github"
 	
+	public typealias ConfigType = GitHubServiceConfig
 	public typealias UserType = GitHubUser
 	
-	public let serviceConfig: GitHubServiceConfig
+	public let config: GitHubServiceConfig
 	
-	public init(config: GitHubServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
-		serviceConfig = config
+	public init(config c: GitHubServiceConfig, semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+		config = c
 		
 		asyncConfig = ac
 		semiSingletonStore = sms
