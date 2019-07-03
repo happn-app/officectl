@@ -88,6 +88,7 @@ public struct GoogleUser : Hashable, Codable {
 
 extension GoogleUser : DirectoryUser {
 	
+	#warning("TODO: Type should probably be Email")
 	public typealias IdType = String
 	
 	public var emails: RemoteProperty<[Email]> {

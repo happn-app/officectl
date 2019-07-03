@@ -48,11 +48,30 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		ldapConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
-	public func logicalUser(from email: Email) throws -> LDAPInetOrgPersonWithObject {
+	public func logicalUser(from email: Email) throws -> LDAPInetOrgPersonWithObject? {
 		throw NotImplementedError()
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> LDAPInetOrgPersonWithObject {
+	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> LDAPInetOrgPersonWithObject? {
+		if let user = user as? GoogleUser {
+			guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
+				throw InvalidArgumentError(message: "Cannot get logical user from \(user) when I don’t have people base DNs.")
+			}
+			guard let baseDN = peopleBaseDNPerDomain[user.primaryEmail.domain] else {
+				/* If the domain of the Google user is not supported in the LDAP
+				 * config, we return a nil logical user: the user cannot exist in
+				 * the LDAP in this state, but it’s not an actual error.
+				 * TODO: Make sure we actually do want that and not raise a “well-
+				 *       known” error instead, that clients could catch… */
+				return nil
+			}
+			let inetOrgPerson = LDAPInetOrgPerson(
+				dn: LDAPDistinguishedName(uid: user.primaryEmail.username, baseDN: baseDN),
+				sn: [user.name.familyName], cn: [user.name.givenName + " " + user.name.familyName]
+			)
+			inetOrgPerson.givenName = [user.name.givenName]
+			return LDAPInetOrgPersonWithObject(inetOrgPerson: inetOrgPerson)
+		}
 		throw NotImplementedError()
 	}
 	

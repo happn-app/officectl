@@ -15,8 +15,8 @@ private protocol DirectoryServiceBox {
 	
 	var config: AnyOfficeKitServiceConfig {get}
 	
-	func logicalUser(from email: Email) throws -> AnyDirectoryUser
-	func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, eventLoop: EventLoop) throws -> AnyDirectoryUser
+	func logicalUser(from email: Email) throws -> AnyDirectoryUser?
+	func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, eventLoop: EventLoop) throws -> AnyDirectoryUser?
 	
 	func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<AnyDirectoryUser?>
 	func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, eventLoop: EventLoop) -> Future<AnyDirectoryUser?>
@@ -45,13 +45,13 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		return originalDirectory.config.erased()
 	}
 	
-	func logicalUser(from email: Email) throws -> AnyDirectoryUser {
-		return try AnyDirectoryUser(originalDirectory.logicalUser(from: email))
+	func logicalUser(from email: Email) throws -> AnyDirectoryUser? {
+		return try originalDirectory.logicalUser(from: email)?.erased()
 	}
 	
-	func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, eventLoop: EventLoop) throws -> AnyDirectoryUser {
+	func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, eventLoop: EventLoop) throws -> AnyDirectoryUser? {
 		guard let anyService = service as? AnyDirectoryService else {
-			return try originalDirectory.logicalUser(from: user, in: service).erased()
+			return try originalDirectory.logicalUser(from: user, in: service)?.erased()
 		}
 		
 		let anyUser = user as! AnyDirectoryUser
@@ -174,11 +174,11 @@ public struct AnyDirectoryService : DirectoryService {
 		return box.config
 	}
 	
-	public func logicalUser(from email: Email) throws -> AnyDirectoryUser {
+	public func logicalUser(from email: Email) throws -> AnyDirectoryUser? {
 		return try box.logicalUser(from: email)
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> AnyDirectoryUser {
+	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> AnyDirectoryUser? {
 		return try box.logicalUser(from: user, in: service, eventLoop: asyncConfig.eventLoop)
 	}
 	

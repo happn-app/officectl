@@ -42,11 +42,11 @@ public final class GoogleService : DirectoryService {
 		googleConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
-	public func logicalUser(from email: Email) throws -> GoogleUser {
+	public func logicalUser(from email: Email) throws -> GoogleUser? {
 		throw NotImplementedError()
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> GoogleUser {
+	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> GoogleUser? {
 		throw NotImplementedError()
 	}
 	

@@ -14,59 +14,78 @@ import OfficeKit
 
 
 
+private struct ServiceSyncPlan {
+	
+	var service: AnyDirectoryService
+	
+	var usersToCreate: Set<AnyDirectoryUser>
+	var usersToDelete: Set<AnyDirectoryUser>
+	
+}
+
+
 func sync(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	#warning("TODO: Manage multiple domains")
 	let asyncConfig = try context.container.make(AsyncConfig.self)
 	let officeKitServiceProvider = try context.container.make(OfficeKitServiceProvider.self)
 	
-	let fromDirectory = try officeKitServiceProvider.getDirectoryService(id: f.getString(name: "from")!, container: context.container)
-	let toDirectories = try Set(f.getString(name: "to")!.split(separator: ",")).map{ try officeKitServiceProvider.getDirectoryService(id: String($0), container: context.container) }
-	
-	/* *** Connect sources connectors and retrieve all (future) users from required sources *** */
-	var serviceId2FutureUsers = [String: Future<(String, [AnyDirectoryUser])>]()
-	for s in [fromDirectory] + toDirectories {
-		guard serviceId2FutureUsers[s.config.serviceId] == nil else {continue}
-		serviceId2FutureUsers[s.config.serviceId] = s.listAllUsers().map{ (s.config.serviceId, $0) }
-	}
-	
-	/* *** Launch sync *** */
-	let f = Future.reduce(into: [String: [AnyDirectoryUser]](), Array(serviceId2FutureUsers.values), eventLoop: asyncConfig.eventLoop, { currentValue, newValue in
-		let (sourceId, users) = newValue
-		currentValue[sourceId] = users
-	})
-	.then{ usersBySourceId -> Future<Void> in
+	let fromId = f.getString(name: "from")!
+	let toIds = Set(f.getString(name: "to")!.split(separator: ",").map(String.init)).subtracting([fromId])
+	guard !toIds.isEmpty else {
+		/* If there is nothing in toIds, we are done! */
 		return asyncConfig.eventLoop.future()
-//		switch fromDirectory.config.serviceId {
-//		case .google: return syncFromGoogle(to: toSourceIds, users: usersBySourceId, baseDN: ldapBasePeopleDN, connectors: connectors, asyncConfig: asyncConfig, console: context.console)
-//		case .ldap:   return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
-//		case .github: return asyncConfig.eventLoop.newFailedFuture(error: BasicValidationError("Cannot sync from GitHub (GitHub’s directory does not have enough information)"))
-//		}
 	}
-	return f
+	
+	let fromDirectory = try officeKitServiceProvider.getDirectoryService(id: fromId, container: context.container)
+	let toDirectories = try toIds.map{ try officeKitServiceProvider.getDirectoryService(id: String($0), container: context.container) }
+	
+	return fromDirectory.listAllUsers().map{ Set($0) }
+	.then{ sourceUsers -> Future<[ServiceSyncPlan]> in
+		let futures = toDirectories.map{ toDirectory in
+			return toDirectory.listAllUsers().map{ Set($0) }
+			.map{ (currentDestinationUsers: Set<AnyDirectoryUser>) -> ServiceSyncPlan in
+				let expectedDestinationUsers = try Set(sourceUsers.compactMap{ try toDirectory.logicalUser(from: $0, in: fromDirectory) })
+				
+				let usersToCreate = expectedDestinationUsers.subtracting(currentDestinationUsers)
+				let usersToDelete = currentDestinationUsers.subtracting(expectedDestinationUsers)
+				return ServiceSyncPlan(service: toDirectory, usersToCreate: usersToCreate, usersToDelete: usersToDelete)
+			}
+		}
+		return Future.reduce([ServiceSyncPlan](), futures, eventLoop: asyncConfig.eventLoop, { $0 + [$1] })
+	}
+	.map{ (plans: [ServiceSyncPlan]) -> [ServiceSyncPlan] in
+		/* Let’s verify the user is ok with the plan */
+		var textPlan = ConsoleText.newLine + "********* SYNC PLAN *********" + ConsoleText.newLine
+		for plan in plans {
+			textPlan += ConsoleText.newLine + "*** For service \(plan.service.config.serviceName) (id=\(plan.service.config.serviceId))".consoleText() + ConsoleText.newLine
+			
+			var printedSomething = false
+			if !plan.usersToCreate.isEmpty {
+				printedSomething = true
+				textPlan += "- Users creation:" + ConsoleText.newLine
+				plan.usersToCreate.forEach{ textPlan += "   \($0)".consoleText() + ConsoleText.newLine }
+			}
+			if !plan.usersToDelete.isEmpty {
+				printedSomething = true
+				textPlan += "- Users deletion:" + ConsoleText.newLine
+				plan.usersToDelete.forEach{ textPlan += "   \($0)".consoleText() + ConsoleText.newLine }
+			}
+			if !printedSomething {
+				textPlan += "<Nothing to do for this service>" + ConsoleText.newLine
+			}
+		}
+		textPlan += "Do you want to continue?"
+		guard context.console.confirm(textPlan) else {
+			throw UserAbortedError()
+		}
+		return plans
+	}
+	.then{ plans in
+		/* Now let’s do the actual sync! */
+		return asyncConfig.eventLoop.future()
+	}
 }
 
 #if false
-private func syncFromGoogle(to toSourceIds: [SourceId], users: [SourceId: [User]], baseDN: LDAPDistinguishedName, connectors: Connectors, asyncConfig: AsyncConfig, console: Console) -> Future<Void> {
-	var f = asyncConfig.eventLoop.newSucceededFuture(result: ())
-	
-	/* To Google */
-	if toSourceIds.contains(.google) {
-		f = f.thenThrowing{ throw BasicValidationError("Cannot sync from Google to Google…") }
-	}
-	
-	/* To GitHub */
-	if toSourceIds.contains(.github) {
-		f = f.thenThrowing{ throw NotImplementedError() }
-	}
-	
-	/* To LDAP */
-	if toSourceIds.contains(.ldap) {
-		f = f.then{ syncFromGoogleToLDAP(users: users, baseDN: baseDN, connectors: connectors, asyncConfig: asyncConfig, console: console) }
-	}
-	
-	return f
-}
-
 /** Compute the users to create on LDAP, asks for confirmation if some users
 should be created, create them if users says ok, print the created users and
 their passwords after creation.

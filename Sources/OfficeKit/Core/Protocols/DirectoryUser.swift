@@ -9,7 +9,7 @@ import Foundation
 
 
 
-public protocol DirectoryUser {
+public protocol DirectoryUser : Hashable {
 	
 	associatedtype IdType : Hashable/* & FallibleStringInitable */
 	
@@ -20,6 +20,19 @@ public protocol DirectoryUser {
 	var firstName: RemoteProperty<String?> {get}
 	var lastName: RemoteProperty<String?> {get}
 	var nickname: RemoteProperty<String?> {get}
+	
+}
+
+
+extension DirectoryUser {
+	
+	public static func ==(_ user1: Self, _ user2: Self) -> Bool {
+		return user1.id == user2.id
+	}
+	
+	public func hash(into hasher: inout Hasher) {
+		hasher.combine(id)
+	}
 	
 }
 

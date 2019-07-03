@@ -43,11 +43,11 @@ public final class OpenDirectoryService : DirectoryService {
 		openDirectoryRecordAuthenticator = try sms.semiSingleton(forKey: c.authenticatorSettings)
 	}
 	
-	public func logicalUser(from email: Email) throws -> ODRecord {
+	public func logicalUser(from email: Email) throws -> ODRecord? {
 		throw NotImplementedError()
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> ODRecord {
+	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> ODRecord? {
 		throw NotImplementedError()
 	}
 	
