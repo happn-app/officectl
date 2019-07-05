@@ -11,7 +11,7 @@ import Async
 
 
 
-public protocol DirectoryService {
+public protocol DirectoryService : class {
 	
 	/** The id of the linked provider, e.g. "internal_openldap". Those are static
 	in OfficeKit. */
@@ -21,6 +21,10 @@ public protocol DirectoryService {
 	associatedtype UserType : DirectoryUser
 	
 	var config: ConfigType {get}
+	
+	/** Empty ids are **not supported**. There are no other restrictions. */
+	func string(from userId: UserType.IdType) -> String
+	func userId(from string: String) throws -> UserType.IdType
 	
 	/** If possible, convert the given email to a user with as much information
 	as possible in your directory.
@@ -37,6 +41,12 @@ public protocol DirectoryService {
 	_should_ be created in the directory if it were to be created in it. */
 	func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> UserType?
 	
+	/** Fetch and return the _only_ user matching the given id.
+	
+	If _more than one_ user matches the given id, the function should return a
+	**failed** future. If _no_ users match the given id, the method should
+	return a succeeded future with a `nil` user. */
+	func existingUser(from id: UserType.IdType, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<UserType?>
 	/** Fetch and return the _only_ user matching the given email.
 	
 	If _more than one_ user matches the given email, the function should return a

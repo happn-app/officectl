@@ -11,7 +11,7 @@ import Foundation
 
 public protocol DirectoryUser {
 	
-	associatedtype IdType : Hashable/* & FallibleStringInitable */
+	associatedtype IdType : Hashable
 	
 	var id: IdType {get}
 	

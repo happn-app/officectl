@@ -15,9 +15,13 @@ private protocol DirectoryServiceBox {
 	
 	var config: AnyOfficeKitServiceConfig {get}
 	
+	func string(from userId: AnyHashable) -> String
+	func userId(from string: String) throws -> AnyHashable
+	
 	func logicalUser(from email: Email) throws -> AnyDirectoryUser?
 	func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, eventLoop: EventLoop) throws -> AnyDirectoryUser?
 	
+	func existingUser(from id: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, eventLoop: EventLoop) -> Future<AnyDirectoryUser?>
 	func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<AnyDirectoryUser?>
 	func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, eventLoop: EventLoop) -> Future<AnyDirectoryUser?>
 	
@@ -43,6 +47,16 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	
 	var config: AnyOfficeKitServiceConfig {
 		return originalDirectory.config.erased()
+	}
+	
+	func string(from userId: AnyHashable) -> String {
+		/* TODO? I’m not a big fan of this forced unwrapping… */
+		let typedId = userId as! Base.UserType.IdType
+		return originalDirectory.string(from: typedId)
+	}
+	
+	func userId(from string: String) throws -> AnyHashable {
+		return try AnyHashable(originalDirectory.userId(from: string))
 	}
 	
 	func logicalUser(from email: Email) throws -> AnyDirectoryUser? {
@@ -71,28 +85,35 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		throw InvalidArgumentError(message: "Unknown AnyDirectory for getting existing user in type erased directory service.")
 	}
 	
+	func existingUser(from id: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, eventLoop: EventLoop) -> EventLoopFuture<AnyDirectoryUser?> {
+		guard let typedId = id as? Base.UserType.IdType else {
+			return eventLoop.newFailedFuture(error: InvalidArgumentError(message: "Got invalid user id (\(id)) for fetching user with directory service of type \(Base.self)"))
+		}
+		return originalDirectory.existingUser(from: typedId, propertiesToFetch: propertiesToFetch).map{ $0?.erased() }
+	}
+	
 	func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<AnyDirectoryUser?> {
-		return originalDirectory.existingUser(from: email, propertiesToFetch: propertiesToFetch).map{ $0.flatMap{ AnyDirectoryUser($0) } }
+		return originalDirectory.existingUser(from: email, propertiesToFetch: propertiesToFetch).map{ $0?.erased() }
 	}
 	
 	func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, eventLoop: EventLoop) -> Future<AnyDirectoryUser?> {
 		do {
 			guard let anyService = service as? AnyDirectoryService else {
-				return originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch).map{ $0.flatMap{ AnyDirectoryUser($0) } }
+				return originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch).map{ $0?.erased() }
 			}
 			
 			let anyUser = user as! AnyDirectoryUser
 			if let (service, user): (GitHubService, GitHubService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-				return originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch).map{ $0.flatMap{ AnyDirectoryUser($0) } }
+				return originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch).map{ $0?.erased() }
 			}
 			if let (service, user): (GoogleService, GoogleService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-				return originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch).map{ $0.flatMap{ AnyDirectoryUser($0) } }
+				return originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch).map{ $0?.erased() }
 			}
 			if let (service, user): (LDAPService, LDAPService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-				return originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch).map{ $0.flatMap{ AnyDirectoryUser($0) } }
+				return originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch).map{ $0?.erased() }
 			}
 			if let (service, user): (OpenDirectoryService, OpenDirectoryService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-				return originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch).map{ $0.flatMap{ AnyDirectoryUser($0) } }
+				return originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch).map{ $0?.erased() }
 			}
 			
 			throw InvalidArgumentError(message: "Unknown AnyDirectory for getting existing user in type erased directory service.")
@@ -102,29 +123,29 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	}
 	
 	func listAllUsers() -> Future<[AnyDirectoryUser]> {
-		return originalDirectory.listAllUsers().map{ $0.map{ AnyDirectoryUser($0) } }
+		return originalDirectory.listAllUsers().map{ $0.map{ $0.erased() } }
 	}
 	
 	var supportsUserCreation: Bool {return originalDirectory.supportsUserCreation}
 	func createUser(_ user: AnyDirectoryUser, eventLoop: EventLoop) -> Future<AnyDirectoryUser> {
 		guard let u: Base.UserType = user.unwrapped() else {
-			return eventLoop.newFailedFuture(error: InvalidArgumentError(message: "Got invalid user to create of type (\(type(of: user))) for directory service of type \(Base.self)"))
+			return eventLoop.newFailedFuture(error: InvalidArgumentError(message: "Got invalid user to create (\(user)) for directory service of type \(Base.self)"))
 		}
-		return originalDirectory.createUser(u).map{ AnyDirectoryUser($0) }
+		return originalDirectory.createUser(u).map{ $0.erased() }
 	}
 	
 	var supportsUserUpdate: Bool {return originalDirectory.supportsUserUpdate}
 	func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, eventLoop: EventLoop) -> Future<AnyDirectoryUser> {
 		guard let u: Base.UserType = user.unwrapped() else {
-			return eventLoop.newFailedFuture(error: InvalidArgumentError(message: "Got invalid user to update of type (\(type(of: user))) for directory service of type \(Base.self)"))
+			return eventLoop.newFailedFuture(error: InvalidArgumentError(message: "Got invalid user to update (\(user)) for directory service of type \(Base.self)"))
 		}
-		return originalDirectory.updateUser(u, propertiesToUpdate: propertiesToUpdate).map{ AnyDirectoryUser($0) }
+		return originalDirectory.updateUser(u, propertiesToUpdate: propertiesToUpdate).map{ $0.erased() }
 	}
 	
 	var supportsUserDeletion: Bool {return originalDirectory.supportsUserDeletion}
 	func deleteUser(_ user: AnyDirectoryUser, eventLoop: EventLoop) -> Future<Void> {
 		guard let u: Base.UserType = user.unwrapped() else {
-			return eventLoop.newFailedFuture(error: InvalidArgumentError(message: "Got invalid user to delete of type (\(type(of: user))) for directory service of type \(Base.self)"))
+			return eventLoop.newFailedFuture(error: InvalidArgumentError(message: "Got invalid user to delete (\(user)) for directory service of type \(Base.self)"))
 		}
 		return originalDirectory.deleteUser(u)
 	}
@@ -132,7 +153,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	var supportsPasswordChange: Bool {return originalDirectory.supportsPasswordChange}
 	func changePasswordAction(for user: AnyDirectoryUser) throws -> ResetPasswordAction {
 		guard let u: Base.UserType = user.unwrapped() else {
-			throw InvalidArgumentError(message: "Got invalid user type (\(type(of: user))) to retrieve password action for directory service of type \(Base.self)")
+			throw InvalidArgumentError(message: "Got invalid user (\(user)) to retrieve password action for directory service of type \(Base.self)")
 		}
 		return try originalDirectory.changePasswordAction(for: u)
 	}
@@ -140,7 +161,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	private func serviceUserPair<DestinationServiceType : DirectoryService>(from service: AnyDirectoryService, user: AnyDirectoryService.UserType) throws -> (DestinationServiceType, DestinationServiceType.UserType)? {
 		if let service: DestinationServiceType = service.unwrapped() {
 			guard let user: DestinationServiceType.UserType = user.unwrapped() else {
-				throw InvalidArgumentError(message: "Got a GitHub service to get original user from other user, but other user is not a GitHub user.")
+				throw InvalidArgumentError(message: "Got an incompatible servicer/user pair.")
 			}
 			return (service, user)
 		}
@@ -149,7 +170,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	
 }
 
-public struct AnyDirectoryService : DirectoryService {
+public class AnyDirectoryService : DirectoryService {
 	
 	public static var providerId: String {
 		assertionFailure("Please do not use providerId on AnyDirectoryService. This is an erasure for a concrete DirectoryService type.")
@@ -174,12 +195,24 @@ public struct AnyDirectoryService : DirectoryService {
 		return box.config
 	}
 	
+	public func string(from userId: AnyHashable) -> String {
+		return box.string(from: userId)
+	}
+	
+	public func userId(from string: String) throws -> AnyHashable {
+		return try box.userId(from: string)
+	}
+	
 	public func logicalUser(from email: Email) throws -> AnyDirectoryUser? {
 		return try box.logicalUser(from: email)
 	}
 	
 	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> AnyDirectoryUser? {
 		return try box.logicalUser(from: user, in: service, eventLoop: asyncConfig.eventLoop)
+	}
+	
+	public func existingUser(from id: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>) -> EventLoopFuture<AnyDirectoryUser?> {
+		return box.existingUser(from: id, propertiesToFetch: propertiesToFetch, eventLoop: asyncConfig.eventLoop)
 	}
 	
 	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<AnyDirectoryUser?> {

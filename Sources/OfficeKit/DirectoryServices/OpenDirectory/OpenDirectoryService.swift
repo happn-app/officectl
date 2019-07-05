@@ -43,6 +43,14 @@ public final class OpenDirectoryService : DirectoryService {
 		openDirectoryRecordAuthenticator = try sms.semiSingleton(forKey: c.authenticatorSettings)
 	}
 	
+	public func string(from userId: LDAPDistinguishedName) -> String {
+		return userId.stringValue
+	}
+	
+	public func userId(from string: String) throws -> LDAPDistinguishedName {
+		return try LDAPDistinguishedName(string: string)
+	}
+	
 	public func logicalUser(from email: Email) throws -> ODRecordOKWrapper? {
 		throw NotImplementedError()
 	}
@@ -66,6 +74,10 @@ public final class OpenDirectoryService : DirectoryService {
 			)
 		}
 		throw NotImplementedError()
+	}
+	
+	public func existingUser(from id: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>) -> EventLoopFuture<ODRecordOKWrapper?> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
 	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<ODRecordOKWrapper?> {

@@ -9,27 +9,24 @@ import Foundation
 
 
 
-public struct TaggedId : ExpressibleByStringLiteral {
+public struct TaggedId {
 	
-	public typealias StringLiteralType = String
-	
-	let tag: String
-	let id: String
+	public let tag: String
+	public let id: String
 	
 	public init(tag t: String, id i: String) {
 		tag = t
 		id = i
 	}
 	
-	public init(stringLiteral string: String) {
+	public init(string: String) throws {
 		let split = string.split(separator: ":", omittingEmptySubsequences: false)
 		
 		tag = String(split[0]) /* We do not omit empty subsequences, thus we know there will be at min 1 elmt in the resulting array */
 		id = split.dropFirst().joined(separator: ":")
 		
-		if id.isEmpty {
-			#warning("print is bad…")
-			print("*** WARNING: Inited a tagged id with \"\(string)\" which resulted in an empty id. This is probably not what you want.")
+		guard !id.isEmpty else {
+			throw InvalidArgumentError(message: "Got a TaggedId whose id part is empty. This is invalid.")
 		}
 	}
 	
@@ -57,7 +54,7 @@ extension TaggedId : Codable {
 	
 	public init(from decoder: Decoder) throws {
 		let container = try decoder.singleValueContainer()
-		try self.init(stringLiteral: container.decode(String.self))
+		try self.init(string: container.decode(String.self))
 	}
 	
 	public func encode(to encoder: Encoder) throws {

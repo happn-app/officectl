@@ -30,12 +30,24 @@ public final class GitHubService : DirectoryService {
 		gitHubConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
+	public func string(from userId: String) -> String {
+		return userId
+	}
+	
+	public func userId(from string: String) throws -> String {
+		return string
+	}
+	
 	public func logicalUser(from email: Email) throws -> GitHubUser? {
 		throw NotSupportedError(message: "There are no logical rules to convert an email to a GitHub user.")
 	}
 	
 	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> GitHubUser? {
 		throw NotSupportedError(message: "There are no logical rules to convert a user from a \(OtherServiceType.self) to a GitHub user.")
+	}
+	
+	public func existingUser(from id: String, propertiesToFetch: Set<DirectoryUserProperty>) -> EventLoopFuture<GitHubUser?> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
 	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<GitHubUser?> {

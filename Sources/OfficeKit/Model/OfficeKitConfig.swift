@@ -30,6 +30,13 @@ public struct OfficeKitConfig {
 		
 		var serviceConfigsBuilding = [AnyOfficeKitServiceConfig]()
 		for (serviceId, serviceInfo) in genericConfigServices {
+			guard !serviceId.contains(":") else {
+				throw ConfigError(domain: domain, key: "services", message: "The id of a service cannot contain a colon.")
+			}
+			guard serviceId != "email" else {
+				throw ConfigError(domain: domain, key: "services", message: #"The id of a service cannot be equal to "email"."#)
+			}
+			
 			let domain = "Service \(serviceId)"
 			let serviceName = try serviceInfo.string(for: "name", domain: domain)
 			let provider = try serviceInfo.string(for: "provider", domain: domain)

@@ -13,8 +13,8 @@ import Async
 
 private protocol DirectoryAuthenticatorServiceBox {
 	
-	func authenticate<UserIdType : Hashable, AuthenticationChallenge>(user: UserIdType, challenge: AuthenticationChallenge) throws -> Future<Bool>
-	func isUserAdmin<UserIdType : Hashable>(_ user: UserIdType) throws -> Future<Bool>
+	func authenticate<UserIdType : Hashable, AuthenticationChallenge>(userId: UserIdType, challenge: AuthenticationChallenge) throws -> Future<Bool>
+	func isUserIdOfAnAdmin<UserIdType : Hashable>(_ userId: UserIdType) throws -> Future<Bool>
 	
 }
 
@@ -22,45 +22,43 @@ private struct ConcreteDirectoryAuthenticatorBox<Base : DirectoryAuthenticatorSe
 	
 	let originalAuthenticator: Base
 	
-	func authenticate<UserIdType : Hashable, AuthenticationChallenge>(user: UserIdType, challenge: AuthenticationChallenge) throws -> Future<Bool> {
-		guard let u = user as? Base.UserIdType, let c = challenge as? Base.AuthenticationChallenge else {
-			throw InvalidArgumentError(message: "Got invalid user type (\(UserIdType.self)) or auth challenge type (\(AuthenticationChallenge.self)) to authenticate with a directory service authenticator of type \(Base.self)")
+	func authenticate<UserIdType : Hashable, AuthenticationChallenge>(userId: UserIdType, challenge: AuthenticationChallenge) throws -> Future<Bool> {
+		guard let uid = userId as? Base.UserType.IdType, let c = challenge as? Base.AuthenticationChallenge else {
+			throw InvalidArgumentError(message: "Got invalid user id type (\(UserIdType.self)) or auth challenge type (\(AuthenticationChallenge.self)) to authenticate with a directory service authenticator of type \(Base.self)")
 		}
-		return originalAuthenticator.authenticate(user: u, challenge: c)
+		return originalAuthenticator.authenticate(userId: uid, challenge: c)
 	}
 	
-	func isUserAdmin<UserIdType : Hashable>(_ user: UserIdType) throws -> Future<Bool> {
-		guard let u = user as? Base.UserIdType else {
-			throw InvalidArgumentError(message: "Got invalid user type (\(UserIdType.self)) to check if user is admin with a directory service authenticator of type \(Base.self)")
+	func isUserIdOfAnAdmin<UserIdType : Hashable>(_ userId: UserIdType) throws -> Future<Bool> {
+		guard let uid = userId as? Base.UserType.IdType else {
+			throw InvalidArgumentError(message: "Got invalid user id type (\(UserIdType.self)) to check if user is admin with a directory service authenticator of type \(Base.self)")
 		}
-		return originalAuthenticator.isUserAdmin(u)
+		return originalAuthenticator.isUserIdOfAnAdmin(uid)
 	}
 	
 }
 
-public struct AnyDirectoryAuthenticatorService : DirectoryAuthenticatorService {
+public class AnyDirectoryAuthenticatorService : AnyDirectoryService, DirectoryAuthenticatorService {
 	
 	public typealias UserIdType = AnyHashable
 	public typealias AuthenticationChallenge = Any
 	
-	public let asyncConfig: AsyncConfig
-	
-	init<T : DirectoryAuthenticatorService>(_ object: T, asyncConfig a: AsyncConfig) {
+	override init<T : DirectoryAuthenticatorService>(_ object: T, asyncConfig a: AsyncConfig) {
 		box = ConcreteDirectoryAuthenticatorBox(originalAuthenticator: object)
-		asyncConfig = a
+		super.init(object, asyncConfig: a)
 	}
 	
-	public func unwrapped<DirectoryType : DirectoryAuthenticatorService>() -> DirectoryType? {
+	public override func unwrapped<DirectoryType : DirectoryAuthenticatorService>() -> DirectoryType? {
 		return (box as? ConcreteDirectoryAuthenticatorBox<DirectoryType>)?.originalAuthenticator ?? (box as? ConcreteDirectoryAuthenticatorBox<AnyDirectoryAuthenticatorService>)?.originalAuthenticator.unwrapped()
 	}
 	
-	public func authenticate(user: AnyHashable, challenge: Any) -> Future<Bool> {
-		do    {return try box.authenticate(user: user, challenge: challenge)}
+	public func authenticate(userId: AnyHashable, challenge: Any) -> Future<Bool> {
+		do    {return try box.authenticate(userId: userId, challenge: challenge)}
 		catch {return asyncConfig.eventLoop.newFailedFuture(error: error)}
 	}
 	
-	public func isUserAdmin(_ user: AnyHashable) -> EventLoopFuture<Bool> {
-		do    {return try box.isUserAdmin(user)}
+	public func isUserIdOfAnAdmin(_ userId: AnyHashable) -> EventLoopFuture<Bool> {
+		do    {return try box.isUserIdOfAnAdmin(userId)}
 		catch {return asyncConfig.eventLoop.newFailedFuture(error: error)}
 	}
 	

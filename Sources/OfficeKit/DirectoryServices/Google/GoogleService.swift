@@ -42,12 +42,24 @@ public final class GoogleService : DirectoryService {
 		googleConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
+	public func string(from userId: String) -> String {
+		return userId
+	}
+	
+	public func userId(from string: String) throws -> String {
+		return string
+	}
+	
 	public func logicalUser(from email: Email) throws -> GoogleUser? {
 		throw NotImplementedError()
 	}
 	
 	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> GoogleUser? {
 		throw NotImplementedError()
+	}
+	
+	public func existingUser(from id: String, propertiesToFetch: Set<DirectoryUserProperty>) -> EventLoopFuture<GoogleUser?> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
 	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<GoogleUser?> {
@@ -127,7 +139,7 @@ public final class GoogleService : DirectoryService {
 			guard let email = emails.first else {throw UserIdConversionError.noEmailInLDAP}
 			return email
 		}
-		.then{ email -> Future<GoogleUser?> in
+		.then{ (email: Email) -> Future<GoogleUser?> in
 			return self.existingUser(from: email, propertiesToFetch: propertiesToFetch)
 		}
 		return future

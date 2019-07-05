@@ -41,6 +41,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 			return bdn.mapValues{ pdnc + $0 }
 		}
 		
+		precondition(id != "email" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
 		serviceName = name

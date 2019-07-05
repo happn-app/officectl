@@ -48,6 +48,14 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		ldapConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
+	public func string(from userId: LDAPDistinguishedName) -> String {
+		return userId.stringValue
+	}
+	
+	public func userId(from string: String) throws -> LDAPDistinguishedName {
+		return try LDAPDistinguishedName(string: string)
+	}
+	
 	public func logicalUser(from email: Email) throws -> LDAPInetOrgPersonWithObject? {
 		throw NotImplementedError()
 	}
@@ -74,6 +82,10 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			return LDAPInetOrgPersonWithObject(inetOrgPerson: inetOrgPerson)
 		}
 		throw NotImplementedError()
+	}
+	
+	public func existingUser(from id: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>) -> EventLoopFuture<LDAPInetOrgPersonWithObject?> {
+		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
 	}
 	
 	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<LDAPInetOrgPersonWithObject?> {
@@ -118,9 +130,9 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		return semiSingletonStore.semiSingleton(forKey: user.id, additionalInitInfo: (asyncConfig, ldapConnector)) as ResetLDAPPasswordAction
 	}
 	
-	public func authenticate(user dn: LDAPDistinguishedName, challenge checkedPassword: String) -> Future<Bool> {
+	public func authenticate(userId dn: LDAPDistinguishedName, challenge checkedPassword: String) -> Future<Bool> {
 		return asyncConfig.eventLoop.future()
-		.thenThrowing{ _ in
+		.map{ _ in
 			guard !checkedPassword.isEmpty else {throw Error.passwordIsEmpty}
 			
 			var ldapConnectorConfig = self.config.connectorSettings
@@ -138,7 +150,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		}
 	}
 	
-	public func isUserAdmin(_ user: LDAPDistinguishedName) -> Future<Bool> {
+	public func isUserIdOfAnAdmin(_ userId: LDAPDistinguishedName) -> Future<Bool> {
 		let adminGroupsDN = config.adminGroupsDN
 		guard adminGroupsDN.count > 0 else {return asyncConfig.eventLoop.future(false)}
 		
@@ -148,7 +160,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		
 		return ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
 		.then{ _ -> Future<[LDAPInetOrgPersonWithObject]> in
-			let op = SearchLDAPOperation(ldapConnector: self.ldapConnector, request: LDAPSearchRequest(scope: .subtree, base: user, searchQuery: searchQuery, attributesToFetch: nil))
+			let op = SearchLDAPOperation(ldapConnector: self.ldapConnector, request: LDAPSearchRequest(scope: .subtree, base: userId, searchQuery: searchQuery, attributesToFetch: nil))
 			return self.asyncConfig.eventLoop.future(from: op, queue: self.asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } }
 		}
 		.thenThrowing{ objects -> Bool in
@@ -158,7 +170,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			guard let inetOrgPerson = objects.first else {
 				return false
 			}
-			return inetOrgPerson.id == user
+			return inetOrgPerson.id == userId
 		}
 	}
 	

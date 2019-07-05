@@ -19,6 +19,7 @@ public struct GitHubServiceConfig : OfficeKitServiceConfig {
 	public var connectorSettings: GitHubJWTConnector.Settings
 	
 	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: GitHubJWTConnector.Settings) {
+		precondition(id != "email" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
 		serviceName = name

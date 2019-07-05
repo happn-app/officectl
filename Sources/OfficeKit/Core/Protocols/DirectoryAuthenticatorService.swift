@@ -11,12 +11,11 @@ import Async
 
 
 
-public protocol DirectoryAuthenticatorService {
+public protocol DirectoryAuthenticatorService : DirectoryService {
 	
-	associatedtype UserIdType : Hashable
 	associatedtype AuthenticationChallenge
 	
-	func authenticate(user: UserIdType, challenge: AuthenticationChallenge) -> Future<Bool>
-	func isUserAdmin(_ user: UserIdType) -> Future<Bool>
+	func authenticate(userId: UserType.IdType, challenge: AuthenticationChallenge) -> Future<Bool>
+	func isUserIdOfAnAdmin(_ userId: UserType.IdType) -> Future<Bool>
 	
 }

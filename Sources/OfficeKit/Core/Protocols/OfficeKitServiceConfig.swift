@@ -9,11 +9,17 @@ import Foundation
 
 
 
-struct ConfigError : Error {
+public struct ConfigError : Error {
 	
-	let domain: String?
-	let key: String
-	let message: String
+	public let domain: String?
+	public let key: String
+	public let message: String
+	
+	public init(domain d: String?, key k: String, message m: String) {
+		domain = d
+		key = k
+		message = m
+	}
 	
 }
 
@@ -48,7 +54,14 @@ public protocol OfficeKitServiceConfig : Hashable {
 	var providerId: String {get}
 	
 	/** The id of the instance of the provider, e.g. "happn_ldap". Defined by the
-	caller. */
+	caller.
+	
+	Restrictions on the id:
+	- It **cannot contain a colon** (“:”)
+	- It **cannot be equal to “email”** (email is a reserved name).
+	
+	You must fail a config init with a serviceId that do not respect these
+	requirements. */
 	var serviceId: String {get}
 	var serviceName: String {get}
 	

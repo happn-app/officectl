@@ -47,6 +47,7 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 	}
 	
 	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: LDAPConnector.Settings, baseDNPerDomain bdn: [String: LDAPDistinguishedName], peopleBaseDNPerDomain pbdn: [String: LDAPDistinguishedName]?, adminGroupsDN agdn: [LDAPDistinguishedName]) {
+		precondition(id != "email" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
 		serviceName = name

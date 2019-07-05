@@ -20,6 +20,7 @@ public struct GoogleServiceConfig : OfficeKitServiceConfig {
 	public var primaryDomains: Set<String>
 	
 	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: GoogleJWTConnector.Settings, primaryDomains d: Set<String>) {
+		precondition(id != "email" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
 		serviceName = name

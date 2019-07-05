@@ -42,9 +42,9 @@ struct ApiAuth : Codable {
 		/** Is the user admin? */
 		var adm: Bool
 		
-		init(dn: LDAPDistinguishedName, admin: Bool, validityDuration: TimeInterval) {
+		init(userId: UserId, admin: Bool, validityDuration: TimeInterval) {
 			adm = admin
-			sub = dn.stringValue
+			sub = userId.stringValue
 			exp = Date(timeIntervalSinceNow: validityDuration)
 		}
 		
