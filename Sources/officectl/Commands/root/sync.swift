@@ -95,6 +95,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	}
 	.then{ plans in
 		/* Now let’s do the actual sync! */
+		#warning("TODO")
 		return asyncConfig.eventLoop.future()
 	}
 }
