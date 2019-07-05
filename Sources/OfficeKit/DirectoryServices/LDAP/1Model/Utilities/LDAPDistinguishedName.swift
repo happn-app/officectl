@@ -67,7 +67,7 @@ public struct LDAPDistinguishedName {
 					case "\\"?:        return .waitEndKeyBackslash
 					case .some(let c): currentKey.append(c); return .waitEndKey
 					case nil:
-						throw NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Got EOF, expected more key characters"])
+						throw NSError(domain: "com.happn.officectl.ldapDNParser", code: 2, userInfo: [NSLocalizedDescriptionKey: "Got EOF, expected more key characters"])
 					}
 					
 				case .waitEndKeyBackslash:
@@ -82,7 +82,7 @@ public struct LDAPDistinguishedName {
 						return .waitEndKey
 						
 					case nil:
-						throw NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Got EOF, expected more key characters after a backslash"])
+						throw NSError(domain: "com.happn.officectl.ldapDNParser", code: 2, userInfo: [NSLocalizedDescriptionKey: "Got EOF, expected more key characters after a backslash"])
 					}
 					
 				case .waitEndKeyBackslash2:
@@ -94,14 +94,14 @@ public struct LDAPDistinguishedName {
 						
 						let intValue = Int(backslashValue, radix: 16)!
 						guard let scalar = Unicode.Scalar(intValue) else {
-							throw NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Cannot convert backslash value \(backslashValue) to unicode scalar"])
+							throw NSError(domain: "com.happn.officectl.ldapDNParser", code: 2, userInfo: [NSLocalizedDescriptionKey: "Cannot convert backslash value \(backslashValue) to unicode scalar"])
 						}
 						
 						currentKey.append(Character(scalar))
 						return .waitEndKey
 						
 					default:
-						throw NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Got invalid char or EOF for a numeric LDAP escape"])
+						throw NSError(domain: "com.happn.officectl.ldapDNParser", code: 2, userInfo: [NSLocalizedDescriptionKey: "Got invalid char or EOF for a numeric LDAP escape"])
 					}
 					
 				case .waitEndValue:
@@ -131,7 +131,7 @@ public struct LDAPDistinguishedName {
 						return .waitEndValue
 						
 					case nil:
-						throw NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Got EOF, expected more value characters after a backslash"])
+						throw NSError(domain: "com.happn.officectl.ldapDNParser", code: 2, userInfo: [NSLocalizedDescriptionKey: "Got EOF, expected more value characters after a backslash"])
 					}
 					
 				case .waitEndValueBackslash2:
@@ -143,14 +143,14 @@ public struct LDAPDistinguishedName {
 						
 						let intValue = Int(backslashValue, radix: 16)!
 						guard let scalar = Unicode.Scalar(intValue) else {
-							throw NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Cannot convert backslash value \(backslashValue) to unicode scalar"])
+							throw NSError(domain: "com.happn.officectl.ldapDNParser", code: 2, userInfo: [NSLocalizedDescriptionKey: "Cannot convert backslash value \(backslashValue) to unicode scalar"])
 						}
 						
 						currentValue.append(Character(scalar))
 						return .waitEndValue
 						
 					default:
-						throw NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Got invalid char or EOF for a numeric LDAP escape"])
+						throw NSError(domain: "com.happn.officectl.ldapDNParser", code: 2, userInfo: [NSLocalizedDescriptionKey: "Got invalid char or EOF for a numeric LDAP escape"])
 					}
 				}
 			}

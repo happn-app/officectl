@@ -34,26 +34,13 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 	DN**. This is a different than the `peopleBaseDN` var in this struct, as
 	the var contains the full people DN. */
 	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: LDAPConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?, adminGroupsDNString: [String]) throws {
-		guard let bdn = try? baseDNPerDomainString.mapValues({ try LDAPDistinguishedName(string: $0) }) else {
-			throw InvalidArgumentError(message: "Invalid DN found in the base DN per domain config")
-		}
+		let adn = try adminGroupsDNString.map{ try LDAPDistinguishedName(string: $0) }
+		let bdn = try baseDNPerDomainString.mapValues{ try LDAPDistinguishedName(string: $0) }
 		
-		let pdn: [String: LDAPDistinguishedName]?
-		if let pdnString = peopleDNString {
-			if pdnString.isEmpty {
-				pdn = bdn
-			} else {
-				guard let pdnc = try? LDAPDistinguishedName(string: pdnString) else {
-					throw InvalidArgumentError(message: "Invalid DN found for the people DN config")
-				}
-				pdn = bdn.mapValues{ pdnc + $0 }
-			}
-		} else {
-			pdn = nil
-		}
-		
-		guard let adn = try? adminGroupsDNString.map({ try LDAPDistinguishedName(string: $0) }) else {
-			throw InvalidArgumentError(message: "Invalid DN found for the admin groups DN config")
+		let pdn = try peopleDNString.flatMap{ peopleDNString -> [String: LDAPDistinguishedName] in
+			guard !peopleDNString.isEmpty else {return bdn}
+			let pdnc = try LDAPDistinguishedName(string: peopleDNString)
+			return bdn.mapValues{ pdnc + $0 }
 		}
 		
 		self.init(providerId: pId, serviceId: id, serviceName: name, connectorSettings: c, baseDNPerDomain: bdn, peopleBaseDNPerDomain: pdn, adminGroupsDN: adn)

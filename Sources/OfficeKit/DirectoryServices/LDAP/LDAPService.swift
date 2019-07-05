@@ -70,6 +70,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 				sn: [user.name.familyName], cn: [user.name.givenName + " " + user.name.familyName]
 			)
 			inetOrgPerson.givenName = [user.name.givenName]
+			inetOrgPerson.mail = [user.primaryEmail]
 			return LDAPInetOrgPersonWithObject(inetOrgPerson: inetOrgPerson)
 		}
 		throw NotImplementedError()

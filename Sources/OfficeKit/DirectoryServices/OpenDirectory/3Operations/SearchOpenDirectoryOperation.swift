@@ -65,9 +65,9 @@ public class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 public struct OpenDirectorySearchRequest {
 	
 	var recordTypes: [String]
-	var attribute: String
+	var attribute: String?
 	var matchType: ODMatchType
-	var queryValues: [Data]
+	var queryValues: [Data]?
 	var returnAttributes: [String]?
 	var maximumResults: Int?
 	

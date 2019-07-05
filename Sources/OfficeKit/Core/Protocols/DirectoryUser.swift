@@ -24,19 +24,6 @@ public protocol DirectoryUser : Hashable {
 }
 
 
-extension DirectoryUser {
-	
-	public static func ==(_ user1: Self, _ user2: Self) -> Bool {
-		return user1.id == user2.id
-	}
-	
-	public func hash(into hasher: inout Hasher) {
-		hasher.combine(id)
-	}
-	
-}
-
-
 public enum DirectoryUserProperty : Hashable {
 	
 	case email

@@ -59,4 +59,12 @@ extension LDAPInetOrgPersonWithObject : DirectoryUser {
 		return .unsupported
 	}
 	
+	public func hash(into hasher: inout Hasher) {
+		hasher.combine(id)
+	}
+	
+	public static func ==(lhs: LDAPInetOrgPersonWithObject, rhs: LDAPInetOrgPersonWithObject) -> Bool {
+		return lhs.id == rhs.id
+	}
+	
 }

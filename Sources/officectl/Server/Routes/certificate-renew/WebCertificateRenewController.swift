@@ -28,8 +28,9 @@ class WebCertificateRenewController {
 		
 		let asyncConfig = try req.make(AsyncConfig.self)
 		let officectlConfig = try req.make(OfficectlConfig.self)
-		let officeKitConfig = try req.make(OfficeKitConfig.self)
-		let basePeopleDN = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDNPerDomain?[officeKitConfig.mainDomain(for: renewCertificateData.email.domain)], "LDAP People Base DN")
+		let officeKitConfig = officectlConfig.officeKitConfig
+		let ldapConfig: LDAPServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
+		let basePeopleDN = try nil2throw(ldapConfig.peopleBaseDNPerDomain?[officeKitConfig.mainDomain(for: renewCertificateData.email.domain)], "LDAP People Base DN")
 		let user = User(email: renewCertificateData.email, basePeopleDN: basePeopleDN, setMainIdToLDAP: true)
 		
 		let baseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
@@ -53,7 +54,7 @@ class WebCertificateRenewController {
 			let op = AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>(request: urlRequest, authenticator: authenticate)
 			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.data }
 		}
-		.then{ certificatesList -> Future<[String?]> in
+		.then{ certificatesList -> Future<[String]> in
 			/* Get the list of certificates to revoke */
 			let futures = certificatesList.keys.map{ id -> Future<String?> in
 				let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent(id))
@@ -63,13 +64,14 @@ class WebCertificateRenewController {
 					return id
 				}
 			}
-			return Future.reduce([String?](), futures, eventLoop: asyncConfig.eventLoop, { full, new in
+			return Future.reduce([String](), futures, eventLoop: asyncConfig.eventLoop, { full, new in
+				guard let new = new else {return full}
 				return full + [new]
 			})
 		}
 		.then{ certificateIdsToRevoke -> Future<Void> in
 			/* Revoke the certificates to revoke */
-			let futures = certificateIdsToRevoke.compactMap{ $0 }.map{ id -> Future<Void> in
+			let futures = certificateIdsToRevoke.map{ id -> Future<Void> in
 				var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("revoke"))
 				urlRequest.httpMethod = "POST"
 				let json = JSON(dictionaryLiteral: ("serial_number", JSON(stringLiteral: id)))
