@@ -16,7 +16,7 @@ extension Yaml : GenericConfig {
 	
 	public func string(for key: String, domain: String?) throws -> String {
 		guard let str = try optionalString(for: key, domain: domain) else {
-			throw InvalidArgumentError(message: "Missing value in yaml for key \(key)")
+			throw ConfigError(domain: domain, key: key, message: "Missing value in yaml")
 		}
 		return str
 	}
@@ -26,13 +26,13 @@ extension Yaml : GenericConfig {
 		case .null:            return nil
 		case .string(let str): return str
 		default:
-			throw InvalidArgumentError(message: "Invalid value (neither absent, null or string) in yaml for key \(key)")
+			throw ConfigError(domain: domain, key: key, message: "Invalid value (neither absent, null or string) in yaml")
 		}
 	}
 	
 	public func url(for key: String, domain: String?) throws -> URL {
 		guard let url = try optionalURL(for: key, domain: domain) else {
-			throw InvalidArgumentError(message: "Missing value in yaml for key \(key)")
+			throw ConfigError(domain: domain, key: key, message: "Missing value in yaml")
 		}
 		return url
 	}
@@ -40,14 +40,14 @@ extension Yaml : GenericConfig {
 	public func optionalURL(for key: String, domain: String?) throws -> URL? {
 		guard let urlStr = try optionalString(for: key, domain: domain) else {return nil}
 		guard let url = URL(string: urlStr) else {
-			throw InvalidArgumentError(message: "Invalid value (invalid URL) in yaml for key \(key)")
+			throw ConfigError(domain: domain, key: key, message: "Invalid value (invalid URL) in yaml")
 		}
 		return url
 	}
 
 	public func arrayOfString(for key: String, domain: String?) throws -> [String] {
 		guard let array = try optionalStringArray(for: key, domain: domain) else {
-			throw InvalidArgumentError(message: "Missing value in yaml for key \(key)")
+			throw ConfigError(domain: domain, key: key, message: "Missing value in yaml")
 		}
 		return array
 	}
@@ -57,13 +57,13 @@ extension Yaml : GenericConfig {
 		if case .null = value {return nil}
 		
 		guard let confArray = value.array else {
-			throw InvalidArgumentError(message: "Invalid value (not absent or an array) in yaml for key \(key)")
+			throw ConfigError(domain: domain, key: key, message: "Invalid value (not absent or an array) in yaml")
 		}
 		
 		var result = [String]()
 		for v in confArray {
 			guard let value = v.string else {
-				throw InvalidArgumentError(message: "Invalid value in yaml for key \(key) (one of the value is not a string)")
+				throw ConfigError(domain: domain, key: key, message: "Invalid value in yaml (one of the value is not a string)")
 			}
 			result.append(value)
 		}
@@ -72,7 +72,7 @@ extension Yaml : GenericConfig {
 	
 	public func stringStringDic(for key: String, domain: String?) throws -> [String: String] {
 		guard let dic = try optionalStringStringDic(for: key, domain: domain) else {
-			throw InvalidArgumentError(message: "Missing value in yaml for key \(key)")
+			throw ConfigError(domain: domain, key: key, message: "Missing value in yaml")
 		}
 		return dic
 	}
@@ -82,16 +82,16 @@ extension Yaml : GenericConfig {
 		if case .null = value {return nil}
 		
 		guard let confDic = value.dictionary else {
-			throw InvalidArgumentError(message: "Invalid value (not a dictionary) in yaml for key \(key)")
+			throw ConfigError(domain: domain, key: key, message: "Invalid value (not a dictionary) in yaml")
 		}
 		
 		var result = [String: String]()
 		for (k, v) in confDic {
 			guard let keyStr = k.string else {
-				throw InvalidArgumentError(message: "Invalid value in yaml for key \(key) (one of the key is not a string)")
+				throw ConfigError(domain: domain, key: key, message: "Invalid value in yaml (one of the key is not a string)")
 			}
 			guard let valueStr = v.string else {
-				throw InvalidArgumentError(message: "Invalid value in yaml for key \(key) (one of the value is not a string)")
+				throw ConfigError(domain: domain, key: key, message: "Invalid value in yaml (value for key \"\(keyStr)\" is not a string)")
 			}
 			result[keyStr] = valueStr
 		}
@@ -115,7 +115,7 @@ extension Yaml : GenericConfig {
 	
 	public func stringGenericConfigDic(for key: String, domain: String?) throws -> [String: GenericConfig] {
 		guard let dic = try optionalStringGenericConfigDic(for: key, domain: domain) else {
-			throw InvalidArgumentError(message: "Missing value in yaml for key \(key)")
+			throw ConfigError(domain: domain, key: key, message: "Missing value in yaml")
 		}
 		return dic
 	}
@@ -125,13 +125,13 @@ extension Yaml : GenericConfig {
 		if case .null = value {return nil}
 		
 		guard let confDic = value.dictionary else {
-			throw InvalidArgumentError(message: "Invalid value (not a dictionary) in yaml for key \(key)")
+			throw ConfigError(domain: domain, key: key, message: "Invalid value (not a dictionary) in yaml")
 		}
 		
 		var result = [String: Yaml]()
 		for (k, v) in confDic {
 			guard let keyStr = k.string else {
-				throw InvalidArgumentError(message: "Invalid value in yaml for key \(key) (one of the key is not a string)")
+				throw ConfigError(domain: domain, key: key, message: "Invalid value in yaml (one of the key is not a string)")
 			}
 			result[keyStr] = v
 		}
@@ -140,7 +140,7 @@ extension Yaml : GenericConfig {
 	
 	public func genericConfig(for key: String, domain: String?) throws -> GenericConfig {
 		guard let dic = try optionalGenericConfig(for: key, domain: domain) else {
-			throw InvalidArgumentError(message: "Missing value in yaml for key \(key)")
+			throw ConfigError(domain: domain, key: key, message: "Missing value in yaml")
 		}
 		return dic
 	}
