@@ -18,8 +18,8 @@ private struct ServiceSyncPlan {
 	
 	var service: AnyDirectoryService
 	
-	var usersToCreate: Set<AnyDirectoryUser>
-	var usersToDelete: Set<AnyDirectoryUser>
+	var usersToCreate: [AnyDirectoryUser]
+	var usersToDelete: [AnyDirectoryUser]
 	
 }
 
@@ -35,18 +35,32 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		return asyncConfig.eventLoop.future()
 	}
 	
+	func usersById(from users: [AnyDirectoryUser]) throws -> [AnyHashable: AnyDirectoryUser] {
+		let grouped = Dictionary(grouping: users, by: { $0.id })
+		return try grouped.mapValues{ ug in
+			guard let u = ug.first, ug.count == 1 else {
+				throw InternalError(message: "Invalid users list which contains at least two users with the same id.")
+			}
+			return u
+		}
+	}
+	
 	let fromDirectory = try officeKitServiceProvider.getDirectoryService(id: fromId, container: context.container)
 	let toDirectories = try toIds.map{ try officeKitServiceProvider.getDirectoryService(id: String($0), container: context.container) }
 	
-	return fromDirectory.listAllUsers().map{ Set($0) }
+	return fromDirectory.listAllUsers().map{ try usersById(from: $0) }
 	.then{ sourceUsers -> Future<[ServiceSyncPlan]> in
 		let futures = toDirectories.map{ toDirectory in
-			return toDirectory.listAllUsers().map{ Set($0) }
-			.map{ (currentDestinationUsers: Set<AnyDirectoryUser>) -> ServiceSyncPlan in
-				let expectedDestinationUsers = try Set(sourceUsers.compactMap{ try toDirectory.logicalUser(from: $0, in: fromDirectory) })
+			return toDirectory.listAllUsers().map{ try usersById(from: $0) }
+			.map{ (currentDestinationUsers: [AnyHashable: AnyDirectoryUser]) -> ServiceSyncPlan in
+				let expectedDestinationUsers = try usersById(from: sourceUsers.values.compactMap{ try toDirectory.logicalUser(from: $0, in: fromDirectory) })
 				
-				let usersToCreate = expectedDestinationUsers.subtracting(currentDestinationUsers)
-				let usersToDelete = currentDestinationUsers.subtracting(expectedDestinationUsers)
+				let currentDestinationUserIds = Set(currentDestinationUsers.keys)
+				let expectedDestinationUserIds = Set(expectedDestinationUsers.keys)
+				let userIdsToCreate = expectedDestinationUserIds.subtracting(currentDestinationUserIds)
+				let userIdsToDelete = currentDestinationUserIds.subtracting(expectedDestinationUserIds)
+				let usersToCreate = Array(expectedDestinationUsers.filter{ userIdsToCreate.contains($0.key) }.values)
+				let usersToDelete = Array(currentDestinationUsers.filter{ userIdsToDelete.contains($0.key) }.values)
 				return ServiceSyncPlan(service: toDirectory, usersToCreate: usersToCreate, usersToDelete: usersToDelete)
 			}
 		}

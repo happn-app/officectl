@@ -94,14 +94,6 @@ public struct AnyDirectoryUser : DirectoryUser {
 		return box.nickname
 	}
 	
-	public func hash(into hasher: inout Hasher) {
-		hasher.combine(id)
-	}
-	
-	public static func ==(lhs: AnyDirectoryUser, rhs: AnyDirectoryUser) -> Bool {
-		return lhs.id == rhs.id
-	}
-	
 	private let box: DirectoryUserBox
 	
 }

@@ -52,14 +52,6 @@ public struct ODRecordOKWrapper : DirectoryUser {
 	
 	public let nickname = RemoteProperty<String?>.unsupported
 	
-	public func hash(into hasher: inout Hasher) {
-		hasher.combine(id)
-	}
-	
-	public static func ==(lhs: ODRecordOKWrapper, rhs: ODRecordOKWrapper) -> Bool {
-		return lhs.id == rhs.id
-	}
-	
 }
 
 #endif

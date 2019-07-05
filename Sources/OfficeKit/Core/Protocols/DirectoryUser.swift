@@ -9,7 +9,7 @@ import Foundation
 
 
 
-public protocol DirectoryUser : Hashable {
+public protocol DirectoryUser {
 	
 	associatedtype IdType : Hashable/* & FallibleStringInitable */
 	

@@ -21,12 +21,4 @@ public struct GitHubUser : DirectoryUser {
 	public var lastName: RemoteProperty<String?>
 	public var nickname: RemoteProperty<String?>
 	
-	public func hash(into hasher: inout Hasher) {
-		hasher.combine(id)
-	}
-	
-	public static func ==(lhs: GitHubUser, rhs: GitHubUser) -> Bool {
-		return lhs.id == rhs.id
-	}
-	
 }
