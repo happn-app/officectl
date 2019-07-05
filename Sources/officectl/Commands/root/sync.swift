@@ -48,12 +48,12 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	let fromDirectory = try officeKitServiceProvider.getDirectoryService(id: fromId, container: context.container)
 	let toDirectories = try toIds.map{ try officeKitServiceProvider.getDirectoryService(id: String($0), container: context.container) }
 	
-	return fromDirectory.listAllUsers().map{ try usersById(from: $0) }
+	return fromDirectory.listAllUsers()
 	.then{ sourceUsers -> Future<[ServiceSyncPlan]> in
 		let futures = toDirectories.map{ toDirectory in
 			return toDirectory.listAllUsers().map{ try usersById(from: $0) }
 			.map{ (currentDestinationUsers: [AnyHashable: AnyDirectoryUser]) -> ServiceSyncPlan in
-				let expectedDestinationUsers = try usersById(from: sourceUsers.values.compactMap{ try toDirectory.logicalUser(from: $0, in: fromDirectory) })
+				let expectedDestinationUsers = try usersById(from: sourceUsers.compactMap{ try toDirectory.logicalUser(from: $0, in: fromDirectory) })
 				
 				let currentDestinationUserIds = Set(currentDestinationUsers.keys)
 				let expectedDestinationUserIds = Set(expectedDestinationUsers.keys)
