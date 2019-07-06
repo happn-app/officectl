@@ -12,6 +12,9 @@ import Async
 
 
 
+public let defaultDispatchQueueForFutureSupport = DispatchQueue(label: "Default Dispatch Queue for Futures")
+public let defaultOperationQueueForFutureSupport = OperationQueue(name_OperationQueue: "Default Operation Queue for Futures")
+
 public extension Future {
 	
 	static func waitAll(_ futures: [Future<T>], eventLoop: EventLoop) -> Future<[FutureResult<T>]> {

@@ -9,6 +9,7 @@ import Foundation
 
 import Async
 import SemiSingleton
+import Service
 
 
 
@@ -38,14 +39,9 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	public let config: LDAPServiceConfig
 	public let domainAliases: [String: String]
 	
-	public init(config c: LDAPServiceConfig, domainAliases aliases: [String: String], semiSingletonStore sms: SemiSingletonStore, asyncConfig ac: AsyncConfig) throws {
+	public init(config c: LDAPServiceConfig, domainAliases aliases: [String: String]) throws {
 		config = c
 		domainAliases = aliases
-		
-		asyncConfig = ac
-		semiSingletonStore = sms
-		
-		ldapConnector = try sms.semiSingleton(forKey: config.connectorSettings)
 	}
 	
 	public func string(from userId: LDAPDistinguishedName) -> String {
@@ -84,54 +80,59 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(from id: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>) -> EventLoopFuture<LDAPInetOrgPersonWithObject?> {
-		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	public func existingUser(from id: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<LDAPInetOrgPersonWithObject?> {
+		throw NotImplementedError()
 	}
 	
-	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<LDAPInetOrgPersonWithObject?> {
-		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {
+		throw NotImplementedError()
 	}
 	
-	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<LDAPInetOrgPersonWithObject?> {
-		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {
+		throw NotImplementedError()
 	}
 	
-	public func listAllUsers() -> Future<[LDAPInetOrgPersonWithObject]> {
-		return ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
+	public func listAllUsers(on container: Container) throws -> Future<[LDAPInetOrgPersonWithObject]> {
+		let ldapConnector: LDAPConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		
+		return ldapConnector.connect(scope: (), eventLoop: container.eventLoop)
 		.then{ _ in
 			let futures = self.config.allBaseDNs.map{ dn -> Future<[LDAPInetOrgPersonWithObject]> in
-				let searchOp = SearchLDAPOperation(ldapConnector: self.ldapConnector, request: LDAPSearchRequest(scope: .children, base: dn, searchQuery: nil, attributesToFetch: nil))
-				return self.asyncConfig.eventLoop.future(from: searchOp, queue: self.asyncConfig.operationQueue).map{
+				let searchOp = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: dn, searchQuery: nil, attributesToFetch: nil))
+				return Future<[LDAPInetOrgPerson]>.future(from: searchOp, eventLoop: container.eventLoop).map{
 					$0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) }
 				}
 			}
 			/* Merging all the users from all the domains. */
-			return Future.reduce([LDAPInetOrgPersonWithObject](), futures, eventLoop: self.asyncConfig.eventLoop, +)
+			return Future.reduce([LDAPInetOrgPersonWithObject](), futures, eventLoop: container.eventLoop, +)
 		}
 	}
 	
 	public let supportsUserCreation = true
-	public func createUser(_ user: LDAPInetOrgPersonWithObject) -> Future<LDAPInetOrgPersonWithObject> {
-		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	public func createUser(_ user: LDAPInetOrgPersonWithObject, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject> {
+		throw NotImplementedError()
 	}
 	
 	public let supportsUserUpdate = true
-	public func updateUser(_ user: LDAPInetOrgPersonWithObject, propertiesToUpdate: Set<DirectoryUserProperty>) -> Future<LDAPInetOrgPersonWithObject> {
-		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	public func updateUser(_ user: LDAPInetOrgPersonWithObject, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject> {
+		throw NotImplementedError()
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: LDAPInetOrgPersonWithObject) -> Future<Void> {
-		return asyncConfig.eventLoop.newFailedFuture(error: NotImplementedError())
+	public func deleteUser(_ user: LDAPInetOrgPersonWithObject, on container: Container) throws -> Future<Void> {
+		throw NotImplementedError()
 	}
 	
 	public let supportsPasswordChange = true
-	public func changePasswordAction(for user: LDAPInetOrgPersonWithObject) throws -> ResetPasswordAction {
+	public func changePasswordAction(for user: LDAPInetOrgPersonWithObject, on container: Container) throws -> ResetPasswordAction {
+		let asyncConfig: AsyncConfig = try container.make()
+		let semiSingletonStore: SemiSingletonStore = try container.make()
+		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		return semiSingletonStore.semiSingleton(forKey: user.id, additionalInitInfo: (asyncConfig, ldapConnector)) as ResetLDAPPasswordAction
 	}
 	
-	public func authenticate(userId dn: LDAPDistinguishedName, challenge checkedPassword: String) -> Future<Bool> {
-		return asyncConfig.eventLoop.future()
+	public func authenticate(userId dn: LDAPDistinguishedName, challenge checkedPassword: String, on container: Container) throws -> Future<Bool> {
+		return container.eventLoop.future()
 		.map{ _ in
 			guard !checkedPassword.isEmpty else {throw Error.passwordIsEmpty}
 			
@@ -140,7 +141,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			return try LDAPConnector(key: ldapConnectorConfig)
 		}
 		.then{ (connector: LDAPConnector) in
-			return connector.connect(scope: (), forceReconnect: true, asyncConfig: self.asyncConfig).map{ true }
+			return connector.connect(scope: (), forceReconnect: true, eventLoop: container.eventLoop).map{ true }
 		}
 		.catchMap{ error in
 			if LDAPConnector.isInvalidPassError(error) {
@@ -150,18 +151,20 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		}
 	}
 	
-	public func isUserIdOfAnAdmin(_ userId: LDAPDistinguishedName) -> Future<Bool> {
+	public func validateAdminStatus(userId: LDAPDistinguishedName, on container: Container) throws -> Future<Bool> {
 		let adminGroupsDN = config.adminGroupsDN
-		guard adminGroupsDN.count > 0 else {return asyncConfig.eventLoop.future(false)}
+		guard adminGroupsDN.count > 0 else {return container.eventLoop.future(false)}
+		
+		let ldapConnector: LDAPConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
 		
 		let searchQuery = LDAPSearchQuery.or(adminGroupsDN.map{
 			LDAPSearchQuery.simple(attribute: .memberof, filtertype: .equal, value: Data($0.stringValue.utf8))
 		})
 		
-		return ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
+		return ldapConnector.connect(scope: (), eventLoop: container.eventLoop)
 		.then{ _ -> Future<[LDAPInetOrgPersonWithObject]> in
-			let op = SearchLDAPOperation(ldapConnector: self.ldapConnector, request: LDAPSearchRequest(scope: .subtree, base: userId, searchQuery: searchQuery, attributesToFetch: nil))
-			return self.asyncConfig.eventLoop.future(from: op, queue: self.asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } }
+			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .subtree, base: userId, searchQuery: searchQuery, attributesToFetch: nil))
+			return Future<[LDAPInetOrgPerson]>.future(from: op, eventLoop: container.eventLoop).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } }
 		}
 		.thenThrowing{ objects -> Bool in
 			guard objects.count <= 1 else {
@@ -174,12 +177,14 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		}
 	}
 	
-	public func fetchProperties(_ properties: Set<String>?, from dn: LDAPDistinguishedName) -> Future<[String: [Data]]> {
+	public func fetchProperties(_ properties: Set<String>?, from dn: LDAPDistinguishedName, on container: Container) throws -> Future<[String: [Data]]> {
+		let ldapConnector: LDAPConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		
 		let searchRequest = LDAPSearchRequest(scope: .singleLevel, base: dn, searchQuery: nil, attributesToFetch: properties)
 		let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: searchRequest)
-		return ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
+		return ldapConnector.connect(scope: (), eventLoop: container.eventLoop)
 		.then{ _ in
-			return self.asyncConfig.eventLoop.future(from: op, queue: self.asyncConfig.operationQueue).map{ $0.results }
+			return Future<[LDAPInetOrgPerson]>.future(from: op, eventLoop: container.eventLoop).map{ $0.results }
 		}
 		.thenThrowing{ ldapObjects in
 			guard ldapObjects.count <= 1             else {throw Error.tooManyUsersFound}
@@ -188,9 +193,9 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		}
 	}
 	
-	public func fetchUniqueEmails(from user: LDAPInetOrgPersonWithObject, deduplicateAliases: Bool = true) -> Future<Set<Email>> {
+	public func fetchUniqueEmails(from user: LDAPInetOrgPersonWithObject, deduplicateAliases: Bool = true, on container: Container) throws -> Future<Set<Email>> {
 		#warning("TODO: Consider whether we want to use the emails already in the user (if applicable)")
-		return fetchProperties([LDAPInetOrgPerson.propNameMail], from: user.id)
+		return try fetchProperties([LDAPInetOrgPerson.propNameMail], from: user.id, on: container)
 		.map{ properties in
 			guard let emailDataArray = properties[LDAPInetOrgPerson.propNameMail] else {
 				throw Error.internalError
@@ -206,10 +211,5 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			return Set(emails.map{ $0.primaryDomainVariant(aliasMap: self.domainAliases) })
 		}
 	}
-	
-	private let asyncConfig: AsyncConfig
-	private let semiSingletonStore: SemiSingletonStore
-	
-	private let ldapConnector: LDAPConnector
 	
 }

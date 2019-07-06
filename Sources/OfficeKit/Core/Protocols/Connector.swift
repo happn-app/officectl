@@ -89,12 +89,13 @@ public extension Connector {
 	
 	The handler will be called with the new scopes after the connection operation
 	and an optional error. */
-	func connect(scope: ScopeType, forceReconnect: Bool = false, handlerQueue: DispatchQueue = .main, handler: @escaping (_ newScope: ScopeType?, _ error: Error?) -> Void) {
+	func connect(scope: ScopeType, forceReconnect: Bool = false, handlerQueue: DispatchQueue = .main, handler: @escaping (_ result: Result<ScopeType?, Error>) -> Void) {
 		assert(connectorOperationQueue.maxConcurrentOperationCount == 1)
 		connectorOperationQueue.addAsyncBlock{ stopOperationHandler in
 			let connectionHandler = { (_ error: Error?) -> Void in
 				handlerQueue.async{
-					handler(self.currentScope, error)
+					if let error = error {handler(.failure(error))}
+					else                 {handler(.success(self.currentScope))}
 					stopOperationHandler()
 				}
 			}
@@ -118,12 +119,13 @@ public extension Connector {
 	
 	The handler will be called with the new scopes after the disconnection
 	operation and an optional error. */
-	func disconnect(scope: ScopeType? = nil, forceDisconnect: Bool = false, handlerQueue: DispatchQueue = .main, handler: @escaping (_ newScope: ScopeType?, _ error: Error?) -> Void) {
+	func disconnect(scope: ScopeType? = nil, forceDisconnect: Bool = false, handlerQueue: DispatchQueue = .main, handler: @escaping (_ result: Result<ScopeType?, Error>) -> Void) {
 		assert(connectorOperationQueue.maxConcurrentOperationCount == 1)
 		connectorOperationQueue.addAsyncBlock{ stopOperationHandler in
 			let connectionHandler = { (_ error: Error?) -> Void in
 				handlerQueue.async{
-					handler(self.currentScope, error)
+					if let error = error {handler(.failure(error))}
+					else                 {handler(.success(self.currentScope))}
 					stopOperationHandler()
 				}
 			}

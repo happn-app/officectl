@@ -28,10 +28,10 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 	
 	/* Try and change OpenDirectory password via LDAP connection */
 //	let ldapConnector = try LDAPConnector(ldapURL: URL(string: "ldap://od1.happn.private")!, protocolVersion: .v3, username: "uid=diradmin,cn=users,dc=office2,dc=happn,dc=private", password: "REDACTED")
-//	return ldapConnector.connect(scope: (), asyncConfig: asyncConfig)
+//	return ldapConnector.connect(scope: (), eventLoop: context.container.eventLoop)
 //	.then{
 //		let op = try! ResetLDAPPasswordAction(key: User(id: UserId.distinguishedName(LDAPDistinguishedName(string: "uid=ldap.test,cn=users,dc=office2,dc=happn,dc=private"))), additionalInfo: context.container, store: semiSingletonStore)
-//		return op.start(parameters: "toto", eventLoop: asyncConfig.eventLoop)
+//		return op.start(parameters: "toto", eventLoop: context.container.eventLoop)
 //	}
 	
 	/* Connect to OpenDirectory */
@@ -72,17 +72,17 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 			print("got error: \(error)")
 		}
 	}
-	return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue, resultRetriever: { _ in () })
+	return Future<Void>.future(from: op, eventLoop: context.container.eventLoop, resultRetriever: { _ in () })
 	#else
-	return asyncConfig.eventLoop.newFailedFuture(error: NotAvailableOnThisPlatformError())
+	throw NotAvailableOnThisPlatformError()
 	#endif
 	
 	/* List all GitHub project’s hooks */
 //	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)
-//	let f = c.connect(scope: (), asyncConfig: asyncConfig)
+//	let f = c.connect(scope: (), eventLoop: context.container.eventLoop)
 //	.then{ _ -> Future<[GitHubRepository]> in
 //		let op = GitHubRepositorySearchOperation(searchedOrganisation: "happn-app", gitHubConnector: c)
-//		return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.get() })
+//		return Future<[GitHubRepository]>.future(from: op, eventLoop: context.container.eventLoop, resultRetriever: { try $0.result.get() })
 //	}
 //	.then{ repositories -> Future<[FutureResult<[Hook]>]> in
 //		let ops = repositories.map{ rep -> AuthenticatedJSONOperation<[Hook]> in
@@ -94,13 +94,12 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 //				handler(.success(request), nil)
 //			})
 //		}
-//		return asyncConfig.eventLoop.executeAll(ops, queue: asyncConfig.operationQueue)
+//		return Future<[FutureResult<[Hook]>]>.executeAll(ops, eventLoop: context.container.eventLoop)
 //	}
-//	.then{ hooks -> Future<Void> in
+//	.map{ hooks in
 //		let hooks = Set(hooks.flatMap{ $0.result ?? [] }.filter{ $0.config.url.absoluteString.contains("email") })
 //		let hooksStr = Data(hooks.reduce("", { $0 + $1.url.absoluteString + "\n" }).utf8)
 //		_ = try? hooksStr.write(to: URL(fileURLWithPath: "/Users/frizlab/Desktop/toto.txt"))
-// 		return asyncConfig.eventLoop.future(())
 //	}
 //
 //	struct Hook : Codable, Hashable {
@@ -126,16 +125,16 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 //	_ = try nil2throw(googleConnectorConfig.userBehalf, "Google User Behalf")
 //
 //	let c = try GoogleJWTConnector(key: googleConnectorConfig)
-//	let f = c.connect(scope: ModifyGoogleUserOperation.scopes, asyncConfig: asyncConfig)
+//	let f = c.connect(scope: ModifyGoogleUserOperation.scopes, eventLoop: context.container.eventLoop)
 //	.then{ _ -> Future<GoogleUser> in
 //		let searchOp = GetGoogleUserOperation(userKey: "deletion.test@happn.fr", connector: c)
-//		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.get() })
+//		return Future<GoogleUser>.future(from: searchOp, eventLoop: context.container.eventLoop, resultRetriever: { try $0.result.get() })
 //	}
 //	.then{ user -> Future<Void> in
 //		var user = user
 //		user.name.familyName = "SuperTest"
 //		let modifyUserOp = ModifyGoogleUserOperation(user: user, propertiesToUpdate: ["name"], connector: c)
-//		return asyncConfig.eventLoop.future(from: modifyUserOp, queue: asyncConfig.operationQueue, resultRetriever: { _ in return })
+//		return Future<Void>.future(from: modifyUserOp, eventLoop: context.container.eventLoop, resultRetriever: { _ in return })
 //	}
 //	return f
 }

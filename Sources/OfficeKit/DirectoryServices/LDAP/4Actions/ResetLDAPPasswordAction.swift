@@ -8,7 +8,7 @@
 import Foundation
 
 import SemiSingleton
-import Vapor
+import Service
 
 
 
@@ -30,8 +30,8 @@ public class ResetLDAPPasswordAction : Action<LDAPDistinguishedName, String, Voi
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Error>) -> Void) throws {
 		/* Note: To be symmetrical with the reset google user action, we could use
 		 *       the existingLDAPUser method. */
-		deps.connector.connect(scope: (), handlerQueue: deps.asyncConfig.dispatchQueue, handler: { _, error in
-			if let e = error {return handler(.failure(e))}
+		deps.connector.connect(scope: (), handlerQueue: deps.asyncConfig.dispatchQueue, handler: { result in
+			if let e = result.failureValue {return handler(.failure(e))}
 			
 			let person = LDAPInetOrgPerson(dn: self.subject, sn: [], cn: [])
 			person.userPassword = newPassword

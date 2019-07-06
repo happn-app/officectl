@@ -32,7 +32,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	let toIds = Set(f.getString(name: "to")!.split(separator: ",").map(String.init)).subtracting([fromId])
 	guard !toIds.isEmpty else {
 		/* If there is nothing in toIds, we are done! */
-		return asyncConfig.eventLoop.future()
+		return context.container.eventLoop.future()
 	}
 	
 	func usersById(from users: [AnyDirectoryUser]) throws -> [AnyHashable: AnyDirectoryUser] {
@@ -48,10 +48,10 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	let fromDirectory = try officeKitServiceProvider.getDirectoryService(id: fromId, container: context.container)
 	let toDirectories = try toIds.map{ try officeKitServiceProvider.getDirectoryService(id: String($0), container: context.container) }
 	
-	return fromDirectory.listAllUsers()
-	.then{ sourceUsers -> Future<[ServiceSyncPlan]> in
-		let futures = toDirectories.map{ toDirectory in
-			return toDirectory.listAllUsers().map{ try usersById(from: $0) }
+	return try fromDirectory.listAllUsers(on: context.container)
+	.flatMap{ sourceUsers -> Future<[ServiceSyncPlan]> in
+		let futures = try toDirectories.map{ toDirectory in
+			return try toDirectory.listAllUsers(on: context.container).map{ try usersById(from: $0) }
 			.map{ (currentDestinationUsers: [AnyHashable: AnyDirectoryUser]) -> ServiceSyncPlan in
 				let expectedDestinationUsers = try usersById(from: sourceUsers.compactMap{ try toDirectory.logicalUser(from: $0, in: fromDirectory) })
 				
@@ -64,7 +64,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 				return ServiceSyncPlan(service: toDirectory, usersToCreate: usersToCreate, usersToDelete: usersToDelete)
 			}
 		}
-		return Future.reduce([ServiceSyncPlan](), futures, eventLoop: asyncConfig.eventLoop, { $0 + [$1] })
+		return Future.reduce([ServiceSyncPlan](), futures, eventLoop: context.container.eventLoop, { $0 + [$1] })
 	}
 	.map{ (plans: [ServiceSyncPlan]) -> [ServiceSyncPlan] in
 		/* Let’s verify the user is ok with the plan */
@@ -93,10 +93,10 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		}
 		return plans
 	}
-	.then{ plans in
+	.flatMap{ plans in
 		/* Now let’s do the actual sync! */
 		#warning("TODO")
-		return asyncConfig.eventLoop.future()
+		return context.container.eventLoop.future()
 	}
 }
 

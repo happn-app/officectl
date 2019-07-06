@@ -8,6 +8,7 @@
 import Foundation
 
 import Async
+import Service
 
 
 
@@ -46,33 +47,33 @@ public protocol DirectoryService : class {
 	If _more than one_ user matches the given id, the function should return a
 	**failed** future. If _no_ users match the given id, the method should
 	return a succeeded future with a `nil` user. */
-	func existingUser(from id: UserType.IdType, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<UserType?>
+	func existingUser(from id: UserType.IdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
 	/** Fetch and return the _only_ user matching the given email.
 	
 	If _more than one_ user matches the given email, the function should return a
 	**failed** future. If _no_ users match the given email, the method should
 	return a succeeded future with a `nil` user. */
-	func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<UserType?>
+	func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
 	/** Fetch and return the _only_ user matching the given user in the given
 	directory.
 	
 	If _more than one_ user matches the given user, the function should return a
 	**failed** future. If _no_ users match the given user, the method should
 	return a succeeded future with a `nil` user. */
-	func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>) -> Future<UserType?>
+	func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
 	
-	func listAllUsers() -> Future<[UserType]>
+	func listAllUsers(on container: Container) throws -> Future<[UserType]>
 	
 	var supportsUserCreation: Bool {get}
-	func createUser(_ user: UserType) -> Future<UserType>
+	func createUser(_ user: UserType, on container: Container) throws -> Future<UserType>
 	
 	var supportsUserUpdate: Bool {get}
-	func updateUser(_ user: UserType, propertiesToUpdate: Set<DirectoryUserProperty>) -> Future<UserType>
+	func updateUser(_ user: UserType, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType>
 	
 	var supportsUserDeletion: Bool {get}
-	func deleteUser(_ user: UserType) -> Future<Void>
+	func deleteUser(_ user: UserType, on container: Container) throws -> Future<Void>
 	
 	var supportsPasswordChange: Bool {get}
-	func changePasswordAction(for user: UserType) throws -> ResetPasswordAction
+	func changePasswordAction(for user: UserType, on container: Container) throws -> ResetPasswordAction
 	
 }

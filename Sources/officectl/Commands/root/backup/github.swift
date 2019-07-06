@@ -25,14 +25,14 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 	let destinationFolderURL = try URL(fileURLWithPath: nil2throw(f.getString(name: "destination"), "destination"), isDirectory: true)
 	
 	let gitHubConnector = try GitHubJWTConnector(key: gitHubConfig.connectorSettings)
-	let f = gitHubConnector.connect(scope: (), asyncConfig: asyncConfig)
+	let f = gitHubConnector.connect(scope: (), eventLoop: context.container.eventLoop)
 	.then{ _ -> Future<[GitHubRepository]> in
 		context.console.info("Fetching repositories list from GitHub...")
 		let searchOp = GitHubRepositorySearchOperation(searchedOrganisation: orgName, gitHubConnector: gitHubConnector)
-		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue)
+		return Future<[GitHubRepository]>.future(from: searchOp, eventLoop: context.container.eventLoop)
 	}
 	.then{ repositories -> Future<Set<String>> in
-		let promise: EventLoopPromise<Set<String>> = asyncConfig.eventLoop.newPromise()
+		let promise: EventLoopPromise<Set<String>> = context.container.eventLoop.newPromise()
 		asyncConfig.dispatchQueue.async{
 			let repositoryNames = Set(repositories.map{ $0.fullName })
 			
@@ -61,11 +61,11 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 		context.console.info("Updating clones...")
 		let q = OperationQueue(); q.maxConcurrentOperationCount = 7 /* We do not use the default operation queue from async config. Indeed, we are launching one sub-process per operation. We do not want a configuration suited for threads, we want one suited for launching subprocesses. */
 		let operations = repositoryNames.map{ CloneGitHubRepoOperation(in: destinationFolderURL, repoFullName: $0, accessToken: gitHubConnector.token!) }
-		return asyncConfig.eventLoop
-			.executeAll(operations, queue: q, resultRetriever: { o -> Void in try throwIfError(o.cloneError) })
+		return Future<[FutureResult<Void>]>
+			.executeAll(operations, eventLoop: context.container.eventLoop, queue: q, resultRetriever: { o -> Void in try throwIfError(o.cloneError) })
 			.and(result: repositoryNames)
 	}
-	.then{ r -> Future<Void> in
+	.map{ r in
 		let (operationResults, repositoryNames) = r
 		
 		/* Let's check we have all the repositories backed-up */
@@ -81,10 +81,8 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 		
 		let errors = operationResults.compactMap{ $0.error }
 		guard errors.count == 0 else {
-			return asyncConfig.eventLoop.newFailedFuture(error: NSError(domain: "com.happn.officectl", code: 3, userInfo: [NSLocalizedDescriptionKey: "Got the following errors while backing up the repositories" + errors.reduce("", { $0 + "\n   " + $1.legibleLocalizedDescription })]))
+			throw NSError(domain: "com.happn.officectl", code: 3, userInfo: [NSLocalizedDescriptionKey: "Got the following errors while backing up the repositories" + errors.reduce("", { $0 + "\n   " + $1.legibleLocalizedDescription })])
 		}
-		
-		return asyncConfig.eventLoop.newSucceededFuture(result: ())
 	}
 	return f
 }

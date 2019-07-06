@@ -15,7 +15,6 @@ import OfficeKit
 
 
 func getToken(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	let asyncConfig = try context.container.make(AsyncConfig.self)
 	let officeKitConfig = try context.container.make(OfficectlConfig.self).officeKitConfig
 	
 	let scopes = f.getString(name: "scopes")
@@ -24,10 +23,10 @@ func getToken(flags f: Flags, arguments args: [String], context: CommandContext)
 	
 	let token: Future<String>
 	if let googleConfig: GoogleServiceConfig = serviceConfig.unwrapped() {
-		token = try getGoogleToken(googleConfig: googleConfig, scopesStr: scopes, asyncConfig: asyncConfig)
+		token = try getGoogleToken(googleConfig: googleConfig, scopesStr: scopes, eventLoop: context.container.eventLoop)
 		
 	} else if let gitHubConfig: GitHubServiceConfig = serviceConfig.unwrapped() {
-		token = try getGitHubToken(gitHubConfig: gitHubConfig, scopesStr: scopes, asyncConfig: asyncConfig)
+		token = try getGitHubToken(gitHubConfig: gitHubConfig, scopesStr: scopes, eventLoop: context.container.eventLoop)
 		
 	} else {
 		throw InvalidArgumentError(message: "Unsupported service to get a token from.")
@@ -38,25 +37,25 @@ func getToken(flags f: Flags, arguments args: [String], context: CommandContext)
 	}
 }
 
-private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String?, asyncConfig: AsyncConfig) throws -> Future<String> {
+private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String?, eventLoop: EventLoop) throws -> Future<String> {
 	guard let scopesStr = scopesStr else {
 		throw InvalidArgumentError(message: "The --scopes option is required to get a Google token.")
 	}
 	
 	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-	return googleConnector.connect(scope: Set(scopesStr.components(separatedBy: ",")), asyncConfig: asyncConfig)
+	return googleConnector.connect(scope: Set(scopesStr.components(separatedBy: ",")), eventLoop: eventLoop)
 	.map{ _ -> String in
 		return googleConnector.token!
 	}
 }
 
-private func getGitHubToken(gitHubConfig: GitHubServiceConfig, scopesStr: String?, asyncConfig: AsyncConfig) throws -> Future<String> {
+private func getGitHubToken(gitHubConfig: GitHubServiceConfig, scopesStr: String?, eventLoop: EventLoop) throws -> Future<String> {
 	guard scopesStr == nil else {
 		throw InvalidArgumentError(message: "Scopes are not supported to retrieve a GitHub token.")
 	}
 	
 	let gitHubConnector = try GitHubJWTConnector(key: gitHubConfig.connectorSettings)
-	return gitHubConnector.connect(scope: (), asyncConfig: asyncConfig)
+	return gitHubConnector.connect(scope: (), eventLoop: eventLoop)
 	.map{ _ -> String in
 		return gitHubConnector.token!
 	}

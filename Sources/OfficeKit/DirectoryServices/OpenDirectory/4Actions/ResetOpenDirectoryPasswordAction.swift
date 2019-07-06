@@ -10,8 +10,9 @@
 import Foundation
 import OpenDirectory
 
+import NIO
 import SemiSingleton
-import Vapor
+import Service
 
 
 
@@ -31,11 +32,13 @@ public class ResetOpenDirectoryPasswordAction : Action<ODRecord, String, Void>, 
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Error>) -> Void) throws {
-		let f = deps.connector
-		.connect(scope: (), asyncConfig: deps.asyncConfig)
+		/* We use futures for style. */
+		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
+		
+		let f = deps.connector.connect(scope: (), eventLoop: eventLoop)
 		.then{ _ -> Future<Void> in
 			let modifyUserOperation = ModifyOpenDirectoryPasswordOperation(record: self.subject, newPassword: newPassword, authenticator: self.deps.authenticator)
-			return self.deps.asyncConfig.eventLoop.future(from: modifyUserOperation, queue: self.deps.asyncConfig.operationQueue)
+			return Future<Void>.future(from: modifyUserOperation, eventLoop: eventLoop)
 		}
 		f.whenSuccess{ _ in
 			/* Success! Let’s call the handler. */

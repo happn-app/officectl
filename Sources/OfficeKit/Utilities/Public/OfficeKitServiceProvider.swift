@@ -8,7 +8,7 @@
 import Foundation
 
 import SemiSingleton
-import Vapor
+import Service
 
 
 
@@ -70,33 +70,26 @@ public class OfficeKitServiceProvider {
 	}
 	
 	private func createDirectoryService(with config: AnyOfficeKitServiceConfig, container: Container) throws -> AnyDirectoryService {
-		let ac = try container.make(AsyncConfig.self)
-		let sms = try container.make(SemiSingletonStore.self)
-		
 		switch config.providerId {
 		case LDAPService.providerId:
 			return try AnyDirectoryService(
-				LDAPService(config: config.unwrapped()!, domainAliases: officeKitConfig.domainAliases, semiSingletonStore: sms, asyncConfig: ac),
-				asyncConfig: ac
+				LDAPService(config: config.unwrapped()!, domainAliases: officeKitConfig.domainAliases)
 			)
 			
 		case GoogleService.providerId:
 			return try AnyDirectoryService(
-				GoogleService(config: config.unwrapped()!, semiSingletonStore: sms, asyncConfig: ac),
-				asyncConfig: ac
+				GoogleService(config: config.unwrapped()!)
 			)
 			
 		case GitHubService.providerId:
 			return try AnyDirectoryService(
-				GitHubService(config: config.unwrapped()!, semiSingletonStore: sms, asyncConfig: ac),
-				asyncConfig: ac
+				GitHubService(config: config.unwrapped()!)
 			)
 			
 		#if canImport(DirectoryService) && canImport(OpenDirectory)
 		case OpenDirectoryService.providerId:
 			return try AnyDirectoryService(
-				OpenDirectoryService(config: config.unwrapped()!, semiSingletonStore: sms, asyncConfig: ac),
-				asyncConfig: ac
+				OpenDirectoryService(config: config.unwrapped()!)
 			)
 		#endif
 			
@@ -116,14 +109,10 @@ public class OfficeKitServiceProvider {
 	}
 	
 	private func createDirectoryAuthenticatorService(with config: AnyOfficeKitServiceConfig, container: Container) throws -> AnyDirectoryAuthenticatorService {
-		let ac = try container.make(AsyncConfig.self)
-		let sms = try container.make(SemiSingletonStore.self)
-		
 		switch config.providerId {
 		case LDAPService.providerId:
 			return try AnyDirectoryAuthenticatorService(
-				LDAPService(config: config.unwrapped()!, domainAliases: officeKitConfig.domainAliases, semiSingletonStore: sms, asyncConfig: ac),
-				asyncConfig: ac
+				LDAPService(config: config.unwrapped()!, domainAliases: officeKitConfig.domainAliases)
 			)
 			
 		default:

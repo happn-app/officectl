@@ -17,7 +17,8 @@ let package = Package(
 		.package(url: "https://github.com/vapor/vapor.git", from: "3.0.0"),
 		.package(url: "https://github.com/vapor/core.git", from: "3.9.0"), /* Async */
 		.package(url: "https://github.com/vapor/crypto.git", from: "3.0.0"),
-		.package(url: "https://github.com/vapor/fluent-sqlite.git", from: "3.0.0"),
+//		.package(url: "https://github.com/vapor/fluent-sqlite.git", from: "3.0.0"),
+		.package(url: "https://github.com/vapor/service.git", from: "1.0.0"),
 		.package(url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
 		.package(url: "https://github.com/vapor/jwt.git", from: "3.0.0"),
 		.package(url: "https://github.com/happn-tech/EmailValidator.git", .branch("master")),
@@ -34,7 +35,10 @@ let package = Package(
 			/* happn dependencies */
 			"RetryingOperation", "URLRequestOperation", "SemiSingleton", "EmailValidator",
 			/* External dependencies */
-			"NIO", "FluentSQLite", "Crypto", "Vapor", "Async", "JWT", "GenericJSON"
+			"NIO", "Crypto", "Service", "Async", "JWT", "GenericJSON"
+			/* IMHO this one shouldn’t be needed, but I can’t seem to get rid of it
+			 * in Xcode. Works well with SPM CLI. */
+			,"Vapor"
 		]),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
 		

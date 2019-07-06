@@ -8,7 +8,7 @@
 import Foundation
 
 import NIO
-import Vapor
+import Service
 
 
 
@@ -18,15 +18,13 @@ public struct AsyncConfig : ServiceType {
 		let oq = OperationQueue()
 		oq.name = "Default Background Operation Queue"
 		let dq = DispatchQueue(label: "Default Background Dispatch Queue")
-		return AsyncConfig(eventLoop: worker.eventLoop, dispatchQueue: dq, operationQueue: oq)
+		return AsyncConfig(dispatchQueue: dq, operationQueue: oq)
 	}
 	
-	public var eventLoop: EventLoop
 	public var dispatchQueue: DispatchQueue
 	public var operationQueue: OperationQueue
 	
-	public init(eventLoop el: EventLoop, dispatchQueue dq: DispatchQueue, operationQueue oq: OperationQueue) {
-		eventLoop = el
+	public init(dispatchQueue dq: DispatchQueue, operationQueue oq: OperationQueue) {
 		dispatchQueue = dq
 		operationQueue = oq
 	}

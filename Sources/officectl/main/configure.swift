@@ -7,7 +7,7 @@
 
 import Foundation
 
-import FluentSQLite
+//import FluentSQLite
 import Leaf
 import SemiSingleton
 import URLRequestOperation
@@ -33,7 +33,7 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	}
 	
 	/* Register providers */
-	try services.register(FluentSQLiteProvider())
+//	try services.register(FluentSQLiteProvider())
 	try services.register(LeafProvider())
 	
 	/* Register Services */

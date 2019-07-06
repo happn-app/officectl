@@ -15,7 +15,6 @@ import OfficeKit
 
 
 func listUsers(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	let asyncConfig: AsyncConfig = try context.container.make()
 	let officeKitConfig = try context.container.make(OfficectlConfig.self).officeKitConfig
 	
 	let serviceId = f.getString(name: "service-id")
@@ -25,7 +24,7 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 	
 	let usersFuture: Future<[String]>
 	if let googleConfig: GoogleServiceConfig = serviceConfig.unwrapped() {
-		usersFuture = try getUsersList(googleConfig: googleConfig, includeInactiveUsers: includeInactiveUsers, asyncConfig: asyncConfig)
+		usersFuture = try getUsersList(googleConfig: googleConfig, includeInactiveUsers: includeInactiveUsers, eventLoop: context.container.eventLoop)
 	} else {
 		throw InvalidArgumentError(message: "Unsupported service to list users from.")
 	}
@@ -43,14 +42,14 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 	}
 }
 
-private func getUsersList(googleConfig: GoogleServiceConfig, includeInactiveUsers: Bool, asyncConfig: AsyncConfig) throws -> Future<[String]> {
+private func getUsersList(googleConfig: GoogleServiceConfig, includeInactiveUsers: Bool, eventLoop: EventLoop) throws -> Future<[String]> {
 	_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
 	
 	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-	return googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
+	return googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
 	.then{ _ -> Future<[String]> in
 		#warning("lol hardcoded happn.fr spotted :P")
 		let searchOp = SearchGoogleUsersOperation(searchedDomain: "happn.fr", query: includeInactiveUsers ? nil : "isSuspended=false", googleConnector: googleConnector)
-		return asyncConfig.eventLoop.future(from: searchOp, queue: asyncConfig.operationQueue, resultRetriever: { try $0.result.get().map{ $0.primaryEmail.stringValue } })
+		return Future<[String]>.future(from: searchOp, eventLoop: eventLoop, resultRetriever: { try $0.result.get().map{ $0.primaryEmail.stringValue } })
 	}
 }

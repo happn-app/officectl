@@ -27,13 +27,13 @@ class LoginController {
 		}
 		
 		
-		return authService.authenticate(userId: userId.id, challenge: loginData.password)
+		return try authService.authenticate(userId: userId.id, challenge: loginData.password, on: req)
 		.map{ authSuccess -> Void in
 			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}
 			return ()
 		}
-		.then{ _ -> Future<Bool> in
-			return authService.isUserIdOfAnAdmin(userId.id)
+		.flatMap{ _ -> Future<Bool> in
+			return try authService.validateAdminStatus(userId: userId.id, on: req)
 		}
 		.map{ isAdmin in
 			/* The password of the user is verified. Let’s return the relevant
