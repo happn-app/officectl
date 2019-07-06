@@ -23,9 +23,9 @@ func setup_routes(_ router: Router) throws {
 //	})
 	
 	router.post("api", "auth", "login",  use: LoginController().login)
-	#if false
 	router.post("api", "auth", "logout", use: LogoutController().logout)
 	
+	#if false
 	let usersController = UsersController()
 	router.get("api", "users", use: usersController.getUsers)
 	router.get("api", "users", UserId.parameter, use: usersController.getUser)

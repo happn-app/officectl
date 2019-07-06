@@ -13,7 +13,6 @@ import Vapor
 
 
 
-#if false
 class LogoutController {
 	
 	/** Logging out a given token. Note we don’t do anything here yet. In theory
@@ -29,4 +28,3 @@ class LogoutController {
 	}
 	
 }
-#endif
