@@ -23,7 +23,7 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 	let includeInactiveUsers = f.getBool(name: "include-suspended-users")!
 	
 	let usersFuture: Future<[String]>
-	if let googleConfig: GoogleServiceConfig = serviceConfig.unwrapped() {
+	if let googleConfig: GoogleServiceConfig = serviceConfig.unboxed() {
 		usersFuture = try getUsersList(googleConfig: googleConfig, includeInactiveUsers: includeInactiveUsers, eventLoop: context.container.eventLoop)
 	} else {
 		throw InvalidArgumentError(message: "Unsupported service to list users from.")

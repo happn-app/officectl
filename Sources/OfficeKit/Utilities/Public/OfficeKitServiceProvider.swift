@@ -33,7 +33,7 @@ public class OfficeKitServiceProvider {
 	
 	public func getDirectoryService<DirectoryServiceType : DirectoryService>(id: String?, container: Container) throws -> DirectoryServiceType {
 		if let id = id {
-			guard let directoryService: DirectoryServiceType = try getDirectoryService(id: id, container: container).unwrapped() else {
+			guard let directoryService: DirectoryServiceType = try getDirectoryService(id: id, container: container).unboxed() else {
 				throw InvalidArgumentError(message: "Service with id \(id) does not have the correct type")
 			}
 			return directoryService
@@ -42,7 +42,7 @@ public class OfficeKitServiceProvider {
 			guard let config = configs.first, configs.count == 1 else {
 				throw InvalidArgumentError(message: "No or too many directory services found for type \(DirectoryServiceType.providerId)")
 			}
-			return try directoryService(with: config, container: container).unwrapped()!
+			return try directoryService(with: config, container: container).unboxed()!
 		}
 	}
 	
@@ -73,23 +73,23 @@ public class OfficeKitServiceProvider {
 		switch config.providerId {
 		case LDAPService.providerId:
 			return try AnyDirectoryService(
-				LDAPService(config: config.unwrapped()!, domainAliases: officeKitConfig.domainAliases)
+				LDAPService(config: config.unboxed()!, domainAliases: officeKitConfig.domainAliases)
 			)
 			
 		case GoogleService.providerId:
 			return try AnyDirectoryService(
-				GoogleService(config: config.unwrapped()!)
+				GoogleService(config: config.unboxed()!)
 			)
 			
 		case GitHubService.providerId:
 			return try AnyDirectoryService(
-				GitHubService(config: config.unwrapped()!)
+				GitHubService(config: config.unboxed()!)
 			)
 			
 		#if canImport(DirectoryService) && canImport(OpenDirectory)
 		case OpenDirectoryService.providerId:
 			return try AnyDirectoryService(
-				OpenDirectoryService(config: config.unwrapped()!)
+				OpenDirectoryService(config: config.unboxed()!)
 			)
 		#endif
 			
@@ -112,7 +112,7 @@ public class OfficeKitServiceProvider {
 		switch config.providerId {
 		case LDAPService.providerId:
 			return try AnyDirectoryAuthenticatorService(
-				LDAPService(config: config.unwrapped()!, domainAliases: officeKitConfig.domainAliases)
+				LDAPService(config: config.unboxed()!, domainAliases: officeKitConfig.domainAliases)
 			)
 			
 		default:

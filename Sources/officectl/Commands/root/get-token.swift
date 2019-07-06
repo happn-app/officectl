@@ -22,10 +22,10 @@ func getToken(flags f: Flags, arguments args: [String], context: CommandContext)
 	let serviceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
 	
 	let token: Future<String>
-	if let googleConfig: GoogleServiceConfig = serviceConfig.unwrapped() {
+	if let googleConfig: GoogleServiceConfig = serviceConfig.unboxed() {
 		token = try getGoogleToken(googleConfig: googleConfig, scopesStr: scopes, eventLoop: context.container.eventLoop)
 		
-	} else if let gitHubConfig: GitHubServiceConfig = serviceConfig.unwrapped() {
+	} else if let gitHubConfig: GitHubServiceConfig = serviceConfig.unboxed() {
 		token = try getGitHubToken(gitHubConfig: gitHubConfig, scopesStr: scopes, eventLoop: context.container.eventLoop)
 		
 	} else {

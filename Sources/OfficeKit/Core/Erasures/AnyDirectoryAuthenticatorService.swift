@@ -49,9 +49,8 @@ public class AnyDirectoryAuthenticatorService : AnyDirectoryService, DirectoryAu
 		super.init(object)
 	}
 	
-	#warning("TODO: Rename to unboxed")
-	public override func unwrapped<DirectoryType : DirectoryAuthenticatorService>() -> DirectoryType? {
-		return (box as? ConcreteDirectoryAuthenticatorBox<DirectoryType>)?.originalAuthenticator ?? (box as? ConcreteDirectoryAuthenticatorBox<AnyDirectoryAuthenticatorService>)?.originalAuthenticator.unwrapped()
+	public override func unboxed<DirectoryType : DirectoryAuthenticatorService>() -> DirectoryType? {
+		return (box as? ConcreteDirectoryAuthenticatorBox<DirectoryType>)?.originalAuthenticator ?? (box as? ConcreteDirectoryAuthenticatorBox<AnyDirectoryAuthenticatorService>)?.originalAuthenticator.unboxed()
 	}
 	
 	public func authenticate(userId: AnyHashable, challenge: Any, on container: Container) throws -> Future<Bool> {

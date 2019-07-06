@@ -89,8 +89,8 @@ public struct AnyOfficeKitServiceConfig : OfficeKitServiceConfig {
 		return box.serviceName
 	}
 	
-	public func unwrapped<ConfigType : OfficeKitServiceConfig>() -> ConfigType? {
-		return (box as? ConcreteOfficeKitServiceConfigBox<ConfigType>)?.originalConfig ?? (box as? ConcreteOfficeKitServiceConfigBox<AnyOfficeKitServiceConfig>)?.originalConfig.unwrapped()
+	public func unboxed<ConfigType : OfficeKitServiceConfig>() -> ConfigType? {
+		return (box as? ConcreteOfficeKitServiceConfigBox<ConfigType>)?.originalConfig ?? (box as? ConcreteOfficeKitServiceConfigBox<AnyOfficeKitServiceConfig>)?.originalConfig.unboxed()
 	}
 	
 	private let box: OfficeKitServiceConfigBox

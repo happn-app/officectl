@@ -156,7 +156,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	}
 	
 	private func serviceUserPair<DestinationServiceType : DirectoryService>(from service: AnyDirectoryService, user: AnyDirectoryService.UserType) throws -> (DestinationServiceType, DestinationServiceType.UserType)? {
-		if let service: DestinationServiceType = service.unwrapped() {
+		if let service: DestinationServiceType = service.unboxed() {
 			guard let user: DestinationServiceType.UserType = user.unwrapped() else {
 				throw InvalidArgumentError(message: "Got an incompatible servicer/user pair.")
 			}
@@ -181,8 +181,8 @@ public class AnyDirectoryService : DirectoryService {
 		box = ConcreteDirectoryBox(originalDirectory: object)
 	}
 	
-	public func unwrapped<DirectoryType : DirectoryService>() -> DirectoryType? {
-		return (box as? ConcreteDirectoryBox<DirectoryType>)?.originalDirectory ?? (box as? ConcreteDirectoryBox<AnyDirectoryService>)?.originalDirectory.unwrapped()
+	public func unboxed<DirectoryType : DirectoryService>() -> DirectoryType? {
+		return (box as? ConcreteDirectoryBox<DirectoryType>)?.originalDirectory ?? (box as? ConcreteDirectoryBox<AnyDirectoryService>)?.originalDirectory.unboxed()
 	}
 	
 	public var config: AnyOfficeKitServiceConfig {
