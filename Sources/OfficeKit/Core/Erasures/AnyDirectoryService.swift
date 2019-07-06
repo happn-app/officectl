@@ -79,9 +79,11 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		if let (service, user): (LDAPService, LDAPService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
 			return try originalDirectory.logicalUser(from: user, in: service)?.erased()
 		}
+		#if canImport(DirectoryService) && canImport(OpenDirectory)
 		if let (service, user): (OpenDirectoryService, OpenDirectoryService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
 			return try originalDirectory.logicalUser(from: user, in: service)?.erased()
 		}
+		#endif
 		
 		throw InvalidArgumentError(message: "Unknown AnyDirectory for getting existing user in type erased directory service.")
 	}
@@ -112,9 +114,11 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		if let (service, user): (LDAPService, LDAPService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
 			return try originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
 		}
+		#if canImport(DirectoryService) && canImport(OpenDirectory)
 		if let (service, user): (OpenDirectoryService, OpenDirectoryService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
 			return try originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
 		}
+		#endif
 		
 		throw InvalidArgumentError(message: "Unknown AnyDirectory for getting existing user in type erased directory service.")
 	}
