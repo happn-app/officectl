@@ -118,10 +118,9 @@ public final class GoogleService : DirectoryService {
 	
 	public let supportsPasswordChange = true
 	public func changePasswordAction(for user: GoogleUser, on container: Container) throws -> ResetPasswordAction {
-		let asyncConfig: AsyncConfig = try container.make()
 		let semiSingletonStore: SemiSingletonStore = try container.make()
 		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
-		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: (asyncConfig, googleConnector)) as ResetGooglePasswordAction
+		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: googleConnector) as ResetGooglePasswordAction
 	}
 	
 	/* ***************

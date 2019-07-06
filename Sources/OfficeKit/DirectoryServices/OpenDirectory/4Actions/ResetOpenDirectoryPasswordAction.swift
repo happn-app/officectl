@@ -18,15 +18,15 @@ import Service
 
 public class ResetOpenDirectoryPasswordAction : Action<ODRecord, String, Void>, ResetPasswordAction, SemiSingleton {
 	
-	public static func additionalInfo(from container: Container) throws -> (AsyncConfig, OpenDirectoryConnector, OpenDirectoryRecordAuthenticator) {
-		return try (container.make(), container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()), container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()))
+	public static func additionalInfo(from container: Container) throws -> (OpenDirectoryConnector, OpenDirectoryRecordAuthenticator) {
+		return try (container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()), container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()))
 	}
 	
 	public typealias SemiSingletonKey = ODRecord
-	public typealias SemiSingletonAdditionalInitInfo = (AsyncConfig, OpenDirectoryConnector, OpenDirectoryRecordAuthenticator)
+	public typealias SemiSingletonAdditionalInitInfo = (OpenDirectoryConnector, OpenDirectoryRecordAuthenticator)
 	
-	public required init(key u: ODRecord, additionalInfo: (AsyncConfig, OpenDirectoryConnector, OpenDirectoryRecordAuthenticator), store: SemiSingletonStore) {
-		deps = Dependencies(asyncConfig: additionalInfo.0, connector: additionalInfo.1, authenticator: additionalInfo.2)
+	public required init(key u: ODRecord, additionalInfo: (OpenDirectoryConnector, OpenDirectoryRecordAuthenticator), store: SemiSingletonStore) {
+		deps = Dependencies(connector: additionalInfo.0, authenticator: additionalInfo.1)
 		
 		super.init(subject: u)
 	}
@@ -52,7 +52,6 @@ public class ResetOpenDirectoryPasswordAction : Action<ODRecord, String, Void>, 
 	
 	private struct Dependencies {
 		
-		var asyncConfig: AsyncConfig
 		var connector: OpenDirectoryConnector
 		var authenticator: OpenDirectoryRecordAuthenticator
 		

@@ -15,7 +15,6 @@ import OfficeKit
 
 
 func backupGitHub(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	let asyncConfig: AsyncConfig = try context.container.make()
 	let officeKitConfig = try context.container.make(OfficectlConfig.self).officeKitConfig
 	
 	let serviceId = f.getString(name: "service-id")
@@ -33,7 +32,7 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 	}
 	.then{ repositories -> Future<Set<String>> in
 		let promise: EventLoopPromise<Set<String>> = context.container.eventLoop.newPromise()
-		asyncConfig.dispatchQueue.async{
+		defaultDispatchQueueForFutureSupport.async{
 			let repositoryNames = Set(repositories.map{ $0.fullName })
 			
 			context.console.info("Found \(repositoryNames.count) repositories")

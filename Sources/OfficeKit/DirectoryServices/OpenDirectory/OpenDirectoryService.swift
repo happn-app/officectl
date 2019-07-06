@@ -121,11 +121,10 @@ public final class OpenDirectoryService : DirectoryService {
 	public func changePasswordAction(for user: ODRecordOKWrapper, on container: Container) throws -> ResetPasswordAction {
 		guard let record = user.record else {throw InvalidArgumentError(message: "Got a user without a record to reset password.")}
 		
-		let asyncConfig: AsyncConfig = try container.make()
 		let semiSingletonStore: SemiSingletonStore = try container.make()
 		let openDirectoryConnector: OpenDirectoryConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		let openDirectoryRecordAuthenticator: OpenDirectoryRecordAuthenticator = try semiSingletonStore.semiSingleton(forKey: config.authenticatorSettings)
-		return semiSingletonStore.semiSingleton(forKey: record, additionalInitInfo: (asyncConfig, openDirectoryConnector, openDirectoryRecordAuthenticator)) as ResetOpenDirectoryPasswordAction
+		return semiSingletonStore.semiSingleton(forKey: record, additionalInitInfo: (openDirectoryConnector, openDirectoryRecordAuthenticator)) as ResetOpenDirectoryPasswordAction
 	}
 	
 	/* ***************

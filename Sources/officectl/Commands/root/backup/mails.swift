@@ -16,7 +16,6 @@ import OfficeKit
 
 
 func backupMails(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	let asyncConfig = try context.container.make(AsyncConfig.self)
 	let officeKitConfig = try context.container.make(OfficectlConfig.self).officeKitConfig
 	
 	let serviceId = f.getString(name: "service-id")

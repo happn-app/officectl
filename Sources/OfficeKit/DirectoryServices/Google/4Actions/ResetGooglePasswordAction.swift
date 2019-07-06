@@ -20,19 +20,19 @@ import Service
 
 public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, ResetPasswordAction, SemiSingleton {
 	
-	public static func additionalInfo(from container: Container) throws -> (AsyncConfig, GoogleJWTConnector) {
-		return try (container.make(), container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()))
+	public static func additionalInfo(from container: Container) throws -> GoogleJWTConnector {
+		return try (container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()))
 	}
 	
 	public typealias SemiSingletonKey = GoogleUser
-	public typealias SemiSingletonAdditionalInitInfo = (AsyncConfig, GoogleJWTConnector)
+	public typealias SemiSingletonAdditionalInitInfo = GoogleJWTConnector
 	
 	/* Contains the Google user id as soon as the user is found (after the
 	 * operation is started). */
 	public var googleUserId: String?
 	
-	public required init(key id: GoogleUser, additionalInfo: (AsyncConfig, GoogleJWTConnector), store: SemiSingletonStore) {
-		deps = Dependencies(asyncConfig: additionalInfo.0, connector: additionalInfo.1)
+	public required init(key id: GoogleUser, additionalInfo: GoogleJWTConnector, store: SemiSingletonStore) {
+		deps = Dependencies(connector: additionalInfo)
 		
 		super.init(subject: id)
 	}
@@ -82,7 +82,6 @@ public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, Reset
 	
 	private struct Dependencies {
 		
-		var asyncConfig: AsyncConfig
 		var connector: GoogleJWTConnector
 		
 	}

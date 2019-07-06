@@ -37,7 +37,6 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	try services.register(LeafProvider())
 	
 	/* Register Services */
-	services.register(AsyncConfig.self)
 	services.register(ErrorMiddleware.self)
 	services.register(SemiSingletonStore(forceClassInKeys: true))
 	services.register(OfficeKitServiceProvider(config: cliParseResults.officectlConfig.officeKitConfig))

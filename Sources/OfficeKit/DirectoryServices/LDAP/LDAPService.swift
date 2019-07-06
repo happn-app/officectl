@@ -125,10 +125,9 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	
 	public let supportsPasswordChange = true
 	public func changePasswordAction(for user: LDAPInetOrgPersonWithObject, on container: Container) throws -> ResetPasswordAction {
-		let asyncConfig: AsyncConfig = try container.make()
 		let semiSingletonStore: SemiSingletonStore = try container.make()
 		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
-		return semiSingletonStore.semiSingleton(forKey: user.id, additionalInitInfo: (asyncConfig, ldapConnector)) as ResetLDAPPasswordAction
+		return semiSingletonStore.semiSingleton(forKey: user.id, additionalInitInfo: ldapConnector) as ResetLDAPPasswordAction
 	}
 	
 	public func authenticate(userId dn: LDAPDistinguishedName, challenge checkedPassword: String, on container: Container) throws -> Future<Bool> {

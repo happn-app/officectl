@@ -22,7 +22,6 @@ import URLRequestOperation
 
 
 func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	let asyncConfig: AsyncConfig = try context.container.make()
 //	let officeKitConfig: OfficeKitConfig = try context.container.make()
 //	let semiSingletonStore: SemiSingletonStore = try context.container.make()
 	

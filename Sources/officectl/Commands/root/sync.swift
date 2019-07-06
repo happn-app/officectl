@@ -25,7 +25,6 @@ private struct ServiceSyncPlan {
 
 
 func sync(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	let asyncConfig = try context.container.make(AsyncConfig.self)
 	let officeKitServiceProvider = try context.container.make(OfficeKitServiceProvider.self)
 	
 	let fromId = f.getString(name: "from")!
