@@ -19,6 +19,7 @@ let package = Package(
 		.package(url: "https://github.com/vapor/crypto.git", from: "3.0.0"),
 //		.package(url: "https://github.com/vapor/fluent-sqlite.git", from: "3.0.0"),
 		.package(url: "https://github.com/vapor/service.git", from: "1.0.0"),
+		.package(url: "https://github.com/vapor/console.git", from: "3.0.0"), /* Logging */
 		.package(url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
 		.package(url: "https://github.com/vapor/jwt.git", from: "3.0.0"),
 		.package(url: "https://github.com/happn-tech/EmailValidator.git", .branch("master")),
@@ -35,7 +36,7 @@ let package = Package(
 			/* happn dependencies */
 			"RetryingOperation", "URLRequestOperation", "SemiSingleton", "EmailValidator",
 			/* External dependencies */
-			"NIO", "Crypto", "Service", "Async", "JWT", "GenericJSON"
+			"NIO", "Crypto", "Service", "Logging", "Async", "JWT", "GenericJSON"
 			/* IMHO this one shouldn’t be needed, but I can’t seem to get rid of it
 			 * in Xcode. Works well with SPM CLI. */
 			,"Vapor"
