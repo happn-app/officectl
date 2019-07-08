@@ -75,9 +75,9 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> LDAPInetOrgPersonWithObject? {
 		if let user = user as? GoogleUser {
 			let ret = try logicalUser(fromEmail: user.primaryEmail)
-			ret?.inetOrgPerson.sn = [user.name.familyName]
-			ret?.inetOrgPerson.cn = [user.name.givenName + " " + user.name.familyName]
-			ret?.inetOrgPerson.givenName = [user.name.givenName]
+			if let fn = user.name.value?.familyName {ret?.inetOrgPerson.sn = [fn]}
+			if let fn = user.name.value?.fullName   {ret?.inetOrgPerson.cn = [fn]}
+			if let gn = user.name.value?.givenName  {ret?.inetOrgPerson.givenName = [gn]}
 			return ret
 		}
 		throw NotImplementedError()

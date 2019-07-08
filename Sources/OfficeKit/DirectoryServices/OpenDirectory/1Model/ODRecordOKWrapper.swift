@@ -37,13 +37,13 @@ public struct ODRecordOKWrapper : DirectoryUser {
 		lastName = .unsupported
 	}
 	
-	public init(id theId: LDAPDistinguishedName, emails e: [Email], firstName fn: String?, lastName ln: String?) {
+	public init(id theId: LDAPDistinguishedName, emails e: [Email]) {
 		userId = theId
 		persistentId = .unfetched
 		
 		emails = .fetched(e)
-		firstName = .fetched(fn)
-		lastName = .fetched(ln)
+		firstName = .unfetched
+		lastName = .unfetched
 	}
 	
 	public var record: ODRecord?

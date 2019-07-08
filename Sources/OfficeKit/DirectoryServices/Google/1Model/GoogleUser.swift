@@ -11,8 +11,6 @@ import Foundation
 
 public struct GoogleUser : Hashable, Codable {
 	
-	#warning("TODO: Migrate all keys to RemoteProperty")
-	
 	public enum Kind : String, Codable {
 		
 		case user = "admin#directory#user"
@@ -35,58 +33,33 @@ public struct GoogleUser : Hashable, Codable {
 		
 	}
 	
-	public var kind: Kind
-	public var etag: String?
+	public var kind: RemoteProperty<Kind> = .unfetched
+	public var etag: RemoteProperty<String?> = .unfetched
 	
-	/** The id of the user. If empty, the id has not been fetched. */
-	public var id: String
-	/** The customer id of the user. If empty, the id has not been fetched. */
-	public var customerId: String
+	public var id: RemoteProperty<String> = .unfetched
+	public var customerId: RemoteProperty<String> = .unfetched
 	
-	public var name: Name
+	public var name: RemoteProperty<Name> = .unfetched
 	
 	public var primaryEmail: Email
-	public var aliases: [Email]?
-	public var nonEditableAliases: [Email]?
-	public var includeInGlobalAddressList: Bool
+	public var aliases: RemoteProperty<[Email]?> = .unfetched
+	public var nonEditableAliases: RemoteProperty<[Email]?> = .unfetched
+	public var includeInGlobalAddressList: RemoteProperty<Bool> = .unfetched
 	
-	public var isAdmin: Bool
-	public var isDelegatedAdmin: Bool
+	public var isAdmin: RemoteProperty<Bool> = .unfetched
+	public var isDelegatedAdmin: RemoteProperty<Bool> = .unfetched
 	
-	public var lastLoginTime: Date?
-	public var creationTime: Date
-	public var agreedToTerms: Bool
+	public var lastLoginTime: RemoteProperty<Date?> = .unfetched
+	public var creationTime: RemoteProperty<Date> = .unfetched
+	public var agreedToTerms: RemoteProperty<Bool> = .unfetched
 	
-	public var suspended: Bool
-	public var hashFunction: PasswordHashFunction?
-	public var password: String?
-	public var changePasswordAtNextLogin: Bool
+	public var suspended: RemoteProperty<Bool> = .unfetched
+	public var hashFunction: RemoteProperty<PasswordHashFunction?> = .unfetched
+	public var password: RemoteProperty<String?> = .unfetched
+	public var changePasswordAtNextLogin: RemoteProperty<Bool> = .unfetched
 	
 	init(email: Email) {
-		kind = .user
-		etag = nil
-		
-		id = ""
-		customerId = ""
-		
-		name = Name(givenName: "", familyName: "", fullName: "")
-		
 		primaryEmail = email
-		aliases = nil
-		nonEditableAliases = nil
-		includeInGlobalAddressList = false
-		
-		isAdmin = false
-		isDelegatedAdmin = false
-		
-		lastLoginTime = nil
-		creationTime = Date()
-		agreedToTerms = false
-		
-		suspended = false
-		hashFunction = nil
-		password = nil
-		changePasswordAtNextLogin = false
 	}
 	
 	public static func ==(_ user1: GoogleUser, _ user2: GoogleUser) -> Bool {
@@ -127,19 +100,19 @@ extension GoogleUser : DirectoryUser {
 	}
 	
 	public var persistentId: RemoteProperty<String> {
-		return (id.isEmpty ? .unfetched : .fetched(id))
+		return id
 	}
 	
 	public var emails: RemoteProperty<[Email]> {
-		return .fetched([primaryEmail] + (aliases ?? []))
+		return aliases.map{ [primaryEmail] + ($0 ?? []) }
 	}
 	
 	public var firstName: RemoteProperty<String?> {
-		return .fetched(name.givenName)
+		return name.map{ $0.givenName }
 	}
 	
 	public var lastName: RemoteProperty<String?> {
-		return .fetched(name.familyName)
+		return name.map{ $0.familyName }
 	}
 	
 	public var nickname: RemoteProperty<String?> {

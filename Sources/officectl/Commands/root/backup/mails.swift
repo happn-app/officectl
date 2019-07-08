@@ -359,15 +359,21 @@ class OfflineimapRunOperation : RetryingOperation {
 			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "No access tokens…"])
 		}
 		
+		guard userTokens.keys.first(where: { $0.id.value == nil }) == nil else {
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Got a user with no id fetched!"])
+		}
+		
 		/* About maxsyncaccounts:
 		 *    We default arbitrarily to 4 (ncores/2 would probably be better).
 		 *    Even on an 8-core machine, offlineimap seems greedy, and I got a
-		 *    "pthread_cond_wait: Resource busy" error with maxsyncaccounts = 8. */
+		 *    "pthread_cond_wait: Resource busy" error with maxsyncaccounts = 8.
+		 * About the forced unwrapped below, we know the id is fetched on all the
+		 * users (checked above). */
 		let config = """
 		[general]
 		ui = MachineUI
 		maxsyncaccounts = \(maxConcurrentOfflineimapSyncTasks ?? 4)
-		accounts = \(userTokens.keys.map{ "AccountUserID_" + $0.id }.joined(separator: ","))
+		accounts = \(userTokens.keys.map{ "AccountUserID_" + $0.id.value! }.joined(separator: ","))
 		
 		
 		
@@ -377,15 +383,15 @@ class OfflineimapRunOperation : RetryingOperation {
 			 *    - When using the system (macOS) Python, we must use the dummycert trick (sslcacertfile = ~/.dummycert_for_python.pem);
 			 *    - When using homebrew’s Python2 (offlineimap uses Python2…), we must specify the cacert file. We use the one from openssl. */
 			return """
-			[Account AccountUserID_\(user.id)]
-			localrepository = LocalRepoID_\(user.id)
-			remoterepository = RemoteRepoID_\(user.id)
+			[Account AccountUserID_\(user.id.value!)]
+			localrepository = LocalRepoID_\(user.id.value!)
+			remoterepository = RemoteRepoID_\(user.id.value!)
 			
-			[Repository LocalRepoID_\(user.id)]
+			[Repository LocalRepoID_\(user.id.value!)]
 			type = Maildir
 			localfolders = \(OfflineimapRunOperation.destinationURL(for: user, destinationFolderURL: destinationFolderURL).path)
 			
-			[Repository RemoteRepoID_\(user.id)]
+			[Repository RemoteRepoID_\(user.id.value!)]
 			type = Gmail
 			readonly = True
 			remoteuser = \(user.primaryEmail.stringValue)

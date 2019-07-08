@@ -60,15 +60,15 @@ public final class OpenDirectoryService : DirectoryService {
 		}
 		return ODRecordOKWrapper(
 			id: LDAPDistinguishedName(uid: email.username, baseDN: baseDN),
-			emails: [email], firstName: nil, lastName: nil
+			emails: [email]
 		)
 	}
 	
 	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> ODRecordOKWrapper? {
 		if let user = user as? GoogleUser {
 			var ret = try logicalUser(fromEmail: user.primaryEmail)
-			ret?.firstName = .fetched(user.name.givenName)
-			ret?.lastName = .fetched(user.name.familyName)
+			if let gn = user.name.value?.givenName  {ret?.firstName = .fetched(gn)}
+			if let fn = user.name.value?.familyName {ret?.lastName  = .fetched(fn)}
 			return ret
 		}
 		throw NotImplementedError()

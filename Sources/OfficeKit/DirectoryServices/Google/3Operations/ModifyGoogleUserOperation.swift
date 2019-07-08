@@ -43,8 +43,8 @@ public class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 			let dataToSend = try JSONEncoder().encode(toSend)
 			
 			let baseURL = URL(string: "https://www.googleapis.com/admin/directory/v1/users/")!
-			guard !user.id.isEmpty else {throw InvalidArgumentError(message: "Invalid Google user to modify: id is empty.")}
-			guard let url = URL(string: user.id, relativeTo: baseURL), let urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true) else {
+			guard let userId = user.id.value else {throw InvalidArgumentError(message: "Invalid Google user to modify: id is not fetched.")}
+			guard let url = URL(string: userId, relativeTo: baseURL), let urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true) else {
 				throw InternalError(message: "Cannot build URL to modify Google user \(user)")
 			}
 			var urlRequest = URLRequest(url: urlComponents.url!)
