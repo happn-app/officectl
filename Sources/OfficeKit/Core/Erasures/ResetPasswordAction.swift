@@ -18,6 +18,7 @@ import Foundation
  *       IMHO this is a Swift bug, but this is debatable. */
 public protocol ResetPasswordAction/* : AnyAction where ParametersType == String, ResultType == Void */ {
 	
+	var isWeak: Bool {get}
 	var isExecuting: Bool {get}
 	var latestParameters: String? {get}
 	var result: Result<Void, Error>? {get}

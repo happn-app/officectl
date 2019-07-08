@@ -44,7 +44,7 @@ final class WebPasswordResetController {
 		}
 		.flatMap{
 			let actions = try self.resetPasswordActions(for: email, container: req)
-			actions.forEach{ $0.resetAction.successValue?.start(parameters: resetPasswordData.newPass, weakeningMode: .always(successDelay: nil, errorDelay: 180), handler: nil) }
+			actions.forEach{ $0.resetAction.successValue?.start(parameters: resetPasswordData.newPass, weakeningMode: .always(successDelay: 180, errorDelay: 180), handler: nil) }
 			return self.renderResetPasswordActions(actions, for: email, view: view)
 		}
 	}
@@ -83,6 +83,7 @@ final class WebPasswordResetController {
 			struct ServicePasswordResetStatus : Encodable {
 				var serviceName: String
 				var isExecuting: Bool
+				var hasRun: Bool
 				var errorStr: String?
 			}
 			
@@ -99,6 +100,7 @@ final class WebPasswordResetController {
 				ResetPasswordStatusContext.ServicePasswordResetStatus(
 					serviceName: $0.service.config.serviceName,
 					isExecuting: $0.resetAction.successValue?.isExecuting ?? false,
+					hasRun: !($0.resetAction.successValue?.isWeak ?? false),
 					errorStr: ($0.resetAction.failureValue ?? $0.resetAction.successValue?.result?.failureValue)?.legibleLocalizedDescription
 				)
 			}
