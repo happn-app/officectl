@@ -89,7 +89,7 @@ public extension Connector {
 	
 	The handler will be called with the new scopes after the connection operation
 	and an optional error. */
-	func connect(scope: ScopeType, forceReconnect: Bool = false, handlerQueue: DispatchQueue = .main, handler: @escaping (_ result: Result<ScopeType?, Error>) -> Void) {
+	func connect(scope: ScopeType, forceReconnect: Bool = false, handlerQueue: DispatchQueue = defaultDispatchQueueForFutureSupport, handler: @escaping (_ result: Result<ScopeType?, Error>) -> Void) {
 		assert(connectorOperationQueue.maxConcurrentOperationCount == 1)
 		connectorOperationQueue.addAsyncBlock{ stopOperationHandler in
 			let connectionHandler = { (_ error: Error?) -> Void in
@@ -119,7 +119,7 @@ public extension Connector {
 	
 	The handler will be called with the new scopes after the disconnection
 	operation and an optional error. */
-	func disconnect(scope: ScopeType? = nil, forceDisconnect: Bool = false, handlerQueue: DispatchQueue = .main, handler: @escaping (_ result: Result<ScopeType?, Error>) -> Void) {
+	func disconnect(scope: ScopeType? = nil, forceDisconnect: Bool = false, handlerQueue: DispatchQueue = defaultDispatchQueueForFutureSupport, handler: @escaping (_ result: Result<ScopeType?, Error>) -> Void) {
 		assert(connectorOperationQueue.maxConcurrentOperationCount == 1)
 		connectorOperationQueue.addAsyncBlock{ stopOperationHandler in
 			let connectionHandler = { (_ error: Error?) -> Void in

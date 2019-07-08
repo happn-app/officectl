@@ -15,6 +15,10 @@ import OpenDirectory
 
 public struct ODRecordOKWrapper : DirectoryUser {
 	
+	public typealias UserIdType = LDAPDistinguishedName
+	#warning("TODO: Honestly, I don’t know what type the persistent id of an LDAP object is.")
+	public typealias PersistentIdType = LDAPDistinguishedName
+	
 	public init(record r: ODRecord) throws {
 		record = r
 		
@@ -24,27 +28,29 @@ public struct ODRecordOKWrapper : DirectoryUser {
 		guard let idsStr = try r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName])[kODAttributeTypeMetaRecordName] as? [String], let idStr = idsStr.first, idsStr.count == 1 else {
 			throw InvalidArgumentError(message: "Cannot create an ODRecordOKWrapper if I don’t have an id or have too many ids in the record. Record is: \(r)")
 		}
-		id = try LDAPDistinguishedName(string: idStr)
+		userId = try LDAPDistinguishedName(string: idStr)
 		
 		#warning("TODO")
-		emails = .unfetched
-		firstName = .unfetched
-		lastName = .unfetched
+		persistentId = .unsupported
+		emails = .unsupported
+		firstName = .unsupported
+		lastName = .unsupported
 	}
 	
 	public init(id theId: LDAPDistinguishedName, emails e: [Email], firstName fn: String?, lastName ln: String?) {
-		id = theId
+		userId = theId
+		persistentId = .unfetched
 		
 		emails = .fetched(e)
 		firstName = .fetched(fn)
 		lastName = .fetched(ln)
 	}
 	
-	public typealias IdType = LDAPDistinguishedName
-	
 	public var record: ODRecord?
 	
-	public var id: LDAPDistinguishedName
+	public var userId: LDAPDistinguishedName
+	public var persistentId: RemoteProperty<LDAPDistinguishedName>
+	
 	public var emails: RemoteProperty<[Email]>
 	
 	public var firstName: RemoteProperty<String?>

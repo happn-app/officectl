@@ -27,10 +27,6 @@ public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, Reset
 	public typealias SemiSingletonKey = GoogleUser
 	public typealias SemiSingletonAdditionalInitInfo = GoogleJWTConnector
 	
-	/* Contains the Google user id as soon as the user is found (after the
-	 * operation is started). */
-	public var googleUserId: String?
-	
 	public required init(key id: GoogleUser, additionalInfo: GoogleJWTConnector, store: SemiSingletonStore) {
 		deps = Dependencies(connector: additionalInfo)
 		
@@ -38,8 +34,6 @@ public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, Reset
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
-		googleUserId = nil /* We re-search for the user, so we clear the current user id we have */
-		
 		let newPasswordHash: Data
 		let passwordData = Data(newPassword.utf8)
 		#if canImport(CommonCrypto)

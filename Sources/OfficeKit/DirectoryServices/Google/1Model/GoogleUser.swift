@@ -11,6 +11,8 @@ import Foundation
 
 public struct GoogleUser : Hashable, Codable {
 	
+	#warning("TODO: Migrate all keys to RemoteProperty")
+	
 	public enum Kind : String, Codable {
 		
 		case user = "admin#directory#user"
@@ -36,7 +38,9 @@ public struct GoogleUser : Hashable, Codable {
 	public var kind: Kind
 	public var etag: String?
 	
+	/** The id of the user. If empty, the id has not been fetched. */
 	public var id: String
+	/** The customer id of the user. If empty, the id has not been fetched. */
 	public var customerId: String
 	
 	public var name: Name
@@ -57,6 +61,33 @@ public struct GoogleUser : Hashable, Codable {
 	public var hashFunction: PasswordHashFunction?
 	public var password: String?
 	public var changePasswordAtNextLogin: Bool
+	
+	init(email: Email) {
+		kind = .user
+		etag = nil
+		
+		id = ""
+		customerId = ""
+		
+		name = Name(givenName: "", familyName: "", fullName: "")
+		
+		primaryEmail = email
+		aliases = nil
+		nonEditableAliases = nil
+		includeInGlobalAddressList = false
+		
+		isAdmin = false
+		isDelegatedAdmin = false
+		
+		lastLoginTime = nil
+		creationTime = Date()
+		agreedToTerms = false
+		
+		suspended = false
+		hashFunction = nil
+		password = nil
+		changePasswordAtNextLogin = false
+	}
 	
 	public static func ==(_ user1: GoogleUser, _ user2: GoogleUser) -> Bool {
 		return user1.id == user2.id
@@ -88,8 +119,16 @@ public struct GoogleUser : Hashable, Codable {
 
 extension GoogleUser : DirectoryUser {
 	
-	#warning("TODO: Type should probably be Email")
-	public typealias IdType = String
+	public typealias UserIdType = Email
+	public typealias PersistentIdType = String
+	
+	public var userId: Email {
+		return primaryEmail
+	}
+	
+	public var persistentId: RemoteProperty<String> {
+		return (id.isEmpty ? .unfetched : .fetched(id))
+	}
 	
 	public var emails: RemoteProperty<[Email]> {
 		return .fetched([primaryEmail] + (aliases ?? []))

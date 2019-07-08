@@ -34,20 +34,24 @@ public final class GitHubService : DirectoryService {
 		return string
 	}
 	
-	public func logicalUser(from email: Email) throws -> GitHubUser? {
+	public func logicalUser(fromEmail email: Email) throws -> GitHubUser? {
 		throw NotSupportedError(message: "There are no logical rules to convert an email to a GitHub user.")
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> GitHubUser? {
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> GitHubUser? {
 		throw NotSupportedError(message: "There are no logical rules to convert a user from a \(OtherServiceType.self) to a GitHub user.")
 	}
 	
-	public func existingUser(from id: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) -> Future<GitHubUser?> {
-		return container.eventLoop.newFailedFuture(error: NotImplementedError())
+	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GitHubUser?> {
+		throw NotImplementedError()
 	}
 	
-	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) -> Future<GitHubUser?> {
-		return container.eventLoop.newFailedFuture(error: NotSupportedError(message: "Fetching a GitHub user id from his email does not make sense as the user have his personal email in GitHub (and we probably don’t have access to the user’s emails anyway)."))
+	public func existingUser(fromUserId uId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GitHubUser?> {
+		throw NotImplementedError()
+	}
+	
+	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GitHubUser?> {
+		throw NotSupportedError(message: "Fetching a GitHub user id from his email does not make sense as the user have his personal email in GitHub (and we probably don’t have access to the user’s emails anyway).")
 	}
 	
 	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) -> Future<GitHubUser?> {

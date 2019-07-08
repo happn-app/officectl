@@ -19,11 +19,12 @@ private protocol DirectoryServiceBox {
 	func string(from userId: AnyHashable) -> String
 	func userId(from string: String) throws -> AnyHashable
 	
-	func logicalUser(from email: Email) throws -> AnyDirectoryUser?
-	func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> AnyDirectoryUser?
+	func logicalUser(fromEmail email: Email) throws -> AnyDirectoryUser?
+	func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> AnyDirectoryUser?
 	
-	func existingUser(from id: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
-	func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
+	func existingUser(fromPersistentId pId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
+	func existingUser(fromUserId uId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
+	func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
 	func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
 	
 	func listAllUsers(on container: Container) throws -> Future<[AnyDirectoryUser]>
@@ -52,7 +53,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	
 	func string(from userId: AnyHashable) -> String {
 		/* TODO? I’m not a big fan of this forced unwrapping… */
-		let typedId = userId as! Base.UserType.IdType
+		let typedId = userId as! Base.UserType.UserIdType
 		return originalDirectory.string(from: typedId)
 	}
 	
@@ -60,43 +61,50 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		return try AnyHashable(originalDirectory.userId(from: string))
 	}
 	
-	func logicalUser(from email: Email) throws -> AnyDirectoryUser? {
-		return try originalDirectory.logicalUser(from: email)?.erased()
+	func logicalUser(fromEmail email: Email) throws -> AnyDirectoryUser? {
+		return try originalDirectory.logicalUser(fromEmail: email)?.erased()
 	}
 	
-	func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> AnyDirectoryUser? {
+	func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> AnyDirectoryUser? {
 		guard let anyService = service as? AnyDirectoryService else {
-			return try originalDirectory.logicalUser(from: user, in: service)?.erased()
+			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
 		}
 		
 		let anyUser = user as! AnyDirectoryUser
 		if let (service, user): (GitHubService, GitHubService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.logicalUser(from: user, in: service)?.erased()
+			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
 		}
 		if let (service, user): (GoogleService, GoogleService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.logicalUser(from: user, in: service)?.erased()
+			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
 		}
 		if let (service, user): (LDAPService, LDAPService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.logicalUser(from: user, in: service)?.erased()
+			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
 		}
 		#if canImport(DirectoryService) && canImport(OpenDirectory)
 		if let (service, user): (OpenDirectoryService, OpenDirectoryService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.logicalUser(from: user, in: service)?.erased()
+			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
 		}
 		#endif
 		
 		throw InvalidArgumentError(message: "Unknown AnyDirectory for getting existing user in type erased directory service.")
 	}
 	
-	func existingUser(from id: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
-		guard let typedId = id as? Base.UserType.IdType else {
-			throw InvalidArgumentError(message: "Got invalid user id (\(id)) for fetching user with directory service of type \(Base.self)")
+	func existingUser(fromPersistentId pId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+		guard let typedId = pId as? Base.UserType.PersistentIdType else {
+			throw InvalidArgumentError(message: "Got invalid persistent user id (\(pId)) for fetching user with directory service of type \(Base.self)")
 		}
-		return try originalDirectory.existingUser(from: typedId, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
+		return try originalDirectory.existingUser(fromPersistentId: typedId, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
 	}
 	
-	func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
-		return try originalDirectory.existingUser(from: email, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
+	func existingUser(fromUserId uId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+		guard let typedId = uId as? Base.UserType.UserIdType else {
+			throw InvalidArgumentError(message: "Got invalid user id (\(uId)) for fetching user with directory service of type \(Base.self)")
+		}
+		return try originalDirectory.existingUser(fromUserId: typedId, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
+	}
+	
+	func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+		return try originalDirectory.existingUser(fromEmail: email, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
 	}
 	
 	func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
@@ -201,20 +209,24 @@ public class AnyDirectoryService : DirectoryService {
 		return try box.userId(from: string)
 	}
 	
-	public func logicalUser(from email: Email) throws -> AnyDirectoryUser? {
-		return try box.logicalUser(from: email)
+	public func logicalUser(fromEmail email: Email) throws -> AnyDirectoryUser? {
+		return try box.logicalUser(fromEmail: email)
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> AnyDirectoryUser? {
-		return try box.logicalUser(from: user, in: service)
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> AnyDirectoryUser? {
+		return try box.logicalUser(fromUser: user, in: service)
 	}
 	
-	public func existingUser(from id: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
-		return try box.existingUser(from: id, propertiesToFetch: propertiesToFetch, on: container)
+	public func existingUser(fromPersistentId pId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+		return try box.existingUser(fromPersistentId: pId, propertiesToFetch: propertiesToFetch, on: container)
 	}
 	
-	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
-		return try box.existingUser(from: email, propertiesToFetch: propertiesToFetch, on: container)
+	public func existingUser(fromUserId uId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+		return try box.existingUser(fromUserId: uId, propertiesToFetch: propertiesToFetch, on: container)
+	}
+	
+	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+		return try box.existingUser(fromEmail: email, propertiesToFetch: propertiesToFetch, on: container)
 	}
 	
 	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {

@@ -46,36 +46,43 @@ public final class OpenDirectoryService : DirectoryService {
 		return try LDAPDistinguishedName(string: string)
 	}
 	
-	public func logicalUser(from email: Email) throws -> ODRecordOKWrapper? {
-		throw NotImplementedError()
+	public func logicalUser(fromEmail email: Email) throws -> ODRecordOKWrapper? {
+		guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
+			throw InvalidArgumentError(message: "Cannot get logical user from \(email) when I don’t have people base DNs.")
+		}
+		guard let baseDN = peopleBaseDNPerDomain[email.domain] else {
+			/* If the domain of the email is not supported in the LDAP config, we
+			 * return a nil logical user: the user cannot exist in the LDAP in this
+			 * state, but it’s not an actual error.
+			 * TODO: Make sure we actually do want that and not raise a “well-
+			 *       known” error instead, that clients could catch… */
+			return nil
+		}
+		return ODRecordOKWrapper(
+			id: LDAPDistinguishedName(uid: email.username, baseDN: baseDN),
+			emails: [email], firstName: nil, lastName: nil
+		)
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> ODRecordOKWrapper? {
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> ODRecordOKWrapper? {
 		if let user = user as? GoogleUser {
-			guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
-				throw InvalidArgumentError(message: "Cannot get logical user from \(user) when I don’t have people base DNs.")
-			}
-			guard let baseDN = peopleBaseDNPerDomain[user.primaryEmail.domain] else {
-				/* If the domain of the Google user is not supported in the LDAP
-				 * config, we return a nil logical user: the user cannot exist in
-				 * the LDAP in this state, but it’s not an actual error.
-				 * TODO: Make sure we actually do want that and not raise a “well-
-				 *       known” error instead, that clients could catch… */
-				return nil
-			}
-			return ODRecordOKWrapper(
-				id: LDAPDistinguishedName(uid: user.primaryEmail.username, baseDN: baseDN),
-				emails: [user.primaryEmail], firstName: user.name.givenName, lastName: user.name.familyName
-			)
+			var ret = try logicalUser(fromEmail: user.primaryEmail)
+			ret?.firstName = .fetched(user.name.givenName)
+			ret?.lastName = .fetched(user.name.familyName)
+			return ret
 		}
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(from id: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<ODRecordOKWrapper?> {
+	public func existingUser(fromPersistentId pId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<ODRecordOKWrapper?> {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
+	public func existingUser(fromUserId uId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<ODRecordOKWrapper?> {
+		throw NotImplementedError()
+	}
+	
+	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
 		#warning("TODO: Implement propertiesToFetch")
 		let request = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(email.username.utf8)], returnAttributes: nil, maximumResults: 2)
 		return try existingRecord(fromSearchRequest: request, on: container)
@@ -84,7 +91,7 @@ public final class OpenDirectoryService : DirectoryService {
 	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
 		switch (service, user) {
 		case let (_ as LDAPService, ldapUser as LDAPService.UserType):
-			guard let uid = ldapUser.id.uid else {throw UserIdConversionError.uidMissingInDN}
+			guard let uid = ldapUser.userId.uid else {throw UserIdConversionError.uidMissingInDN}
 			let request = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(uid.utf8)], returnAttributes: nil, maximumResults: 2)
 			return try existingRecord(fromSearchRequest: request, on: container)
 			
@@ -119,7 +126,7 @@ public final class OpenDirectoryService : DirectoryService {
 	
 	public let supportsPasswordChange = true
 	public func changePasswordAction(for user: ODRecordOKWrapper, on container: Container) throws -> ResetPasswordAction {
-		guard let record = user.record else {throw InvalidArgumentError(message: "Got a user without a record to reset password.")}
+		guard let record = user.record else {throw InvalidArgumentError(message: "Got a user without a record to retrieve reset password action.")}
 		
 		let semiSingletonStore: SemiSingletonStore = try container.make()
 		let openDirectoryConnector: OpenDirectoryConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)

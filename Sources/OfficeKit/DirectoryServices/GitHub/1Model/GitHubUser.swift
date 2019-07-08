@@ -11,9 +11,11 @@ import Foundation
 
 public struct GitHubUser : DirectoryUser {
 	
-	public typealias IdType = String
+	public typealias UserIdType = String
+	public typealias PersistentIdType = String
 	
-	public var id: String
+	public var userId: String
+	public var persistentId: RemoteProperty<String>
 	
 	public var emails: RemoteProperty<[Email]>
 	

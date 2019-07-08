@@ -24,8 +24,8 @@ public protocol DirectoryService : class {
 	var config: ConfigType {get}
 	
 	/** Empty ids are **not supported**. There are no other restrictions. */
-	func string(from userId: UserType.IdType) -> String
-	func userId(from string: String) throws -> UserType.IdType
+	func string(from userId: UserType.UserIdType) -> String
+	func userId(from string: String) throws -> UserType.UserIdType
 	
 	/** If possible, convert the given email to a user with as much information
 	as possible in your directory.
@@ -33,27 +33,33 @@ public protocol DirectoryService : class {
 	The conversion should not fetch anything from the directory. It is simply a
 	representation of how the given email _should_ be created in the directory if
 	it were to be created in it. */
-	func logicalUser(from email: Email) throws -> UserType?
+	func logicalUser(fromEmail email: Email) throws -> UserType?
 	/** If possible, convert the given user in the given directory to a user with
 	as much information as possible in your directory.
 	
 	The conversion should not fetch anything from neither the source nor the
 	destination directory. It is simply a representation of how the given user
 	_should_ be created in the directory if it were to be created in it. */
-	func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> UserType?
+	func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> UserType?
 	
 	/** Fetch and return the _only_ user matching the given id.
 	
 	If _more than one_ user matches the given id, the function should return a
 	**failed** future. If _no_ users match the given id, the method should
 	return a succeeded future with a `nil` user. */
-	func existingUser(from id: UserType.IdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
+	func existingUser(fromPersistentId pId: UserType.PersistentIdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
+	/** Fetch and return the _only_ user matching the given id.
+	
+	If _more than one_ user matches the given id, the function should return a
+	**failed** future. If _no_ users match the given id, the method should
+	return a succeeded future with a `nil` user. */
+	func existingUser(fromUserId uId: UserType.UserIdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
 	/** Fetch and return the _only_ user matching the given email.
 	
 	If _more than one_ user matches the given email, the function should return a
 	**failed** future. If _no_ users match the given email, the method should
 	return a succeeded future with a `nil` user. */
-	func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
+	func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
 	/** Fetch and return the _only_ user matching the given user in the given
 	directory.
 	

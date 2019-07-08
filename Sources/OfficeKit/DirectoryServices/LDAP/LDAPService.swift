@@ -52,39 +52,46 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		return try LDAPDistinguishedName(string: string)
 	}
 	
-	public func logicalUser(from email: Email) throws -> LDAPInetOrgPersonWithObject? {
-		throw NotImplementedError()
+	public func logicalUser(fromEmail email: Email) throws -> LDAPInetOrgPersonWithObject? {
+		guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
+			throw InvalidArgumentError(message: "Cannot get logical user from \(email) when I don’t have people base DNs.")
+		}
+		guard let baseDN = peopleBaseDNPerDomain[email.domain] else {
+			/* If the domain of the email is not supported in the LDAP config, we
+			 * return a nil logical user: the user cannot exist in the LDAP in this
+			 * state, but it’s not an actual error.
+			 * TODO: Make sure we actually do want that and not raise a “well-
+			 *       known” error instead, that clients could catch… */
+			return nil
+		}
+		let inetOrgPerson = LDAPInetOrgPerson(
+			dn: LDAPDistinguishedName(uid: email.username, baseDN: baseDN),
+			sn: [], cn: []
+		)
+		inetOrgPerson.mail = [email]
+		return LDAPInetOrgPersonWithObject(inetOrgPerson: inetOrgPerson)
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> LDAPInetOrgPersonWithObject? {
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> LDAPInetOrgPersonWithObject? {
 		if let user = user as? GoogleUser {
-			guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
-				throw InvalidArgumentError(message: "Cannot get logical user from \(user) when I don’t have people base DNs.")
-			}
-			guard let baseDN = peopleBaseDNPerDomain[user.primaryEmail.domain] else {
-				/* If the domain of the Google user is not supported in the LDAP
-				 * config, we return a nil logical user: the user cannot exist in
-				 * the LDAP in this state, but it’s not an actual error.
-				 * TODO: Make sure we actually do want that and not raise a “well-
-				 *       known” error instead, that clients could catch… */
-				return nil
-			}
-			let inetOrgPerson = LDAPInetOrgPerson(
-				dn: LDAPDistinguishedName(uid: user.primaryEmail.username, baseDN: baseDN),
-				sn: [user.name.familyName], cn: [user.name.givenName + " " + user.name.familyName]
-			)
-			inetOrgPerson.givenName = [user.name.givenName]
-			inetOrgPerson.mail = [user.primaryEmail]
-			return LDAPInetOrgPersonWithObject(inetOrgPerson: inetOrgPerson)
+			let ret = try logicalUser(fromEmail: user.primaryEmail)
+			ret?.inetOrgPerson.sn = [user.name.familyName]
+			ret?.inetOrgPerson.cn = [user.name.givenName + " " + user.name.familyName]
+			ret?.inetOrgPerson.givenName = [user.name.givenName]
+			return ret
 		}
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(from id: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<LDAPInetOrgPersonWithObject?> {
+	public func existingUser(fromPersistentId pId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {
+	public func existingUser(fromUserId uId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {
+		throw NotImplementedError()
+	}
+	
+	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {
 		throw NotImplementedError()
 	}
 	
@@ -127,7 +134,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	public func changePasswordAction(for user: LDAPInetOrgPersonWithObject, on container: Container) throws -> ResetPasswordAction {
 		let semiSingletonStore: SemiSingletonStore = try container.make()
 		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
-		return semiSingletonStore.semiSingleton(forKey: user.id, additionalInitInfo: ldapConnector) as ResetLDAPPasswordAction
+		return semiSingletonStore.semiSingleton(forKey: user.userId, additionalInitInfo: ldapConnector) as ResetLDAPPasswordAction
 	}
 	
 	public func authenticate(userId dn: LDAPDistinguishedName, challenge checkedPassword: String, on container: Container) throws -> Future<Bool> {
@@ -172,7 +179,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			guard let inetOrgPerson = objects.first else {
 				return false
 			}
-			return inetOrgPerson.id == userId
+			return inetOrgPerson.userId == userId
 		}
 	}
 	
@@ -194,7 +201,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	
 	public func fetchUniqueEmails(from user: LDAPInetOrgPersonWithObject, deduplicateAliases: Bool = true, on container: Container) throws -> Future<Set<Email>> {
 		#warning("TODO: Consider whether we want to use the emails already in the user (if applicable)")
-		return try fetchProperties([LDAPInetOrgPerson.propNameMail], from: user.id, on: container)
+		return try fetchProperties([LDAPInetOrgPerson.propNameMail], from: user.userId, on: container)
 		.map{ properties in
 			guard let emailDataArray = properties[LDAPInetOrgPerson.propNameMail] else {
 				throw Error.internalError

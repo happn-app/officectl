@@ -24,14 +24,14 @@ private struct ConcreteDirectoryAuthenticatorBox<Base : DirectoryAuthenticatorSe
 	let originalAuthenticator: Base
 	
 	func authenticate<UserIdType : Hashable, AuthenticationChallenge>(userId: UserIdType, challenge: AuthenticationChallenge, on container: Container) throws -> Future<Bool> {
-		guard let uid = userId as? Base.UserType.IdType, let c = challenge as? Base.AuthenticationChallenge else {
+		guard let uid = userId as? Base.UserType.UserIdType, let c = challenge as? Base.AuthenticationChallenge else {
 			throw InvalidArgumentError(message: "Got invalid user id type (\(UserIdType.self)) or auth challenge type (\(AuthenticationChallenge.self)) to authenticate with a directory service authenticator of type \(Base.self)")
 		}
 		return try originalAuthenticator.authenticate(userId: uid, challenge: c, on: container)
 	}
 	
 	func validateAdminStatus<UserIdType : Hashable>(userId: UserIdType, on container: Container) throws -> Future<Bool> {
-		guard let uid = userId as? Base.UserType.IdType else {
+		guard let uid = userId as? Base.UserType.UserIdType else {
 			throw InvalidArgumentError(message: "Got invalid user id type (\(UserIdType.self)) to check if user is admin with a directory service authenticator of type \(Base.self)")
 		}
 		return try originalAuthenticator.validateAdminStatus(userId: uid, on: container)
@@ -41,7 +41,6 @@ private struct ConcreteDirectoryAuthenticatorBox<Base : DirectoryAuthenticatorSe
 
 public class AnyDirectoryAuthenticatorService : AnyDirectoryService, DirectoryAuthenticatorService {
 	
-	public typealias UserIdType = AnyHashable
 	public typealias AuthenticationChallenge = Any
 	
 	override init<T : DirectoryAuthenticatorService>(_ object: T) {

@@ -42,7 +42,11 @@ public class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 			let toSend = userJSON.filter{ propertiesToUpdate.contains($0.key) }
 			let dataToSend = try JSONEncoder().encode(toSend)
 			
-			let urlComponents = URLComponents(url: URL(string: user.id, relativeTo: URL(string: "https://www.googleapis.com/admin/directory/v1/users/")!)!, resolvingAgainstBaseURL: true)!
+			let baseURL = URL(string: "https://www.googleapis.com/admin/directory/v1/users/")!
+			guard !user.id.isEmpty else {throw InvalidArgumentError(message: "Invalid Google user to modify: id is empty.")}
+			guard let url = URL(string: user.id, relativeTo: baseURL), let urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true) else {
+				throw InternalError(message: "Cannot build URL to modify Google user \(user)")
+			}
 			var urlRequest = URLRequest(url: urlComponents.url!)
 			urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 			urlRequest.httpBody = dataToSend

@@ -38,27 +38,34 @@ public final class GoogleService : DirectoryService {
 		config = c
 	}
 	
-	public func string(from userId: String) -> String {
-		return userId
+	public func string(from userId: Email) -> String {
+		return userId.stringValue
 	}
 	
-	public func userId(from string: String) throws -> String {
-		return string
+	public func userId(from string: String) throws -> Email {
+		guard let e = Email(string: string) else {
+			throw InvalidArgumentError(message: "The given string is not a valid email: \(string)")
+		}
+		return e
 	}
 	
-	public func logicalUser(from email: Email) throws -> GoogleUser? {
+	public func logicalUser(fromEmail email: Email) throws -> GoogleUser? {
+		return GoogleUser(email: email)
+	}
+	
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> GoogleUser? {
 		throw NotImplementedError()
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType) throws -> GoogleUser? {
+	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(from id: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
-		throw NotImplementedError()
+	public func existingUser(fromUserId uId: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
+		return try existingUser(fromEmail: uId, propertiesToFetch: propertiesToFetch, on: container)
 	}
 	
-	public func existingUser(from email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
+	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
 		#warning("TODO: Implement propertiesToFetch")
 		/* Note: We do **NOT** map the email to the main domain. Maybe we should? */
 		let googleConnector: GoogleJWTConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
@@ -134,7 +141,7 @@ public final class GoogleService : DirectoryService {
 			return email
 		}
 		.flatMap{ (email: Email) -> Future<GoogleUser?> in
-			return try self.existingUser(from: email, propertiesToFetch: propertiesToFetch, on: container)
+			return try self.existingUser(fromEmail: email, propertiesToFetch: propertiesToFetch, on: container)
 		}
 		return future
 	}

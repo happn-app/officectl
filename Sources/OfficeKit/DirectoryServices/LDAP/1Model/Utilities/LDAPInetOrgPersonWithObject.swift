@@ -11,8 +11,8 @@ import Foundation
 
 public struct LDAPInetOrgPersonWithObject {
 	
-	let inetOrgPerson: LDAPInetOrgPerson
-	let object: LDAPObject
+	var inetOrgPerson: LDAPInetOrgPerson
+	var object: LDAPObject
 	
 	public init?(object o: LDAPObject) {
 		guard let p = LDAPInetOrgPerson(object: o) else {return nil}
@@ -31,10 +31,17 @@ public struct LDAPInetOrgPersonWithObject {
 
 extension LDAPInetOrgPersonWithObject : DirectoryUser {
 	
-	public typealias IdType = LDAPDistinguishedName
+	public typealias UserIdType = LDAPDistinguishedName
+	#warning("TODO: Honestly, I don’t know what type the persistent id of an LDAP object is.")
+	public typealias PersistentIdType = LDAPDistinguishedName
 	
-	public var id: LDAPDistinguishedName {
+	public var userId: LDAPDistinguishedName {
 		return inetOrgPerson.dn
+	}
+	
+	public var persistentId: RemoteProperty<LDAPDistinguishedName> {
+		#warning("TODO")
+		return .unsupported
 	}
 	
 	public var emails: RemoteProperty<[Email]> {

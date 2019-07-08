@@ -30,7 +30,8 @@ import Foundation
 
 private protocol DirectoryUserBox {
 	
-	var id: AnyHashable {get}
+	var userId: AnyHashable {get}
+	var persistentId: RemoteProperty<AnyHashable> {get}
 	
 	var emails: RemoteProperty<[Email]> {get}
 	
@@ -44,8 +45,16 @@ private struct ConcreteUserBox<Base : DirectoryUser> : DirectoryUserBox {
 	
 	let originalUser: Base
 	
-	var id: AnyHashable {
-		return AnyHashable(originalUser.id)
+	var userId: AnyHashable {
+		return AnyHashable(originalUser.userId)
+	}
+	
+	var persistentId: RemoteProperty<AnyHashable> {
+		switch originalUser.persistentId {
+		case .fetched(let pId): return .fetched(AnyHashable(pId))
+		case .unfetched:        return .unfetched
+		case .unsupported:      return .unsupported
+		}
 	}
 	
 	var emails: RemoteProperty<[Email]> {
@@ -66,7 +75,8 @@ private struct ConcreteUserBox<Base : DirectoryUser> : DirectoryUserBox {
 
 public struct AnyDirectoryUser : DirectoryUser {
 	
-	public typealias IdType = AnyHashable
+	public typealias UserIdType = AnyHashable
+	public typealias PersistentIdType = AnyHashable
 	
 	public init<U : DirectoryUser>(_ user: U) {
 		box = ConcreteUserBox(originalUser: user)
@@ -76,8 +86,12 @@ public struct AnyDirectoryUser : DirectoryUser {
 		return (box as? ConcreteUserBox<UserType>)?.originalUser ?? (box as? ConcreteUserBox<AnyDirectoryUser>)?.originalUser.unwrapped()
 	}
 	
-	public var id: AnyHashable {
-		return box.id
+	public var userId: AnyHashable {
+		return box.userId
+	}
+	
+	public var persistentId: RemoteProperty<AnyHashable> {
+		return box.persistentId
 	}
 	
 	public var emails: RemoteProperty<[Email]> {

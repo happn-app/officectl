@@ -16,7 +16,7 @@ public protocol DirectoryAuthenticatorService : DirectoryService {
 	
 	associatedtype AuthenticationChallenge
 	
-	func authenticate(userId: UserType.IdType, challenge: AuthenticationChallenge, on container: Container) throws -> Future<Bool>
-	func validateAdminStatus(userId: UserType.IdType, on container: Container) throws -> Future<Bool>
+	func authenticate(userId: UserType.UserIdType, challenge: AuthenticationChallenge, on container: Container) throws -> Future<Bool>
+	func validateAdminStatus(userId: UserType.UserIdType, on container: Container) throws -> Future<Bool>
 	
 }
