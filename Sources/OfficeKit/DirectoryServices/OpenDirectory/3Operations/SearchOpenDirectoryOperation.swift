@@ -26,8 +26,8 @@ public final class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 		return try results.get()
 	}
 	
-	public convenience init(dn: LDAPDistinguishedName, maxResults: Int? = nil, returnAttributes: [String]? = nil, openDirectoryConnector c: OpenDirectoryConnector) {
-		let request = OpenDirectorySearchRequest(recordTypes: [], attribute: kODAttributeTypeMetaRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(dn.stringValue.utf8)], returnAttributes: returnAttributes, maximumResults: maxResults)
+	public convenience init(uid: String, maxResults: Int? = nil, returnAttributes: [String]? = nil, openDirectoryConnector c: OpenDirectoryConnector) {
+		let request = OpenDirectorySearchRequest(uid: uid, maxResults: maxResults, returnAttributes: returnAttributes)
 		self.init(request: request, openDirectoryConnector: c)
 	}
 	
@@ -69,12 +69,30 @@ public final class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 /** Basically a wrapper for `ODQuery`, but without specifying the node. */
 public struct OpenDirectorySearchRequest {
 	
-	var recordTypes: [String]
-	var attribute: String?
-	var matchType: ODMatchType
-	var queryValues: [Data]?
-	var returnAttributes: [String]?
-	var maximumResults: Int?
+	public init(uid: String, maxResults: Int? = nil, returnAttributes attr: [String]? = nil) {
+		recordTypes = [kODRecordTypeUsers]
+		attribute = kODAttributeTypeRecordName
+		matchType = ODMatchType(kODMatchEqualTo)
+		queryValues = [Data(uid.utf8)]
+		returnAttributes = attr
+		maximumResults = maxResults
+	}
+	
+	public init(recordTypes rt: [String], attribute attr: String?, matchType mt: ODMatchType, queryValues qv: [Data]?, returnAttributes ra: [String]?, maximumResults mr: Int?) {
+		recordTypes = rt
+		attribute = attr
+		matchType = mt
+		queryValues = qv
+		returnAttributes = ra
+		maximumResults = mr
+	}
+	
+	public var recordTypes: [String]
+	public var attribute: String?
+	public var matchType: ODMatchType
+	public var queryValues: [Data]?
+	public var returnAttributes: [String]?
+	public var maximumResults: Int?
 	
 }
 

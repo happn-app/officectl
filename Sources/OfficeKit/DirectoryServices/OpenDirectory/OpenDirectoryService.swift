@@ -84,7 +84,7 @@ public final class OpenDirectoryService : DirectoryService {
 	
 	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
 		#warning("TODO: Implement propertiesToFetch")
-		let request = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(email.username.utf8)], returnAttributes: nil, maximumResults: 2)
+		let request = OpenDirectorySearchRequest(uid: email.username, maxResults: 2)
 		return try existingRecord(fromSearchRequest: request, on: container)
 	}
 	
@@ -92,7 +92,7 @@ public final class OpenDirectoryService : DirectoryService {
 		switch (service, user) {
 		case let (_ as LDAPService, ldapUser as LDAPService.UserType):
 			guard let uid = ldapUser.userId.uid else {throw UserIdConversionError.uidMissingInDN}
-			let request = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(uid.utf8)], returnAttributes: nil, maximumResults: 2)
+			let request = OpenDirectorySearchRequest(uid: uid, maxResults: 2)
 			return try existingRecord(fromSearchRequest: request, on: container)
 			
 		default:

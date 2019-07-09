@@ -32,12 +32,18 @@ public class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedName, St
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Error>) -> Void) throws {
+		guard let uid = subject.uid else {
+			throw InvalidArgumentError(message: "Did not get a UID in the given DN.")
+		}
+		
 		/* We use futures for style. */
 		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
 		
 		let f = deps.connector.connect(scope: (), eventLoop: eventLoop)
 		.then{ _ -> Future<[ODRecord]> in
-			let op = SearchOpenDirectoryOperation(dn: self.subject, maxResults: 2, returnAttributes: nil, openDirectoryConnector: self.deps.connector)
+			/* Ideally I’d like to search for the DN directly, but for the life of
+			 * me, I cannot find a way to do this! OpenDirectory is awesome. */
+			let op = SearchOpenDirectoryOperation(uid: uid, maxResults: 2, returnAttributes: nil, openDirectoryConnector: self.deps.connector)
 			return Future<[ODRecord]>.future(from: op, eventLoop: eventLoop)
 		}
 		.map{ users -> ODRecord in

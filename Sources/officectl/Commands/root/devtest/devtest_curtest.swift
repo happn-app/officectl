@@ -22,13 +22,24 @@ import URLRequestOperation
 
 
 func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	var user = GoogleUser(email: Email(string: "toto@example.com")!)
-	user.customerId = .set("42")
-	print(Array(Mirror(reflecting: user).children))
-	let encoder = JSONEncoder()
-	let a = try encoder.encode(user)
-	print(String(data: a, encoding: .utf8)!)
-	return context.container.future()
+	let odService: OpenDirectoryService = try context.container.make(OfficeKitServiceProvider.self).getDirectoryService(id: nil, container: context.container)
+	let openDirectoryConnector: OpenDirectoryConnector = try context.container.makeSemiSingleton(forKey: odService.config.connectorSettings)
+	let f = try odService.existingUser(fromEmail: Email(string: "ldap.test@happn.fr")!, propertiesToFetch: Set(), on: context.container)
+	return f.map{ user in
+//		try print(openDirectoryConnector.node?.accountPolicies() as Any)
+		try print(openDirectoryConnector.node?.nodeDetails(forKeys: nil) as Any)
+		print(user as Any)
+		try print(user?.record?.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName]) as Any)
+		return ()
+	}
+	
+//	var user = GoogleUser(email: Email(string: "toto@example.com")!)
+//	user.customerId = .set("42")
+//	print(Array(Mirror(reflecting: user).children))
+//	let encoder = JSONEncoder()
+//	let a = try encoder.encode(user)
+//	print(String(data: a, encoding: .utf8)!)
+//	return context.container.future()
 	
 //	let officeKitConfig: OfficeKitConfig = try context.container.make()
 //	let semiSingletonStore: SemiSingletonStore = try context.container.make()
