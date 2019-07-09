@@ -34,7 +34,7 @@ public final class OpenDirectoryService : DirectoryService {
 	
 	public let config: OpenDirectoryServiceConfig
 	
-	public init(config c: OpenDirectoryServiceConfig) throws {
+	public init(config c: OpenDirectoryServiceConfig) {
 		config = c
 	}
 	

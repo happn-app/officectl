@@ -39,7 +39,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	public let config: LDAPServiceConfig
 	public let domainAliases: [String: String]
 	
-	public init(config c: LDAPServiceConfig, domainAliases aliases: [String: String]) throws {
+	public init(config c: LDAPServiceConfig, domainAliases aliases: [String: String]) {
 		config = c
 		domainAliases = aliases
 	}

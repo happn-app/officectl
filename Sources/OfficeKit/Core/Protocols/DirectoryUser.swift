@@ -26,14 +26,43 @@ public protocol DirectoryUser {
 }
 
 
-public enum DirectoryUserProperty : Hashable {
+public enum DirectoryUserProperty : RawRepresentable, Hashable {
 	
-	case email
+	public typealias RawValue = String
+	
+	case userId
+	case persistentId
+	
+	case emails
 	
 	case firstName
 	case lastName
 	case nickname
 	
 	case custom(String)
+	
+	public init?(rawValue: String) {
+		switch rawValue {
+		case "userId":       self = .userId
+		case "persistentId": self = .persistentId
+		case "emails":       self = .emails
+		case "firstName":    self = .firstName
+		case "lastName":     self = .lastName
+		case "nickname":     self = .nickname
+		default:             self = .custom(rawValue)
+		}
+	}
+	
+	public var rawValue: String {
+		switch self {
+		case .userId:        return "userId"
+		case .persistentId:  return "persistentId"
+		case .emails:        return "emails"
+		case .firstName:     return "firstName"
+		case .lastName:      return "lastName"
+		case .nickname:      return "nickname"
+		case .custom(let v): return v
+		}
+	}
 	
 }

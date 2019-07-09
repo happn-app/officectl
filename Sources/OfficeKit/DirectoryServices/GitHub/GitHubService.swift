@@ -22,7 +22,7 @@ public final class GitHubService : DirectoryService {
 	
 	public let config: GitHubServiceConfig
 	
-	public init(config c: GitHubServiceConfig) throws {
+	public init(config c: GitHubServiceConfig) {
 		config = c
 	}
 	

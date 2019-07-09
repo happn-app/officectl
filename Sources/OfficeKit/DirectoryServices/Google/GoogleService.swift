@@ -34,7 +34,7 @@ public final class GoogleService : DirectoryService {
 	
 	public let config: GoogleServiceConfig
 	
-	public init(config c: GoogleServiceConfig) throws {
+	public init(config c: GoogleServiceConfig) {
 		config = c
 	}
 	
