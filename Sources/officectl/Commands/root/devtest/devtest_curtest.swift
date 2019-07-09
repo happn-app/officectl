@@ -22,6 +22,14 @@ import URLRequestOperation
 
 
 func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
+	var user = GoogleUser(email: Email(string: "toto@example.com")!)
+	user.customerId = .set("42")
+	print(Array(Mirror(reflecting: user).children))
+	let encoder = JSONEncoder()
+	let a = try encoder.encode(user)
+	print(String(data: a, encoding: .utf8)!)
+	return context.container.future()
+	
 //	let officeKitConfig: OfficeKitConfig = try context.container.make()
 //	let semiSingletonStore: SemiSingletonStore = try context.container.make()
 	
@@ -35,46 +43,46 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 	
 	/* Connect to OpenDirectory */
 	/* This helps: https://github.com/aosm/OpenDirectory/blob/master/Tests/TestApp.m */
-	#if canImport(DirectoryService) && canImport(OpenDirectory)
-	let op = BlockOperation{
-		do {
-//			If needed, we have this equality that’s true (verified at runtime once…): kODRecordTypeUsers == kDSStdRecordTypeUsers
-			let testDN = try! LDAPDistinguishedName(string: "uid=ldap.test,cn=users,dc=office2,dc=happn,dc=private")
-			
-			let session = try ODSession(options: [
-				kODSessionProxyAddress: "od1.happn.private",
-				kODSessionProxyUsername: "happn",
-				kODSessionProxyPassword: "REDACTED"
-			])
-			let node = try ODNode(session: session, type: ODNodeType(kODNodeTypeAuthentication))
-//			try node.setCredentialsWithRecordType(kODRecordTypeUsers, recordName: "diradmin", password: "REDACTED")
-			/* Searching with the kODAttributeTypeMetaRecordName attribute does not
-			 * seem to work for whatever reason… */
-			let query = try ODQuery(node: node, forRecordTypes: kODRecordTypeUsers, attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: testDN.uid!, returnAttributes: nil, maximumResults: 0)
-			for r in try query.resultsAllowingPartial(false) {
-				print("current result: \(r)")
-				if let r = r as? ODRecord {
-					let detailsForMetaRecordName = try r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName])
-					print("kODAttributeTypeMetaRecordName: \(detailsForMetaRecordName)")
-					if let _ = try? r.verifyPassword("toto") {print("ok")}
-					else                                     {print("ko")}
-					guard try (r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName])[kODAttributeTypeMetaRecordName] as? [String])?.first == testDN.stringValue else {
-						print("NOT trying to set the password")
-						continue
-					}
-					print("Trying to set the password")
-					try r.setNodeCredentials("diradmin", password: "REDACTED")
-					try r.changePassword(nil, toPassword: "toto")
-				}
-			}
-		} catch {
-			print("got error: \(error)")
-		}
-	}
-	return Future<Void>.future(from: op, eventLoop: context.container.eventLoop, resultRetriever: { _ in () })
-	#else
-	throw NotAvailableOnThisPlatformError()
-	#endif
+//	#if canImport(DirectoryService) && canImport(OpenDirectory)
+//	let op = BlockOperation{
+//		do {
+////			If needed, we have this equality that’s true (verified at runtime once…): kODRecordTypeUsers == kDSStdRecordTypeUsers
+//			let testDN = try! LDAPDistinguishedName(string: "uid=ldap.test,cn=users,dc=office2,dc=happn,dc=private")
+//
+//			let session = try ODSession(options: [
+//				kODSessionProxyAddress: "od1.happn.private",
+//				kODSessionProxyUsername: "happn",
+//				kODSessionProxyPassword: "REDACTED"
+//			])
+//			let node = try ODNode(session: session, type: ODNodeType(kODNodeTypeAuthentication))
+////			try node.setCredentialsWithRecordType(kODRecordTypeUsers, recordName: "diradmin", password: "REDACTED")
+//			/* Searching with the kODAttributeTypeMetaRecordName attribute does not
+//			 * seem to work for whatever reason… */
+//			let query = try ODQuery(node: node, forRecordTypes: kODRecordTypeUsers, attribute: kODAttributeTypeRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: testDN.uid!, returnAttributes: nil, maximumResults: 0)
+//			for r in try query.resultsAllowingPartial(false) {
+//				print("current result: \(r)")
+//				if let r = r as? ODRecord {
+//					let detailsForMetaRecordName = try r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName])
+//					print("kODAttributeTypeMetaRecordName: \(detailsForMetaRecordName)")
+//					if let _ = try? r.verifyPassword("toto") {print("ok")}
+//					else                                     {print("ko")}
+//					guard try (r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName])[kODAttributeTypeMetaRecordName] as? [String])?.first == testDN.stringValue else {
+//						print("NOT trying to set the password")
+//						continue
+//					}
+//					print("Trying to set the password")
+//					try r.setNodeCredentials("diradmin", password: "REDACTED")
+//					try r.changePassword(nil, toPassword: "toto")
+//				}
+//			}
+//		} catch {
+//			print("got error: \(error)")
+//		}
+//	}
+//	return Future<Void>.future(from: op, eventLoop: context.container.eventLoop, resultRetriever: { _ in () })
+//	#else
+//	throw NotAvailableOnThisPlatformError()
+//	#endif
 	
 	/* List all GitHub project’s hooks */
 //	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)

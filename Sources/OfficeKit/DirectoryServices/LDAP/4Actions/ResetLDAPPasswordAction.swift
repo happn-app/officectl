@@ -33,10 +33,7 @@ public class ResetLDAPPasswordAction : Action<LDAPDistinguishedName, String, Voi
 		deps.connector.connect(scope: (), handler: { result in
 			if let e = result.failureValue {return handler(.failure(e))}
 			
-			let person = LDAPInetOrgPerson(dn: self.subject, sn: [], cn: [])
-			person.userPassword = newPassword
-			
-			let operation = ModifyLDAPPasswordsOperation(users: [person], connector: self.deps.connector)
+			let operation = ModifyLDAPPasswordsOperation(resets: [(self.subject, newPassword)], connector: self.deps.connector)
 			operation.completionBlock = {
 				if let e = operation.errors[0] {handler(.failure(e))}
 				else                           {handler(.success(()))}

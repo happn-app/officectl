@@ -46,20 +46,20 @@ extension LDAPInetOrgPersonWithObject : DirectoryUser {
 	
 	public var emails: RemoteProperty<[Email]> {
 		if let e = inetOrgPerson.mail {
-			return .fetched(e)
+			return .set(e)
 		}
-		return .unfetched
+		return .unset
 	}
 	
 	public var firstName: RemoteProperty<String?> {
 		if let e = inetOrgPerson.givenName {
-			return .fetched(e.first)
+			return .set(e.first)
 		}
-		return .unfetched
+		return .unset
 	}
 	
 	public var lastName: RemoteProperty<String?> {
-		return .fetched(inetOrgPerson.sn.first)
+		return .set(inetOrgPerson.sn.first)
 	}
 	
 	public var nickname: RemoteProperty<String?> {

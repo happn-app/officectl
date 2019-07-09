@@ -39,11 +39,11 @@ public struct ODRecordOKWrapper : DirectoryUser {
 	
 	public init(id theId: LDAPDistinguishedName, emails e: [Email]) {
 		userId = theId
-		persistentId = .unfetched
+		persistentId = .unset
 		
-		emails = .fetched(e)
-		firstName = .unfetched
-		lastName = .unfetched
+		emails = .set(e)
+		firstName = .unset
+		lastName = .unset
 	}
 	
 	public var record: ODRecord?

@@ -14,7 +14,7 @@ import RetryingOperation
 
 
 
-public class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
+public final class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = [ODRecord]
 	
@@ -26,9 +26,14 @@ public class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 		return try results.get()
 	}
 	
-	public init(openDirectoryConnector c: OpenDirectoryConnector, request r: OpenDirectorySearchRequest) {
-		openDirectoryConnector = c
+	public convenience init(dn: LDAPDistinguishedName, maxResults: Int? = nil, returnAttributes: [String]? = nil, openDirectoryConnector c: OpenDirectoryConnector) {
+		let request = OpenDirectorySearchRequest(recordTypes: [], attribute: kODAttributeTypeMetaRecordName, matchType: ODMatchType(kODMatchEqualTo), queryValues: [Data(dn.stringValue.utf8)], returnAttributes: returnAttributes, maximumResults: maxResults)
+		self.init(request: request, openDirectoryConnector: c)
+	}
+	
+	public init(request r: OpenDirectorySearchRequest, openDirectoryConnector c: OpenDirectoryConnector) {
 		request = r
+		openDirectoryConnector = c
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {

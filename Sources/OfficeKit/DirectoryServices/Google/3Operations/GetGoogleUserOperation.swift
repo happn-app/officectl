@@ -12,7 +12,7 @@ import RetryingOperation
 
 
 /* https://developers.google.com/admin-sdk/directory/v1/reference/users/get */
-public class GetGoogleUserOperation : RetryingOperation, HasResult {
+public final class GetGoogleUserOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = GoogleUser
 	

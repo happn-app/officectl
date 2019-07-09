@@ -11,7 +11,7 @@ import RetryingOperation
 
 
 
-public class GitHubRepositorySearchOperation : RetryingOperation, HasResult {
+public final class GitHubRepositorySearchOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = [GitHubRepository]
 	

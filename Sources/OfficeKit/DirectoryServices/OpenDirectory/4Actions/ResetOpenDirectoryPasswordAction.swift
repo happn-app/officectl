@@ -16,16 +16,16 @@ import Service
 
 
 
-public class ResetOpenDirectoryPasswordAction : Action<ODRecord, String, Void>, ResetPasswordAction, SemiSingleton {
+public class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedName, String, Void>, ResetPasswordAction, SemiSingleton {
 	
 	public static func additionalInfo(from container: Container) throws -> (OpenDirectoryConnector, OpenDirectoryRecordAuthenticator) {
 		return try (container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()), container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()))
 	}
 	
-	public typealias SemiSingletonKey = ODRecord
+	public typealias SemiSingletonKey = LDAPDistinguishedName
 	public typealias SemiSingletonAdditionalInitInfo = (OpenDirectoryConnector, OpenDirectoryRecordAuthenticator)
 	
-	public required init(key u: ODRecord, additionalInfo: (OpenDirectoryConnector, OpenDirectoryRecordAuthenticator), store: SemiSingletonStore) {
+	public required init(key u: LDAPDistinguishedName, additionalInfo: (OpenDirectoryConnector, OpenDirectoryRecordAuthenticator), store: SemiSingletonStore) {
 		deps = Dependencies(connector: additionalInfo.0, authenticator: additionalInfo.1)
 		
 		super.init(subject: u)
@@ -36,8 +36,18 @@ public class ResetOpenDirectoryPasswordAction : Action<ODRecord, String, Void>, 
 		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
 		
 		let f = deps.connector.connect(scope: (), eventLoop: eventLoop)
-		.then{ _ -> Future<Void> in
-			let modifyUserOperation = ModifyOpenDirectoryPasswordOperation(record: self.subject, newPassword: newPassword, authenticator: self.deps.authenticator)
+		.then{ _ -> Future<[ODRecord]> in
+			let op = SearchOpenDirectoryOperation(dn: self.subject, maxResults: 2, returnAttributes: nil, openDirectoryConnector: self.deps.connector)
+			return Future<[ODRecord]>.future(from: op, eventLoop: eventLoop)
+		}
+		.map{ users -> ODRecord in
+			guard let user = users.first, users.count == 1 else {
+				throw InvalidArgumentError(message: "Given DN has no, or more than one matching record")
+			}
+			return user
+		}
+		.then{ user -> Future<Void> in
+			let modifyUserOperation = ModifyOpenDirectoryPasswordOperation(record: user, newPassword: newPassword, authenticator: self.deps.authenticator)
 			return Future<Void>.future(from: modifyUserOperation, eventLoop: eventLoop)
 		}
 		f.whenSuccess{ _ in

@@ -11,7 +11,7 @@ import RetryingOperation
 
 
 
-public class CloneGitHubRepoOperation : RetryingOperation, HasResult {
+public final class CloneGitHubRepoOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = Void
 	

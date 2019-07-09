@@ -51,9 +51,9 @@ private struct ConcreteUserBox<Base : DirectoryUser> : DirectoryUserBox {
 	
 	var persistentId: RemoteProperty<AnyHashable> {
 		switch originalUser.persistentId {
-		case .fetched(let pId): return .fetched(AnyHashable(pId))
-		case .unfetched:        return .unfetched
-		case .unsupported:      return .unsupported
+		case .set(let pId): return .set(AnyHashable(pId))
+		case .unset:        return .unset
+		case .unsupported:  return .unsupported
 		}
 	}
 	

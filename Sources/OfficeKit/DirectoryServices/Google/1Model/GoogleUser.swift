@@ -33,32 +33,97 @@ public struct GoogleUser : Hashable, Codable {
 		
 	}
 	
-	public var kind: RemoteProperty<Kind> = .unfetched
-	public var etag: RemoteProperty<String?> = .unfetched
+	#warning("""
+	TODO: I did not find a way to automate this. Ideally I’d have liked to have a
+	`nil`-like implementation of RemoteProperty that would drop absent keys
+	automatically (from encoding and decoding) but this does not seem possible.
+	So instead I do the same thing manually… A thing to check would be code
+	generation. This is a very good candidate for code generation!
+	""")
+	public init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+		
+		kind = try container.decodeIfPresent(RemoteProperty<Kind>.self, forKey: .kind) ?? .unset
+		etag = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .kind) ?? .unset
+		
+		id = try container.decodeIfPresent(RemoteProperty<String>.self, forKey: .id) ?? .unset
+		customerId = try container.decodeIfPresent(RemoteProperty<String>.self, forKey: .customerId) ?? .unset
+		
+		name = try container.decodeIfPresent(RemoteProperty<Name>.self, forKey: .name) ?? .unset
+		
+		primaryEmail = try container.decode(Email.self, forKey: .primaryEmail)
+		aliases = try container.decodeIfPresent(RemoteProperty<[Email]?>.self, forKey: .aliases) ?? .unset
+		nonEditableAliases = try container.decodeIfPresent(RemoteProperty<[Email]?>.self, forKey: .nonEditableAliases) ?? .unset
+		includeInGlobalAddressList = try container.decodeIfPresent(RemoteProperty<Bool>.self, forKey: .includeInGlobalAddressList) ?? .unset
+		
+		isAdmin = try container.decodeIfPresent(RemoteProperty<Bool>.self, forKey: .isAdmin) ?? .unset
+		isDelegatedAdmin = try container.decodeIfPresent(RemoteProperty<Bool>.self, forKey: .isDelegatedAdmin) ?? .unset
+		
+		lastLoginTime = try container.decodeIfPresent(RemoteProperty<Date?>.self, forKey: .lastLoginTime) ?? .unset
+		creationTime = try container.decodeIfPresent(RemoteProperty<Date>.self, forKey: .creationTime) ?? .unset
+		agreedToTerms = try container.decodeIfPresent(RemoteProperty<Bool>.self, forKey: .agreedToTerms) ?? .unset
+		
+		suspended = try container.decodeIfPresent(RemoteProperty<Bool>.self, forKey: .suspended) ?? .unset
+		hashFunction = try container.decodeIfPresent(RemoteProperty<PasswordHashFunction?>.self, forKey: .hashFunction) ?? .unset
+		password = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .password) ?? .unset
+		changePasswordAtNextLogin = try container.decodeIfPresent(RemoteProperty<Bool>.self, forKey: .changePasswordAtNextLogin) ?? .unset
+	}
 	
-	public var id: RemoteProperty<String> = .unfetched
-	public var customerId: RemoteProperty<String> = .unfetched
+	public func encode(to encoder: Encoder) throws {
+		var container = encoder.container(keyedBy: CodingKeys.self)
+
+		try container.encodeIfSet(kind, forKey: .kind)
+		try container.encodeIfSet(etag, forKey: .etag)
+		
+		try container.encodeIfSet(id, forKey: .id)
+		try container.encodeIfSet(customerId, forKey: .customerId)
+		
+		try container.encodeIfSet(name, forKey: .name)
+		
+		try container.encode(primaryEmail, forKey: .primaryEmail)
+		try container.encodeIfSet(aliases, forKey: .aliases)
+		try container.encodeIfSet(nonEditableAliases, forKey: .nonEditableAliases)
+		try container.encodeIfSet(includeInGlobalAddressList, forKey: .includeInGlobalAddressList)
+		
+		try container.encodeIfSet(isAdmin, forKey: .isAdmin)
+		try container.encodeIfSet(isDelegatedAdmin, forKey: .isDelegatedAdmin)
+		
+		try container.encodeIfSet(lastLoginTime, forKey: .lastLoginTime)
+		try container.encodeIfSet(creationTime, forKey: .creationTime)
+		try container.encodeIfSet(agreedToTerms, forKey: .agreedToTerms)
+		
+		try container.encodeIfSet(suspended, forKey: .suspended)
+		try container.encodeIfSet(hashFunction, forKey: .hashFunction)
+		try container.encodeIfSet(password, forKey: .password)
+		try container.encodeIfSet(changePasswordAtNextLogin, forKey: .changePasswordAtNextLogin)
+	}
 	
-	public var name: RemoteProperty<Name> = .unfetched
+	public var kind: RemoteProperty<Kind> = .unset
+	public var etag: RemoteProperty<String?> = .unset
+	
+	public var id: RemoteProperty<String> = .unset
+	public var customerId: RemoteProperty<String> = .unset
+	
+	public var name: RemoteProperty<Name> = .unset
 	
 	public var primaryEmail: Email
-	public var aliases: RemoteProperty<[Email]?> = .unfetched
-	public var nonEditableAliases: RemoteProperty<[Email]?> = .unfetched
-	public var includeInGlobalAddressList: RemoteProperty<Bool> = .unfetched
+	public var aliases: RemoteProperty<[Email]?> = .unset
+	public var nonEditableAliases: RemoteProperty<[Email]?> = .unset
+	public var includeInGlobalAddressList: RemoteProperty<Bool> = .unset
 	
-	public var isAdmin: RemoteProperty<Bool> = .unfetched
-	public var isDelegatedAdmin: RemoteProperty<Bool> = .unfetched
+	public var isAdmin: RemoteProperty<Bool> = .unset
+	public var isDelegatedAdmin: RemoteProperty<Bool> = .unset
 	
-	public var lastLoginTime: RemoteProperty<Date?> = .unfetched
-	public var creationTime: RemoteProperty<Date> = .unfetched
-	public var agreedToTerms: RemoteProperty<Bool> = .unfetched
+	public var lastLoginTime: RemoteProperty<Date?> = .unset
+	public var creationTime: RemoteProperty<Date> = .unset
+	public var agreedToTerms: RemoteProperty<Bool> = .unset
 	
-	public var suspended: RemoteProperty<Bool> = .unfetched
-	public var hashFunction: RemoteProperty<PasswordHashFunction?> = .unfetched
-	public var password: RemoteProperty<String?> = .unfetched
-	public var changePasswordAtNextLogin: RemoteProperty<Bool> = .unfetched
+	public var suspended: RemoteProperty<Bool> = .unset
+	public var hashFunction: RemoteProperty<PasswordHashFunction?> = .unset
+	public var password: RemoteProperty<String?> = .unset
+	public var changePasswordAtNextLogin: RemoteProperty<Bool> = .unset
 	
-	init(email: Email) {
+	public init(email: Email) {
 		primaryEmail = email
 	}
 	
@@ -70,13 +135,14 @@ public struct GoogleUser : Hashable, Codable {
 		hasher.combine(id)
 	}
 	
-	/** The `CodingKeys` for the `GoogleUser`. We give a public access to this
-	enum in order to be able to pass it to `ModifyGoogleUserOperation`.
+	public func cloneForPatching() -> GoogleUser {
+		var ret = GoogleUser(email: primaryEmail)
+		ret.id = id
+		ret.etag = etag
+		return ret
+	}
 	
-	- Note: Sadly this implies that this enum must be modified whenever a new
-	property is added/removed from `GoogleUser`. And the compiler won’t notify
-	you… */
-	public enum CodingKeys : String, CodingKey {
+	private enum CodingKeys : String, CodingKey {
 		case kind, etag
 		case id, customerId
 		case name

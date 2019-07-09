@@ -55,13 +55,13 @@ public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, Reset
 		
 		let f = deps.connector.connect(scope: Set(arrayLiteral: "https://www.googleapis.com/auth/admin.directory.user"), eventLoop: eventLoop)
 		.then{ googleUser -> Future<Void> in
-			var googleUser = self.subject
+			var googleUser = self.subject.cloneForPatching()
 			
-			googleUser.password = .fetched(newPasswordHash.reduce("", { $0 + String(format: "%02x", $1) }))
-			googleUser.hashFunction = .fetched(.sha1)
-			googleUser.changePasswordAtNextLogin = .fetched(false)
+			googleUser.password = .set(newPasswordHash.reduce("", { $0 + String(format: "%02x", $1) }))
+			googleUser.hashFunction = .set(.sha1)
+			googleUser.changePasswordAtNextLogin = .set(false)
 			
-			let modifyUserOperation = ModifyGoogleUserOperation(user: googleUser, propertiesToUpdate: Set(arrayLiteral: .hashFunction, .password, .changePasswordAtNextLogin), connector: self.deps.connector)
+			let modifyUserOperation = ModifyGoogleUserOperation(user: googleUser, connector: self.deps.connector)
 			return Future<Void>.future(from: modifyUserOperation, eventLoop: eventLoop)
 		}
 		f.whenSuccess{ _ in

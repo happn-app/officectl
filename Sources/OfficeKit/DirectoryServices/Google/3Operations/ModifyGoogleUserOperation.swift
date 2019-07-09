@@ -13,7 +13,7 @@ import RetryingOperation
 
 
 /* https://developers.google.com/admin-sdk/directory/v1/reference/users/update */
-public class ModifyGoogleUserOperation : RetryingOperation, HasResult {
+public final class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = Void
 	
@@ -22,28 +22,23 @@ public class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 	public let connector: GoogleJWTConnector
 	
 	public let user: GoogleUser
-	public let propertiesToUpdate: Set<String>
 	public private(set) var error: Error? = OperationIsNotFinishedError()
 	public func resultOrThrow() throws -> Void {
 		try throwIfError(error)
 		return ()
 	}
 	
-	public init(user u: GoogleUser, propertiesToUpdate ps: Set<GoogleUser.CodingKeys>, connector c: GoogleJWTConnector) {
+	public init(user u: GoogleUser, connector c: GoogleJWTConnector) {
 		user = u
 		connector = c
-		propertiesToUpdate = Set(ps.map{ $0.rawValue })
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
 		do {
-			/* Not elegant, but I don’t have a better idea. */
-			let userJSON = try JSON(encodable: user).objectValue!
-			let toSend = userJSON.filter{ propertiesToUpdate.contains($0.key) }
-			let dataToSend = try JSONEncoder().encode(toSend)
+			let dataToSend = try JSONEncoder().encode(user)
 			
+			let userId = user.persistentId.value ?? user.userId.stringValue
 			let baseURL = URL(string: "https://www.googleapis.com/admin/directory/v1/users/")!
-			guard let userId = user.id.value else {throw InvalidArgumentError(message: "Invalid Google user to modify: id is not fetched.")}
 			guard let url = URL(string: userId, relativeTo: baseURL), let urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true) else {
 				throw InternalError(message: "Cannot build URL to modify Google user \(user)")
 			}

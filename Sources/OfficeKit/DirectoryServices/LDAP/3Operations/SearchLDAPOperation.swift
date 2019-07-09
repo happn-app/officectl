@@ -15,7 +15,7 @@ import COpenLDAP
 
 /* Most of this class is adapted from https://github.com/PerfectlySoft/Perfect-LDAP/blob/3ec5155c2a3efa7aa64b66353024ed36ae77349b/Sources/PerfectLDAP/PerfectLDAP.swift */
 
-public class SearchLDAPOperation : RetryingOperation, HasResult {
+public final class SearchLDAPOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = (results: [LDAPObject], references: [[String]])
 	

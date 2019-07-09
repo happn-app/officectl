@@ -14,7 +14,7 @@ import RetryingOperation
 
 
 
-public class ModifyOpenDirectoryPasswordOperation : RetryingOperation, HasResult {
+public final class ModifyOpenDirectoryPasswordOperation : RetryingOperation, HasResult {
 	
 	public let authenticator: OpenDirectoryRecordAuthenticator
 	

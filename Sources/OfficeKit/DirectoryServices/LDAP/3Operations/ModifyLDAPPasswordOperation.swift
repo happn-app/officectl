@@ -17,29 +17,24 @@ import COpenLDAP
 
 /* If the LDAPObject does not contain a password, will set to a randomly
 generated password. */
-public class ModifyLDAPPasswordsOperation : RetryingOperation {
+public final class ModifyLDAPPasswordsOperation : RetryingOperation {
 	
 	public let connector: LDAPConnector
 	
-	public let objects: [LDAPObject]
+	public let resets: [(dn: LDAPDistinguishedName, pass: String?)]
 	
 	/** Keys are distinguished names, values are passwords. Only set for users
 	whose password was successfully set. */
 	public private(set) var passwords = [LDAPDistinguishedName: String]()
 	public private(set) var errors: [Error?]
 	
-	/** The users must have the new cleartext password set in the `userPassword`
-	property. */
-	public convenience init(users: [LDAPInetOrgPerson], connector c: LDAPConnector) {
-		self.init(objects: users.map{ $0.ldapObject() }, connector: c)
-	}
-	
-	/** The new password must be in the “userPassword” attribute. */
-	public init(objects o: [LDAPObject], connector c: LDAPConnector) {
-		objects = o
+	/** Init with a DNs/passwords array. If the password is nil for a given DN,
+	a new auto-generated password will be created. */
+	public init(resets r: [(LDAPDistinguishedName, String?)], connector c: LDAPConnector) {
+		resets = r
 		connector = c
 		
-		errors = [Error?](repeating: OperationIsNotFinishedError(), count: o.count)
+		errors = [Error?](repeating: OperationIsNotFinishedError(), count: r.count)
 	}
 	
 	public override var isAsynchronous: Bool {
@@ -48,11 +43,11 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 	
 	public override func startBaseOperation(isRetry: Bool) {
 		assert(connector.isConnected)
-		assert(objects.count == errors.count)
+		assert(resets.count == errors.count)
 		
-		for (idx, object) in objects.enumerated() {
+		for (idx, reset) in resets.enumerated() {
 			do {
-				let pass = object.firstStringValue(for: "userPassword") ?? generateRandomPassword()
+				let pass = reset.pass ?? generateRandomPassword()
 				
 				/* Let’s build the password change request */
 				guard let ber = ber_alloc_t(LBER_USE_DER) else {
@@ -61,7 +56,7 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 				defer {ber_free(ber, 1 /* 1 is for “also free buffer” (if I understand correctly) */)}
 				
 				var bv = berval(bv_len: 0, bv_val: nil)
-				try buildBervalPasswordChangeRequest(dn: object.distinguishedName.stringValue, newPass: pass, ber: ber, berval: &bv)
+				try buildBervalPasswordChangeRequest(dn: reset.dn.stringValue, newPass: pass, ber: ber, berval: &bv)
 				assert(bv.bv_val != nil)
 				
 				/* Debug the generated berval data. */
@@ -76,7 +71,7 @@ public class ModifyLDAPPasswordsOperation : RetryingOperation {
 					throw NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])
 				}
 				
-				passwords[object.distinguishedName] = pass
+				passwords[reset.dn] = pass
 				errors[idx] = nil
 			} catch {
 				errors[idx] = error

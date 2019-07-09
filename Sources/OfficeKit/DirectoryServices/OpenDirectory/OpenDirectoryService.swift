@@ -67,8 +67,8 @@ public final class OpenDirectoryService : DirectoryService {
 	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> ODRecordOKWrapper? {
 		if let user = user as? GoogleUser {
 			var ret = try logicalUser(fromEmail: user.primaryEmail)
-			if let gn = user.name.value?.givenName  {ret?.firstName = .fetched(gn)}
-			if let fn = user.name.value?.familyName {ret?.lastName  = .fetched(fn)}
+			if let gn = user.name.value?.givenName  {ret?.firstName = .set(gn)}
+			if let fn = user.name.value?.familyName {ret?.lastName  = .set(fn)}
 			return ret
 		}
 		throw NotImplementedError()
@@ -104,7 +104,7 @@ public final class OpenDirectoryService : DirectoryService {
 		let openDirectoryConnector: OpenDirectoryConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
 		
 		let searchQuery = OpenDirectorySearchRequest(recordTypes:  [kODRecordTypeUsers], attribute: kODAttributeTypeMetaRecordName, matchType: ODMatchType(kODMatchAny), queryValues: nil, returnAttributes: nil, maximumResults: nil)
-		let op = SearchOpenDirectoryOperation(openDirectoryConnector: openDirectoryConnector, request: searchQuery)
+		let op = SearchOpenDirectoryOperation(request: searchQuery, openDirectoryConnector: openDirectoryConnector)
 		return openDirectoryConnector.connect(scope: (), eventLoop: container.eventLoop)
 		.then{ Future<[ODRecord]>.future(from: op, eventLoop: container.eventLoop).map{ $0.compactMap{ try? ODRecordOKWrapper(record: $0) } } }
 	}
@@ -126,12 +126,10 @@ public final class OpenDirectoryService : DirectoryService {
 	
 	public let supportsPasswordChange = true
 	public func changePasswordAction(for user: ODRecordOKWrapper, on container: Container) throws -> ResetPasswordAction {
-		guard let record = user.record else {throw InvalidArgumentError(message: "Got a user without a record to retrieve reset password action.")}
-		
 		let semiSingletonStore: SemiSingletonStore = try container.make()
 		let openDirectoryConnector: OpenDirectoryConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		let openDirectoryRecordAuthenticator: OpenDirectoryRecordAuthenticator = try semiSingletonStore.semiSingleton(forKey: config.authenticatorSettings)
-		return semiSingletonStore.semiSingleton(forKey: record, additionalInitInfo: (openDirectoryConnector, openDirectoryRecordAuthenticator)) as ResetOpenDirectoryPasswordAction
+		return semiSingletonStore.semiSingleton(forKey: user.userId, additionalInitInfo: (openDirectoryConnector, openDirectoryRecordAuthenticator)) as ResetOpenDirectoryPasswordAction
 	}
 	
 	/* ***************
@@ -142,7 +140,7 @@ public final class OpenDirectoryService : DirectoryService {
 		let openDirectoryConnector: OpenDirectoryConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
 		let future = openDirectoryConnector.connect(scope: (), eventLoop: container.eventLoop)
 		.then{ _ -> Future<[ODRecord]> in
-			let op = SearchOpenDirectoryOperation(openDirectoryConnector: openDirectoryConnector, request: request)
+			let op = SearchOpenDirectoryOperation(request: request, openDirectoryConnector: openDirectoryConnector)
 			return Future<[ODRecord]>.future(from: op, eventLoop: container.eventLoop)
 		}
 		.thenThrowing{ objects -> ODRecordOKWrapper? in
