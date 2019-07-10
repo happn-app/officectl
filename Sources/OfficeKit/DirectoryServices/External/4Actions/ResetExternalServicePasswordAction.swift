@@ -39,6 +39,7 @@ public class ResetExternalServicePasswordAction : Action<GenericDirectoryUserId,
 		var urlRequest = URLRequest(url: url)
 		urlRequest.httpMethod = "POST"
 		urlRequest.httpBody = requestData
+		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = AuthenticatedJSONOperation<ExternalServiceResponse<String>>(request: urlRequest, authenticator: deps.authenticator.authenticate, decoder: deps.jsonDecoder)
 		operation.completionBlock = {

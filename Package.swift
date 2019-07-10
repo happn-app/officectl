@@ -45,6 +45,6 @@ let package = Package(
 		
 		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "Guaka", "Yaml", "JWT", "LegibleError"]),
 		
-		.target(name: "opendirectory_officectlproxy", dependencies: ["OfficeKit", "Vapor", "Yaml", "JWT", "LegibleError"])
+		.target(name: "opendirectory_officectlproxy", dependencies: ["OfficeKit", "Vapor", "Yaml", "JWT", "LegibleError", "GenericJSON"])
 	]
 )

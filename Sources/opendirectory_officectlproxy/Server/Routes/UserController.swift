@@ -7,6 +7,7 @@
 
 import Foundation
 
+import GenericJSON
 import OfficeKit
 import Vapor
 
@@ -33,11 +34,16 @@ final class UserController {
 	}
 	
 	func changePassword(_ req: Request) throws -> Future<View> {
+		let request = try req.content.syncDecode(Request.self)
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
 		
-		print("Hello!")
-		
 		throw NotImplementedError()
+		
+		/* The data we should have in input. */
+		struct Request : Decodable {
+			var userId: JSON
+			var newPassword: String
+		}
 	}
 	
 }

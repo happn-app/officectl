@@ -29,10 +29,10 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		 *       https://stackoverflow.com/a/52183880 */
 		
 		jsonEncoder = JSONEncoder()
-		jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
+//		jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
 		
 		jsonDecoder = JSONDecoder()
-		jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+//		jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
 	}
 	
 	public func string(from userId: GenericDirectoryUserId) -> String {
@@ -84,6 +84,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		var urlRequest = URLRequest(url: url)
 		urlRequest.httpMethod = "POST"
 		urlRequest.httpBody = requestData
+		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<GenericDirectoryUser?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
 		return Future<GenericDirectoryUser?>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
@@ -104,6 +105,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		var urlRequest = URLRequest(url: url)
 		urlRequest.httpMethod = "POST"
 		urlRequest.httpBody = requestData
+		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<GenericDirectoryUser?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
 		return Future<GenericDirectoryUser?>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
@@ -124,6 +126,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		var urlRequest = URLRequest(url: url)
 		urlRequest.httpMethod = "POST"
 		urlRequest.httpBody = requestData
+		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<GenericDirectoryUser?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
 		return Future<GenericDirectoryUser?>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
@@ -147,6 +150,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		var urlRequest = URLRequest(url: url)
 		urlRequest.httpMethod = "POST"
 		urlRequest.httpBody = requestData
+		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<GenericDirectoryUser?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
 		return Future<GenericDirectoryUser?>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
@@ -176,6 +180,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		var urlRequest = URLRequest(url: url)
 		urlRequest.httpMethod = "POST"
 		urlRequest.httpBody = requestData
+		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<GenericDirectoryUser>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
 		return Future<GenericDirectoryUser>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
@@ -197,6 +202,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		var urlRequest = URLRequest(url: url)
 		urlRequest.httpMethod = "POST"
 		urlRequest.httpBody = requestData
+		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<GenericDirectoryUser>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
 		return Future<GenericDirectoryUser>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
@@ -217,6 +223,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		var urlRequest = URLRequest(url: url)
 		urlRequest.httpMethod = "POST"
 		urlRequest.httpBody = requestData
+		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<String>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
 		return Future<GenericDirectoryUser>.future(from: operation, eventLoop: container.eventLoop).map{ _ in () }
