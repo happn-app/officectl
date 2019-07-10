@@ -21,14 +21,13 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 	}
 	
 	func encode(to encoder: Encoder) throws {
+		var container = encoder.container(keyedBy: ApiResponse<ObjectType>.CodingKeys.self)
 		switch self {
 		case .data(let object):
-			var container = encoder.container(keyedBy: ApiResponse<ObjectType>.CodingKeys.self)
 			try container.encode(object, forKey: .data)
 			try container.encodeNil(forKey: .error)
 			
 		case .error(let error):
-			var container = encoder.container(keyedBy: ApiResponse<ObjectType>.CodingKeys.self)
 			try container.encode(error, forKey: .error)
 			try container.encodeNil(forKey: .data)
 		}

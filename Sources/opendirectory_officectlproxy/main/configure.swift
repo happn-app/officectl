@@ -45,6 +45,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	services.register(router, as: Router.self)
 	
 	/* Register middleware */
+	#warning("TODO: Request Signature validation middleware")
 	var middlewares = MiddlewareConfig() /* Create _empty_ middleware config */
 	middlewares.use(ErrorMiddleware.self) /* Catches errors and converts to HTTP response */
 	services.register(middlewares)
