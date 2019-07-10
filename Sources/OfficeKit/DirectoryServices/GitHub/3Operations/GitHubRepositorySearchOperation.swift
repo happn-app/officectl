@@ -19,9 +19,6 @@ public final class GitHubRepositorySearchOperation : RetryingOperation, HasResul
 	public let connector: GitHubJWTConnector
 	
 	public private(set) var result = Result<[GitHubRepository], Error>.failure(OperationIsNotFinishedError())
-	public func resultOrThrow() throws -> [GitHubRepository] {
-		return try result.get()
-	}
 	
 	public init(searchedOrganisation orgname: String, gitHubConnector: GitHubJWTConnector) {
 		assert(gitHubConnector.isConnected)
@@ -52,7 +49,7 @@ public final class GitHubRepositorySearchOperation : RetryingOperation, HasResul
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
 		let op = AuthenticatedJSONOperation<[GitHubRepository]>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
 		op.completionBlock = {
-			guard let o = op.result else {
+			guard let o = op.result.successValue else {
 				self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the repositories"]))
 				self.baseOperationEnded()
 				return

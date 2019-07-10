@@ -8,6 +8,7 @@
 import Foundation
 
 import Async
+import GenericJSON
 import SemiSingleton
 import Service
 
@@ -32,6 +33,10 @@ public final class GitHubService : DirectoryService {
 	
 	public func userId(from string: String) throws -> String {
 		return string
+	}
+	
+	public func exportableJSON(from user: GitHubUser) throws -> JSON {
+		throw NotImplementedError()
 	}
 	
 	public func logicalUser(fromEmail email: Email) throws -> GitHubUser? {

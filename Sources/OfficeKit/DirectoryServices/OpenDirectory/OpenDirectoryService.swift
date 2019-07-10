@@ -11,6 +11,7 @@ import Foundation
 import OpenDirectory
 
 import Async
+import GenericJSON
 import SemiSingleton
 import Service
 
@@ -44,6 +45,10 @@ public final class OpenDirectoryService : DirectoryService {
 	
 	public func userId(from string: String) throws -> LDAPDistinguishedName {
 		return try LDAPDistinguishedName(string: string)
+	}
+	
+	public func exportableJSON(from user: ODRecordOKWrapper) throws -> JSON {
+		throw NotImplementedError()
 	}
 	
 	public func logicalUser(fromEmail email: Email) throws -> ODRecordOKWrapper? {

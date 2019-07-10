@@ -23,9 +23,7 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 	public let request: LDAPSearchRequest
 	
 	public private(set) var results = Result<ResultType, Error>.failure(OperationIsNotFinishedError())
-	public func resultOrThrow() throws -> ResultType {
-		return try results.get()
-	}
+	public var result: Result<ResultType, Error> {return results}
 	
 	public init(ldapConnector c: LDAPConnector, request r: LDAPSearchRequest) {
 		ldapConnector = c

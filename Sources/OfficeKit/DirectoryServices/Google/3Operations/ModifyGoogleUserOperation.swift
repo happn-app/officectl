@@ -23,9 +23,9 @@ public final class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 	
 	public let user: GoogleUser
 	public private(set) var error: Error? = OperationIsNotFinishedError()
-	public func resultOrThrow() throws -> Void {
-		try throwIfError(error)
-		return ()
+	public var result: Result<Void, Error> {
+		if let error = error {return .failure(error)}
+		return .success(())
 	}
 	
 	public init(user u: GoogleUser, connector c: GoogleJWTConnector) {

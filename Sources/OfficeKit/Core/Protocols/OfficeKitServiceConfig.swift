@@ -28,13 +28,16 @@ public protocol GenericConfig {
 	/* For all this methods, the domain is only needed to generate the
 	 * ConfigError when applicable. */
 	
+	func bool(for key: String, domain: String?) throws -> Bool
+	func optionalBool(for key: String, domain: String?) throws -> Bool?
+	
 	func string(for key: String, domain: String?) throws -> String
 	func optionalString(for key: String, domain: String?) throws -> String?
 	
 	func url(for key: String, domain: String?) throws -> URL
 	func optionalURL(for key: String, domain: String?) throws -> URL?
 	
-	func arrayOfString(for key: String, domain: String?) throws -> [String]
+	func stringArray(for key: String, domain: String?) throws -> [String]
 	func optionalStringArray(for key: String, domain: String?) throws -> [String]?
 	
 	func stringStringDic(for key: String, domain: String?) throws -> [String: String]

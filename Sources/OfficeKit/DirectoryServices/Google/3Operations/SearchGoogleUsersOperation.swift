@@ -22,9 +22,6 @@ public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 	public let request: GoogleUserSearchRequest
 	
 	public private(set) var result = Result<[GoogleUser], Error>.failure(OperationIsNotFinishedError())
-	public func resultOrThrow() throws -> [GoogleUser] {
-		return try result.get()
-	}
 	
 	public init(searchedDomain d: String, query: String? = nil, googleConnector: GoogleJWTConnector) {
 		connector = googleConnector
@@ -57,7 +54,7 @@ public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 		decoder.keyDecodingStrategy = .useDefaultKeys
 		let op = AuthenticatedJSONOperation<GoogleUsersList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
 		op.completionBlock = {
-			guard let o = op.result else {
+			guard let o = op.result.successValue else {
 				self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the users"]))
 				self.baseOperationEnded()
 				return

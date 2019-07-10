@@ -8,6 +8,7 @@
 import Foundation
 
 import Async
+import GenericJSON
 import Service
 
 
@@ -18,6 +19,8 @@ private protocol DirectoryServiceBox {
 	
 	func string(from userId: AnyHashable) -> String
 	func userId(from string: String) throws -> AnyHashable
+	
+	func exportableJSON(from user: AnyDirectoryUser) throws -> JSON
 	
 	func logicalUser(fromEmail email: Email) throws -> AnyDirectoryUser?
 	func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> AnyDirectoryUser?
@@ -59,6 +62,13 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	
 	func userId(from string: String) throws -> AnyHashable {
 		return try AnyHashable(originalDirectory.userId(from: string))
+	}
+	
+	func exportableJSON(from user: AnyDirectoryUser) throws -> JSON {
+		guard let u: Base.UserType = user.unwrapped() else {
+			throw InvalidArgumentError(message: "Got invalid user (\(user)) from which to create an exportable JSON.")
+		}
+		return try originalDirectory.exportableJSON(from: u)
 	}
 	
 	func logicalUser(fromEmail email: Email) throws -> AnyDirectoryUser? {
@@ -207,6 +217,10 @@ public class AnyDirectoryService : DirectoryService {
 	
 	public func userId(from string: String) throws -> AnyHashable {
 		return try box.userId(from: string)
+	}
+	
+	public func exportableJSON(from user: AnyDirectoryUser) throws -> JSON {
+		return try box.exportableJSON(from: user)
 	}
 	
 	public func logicalUser(fromEmail email: Email) throws -> AnyDirectoryUser? {

@@ -28,11 +28,11 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 	public let decoder: JSONDecoder
 	
 	public var fetchedObject: ObjectType?
-	public func resultOrThrow() throws -> ObjectType {
+	public var result: Result<ObjectType, Error> {
 		switch (fetchedObject, finalError) {
-		case (nil,               nil):              throw OperationIsNotFinishedError()
-		case (.some(let object), _):                return object
-		case (_,                 .some(let error)): throw error
+		case (nil,               nil):              return .failure(OperationIsNotFinishedError())
+		case (.some(let object), _):                return .success(object)
+		case (_,                 .some(let error)): return .failure(error)
 		}
 	}
 	

@@ -32,9 +32,9 @@ public final class CreateLDAPObjectsOperation : RetryingOperation, HasResult {
 	
 	public let objects: [LDAPObject]
 	public private(set) var errors: [Error?]
-	public func resultOrThrow() throws -> [LDAPObject] {
+	public var result: Result<[LDAPObject], Error> {
 		let successfulCreationsIndexes = errors.enumerated().filter{ $0.element == nil }.map{ $0.offset }
-		return successfulCreationsIndexes.map{ objects[$0] }
+		return .success(successfulCreationsIndexes.map{ objects[$0] })
 	}
 	
 	public convenience init(users: [LDAPInetOrgPerson], connector c: LDAPConnector) {

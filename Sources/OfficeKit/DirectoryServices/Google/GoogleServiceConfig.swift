@@ -31,7 +31,7 @@ public struct GoogleServiceConfig : OfficeKitServiceConfig {
 	
 	public init(providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
 		let domain = "Google Config"
-		let domains        = try genericConfig.arrayOfString(for: "domains", domain: domain)
+		let domains        = try genericConfig.stringArray(for: "domains", domain: domain)
 		let userBehalf     = try genericConfig.optionalString(for: "admin_email", domain: domain)
 		let credsURLString = try genericConfig.string(for: "superuser_json_creds", domain: domain)
 		

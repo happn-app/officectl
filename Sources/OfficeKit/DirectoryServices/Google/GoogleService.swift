@@ -8,6 +8,7 @@
 import Foundation
 
 import Async
+import GenericJSON
 import SemiSingleton
 import Service
 
@@ -47,6 +48,10 @@ public final class GoogleService : DirectoryService {
 			throw InvalidArgumentError(message: "The given string is not a valid email: \(string)")
 		}
 		return e
+	}
+	
+	public func exportableJSON(from user: GoogleUser) throws -> JSON {
+		return try JSON(encodable: user)
 	}
 	
 	public func logicalUser(fromEmail email: Email) throws -> GoogleUser? {

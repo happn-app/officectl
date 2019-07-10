@@ -8,6 +8,7 @@
 import Foundation
 
 import Async
+import GenericJSON
 import Service
 
 
@@ -26,6 +27,16 @@ public protocol DirectoryService : class {
 	/** Empty ids are **not supported**. There are no other restrictions. */
 	func string(from userId: UserType.UserIdType) -> String
 	func userId(from string: String) throws -> UserType.UserIdType
+	
+	/** Converts the given user to a JSON representation.
+	
+	The JSON returned by this function doesn’t have to be an exact representation
+	of the given user. In particular it isn’t expected to be necessarily possible
+	to re-create the user back from the JSON.
+	
+	The JSON representation is intended to be sent to an external directory
+	service, when creating a logical user from a user from another service. */
+	func exportableJSON(from user: UserType) throws -> JSON
 	
 	/** If possible, convert the given email to a user with as much information
 	as possible in your directory.

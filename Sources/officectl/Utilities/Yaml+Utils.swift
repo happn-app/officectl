@@ -14,6 +14,22 @@ import Yaml
 
 extension Yaml : GenericConfig {
 	
+	public func bool(for key: String, domain: String?) throws -> Bool {
+		guard let b = try optionalBool(for: key, domain: domain) else {
+			throw ConfigError(domain: domain, key: key, message: "Missing value in yaml")
+		}
+		return b
+	}
+	
+	public func optionalBool(for key: String, domain: String?) throws -> Bool? {
+		switch self[Yaml.string(key)] {
+		case .null:        return nil
+		case .bool(let b): return b
+		default:
+			throw ConfigError(domain: domain, key: key, message: "Invalid value (neither absent, null or bool) in yaml")
+		}
+	}
+	
 	public func string(for key: String, domain: String?) throws -> String {
 		guard let str = try optionalString(for: key, domain: domain) else {
 			throw ConfigError(domain: domain, key: key, message: "Missing value in yaml")
@@ -45,7 +61,7 @@ extension Yaml : GenericConfig {
 		return url
 	}
 
-	public func arrayOfString(for key: String, domain: String?) throws -> [String] {
+	public func stringArray(for key: String, domain: String?) throws -> [String] {
 		guard let array = try optionalStringArray(for: key, domain: domain) else {
 			throw ConfigError(domain: domain, key: key, message: "Missing value in yaml")
 		}

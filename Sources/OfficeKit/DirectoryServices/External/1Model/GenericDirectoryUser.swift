@@ -11,17 +11,60 @@ import GenericJSON
 
 
 
+public enum GenericDirectoryUserId : RawRepresentable, Hashable {
+	
+	public typealias RawValue = JSON
+	
+	case native(JSON)
+	case proxy(serviceId: String, user: JSON)
+	
+	public init?(rawValue: JSON) {
+		guard let object = rawValue.objectValue else {return nil}
+		guard object.count == 1 else {return nil}
+		
+		if let native = object["native"] {
+			self = .native(native)
+			
+		} else if let proxy = object["proxy"]?.objectValue {
+			guard proxy.count == 2 else {return nil}
+			guard let user = proxy["user"] else {return nil}
+			guard let serviceId = proxy["serviceId"]?.stringValue else {return nil}
+			
+			self = .proxy(serviceId: serviceId, user: user)
+			
+		} else {
+			return nil
+		}
+	}
+	
+	public var rawValue: JSON {
+		switch self {
+		case .native(let j):                             return .object(["native": j])
+		case .proxy(serviceId: let sid, user: let user): return .object(["proxy": ["serviceId": .string(sid), "user": user]])
+		}
+	}
+	
+}
+
+
 public struct GenericDirectoryUser : DirectoryUser, Codable {
 	
-	public typealias UserIdType = JSON
+	public typealias UserIdType = GenericDirectoryUserId
 	public typealias PersistentIdType = JSON
+	
+	public init(userId: GenericDirectoryUserId) {
+		data = [DirectoryUserProperty.userId.rawValue: userId.rawValue]
+	}
 	
 	public init(from decoder: Decoder) throws {
 		let container = try decoder.singleValueContainer()
 		data = try container.decode([String: JSON].self)
 		
-		guard data[DirectoryUserProperty.userId.rawValue] != nil else {
+		guard let id = data[DirectoryUserProperty.userId.rawValue] else {
 			throw DecodingError.dataCorruptedError(in: container, debugDescription: "Missing userId value")
+		}
+		guard GenericDirectoryUserId(rawValue: id) != nil else {
+			throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid userId value")
 		}
 		if let emails = data[DirectoryUserProperty.emails.rawValue] {
 			guard let jsonArray = emails.arrayValue else {
@@ -63,9 +106,9 @@ public struct GenericDirectoryUser : DirectoryUser, Codable {
 		set {data[key] = newValue.value}
 	}
 	
-	public var userId: JSON {
-		get {data[DirectoryUserProperty.userId.rawValue]!}
-		set {data[DirectoryUserProperty.userId.rawValue] = newValue}
+	public var userId: GenericDirectoryUserId {
+		get {GenericDirectoryUserId(rawValue: data[DirectoryUserProperty.userId.rawValue]!)!}
+		set {data[DirectoryUserProperty.userId.rawValue] = newValue.rawValue}
 	}
 	public var persistentId: RemoteProperty<JSON> {
 		get {self[DirectoryUserProperty.persistentId.rawValue]}

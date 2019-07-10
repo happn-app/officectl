@@ -157,7 +157,7 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 		/* Run the URLRequest and parse the response in the TokenResponse object */
 		let op = AuthenticatedJSONOperation<TokenResponse>(request: request, authenticator: nil)
 		op.completionBlock = {
-			guard let o = op.result else {
+			guard let o = op.result.successValue else {
 				handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
 				return
 			}

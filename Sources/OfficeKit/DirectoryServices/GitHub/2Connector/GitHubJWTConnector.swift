@@ -70,7 +70,7 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 			decoder.keyDecodingStrategy = .convertFromSnakeCase
 			let op = AuthenticatedJSONOperation<Auth>(request: request, authenticator: nil, decoder: decoder)
 			op.completionBlock = {
-				guard let o = op.result else {
+				guard let o = op.result.successValue else {
 					handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
 					return
 				}

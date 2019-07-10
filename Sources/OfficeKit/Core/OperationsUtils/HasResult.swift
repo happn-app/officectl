@@ -13,21 +13,19 @@ public protocol HasResult {
 	
 	associatedtype ResultType
 	
-	func resultOrThrow() throws -> ResultType
+	var result: Result<ResultType, Error> {get}
 	
 }
 
 
 public extension HasResult {
 	
-	var result: ResultType? {
-		do    {return try resultOrThrow()}
-		catch {return nil}
+	func resultOrThrow() throws -> ResultType {
+		return try result.get()
 	}
 	
 	var resultError: Error? {
-		do    {_ = try resultOrThrow(); return nil}
-		catch {return error}
+		return result.failureValue
 	}
 	
 }

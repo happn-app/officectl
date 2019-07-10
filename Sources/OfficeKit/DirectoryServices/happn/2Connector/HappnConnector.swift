@@ -148,7 +148,7 @@ public class HappnConnector : Connector, Authenticator {
 		
 		let op = AuthenticatedJSONOperation<TokenResponse>(request: request, authenticator: nil)
 		op.completionBlock = {
-			guard let o = op.result else {
+			guard let o = op.result.successValue else {
 				handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
 				return
 			}

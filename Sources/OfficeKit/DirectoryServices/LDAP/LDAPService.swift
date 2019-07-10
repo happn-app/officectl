@@ -8,6 +8,7 @@
 import Foundation
 
 import Async
+import GenericJSON
 import SemiSingleton
 import Service
 
@@ -50,6 +51,10 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	
 	public func userId(from string: String) throws -> LDAPDistinguishedName {
 		return try LDAPDistinguishedName(string: string)
+	}
+	
+	public func exportableJSON(from user: LDAPInetOrgPersonWithObject) throws -> JSON {
+		throw NotImplementedError()
 	}
 	
 	public func logicalUser(fromEmail email: Email) throws -> LDAPInetOrgPersonWithObject? {

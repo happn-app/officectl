@@ -22,9 +22,9 @@ public final class ModifyOpenDirectoryPasswordOperation : RetryingOperation, Has
 	public let newPassword: String
 	
 	public private(set) var error: Error? = OperationIsNotFinishedError()
-	public func resultOrThrow() throws -> Void {
-		try throwIfError(error)
-		return ()
+	public var result: Result<Void, Error> {
+		if let error = error {return .failure(error)}
+		return .success(())
 	}
 	
 	public init(record r: ODRecord, newPassword p: String, authenticator a: OpenDirectoryRecordAuthenticator) {

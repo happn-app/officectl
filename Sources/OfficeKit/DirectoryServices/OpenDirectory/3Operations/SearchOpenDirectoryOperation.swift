@@ -22,9 +22,7 @@ public final class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 	public let request: OpenDirectorySearchRequest
 	
 	public private(set) var results = Result<ResultType, Error>.failure(OperationIsNotFinishedError())
-	public func resultOrThrow() throws -> ResultType {
-		return try results.get()
-	}
+	public var result: Result<[ODRecord], Error> {return results}
 	
 	public convenience init(uid: String, maxResults: Int? = nil, returnAttributes: [String]? = nil, openDirectoryConnector c: OpenDirectoryConnector) {
 		let request = OpenDirectorySearchRequest(uid: uid, maxResults: maxResults, returnAttributes: returnAttributes)

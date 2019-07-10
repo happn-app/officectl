@@ -21,9 +21,9 @@ public final class CloneGitHubRepoOperation : RetryingOperation, HasResult {
 	
 	/** Clone error. Only makes sense when the operation is finished. */
 	public private(set) var cloneError: Error? = OperationIsNotFinishedError()
-	public func resultOrThrow() throws -> Void {
-		try throwIfError(cloneError)
-		return ()
+	public var result: Result<Void, Error> {
+		if let error = cloneError {return .failure(error)}
+		return .success(())
 	}
 	
 	public convenience init(in containerURL: URL, repoFullName name: String, accessToken: String) {
