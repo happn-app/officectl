@@ -44,6 +44,10 @@ final class WebPasswordResetController {
 		}
 		.flatMap{
 			let actions = try self.resetPasswordActions(for: email, container: req)
+			guard !actions.reduce(false, { $0 || $1.resetAction.successValue?.isExecuting ?? false }) else {
+				throw OperationAlreadyInProgressError()
+			}
+			
 			actions.forEach{ $0.resetAction.successValue?.start(parameters: resetPasswordData.newPass, weakeningMode: .always(successDelay: 180, errorDelay: 180), handler: nil) }
 			return self.renderResetPasswordActions(actions, for: email, view: view)
 		}
