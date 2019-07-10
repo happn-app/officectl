@@ -43,6 +43,8 @@ let package = Package(
 		]),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
 		
-		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "Guaka", "Yaml", "JWT", "LegibleError"])
+		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "Guaka", "Yaml", "JWT", "LegibleError"]),
+		
+		.target(name: "opendirectory_officectlproxy", dependencies: ["OfficeKit", "Vapor", "Yaml", "JWT", "LegibleError"])
 	]
 )
