@@ -31,6 +31,9 @@ public protocol GenericConfig {
 	func bool(for key: String, domain: String?) throws -> Bool
 	func optionalBool(for key: String, domain: String?) throws -> Bool?
 	
+	func int(for key: String, domain: String?) throws -> Int
+	func optionalInt(for key: String, domain: String?) throws -> Int?
+	
 	func string(for key: String, domain: String?) throws -> String
 	func optionalString(for key: String, domain: String?) throws -> String?
 	

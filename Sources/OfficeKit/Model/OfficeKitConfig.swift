@@ -43,8 +43,18 @@ public struct OfficeKitConfig {
 			let providerConfig = try serviceInfo.genericConfig(for: "provider_config", domain: domain)
 			
 			switch provider {
-			case LDAPService.providerId:
-				let config = try LDAPServiceConfig(
+			case ExternalDirectoryServiceV1.providerId:
+				let config = try ExternalDirectoryServiceV1Config(
+					providerId: provider,
+					serviceId: serviceId,
+					serviceName: serviceName,
+					genericConfig: providerConfig,
+					pathsRelativeTo: baseURL
+				)
+				serviceConfigsBuilding.append(AnyOfficeKitServiceConfig(config))
+				
+			case GitHubService.providerId:
+				let config = try GitHubServiceConfig(
 					providerId: provider,
 					serviceId: serviceId,
 					serviceName: serviceName,
@@ -63,8 +73,8 @@ public struct OfficeKitConfig {
 				)
 				serviceConfigsBuilding.append(AnyOfficeKitServiceConfig(config))
 				
-			case GitHubService.providerId:
-				let config = try GitHubServiceConfig(
+			case LDAPService.providerId:
+				let config = try LDAPServiceConfig(
 					providerId: provider,
 					serviceId: serviceId,
 					serviceName: serviceName,

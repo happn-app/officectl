@@ -81,6 +81,9 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		}
 		
 		let anyUser = user as! AnyDirectoryUser
+		if let (service, user): (ExternalDirectoryServiceV1, ExternalDirectoryServiceV1.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
+			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
+		}
 		if let (service, user): (GitHubService, GitHubService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
 			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
 		}
@@ -123,6 +126,9 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		}
 		
 		let anyUser = user as! AnyDirectoryUser
+		if let (service, user): (ExternalDirectoryServiceV1, ExternalDirectoryServiceV1.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
+			return try originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
+		}
 		if let (service, user): (GitHubService, GitHubService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
 			return try originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
 		}

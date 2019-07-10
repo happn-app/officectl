@@ -7,7 +7,6 @@
 
 import Foundation
 
-import OfficeKit
 import Yaml
 
 
@@ -27,6 +26,22 @@ extension Yaml : GenericConfig {
 		case .bool(let b): return b
 		default:
 			throw ConfigError(domain: domain, key: key, message: "Invalid value (neither absent, null or bool) in yaml")
+		}
+	}
+	
+	public func int(for key: String, domain: String?) throws -> Int {
+		guard let i = try optionalInt(for: key, domain: domain) else {
+			throw ConfigError(domain: domain, key: key, message: "Missing value in yaml")
+		}
+		return i
+	}
+	
+	public func optionalInt(for key: String, domain: String?) throws -> Int? {
+		switch self[Yaml.string(key)] {
+		case .null:       return nil
+		case .int(let i): return i
+		default:
+			throw ConfigError(domain: domain, key: key, message: "Invalid value (neither absent, null or int) in yaml")
 		}
 	}
 	

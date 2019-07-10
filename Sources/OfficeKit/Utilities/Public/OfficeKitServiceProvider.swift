@@ -71,9 +71,14 @@ public class OfficeKitServiceProvider {
 	
 	private func createDirectoryService(with config: AnyOfficeKitServiceConfig, container: Container) throws -> AnyDirectoryService {
 		switch config.providerId {
-		case LDAPService.providerId:
+		case ExternalDirectoryServiceV1.providerId:
 			return AnyDirectoryService(
-				LDAPService(config: config.unboxed()!, domainAliases: officeKitConfig.domainAliases)
+				ExternalDirectoryServiceV1(config: config.unboxed()!)
+			)
+			
+		case GitHubService.providerId:
+			return AnyDirectoryService(
+				GitHubService(config: config.unboxed()!)
 			)
 			
 		case GoogleService.providerId:
@@ -81,9 +86,9 @@ public class OfficeKitServiceProvider {
 				GoogleService(config: config.unboxed()!)
 			)
 			
-		case GitHubService.providerId:
+		case LDAPService.providerId:
 			return AnyDirectoryService(
-				GitHubService(config: config.unboxed()!)
+				LDAPService(config: config.unboxed()!, domainAliases: officeKitConfig.domainAliases)
 			)
 			
 		#if canImport(DirectoryService) && canImport(OpenDirectory)
