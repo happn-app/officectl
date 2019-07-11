@@ -8,6 +8,7 @@
 import Foundation
 
 import OfficeKit
+import SemiSingleton
 import Vapor
 import Yaml
 
@@ -38,6 +39,9 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 		let openDirectoryService = OpenDirectoryService(config: openDirectoryServiceConfig)
 		services.register(openDirectoryService)
 	}
+	
+	/* Register additional services */
+	services.register(SemiSingletonStore(forceClassInKeys: true))
 	
 	/* Register the routes to the router */
 	let router = EngineRouter.default()

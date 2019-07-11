@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Vapor
+
 
 
 enum ApiResponse<ObjectType : Encodable> : Encodable {
@@ -30,6 +32,18 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 	private enum CodingKeys : String, CodingKey {
 		case data
 		case error
+	}
+	
+}
+
+
+extension ApiResponse : ResponseEncodable {
+	
+	func encode(for req: Request) throws -> Future<Response> {
+		let encoder = JSONEncoder()
+		encoder.dateEncodingStrategy = .iso8601
+		encoder.keyEncodingStrategy = .convertToSnakeCase
+		return try req.future(req.response(encoder.encode(self), as: .json))
 	}
 	
 }
