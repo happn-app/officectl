@@ -70,7 +70,7 @@ public final class OpenDirectoryService : DirectoryService {
 	}
 	
 	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> ODRecordOKWrapper? {
-		if let user = user as? GoogleUser {
+		if let user: GoogleUser = user.unboxed() {
 			var ret = try logicalUser(fromEmail: user.primaryEmail)
 			if let gn = user.name.value?.givenName  {ret?.firstName = .set(gn)}
 			if let fn = user.name.value?.familyName {ret?.lastName  = .set(fn)}
@@ -94,15 +94,13 @@ public final class OpenDirectoryService : DirectoryService {
 	}
 	
 	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
-		switch (service, user) {
-		case let (_ as LDAPService, ldapUser as LDAPService.UserType):
+		if let (_, ldapUser) = try serviceUserPair(from: service, user: user) as (LDAPService, LDAPService.UserType)? {
 			guard let uid = ldapUser.userId.uid else {throw UserIdConversionError.uidMissingInDN}
 			let request = OpenDirectorySearchRequest(uid: uid, maxResults: 2)
 			return try existingRecord(fromSearchRequest: request, on: container)
-			
-		default:
-			throw UserIdConversionError.unsupportedServiceUserIdConversion
 		}
+		
+		throw UserIdConversionError.unsupportedServiceUserIdConversion
 	}
 	
 	public func listAllUsers(on container: Container) throws -> Future<[ODRecordOKWrapper]> {

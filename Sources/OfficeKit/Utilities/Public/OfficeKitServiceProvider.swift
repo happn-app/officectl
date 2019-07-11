@@ -72,30 +72,20 @@ public class OfficeKitServiceProvider {
 	private func createDirectoryService(with config: AnyOfficeKitServiceConfig, container: Container) throws -> AnyDirectoryService {
 		switch config.providerId {
 		case ExternalDirectoryServiceV1.providerId:
-			return AnyDirectoryService(
-				ExternalDirectoryServiceV1(config: config.unboxed()!)
-			)
+			return ExternalDirectoryServiceV1(config: config.unboxed()!).erased()
 			
 		case GitHubService.providerId:
-			return AnyDirectoryService(
-				GitHubService(config: config.unboxed()!)
-			)
+			return GitHubService(config: config.unboxed()!).erased()
 			
 		case GoogleService.providerId:
-			return AnyDirectoryService(
-				GoogleService(config: config.unboxed()!)
-			)
+			return GoogleService(config: config.unboxed()!).erased()
 			
 		case LDAPService.providerId:
-			return AnyDirectoryService(
-				LDAPService(config: config.unboxed()!, domainAliases: officeKitConfig.domainAliases)
-			)
+			return LDAPService(config: config.unboxed()!, domainAliases: officeKitConfig.domainAliases).erased()
 			
 		#if canImport(DirectoryService) && canImport(OpenDirectory)
 		case OpenDirectoryService.providerId:
-			return AnyDirectoryService(
-				OpenDirectoryService(config: config.unboxed()!)
-			)
+			return OpenDirectoryService(config: config.unboxed()!).erased()
 		#endif
 			
 		default:
@@ -116,9 +106,7 @@ public class OfficeKitServiceProvider {
 	private func createDirectoryAuthenticatorService(with config: AnyOfficeKitServiceConfig, container: Container) throws -> AnyDirectoryAuthenticatorService {
 		switch config.providerId {
 		case LDAPService.providerId:
-			return AnyDirectoryAuthenticatorService(
-				LDAPService(config: config.unboxed()!, domainAliases: officeKitConfig.domainAliases)
-			)
+			return LDAPService(config: config.unboxed()!, domainAliases: officeKitConfig.domainAliases).erased()
 			
 		default:
 			throw InvalidArgumentError(message: "Unknown or unsupported service authenticator provider \(config.providerId)")

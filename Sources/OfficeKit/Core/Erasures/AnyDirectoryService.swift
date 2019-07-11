@@ -65,7 +65,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	}
 	
 	func exportableJSON(from user: AnyDirectoryUser) throws -> JSON {
-		guard let u: Base.UserType = user.unwrapped() else {
+		guard let u: Base.UserType = user.unboxed() else {
 			throw InvalidArgumentError(message: "Got invalid user (\(user)) from which to create an exportable JSON.")
 		}
 		return try originalDirectory.exportableJSON(from: u)
@@ -76,30 +76,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	}
 	
 	func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> AnyDirectoryUser? {
-		guard let anyService = service as? AnyDirectoryService else {
-			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
-		}
-		
-		let anyUser = user as! AnyDirectoryUser
-		if let (service, user): (ExternalDirectoryServiceV1, ExternalDirectoryServiceV1.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
-		}
-		if let (service, user): (GitHubService, GitHubService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
-		}
-		if let (service, user): (GoogleService, GoogleService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
-		}
-		if let (service, user): (LDAPService, LDAPService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
-		}
-		#if canImport(DirectoryService) && canImport(OpenDirectory)
-		if let (service, user): (OpenDirectoryService, OpenDirectoryService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
-		}
-		#endif
-		
-		throw InvalidArgumentError(message: "Unknown AnyDirectory for getting existing user in type erased directory service.")
+		return try originalDirectory.logicalUser(fromUser: user, in: service)?.erased()
 	}
 	
 	func existingUser(fromPersistentId pId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
@@ -121,30 +98,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	}
 	
 	func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
-		guard let anyService = service as? AnyDirectoryService else {
-			return try originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
-		}
-		
-		let anyUser = user as! AnyDirectoryUser
-		if let (service, user): (ExternalDirectoryServiceV1, ExternalDirectoryServiceV1.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
-		}
-		if let (service, user): (GitHubService, GitHubService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
-		}
-		if let (service, user): (GoogleService, GoogleService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
-		}
-		if let (service, user): (LDAPService, LDAPService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
-		}
-		#if canImport(DirectoryService) && canImport(OpenDirectory)
-		if let (service, user): (OpenDirectoryService, OpenDirectoryService.UserType) = try serviceUserPair(from: anyService, user: anyUser) {
-			return try originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
-		}
-		#endif
-		
-		throw InvalidArgumentError(message: "Unknown AnyDirectory for getting existing user in type erased directory service.")
+		return try originalDirectory.existingUser(from: user, in: service, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
 	}
 	
 	func listAllUsers(on container: Container) throws -> Future<[AnyDirectoryUser]> {
@@ -153,7 +107,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	
 	var supportsUserCreation: Bool {return originalDirectory.supportsUserCreation}
 	func createUser(_ user: AnyDirectoryUser, on container: Container) throws -> Future<AnyDirectoryUser> {
-		guard let u: Base.UserType = user.unwrapped() else {
+		guard let u: Base.UserType = user.unboxed() else {
 			throw InvalidArgumentError(message: "Got invalid user to create (\(user)) for directory service of type \(Base.self)")
 		}
 		return try originalDirectory.createUser(u, on: container).map{ $0.erased() }
@@ -161,7 +115,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	
 	var supportsUserUpdate: Bool {return originalDirectory.supportsUserUpdate}
 	func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser> {
-		guard let u: Base.UserType = user.unwrapped() else {
+		guard let u: Base.UserType = user.unboxed() else {
 			throw InvalidArgumentError(message: "Got invalid user to update (\(user)) for directory service of type \(Base.self)")
 		}
 		return try originalDirectory.updateUser(u, propertiesToUpdate: propertiesToUpdate, on: container).map{ $0.erased() }
@@ -169,7 +123,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	
 	var supportsUserDeletion: Bool {return originalDirectory.supportsUserDeletion}
 	func deleteUser(_ user: AnyDirectoryUser, on container: Container) throws -> Future<Void> {
-		guard let u: Base.UserType = user.unwrapped() else {
+		guard let u: Base.UserType = user.unboxed() else {
 			throw InvalidArgumentError(message: "Got invalid user to delete (\(user)) for directory service of type \(Base.self)")
 		}
 		return try originalDirectory.deleteUser(u, on: container)
@@ -177,20 +131,10 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	
 	var supportsPasswordChange: Bool {return originalDirectory.supportsPasswordChange}
 	func changePasswordAction(for user: AnyDirectoryUser, on container: Container) throws -> ResetPasswordAction {
-		guard let u: Base.UserType = user.unwrapped() else {
+		guard let u: Base.UserType = user.unboxed() else {
 			throw InvalidArgumentError(message: "Got invalid user (\(user)) to retrieve password action for directory service of type \(Base.self)")
 		}
 		return try originalDirectory.changePasswordAction(for: u, on: container)
-	}
-	
-	private func serviceUserPair<DestinationServiceType : DirectoryService>(from service: AnyDirectoryService, user: AnyDirectoryService.UserType) throws -> (DestinationServiceType, DestinationServiceType.UserType)? {
-		if let service: DestinationServiceType = service.unboxed() {
-			guard let user: DestinationServiceType.UserType = user.unwrapped() else {
-				throw InvalidArgumentError(message: "Got an incompatible servicer/user pair.")
-			}
-			return (service, user)
-		}
-		return nil
 	}
 	
 }
@@ -207,10 +151,6 @@ public class AnyDirectoryService : DirectoryService {
 	
 	init<T : DirectoryService>(_ object: T) {
 		box = ConcreteDirectoryBox(originalDirectory: object)
-	}
-	
-	public func unboxed<DirectoryType : DirectoryService>() -> DirectoryType? {
-		return (box as? ConcreteDirectoryBox<DirectoryType>)?.originalDirectory ?? (box as? ConcreteDirectoryBox<AnyDirectoryService>)?.originalDirectory.unboxed()
 	}
 	
 	public var config: AnyOfficeKitServiceConfig {
@@ -277,6 +217,27 @@ public class AnyDirectoryService : DirectoryService {
 		return try box.changePasswordAction(for: user, on: container)
 	}
 	
-	private let box: DirectoryServiceBox
+	fileprivate let box: DirectoryServiceBox
+	
+}
+
+extension DirectoryService {
+	
+	public func erased() -> AnyDirectoryService {
+		if let erased = self as? AnyDirectoryService {
+			return erased
+		}
+		
+		return AnyDirectoryService(self)
+	}
+	
+	public func unboxed<DirectoryType : DirectoryService>() -> DirectoryType? {
+		guard let anyService = self as? AnyDirectoryService else {
+			/* Nothing to unbox, just return self */
+			return self as? DirectoryType
+		}
+		
+		return (anyService.box as? ConcreteDirectoryBox<DirectoryType>)?.originalDirectory ?? (anyService.box as? ConcreteDirectoryBox<AnyDirectoryService>)?.originalDirectory.unboxed()
+	}
 	
 }

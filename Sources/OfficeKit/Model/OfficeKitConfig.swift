@@ -51,7 +51,7 @@ public struct OfficeKitConfig {
 					genericConfig: providerConfig,
 					pathsRelativeTo: baseURL
 				)
-				serviceConfigsBuilding.append(AnyOfficeKitServiceConfig(config))
+				serviceConfigsBuilding.append(config.erased())
 				
 			case GitHubService.providerId:
 				let config = try GitHubServiceConfig(
@@ -61,7 +61,7 @@ public struct OfficeKitConfig {
 					genericConfig: providerConfig,
 					pathsRelativeTo: baseURL
 				)
-				serviceConfigsBuilding.append(AnyOfficeKitServiceConfig(config))
+				serviceConfigsBuilding.append(config.erased())
 				
 			case GoogleService.providerId:
 				let config = try GoogleServiceConfig(
@@ -71,7 +71,7 @@ public struct OfficeKitConfig {
 					genericConfig: providerConfig,
 					pathsRelativeTo: baseURL
 				)
-				serviceConfigsBuilding.append(AnyOfficeKitServiceConfig(config))
+				serviceConfigsBuilding.append(config.erased())
 				
 			case LDAPService.providerId:
 				let config = try LDAPServiceConfig(
@@ -81,7 +81,7 @@ public struct OfficeKitConfig {
 					genericConfig: providerConfig,
 					pathsRelativeTo: baseURL
 				)
-				serviceConfigsBuilding.append(AnyOfficeKitServiceConfig(config))
+				serviceConfigsBuilding.append(config.erased())
 				
 			#if canImport(DirectoryService) && canImport(OpenDirectory)
 			case OpenDirectoryService.providerId:
@@ -92,7 +92,7 @@ public struct OfficeKitConfig {
 					genericConfig: providerConfig,
 					pathsRelativeTo: baseURL
 				)
-				serviceConfigsBuilding.append(AnyOfficeKitServiceConfig(config))
+				serviceConfigsBuilding.append(config.erased())
 			#endif
 				
 			default:

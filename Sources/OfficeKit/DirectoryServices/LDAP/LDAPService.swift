@@ -78,7 +78,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	}
 	
 	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> LDAPInetOrgPersonWithObject? {
-		if let user = user as? GoogleUser {
+		if let user: GoogleUser = user.unboxed() {
 			let ret = try logicalUser(fromEmail: user.primaryEmail)
 			if let fn = user.name.value?.familyName {ret?.inetOrgPerson.sn = [fn]}
 			if let fn = user.name.value?.fullName   {ret?.inetOrgPerson.cn = [fn]}

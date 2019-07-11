@@ -82,10 +82,6 @@ public struct AnyDirectoryUser : DirectoryUser {
 		box = ConcreteUserBox(originalUser: user)
 	}
 	
-	public func unwrapped<UserType : DirectoryUser>() -> UserType? {
-		return (box as? ConcreteUserBox<UserType>)?.originalUser ?? (box as? ConcreteUserBox<AnyDirectoryUser>)?.originalUser.unwrapped()
-	}
-	
 	public var userId: AnyHashable {
 		return box.userId
 	}
@@ -108,19 +104,28 @@ public struct AnyDirectoryUser : DirectoryUser {
 		return box.nickname
 	}
 	
-	private let box: DirectoryUserBox
+	fileprivate let box: DirectoryUserBox
 	
 }
 
 
-public extension DirectoryUser {
+extension DirectoryUser {
 	
-	func erased() -> AnyDirectoryUser {
+	public func erased() -> AnyDirectoryUser {
 		if let erased = self as? AnyDirectoryUser {
 			return erased
 		}
 		
 		return AnyDirectoryUser(self)
+	}
+	
+	public func unboxed<UserType : DirectoryUser>() -> UserType? {
+		guard let anyUser = self as? AnyDirectoryUser else {
+			/* Nothing to unbox, just return self */
+			return self as? UserType
+		}
+		
+		return (anyUser.box as? ConcreteUserBox<UserType>)?.originalUser ?? (anyUser.box as? ConcreteUserBox<AnyDirectoryUser>)?.originalUser.unboxed()
 	}
 	
 }

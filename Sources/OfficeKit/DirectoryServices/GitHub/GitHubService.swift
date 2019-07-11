@@ -59,27 +59,27 @@ public final class GitHubService : DirectoryService {
 		throw NotSupportedError(message: "Fetching a GitHub user id from his email does not make sense as the user have his personal email in GitHub (and we probably don’t have access to the user’s emails anyway).")
 	}
 	
-	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) -> Future<GitHubUser?> {
-		return container.eventLoop.newFailedFuture(error: NotImplementedError())
+	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GitHubUser?> {
+		throw NotImplementedError()
 	}
 	
-	public func listAllUsers(on container: Container) -> Future<[GitHubUser]> {
-		return container.eventLoop.newFailedFuture(error: NotImplementedError())
+	public func listAllUsers(on container: Container) throws -> Future<[GitHubUser]> {
+		throw NotImplementedError()
 	}
 	
 	public let supportsUserCreation = true
-	public func createUser(_ user: GitHubUser, on container: Container) -> Future<GitHubUser> {
-		return container.eventLoop.newFailedFuture(error: NotImplementedError())
+	public func createUser(_ user: GitHubUser, on container: Container) throws -> Future<GitHubUser> {
+		throw NotImplementedError()
 	}
 	
 	public let supportsUserUpdate = false
-	public func updateUser(_ user: GitHubUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) -> Future<GitHubUser> {
-		return container.eventLoop.newFailedFuture(error: NotSupportedError(message: "Not sure what updating a user would mean for GitHub as the users use personal accounts."))
+	public func updateUser(_ user: GitHubUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GitHubUser> {
+		throw NotSupportedError(message: "Not sure what updating a user would mean for GitHub as the users use personal accounts.")
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: GitHubUser, on container: Container) -> Future<Void> {
-		return container.eventLoop.newFailedFuture(error: NotImplementedError())
+	public func deleteUser(_ user: GitHubUser, on container: Container) throws -> Future<Void> {
+		throw NotImplementedError()
 	}
 	
 	public let supportsPasswordChange = false

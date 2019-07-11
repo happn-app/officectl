@@ -90,13 +90,11 @@ public final class GoogleService : DirectoryService {
 	}
 	
 	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
-		switch (service, user) {
-		case let (ldapService as LDAPService, ldapUser as LDAPService.UserType):
+		if let (ldapService, ldapUser) = try serviceUserPair(from: service, user: user) as (LDAPService, LDAPService.UserType)? {
 			return try self.existingGoogleUser(fromLDAP: ldapUser, ldapService: ldapService, propertiesToFetch: propertiesToFetch, on: container)
-			
-		default:
-			throw UserIdConversionError.unsupportedServiceUserIdConversion
 		}
+		
+		throw UserIdConversionError.unsupportedServiceUserIdConversion
 	}
 	
 	public func listAllUsers(on container: Container) throws -> Future<[GoogleUser]> {

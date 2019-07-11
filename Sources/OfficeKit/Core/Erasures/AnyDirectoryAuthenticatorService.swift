@@ -48,10 +48,6 @@ public class AnyDirectoryAuthenticatorService : AnyDirectoryService, DirectoryAu
 		super.init(object)
 	}
 	
-	public override func unboxed<DirectoryType : DirectoryAuthenticatorService>() -> DirectoryType? {
-		return (box as? ConcreteDirectoryAuthenticatorBox<DirectoryType>)?.originalAuthenticator ?? (box as? ConcreteDirectoryAuthenticatorBox<AnyDirectoryAuthenticatorService>)?.originalAuthenticator.unboxed()
-	}
-	
 	public func authenticate(userId: AnyHashable, challenge: Any, on container: Container) throws -> Future<Bool> {
 		return try box.authenticate(userId: userId, challenge: challenge, on: container)
 	}
@@ -60,6 +56,28 @@ public class AnyDirectoryAuthenticatorService : AnyDirectoryService, DirectoryAu
 		return try box.validateAdminStatus(userId: userId, on: container)
 	}
 	
-	private let box: DirectoryAuthenticatorServiceBox
+	fileprivate let box: DirectoryAuthenticatorServiceBox
+	
+}
+
+
+extension DirectoryAuthenticatorService {
+	
+	public func erased() -> AnyDirectoryAuthenticatorService {
+		if let erased = self as? AnyDirectoryAuthenticatorService {
+			return erased
+		}
+		
+		return AnyDirectoryAuthenticatorService(self)
+	}
+	
+	public func unboxed<DirectoryType : DirectoryAuthenticatorService>() -> DirectoryType? {
+		guard let anyAuth = self as? AnyDirectoryAuthenticatorService else {
+			/* Nothing to unbox, just return self */
+			return self as? DirectoryType
+		}
+		
+		return (anyAuth.box as? ConcreteDirectoryAuthenticatorBox<DirectoryType>)?.originalAuthenticator ?? (anyAuth.box as? ConcreteDirectoryAuthenticatorBox<AnyDirectoryAuthenticatorService>)?.originalAuthenticator.unboxed()
+	}
 	
 }

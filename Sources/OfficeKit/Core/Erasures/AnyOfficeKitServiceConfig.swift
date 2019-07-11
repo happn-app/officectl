@@ -89,23 +89,28 @@ public struct AnyOfficeKitServiceConfig : OfficeKitServiceConfig {
 		return box.serviceName
 	}
 	
-	public func unboxed<ConfigType : OfficeKitServiceConfig>() -> ConfigType? {
-		return (box as? ConcreteOfficeKitServiceConfigBox<ConfigType>)?.originalConfig ?? (box as? ConcreteOfficeKitServiceConfigBox<AnyOfficeKitServiceConfig>)?.originalConfig.unboxed()
-	}
-	
-	private let box: OfficeKitServiceConfigBox
+	fileprivate let box: OfficeKitServiceConfigBox
 	
 }
 
 
-public extension OfficeKitServiceConfig {
+extension OfficeKitServiceConfig {
 	
-	func erased() -> AnyOfficeKitServiceConfig {
+	public func erased() -> AnyOfficeKitServiceConfig {
 		if let erased = self as? AnyOfficeKitServiceConfig {
 			return erased
 		}
 		
 		return AnyOfficeKitServiceConfig(self)
+	}
+	
+	public func unboxed<ConfigType : OfficeKitServiceConfig>() -> ConfigType? {
+		guard let anyConfig = self as? AnyOfficeKitServiceConfig else {
+			/* Nothing to unbox, just return self */
+			return self as? ConfigType
+		}
+		
+		return (anyConfig.box as? ConcreteOfficeKitServiceConfigBox<ConfigType>)?.originalConfig ?? (anyConfig.box as? ConcreteOfficeKitServiceConfigBox<AnyOfficeKitServiceConfig>)?.originalConfig.unboxed()
 	}
 	
 }
