@@ -22,7 +22,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	let (url, conf) = try readYamlConfig(forcedConfigFilePath: forcedConfigPath)
 	
 	let serverConfigYaml = try conf.genericConfig(for: "server", domain: "Global config")
-	let jwtSecret = try serverConfigYaml.string(for: "jwt_secret", domain: "Server Config")
+	let secret = try serverConfigYaml.string(for: "secret", domain: "Server Config")
 	
 	/* Register the Server config */
 	do {
@@ -56,7 +56,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	#warning("TODO: Request Signature validation middleware")
 	var middlewares = MiddlewareConfig() /* Create _empty_ middleware config */
 	middlewares.use(ErrorMiddleware(handleError)) /* Catches errors and converts to HTTP response */
-	middlewares.use(VerifySignatureMiddleware())
+	middlewares.use(VerifySignatureMiddleware(secret: Data(secret.utf8)))
 	services.register(middlewares)
 }
 

@@ -23,7 +23,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 	
 	public init(config c: ExternalDirectoryServiceV1Config) {
 		config = c
-		authenticator = ExternalServiceAuthenticator(jwtSecret: c.jwtSecret)
+		authenticator = ExternalServiceAuthenticator(secret: c.secret)
 		
 		/* Note: We assume JSON encoder/decoder are thread-safe.
 		 *       https://stackoverflow.com/a/52183880 */
