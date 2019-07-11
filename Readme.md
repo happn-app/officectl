@@ -20,12 +20,12 @@ If error is null, data won’t be null and vice-versa.
 
 ### Object Types
 
-The `OfficectlId` Object:
+The `TaggedId` Object:
 ```
    This is a string with the following format:
      service_id + ":" + id_of_object_for_given_service
    
-   Obviously the service_id cannot contain a colon. The id on the service might though.
+   Obviously the service_id cannot contain a colon. The id of the object might though.
 ```
 
 The `Error` Object:
@@ -38,11 +38,12 @@ The `Error` Object:
 The `User` Object:
 ```
 {
-   "id": OfficectlUserId
-   
-   "ldap_id": String or null
-   "github_id": String or null
-   "google_id": String or null
+   "id": TaggedId
+   "linked_ids": [
+      TaggedId,
+      TaggedId,
+      ...
+   ]
    
    "first_name": String or null
    "last_name": String or null
@@ -54,14 +55,14 @@ The `User` Object:
 The `PasswordReset` Object:
 ```
 {
-   "user_id": OfficectlUserId
+   "user_id": TaggedId
    
    "is_executing": Bool (true if any service password reset is executing)
-   "services": [
+   "services": {
       ServicePasswordResetObject,
       ServicePasswordResetObject,
       ...
-   ]
+   }
 }
 ```
 
@@ -69,10 +70,7 @@ The `ServicePasswordReset` Object:
 ```
 {
    "service_id": String
-   
-   "user_id": OfficectlUserId
-   "service_user_id": String or null (The service id (GitHub ID, etc.) of
-                      the user whose pass is being reset; null if not found yet)
+   "user_id": AnyObject (The type of the id of the service)
    
    "is_executing": Bool
    "error": Error or null

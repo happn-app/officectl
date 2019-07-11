@@ -15,9 +15,11 @@ import OfficeKit
 
 
 
-func backupMails(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	let asyncConfig = try context.container.make(AsyncConfig.self)
-	let googleConfig = try context.container.make(OfficeKitConfig.self).googleConfigOrThrow()
+func backupMails(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
+	let officeKitConfig = try context.container.make(OfficectlConfig.self).officeKitConfig
+	
+	let serviceId = f.getString(name: "service-id")
+	let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
 	
 	let usersFilter = (f.getString(name: "emails-to-backup")?.components(separatedBy: ",")).flatMap{ Set($0) }
 	_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
@@ -25,24 +27,24 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 	let archive = try nil2throw(f.getBool(name: "archive"), "archive parameter")
 	
 	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
-	.then{ _ -> EventLoopFuture<[GoogleUser]> in /* Fetch users */
+	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: context.container.eventLoop)
+	.then{ _ -> Future<[GoogleUser]> in /* Fetch users */
 		let searchFutures = googleConfig.primaryDomains.map{ domain in
-			return asyncConfig.eventLoop.future(from: SearchGoogleUsersOperation(searchedDomain: domain, googleConnector: googleConnector), queue: asyncConfig.operationQueue)
+			return Future<[GoogleUser]>.future(from: SearchGoogleUsersOperation(searchedDomain: domain, googleConnector: googleConnector), eventLoop: context.container.eventLoop)
 		}
-		return Future.reduce([], searchFutures, eventLoop: asyncConfig.eventLoop, +)
+		return Future.reduce([], searchFutures, eventLoop: context.container.eventLoop, +)
 	}
-	.then{ allUsers -> EventLoopFuture<[URL]> in /* Backup given mails */
+	.then{ allUsers -> Future<[URL]> in /* Backup given mails */
 		let filteredUsers = allUsers.filter{ usersFilter?.contains($0.primaryEmail.stringValue) ?? true }
-		let options = BackupMailOptions(flags: f, asyncConfig: asyncConfig, console: context.console, mainConnector: googleConnector, users: filteredUsers)
+		let options = BackupMailOptions(flags: f, console: context.console, mainConnector: googleConnector, users: filteredUsers)
 		
-		return asyncConfig.eventLoop.future(from: FetchAllMailsOperation(options: options), queue: asyncConfig.operationQueue, resultRetriever: {
+		return Future<[URL]>.future(from: FetchAllMailsOperation(options: options), eventLoop: context.container.eventLoop, resultRetriever: {
 			try throwIfError($0.fetchError)
 			return $0.options.backedUpDestinations
 		})
 	}
-	.then{ backedUpFolders -> EventLoopFuture<[URL]> in /* Linkify the backed-up emails */
-		guard linkify else {return asyncConfig.eventLoop.future(backedUpFolders)}
+	.then{ backedUpFolders -> Future<[URL]> in /* Linkify the backed-up emails */
+		guard linkify else {return context.container.eventLoop.future(backedUpFolders)}
 		
 		context.console.info("Optimizing backups size")
 		let q = OperationQueue()
@@ -51,7 +53,7 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 			do    {return try LinkifyOperation(folderURL: url, stopOnErrors: false)}
 			catch {context.console.warning("cannot linkify backup at URL \(url.absoluteString)"); return nil}
 		}
-		let futureFromOperations: EventLoopFuture<[FutureResult<Void>]> = asyncConfig.eventLoop.executeAll(operations, queue: q, resultRetriever: { op -> Void in
+		let futureFromOperations = Future<[FutureResult<Void>]>.executeAll(operations, eventLoop: context.container.eventLoop, resultRetriever: { op -> Void in
 			if op.errors.count > 0 {
 				context.console.warning("got errors when linkifying backup at URL \(op.folderURL.absoluteString):")
 				for (url, error) in op.errors {
@@ -62,14 +64,14 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 		})
 		return futureFromOperations.transform(to: backedUpFolders)
 	}
-	.then{ backedUpFolders -> EventLoopFuture<Void> in /* Compressing the backed-up emails */
-		guard archive else {return asyncConfig.eventLoop.future(())}
+	.then{ backedUpFolders -> Future<Void> in /* Compressing the backed-up emails */
+		guard archive else {return context.container.eventLoop.future()}
 		
 		context.console.info("Compressing backups")
 		let q = OperationQueue()
 		q.maxConcurrentOperationCount = 4 /* Seems fair on today’s hardware… */
 		let operations = backedUpFolders.map{ TarOperation(sources: [$0.lastPathComponent], relativeTo: $0.deletingLastPathComponent(), destination: $0.appendingPathExtension("tar.bz2"), compress: true, deleteSourcesOnSuccess: true) }
-		let futureFromOperations: EventLoopFuture<[FutureResult<Void>]> = asyncConfig.eventLoop.executeAll(operations, queue: q, resultRetriever: { op -> Void in
+		let futureFromOperations = Future<[FutureResult<Void>]>.executeAll(operations, eventLoop: context.container.eventLoop, resultRetriever: { op -> Void in
 			if let tarError = op.tarError {
 				context.console.warning("could not compress \(op.sources.first!): \(tarError)")
 			}
@@ -94,7 +96,6 @@ struct BackupMailOptions {
 	let maxConcurrentSync: Int?
 	let offlineimapOutputFileURL: URL?
 	
-	let asyncConfig: AsyncConfig
 	let console: Console
 	
 	let mainConnector: GoogleJWTConnector
@@ -104,13 +105,12 @@ struct BackupMailOptions {
 		return users.map{ OfflineimapRunOperation.destinationURL(for: $0, destinationFolderURL: backupDestinationFolder) }
 	}
 	
-	init(flags f: Flags, asyncConfig conf: AsyncConfig, console csl: Console, mainConnector c: GoogleJWTConnector, users u: [GoogleUser]) {
+	init(flags f: Flags, console csl: Console, mainConnector c: GoogleJWTConnector, users u: [GoogleUser]) {
 		offlineimapConfigFileURL = URL(fileURLWithPath: f.getString(name: "offlineimap-config-file")!, isDirectory: false)
 		backupDestinationFolder = URL(fileURLWithPath: f.getString(name: "destination")!, isDirectory: true)
 		maxConcurrentSync = f.getInt(name: "max-concurrent-account-sync")
 		offlineimapOutputFileURL = f.getString(name: "offlineimap-output").map{ URL(fileURLWithPath: $0, isDirectory: false) }
 		
-		asyncConfig = conf
 		console = csl
 		
 		mainConnector = c
@@ -139,14 +139,16 @@ class FetchAllMailsOperation : RetryingOperation {
 			 * already there. */
 			try FileManager.default.createDirectory(at: options.backupDestinationFolder, withIntermediateDirectories: true, attributes: nil)
 			
-			let futureAccessTokens = options.users.map{ futureAccessToken(for: $0) }
-			let f = EventLoopFuture.reduce(into: (tokens: [GoogleUser: String](), minExpirationDate: Date.distantFuture), futureAccessTokens, eventLoop: options.asyncConfig.eventLoop, { (currentResult, newResult) in
+			let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
+			
+			let futureAccessTokens = options.users.map{ futureAccessToken(for: $0, eventLoop: eventLoop) }
+			let f = Future.reduce(into: (tokens: [GoogleUser: String](), minExpirationDate: Date.distantFuture), futureAccessTokens, eventLoop: eventLoop, { (currentResult, newResult) in
 				currentResult.minExpirationDate = min(currentResult.minExpirationDate, newResult.2)
 				currentResult.tokens[newResult.0] = newResult.1
 			})
-			.then { (info: (tokens: [GoogleUser : String], minExpirationDate: Date)) -> EventLoopFuture<Void> in
+			.then{ (info: (tokens: [GoogleUser : String], minExpirationDate: Date)) -> Future<Void> in
 				let operation = OfflineimapRunOperation(userTokens: info.tokens, tokensMinExpirationDate: info.minExpirationDate, options: self.options)
-				return self.options.asyncConfig.eventLoop.future(from: operation, queue: self.options.asyncConfig.operationQueue, resultRetriever: { if let e = $0.runError {throw e} })
+				return Future<Void>.future(from: operation, eventLoop: eventLoop, resultRetriever: { if let e = $0.runError {throw e} })
 			}
 			try f.wait()
 			baseOperationEnded()
@@ -158,12 +160,12 @@ class FetchAllMailsOperation : RetryingOperation {
 		}
 	}
 	
-	private func futureAccessToken(for user: GoogleUser) -> EventLoopFuture<(GoogleUser, String, Date)> {
+	private func futureAccessToken(for user: GoogleUser, eventLoop: EventLoop) -> Future<(GoogleUser, String, Date)> {
 		let scope = Set(arrayLiteral: "https://mail.google.com/")
 		let connector = GoogleJWTConnector(from: options.mainConnector, userBehalf: user.primaryEmail.stringValue)
-		return connector.connect(scope: scope, asyncConfig: options.asyncConfig)
+		return connector.connect(scope: scope, eventLoop: eventLoop)
 		.then{
-			let promise: EventLoopPromise<(GoogleUser, String, Date)> = self.options.asyncConfig.eventLoop.newPromise()
+			let promise: EventLoopPromise<(GoogleUser, String, Date)> = eventLoop.newPromise()
 			
 			if let token = connector.token, let expirationDate = connector.expirationDate {promise.succeed(result: (user, token, expirationDate))}
 			else                                                                          {promise.fail(error: NSError(domain: "com.happn.officectl", code: 42, userInfo: [NSLocalizedDescriptionKey: "Internal error"]))}
@@ -232,8 +234,11 @@ class OfflineimapRunOperation : RetryingOperation {
 			let process = try createOfflineimapProcess()
 			offlineimapProcess = process
 			
+			/* Launching offlineimap */
+			do    {try process.run()}
+			catch {offlineimapProcess = nil; throw error}
+			
 			console.info("Waiting on offlineimap…")
-			try process.run()
 			process.waitUntilExit()
 			offlineimapProcess = nil
 			
@@ -354,15 +359,21 @@ class OfflineimapRunOperation : RetryingOperation {
 			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "No access tokens…"])
 		}
 		
+		guard userTokens.keys.first(where: { $0.id.value == nil }) == nil else {
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Got a user with no id fetched!"])
+		}
+		
 		/* About maxsyncaccounts:
 		 *    We default arbitrarily to 4 (ncores/2 would probably be better).
 		 *    Even on an 8-core machine, offlineimap seems greedy, and I got a
-		 *    "pthread_cond_wait: Resource busy" error with maxsyncaccounts = 8. */
+		 *    "pthread_cond_wait: Resource busy" error with maxsyncaccounts = 8.
+		 * About the forced unwrapped below, we know the id is fetched on all the
+		 * users (checked above). */
 		let config = """
 		[general]
 		ui = MachineUI
 		maxsyncaccounts = \(maxConcurrentOfflineimapSyncTasks ?? 4)
-		accounts = \(userTokens.keys.map{ "AccountUserID_" + $0.id }.joined(separator: ","))
+		accounts = \(userTokens.keys.map{ "AccountUserID_" + $0.id.value! }.joined(separator: ","))
 		
 		
 		
@@ -372,15 +383,15 @@ class OfflineimapRunOperation : RetryingOperation {
 			 *    - When using the system (macOS) Python, we must use the dummycert trick (sslcacertfile = ~/.dummycert_for_python.pem);
 			 *    - When using homebrew’s Python2 (offlineimap uses Python2…), we must specify the cacert file. We use the one from openssl. */
 			return """
-			[Account AccountUserID_\(user.id)]
-			localrepository = LocalRepoID_\(user.id)
-			remoterepository = RemoteRepoID_\(user.id)
+			[Account AccountUserID_\(user.id.value!)]
+			localrepository = LocalRepoID_\(user.id.value!)
+			remoterepository = RemoteRepoID_\(user.id.value!)
 			
-			[Repository LocalRepoID_\(user.id)]
+			[Repository LocalRepoID_\(user.id.value!)]
 			type = Maildir
 			localfolders = \(OfflineimapRunOperation.destinationURL(for: user, destinationFolderURL: destinationFolderURL).path)
 			
-			[Repository RemoteRepoID_\(user.id)]
+			[Repository RemoteRepoID_\(user.id.value!)]
 			type = Gmail
 			readonly = True
 			remoteuser = \(user.primaryEmail.stringValue)

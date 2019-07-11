@@ -7,7 +7,7 @@
 
 import Foundation
 
-import FluentSQLite
+//import FluentSQLite
 import Leaf
 import SemiSingleton
 import URLRequestOperation
@@ -22,10 +22,10 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	 * wanted CLI-wise with Vapor) :( */
 	let cliParseResults = parse_cli()
 	configureSemiSingleton(cliParseResults.officectlConfig)
+	configureRetryingOperation(cliParseResults.officectlConfig)
 	configureURLRequestOperation(cliParseResults.officectlConfig)
 	/* Register the services/configs we got from CLI, if any */
 	services.register(cliParseResults.officectlConfig)
-	services.register(cliParseResults.officectlConfig.officeKitConfig)
 	if let p = cliParseResults.officectlConfig.staticDataDirURL?.path {
 		services.register{ container -> DirectoryConfig in
 			return DirectoryConfig(workDir: p.hasSuffix("/") ? p : p + "/")
@@ -33,13 +33,13 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	}
 	
 	/* Register providers */
-	try services.register(FluentSQLiteProvider())
+//	try services.register(FluentSQLiteProvider())
 	try services.register(LeafProvider())
 	
 	/* Register Services */
-	services.register(AsyncConfig.self)
 	services.register(ErrorMiddleware.self)
 	services.register(SemiSingletonStore(forceClassInKeys: true))
+	services.register(OfficeKitServiceProvider(config: cliParseResults.officectlConfig.officeKitConfig))
 	
 	/* Register routes */
 	let router = EngineRouter(caseInsensitive: true)
@@ -66,7 +66,9 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 }
 
 
-private func handleOfficectlError(request: Request, chainingTo next: Responder, error: Error) throws -> EventLoopFuture<Response> {
+private func handleOfficectlError(request: Request, chainingTo next: Responder, error: Error) throws -> Future<Response> {
+	#warning("TODO: Log the error")
+	
 	let status = (error as? Abort)?.status
 	let is404 = status?.code == 404
 	let context = [

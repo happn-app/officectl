@@ -27,7 +27,7 @@ func parse_cli() -> GuakaCommandParseResult {
 		return { (_ cmd: Guaka.Command, _ flags: Guaka.Flags, _ args: [String]) -> Void in
 			let officectlConfig: OfficectlConfig
 			do    {officectlConfig = try OfficectlConfig(flags: flags)}
-			catch {cmd.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)}
+			catch {cmd.fail(statusCode: (error as NSError).code, errorMessage: error.legibleLocalizedDescription)}
 			
 			result = GuakaCommandParseResult(
 				officectlConfig: officectlConfig,
@@ -57,7 +57,13 @@ func parse_cli() -> GuakaCommandParseResult {
 	   *********************** */
 	
 	let getTokenFlags = [
-		Flag(longName: "scopes", type: String.self, description: "A comma-separated list of scopes.", required: true)
+		Flag(longName: "scopes",     type: String.self, description: "A comma-separated list of scopes.",                       required: false),
+		Flag(longName: "service-id", type: String.self, description: "The id of the service from which to retrieve the token.", required: false)
+	]
+	
+	let listUsersFlags = [
+		Flag(longName: "include-suspended-users", value: false,      description: "For the directory services that supports it, do we filter out the suspended users?"),
+		Flag(longName: "service-id",              type: String.self, description: "The id of the directory service from which to retrieve the list of users.", required: false)
 	]
 	
 	let backupFlags = [
@@ -65,16 +71,16 @@ func parse_cli() -> GuakaCommandParseResult {
 	]
 	
 	let syncFlags = [
-		Flag(longName: "from", type: String.self, description: "The source service from which to sync the directories from.", required: true),
+		Flag(longName: "from", type: String.self, description: "The source service from which to sync the directories from.",                                  required: true),
 		Flag(longName: "to",   type: String.self, description: "The services to which the directory will be synchronized to. This is a comma-separated list.", required: true)
 	]
 	
-	let devtestCommand = Command(usage: "devtest",    flags: [],            parent: rootCommand, run: createSetWrapperCommandHandler(devTest))
-	let _              = Command(usage: "get-token",  flags: getTokenFlags, parent: rootCommand, run: createSetWrapperCommandHandler(getToken))
-	let _              = Command(usage: "list-users", flags: [],            parent: rootCommand, run: createSetWrapperCommandHandler(listUsers))
-	let backupCommand  = Command(usage: "backup",     flags: backupFlags,   parent: rootCommand, run: createSetWrapperCommandHandler(backup))
-	let _              = Command(usage: "sync",       flags: syncFlags,     parent: rootCommand, run: createSetWrapperCommandHandler(sync))
-	let serverCommand  = Command(usage: "server",     flags: [],            parent: rootCommand, run: createSetWrapperCommandHandler(server))
+	let devtestCommand = Command(usage: "devtest",    flags: [],             parent: rootCommand, run: createSetWrapperCommandHandler(devTest))
+	let _              = Command(usage: "get-token",  flags: getTokenFlags,  parent: rootCommand, run: createSetWrapperCommandHandler(getToken))
+	let _              = Command(usage: "list-users", flags: listUsersFlags, parent: rootCommand, run: createSetWrapperCommandHandler(listUsers))
+	let backupCommand  = Command(usage: "backup",     flags: backupFlags,    parent: rootCommand, run: createSetWrapperCommandHandler(backup))
+	let _              = Command(usage: "sync",       flags: syncFlags,      parent: rootCommand, run: createSetWrapperCommandHandler(sync))
+	let serverCommand  = Command(usage: "server",     flags: [],             parent: rootCommand, run: createSetWrapperCommandHandler(server))
 	
 	
 	/* *************************
@@ -87,11 +93,13 @@ func parse_cli() -> GuakaCommandParseResult {
 		Flag(longName: "max-concurrent-account-sync", type: Int.self,    description: "The maximum number of concurrent sync that will be done by offlineimap.", required: false),
 		Flag(longName: "offlineimap-output",          type: String.self, description: "A path to a file in which the offlineimap output will be written.", required: false),
 		Flag(longName: "linkify",                     value: false,      description: "Whether to “linkify” the backups. Linkifying consists in scanning the backup for duplicate files and de-duplicating the files by replacing the duplicate with a hard link."),
-		Flag(longName: "archive",                     value: false,      description: "Whether to archive the backup (create a tar bz2 file and remove the directory).")
+		Flag(longName: "archive",                     value: false,      description: "Whether to archive the backup (create a tar bz2 file and remove the directory)."),
+		Flag(longName: "service-id",                  type: String.self, description: "The id of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.", required: false)
 	]
 	
 	let backupGitHubFlags = [
-		Flag(longName: "orgname", type: String.self, description: "The organisation name from which to backup the repositories from.", required: true)
+		Flag(longName: "orgname",    type: String.self, description: "The organisation name from which to backup the repositories from.", required: true),
+		Flag(longName: "service-id", type: String.self, description: "The id of the GitHub service to use to do the backup. Required if there are more than one GitHub service in officectl conf, otherwise the only GitHub service is used.", required: false)
 	]
 	
 	let _ = Command(usage: "mails",  flags: backupMailsFlags,  parent: backupCommand, run: createSetWrapperCommandHandler(backupMails))

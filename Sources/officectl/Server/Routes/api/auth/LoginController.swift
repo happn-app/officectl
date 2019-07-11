@@ -19,21 +19,26 @@ class LoginController {
 		let loginData = try req.content.syncDecode(LoginData.self)
 		
 		let config = try req.make(OfficectlConfig.self)
-		let adminGroups = try config.officeKitConfig.ldapConfigOrThrow().adminGroupsDN
+		let authService = try req.make(OfficeKitServiceProvider.self).getDirectoryAuthenticatorService(container: req)
 		
-		let dn = loginData.username
-		let user = User(id: .distinguishedName(loginData.username))
+		let userId = try UserId(string: loginData.username, container: req)
+		guard userId.service.config.serviceId == authService.config.serviceId else {
+			throw BasicValidationError("Tried to login with an id which is not from the auth service.")
+		}
 		
-		return try user
-		.checkLDAPPassword(container: req, checkedPassword: loginData.password)
-		.then{ _ -> Future<Bool> in
-			do    {return try user.isMemberOf(anyGroup: adminGroups, container: req)}
-			catch {return req.future(error: error)}
+		
+		return try authService.authenticate(userId: userId.id, challenge: loginData.password, on: req)
+		.map{ authSuccess -> Void in
+			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}
+			return ()
+		}
+		.flatMap{ _ -> Future<Bool> in
+			return try authService.validateAdminStatus(userId: userId.id, on: req)
 		}
 		.map{ isAdmin in
 			/* The password of the user is verified. Let’s return the relevant
 			 * data. */
-			let token = ApiAuth.Token(dn: dn, admin: isAdmin, validityDuration: 30*60) /* 30 minutes */
+			let token = ApiAuth.Token(userId: userId, admin: isAdmin, validityDuration: 30*60) /* 30 minutes */
 			guard let tokenString = String(data: try JWT(payload: token).sign(using: .hs256(key: config.jwtSecret)), encoding: .utf8) else {
 				throw Abort(.internalServerError)
 			}
@@ -44,7 +49,7 @@ class LoginController {
 	
 	private struct LoginData : Decodable {
 		
-		var username: LDAPDistinguishedName
+		var username: String
 		var password: String
 		
 	}

@@ -22,18 +22,18 @@ final class AsyncErrorMiddleware : Middleware, ServiceType {
 			/* Simple default error handling. */
 			let response = request.response(http: HTTPResponse(status: .internalServerError, headers: [:]))
 			response.http.headers.replaceOrAdd(name: .contentType, value: "text/plain; charset=utf-8")
-			response.http.body = HTTPBody(string: "error: " + error.localizedDescription)
+			response.http.body = HTTPBody(string: "error: " + error.legibleLocalizedDescription)
 			return request.future(response)
 		}
 	}
 	
-	init(processErrorHandler h: @escaping (_ request: Request, _ responder: Responder, _ error: Error) throws -> EventLoopFuture<Response>) {
+	init(processErrorHandler h: @escaping (_ request: Request, _ responder: Responder, _ error: Error) throws -> Future<Response>) {
 		processErrorHandler = h
 	}
 	
-	let processErrorHandler: (_ request: Request, _ responder: Responder, _ error: Error) throws -> EventLoopFuture<Response>
+	let processErrorHandler: (_ request: Request, _ responder: Responder, _ error: Error) throws -> Future<Response>
 	
-	func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
+	func respond(to request: Request, chainingTo next: Responder) throws -> Future<Response> {
 		let futureResponse: Future<Response>
 		do    {futureResponse = try next.respond(to: request)}
 		catch {futureResponse = request.eventLoop.newFailedFuture(error: error)}

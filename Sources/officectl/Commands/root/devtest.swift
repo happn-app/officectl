@@ -14,6 +14,6 @@ import OfficeKit
 
 
 
-func devTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+func devTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
 	throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please choose what to test"])
 }

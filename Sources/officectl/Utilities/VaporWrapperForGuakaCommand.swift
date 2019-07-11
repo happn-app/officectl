@@ -23,7 +23,7 @@ struct VaporWrapperForGuakaCommand : Vapor.Command {
 	let guakaFlags: Guaka.Flags
 	let guakaArgs: [String]
 	
-	typealias Run = (Guaka.Flags, [String], CommandContext) throws -> EventLoopFuture<Void>
+	typealias Run = (Guaka.Flags, [String], CommandContext) throws -> Future<Void>
 	let run: Run
 	
 	init(guakaCommand cmd: Guaka.Command, guakaFlags flags: Guaka.Flags, guakaArgs args: [String], run r: @escaping Run) {
@@ -33,9 +33,9 @@ struct VaporWrapperForGuakaCommand : Vapor.Command {
 		run = r
 	}
 	
-	func run(using context: CommandContext) throws -> EventLoopFuture<Void> {
+	func run(using context: CommandContext) throws -> Future<Void> {
 		do    {return try run(guakaFlags, guakaArgs, context)}
-		catch {guakaCommand.fail(statusCode: (error as NSError).code, errorMessage: error.localizedDescription)}
+		catch {guakaCommand.fail(statusCode: (error as NSError).code, errorMessage: error.legibleLocalizedDescription)}
 	}
 	
 }

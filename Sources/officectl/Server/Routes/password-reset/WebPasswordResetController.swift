@@ -22,30 +22,34 @@ final class WebPasswordResetController {
 	
 	func showResetPage(_ req: Request) throws -> Future<View> {
 		let email = try req.parameters.next(Email.self)
-		let officeKitConfig = try req.make(OfficeKitConfig.self)
-		let semiSingletonStore = try req.make(SemiSingletonStore.self)
-		let basePeopleDN = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDNPerDomain?[officeKitConfig.mainDomain(for: email.domain)], "LDAP People Base DN")
-		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(email: email, basePeopleDN: basePeopleDN, setMainIdToLDAP: true), additionalInitInfo: req) as ResetPasswordAction
-		
-		return try renderResetPasswordAction(resetPasswordAction, view: req.view())
+		let actions = try resetPasswordActions(for: email, container: req)
+		return try renderResetPasswordActions(actions, for: email, view: req.view())
 	}
 	
 	func resetPassword(_ req: Request) throws -> Future<View> {
 		let view = try req.view()
 		let email = try req.parameters.next(Email.self)
-		let officeKitConfig = try req.make(OfficeKitConfig.self)
-		let semiSingletonStore = try req.make(SemiSingletonStore.self)
 		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
-		let basePeopleDN = try nil2throw(officeKitConfig.ldapConfigOrThrow().peopleBaseDNPerDomain?[officeKitConfig.mainDomain(for: email.domain)], "LDAP People Base DN")
-		let user = User(email: email, basePeopleDN: basePeopleDN, setMainIdToLDAP: true)
 		
-		return try user
-		.checkLDAPPassword(container: req, checkedPassword: resetPasswordData.oldPass)
-		.then{ _ in
-			/* The password of the user is verified. Let’s launch the reset! */
-			let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: req) as ResetPasswordAction
-			resetPasswordAction.start(parameters: resetPasswordData.newPass, handler: nil)
-			return self.renderResetPasswordAction(resetPasswordAction, view: view)
+		let officeKitServiceProvider = try req.make(OfficeKitServiceProvider.self)
+		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService(container: req)
+		
+		guard let user = try authService.logicalUser(fromEmail: email) else {
+			throw BasicValidationError("Cannot user this email to login (cannot convert to auth service user).")
+		}
+		return try authService.authenticate(userId: user.userId, challenge: resetPasswordData.oldPass, on: req)
+		.map{ authSuccess -> Void in
+			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}
+			return ()
+		}
+		.flatMap{
+			let actions = try self.resetPasswordActions(for: email, container: req)
+			guard !actions.reduce(false, { $0 || $1.resetAction.successValue?.isExecuting ?? false }) else {
+				throw OperationAlreadyInProgressError()
+			}
+			
+			actions.forEach{ $0.resetAction.successValue?.start(parameters: resetPasswordData.newPass, weakeningMode: .always(successDelay: 180, errorDelay: 180), handler: nil) }
+			return self.renderResetPasswordActions(actions, for: email, view: view)
 		}
 	}
 	
@@ -56,54 +60,56 @@ final class WebPasswordResetController {
 		
 	}
 	
-	private func renderResetPasswordAction(_ resetPasswordAction: ResetPasswordAction, view: ViewRenderer) -> EventLoopFuture<View> {
-		let emailStr = resetPasswordAction.subject.email?.stringValue ?? "<unknown>"
+	private struct ResetPasswordActionAndService {
 		
-		if !resetPasswordAction.isWeak {
-			/* The action is either executing or finished but with a reachable
-			 * result. */
-			struct ResetPasswordStatusContext : Encodable {
-				struct ServicePasswordResetStatus : Encodable {
-					var isExecuting: Bool
-					var errorStr: String?
-				}
-				var userEmail: String
+		var service: AnyDirectoryService
+		var resetAction: Result<ResetPasswordAction, Error>
+		
+		init?(service s: AnyDirectoryService, email: Email, container: Container) throws {
+			service = s
+			guard let user = try s.logicalUser(fromEmail: email) else {return nil}
+			resetAction = Result(catching: { try s.changePasswordAction(for: user, on: container) })
+		}
+		
+	}
+	
+	private func resetPasswordActions(for email: Email, container: Container) throws -> [ResetPasswordActionAndService] {
+		let officeKitServiceProvider = try container.make(OfficeKitServiceProvider.self)
+		return try officeKitServiceProvider
+			.getAllServices(container: container)
+			.sorted{ $0.config.serviceName < $1.config.serviceName }
+			.filter{ $0.supportsPasswordChange }
+			.compactMap{ try ResetPasswordActionAndService(service: $0, email: email, container: container) }
+	}
+	
+	private func renderResetPasswordActions(_ resetPasswordActions: [ResetPasswordActionAndService], for email: Email, view: ViewRenderer) -> Future<View> {
+		struct ResetPasswordStatusContext : Encodable {
+			struct ServicePasswordResetStatus : Encodable {
+				var serviceName: String
 				var isExecuting: Bool
-				var isSuccessful: Bool
-				var ldapResetStatus: ServicePasswordResetStatus
-				var googleResetStatus: ServicePasswordResetStatus
-				var openDirectoryResetStatus: ServicePasswordResetStatus
+				var hasRun: Bool
+				var errorStr: String?
 			}
 			
-			let isOpenDirectoryBeingReset: Bool
-			#if canImport(DirectoryService) && canImport(OpenDirectory)
-			isOpenDirectoryBeingReset = resetPasswordAction.resetOpenDirectoryPasswordAction.isExecuting
-			#else
-			isOpenDirectoryBeingReset = false
-			#endif
-			let context = ResetPasswordStatusContext(
-				userEmail: emailStr,
-				isExecuting: resetPasswordAction.isExecuting,
-				isSuccessful: resetPasswordAction.result?.isSuccessful ?? false,
-				ldapResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
-					isExecuting: resetPasswordAction.ldapResetResult == nil || resetPasswordAction.resetLDAPPasswordAction.isExecuting,
-					errorStr: resetPasswordAction.ldapResetResult?.failureValue?.localizedDescription
-				),
-				googleResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
-					isExecuting: resetPasswordAction.googleResetResult == nil || resetPasswordAction.resetGooglePasswordAction.isExecuting,
-					errorStr: resetPasswordAction.googleResetResult?.failureValue?.localizedDescription
-				),
-				openDirectoryResetStatus: ResetPasswordStatusContext.ServicePasswordResetStatus(
-					isExecuting: resetPasswordAction.openDirectoryResetResult == nil || isOpenDirectoryBeingReset,
-					errorStr: resetPasswordAction.openDirectoryResetResult?.failureValue?.localizedDescription
-				)
-			)
-			return view.render("PasswordResetStatusPage", context)
+			var userEmail: String
+			var isExecuting: Bool
 			
-		} else {
-			return view.render("NewPasswordResetPage", ["user_email": emailStr])
-			
+			var servicesResetStatus: [ServicePasswordResetStatus]
 		}
+		
+		let context = ResetPasswordStatusContext(
+			userEmail: email.stringValue,
+			isExecuting: resetPasswordActions.reduce(false, { $0 || $1.resetAction.successValue?.isExecuting ?? false }),
+			servicesResetStatus: resetPasswordActions.map{
+				ResetPasswordStatusContext.ServicePasswordResetStatus(
+					serviceName: $0.service.config.serviceName,
+					isExecuting: $0.resetAction.successValue?.isExecuting ?? false,
+					hasRun: !($0.resetAction.successValue?.isWeak ?? false),
+					errorStr: ($0.resetAction.failureValue ?? $0.resetAction.successValue?.result?.failureValue)?.legibleLocalizedDescription
+				)
+			}
+		)
+		return view.render("PasswordResetStatusPage", context)
 	}
 	
 }

@@ -11,6 +11,7 @@ import OfficeKit
 
 
 
+#if false
 extension User : Encodable {
 	
 	public func encode(to encoder: Encoder) throws {
@@ -44,3 +45,4 @@ extension User : Encodable {
 	}
 	
 }
+#endif
