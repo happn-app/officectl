@@ -165,7 +165,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		return Future<[GenericDirectoryUser]>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
 	}
 	
-	public var supportsUserCreation: Bool {config.supportsUserCreation}
+	public var supportsUserCreation: Bool {return config.supportsUserCreation}
 	public func createUser(_ user: GenericDirectoryUser, on container: Container) throws -> Future<GenericDirectoryUser> {
 		guard let url = URL(string: "create-user", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to create a user")
@@ -186,7 +186,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		return Future<GenericDirectoryUser>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
 	}
 	
-	public var supportsUserUpdate: Bool {config.supportsUserUpdate}
+	public var supportsUserUpdate: Bool {return config.supportsUserUpdate}
 	public func updateUser(_ user: GenericDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GenericDirectoryUser> {
 		guard let url = URL(string: "update-user", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to update a user")
@@ -208,7 +208,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		return Future<GenericDirectoryUser>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
 	}
 	
-	public var supportsUserDeletion: Bool {config.supportsUserDeletion}
+	public var supportsUserDeletion: Bool {return config.supportsUserDeletion}
 	public func deleteUser(_ user: GenericDirectoryUser, on container: Container) throws -> Future<Void> {
 		guard let url = URL(string: "delete-user", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to delete a user")
@@ -229,7 +229,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		return Future<GenericDirectoryUser>.future(from: operation, eventLoop: container.eventLoop).map{ _ in () }
 	}
 	
-	public var supportsPasswordChange: Bool {config.supportsPasswordChange}
+	public var supportsPasswordChange: Bool {return config.supportsPasswordChange}
 	public func changePasswordAction(for user: GenericDirectoryUser, on container: Container) throws -> ResetPasswordAction {
 		return try container.makeSemiSingleton(forKey: user.userId, additionalInitInfo: (config.url, authenticator, jsonEncoder, jsonDecoder)) as ResetExternalServicePasswordAction
 	}

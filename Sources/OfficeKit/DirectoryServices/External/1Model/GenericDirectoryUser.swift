@@ -101,35 +101,36 @@ public struct GenericDirectoryUser : DirectoryUser, Codable {
 		try container.encode(data)
 	}
 	
+	#warning("INFO: With Swift 5.1, no need for returns anymore in getters.")
 	public subscript(key: String) -> RemoteProperty<JSON> {
-		get {data[key].flatMap{ .set($0) } ?? .unsupported}
+		get {return data[key].flatMap{ .set($0) } ?? .unsupported}
 		set {data[key] = newValue.value}
 	}
 	
 	public var userId: GenericDirectoryUserId {
-		get {GenericDirectoryUserId(rawValue: data[DirectoryUserProperty.userId.rawValue]!)!}
+		get {return GenericDirectoryUserId(rawValue: data[DirectoryUserProperty.userId.rawValue]!)!}
 		set {data[DirectoryUserProperty.userId.rawValue] = newValue.rawValue}
 	}
 	public var persistentId: RemoteProperty<JSON> {
-		get {self[DirectoryUserProperty.persistentId.rawValue]}
+		get {return self[DirectoryUserProperty.persistentId.rawValue]}
 		set {self[DirectoryUserProperty.persistentId.rawValue] = newValue}
 	}
 	
 	public var emails: RemoteProperty<[Email]> {
-		get {self[DirectoryUserProperty.emails.rawValue].map{ $0.arrayValue!.map{ Email(string: $0.stringValue!)! } }} /* Lot of forced unwraps, but it’s all verified upstream. */
+		get {return self[DirectoryUserProperty.emails.rawValue].map{ $0.arrayValue!.map{ Email(string: $0.stringValue!)! } }} /* Lot of forced unwraps, but it’s all verified upstream. */
 		set {self[DirectoryUserProperty.emails.rawValue] = newValue.map{ JSON.array($0.map{ JSON.string($0.stringValue) }) }}
 	}
 	
 	public var firstName: RemoteProperty<String?> {
-		get {self[DirectoryUserProperty.firstName.rawValue].map{ unsafeJSONToOptionalString($0) }}
+		get {return self[DirectoryUserProperty.firstName.rawValue].map{ unsafeJSONToOptionalString($0) }}
 		set {self[DirectoryUserProperty.firstName.rawValue] = newValue.map{ optionalStringToJSON($0) }}
 	}
 	public var lastName: RemoteProperty<String?> {
-		get {self[DirectoryUserProperty.lastName.rawValue].map{ unsafeJSONToOptionalString($0) }}
+		get {return self[DirectoryUserProperty.lastName.rawValue].map{ unsafeJSONToOptionalString($0) }}
 		set {self[DirectoryUserProperty.lastName.rawValue] = newValue.map{ optionalStringToJSON($0) }}
 	}
 	public var nickname: RemoteProperty<String?> {
-		get {self[DirectoryUserProperty.nickname.rawValue].map{ unsafeJSONToOptionalString($0) }}
+		get {return self[DirectoryUserProperty.nickname.rawValue].map{ unsafeJSONToOptionalString($0) }}
 		set {self[DirectoryUserProperty.nickname.rawValue] = newValue.map{ optionalStringToJSON($0) }}
 	}
 	
