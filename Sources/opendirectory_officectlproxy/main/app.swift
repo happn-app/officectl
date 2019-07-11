@@ -18,11 +18,12 @@ func app(_ env: Environment) throws -> Application {
 	} else {
 		forcedConfigPath = nil
 	}
+	let verbose = env.arguments.contains("--verbose")
 	
 	var config = Config.default()
 	var env = env
 	var services = Services.default()
-	try configure(&config, &env, &services, forcedConfigPath: forcedConfigPath)
+	try configure(&config, &env, &services, forcedConfigPath: forcedConfigPath, verbose: verbose)
 	
 	let app = try Application(config: config, environment: env, services: services)
 	try boot(app)

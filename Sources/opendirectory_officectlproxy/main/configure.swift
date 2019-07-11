@@ -14,7 +14,11 @@ import Yaml
 
 
 
-public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services, forcedConfigPath: String?) throws {
+public func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services, forcedConfigPath: String?, verbose: Bool) throws {
+	configureURLRequestOperation(verbose)
+	configureRetryingOperation(verbose)
+	configureSemiSingleton(verbose)
+	
 	let (url, conf) = try readYamlConfig(forcedConfigFilePath: forcedConfigPath)
 	
 	let serverConfigYaml = try conf.genericConfig(for: "server", domain: "Global config")
