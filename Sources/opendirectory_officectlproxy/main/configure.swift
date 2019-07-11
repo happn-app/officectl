@@ -56,6 +56,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	#warning("TODO: Request Signature validation middleware")
 	var middlewares = MiddlewareConfig() /* Create _empty_ middleware config */
 	middlewares.use(ErrorMiddleware(handleError)) /* Catches errors and converts to HTTP response */
+	middlewares.use(VerifySignatureMiddleware())
 	services.register(middlewares)
 }
 
