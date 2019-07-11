@@ -52,7 +52,7 @@ public final class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 			decoder.keyDecodingStrategy = .useDefaultKeys
 			let op = AuthenticatedJSONOperation<GoogleUser>(request: urlRequest, authenticator: connector.authenticate, decoder: decoder)
 			op.completionBlock = {
-				guard op.result != nil else {
+				guard op.result.successValue != nil else {
 					self.error = op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the user"])
 					self.baseOperationEnded()
 					return
