@@ -37,7 +37,7 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 	}
 	
 	public convenience init(request: URLRequest, authenticator a: Authenticator?, decoder: JSONDecoder = AuthenticatedJSONOperation<ObjectType>.defaultDecoder) {
-		self.init(config: URLRequestOperation.Config(request: request, session: nil), authenticator: a, decoder: decoder)
+		self.init(config: URLRequestOperation.Config(request: request, session: nil, acceptableStatusCodes: nil, acceptableContentTypes: ["application/json"]), authenticator: a, decoder: decoder)
 	}
 	
 	public convenience init(url: URL, authenticator a: Authenticator?, decoder: JSONDecoder = AuthenticatedJSONOperation<ObjectType>.defaultDecoder) {
@@ -68,8 +68,12 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 		
 		do {
 			fetchedObject = try decoder.decode(ObjectType.self, from: fetchedData)
-			completionHandler(.doNotRetry, currentURLRequest, nil)
+			let error: Error?
+			if let statusCode = statusCode, 200..<300 ~= statusCode {error = nil}
+			else                                                    {error = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid status code \(statusCode as Any? ?? "<nil>"). Parsed data is: \(fetchedObject as Any? ?? "<nil>")"])}
+			completionHandler(.doNotRetry, currentURLRequest, error)
 		} catch {
+			#warning("print is bad!")
 			print("Cannot decode JSON; error \(error), data \(fetchedData.reduce("", { $0 + String(format: "%02x", $1) }))", to: &stderrStream)
 			completionHandler(.doNotRetry, currentURLRequest, error)
 		}
