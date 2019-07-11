@@ -2,6 +2,13 @@
 import PackageDescription
 
 
+
+var platformDependentTargets = [PackageDescription.Target]()
+#if canImport(DirectoryService) && canImport(OpenDirectory)
+platformDependentTargets.append(.target(name: "opendirectory_officectlproxy", dependencies: ["OfficeKit", "Vapor", "Yaml", "JWT", "LegibleError", "GenericJSON"]))
+#endif
+
+
 let package = Package(
 	name: "officectl",
 	platforms: [
@@ -43,8 +50,7 @@ let package = Package(
 		]),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
 		
-		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "Guaka", "Yaml", "JWT", "LegibleError"]),
+		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "Guaka", "Yaml", "JWT", "LegibleError"])
 		
-		.target(name: "opendirectory_officectlproxy", dependencies: ["OfficeKit", "Vapor", "Yaml", "JWT", "LegibleError", "GenericJSON"])
-	]
+	] + platformDependentTargets
 )
