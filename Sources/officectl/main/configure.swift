@@ -67,6 +67,8 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 
 
 private func handleOfficectlError(request: Request, chainingTo next: Responder, error: Error) throws -> Future<Response> {
+	#warning("TODO: Log the error")
+	
 	let status = (error as? Abort)?.status
 	let is404 = status?.code == 404
 	let context = [

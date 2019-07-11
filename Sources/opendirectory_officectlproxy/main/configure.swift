@@ -58,6 +58,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 
 private func handleError(req: Request, error: Error) -> Response {
 	do {
+		#warning("TODO: Log the error")
 		return try ApiResponse<String>(error: error).syncEncode(for: req)
 	} catch {
 		return req.response(#"{"error":{"domain":"top","code":42,"message":"Cannot even encode the upstream error…"}}"#, as: .json)
