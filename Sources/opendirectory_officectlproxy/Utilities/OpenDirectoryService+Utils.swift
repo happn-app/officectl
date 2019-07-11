@@ -8,6 +8,7 @@
 import Foundation
 
 import Async
+import GenericJSON
 import OfficeKit
 import Service
 
@@ -15,7 +16,11 @@ import Service
 
 extension OpenDirectoryService {
 	
-	func logicalUser(fromGenericUserId userId: GenericDirectoryUserId, on container: Container) throws -> ODRecordOKWrapper? {
+	func logicalUser(fromJSONUserId jsonUserId: JSON, on container: Container) throws -> ODRecordOKWrapper? {
+		guard let userId = GenericDirectoryUserId(rawValue: jsonUserId) else {
+			throw InvalidArgumentError(message: "Cannot convert JSON to GenericDirectoryUserId")
+		}
+		
 		switch userId {
 		case .native(let nativeIdJSON):
 			guard let nativeIdStr = nativeIdJSON.stringValue, let nativeId = try? LDAPDistinguishedName(string: nativeIdStr) else {
@@ -37,7 +42,11 @@ extension OpenDirectoryService {
 		}
 	}
 	
-	func existingUser(fromGenericUserId userId: GenericDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
+	func existingUser(fromJSONUserId jsonUserId: JSON, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
+		guard let userId = GenericDirectoryUserId(rawValue: jsonUserId) else {
+			throw InvalidArgumentError(message: "Cannot convert JSON to GenericDirectoryUserId")
+		}
+		
 		switch userId {
 		case .native(let nativeIdJSON):
 			guard let nativeIdStr = nativeIdJSON.stringValue, let nativeId = try? LDAPDistinguishedName(string: nativeIdStr) else {
