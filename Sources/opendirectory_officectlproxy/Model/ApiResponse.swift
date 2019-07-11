@@ -16,6 +16,10 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 	case data(ObjectType)
 	case error(ApiError)
 	
+	init(error: Error) {
+		self = .error(ApiError(error: error))
+	}
+	
 	func encode(to encoder: Encoder) throws {
 		var container = encoder.container(keyedBy: ApiResponse<ObjectType>.CodingKeys.self)
 		switch self {
@@ -40,10 +44,15 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 extension ApiResponse : ResponseEncodable {
 	
 	func encode(for req: Request) throws -> Future<Response> {
+		return try req.future(syncEncode(for: req))
+	}
+	
+	/* Convenience, not part of the protocol. */
+	func syncEncode(for req: Request) throws -> Response {
 		let encoder = JSONEncoder()
 		encoder.dateEncodingStrategy = .iso8601
 		encoder.keyEncodingStrategy = .convertToSnakeCase
-		return try req.future(req.response(encoder.encode(self), as: .json))
+		return try req.response(encoder.encode(self), as: .json)
 	}
 	
 }

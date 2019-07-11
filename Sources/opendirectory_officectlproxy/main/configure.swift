@@ -51,8 +51,17 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	/* Register middleware */
 	#warning("TODO: Request Signature validation middleware")
 	var middlewares = MiddlewareConfig() /* Create _empty_ middleware config */
-	middlewares.use(ErrorMiddleware.self) /* Catches errors and converts to HTTP response */
+	middlewares.use(ErrorMiddleware(handleError)) /* Catches errors and converts to HTTP response */
 	services.register(middlewares)
+}
+
+
+private func handleError(req: Request, error: Error) -> Response {
+	do {
+		return try ApiResponse<String>(error: error).syncEncode(for: req)
+	} catch {
+		return req.response(#"{"error":{"domain":"top","code":42,"message":"Cannot even encode the upstream error…"}}"#, as: .json)
+	}
 }
 
 

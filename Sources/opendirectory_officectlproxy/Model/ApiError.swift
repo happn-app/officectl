@@ -15,4 +15,10 @@ struct ApiError : Encodable, Error {
 	var code: Int
 	var message: String?
 	
+	init(error: Error) {
+		domain = nil
+		code = 1
+		message = error.legibleLocalizedDescription
+	}
+	
 }
