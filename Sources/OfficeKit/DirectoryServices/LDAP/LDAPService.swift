@@ -126,7 +126,22 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	
 	public let supportsUserCreation = true
 	public func createUser(_ user: LDAPInetOrgPersonWithObject, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject> {
-		throw NotImplementedError()
+		let ldapConnector: LDAPConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		
+		let op = CreateLDAPObjectsOperation(objects: [user.object], connector: ldapConnector)
+		return ldapConnector.connect(scope: (), eventLoop: container.eventLoop)
+		.then{ _ in
+			Future<[LDAPObject]>.future(from: op, eventLoop: container.eventLoop).map{ results in
+				guard let result = results.first, results.count == 1 else {
+					throw InternalError(message: "Got no or more than one result from a CreateLDAPObjectsOperation that creates only one user.")
+				}
+				let object = try result.get()
+				guard let person = LDAPInetOrgPerson(object: object) else {
+					throw InternalError(message: "Cannot get an inet org person from the created object. The object may have been created on the LDAP.")
+				}
+				return LDAPInetOrgPersonWithObject(inetOrgPerson: person)
+			}
+		}
 	}
 	
 	public let supportsUserUpdate = true

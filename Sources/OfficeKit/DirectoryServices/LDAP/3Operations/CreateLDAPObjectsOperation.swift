@@ -26,15 +26,17 @@ error is nil for a given object, it means the object has successfully been
 created, otherwise the error tells you what went wrong. */
 public final class CreateLDAPObjectsOperation : RetryingOperation, HasResult {
 	
-	public typealias ResultType = [LDAPObject]
+	public typealias ResultType = [Result<LDAPObject, Error>]
 	
 	public let connector: LDAPConnector
 	
 	public let objects: [LDAPObject]
 	public private(set) var errors: [Error?]
-	public var result: Result<[LDAPObject], Error> {
-		let successfulCreationsIndexes = errors.enumerated().filter{ $0.element == nil }.map{ $0.offset }
-		return .success(successfulCreationsIndexes.map{ objects[$0] })
+	public var result: Result<[Result<LDAPObject, Error>], Error> {
+		return .success(objects.enumerated().map{
+			if let e = errors[$0.offset] {return .failure(e)}
+			return .success($0.element)
+		})
 	}
 	
 	public convenience init(users: [LDAPInetOrgPerson], connector c: LDAPConnector) {
