@@ -66,7 +66,7 @@ public final class ModifyLDAPPasswordsOperation : RetryingOperation {
 				
 				/* We use the synchronous version of the function. See long comment
 				 * in search operation for details. */
-				let r = ldap_extended_operation_s(connector.ldapPtr, LDAP_EXOP_MODIFY_PASSWD, &bv, nil /* Server controls */, nil /* Client controls */, nil, nil)
+				let r = connector.performLDAPCommunication{ ldap_extended_operation_s($0, LDAP_EXOP_MODIFY_PASSWD, &bv, nil /* Server controls */, nil /* Client controls */, nil, nil) }
 				guard r == LDAP_SUCCESS else {
 					throw NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])
 				}

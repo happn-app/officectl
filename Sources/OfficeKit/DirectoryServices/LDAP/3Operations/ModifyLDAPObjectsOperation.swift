@@ -56,7 +56,7 @@ public final class ModifyLDAPObjectsOperation : RetryingOperation {
 			
 			/* We use the synchronous version of the function. See long comment in
 			 * search operation for details. */
-			let r = ldap_modify_ext_s(connector.ldapPtr, object.distinguishedName.stringValue, &ldapModifsRequest, nil /* Server controls */, nil /* Client controls */)
+			let r = connector.performLDAPCommunication{ ldap_modify_ext_s($0, object.distinguishedName.stringValue, &ldapModifsRequest, nil /* Server controls */, nil /* Client controls */) }
 			if r == LDAP_SUCCESS {errors[idx] = nil}
 			else                 {errors[idx] = NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])}
 		}

@@ -47,7 +47,6 @@ public final class LDAPConnector : Connector {
 	public let authMode: AuthMode
 	
 	public var currentScope: Void?
-	let ldapPtr: OpaquePointer /* “LDAP*”; Cannot use the LDAP type (not exported to Swift, because opaque in C headers...) */
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "LDAPConnector")
 	
@@ -89,6 +88,17 @@ public final class LDAPConnector : Connector {
 	
 	deinit {
 		ldap_unbind_ext_s(ldapPtr, nil, nil)
+	}
+	
+	/** Lets the client communicate directly with the LDAP. Use the pointer
+	inside the block only, do **not** store it!
+	
+	- Parameter communicationBlock: The block to execute.
+	- Parameter ldapPtr: An opaque pointer to the underlying LDAP C structure.
+	The structure is opaque in the openldap headers, so we get an opaque pointer
+	in Swift. */
+	public func performLDAPCommunication<T>(_ communicationBlock: (_ ldapPtr: OpaquePointer) throws -> T) rethrows -> T {
+		return try ldapCommunicationQueue.sync{ try communicationBlock(ldapPtr) }
 	}
 	
 	/* ********************************
@@ -133,5 +143,8 @@ public final class LDAPConnector : Connector {
 	   *************** */
 	
 	private static let initSemaphore = DispatchSemaphore(value: 1)
+	
+	private let ldapCommunicationQueue = DispatchQueue(label: "LDAPConnector Communication Queue")
+	private let ldapPtr: OpaquePointer /* “LDAP*”; Cannot use the LDAP type (not exported to Swift, because opaque in C headers...) */
 	
 }

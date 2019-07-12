@@ -46,97 +46,99 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 		 * Another (guessed) downside is if we have multiple requests launched on
 		 * the same connection, they won’t be run at the same time, one long
 		 * request potentially blocking another small request. */
-		var searchResultMessagePtr: OpaquePointer? /* “LDAPMessage*”; Cannot use the LDAPMessage type (not exported to Swift, because opaque in C headers...) */
-		let searchResultError = withCLDAPArrayOfString(array: request.attributesToFetch.flatMap{ Array($0) }){ attributesPtr in
-			return ldap_search_ext_s(
-				ldapConnector.ldapPtr,
-				request.base.stringValue, request.scope.rawValue, request.searchQuery?.stringValue, attributesPtr,
-				0 /* We want attributes and values */, nil /* Server controls */, nil /* Client controls */,
-				nil /* Timeout */, 0 /* Size limit */, &searchResultMessagePtr
-			)
-		}
-		defer {_ = ldap_msgfree(searchResultMessagePtr)}
-		
-		guard searchResultError == LDAP_SUCCESS else {
-//			print("Cannot search LDAP: \(String(cString: ldap_err2string(searchResultError)))", to: &stderrStream)
-			results = RError(domain: "com.happn.officectl.openldap", code: Int(searchResultError), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(searchResultError))])
-			return
-		}
-		
-		var swiftResults = [LDAPObject]()
-		var swiftReferences = [[String]]()
-		var nextMessage = ldap_first_entry(ldapConnector.ldapPtr, searchResultMessagePtr)
-		while let currentMessage = nextMessage {
-			nextMessage = ldap_next_message(ldapConnector.ldapPtr, currentMessage)
+		ldapConnector.performLDAPCommunication{ ldapPtr in
+			var searchResultMessagePtr: OpaquePointer? /* “LDAPMessage*”; Cannot use the LDAPMessage type (not exported to Swift, because opaque in C headers...) */
+			let searchResultError = withCLDAPArrayOfString(array: request.attributesToFetch.flatMap{ Array($0) }){ attributesPtr in
+				return ldap_search_ext_s(
+					ldapPtr,
+					request.base.stringValue, request.scope.rawValue, request.searchQuery?.stringValue, attributesPtr,
+					0 /* We want attributes and values */, nil /* Server controls */, nil /* Client controls */,
+					nil /* Timeout */, 0 /* Size limit */, &searchResultMessagePtr
+				)
+			}
+			defer {_ = ldap_msgfree(searchResultMessagePtr)}
 			
-			switch ber_tag_t(ldap_msgtype(currentMessage)) {
-			case LDAP_RES_SEARCH_ENTRY: /* A search result */
-				guard let dnCString = ldap_get_dn(ldapConnector.ldapPtr, currentMessage) else {
-					print("Cannot get DN for a search entry", to: &stderrStream)
-					continue
-				}
-				defer {ldap_memfree(dnCString)}
+			guard searchResultError == LDAP_SUCCESS else {
+//				print("Cannot search LDAP: \(String(cString: ldap_err2string(searchResultError)))", to: &stderrStream)
+				results = RError(domain: "com.happn.officectl.openldap", code: Int(searchResultError), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(searchResultError))])
+				return
+			}
+			
+			var swiftResults = [LDAPObject]()
+			var swiftReferences = [[String]]()
+			var nextMessage = ldap_first_entry(ldapPtr, searchResultMessagePtr)
+			while let currentMessage = nextMessage {
+				nextMessage = ldap_next_message(ldapPtr, currentMessage)
 				
-				var ber: OpaquePointer?
-				var swiftAttributesAndValues = [String: [Data]]()
-				var nextAttribute = ldap_first_attribute(ldapConnector.ldapPtr, currentMessage, &ber)
-				defer {ber_free(ber, 0)}
-				while let currentAttribute = nextAttribute {
-					defer {ldap_memfree(currentAttribute)}
-					nextAttribute = ldap_next_attribute(ldapConnector.ldapPtr, currentMessage, ber)
-					
-					let currentAttributeString = String(cString: currentAttribute)
-					guard let valueSetPtr = ldap_get_values_len(ldapConnector.ldapPtr, currentMessage, currentAttribute) else {
-						/* To retrieve the error message: ldap_err2string(ldapConnector.ldapPtr.pointee.ld_errno)
-						 * But does not work because ldapPtr is an Opaque Pointer
-						 * (because it is opaque in the OpenLDAP headers...) */
-						print("Cannot get value set for attribute \(currentAttributeString)", to: &stderrStream)
+				switch ber_tag_t(ldap_msgtype(currentMessage)) {
+				case LDAP_RES_SEARCH_ENTRY: /* A search result */
+					guard let dnCString = ldap_get_dn(ldapPtr, currentMessage) else {
+						print("Cannot get DN for a search entry", to: &stderrStream)
 						continue
 					}
-					var swiftValues = [Data]()
-					var currentValuePtr = valueSetPtr
-					while let currentValue = currentValuePtr.pointee {
-						defer {currentValuePtr = currentValuePtr.successor()}
-						swiftValues.append(Data(bytes: currentValue.pointee.bv_val, count: Int(currentValue.pointee.bv_len)))
-					}
-					ldap_value_free_len(valueSetPtr)
-					swiftAttributesAndValues[currentAttributeString] = swiftValues
-				}
-				let dnString = String(cString: dnCString)
-				guard let dn = try? LDAPDistinguishedName(string: dnString) else {
-					results = .failure(InternalError(message: "Got malformed dn '\(dnString)' from LDAP. Aborting search."))
-					return
-				}
-				swiftResults.append(LDAPObject(distinguishedName: dn, attributes: swiftAttributesAndValues))
-				
-			case LDAP_RES_SEARCH_REFERENCE: /* UNTESTED (our server does not return search references; not sure what search references are anyway…) */
-				var referrals: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?
-				let err = ldap_parse_reference(ldapConnector.ldapPtr, currentMessage, &referrals, nil /* Server Controls */, 0 /* Do not free the message */)
-				guard err == LDAP_SUCCESS else {
-					print("Cannot get search reference: got error \(String(cString: ldap_err2string(err)))", to: &stderrStream)
-					continue
-				}
-				
-				var swiftValues = [String]()
-				var nextReferralPtr = referrals
-				while let currentReferral = nextReferralPtr?.pointee {
-					defer {ldap_memfree(currentReferral)}
-					nextReferralPtr = nextReferralPtr?.successor()
+					defer {ldap_memfree(dnCString)}
 					
-					swiftValues.append(String(cString: currentReferral))
+					var ber: OpaquePointer?
+					var swiftAttributesAndValues = [String: [Data]]()
+					var nextAttribute = ldap_first_attribute(ldapPtr, currentMessage, &ber)
+					defer {ber_free(ber, 0)}
+					while let currentAttribute = nextAttribute {
+						defer {ldap_memfree(currentAttribute)}
+						nextAttribute = ldap_next_attribute(ldapPtr, currentMessage, ber)
+						
+						let currentAttributeString = String(cString: currentAttribute)
+						guard let valueSetPtr = ldap_get_values_len(ldapPtr, currentMessage, currentAttribute) else {
+							/* To retrieve the error message: ldap_err2string(ldapPtr.pointee.ld_errno)
+							 * But does not work because ldapPtr is an Opaque Pointer
+							 * (because it is opaque in the OpenLDAP headers...) */
+							print("Cannot get value set for attribute \(currentAttributeString)", to: &stderrStream)
+							continue
+						}
+						var swiftValues = [Data]()
+						var currentValuePtr = valueSetPtr
+						while let currentValue = currentValuePtr.pointee {
+							defer {currentValuePtr = currentValuePtr.successor()}
+							swiftValues.append(Data(bytes: currentValue.pointee.bv_val, count: Int(currentValue.pointee.bv_len)))
+						}
+						ldap_value_free_len(valueSetPtr)
+						swiftAttributesAndValues[currentAttributeString] = swiftValues
+					}
+					let dnString = String(cString: dnCString)
+					guard let dn = try? LDAPDistinguishedName(string: dnString) else {
+						results = .failure(InternalError(message: "Got malformed dn '\(dnString)' from LDAP. Aborting search."))
+						return
+					}
+					swiftResults.append(LDAPObject(distinguishedName: dn, attributes: swiftAttributesAndValues))
+					
+				case LDAP_RES_SEARCH_REFERENCE: /* UNTESTED (our server does not return search references; not sure what search references are anyway…) */
+					var referrals: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?
+					let err = ldap_parse_reference(ldapPtr, currentMessage, &referrals, nil /* Server Controls */, 0 /* Do not free the message */)
+					guard err == LDAP_SUCCESS else {
+						print("Cannot get search reference: got error \(String(cString: ldap_err2string(err)))", to: &stderrStream)
+						continue
+					}
+					
+					var swiftValues = [String]()
+					var nextReferralPtr = referrals
+					while let currentReferral = nextReferralPtr?.pointee {
+						defer {ldap_memfree(currentReferral)}
+						nextReferralPtr = nextReferralPtr?.successor()
+						
+						swiftValues.append(String(cString: currentReferral))
+					}
+					ldap_memfree(referrals)
+					
+					swiftReferences.append(swiftValues)
+					
+				case LDAP_RES_SEARCH_RESULT: /* The metadata about the search results */
+					()
+					
+				default:
+					print("Got unknown message of type \(ldap_msgtype(currentMessage)). Ignoring.", to: &stderrStream)
 				}
-				ldap_memfree(referrals)
-				
-				swiftReferences.append(swiftValues)
-				
-			case LDAP_RES_SEARCH_RESULT: /* The metadata about the search results */
-				()
-				
-			default:
-				print("Got unknown message of type \(ldap_msgtype(currentMessage)). Ignoring.", to: &stderrStream)
 			}
+			results = .success((results: swiftResults, references: swiftReferences))
 		}
-		results = .success((results: swiftResults, references: swiftReferences))
 	}
 	
 	public override var isAsynchronous: Bool {
