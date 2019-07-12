@@ -83,11 +83,11 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	
 	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> LDAPInetOrgPersonWithObject? {
 		if let user: GoogleUser = user.unboxed() {
-			let ret = try logicalUser(fromEmail: user.primaryEmail)
-			if let fn = user.name.value?.familyName {ret?.inetOrgPerson.sn = [fn]}
-			if let fn = user.name.value?.fullName   {ret?.inetOrgPerson.cn = [fn]}
-			if let gn = user.name.value?.givenName  {ret?.inetOrgPerson.givenName = [gn]}
-			return ret
+			let person = try logicalUser(fromEmail: user.primaryEmail)?.inetOrgPerson
+			if let fn = user.name.value?.familyName {person?.sn = [fn]}
+			if let fn = user.name.value?.fullName   {person?.cn = [fn]}
+			if let gn = user.name.value?.givenName  {person?.givenName = [gn]}
+			return person.flatMap{ LDAPInetOrgPersonWithObject(inetOrgPerson: $0) }
 		}
 		throw NotImplementedError()
 	}
