@@ -24,8 +24,6 @@ public final class OpenDirectoryConnector : Connector {
 	public let nodeType: ODNodeType
 	
 	public var currentScope: Void?
-	/** The node to use for requests. Non-nil when the connector is connected. */
-	private(set) public var node: ODNode?
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "OpenDirectoryConnector")
 	
@@ -34,6 +32,16 @@ public final class OpenDirectoryConnector : Connector {
 		username = u
 		password = p
 		nodeType = t
+	}
+	
+	/** Lets the client communicate directly with the node. Use the node inside
+	the block only, do **not** store it!
+	
+	- Parameter communicationBlock: The block to execute.
+	- Parameter node: The OpenDirectory node. If the connector is not connected,
+	will be `nil`. */
+	public func performOpenDirectoryCommunication<T>(_ communicationBlock: (_ node: ODNode?) throws -> T) rethrows -> T {
+		return try odCommunicationQueue.sync{ try communicationBlock(node) }
 	}
 	
 	/* ********************************
@@ -70,6 +78,9 @@ public final class OpenDirectoryConnector : Connector {
 			}
 		}
 	}
+	
+	private let odCommunicationQueue = DispatchQueue(label: "OpenDirectory Communication Queue")
+	private var node: ODNode?
 	
 }
 

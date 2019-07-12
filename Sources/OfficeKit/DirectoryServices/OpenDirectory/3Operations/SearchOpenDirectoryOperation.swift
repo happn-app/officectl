@@ -35,24 +35,28 @@ public final class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		assert(openDirectoryConnector.isConnected)
 		defer {baseOperationEnded()}
 		
 		do {
-			let odQuery = try ODQuery(
-				node: openDirectoryConnector.node!,
-				forRecordTypes: request.recordTypes,
-				attribute: request.attribute,
-				matchType: request.matchType,
-				queryValues: request.queryValues,
-				returnAttributes: request.returnAttributes,
-				maximumResults: request.maximumResults ?? 0
-			)
-			/* The as! should be valid; OpenDirectory is simply not updated anymore
-			 * and the returned array is not typed. But doc says this method
-			 * returns an array of ODRecord. */
-			let odResults = try odQuery.resultsAllowingPartial(false) as! [ODRecord]
-			results = .success(odResults)
+			try openDirectoryConnector.performOpenDirectoryCommunication{ node in
+				guard let node = node else {
+					throw InternalError(message: "Launched a search open directory action with a non-connected connector!")
+				}
+				let odQuery = try ODQuery(
+					node: node,
+					forRecordTypes: request.recordTypes,
+					attribute: request.attribute,
+					matchType: request.matchType,
+					queryValues: request.queryValues,
+					returnAttributes: request.returnAttributes,
+					maximumResults: request.maximumResults ?? 0
+				)
+				/* The as! should be valid; OpenDirectory is simply not updated anymore
+				 * and the returned array is not typed. But doc says this method
+				 * returns an array of ODRecord. */
+				let odResults = try odQuery.resultsAllowingPartial(false) as! [ODRecord]
+				results = .success(odResults)
+			}
 		} catch {
 			results = .failure(error)
 		}
