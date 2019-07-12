@@ -182,4 +182,18 @@ extension Yaml : GenericConfig {
 		return value
 	}
 	
+	public func asString(domain: String?) throws -> String {
+		guard let str = string else {
+			throw ConfigError(domain: domain, key: "self", message: "Value is not a String")
+		}
+		return str
+	}
+	
+	public func asStringArray(domain: String?) throws -> [String] {
+		guard let a = try array?.map({ try $0.asString(domain: domain) }) else {
+			throw ConfigError(domain: domain, key: "self", message: "Value is not an array")
+		}
+		return a
+	}
+	
 }

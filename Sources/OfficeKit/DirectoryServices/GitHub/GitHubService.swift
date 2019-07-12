@@ -35,6 +35,10 @@ public final class GitHubService : DirectoryService {
 		return string
 	}
 	
+	public func shortDescription(from user: GitHubUser) -> String {
+		return user.userId
+	}
+	
 	public func exportableJSON(from user: GitHubUser) throws -> JSON {
 		throw NotImplementedError()
 	}

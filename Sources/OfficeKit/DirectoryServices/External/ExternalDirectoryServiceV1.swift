@@ -50,6 +50,10 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		return id
 	}
 	
+	public func shortDescription(from user: GenericDirectoryUser) -> String {
+		return "\(user.userId)"
+	}
+	
 	public func exportableJSON(from user: GenericDirectoryUser) throws -> JSON {
 		return try JSON(encodable: user)
 	}

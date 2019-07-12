@@ -53,6 +53,10 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		return try LDAPDistinguishedName(string: string)
 	}
 	
+	public func shortDescription(from user: LDAPInetOrgPersonWithObject) -> String {
+		return user.userId.stringValue
+	}
+	
 	public func exportableJSON(from user: LDAPInetOrgPersonWithObject) throws -> JSON {
 		throw NotImplementedError()
 	}

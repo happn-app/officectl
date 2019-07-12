@@ -31,6 +31,7 @@ struct OfficectlConfig : Service {
 	var tmpVaultTTL: String?
 	
 	var officeKitConfig: OfficeKitConfig
+	var syncConfig: SyncConfig?
 	
 	init(flags f: Flags) throws {
 		let (configURL, configYaml) = try OfficectlConfig.readYamlConfig(forcedConfigFilePath: f.getString(name: "config-file"))
@@ -52,6 +53,7 @@ struct OfficectlConfig : Service {
 		tmpVaultTTL = configYaml["vault"]["ttl"].string
 		
 		officeKitConfig = try OfficeKitConfig(genericConfig: configYaml, pathsRelativeTo: configURL)
+		syncConfig = try configYaml.optionalGenericConfig(for: "sync", domain: nil).map{ try SyncConfig(genericConfig: $0, pathsRelativeTo: configURL) }
 	}
 	
 	private static func readYamlConfig(forcedConfigFilePath: String?) throws -> (URL, Yaml) {

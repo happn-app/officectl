@@ -52,6 +52,9 @@ public protocol GenericConfig {
 	func genericConfig(for key: String, domain: String?) throws -> GenericConfig
 	func optionalGenericConfig(for key: String, domain: String?) throws -> GenericConfig?
 	
+	func asString(domain: String?) throws -> String
+	func asStringArray(domain: String?) throws -> [String]
+
 }
 
 public protocol OfficeKitServiceConfig : Hashable {

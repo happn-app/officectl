@@ -47,6 +47,10 @@ public final class OpenDirectoryService : DirectoryService {
 		return try LDAPDistinguishedName(string: string)
 	}
 	
+	public func shortDescription(from user: ODRecordOKWrapper) -> String {
+		return user.userId.stringValue
+	}
+	
 	public func exportableJSON(from user: ODRecordOKWrapper) throws -> JSON {
 		throw NotImplementedError()
 	}

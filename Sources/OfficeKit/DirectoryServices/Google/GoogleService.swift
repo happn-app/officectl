@@ -50,6 +50,10 @@ public final class GoogleService : DirectoryService {
 		return e
 	}
 	
+	public func shortDescription(from user: GoogleUser) -> String {
+		return user.primaryEmail.stringValue
+	}
+	
 	public func exportableJSON(from user: GoogleUser) throws -> JSON {
 		return try JSON(encodable: user)
 	}

@@ -25,6 +25,10 @@ private struct ServiceSyncPlan {
 
 
 func sync(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
+	guard let syncConfig = try context.container.make(OfficectlConfig.self).syncConfig else {
+		throw InvalidArgumentError(message: "Won’t sync without a sync config.")
+	}
+	
 	let officeKitServiceProvider = try context.container.make(OfficeKitServiceProvider.self)
 	
 	let fromId = f.getString(name: "from")!
@@ -52,14 +56,15 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		let futures = try toDirectories.map{ toDirectory in
 			return try toDirectory.listAllUsers(on: context.container).map{ try usersById(from: $0) }
 			.map{ (currentDestinationUsers: [AnyHashable: AnyDirectoryUser]) -> ServiceSyncPlan in
+				let directoryBlacklist = syncConfig.blacklistsByServiceId[toDirectory.config.serviceId] ?? []
 				let expectedDestinationUsers = try usersById(from: sourceUsers.compactMap{ try toDirectory.logicalUser(fromUser: $0, in: fromDirectory) })
 				
 				let currentDestinationUserIds = Set(currentDestinationUsers.keys)
 				let expectedDestinationUserIds = Set(expectedDestinationUsers.keys)
 				let userIdsToCreate = expectedDestinationUserIds.subtracting(currentDestinationUserIds)
 				let userIdsToDelete = currentDestinationUserIds.subtracting(expectedDestinationUserIds)
-				let usersToCreate = Array(expectedDestinationUsers.filter{ userIdsToCreate.contains($0.key) }.values)
-				let usersToDelete = Array(currentDestinationUsers.filter{ userIdsToDelete.contains($0.key) }.values)
+				let usersToCreate = Array(expectedDestinationUsers.filter{ userIdsToCreate.contains($0.key) && !directoryBlacklist.contains(toDirectory.string(from: $0.key)) }.values)
+				let usersToDelete = Array(currentDestinationUsers.filter{  userIdsToDelete.contains($0.key) && !directoryBlacklist.contains(toDirectory.string(from: $0.key)) }.values)
 				return ServiceSyncPlan(service: toDirectory, usersToCreate: usersToCreate, usersToDelete: usersToDelete)
 			}
 		}
@@ -67,26 +72,26 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	}
 	.map{ (plans: [ServiceSyncPlan]) -> [ServiceSyncPlan] in
 		/* Let’s verify the user is ok with the plan */
-		var textPlan = ConsoleText.newLine + "********* SYNC PLAN *********" + ConsoleText.newLine
-		for plan in plans {
-			textPlan += ConsoleText.newLine + "*** For service \(plan.service.config.serviceName) (id=\(plan.service.config.serviceId))".consoleText() + ConsoleText.newLine
+		var textPlan = "********* SYNC PLAN *********" + ConsoleText.newLine
+		for plan in plans.sorted(by: { $0.service.config.serviceName < $1.service.config.serviceName }) {
+			textPlan += ConsoleText.newLine + ConsoleText.newLine + "*** For service \(plan.service.config.serviceName) (id=\(plan.service.config.serviceId))".consoleText() + ConsoleText.newLine
 			
 			var printedSomething = false
 			if !plan.usersToCreate.isEmpty {
 				printedSomething = true
-				textPlan += "- Users creation:" + ConsoleText.newLine
-				plan.usersToCreate.forEach{ textPlan += "   \($0)".consoleText() + ConsoleText.newLine }
+				textPlan += ConsoleText.newLine + "   - Users creation:" + ConsoleText.newLine
+				plan.usersToCreate.forEach{ textPlan += "      \(plan.service.shortDescription(from: $0))".consoleText() + ConsoleText.newLine }
 			}
 			if !plan.usersToDelete.isEmpty {
 				printedSomething = true
-				textPlan += "- Users deletion:" + ConsoleText.newLine
-				plan.usersToDelete.forEach{ textPlan += "   \($0)".consoleText() + ConsoleText.newLine }
+				textPlan += ConsoleText.newLine + "   - Users deletion (currently not implemented):" + ConsoleText.newLine
+				plan.usersToDelete.forEach{ textPlan += "      \(plan.service.shortDescription(from: $0))".consoleText() + ConsoleText.newLine }
 			}
 			if !printedSomething {
-				textPlan += "<Nothing to do for this service>" + ConsoleText.newLine
+				textPlan += "   <Nothing to do for this service>" + ConsoleText.newLine
 			}
 		}
-		textPlan += "Do you want to continue?"
+		textPlan += ConsoleText.newLine + ConsoleText.newLine + ConsoleText.newLine + "Do you want to continue?"
 		guard context.console.confirm(textPlan) else {
 			throw UserAbortedError()
 		}

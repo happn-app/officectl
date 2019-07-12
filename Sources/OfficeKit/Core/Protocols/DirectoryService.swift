@@ -28,6 +28,9 @@ public protocol DirectoryService : class {
 	func string(from userId: UserType.UserIdType) -> String
 	func userId(from string: String) throws -> UserType.UserIdType
 	
+	/** Convert the user to a user printable string. Mostly used for logging. */
+	func shortDescription(from user: UserType) -> String
+	
 	/** Converts the given user to a JSON representation.
 	
 	The JSON returned by this function doesn’t have to be an exact representation

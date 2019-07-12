@@ -20,6 +20,7 @@ private protocol DirectoryServiceBox {
 	func string(from userId: AnyHashable) -> String
 	func userId(from string: String) throws -> AnyHashable
 	
+	func shortDescription(from user: AnyDirectoryUser) -> String
 	func exportableJSON(from user: AnyDirectoryUser) throws -> JSON
 	
 	func logicalUser(fromEmail email: Email) throws -> AnyDirectoryUser?
@@ -55,13 +56,24 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	}
 	
 	func string(from userId: AnyHashable) -> String {
-		/* TODO? I’m not a big fan of this forced unwrapping… */
-		let typedId = userId as! Base.UserType.UserIdType
+		guard let typedId = userId as? Base.UserType.UserIdType else {
+			#warning("TODO: Log the error")
+			/* The source user type is unknown, so we return a purposefully invalid
+			 * id. This is not ideal… */
+			return ""
+		}
 		return originalDirectory.string(from: typedId)
 	}
 	
 	func userId(from string: String) throws -> AnyHashable {
 		return try AnyHashable(originalDirectory.userId(from: string))
+	}
+	
+	func shortDescription(from user: AnyDirectoryUser) -> String {
+		guard let u: Base.UserType = user.unboxed() else {
+			return "UnknownAnyDirectoryUser<\(user)>"
+		}
+		return originalDirectory.shortDescription(from: u)
 	}
 	
 	func exportableJSON(from user: AnyDirectoryUser) throws -> JSON {
@@ -163,6 +175,10 @@ public class AnyDirectoryService : DirectoryService {
 	
 	public func userId(from string: String) throws -> AnyHashable {
 		return try box.userId(from: string)
+	}
+	
+	public func shortDescription(from user: AnyDirectoryUser) -> String {
+		return box.shortDescription(from: user)
 	}
 	
 	public func exportableJSON(from user: AnyDirectoryUser) throws -> JSON {
