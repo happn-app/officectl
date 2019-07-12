@@ -128,11 +128,11 @@ public struct GoogleUser : Hashable, Codable {
 	}
 	
 	public static func ==(_ user1: GoogleUser, _ user2: GoogleUser) -> Bool {
-		return user1.id == user2.id
+		return user1.primaryEmail == user2.primaryEmail
 	}
 	
 	public func hash(into hasher: inout Hasher) {
-		hasher.combine(id)
+		hasher.combine(primaryEmail)
 	}
 	
 	public func cloneForPatching() -> GoogleUser {
