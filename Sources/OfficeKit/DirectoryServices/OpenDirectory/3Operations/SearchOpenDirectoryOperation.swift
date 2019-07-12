@@ -42,6 +42,8 @@ public final class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 				guard let node = node else {
 					throw InternalError(message: "Launched a search open directory action with a non-connected connector!")
 				}
+				/* Note: This shortcut exists when searching directly with a UID:
+				 *       try node.record(withRecordType: kODRecordTypeUsers, name: the_uid (e.g. "francois.lamboley"), attributes: request.returnAttributes) */
 				let odQuery = try ODQuery(
 					node: node,
 					forRecordTypes: request.recordTypes,
