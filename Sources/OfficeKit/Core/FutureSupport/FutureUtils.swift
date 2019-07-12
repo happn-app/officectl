@@ -8,23 +8,22 @@
 import Foundation
 
 import NIO
-import Async
 
 
 
 public let defaultDispatchQueueForFutureSupport = DispatchQueue(label: "Default Dispatch Queue for Futures")
 public let defaultOperationQueueForFutureSupport = OperationQueue(name_OperationQueue: "Default Operation Queue for Futures")
 
-public extension Future {
+public extension EventLoopFuture {
 	
-	static func waitAll(_ futures: [Future<T>], eventLoop: EventLoop) -> Future<[FutureResult<T>]> {
+	static func waitAll(_ futures: [EventLoopFuture<T>], eventLoop: EventLoop) -> EventLoopFuture<[Result<T, Error>]> {
 		/* No need for this assert, we hop the future to the event loop. */
 //		assert(futures.reduce(true, { val, future in val && future.eventLoop === eventLoop }))
-		let f0 = eventLoop.newSucceededFuture(result: [FutureResult<T>]())
+		let f0 = eventLoop.newSucceededFuture(result: [Swift.Result<T, Error>]())
 		
 		let body = futures
 		.map{ $0.hopTo(eventLoop: eventLoop) }
-		.reduce(f0, { (result: Future<[FutureResult<T>]>, newFuture: Future<T>) -> Future<[FutureResult<T>]> in
+		.reduce(f0, { (result: EventLoopFuture<[Result<T, Error>]>, newFuture: EventLoopFuture<T>) -> EventLoopFuture<[Result<T, Error>]> in
 			return result
 			.then{ results in
 				newFuture
@@ -32,7 +31,7 @@ public extension Future {
 					return results + [.success(success)]
 				}
 				.mapIfError{
-					return results + [.error($0)]
+					return results + [.failure($0)]
 				}
 			}
 		})
