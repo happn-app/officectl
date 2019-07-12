@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Async
+
 
 
 /* Type erasure for a reset password action.
@@ -23,6 +25,7 @@ public protocol ResetPasswordAction/* : AnyAction where ParametersType == String
 	var latestParameters: String? {get}
 	var result: Result<Void, Error>? {get}
 	
+	func start(parameters: String, weakeningMode: WeakeningMode, eventLoop: EventLoop) -> EventLoopFuture<Void>
 	func start(parameters: String, weakeningMode: WeakeningMode, handler: ((_ result: Result<Void, Error>) -> Void)?)
 	
 	func weaken() throws

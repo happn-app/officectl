@@ -29,6 +29,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		throw InvalidArgumentError(message: "Won’t sync without a sync config.")
 	}
 	
+	let authServiceId = try context.container.make(OfficectlConfig.self).officeKitConfig.authServiceConfig.serviceId
 	let officeKitServiceProvider = try context.container.make(OfficeKitServiceProvider.self)
 	
 	let fromId = f.getString(name: "from")!
@@ -99,57 +100,57 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	}
 	.flatMap{ plans in
 		/* Now let’s do the actual sync! */
-		#warning("TODO")
-		return context.container.eventLoop.future()
-	}
-}
-
-#if false
-/** Compute the users to create on LDAP, asks for confirmation if some users
-should be created, create them if users says ok, print the created users and
-their passwords after creation.
-
-- returns: The mapping dn<->password that has been created. */
-private func syncFromGoogleToLDAP(users: [SourceId: [User]], baseDN: LDAPDistinguishedName, connectors: Connectors, asyncConfig: AsyncConfig, console: Console) -> Future<Void> {
-	/* TODO: User deletion. Currently we’re append only. */
-	let ldapUsers = users[.ldap]!
-	let googleUsers = users[.google]!
-	let ldapDNUsers = ldapUsers.compactMap{ $0.distinguishedNameIdVariant() }
-	let googleDNUsers = googleUsers.compactMap{ $0.distinguishedNameIdVariant() }
-	guard ldapUsers.count == ldapDNUsers.count && googleUsers.count == googleDNUsers.count else {
-		return asyncConfig.eventLoop.newFailedFuture(error: InternalError(message: "Got users who could not be converted to DN variant."))
-	}
-	
-	let usersToCreate = Set(googleDNUsers).subtracting(Set(ldapDNUsers))
-	guard usersToCreate.count > 0 else {return asyncConfig.eventLoop.newSucceededFuture(result: ())}
-	
-	let usersToCreateAsText = usersToCreate
-		.reduce("".consoleText(), { $0 + "   ".consoleText() + ($1.email?.stringValue ?? "<Unknown email>").consoleText() + ConsoleText.newLine })
-	let msg =
-		"Will create the following users on LDAP:" + ConsoleText.newLine +
-		 usersToCreateAsText +
-		"Do you want to continue?"
-	guard console.confirm(msg) else {
-		return asyncConfig.eventLoop.newFailedFuture(error: UserAbortedError())
-	}
-	
-	let ldapUsersToCreate = usersToCreate.compactMap{ try? $0.ldapInetOrgPerson(baseDN: baseDN) }
-	let createUsersOperation = CreateLDAPObjectsOperation(users: ldapUsersToCreate, connector: connectors.ldapConnector)
-	return asyncConfig.eventLoop
-	.future(from: createUsersOperation, queue: asyncConfig.operationQueue, resultRetriever: { op -> [LDAPObject] in
-		let successfulCreationsIndex = op.errors.enumerated().filter{ $0.element == nil }.map{ $0.offset }
-		return successfulCreationsIndex.map{ op.objects[$0] }
-	})
-	.then{ createdLDAPObjects -> Future<[String: String]> in
-		let changePasswordsOperation = ModifyLDAPPasswordsOperation(objects: createdLDAPObjects, connector: connectors.ldapConnector)
-		return asyncConfig.eventLoop.future(from: changePasswordsOperation, queue: asyncConfig.operationQueue, resultRetriever: { op in op.passwords })
-	}
-	.map{ passwords in
-		console.print("Generated the following users on LDAP:")
-		for (dn, password) in passwords {
-			console.print("   " + dn + ": " + password)
+		typealias UserSyncResult = (serviceId: String, userStr: String, creationResult: Result<String?, Error>)
+		let futures = plans.flatMap{ plan in
+			plan.usersToCreate.map{ user -> Future<UserSyncResult> in
+				let serviceId = plan.service.config.serviceId
+				let userStr = plan.service.shortDescription(from: user)
+				do {
+					/* Create the user */
+					return try plan.service.createUser(user, on: context.container)
+					.flatMap{ user in
+						/* If the service we’re creating the user in is the auth
+						 * service, we also set a password on the user. */
+						guard serviceId == authServiceId else {return context.container.future(nil)}
+						
+						let newPass = generateRandomPassword()
+						let changePassAction = try plan.service.changePasswordAction(for: user, on: context.container)
+						return changePassAction.start(parameters: newPass, weakeningMode: .alwaysInstantly, eventLoop: context.container.eventLoop)
+							.map{ newPass }
+					}
+					.map{ pass in Result<String?, Error>.success(pass) }.catchMap{ error in Result<String?, Error>.failure(error) }
+					.map{ (serviceId, userStr, $0) }
+				} catch {
+					return context.container.eventLoop.future((serviceId, userStr, .failure(error)))
+				}
+			}
 		}
-		return ()
+		
+		return Future.waitAll(futures, eventLoop: context.container.eventLoop)
+		.map{ results in
+			context.console.info()
+			context.console.info("********* SYNC RESULTS *********")
+			for result in results.sorted(by: { ($0.successValue?.serviceId ?? "") < ($1.successValue?.serviceId ?? "") }) {
+				switch result {
+				case .success(let success):
+					let userCreationResult = success.creationResult
+					switch userCreationResult {
+					case .success(nil):       context.console.info("\(success.serviceId): created user \(success.userStr)", newLine: true)
+					case .success(let pass?): context.console.info("\(success.serviceId): created user \(success.userStr) w/ pass \(pass)", newLine: true)
+					case .failure(let error): context.console.error("\(success.serviceId): failed to create user \(success.userStr): \(error)", newLine: true)
+					}
+					
+				case .failure(let error):
+					context.console.error("Got error \(error) for a future that should not fail!", newLine: true)
+				}
+			}
+			context.console.info()
+		}
 	}
 }
-#endif
+
+private func generateRandomPassword() -> String {
+	let length = 13
+	let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	return String((0..<length).map{ _ in chars.randomElement()! })
+}
