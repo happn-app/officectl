@@ -46,9 +46,7 @@ class VerifySignatureMiddleware : Middleware {
 			throw BasicValidationError("Incorrectly signed request (signature is not valid base64)")
 		}
 		
-		guard let body = request.http.body.data else {
-			throw InternalError(message: "Cannot validate request with a streaming body")
-		}
+		let body = request.http.body.data ?? Data()
 		
 		let sepData = Data(":".utf8)
 		let signedData = (
