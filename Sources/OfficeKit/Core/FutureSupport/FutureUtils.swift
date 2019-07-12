@@ -16,6 +16,11 @@ public let defaultOperationQueueForFutureSupport = OperationQueue(name_Operation
 
 public extension EventLoopFuture {
 	
+	/** Returns a futures that _never_ fails and contains the result of all the
+	given futures, in the order they were given.
+	
+	- Important: Test the order thing; I don’t remember for sure the order stays
+	the same, though I don’t see the point of the method if it does not. */
 	static func waitAll(_ futures: [EventLoopFuture<T>], eventLoop: EventLoop) -> EventLoopFuture<[Result<T, Error>]> {
 		/* No need for this assert, we hop the future to the event loop. */
 //		assert(futures.reduce(true, { val, future in val && future.eventLoop === eventLoop }))

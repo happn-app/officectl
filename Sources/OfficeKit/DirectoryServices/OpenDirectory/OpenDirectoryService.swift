@@ -55,7 +55,7 @@ public final class OpenDirectoryService : DirectoryService {
 		throw NotImplementedError()
 	}
 	
-	public func logicalUser(fromEmail email: Email) throws -> ODRecordOKWrapper? {
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> ODRecordOKWrapper? {
 		guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
 			throw InvalidArgumentError(message: "Cannot get logical user from \(email) when I don’t have people base DNs.")
 		}
@@ -67,23 +67,34 @@ public final class OpenDirectoryService : DirectoryService {
 			 *       known” error instead, that clients could catch… */
 			return nil
 		}
+		let fullNameComponents = [hints[.firstName] as? String, hints[.lastName] as? String].compactMap{ $0 }
+		let fullName = (!fullNameComponents.isEmpty ? fullNameComponents.joined(separator: " ") : nil)
+		let inetOrgPerson = LDAPInetOrgPerson(
+			dn: LDAPDistinguishedName(uid: email.username, baseDN: baseDN),
+			sn: (hints[.lastName] as? String).flatMap{ [$0] } ?? [],
+			cn: fullName.flatMap{ [$0] } ?? []
+		)
+		inetOrgPerson.mail = [email]
 		return ODRecordOKWrapper(
 			id: LDAPDistinguishedName(uid: email.username, baseDN: baseDN),
-			emails: [email]
+			emails: [email], firstName: hints[.firstName] as? String, lastName: hints[.lastName] as? String
 		)
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> ODRecordOKWrapper? {
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> ODRecordOKWrapper? {
 		if let user: GoogleUser = user.unboxed() {
-			var ret = try logicalUser(fromEmail: user.primaryEmail)
-			if let gn = user.name.value?.givenName  {ret?.firstName = .set(gn)}
-			if let fn = user.name.value?.familyName {ret?.lastName  = .set(fn)}
+			guard var ret = try logicalUser(fromEmail: user.primaryEmail, hints: hints) else {
+				return nil
+			}
+			
+			if let gn = user.name.value?.givenName,  ret.firstName.value == nil {ret.firstName = .set(gn)}
+			if let fn = user.name.value?.familyName, ret.lastName.value  == nil {ret.lastName  = .set(fn)}
 			return ret
 		}
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(fromPersistentId pId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
+	public func existingUser(fromPersistentId pId: UUID, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
 		throw NotImplementedError()
 	}
 	

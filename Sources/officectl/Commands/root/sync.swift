@@ -58,7 +58,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 			return try toDirectory.listAllUsers(on: context.container).map{ try usersById(from: $0) }
 			.map{ (currentDestinationUsers: [AnyHashable: AnyDirectoryUser]) -> ServiceSyncPlan in
 				let directoryBlacklist = syncConfig.blacklistsByServiceId[toDirectory.config.serviceId] ?? []
-				let expectedDestinationUsers = try usersById(from: sourceUsers.compactMap{ try toDirectory.logicalUser(fromUser: $0, in: fromDirectory) })
+				let expectedDestinationUsers = try usersById(from: sourceUsers.compactMap{ try toDirectory.logicalUser(fromUser: $0, in: fromDirectory, hints: [:]) })
 				
 				let currentDestinationUserIds = Set(currentDestinationUsers.keys)
 				let expectedDestinationUserIds = Set(expectedDestinationUsers.keys)
@@ -147,10 +147,4 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 			context.console.info()
 		}
 	}
-}
-
-private func generateRandomPassword() -> String {
-	let length = 13
-	let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	return String((0..<length).map{ _ in chars.randomElement()! })
 }

@@ -43,11 +43,12 @@ public final class GitHubService : DirectoryService {
 		throw NotImplementedError()
 	}
 	
-	public func logicalUser(fromEmail email: Email) throws -> GitHubUser? {
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GitHubUser? {
 		throw NotSupportedError(message: "There are no logical rules to convert an email to a GitHub user.")
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> GitHubUser? {
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GitHubUser? {
+		#warning("TODO: Actually error thrown below is not necessarily true… we can setup a custom property in LDAP to set the GitHub user id of a user.")
 		throw NotSupportedError(message: "There are no logical rules to convert a user from a \(OtherServiceType.self) to a GitHub user.")
 	}
 	

@@ -47,14 +47,14 @@ public protocol DirectoryService : class {
 	The conversion should not fetch anything from the directory. It is simply a
 	representation of how the given email _should_ be created in the directory if
 	it were to be created in it. */
-	func logicalUser(fromEmail email: Email) throws -> UserType?
+	func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> UserType?
 	/** If possible, convert the given user in the given directory to a user with
 	as much information as possible in your directory.
 	
 	The conversion should not fetch anything from neither the source nor the
 	destination directory. It is simply a representation of how the given user
 	_should_ be created in the directory if it were to be created in it. */
-	func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> UserType?
+	func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> UserType?
 	
 	/** Fetch and return the _only_ user matching the given id.
 	

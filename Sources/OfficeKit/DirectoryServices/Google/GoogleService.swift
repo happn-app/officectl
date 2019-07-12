@@ -58,11 +58,11 @@ public final class GoogleService : DirectoryService {
 		return try JSON(encodable: user)
 	}
 	
-	public func logicalUser(fromEmail email: Email) throws -> GoogleUser? {
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GoogleUser? {
 		return GoogleUser(email: email)
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> GoogleUser? {
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GoogleUser? {
 		throw NotImplementedError()
 	}
 	

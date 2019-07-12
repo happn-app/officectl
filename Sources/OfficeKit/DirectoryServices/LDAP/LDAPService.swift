@@ -61,7 +61,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		throw NotImplementedError()
 	}
 	
-	public func logicalUser(fromEmail email: Email) throws -> LDAPInetOrgPersonWithObject? {
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> LDAPInetOrgPersonWithObject? {
 		guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
 			throw InvalidArgumentError(message: "Cannot get logical user from \(email) when I don’t have people base DNs.")
 		}
@@ -73,21 +73,28 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			 *       known” error instead, that clients could catch… */
 			return nil
 		}
+		let fullNameComponents = [hints[.firstName] as? String, hints[.lastName] as? String].compactMap{ $0 }
+		let fullName = (!fullNameComponents.isEmpty ? fullNameComponents.joined(separator: " ") : nil)
 		let inetOrgPerson = LDAPInetOrgPerson(
 			dn: LDAPDistinguishedName(uid: email.username, baseDN: baseDN),
-			sn: [], cn: []
+			sn: (hints[.lastName] as? String).flatMap{ [$0] } ?? [],
+			cn: fullName.flatMap{ [$0] } ?? []
 		)
 		inetOrgPerson.mail = [email]
+		if let gn = hints[.firstName] as? String {inetOrgPerson.givenName = [gn]}
 		return LDAPInetOrgPersonWithObject(inetOrgPerson: inetOrgPerson)
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> LDAPInetOrgPersonWithObject? {
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> LDAPInetOrgPersonWithObject? {
 		if let user: GoogleUser = user.unboxed() {
-			let person = try logicalUser(fromEmail: user.primaryEmail)?.inetOrgPerson
-			if let fn = user.name.value?.familyName {person?.sn = [fn]}
-			if let fn = user.name.value?.fullName   {person?.cn = [fn]}
-			if let gn = user.name.value?.givenName  {person?.givenName = [gn]}
-			return person.flatMap{ LDAPInetOrgPersonWithObject(inetOrgPerson: $0) }
+			guard let person = try logicalUser(fromEmail: user.primaryEmail, hints: hints)?.inetOrgPerson else {
+				return nil
+			}
+			
+			if let fn = user.name.value?.familyName, person.sn.isEmpty                 {person.sn = [fn]}
+			if let fn = user.name.value?.fullName,   person.cn.isEmpty                 {person.cn = [fn]}
+			if let gn = user.name.value?.givenName,  person.givenName?.isEmpty ?? true {person.givenName = [gn]}
+			return LDAPInetOrgPersonWithObject(inetOrgPerson: person)
 		}
 		throw NotImplementedError()
 	}

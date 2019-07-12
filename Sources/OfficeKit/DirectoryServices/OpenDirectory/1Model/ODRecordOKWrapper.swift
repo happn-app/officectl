@@ -16,8 +16,7 @@ import OpenDirectory
 public struct ODRecordOKWrapper : DirectoryUser {
 	
 	public typealias UserIdType = LDAPDistinguishedName
-	#warning("TODO: Honestly, I don’t know what type the persistent id of an LDAP object is.")
-	public typealias PersistentIdType = LDAPDistinguishedName
+	public typealias PersistentIdType = UUID
 	
 	public init(record r: ODRecord) throws {
 		record = r
@@ -37,19 +36,19 @@ public struct ODRecordOKWrapper : DirectoryUser {
 		lastName = .unsupported
 	}
 	
-	public init(id theId: LDAPDistinguishedName, emails e: [Email]) {
+	public init(id theId: LDAPDistinguishedName, emails e: [Email], firstName fn: String? = nil, lastName ln: String? = nil) {
 		userId = theId
 		persistentId = .unset
 		
 		emails = .set(e)
-		firstName = .unset
-		lastName = .unset
+		firstName = fn.map{ .set($0) } ?? .unset
+		lastName = ln.map{ .set($0) } ?? .unset
 	}
 	
 	public var record: ODRecord?
 	
 	public var userId: LDAPDistinguishedName
-	public var persistentId: RemoteProperty<LDAPDistinguishedName>
+	public var persistentId: RemoteProperty<UUID>
 	
 	public var emails: RemoteProperty<[Email]>
 	
