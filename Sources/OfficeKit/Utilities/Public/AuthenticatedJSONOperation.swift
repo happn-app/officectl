@@ -37,7 +37,7 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 	}
 	
 	public convenience init(request: URLRequest, authenticator a: Authenticator?, decoder: JSONDecoder = AuthenticatedJSONOperation<ObjectType>.defaultDecoder) {
-		self.init(config: URLRequestOperation.Config(request: request, session: nil, acceptableStatusCodes: nil, acceptableContentTypes: ["application/json"]), authenticator: a, decoder: decoder)
+		self.init(config: URLRequestOperation.Config(request: request, session: nil, maximumNumberOfRetries: 1, acceptableStatusCodes: nil, acceptableContentTypes: ["application/json"]), authenticator: a, decoder: decoder)
 	}
 	
 	public convenience init(url: URL, authenticator a: Authenticator?, decoder: JSONDecoder = AuthenticatedJSONOperation<ObjectType>.defaultDecoder) {
