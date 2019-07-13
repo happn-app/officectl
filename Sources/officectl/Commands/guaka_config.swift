@@ -120,7 +120,13 @@ func parse_cli() -> GuakaCommandParseResult {
 		Flag(longName: "yes",         value: false,      description: "If set, this the users will be created without confirmation.")
 	]
 	
-	let _ = Command(usage: "create", flags: usersCreateFlags, parent: usersCommand, run: createSetWrapperCommandHandler(usersCreate))
+	let usersChangePasswordFlags = [
+		Flag(longName: "user-id",     type: String.self, description: "The tagged user id of the user whose password needs to be reset.", required: true),
+		Flag(longName: "service-ids", type: String.self, description: "The service ids on which to reset the password. If unset, the password will be reset on all the services configured.", required: false)
+	]
+	
+	let _ = Command(usage: "create",          flags: usersCreateFlags,         parent: usersCommand, run: createSetWrapperCommandHandler(usersCreate))
+	let _ = Command(usage: "change-password", flags: usersChangePasswordFlags, parent: usersCommand, run: createSetWrapperCommandHandler(usersChangePassword))
 	
 	
 	/* *************************
