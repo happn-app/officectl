@@ -46,7 +46,7 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 		context.console.warning("Nothing to do.")
 		return context.container.future()
 	}
-	if skippedSomeUsers {context.console.warning()}
+	if skippedSomeUsers {context.console.info()}
 	
 	if !yes {
 		let confirmationPrompt: ConsoleText = (
@@ -56,7 +56,7 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 			ConsoleText(stringLiteral: "   - last name:  \(lastname)") + ConsoleText.newLine +
 			ConsoleText(stringLiteral: "   - password:   \(password)") + ConsoleText.newLine +
 			ConsoleText.newLine +
-			ConsoleText(stringLiteral: "Resolved:") +
+			ConsoleText(stringLiteral: "Resolved to:") +
 				(users.enumerated()
 					.sorted{ services[$0.offset].config.serviceId < services[$1.offset].config.serviceId }
 					.map{ serviceIdxAndUser in
