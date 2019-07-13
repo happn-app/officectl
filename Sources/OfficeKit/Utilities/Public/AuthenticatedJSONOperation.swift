@@ -8,6 +8,7 @@
 import Foundation
 
 import AsyncOperationResult
+import GenericJSON
 import URLRequestOperation
 
 
@@ -62,16 +63,18 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 	public override func computeRetryInfo(sourceError error: Error?, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {
 		guard error == nil, let fetchedData = fetchedData else {
 			/* There is already an URL operation error. */
-			super.computeRetryInfo(sourceError: error ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "No data, unknown error"]), completionHandler: completionHandler)
+			super.computeRetryInfo(sourceError: error ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Nil data, unknown error"]), completionHandler: completionHandler)
 			return
 		}
 		
 		do {
-			fetchedObject = try decoder.decode(ObjectType.self, from: fetchedData)
-			let error: Error?
-			if let statusCode = statusCode, 200..<300 ~= statusCode {error = nil}
-			else                                                    {error = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid status code \(statusCode as Any? ?? "<nil>"). Parsed data is: \(fetchedObject as Any? ?? "<nil>")"])}
-			completionHandler(.doNotRetry, currentURLRequest, error)
+			if let statusCode = statusCode, 200..<300 ~= statusCode {
+				fetchedObject = try decoder.decode(ObjectType.self, from: fetchedData)
+			} else {
+				let fetchedDataStr = String(data: fetchedData, encoding: .utf8) ?? (fetchedData.reduce("HexData<", { $0 + String(format: "%02x", $1) }) + ">")
+				throw InvalidArgumentError(message: "Invalid status code \(statusCode as Any? ?? "<nil>"). Data from request is: \(fetchedDataStr)")
+			}
+			completionHandler(.doNotRetry, currentURLRequest, nil)
 		} catch {
 //			print("Cannot decode JSON; error \(error), data \(fetchedData.reduce("", { $0 + String(format: "%02x", $1) }))", to: &stderrStream)
 			completionHandler(.doNotRetry, currentURLRequest, error)
