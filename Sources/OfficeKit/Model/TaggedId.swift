@@ -15,6 +15,7 @@ public struct TaggedId {
 	public let id: String
 	
 	public init(tag t: String, id i: String) {
+		assert(!t.contains(":"))
 		tag = t
 		id = i
 	}

@@ -16,7 +16,7 @@ struct ApiServicePasswordReset : Codable {
 	
 	var serviceId: String
 	
-	var userId: UserId
+	var userId: UserIdParameter
 	var serviceUserId: String?
 	
 	var isExecuting: Bool

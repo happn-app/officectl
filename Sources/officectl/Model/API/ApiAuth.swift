@@ -42,9 +42,9 @@ struct ApiAuth : Codable {
 		/** Is the user admin? */
 		var adm: Bool
 		
-		init(userId: UserId, admin: Bool, validityDuration: TimeInterval) {
+		init(userId: UserIdParameter, admin: Bool, validityDuration: TimeInterval) {
 			adm = admin
-			sub = userId.stringValue
+			sub = userId.taggedId.stringValue
 			exp = Date(timeIntervalSinceNow: validityDuration)
 		}
 		

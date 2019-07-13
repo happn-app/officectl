@@ -136,7 +136,7 @@ class UsersController {
 	}
 	
 	func getUser(_ req: Request) throws -> Future<ApiResponse<User>> {
-		let userId = try req.parameters.next(UserId.self)
+		let userId = try req.parameters.next(UserIdParameter.self)
 		
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}

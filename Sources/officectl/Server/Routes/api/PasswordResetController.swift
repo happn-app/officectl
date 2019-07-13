@@ -22,7 +22,7 @@ class PasswordResetController {
 	}
 	
 	func getReset(_ req: Request) throws -> ApiResponse<ApiPasswordReset> {
-		let userId = try req.parameters.next(UserId.self)
+		let userId = try req.parameters.next(UserIdParameter.self)
 		
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
@@ -39,7 +39,7 @@ class PasswordResetController {
 	}
 	
 	func createReset(_ req: Request) throws -> Future<ApiResponse<ApiPasswordReset>> {
-		let userId = try req.parameters.next(UserId.self)
+		let userId = try req.parameters.next(UserIdParameter.self)
 		let passChangeData = try req.content.syncDecode(PassChangeData.self)
 		
 		let officectlConfig = try req.make(OfficectlConfig.self)

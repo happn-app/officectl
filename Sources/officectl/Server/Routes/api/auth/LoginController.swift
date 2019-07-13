@@ -21,7 +21,7 @@ class LoginController {
 		let config = try req.make(OfficectlConfig.self)
 		let authService = try req.make(OfficeKitServiceProvider.self).getDirectoryAuthenticatorService(container: req)
 		
-		let userId = try UserId(string: loginData.username, container: req)
+		let userId = try UserIdParameter(string: loginData.username, container: req)
 		guard userId.service.config.serviceId == authService.config.serviceId else {
 			throw BasicValidationError("Tried to login with an id which is not from the auth service.")
 		}

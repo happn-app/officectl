@@ -27,14 +27,14 @@ func setup_routes(_ router: Router) throws {
 	
 //	let usersController = UsersController()
 //	router.get("api", "users", use: usersController.getUsers)
-//	router.get("api", "users", UserId.parameter, use: usersController.getUser)
+//	router.get("api", "users", UserIdParameter.parameter, use: usersController.getUser)
 //	router.get("api", "search-users", use: usersController.searchUsers)
 	
 //	let passwordResetController = PasswordResetController()
 //	router.get("api", "password-resets", use: passwordResetController.getResets)
-//	router.get("api", "password-resets", UserId.parameter, use: passwordResetController.getReset)
-//	router.put("api", "password-resets", UserId.parameter, use: passwordResetController.createReset)
-//	router.delete("api", "password-resets", UserId.parameter, use: passwordResetController.deleteReset)
+//	router.get("api", "password-resets", UserIdParameter.parameter, use: passwordResetController.getReset)
+//	router.put("api", "password-resets", UserIdParameter.parameter, use: passwordResetController.createReset)
+//	router.delete("api", "password-resets", UserIdParameter.parameter, use: passwordResetController.deleteReset)
 	
 	/* ******** Temporary password reset page ******** */
 	
