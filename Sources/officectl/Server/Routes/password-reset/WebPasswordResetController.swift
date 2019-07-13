@@ -38,7 +38,6 @@ final class WebPasswordResetController {
 		return try authService.authenticate(userId: user.userId, challenge: resetPasswordData.oldPass, on: req)
 		.map{ authSuccess -> Void in
 			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}
-			return ()
 		}
 		.flatMap{
 			let actions = try self.resetPasswordActions(for: email, container: req)
