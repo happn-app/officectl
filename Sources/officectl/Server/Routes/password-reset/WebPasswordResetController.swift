@@ -34,7 +34,7 @@ final class WebPasswordResetController {
 		let officeKitServiceProvider = try req.make(OfficeKitServiceProvider.self)
 		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService(container: req)
 		
-		guard let user = try authService.logicalUser(fromEmail: email) else {
+		guard let user = try authService.logicalUser(fromEmail: email, hints: [:]) else {
 			throw BasicValidationError("Cannot user this email to login (cannot convert to auth service user).")
 		}
 		return try authService.authenticate(userId: user.userId, challenge: resetPasswordData.oldPass, on: req)
@@ -67,7 +67,7 @@ final class WebPasswordResetController {
 		
 		init?(service s: AnyDirectoryService, email: Email, container: Container) throws {
 			service = s
-			guard let user = try s.logicalUser(fromEmail: email) else {return nil}
+			guard let user = try s.logicalUser(fromEmail: email, hints: [:]) else {return nil}
 			resetAction = Result(catching: { try s.changePasswordAction(for: user, on: container) })
 		}
 		

@@ -58,14 +58,14 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		return try JSON(encodable: user)
 	}
 	
-	public func logicalUser(fromEmail email: Email) throws -> GenericDirectoryUser? {
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GenericDirectoryUser? {
 		guard config.supportsServiceIdForLogicalUserConversion("email") else {
 			throw NotSupportedError(message: "Creating a user from an email is not supported for service \(config.serviceId)")
 		}
 		return GenericDirectoryUser(userId: .proxy(serviceId: "email", user: .string(email.stringValue)))
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType) throws -> GenericDirectoryUser? {
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GenericDirectoryUser? {
 		guard config.supportsServiceIdForLogicalUserConversion(service.config.serviceId) else {
 			throw NotSupportedError(message: "Creating a user from service id \(service.config.serviceId) is not supported for service \(config.serviceId)")
 		}

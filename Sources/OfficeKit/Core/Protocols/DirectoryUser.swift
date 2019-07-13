@@ -26,9 +26,10 @@ public protocol DirectoryUser {
 }
 
 
-public enum DirectoryUserProperty : RawRepresentable, Hashable {
+public enum DirectoryUserProperty : RawRepresentable, Hashable, ExpressibleByStringLiteral {
 	
 	public typealias RawValue = String
+	public typealias StringLiteralType = String
 	
 	case userId
 	case persistentId
@@ -41,16 +42,20 @@ public enum DirectoryUserProperty : RawRepresentable, Hashable {
 	
 	case custom(String)
 	
-	public init?(rawValue: String) {
-		switch rawValue {
+	public init(stringLiteral value: String) {
+		switch value {
 		case "userId":       self = .userId
 		case "persistentId": self = .persistentId
 		case "emails":       self = .emails
 		case "firstName":    self = .firstName
 		case "lastName":     self = .lastName
 		case "nickname":     self = .nickname
-		default:             self = .custom(rawValue)
+		default:             self = .custom(value)
 		}
+	}
+	
+	public init?(rawValue: String) {
+		self.init(stringLiteral: rawValue)
 	}
 	
 	public var rawValue: String {

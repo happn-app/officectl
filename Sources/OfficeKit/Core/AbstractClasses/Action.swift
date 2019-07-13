@@ -70,7 +70,7 @@ public class Action<SubjectType, ParametersType, ResultType> {
 	}
 	
 	deinit {
-		print("Deiniting a \(type(of: self))")
+//		print("Deiniting a \(type(of: self))")
 	}
 	
 	/** Start the action.

@@ -80,8 +80,9 @@ func parse_cli() -> GuakaCommandParseResult {
 	let _              = Command(usage: "list-users", flags: listUsersFlags, parent: rootCommand, run: createSetWrapperCommandHandler(listUsers))
 	let backupCommand  = Command(usage: "backup",     flags: backupFlags,    parent: rootCommand, run: createSetWrapperCommandHandler(backup))
 	let _              = Command(usage: "sync",       flags: syncFlags,      parent: rootCommand, run: createSetWrapperCommandHandler(sync))
+	let usersCommand   = Command(usage: "users",      flags: [],             parent: rootCommand, run: createSetWrapperCommandHandler(users))
 	let serverCommand  = Command(usage: "server",     flags: [],             parent: rootCommand, run: createSetWrapperCommandHandler(server))
-	
+
 	
 	/* *************************
 	   MARK: backup sub-commands
@@ -104,6 +105,22 @@ func parse_cli() -> GuakaCommandParseResult {
 	
 	let _ = Command(usage: "mails",  flags: backupMailsFlags,  parent: backupCommand, run: createSetWrapperCommandHandler(backupMails))
 	let _ = Command(usage: "github", flags: backupGitHubFlags, parent: backupCommand, run: createSetWrapperCommandHandler(backupGitHub))
+	
+	
+	/* *************************
+	   MARK: users sub-commands
+	   ************************* */
+	
+	let usersCreateFlags = [
+		Flag(longName: "email",       type: String.self, description: "The email of the new user (we require the full email to infer the domain for the new user).", required: true),
+		Flag(longName: "lastname",    type: String.self, description: "The lastname of the new user.", required: true),
+		Flag(longName: "firstname",   type: String.self, description: "The firstname of the new user.", required: true),
+		Flag(longName: "password",    type: String.self, description: "The password of the new user. If not set, an auto-generated pass will be used.", required: false),
+		Flag(longName: "service-ids", type: String.self, description: "The service ids on which to create the user. If unset, the user will be created on all the services configured.", required: false),
+		Flag(longName: "yes",         value: false,      description: "If set, this the users will be created without confirmation.")
+	]
+	
+	let _ = Command(usage: "create", flags: usersCreateFlags, parent: usersCommand, run: createSetWrapperCommandHandler(usersCreate))
 	
 	
 	/* *************************
