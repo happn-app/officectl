@@ -35,11 +35,11 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 //		jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
 	}
 	
-	public func string(from userId: GenericDirectoryUserId) -> String {
+	public func string(fromUserId userId: GenericDirectoryUserId) -> String {
 		return try! JSONEncoder().encode(userId.rawValue).base64EncodedString()
 	}
 	
-	public func userId(from string: String) throws -> GenericDirectoryUserId {
+	public func userId(fromString string: String) throws -> GenericDirectoryUserId {
 		guard let jsonData = Data(base64Encoded: string) else {
 			throw InvalidArgumentError(message: "Cannot decode base64 string")
 		}
@@ -58,17 +58,33 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		return try JSON(encodable: user)
 	}
 	
-	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GenericDirectoryUser? {
+	public func logicalUser(fromPersistentId pId: JSON, hints: [DirectoryUserProperty : Any]) throws -> GenericDirectoryUser {
+		throw NotImplementedError()
+	}
+	
+	public func logicalUser(fromUserId uId: GenericDirectoryUserId, hints: [DirectoryUserProperty : Any]) throws -> GenericDirectoryUser {
+		#warning("TODO: Implement hints")
+		return GenericDirectoryUser(userId: uId)
+	}
+	
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GenericDirectoryUser {
 		guard config.supportsServiceIdForLogicalUserConversion("email") else {
 			throw NotSupportedError(message: "Creating a user from an email is not supported for service \(config.serviceId)")
 		}
+		#warning("TODO: Implement hints")
 		return GenericDirectoryUser(userId: .proxy(serviceId: "email", user: .string(email.stringValue)))
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GenericDirectoryUser? {
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GenericDirectoryUser {
+		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
+			/* The given user is already from our service; let’s return it. */
+			return user
+		}
+		
 		guard config.supportsServiceIdForLogicalUserConversion(service.config.serviceId) else {
 			throw NotSupportedError(message: "Creating a user from service id \(service.config.serviceId) is not supported for service \(config.serviceId)")
 		}
+		#warning("TODO: Implement hints")
 		let jsonUser = try service.exportableJSON(from: user)
 		return GenericDirectoryUser(userId: .proxy(serviceId: service.config.serviceId, user: jsonUser))
 	}

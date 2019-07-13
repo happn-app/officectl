@@ -8,25 +8,21 @@
 import Foundation
 
 import OfficeKit
+import Service
 
 
 
-#if false
 struct ApiPasswordReset : Codable {
 	
 	var userId: TaggedId
 	
 	var isExecuting: Bool
-	var services: [ApiServicePasswordReset]
+	var serviceResets: [ApiServicePasswordReset]
 	
-	init(passwordReset: ResetPasswordAction) {
-		userId = passwordReset.subject.id
-		isExecuting = passwordReset.isExecuting
-		services = [
-			ApiServicePasswordReset(ldapPasswordReset: passwordReset.resetLDAPPasswordAction),
-			ApiServicePasswordReset(googlePasswordReset: passwordReset.resetGooglePasswordAction)
-		]
+	init(userId uid: TaggedId, passwordResetAndServices passwordResets: [ResetPasswordActionAndService], environment: Environment) {
+		userId = uid
+		isExecuting = passwordResets.reduce(false, { $0 || $1.resetAction.successValue?.resetAction.isExecuting ?? false })
+		serviceResets = passwordResets.map{ ApiServicePasswordReset(passwordResetAndService: $0, environment: environment) }
 	}
 	
 }
-#endif

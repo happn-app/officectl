@@ -8,37 +8,28 @@
 import Foundation
 
 import OfficeKit
+import Service
 
 
 
-#if false
 struct ApiServicePasswordReset : Codable {
 	
 	var serviceId: String
+	var userId: String?
 	
-	var userId: UserIdParameter
-	var serviceUserId: String?
-	
+	var hasRun: Bool
 	var isExecuting: Bool
 	var error: ApiError?
 	
-	init(ldapPasswordReset: ResetLDAPPasswordAction) {
-		serviceId = "LDAP"
-		userId = ldapPasswordReset.subject.id
-		serviceUserId = ldapPasswordReset.subject.distinguishedName?.stringValue
+	init(passwordResetAndService passwordReset: ResetPasswordActionAndService, environment: Environment) {
+		serviceId = passwordReset.service.config.serviceId
 		
-		isExecuting = ldapPasswordReset.isExecuting
-		error = ldapPasswordReset.result?.failureValue.flatMap{ ApiError(error: $0, environment: ldapPasswordReset.container.environment) }
-	}
-	
-	init(googlePasswordReset: ResetGooglePasswordAction) {
-		serviceId = "Google"
-		userId = googlePasswordReset.subject.id
-		serviceUserId = googlePasswordReset.googleUserId
+		userId = passwordReset.resetAction.successValue.flatMap{ passwordReset.service.string(fromUserId: $0.user.userId) }
 		
-		isExecuting = googlePasswordReset.isExecuting
-		error = googlePasswordReset.result?.failureValue.flatMap{ ApiError(error: $0, environment: googlePasswordReset.container.environment) }
+		hasRun = !(passwordReset.resetAction.successValue?.resetAction.isWeak ?? false)
+		isExecuting = passwordReset.resetAction.successValue?.resetAction.isExecuting ?? false
+		error = (passwordReset.resetAction.failureValue ?? passwordReset.resetAction.successValue?.resetAction.result?.failureValue)
+			.flatMap{ ApiError(error: $0, environment: environment) }
 	}
 	
 }
-#endif

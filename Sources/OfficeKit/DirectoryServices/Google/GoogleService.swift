@@ -39,11 +39,11 @@ public final class GoogleService : DirectoryService {
 		config = c
 	}
 	
-	public func string(from userId: Email) -> String {
+	public func string(fromUserId userId: Email) -> String {
 		return userId.stringValue
 	}
 	
-	public func userId(from string: String) throws -> Email {
+	public func userId(fromString string: String) throws -> Email {
 		guard let e = Email(string: string) else {
 			throw InvalidArgumentError(message: "The given string is not a valid email: \(string)")
 		}
@@ -58,11 +58,24 @@ public final class GoogleService : DirectoryService {
 		return try JSON(encodable: user)
 	}
 	
-	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GoogleUser? {
-		return GoogleUser(email: email, hints: hints)
+	public func logicalUser(fromPersistentId pId: String, hints: [DirectoryUserProperty : Any]) throws -> GoogleUser {
+		throw NotSupportedError(message: "It is not possible to create a Google user from its persistent id without fetching it.")
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GoogleUser? {
+	public func logicalUser(fromUserId uId: Email, hints: [DirectoryUserProperty : Any]) throws -> GoogleUser {
+		return GoogleUser(email: uId, hints: hints)
+	}
+	
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GoogleUser {
+		return try logicalUser(fromUserId: email, hints: hints)
+	}
+	
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GoogleUser {
+		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
+			/* The given user is already from our service; let’s return it. */
+			return user
+		}
+		
 		throw NotImplementedError()
 	}
 	
@@ -94,7 +107,7 @@ public final class GoogleService : DirectoryService {
 	}
 	
 	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
-		if let (ldapService, ldapUser) = try serviceUserPair(from: service, user: user) as (LDAPService, LDAPService.UserType)? {
+		if let (ldapService, ldapUser) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
 			return try self.existingGoogleUser(fromLDAP: ldapUser, ldapService: ldapService, propertiesToFetch: propertiesToFetch, on: container)
 		}
 		

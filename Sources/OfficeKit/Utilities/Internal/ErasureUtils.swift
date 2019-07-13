@@ -9,7 +9,8 @@ import Foundation
 
 
 
-func serviceUserPair<SourceServiceType : DirectoryService, DestinationServiceType : DirectoryService>(from service: SourceServiceType, user: SourceServiceType.UserType) throws -> (DestinationServiceType, DestinationServiceType.UserType)? {
+typealias DSUPair<DirectoryServiceType : DirectoryService> = (DirectoryServiceType, DirectoryServiceType.UserType)
+func dsuPairFrom<SourceServiceType : DirectoryService, DestinationServiceType : DirectoryService>(service: SourceServiceType, user: SourceServiceType.UserType) throws -> DSUPair<DestinationServiceType>? {
 	if let service: DestinationServiceType = service.unboxed() {
 		guard let user: DestinationServiceType.UserType = user.unboxed() else {
 			/* In theory we can fatalError here. However, because we’re a server

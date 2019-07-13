@@ -34,9 +34,7 @@ final class WebPasswordResetController {
 		let officeKitServiceProvider = try req.make(OfficeKitServiceProvider.self)
 		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService(container: req)
 		
-		guard let user = try authService.logicalUser(fromEmail: email, hints: [:]) else {
-			throw BasicValidationError("Cannot user this email to login (cannot convert to auth service user).")
-		}
+		let user = try authService.logicalUser(fromEmail: email, hints: [:])
 		return try authService.authenticate(userId: user.userId, challenge: resetPasswordData.oldPass, on: req)
 		.map{ authSuccess -> Void in
 			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}
@@ -44,11 +42,11 @@ final class WebPasswordResetController {
 		}
 		.flatMap{
 			let actions = try self.resetPasswordActions(for: email, container: req)
-			guard !actions.reduce(false, { $0 || $1.resetAction.successValue?.isExecuting ?? false }) else {
+			guard !actions.reduce(false, { $0 || $1.resetAction.successValue?.resetAction.isExecuting ?? false }) else {
 				throw OperationAlreadyInProgressError()
 			}
 			
-			actions.forEach{ $0.resetAction.successValue?.start(parameters: resetPasswordData.newPass, weakeningMode: .always(successDelay: 180, errorDelay: 180), handler: nil) }
+			actions.forEach{ $0.resetAction.successValue?.resetAction.start(parameters: resetPasswordData.newPass, weakeningMode: .always(successDelay: 180, errorDelay: 180), handler: nil) }
 			return self.renderResetPasswordActions(actions, for: email, view: view)
 		}
 	}
@@ -60,26 +58,13 @@ final class WebPasswordResetController {
 		
 	}
 	
-	private struct ResetPasswordActionAndService {
-		
-		var service: AnyDirectoryService
-		var resetAction: Result<ResetPasswordAction, Error>
-		
-		init?(service s: AnyDirectoryService, email: Email, container: Container) throws {
-			service = s
-			guard let user = try s.logicalUser(fromEmail: email, hints: [:]) else {return nil}
-			resetAction = Result(catching: { try s.changePasswordAction(for: user, on: container) })
-		}
-		
-	}
-	
 	private func resetPasswordActions(for email: Email, container: Container) throws -> [ResetPasswordActionAndService] {
 		let officeKitServiceProvider = try container.make(OfficeKitServiceProvider.self)
 		return try officeKitServiceProvider
 			.getAllServices(container: container)
 			.sorted{ $0.config.serviceName < $1.config.serviceName }
 			.filter{ $0.supportsPasswordChange }
-			.compactMap{ try ResetPasswordActionAndService(service: $0, email: email, container: container) }
+			.map{ ResetPasswordActionAndService(destinationService: $0, email: email, container: container) }
 	}
 	
 	private func renderResetPasswordActions(_ resetPasswordActions: [ResetPasswordActionAndService], for email: Email, view: ViewRenderer) -> Future<View> {
@@ -99,13 +84,13 @@ final class WebPasswordResetController {
 		
 		let context = ResetPasswordStatusContext(
 			userEmail: email.stringValue,
-			isExecuting: resetPasswordActions.reduce(false, { $0 || $1.resetAction.successValue?.isExecuting ?? false }),
+			isExecuting: resetPasswordActions.reduce(false, { $0 || $1.resetAction.successValue?.resetAction.isExecuting ?? false }),
 			servicesResetStatus: resetPasswordActions.map{
 				ResetPasswordStatusContext.ServicePasswordResetStatus(
 					serviceName: $0.service.config.serviceName,
-					isExecuting: $0.resetAction.successValue?.isExecuting ?? false,
-					hasRun: !($0.resetAction.successValue?.isWeak ?? false),
-					errorStr: ($0.resetAction.failureValue ?? $0.resetAction.successValue?.result?.failureValue)?.legibleLocalizedDescription
+					isExecuting: $0.resetAction.successValue?.resetAction.isExecuting ?? false,
+					hasRun: !($0.resetAction.successValue?.resetAction.isWeak ?? false),
+					errorStr: ($0.resetAction.failureValue ?? $0.resetAction.successValue?.resetAction.result?.failureValue)?.legibleLocalizedDescription
 				)
 			}
 		)

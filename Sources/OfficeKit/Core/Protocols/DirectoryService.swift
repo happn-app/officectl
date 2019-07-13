@@ -25,8 +25,8 @@ public protocol DirectoryService : class {
 	var config: ConfigType {get}
 	
 	/** Empty ids are **not supported**. There are no other restrictions. */
-	func string(from userId: UserType.UserIdType) -> String
-	func userId(from string: String) throws -> UserType.UserIdType
+	func string(fromUserId userId: UserType.UserIdType) -> String
+	func userId(fromString string: String) throws -> UserType.UserIdType
 	
 	/** Convert the user to a user printable string. Mostly used for logging. */
 	func shortDescription(from user: UserType) -> String
@@ -41,20 +41,34 @@ public protocol DirectoryService : class {
 	service, when creating a logical user from a user from another service. */
 	func exportableJSON(from user: UserType) throws -> JSON
 	
+	/** If possible, convert the given id to a user with as much information as
+	possible in your directory.
+	
+	The conversion should not fetch anything from the directory. It is simply a
+	representation of how the given id _should_ be created in the directory if it
+	were to be created in it. */
+	func logicalUser(fromPersistentId pId: UserType.PersistentIdType, hints: [DirectoryUserProperty: Any]) throws -> UserType
+	/** If possible, convert the given id to a user with as much information as
+	possible in your directory.
+	
+	The conversion should not fetch anything from the directory. It is simply a
+	representation of how the given id _should_ be created in the directory if it
+	were to be created in it. */
+	func logicalUser(fromUserId uId: UserType.UserIdType, hints: [DirectoryUserProperty: Any]) throws -> UserType
 	/** If possible, convert the given email to a user with as much information
 	as possible in your directory.
 	
 	The conversion should not fetch anything from the directory. It is simply a
 	representation of how the given email _should_ be created in the directory if
 	it were to be created in it. */
-	func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> UserType?
+	func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> UserType
 	/** If possible, convert the given user in the given directory to a user with
 	as much information as possible in your directory.
 	
 	The conversion should not fetch anything from neither the source nor the
 	destination directory. It is simply a representation of how the given user
 	_should_ be created in the directory if it were to be created in it. */
-	func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> UserType?
+	func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> UserType
 	
 	/** Fetch and return the _only_ user matching the given id.
 	

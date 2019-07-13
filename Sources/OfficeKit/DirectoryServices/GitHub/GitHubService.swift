@@ -27,11 +27,11 @@ public final class GitHubService : DirectoryService {
 		config = c
 	}
 	
-	public func string(from userId: String) -> String {
+	public func string(fromUserId userId: String) -> String {
 		return userId
 	}
 	
-	public func userId(from string: String) throws -> String {
+	public func userId(fromString string: String) throws -> String {
 		return string
 	}
 	
@@ -43,11 +43,24 @@ public final class GitHubService : DirectoryService {
 		throw NotImplementedError()
 	}
 	
-	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GitHubUser? {
+	public func logicalUser(fromPersistentId pId: String, hints: [DirectoryUserProperty : Any]) throws -> GitHubUser {
+		throw NotSupportedError(message: "It is not possible to create a GitHub user from its persistent id without fetching it.")
+	}
+	
+	public func logicalUser(fromUserId uId: String, hints: [DirectoryUserProperty : Any]) throws -> GitHubUser {
+		throw NotImplementedError()
+	}
+	
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GitHubUser {
 		throw NotSupportedError(message: "There are no logical rules to convert an email to a GitHub user.")
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GitHubUser? {
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GitHubUser {
+		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
+			/* The given user is already from our service; let’s return it. */
+			return user
+		}
+		
 		#warning("TODO: Actually error thrown below is not necessarily true… we can setup a custom property in LDAP to set the GitHub user id of a user.")
 		throw NotSupportedError(message: "There are no logical rules to convert a user from a \(OtherServiceType.self) to a GitHub user.")
 	}

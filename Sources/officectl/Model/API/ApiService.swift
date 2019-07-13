@@ -11,8 +11,9 @@ import Foundation
 
 struct ApiService : Codable {
 	
+	var providerId: String
+	
 	var serviceId: String
 	var serviceFullName: String
-	var serviceDescription: String
 	
 }

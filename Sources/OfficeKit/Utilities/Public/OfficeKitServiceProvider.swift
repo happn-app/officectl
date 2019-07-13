@@ -70,6 +70,7 @@ public class OfficeKitServiceProvider {
 	}
 	
 	private func createDirectoryService(with config: AnyOfficeKitServiceConfig, container: Container) throws -> AnyDirectoryService {
+		#warning("TODO: Somehow register the service providers and automate the init instead of switching on provider id!")
 		switch config.providerId {
 		case ExternalDirectoryServiceV1.providerId:
 			return ExternalDirectoryServiceV1(config: config.unboxed()!).erased()

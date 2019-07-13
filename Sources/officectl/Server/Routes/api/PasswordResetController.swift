@@ -14,30 +14,34 @@ import Vapor
 
 
 
-#if false
 class PasswordResetController {
 	
-	func getResets(_ req: Request) throws -> Future<ApiResponse<[ApiPasswordReset]>> {
-		throw NotImplementedError()
-	}
-	
 	func getReset(_ req: Request) throws -> ApiResponse<ApiPasswordReset> {
-		let userId = try req.parameters.next(UserIdParameter.self)
-		
+		/* General auth check */
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
 		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
 		
-		/* Only admins are allowed to see any password reset. */
-		guard token.payload.adm || token.payload.sub == userId.distinguishedName?.stringValue else {
+		/* Parameter retrieval */
+		let userId = try req.parameters.next(UserIdParameter.self)
+		
+		/* Only admins are allowed to see all password resets. Other users can
+		 * only see their own password resets. */
+		guard try token.payload.adm || token.payload.representsSameUserAs(userId: userId, container: req) else {
 			throw Abort(.forbidden)
 		}
 		
-		let semiSingletonStore = try req.make(SemiSingletonStore.self)
-		let resetPasswordAction = semiSingletonStore.semiSingleton(forKey: User(id: userId), additionalInitInfo: req) as ResetPasswordAction
-		return ApiResponse.data(ApiPasswordReset(passwordReset: resetPasswordAction))
+		let sProvider = try req.make(OfficeKitServiceProvider.self)
+		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id, hints: [:]))
+		
+		let passwordResets = try sProvider
+			.getAllServices(container: req)
+			.filter{ $0.supportsPasswordChange }
+			.map{ ResetPasswordActionAndService(destinationService: $0, sourceUser: user, sourceService: service, container: req) }
+		return ApiResponse.data(ApiPasswordReset(userId: userId.taggedId, passwordResetAndServices: passwordResets, environment: req.environment))
 	}
 	
+	#if false
 	func createReset(_ req: Request) throws -> Future<ApiResponse<ApiPasswordReset>> {
 		let userId = try req.parameters.next(UserIdParameter.self)
 		let passChangeData = try req.content.syncDecode(PassChangeData.self)
@@ -78,6 +82,7 @@ class PasswordResetController {
 	func deleteReset(_ req: Request) throws -> Future<ApiResponse<ApiPasswordReset>> {
 		throw NotImplementedError()
 	}
+	#endif
 	
 	private struct PassChangeData : Decodable {
 		
@@ -94,4 +99,3 @@ class PasswordResetController {
 	}
 	
 }
-#endif

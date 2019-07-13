@@ -64,8 +64,8 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 				let expectedDestinationUserIds = Set(expectedDestinationUsers.keys)
 				let userIdsToCreate = expectedDestinationUserIds.subtracting(currentDestinationUserIds)
 				let userIdsToDelete = currentDestinationUserIds.subtracting(expectedDestinationUserIds)
-				let usersToCreate = Array(expectedDestinationUsers.filter{ userIdsToCreate.contains($0.key) && !directoryBlacklist.contains(toDirectory.string(from: $0.key)) }.values)
-				let usersToDelete = Array(currentDestinationUsers.filter{  userIdsToDelete.contains($0.key) && !directoryBlacklist.contains(toDirectory.string(from: $0.key)) }.values)
+				let usersToCreate = Array(expectedDestinationUsers.filter{ userIdsToCreate.contains($0.key) && !directoryBlacklist.contains(toDirectory.string(fromUserId: $0.key)) }.values)
+				let usersToDelete = Array(currentDestinationUsers.filter{  userIdsToDelete.contains($0.key) && !directoryBlacklist.contains(toDirectory.string(fromUserId: $0.key)) }.values)
 				return ServiceSyncPlan(service: toDirectory, usersToCreate: usersToCreate, usersToDelete: usersToDelete)
 			}
 		}

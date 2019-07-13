@@ -33,8 +33,9 @@ struct ApiAuth : Codable {
 		
 		var jti = UUID().uuidString
 		
-		/** The dn of the authenticated person. */
-		var sub: String
+		/** The tagged id of the authenticated person. Should always be tagged
+		with the auth service. */
+		var sub: TaggedId
 		
 		/** The expiration time of the token. */
 		var exp: Date
@@ -44,13 +45,24 @@ struct ApiAuth : Codable {
 		
 		init(userId: UserIdParameter, admin: Bool, validityDuration: TimeInterval) {
 			adm = admin
-			sub = userId.taggedId.stringValue
+			sub = userId.taggedId
 			exp = Date(timeIntervalSinceNow: validityDuration)
 		}
 		
 		func verify(using signer: JWTSigner) throws {
 			guard aud == "officectl" else {throw Abort(.unauthorized)}
 			guard exp.timeIntervalSinceNow > 0 else {throw Abort(.unauthorized)}
+		}
+		
+		func representsSameUserAs(userId: UserIdParameter, container: Container) throws -> Bool {
+			let sProvider = try container.make(OfficeKitServiceProvider.self)
+			let authService = try sProvider.getDirectoryAuthenticatorService(container: container)
+			
+			let user = try userId.service.logicalUser(fromUserId: userId.id, hints: [:])
+			let authUser = try authService.logicalUser(fromUser: user, in: userId.service, hints: [:])
+			let authUserId = authService.string(fromUserId: authUser.userId)
+			
+			return sub == TaggedId(tag: authService.config.serviceId, id: authUserId)
 		}
 		
 	}

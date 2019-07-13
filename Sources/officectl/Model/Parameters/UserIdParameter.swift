@@ -17,13 +17,13 @@ struct UserIdParameter : Parameter {
 	var service: AnyDirectoryService
 	var id: AnyHashable
 	
-	public static func resolveParameter(_ parameter: String, on container: Container) throws -> UserIdParameter {
+	static func resolveParameter(_ parameter: String, on container: Container) throws -> UserIdParameter {
 		return try UserIdParameter(string: parameter, container: container)
 	}
 	
 	init(taggedId: TaggedId, container: Container) throws {
 		service = try container.make(OfficeKitServiceProvider.self).getDirectoryService(id: taggedId.tag, container: container)
-		id = try service.userId(from: taggedId.id)
+		id = try service.userId(fromString: taggedId.id)
 	}
 	
 	init(string: String, container: Container) throws {
@@ -33,7 +33,7 @@ struct UserIdParameter : Parameter {
 	
 	var taggedId: TaggedId {
 		assert(!service.config.serviceId.contains(":"))
-		return TaggedId(tag: service.config.serviceId, id: service.string(from: id))
+		return TaggedId(tag: service.config.serviceId, id: service.string(fromUserId: id))
 	}
 	
 }
