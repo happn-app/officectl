@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Crypto
+
 
 
 public struct GoogleUser : Hashable, Codable {
@@ -123,8 +125,21 @@ public struct GoogleUser : Hashable, Codable {
 	public var password: RemoteProperty<String?> = .unset
 	public var changePasswordAtNextLogin: RemoteProperty<Bool> = .unset
 	
-	public init(email: Email) {
+	public init(email: Email, hints: [DirectoryUserProperty: Any] = [:]) {
 		primaryEmail = email
+		
+		if let firstName = hints[.firstName] as? String, let lastName = hints[.lastName] as? String {
+			name = .set(Name(givenName: firstName, familyName: lastName, fullName: firstName + " " + lastName))
+		}
+		if let pass = hints[.password] as? String {
+			if let passHash = try? SHA1.hash(Data(pass.utf8)) {
+				password = .set(passHash.reduce("", { $0 + String(format: "%02x", $1) }))
+				hashFunction = .set(.sha1)
+				changePasswordAtNextLogin = .set(false)
+			} else {
+				#warning("TODO: Log warning that pass cannot be encrypted and won’t therefore be in the user.")
+			}
+		}
 	}
 	
 	public static func ==(_ user1: GoogleUser, _ user2: GoogleUser) -> Bool {

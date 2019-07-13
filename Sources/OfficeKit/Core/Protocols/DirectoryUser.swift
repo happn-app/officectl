@@ -40,6 +40,8 @@ public enum DirectoryUserProperty : RawRepresentable, Hashable, ExpressibleByStr
 	case lastName
 	case nickname
 	
+	case password
+	
 	case custom(String)
 	
 	public init(stringLiteral value: String) {
@@ -50,6 +52,7 @@ public enum DirectoryUserProperty : RawRepresentable, Hashable, ExpressibleByStr
 		case "firstName":    self = .firstName
 		case "lastName":     self = .lastName
 		case "nickname":     self = .nickname
+		case "password":     self = .password
 		default:             self = .custom(value)
 		}
 	}
@@ -66,6 +69,7 @@ public enum DirectoryUserProperty : RawRepresentable, Hashable, ExpressibleByStr
 		case .firstName:     return "firstName"
 		case .lastName:      return "lastName"
 		case .nickname:      return "nickname"
+		case .password:      return "password"
 		case .custom(let v): return v
 		}
 	}

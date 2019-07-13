@@ -59,7 +59,7 @@ public final class GoogleService : DirectoryService {
 	}
 	
 	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GoogleUser? {
-		return GoogleUser(email: email)
+		return GoogleUser(email: email, hints: hints)
 	}
 	
 	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GoogleUser? {
@@ -117,7 +117,11 @@ public final class GoogleService : DirectoryService {
 	
 	public let supportsUserCreation = true
 	public func createUser(_ user: GoogleUser, on container: Container) throws -> Future<GoogleUser> {
-		throw NotImplementedError()
+		let googleConnector: GoogleJWTConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		
+		let op = CreateGoogleUserOperation(user: user, connector: googleConnector)
+		return googleConnector.connect(scope: CreateGoogleUserOperation.scopes, eventLoop: container.eventLoop)
+		.then{ _ in Future<[LDAPObject]>.future(from: op, eventLoop: container.eventLoop) }
 	}
 	
 	public let supportsUserUpdate = true
