@@ -59,9 +59,10 @@ func usersChangePassword(flags f: Flags, arguments args: [String], context: Comm
 		for (idx, result) in results.enumerated() {
 			let service = passwordResets[idx].service
 			let serviceId = service.config.serviceId
+			let serviceName = service.config.serviceName
 			switch result {
-			case .success:            context.console.info("✅ \(serviceId)")
-			case .failure(let error): context.console.info("🛑 \(serviceId): \(error)")
+			case .success:            context.console.info("✅ \(serviceId) (\(serviceName))")
+			case .failure(let error): context.console.info("🛑 \(serviceId) (\(serviceName): \(error)")
 			}
 		}
 	}
