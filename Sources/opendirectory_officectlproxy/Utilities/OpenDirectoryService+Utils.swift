@@ -34,7 +34,7 @@ extension OpenDirectoryService {
 				guard let emailStr = userIdJSON.stringValue, let email = Email(string: emailStr) else {
 					throw InvalidArgumentError(message: "Cannot convert given native id to email")
 				}
-				return try logicalUser(fromEmail: email)
+				return try logicalUser(fromEmail: email, hints: [:])
 				
 			default:
 				throw InvalidArgumentError(message: "Unknown service id \(serviceId) to convert user id from")
