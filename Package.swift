@@ -5,7 +5,7 @@ import PackageDescription
 
 var platformDependentTargets = [PackageDescription.Target]()
 #if canImport(DirectoryService) && canImport(OpenDirectory)
-platformDependentTargets.append(.target(name: "opendirectory_officectlproxy", dependencies: ["OfficeKit", "Vapor", "Yaml", "JWT", "LegibleError", "GenericJSON"]))
+platformDependentTargets.append(.target(name: "officectl_odproxy", dependencies: ["OfficeKit", "Vapor", "Yaml", "JWT", "LegibleError", "GenericJSON"]))
 #endif
 
 

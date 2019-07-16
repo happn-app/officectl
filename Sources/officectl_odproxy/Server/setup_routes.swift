@@ -1,6 +1,6 @@
 /*
  * setup_routes.swift
- * opendirectory_officectlproxy
+ * officectl_odproxy
  *
  * Created by François Lamboley on 10/07/2019.
  */

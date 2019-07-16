@@ -1,6 +1,6 @@
 /*
  * configure.swift
- * opendirectory_officectlproxy
+ * officectl_odproxy
  *
  * Created by François Lamboley on 10/07/2019.
  */
@@ -83,8 +83,8 @@ private func readYamlConfig(forcedConfigFilePath: String?) throws -> (URL, Yaml)
 		configURL = URL(fileURLWithPath: path, isDirectory: false)
 	} else {
 		let searchedURLs = [
-			fm.homeDirectoryForCurrentUser.appendingPathComponent(".config/officectl/opendirectory_officectlproxy.yaml", isDirectory: false),
-			URL(fileURLWithPath: "/etc/officectl/opendirectory_officectlproxy.yaml", isDirectory: false)
+			fm.homeDirectoryForCurrentUser.appendingPathComponent(".config/officectl/officectl_odproxy.yaml", isDirectory: false),
+			URL(fileURLWithPath: "/etc/officectl/officectl_odproxy.yaml", isDirectory: false)
 		]
 		guard let firstURL = searchedURLs.first(where: { fm.fileExists(atPath: $0.path, isDirectory: &isDir) && !isDir.boolValue }) else {
 			throw MissingFieldError("Config file path")
