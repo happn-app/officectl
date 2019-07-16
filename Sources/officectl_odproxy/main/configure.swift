@@ -24,6 +24,16 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	let serverConfigYaml = try conf.genericConfig(for: "server", domain: "Global config")
 	let secret = try serverConfigYaml.string(for: "secret", domain: "Server Config")
 	
+	let signatureURLPathPrefixTransform: VerifySignatureMiddleware.SignatureURLPathPrefixTransform?
+	if let transformObject = try serverConfigYaml.optionalGenericConfig(for: "signature_url_path_prefix_transform", domain: "Server Config") {
+		signatureURLPathPrefixTransform = (
+			from: try transformObject.string(for: "from", domain: "Signature URL Prefix Transform"),
+			to:   try transformObject.string(for: "to",   domain: "Signature URL Prefix Transform")
+		)
+	} else {
+		signatureURLPathPrefixTransform = nil
+	}
+	
 	/* Register the Server config */
 	do {
 		let serverHostname = try serverConfigYaml.optionalString(for: "hostname", domain: "Server Config")
@@ -53,10 +63,9 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	services.register(router, as: Router.self)
 	
 	/* Register middleware */
-	#warning("TODO: Request Signature validation middleware")
 	var middlewares = MiddlewareConfig() /* Create _empty_ middleware config */
 	middlewares.use(ErrorMiddleware(handleError)) /* Catches errors and converts to HTTP response */
-	middlewares.use(VerifySignatureMiddleware(secret: Data(secret.utf8)))
+	middlewares.use(VerifySignatureMiddleware(secret: Data(secret.utf8), signatureURLPathPrefixTransform: signatureURLPathPrefixTransform))
 	services.register(middlewares)
 }
 

@@ -15,10 +15,14 @@ import Vapor
 
 class VerifySignatureMiddleware : Middleware {
 	
-	let secret: Data
+	typealias SignatureURLPathPrefixTransform = (from: String, to: String)
 	
-	init(secret s: Data) {
+	let secret: Data
+	let signatureURLPathPrefixTransform: SignatureURLPathPrefixTransform?
+	
+	init(secret s: Data, signatureURLPathPrefixTransform t: SignatureURLPathPrefixTransform?) {
 		secret = s
+		signatureURLPathPrefixTransform = t
 	}
 	
 	func respond(to request: Request, chainingTo next: Responder) throws -> Future<Response> {
@@ -47,12 +51,13 @@ class VerifySignatureMiddleware : Middleware {
 		}
 		
 		let body = request.http.body.data ?? Data()
+		let requestURLPath = transformURLPath(request.http.url.path)
 		
 		let sepData = Data(":".utf8)
 		let signedData = (
-			Data(validityStartStr.utf8).base64EncodedData()      + sepData +
-			Data(validityEndStr.utf8).base64EncodedData()        + sepData +
-			Data(request.http.url.path.utf8).base64EncodedData() + sepData +
+			Data(validityStartStr.utf8).base64EncodedData() + sepData +
+			Data(validityEndStr.utf8).base64EncodedData()   + sepData +
+			Data(requestURLPath.utf8).base64EncodedData()   + sepData +
 			body.base64EncodedData()
 		)
 		let computedSignature = try HMAC.SHA256.authenticate(signedData, key: secret)
@@ -62,6 +67,15 @@ class VerifySignatureMiddleware : Middleware {
 		}
 		
 		return try next.respond(to: request)
+	}
+	
+	private func transformURLPath(_ path: String) -> String {
+		guard let t = signatureURLPathPrefixTransform else {return path}
+		guard path.hasPrefix(t.from) else {return path}
+		
+		var noPrefix = path
+		noPrefix.removeSubrange(t.from.startIndex..<t.from.endIndex)
+		return t.to + noPrefix
 	}
 	
 }
