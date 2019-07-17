@@ -51,7 +51,7 @@ class VerifySignatureMiddleware : Middleware {
 		}
 		
 		let body = request.http.body.data ?? Data()
-		let requestURLPath = transformURLPath(request.http.url.path)
+		let requestURLPath = try transformURLPath(request.http.url.path)
 		
 		let sepData = Data(":".utf8)
 		let signedData = (
@@ -69,13 +69,15 @@ class VerifySignatureMiddleware : Middleware {
 		return try next.respond(to: request)
 	}
 	
-	private func transformURLPath(_ path: String) -> String {
+	private func transformURLPath(_ path: String) throws -> String {
 		guard let t = signatureURLPathPrefixTransform else {return path}
-		guard path.hasPrefix(t.from) else {return path}
+		guard let r = path.range(of: t.from), r.lowerBound == path.startIndex else {
+			throw BasicValidationError("Cannot validate the signature because the path does not have the expected prefix.")
+		}
 		
-		var noPrefix = path
-		noPrefix.removeSubrange(t.from.startIndex..<t.from.endIndex)
-		return t.to + noPrefix
+		var ret = path
+		ret.replaceSubrange(r, with: t.to)
+		return ret
 	}
 	
 }
