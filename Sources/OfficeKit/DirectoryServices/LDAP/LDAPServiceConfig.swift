@@ -67,7 +67,7 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 		
 		let bdnDic    = try genericConfig.stringStringDic(for: "base_dn_per_domains", domain: domain)
 		let pdnString = try genericConfig.optionalString(for: "people_dn", domain: domain)
-		let adnString = try genericConfig.optionalStringArray(for: "admin_groups_dn", domain: domain) ?? []
+		let adnString = try genericConfig.optionalStringArray(for: "officectl_admin_groups_dn", domain: domain) ?? []
 		
 		
 		let connectorSettings: LDAPConnector.Settings
