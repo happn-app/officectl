@@ -24,6 +24,7 @@ public struct ODRecordOKWrapper : DirectoryUser {
 		/* Not great… I’m not even sure the following line doesn’t do blocking IO
 		 * on the OpenDirectory Server! But I don’t really care, it’s
 		 * OpenDirectory; this Framework is an aberration… */
+		#warning("TODO: After reading the doc, it seems that passing a nil attributes list will return what’s in the cache and shouldn’t do IO.")
 		guard let idsStr = try r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName])[kODAttributeTypeMetaRecordName] as? [String], let idStr = idsStr.first, idsStr.count == 1 else {
 			throw InvalidArgumentError(message: "Cannot create an ODRecordOKWrapper if I don’t have an id or have too many ids in the record. Record is: \(r)")
 		}

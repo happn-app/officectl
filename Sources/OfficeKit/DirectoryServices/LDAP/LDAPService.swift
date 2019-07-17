@@ -58,7 +58,15 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	}
 	
 	public func exportableJSON(from user: LDAPInetOrgPersonWithObject) throws -> JSON {
-		throw NotImplementedError()
+		return JSON.object(user.object.attributes.mapValues{ values in
+			JSON.array(values.map{ valueData in
+				if let valueString = String(data: valueData, encoding: .utf8) {
+					return JSON.object(["str": JSON.string(valueString)])
+				} else {
+					return JSON.object(["dta": JSON.string(valueData.base64EncodedString())])
+				}
+			})
+		}.merging(["dn": JSON.string(user.inetOrgPerson.dn.stringValue)], uniquingKeysWith: { (_, new) in new }))
 	}
 	
 	public func logicalUser(fromPersistentId pId: LDAPDistinguishedName, hints: [DirectoryUserProperty : Any]) throws -> LDAPInetOrgPersonWithObject {
@@ -113,7 +121,23 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	}
 	
 	public func existingUser(fromUserId uId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {
-		throw NotImplementedError()
+		let ldapConnector: LDAPConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		
+		return ldapConnector.connect(scope: (), eventLoop: container.eventLoop)
+		.then{ _ in
+			#warning("TODO: Implement properties to fetch")
+			let searchOp = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .base, base: uId, searchQuery: nil, attributesToFetch: nil))
+			return Future<[LDAPInetOrgPerson]>.future(from: searchOp, eventLoop: container.eventLoop).map{ searchResults in
+				let c = searchResults.results.count
+				guard let object = searchResults.results.first, c == 1 else {
+					throw c == 0 ? Error.userNotFound : Error.tooManyUsersFound
+				}
+				guard let ret = LDAPInetOrgPersonWithObject(object: object) else {
+					throw Error.internalError
+				}
+				return ret
+			}
+		}
 	}
 	
 	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {
@@ -121,6 +145,11 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	}
 	
 	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {
+		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
+			/* The given user is already from our service. */
+			return try existingUser(fromUserId: user.userId, propertiesToFetch: propertiesToFetch, on: container)
+		}
+		
 		throw NotImplementedError()
 	}
 	
@@ -226,7 +255,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	public func fetchProperties(_ properties: Set<String>?, from dn: LDAPDistinguishedName, on container: Container) throws -> Future<[String: [Data]]> {
 		let ldapConnector: LDAPConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
 		
-		let searchRequest = LDAPSearchRequest(scope: .singleLevel, base: dn, searchQuery: nil, attributesToFetch: properties)
+		let searchRequest = LDAPSearchRequest(scope: .base, base: dn, searchQuery: nil, attributesToFetch: properties)
 		let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: searchRequest)
 		return ldapConnector.connect(scope: (), eventLoop: container.eventLoop)
 		.then{ _ in

@@ -7,21 +7,15 @@
 
 import Foundation
 
+import GenericJSON
 import OfficeKit
 
 
 
-struct ApiUser : Codable {
+struct ApiUser : Encodable {
 	
-	var userId: TaggedId
-	var persistentId: String?
+	var requestedUserId: TaggedId
 	
-	var emails: [Email]
-	
-	var firstName: String?
-	var lastName: String?
-	var nickname: String?
-	
-	var password: String?
+	var serviceUsers: [String: ApiResponse<JSON?>]
 	
 }

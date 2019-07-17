@@ -38,7 +38,7 @@ class PasswordResetController {
 			.getAllServices(container: req)
 			.filter{ $0.supportsPasswordChange }
 			.map{ ResetPasswordActionAndService(destinationService: $0, sourceUser: user, sourceService: service, container: req) }
-		return ApiResponse.data(ApiPasswordReset(userId: userId.taggedId, passwordResetAndServices: passwordResets, environment: req.environment))
+		return try ApiResponse.data(ApiPasswordReset(userId: userId.taggedId, passwordResetAndServices: passwordResets, environment: req.environment))
 	}
 	
 	func createReset(_ req: Request) throws -> Future<ApiResponse<ApiPasswordReset>> {
@@ -90,7 +90,7 @@ class PasswordResetController {
 			passwordResets.forEach{ $0.resetAction.successValue?.resetAction.start(parameters: passChangeData.newPassword, weakeningMode: .always(successDelay: 180, errorDelay: 180), handler: nil) }
 			
 			/* Return the resets response. */
-			return ApiResponse.data(ApiPasswordReset(userId: userId.taggedId, passwordResetAndServices: passwordResets, environment: req.environment))
+			return try ApiResponse.data(ApiPasswordReset(userId: userId.taggedId, passwordResetAndServices: passwordResets, environment: req.environment))
 		}
 	}
 	

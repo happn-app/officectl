@@ -25,10 +25,10 @@ func setup_routes(_ router: Router) throws {
 	router.post("api", "auth", "login",  use: LoginController().login)
 	router.post("api", "auth", "logout", use: LogoutController().logout)
 	
-//	let usersController = UsersController()
-//	router.get("api", "users", use: usersController.getUsers)
-//	router.get("api", "users", UserIdParameter.parameter, use: usersController.getUser)
-//	router.get("api", "search-users", use: usersController.searchUsers)
+	let usersController = UsersController()
+	router.get("api", "users", use: usersController.getAllUsers)
+	router.get("api", "users", "me", use: usersController.getMe)
+	router.get("api", "users", UserIdParameter.parameter, use: usersController.getUser)
 	
 	/* Intentionnally not giving access to listing of all resets: We do not keep
 	 * a table of the lists of password resets, and it would not be trivial to do

@@ -52,7 +52,27 @@ public final class OpenDirectoryService : DirectoryService {
 	}
 	
 	public func exportableJSON(from user: ODRecordOKWrapper) throws -> JSON {
-		throw NotImplementedError()
+		var ret = ["dn": JSON.string(user.userId.stringValue)]
+		guard let record = user.record else {return .object(ret)}
+		
+		/* Is this making IO? Who knows… But it shouldn’t be; doc says if
+		 * attributes is nil the method returns what’s in the cache. */
+		let attributes = try record.recordDetails(forAttributes: nil)
+		for (key, val) in attributes {
+			#warning("TODO: Log the skipped key")
+			guard let keyStr = key as? String else {continue}
+			guard keyStr != "dn" else {continue}
+			switch val {
+			case let str       as  String:  ret[keyStr] =                          JSON.object(["str": JSON.string(str)])
+			case let strArray  as [String]: ret[keyStr] = JSON.array(strArray.map{ JSON.object(["str": JSON.string($0)]) })
+			case let data      as  Data:    ret[keyStr] =                           JSON.object(["dta": JSON.string(data.base64EncodedString())])
+			case let dataArray as [Data]:   ret[keyStr] = JSON.array(dataArray.map{ JSON.object(["dta": JSON.string($0.base64EncodedString())]) })
+			default:
+				#warning("TODO: Log the skipped key")
+				continue
+			}
+		}
+		return JSON.object(ret)
 	}
 	
 	public func logicalUser(fromPersistentId pId: UUID, hints: [DirectoryUserProperty : Any]) throws -> ODRecordOKWrapper {

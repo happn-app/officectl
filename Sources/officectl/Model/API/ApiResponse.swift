@@ -13,8 +13,15 @@ import Vapor
 
 enum ApiResponse<ObjectType : Encodable> : Encodable {
 	
-	case error(ApiError)
 	case data(ObjectType)
+	case error(ApiError)
+	
+	init(result: Result<ObjectType, Error>, environment: Environment) {
+		switch result {
+		case .success(let o): self = .data(o)
+		case .failure(let e): self = .error(ApiError(error: e, environment: environment))
+		}
+	}
 	
 	init(error: Error, environment: Environment) {
 		self = .error(ApiError(error: error, environment: environment))
