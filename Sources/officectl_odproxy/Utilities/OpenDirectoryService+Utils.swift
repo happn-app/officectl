@@ -32,18 +32,18 @@ extension OpenDirectoryService {
 			switch serviceId {
 			case "email":
 				guard let emailStr = userJSON.stringValue, let email = Email(string: emailStr) else {
-					throw InvalidArgumentError(message: "Cannot convert given native id to email for service id email")
+					throw InvalidArgumentError(message: "Cannot convert given native id to email for service id email to retrieve logical user")
 				}
 				return try logicalUser(fromEmail: email, hints: [:])
 				
 			case "ggl":
 				guard let emailStr = userJSON["primaryEmail"]?.stringValue, let email = Email(string: emailStr) else {
-					throw InvalidArgumentError(message: "Cannot convert fetch email in given user for service ggl: \(userJSON)")
+					throw InvalidArgumentError(message: "Cannot convert fetch email in given user for service ggl to retrieve logical user: \(userJSON)")
 				}
 				return try logicalUser(fromEmail: email, hints: [:])
 				
 			default:
-				throw InvalidArgumentError(message: "Unknown service id \(serviceId) to convert user id from")
+				throw InvalidArgumentError(message: "Unknown service id \(serviceId) to convert user id to retrieve logical user")
 			}
 		}
 	}
@@ -60,16 +60,22 @@ extension OpenDirectoryService {
 			}
 			return try existingUser(fromUserId: nativeId, propertiesToFetch: propertiesToFetch, on: container)
 			
-		case .proxy(serviceId: let serviceId, user: let userIdJSON):
+		case .proxy(serviceId: let serviceId, user: let userJSON):
 			switch serviceId {
 			case "email":
-				guard let emailStr = userIdJSON.stringValue, let email = Email(string: emailStr) else {
-					throw InvalidArgumentError(message: "Cannot convert given native id to email")
+				guard let emailStr = userJSON.stringValue, let email = Email(string: emailStr) else {
+					throw InvalidArgumentError(message: "Cannot convert given native id to email to retrieve existing user")
+				}
+				return try existingUser(fromEmail: email, propertiesToFetch: propertiesToFetch, on: container)
+				
+			case "ggl":
+				guard let emailStr = userJSON["primaryEmail"]?.stringValue, let email = Email(string: emailStr) else {
+					throw InvalidArgumentError(message: "Cannot convert fetch email in given user for service ggl to retrieve existing user: \(userJSON)")
 				}
 				return try existingUser(fromEmail: email, propertiesToFetch: propertiesToFetch, on: container)
 				
 			default:
-				throw InvalidArgumentError(message: "Unknown service id \(serviceId) to convert user id from")
+				throw InvalidArgumentError(message: "Unknown service id \(serviceId) to convert user id to retrieve existing user")
 			}
 		}
 	}

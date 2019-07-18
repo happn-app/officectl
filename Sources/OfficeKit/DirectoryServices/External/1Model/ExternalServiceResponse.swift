@@ -17,16 +17,10 @@ enum ExternalServiceResponse<ObjectType : Decodable> : Decodable {
 	init(from decoder: Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
 		
-		let object = try container.decodeIfPresent(ObjectType.self, forKey: .data)
-		let error = try container.decodeIfPresent(ExternalServiceError.self, forKey: .error)
-		
-		switch (object, error) {
-		case (nil,         let error?): self = .error(error)
-		case (let object?, nil):        self = .data(object)
-		case (nil, nil), (_?, _?):
-			/* The error is not on the .data key precisely; it’s both on data and
-			 * error… But I did not find a way to express that. */
-			throw DecodingError.dataCorruptedError(forKey: .data, in: container, debugDescription: "Both data and error are nil or non-nil")
+		if let error = try container.decodeIfPresent(ExternalServiceError.self, forKey: .error) {
+			self = .error(error)
+		} else {
+			self = .data(try container.decode(ObjectType.self, forKey: .data))
 		}
 	}
 	

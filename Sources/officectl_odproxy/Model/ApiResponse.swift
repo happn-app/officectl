@@ -25,11 +25,9 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 		switch self {
 		case .data(let object):
 			try container.encode(object, forKey: .data)
-			try container.encodeNil(forKey: .error)
 			
 		case .error(let error):
 			try container.encode(error, forKey: .error)
-			try container.encodeNil(forKey: .data)
 		}
 	}
 	
