@@ -28,11 +28,17 @@ extension OpenDirectoryService {
 			}
 			return ODRecordOKWrapper(id: nativeId, emails: [])
 			
-		case .proxy(serviceId: let serviceId, user: let userIdJSON):
+		case .proxy(serviceId: let serviceId, user: let userJSON):
 			switch serviceId {
 			case "email":
-				guard let emailStr = userIdJSON.stringValue, let email = Email(string: emailStr) else {
-					throw InvalidArgumentError(message: "Cannot convert given native id to email")
+				guard let emailStr = userJSON.stringValue, let email = Email(string: emailStr) else {
+					throw InvalidArgumentError(message: "Cannot convert given native id to email for service id email")
+				}
+				return try logicalUser(fromEmail: email, hints: [:])
+				
+			case "ggl":
+				guard let emailStr = userJSON["primaryEmail"]?.stringValue, let email = Email(string: emailStr) else {
+					throw InvalidArgumentError(message: "Cannot convert fetch email in given user for service ggl: \(userJSON)")
 				}
 				return try logicalUser(fromEmail: email, hints: [:])
 				
