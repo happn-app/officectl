@@ -7,9 +7,13 @@
 
 import Foundation
 
+import Logging
+
 
 
 public struct OfficeKitConfig {
+	
+	public static var logger: Logger?
 	
 	public var authServiceConfig: AnyOfficeKitServiceConfig
 	public var serviceConfigs: [String: AnyOfficeKitServiceConfig]

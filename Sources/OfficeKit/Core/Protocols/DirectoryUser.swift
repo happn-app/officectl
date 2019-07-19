@@ -74,4 +74,11 @@ public enum DirectoryUserProperty : RawRepresentable, Hashable, ExpressibleByStr
 		}
 	}
 	
+	public func normalized() -> DirectoryUserProperty {
+		if case .custom(let v) = self {
+			return DirectoryUserProperty(stringLiteral: v)
+		}
+		return self
+	}
+	
 }

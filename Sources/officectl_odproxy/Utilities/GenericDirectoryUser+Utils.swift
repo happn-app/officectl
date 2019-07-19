@@ -13,9 +13,17 @@ import OfficeKit
 
 extension GenericDirectoryUser {
 	
-	init(recordWrapper: ODRecordOKWrapper) throws {
+	init(recordWrapper: ODRecordOKWrapper, odService: OpenDirectoryService) throws {
 		self.init(userId: .native(.string(recordWrapper.userId.stringValue)))
-		#warning("TODO: Fill in the rest?")
+		do {
+			let json = try odService.exportableJSON(from: recordWrapper)
+			guard case .object(let object) = json else {return}
+			for (k, v) in object {
+				self[k] = .set(v)
+			}
+		} catch {
+			/*nop*/
+		}
 	}
 	
 }

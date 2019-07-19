@@ -8,6 +8,7 @@
 import Foundation
 
 import GenericJSON
+import Logging
 
 
 
@@ -60,38 +61,9 @@ public struct GenericDirectoryUser : DirectoryUser, Codable {
 		let container = try decoder.singleValueContainer()
 		data = try container.decode([String: JSON].self)
 		
-		guard let id = data[DirectoryUserProperty.userId.rawValue] else {
-			throw DecodingError.dataCorruptedError(in: container, debugDescription: "Missing userId value")
-		}
-		guard GenericDirectoryUserId(rawValue: id) != nil else {
-			throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid userId value")
-		}
-		if let emails = data[DirectoryUserProperty.emails.rawValue] {
-			guard let jsonArray = emails.arrayValue else {
-				throw DecodingError.dataCorruptedError(in: container, debugDescription: "Value for key emails is not an array")
-			}
-			let strArray = jsonArray.compactMap{ $0.stringValue }
-			guard strArray.count == jsonArray.count else {
-				throw DecodingError.dataCorruptedError(in: container, debugDescription: "Value for key emails contains a non-string element")
-			}
-			let emailsArray = strArray.compactMap{ Email(string: $0) }
-			guard emailsArray.count == strArray.count else {
-				throw DecodingError.dataCorruptedError(in: container, debugDescription: "Value for key emails contains a non-valid email")
-			}
-		}
-		if let firstName = data[DirectoryUserProperty.firstName.rawValue] {
-			guard firstName.stringValue != nil || firstName.isNull else {
-				throw DecodingError.dataCorruptedError(in: container, debugDescription: "Value for key firstName is neither a string nor nil.")
-			}
-		}
-		if let lastName = data[DirectoryUserProperty.lastName.rawValue] {
-			guard lastName.stringValue != nil || lastName.isNull else {
-				throw DecodingError.dataCorruptedError(in: container, debugDescription: "Value for key lastName is neither a string nor nil.")
-			}
-		}
-		if let nickname = data[DirectoryUserProperty.nickname.rawValue] {
-			guard nickname.stringValue != nil || nickname.isNull else {
-				throw DecodingError.dataCorruptedError(in: container, debugDescription: "Value for key nickname is neither a string nor nil.")
+		for (k, v) in data {
+			guard GenericDirectoryUser.validate(value: .set(v), for: k) else {
+				throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid \(k) value")
 			}
 		}
 	}
@@ -101,12 +73,18 @@ public struct GenericDirectoryUser : DirectoryUser, Codable {
 		try container.encode(data)
 	}
 	
-	#warning("INFO: With Swift 5.1, no need for returns anymore in getters.")
 	public subscript(key: String) -> RemoteProperty<JSON> {
 		get {return data[key].flatMap{ .set($0) } ?? .unsupported}
-		set {data[key] = newValue.value}
+		set {
+			guard GenericDirectoryUser.validate(value: newValue, for: key) else {
+				OfficeKitConfig.logger?.error("Invalid value \(newValue) for a GenericDirectoryUser for key \(key). Not changing the value.")
+				return
+			}
+			data[key] = newValue.value
+		}
 	}
 	
+	#warning("INFO: With Swift 5.1, no need for returns anymore in getters.")
 	public var userId: GenericDirectoryUserId {
 		get {return GenericDirectoryUserId(rawValue: data[DirectoryUserProperty.userId.rawValue]!)!}
 		set {data[DirectoryUserProperty.userId.rawValue] = newValue.rawValue}
@@ -137,6 +115,22 @@ public struct GenericDirectoryUser : DirectoryUser, Codable {
 	/* ***************
 	   MARK: - Private
 	   *************** */
+	
+	private static func validate(value: RemoteProperty<JSON>, for key: String) -> Bool {
+		switch DirectoryUserProperty(stringLiteral: key) {
+		case .userId:
+			return value.value.flatMap{ GenericDirectoryUserId(rawValue: $0) } != nil
+			
+		case .firstName, .lastName, .nickname, .password:
+			return value.map{ $0.stringValue != nil || $0.isNull }.value ?? true
+			
+		case .emails:
+			guard let array = value.value?.arrayValue else {return false}
+			return array.first{ $0.stringValue.flatMap{ Email(string: $0) } == nil } == nil
+		
+		case .persistentId, .custom: return true
+		}
+	}
 	
 	private var data: [String: JSON]
 	
