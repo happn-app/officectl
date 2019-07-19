@@ -61,8 +61,8 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		}
 		
 		let nodeName = try genericConfig.string(for: "node_name", domain: domain)
-		let username = try genericConfig.string(for: "username", domain: domain)
-		let password = try genericConfig.string(for: "password", domain: domain)
+		let username = try genericConfig.string(for: "admin_username", domain: domain)
+		let password = try genericConfig.string(for: "admin_password", domain: domain)
 		
 		let bdnDic    = try genericConfig.stringStringDic(for: "base_dn_per_domains", domain: domain)
 		let pdnString = try genericConfig.optionalString(for: "people_dn", domain: domain)
