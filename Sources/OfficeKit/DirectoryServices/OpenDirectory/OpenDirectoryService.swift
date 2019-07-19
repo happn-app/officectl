@@ -178,13 +178,11 @@ public final class OpenDirectoryService : DirectoryService {
 	
 	public let supportsUserDeletion = true
 	public func deleteUser(_ user: ODRecordOKWrapper, on container: Container) throws -> Future<Void> {
-		let authenticator: OpenDirectoryRecordAuthenticator = try container.makeSemiSingleton(forKey: config.authenticatorSettings)
-		
 		return try self.existingUser(fromUserId: user.userId, propertiesToFetch: [], on: container)
 		.flatMap{ u in
 			#warning("TODO: Error is not correct")
 			guard let r = u?.record else {throw ODError.noRecordInRecordWrapper}
-			return Future<Void>.future(from: DeleteOpenDirectoryRecordOperation(record: r, authenticator: authenticator), eventLoop: container.eventLoop)
+			return Future<Void>.future(from: DeleteOpenDirectoryRecordOperation(record: r), eventLoop: container.eventLoop)
 		}
 	}
 	
@@ -192,8 +190,7 @@ public final class OpenDirectoryService : DirectoryService {
 	public func changePasswordAction(for user: ODRecordOKWrapper, on container: Container) throws -> ResetPasswordAction {
 		let semiSingletonStore: SemiSingletonStore = try container.make()
 		let openDirectoryConnector: OpenDirectoryConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
-		let openDirectoryRecordAuthenticator: OpenDirectoryRecordAuthenticator = try semiSingletonStore.semiSingleton(forKey: config.authenticatorSettings)
-		return semiSingletonStore.semiSingleton(forKey: user.userId, additionalInitInfo: (openDirectoryConnector, openDirectoryRecordAuthenticator)) as ResetOpenDirectoryPasswordAction
+		return semiSingletonStore.semiSingleton(forKey: user.userId, additionalInitInfo: openDirectoryConnector) as ResetOpenDirectoryPasswordAction
 	}
 	
 	/* ***************

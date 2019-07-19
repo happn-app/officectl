@@ -18,15 +18,15 @@ import Service
 
 public class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedName, String, Void>, ResetPasswordAction, SemiSingleton {
 	
-	public static func additionalInfo(from container: Container) throws -> (OpenDirectoryConnector, OpenDirectoryRecordAuthenticator) {
-		return try (container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()), container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()))
+	public static func additionalInfo(from container: Container) throws -> OpenDirectoryConnector {
+		return try container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make())
 	}
 	
 	public typealias SemiSingletonKey = LDAPDistinguishedName
-	public typealias SemiSingletonAdditionalInitInfo = (OpenDirectoryConnector, OpenDirectoryRecordAuthenticator)
+	public typealias SemiSingletonAdditionalInitInfo = OpenDirectoryConnector
 	
-	public required init(key u: LDAPDistinguishedName, additionalInfo: (OpenDirectoryConnector, OpenDirectoryRecordAuthenticator), store: SemiSingletonStore) {
-		deps = Dependencies(connector: additionalInfo.0, authenticator: additionalInfo.1)
+	public required init(key u: LDAPDistinguishedName, additionalInfo: OpenDirectoryConnector, store: SemiSingletonStore) {
+		deps = Dependencies(connector: additionalInfo)
 		
 		super.init(subject: u)
 	}
@@ -53,7 +53,7 @@ public class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedName, St
 			return user
 		}
 		.then{ user -> Future<Void> in
-			let modifyUserOperation = ModifyOpenDirectoryPasswordOperation(record: user, newPassword: newPassword, authenticator: self.deps.authenticator)
+			let modifyUserOperation = ModifyOpenDirectoryPasswordOperation(record: user, newPassword: newPassword)
 			return Future<Void>.future(from: modifyUserOperation, eventLoop: eventLoop)
 		}
 		f.whenSuccess{ _ in
@@ -69,7 +69,6 @@ public class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedName, St
 	private struct Dependencies {
 		
 		var connector: OpenDirectoryConnector
-		var authenticator: OpenDirectoryRecordAuthenticator
 		
 	}
 	

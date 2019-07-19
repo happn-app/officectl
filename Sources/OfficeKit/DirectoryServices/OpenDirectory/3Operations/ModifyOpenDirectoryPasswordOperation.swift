@@ -16,38 +16,29 @@ import RetryingOperation
 
 public final class ModifyOpenDirectoryPasswordOperation : RetryingOperation, HasResult {
 	
-	public let authenticator: OpenDirectoryRecordAuthenticator
-	
 	public let record: ODRecord
 	public let newPassword: String
 	
-	public private(set) var error: Error? = OperationIsNotFinishedError()
-	public var result: Result<Void, Error> {
-		if let error = error {return .failure(error)}
-		return .success(())
-	}
+	public private(set) var result = Result<Void, Error>.failure(OperationIsNotFinishedError())
 	
-	public init(record r: ODRecord, newPassword p: String, authenticator a: OpenDirectoryRecordAuthenticator) {
+	public init(record r: ODRecord, newPassword p: String) {
 		record = r
 		newPassword = p
-		authenticator = a
 	}
 	
 	public override var isAsynchronous: Bool {
-		return true
+		return false
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		authenticator.authenticate(request: record, handler: { result, userInfo in
-			do {
-				let record = try result.get()
-				try record.changePassword(nil, toPassword: self.newPassword)
-				self.error = nil
-			} catch let err {
-				self.error = err
-			}
-			self.baseOperationEnded()
-		})
+		defer {self.baseOperationEnded()}
+		
+		do {
+			try record.changePassword(nil, toPassword: newPassword)
+			result = .success(())
+		} catch {
+			result = .failure(error)
+		}
 	}
 	
 }

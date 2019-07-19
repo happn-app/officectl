@@ -18,20 +18,23 @@ public final class OpenDirectoryConnector : Connector {
 	
 	public typealias ScopeType = Void
 	
-	public let serverHostname: String
-	public let username: String
-	public let password: String
-	public let nodeName: String?
+	public typealias ProxySettings = (hostname: String, username: String, password: String)
+	public typealias CredentialsSettings = (recordType: String, username: String, password: String)
+	
+	public let sessionOptions: [AnyHashable: Any]?
+	
+	#warning("We may want to let the user choose to instantiate the node with a node type instead of a node name (we used to use ODNodeType(kODNodeTypeAuthentication))…")
+	public let nodeName: String
+	public let nodeCredentials: CredentialsSettings?
 	
 	public var currentScope: Void?
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "OpenDirectoryConnector")
 	
-	public init(serverHostname h: String, username u: String, password p: String, nodeName n: String?) throws {
-		serverHostname = h
-		username = u
-		password = p
+	public init(proxySettings: ProxySettings? = nil, nodeName n: String = "/LDAPv3/127.0.0.1", nodeCredentials creds: CredentialsSettings?) throws {
+		sessionOptions = proxySettings.flatMap{ [kODSessionProxyAddress: $0.hostname, kODSessionProxyUsername: $0.username, kODSessionProxyPassword: $0.password] }
 		nodeName = n
+		nodeCredentials = creds
 	}
 	
 	/** Lets the client communicate directly with the node. Use the node inside
@@ -64,12 +67,12 @@ public final class OpenDirectoryConnector : Connector {
 			
 			DispatchQueue(label: "OpenDirectory Connector Connect Queue").async{
 				do {
-					let session = try ODSession(options: [
-						kODSessionProxyAddress: self.serverHostname,
-						kODSessionProxyUsername: self.username,
-						kODSessionProxyPassword: self.password
-					])
+					let session = try ODSession(options: self.sessionOptions)
 					self.node = try ODNode(session: session, name: self.nodeName)
+					if let creds = self.nodeCredentials {
+						try self.node?.setCredentialsWithRecordType(creds.recordType, recordName: creds.username, password: creds.password)
+					}
+					
 					self.currentScope = scopeToAdd
 					handler(nil)
 				} catch {
@@ -85,6 +88,7 @@ public final class OpenDirectoryConnector : Connector {
 }
 
 
+@available(*, deprecated, message: "Set node credentials directly in the connector.")
 public final class OpenDirectoryRecordAuthenticator : Authenticator {
 	
 	public typealias RequestType = ODRecord

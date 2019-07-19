@@ -18,16 +18,43 @@ extension OpenDirectoryConnector : SemiSingletonWithFallibleInit {
 	
 	public struct Settings : Hashable {
 		
-		public let serverHostname: String
-		public let username: String
-		public let password: String
-		public let nodeName: String?
+		public let proxySettings: ProxySettings?
 		
-		public init(serverHostname h: String, username u: String, password p: String, nodeName n: String?) {
-			serverHostname = h
-			username = u
-			password = p
+		public let nodeName: String
+		public let nodeCredentials: CredentialsSettings?
+		
+		public init(proxySettings ps: ProxySettings? = nil, nodeName n: String, nodeCredentials creds: CredentialsSettings?) {
+			proxySettings = ps
 			nodeName = n
+			nodeCredentials = creds
+		}
+		
+		/* Yes, if ProxySettings and CredentialsSettings were structs, the == and
+		 * hash functions would not be needed, I know… */
+		public static func ==(lhs: OpenDirectoryConnector.Settings, rhs: OpenDirectoryConnector.Settings) -> Bool {
+			return (
+				lhs.proxySettings?.hostname == rhs.proxySettings?.hostname &&
+				lhs.proxySettings?.username == rhs.proxySettings?.username &&
+				lhs.proxySettings?.password == rhs.proxySettings?.password &&
+				
+				lhs.nodeName == rhs.nodeName &&
+				
+				lhs.nodeCredentials?.recordType == rhs.nodeCredentials?.recordType &&
+				lhs.nodeCredentials?.username == rhs.nodeCredentials?.username &&
+				lhs.nodeCredentials?.password == rhs.nodeCredentials?.password
+			)
+		}
+		
+		public func hash(into hasher: inout Hasher) {
+			hasher.combine(proxySettings?.hostname)
+			hasher.combine(proxySettings?.username)
+			hasher.combine(proxySettings?.password)
+			
+			hasher.combine(nodeName)
+			
+			hasher.combine(nodeCredentials?.recordType)
+			hasher.combine(nodeCredentials?.username)
+			hasher.combine(nodeCredentials?.password)
 		}
 		
 	}
@@ -40,7 +67,7 @@ extension OpenDirectoryConnector : SemiSingletonWithFallibleInit {
 	}
 	
 	public convenience init(key s: Settings) throws {
-		try self.init(serverHostname: s.serverHostname, username: s.username, password: s.password, nodeName: s.nodeName)
+		try self.init(proxySettings: s.proxySettings, nodeName: s.nodeName, nodeCredentials: s.nodeCredentials)
 	}
 	
 }

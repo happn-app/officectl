@@ -20,7 +20,6 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 	public var serviceName: String
 	
 	public var connectorSettings: OpenDirectoryConnector.Settings
-	public var authenticatorSettings: OpenDirectoryRecordAuthenticator.Settings
 	public var baseDNPerDomain: [String: LDAPDistinguishedName]
 	public var peopleBaseDNPerDomain: [String: LDAPDistinguishedName]?
 	
@@ -32,7 +31,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		return Set(baseDNPerDomain.keys)
 	}
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: OpenDirectoryConnector.Settings, authenticatorSettings a: OpenDirectoryRecordAuthenticator.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: OpenDirectoryConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
 		let bdn = try baseDNPerDomainString.mapValues{ try LDAPDistinguishedName(string: $0) }
 		baseDNPerDomain = bdn
 		peopleBaseDNPerDomain = try peopleDNString.flatMap{ peopleDNString -> [String: LDAPDistinguishedName] in
@@ -47,24 +46,29 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		serviceName = name
 		
 		connectorSettings = c
-		authenticatorSettings = a
 	}
 	
 	public init(providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
 		let domain = "OpenDirectory Config"
-		let hostnameString = try genericConfig.string(for: "server", domain: domain)
+		
+		let proxySettings = try genericConfig.optionalGenericConfig(for: "proxy", domain: domain).flatMap{ proxyGenericConfig -> OpenDirectoryConnector.ProxySettings in
+			let domain = "OpenDirectory Proxy Config"
+			return (
+				hostname: try proxyGenericConfig.string(for: "hostname", domain: domain),
+				username: try proxyGenericConfig.string(for: "username", domain: domain),
+				password: try proxyGenericConfig.string(for: "password", domain: domain)
+			)
+		}
+		
 		let nodeName = try genericConfig.string(for: "node_name", domain: domain)
-		let adminUsernameString = try genericConfig.string(for: "admin_username", domain: domain)
-		let adminPasswordString = try genericConfig.string(for: "admin_password", domain: domain)
-		let ldapAdminUsernameString = try genericConfig.string(for: "ldap_admin_username", domain: domain)
-		let ldapAdminPasswordString = try genericConfig.string(for: "ldap_admin_password", domain: domain)
+		let username = try genericConfig.string(for: "username", domain: domain)
+		let password = try genericConfig.string(for: "password", domain: domain)
 		
 		let bdnDic    = try genericConfig.stringStringDic(for: "base_dn_per_domains", domain: domain)
 		let pdnString = try genericConfig.optionalString(for: "people_dn", domain: domain)
 		
-		let connectorSettings = OpenDirectoryConnector.Settings(serverHostname: hostnameString, username: adminUsernameString, password: adminPasswordString, nodeName: nodeName)
-		let authenticatorSettings = OpenDirectoryRecordAuthenticator.Settings(username: ldapAdminUsernameString, password: ldapAdminPasswordString)
-		try self.init(providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings, authenticatorSettings: authenticatorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString)
+		let connectorSettings = OpenDirectoryConnector.Settings(proxySettings: proxySettings, nodeName: nodeName, nodeCredentials: (recordType: kODRecordTypeUsers, username: username, password: password))
+		try self.init(providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString)
 	}
 	
 }
