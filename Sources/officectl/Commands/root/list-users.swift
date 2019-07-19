@@ -15,16 +15,17 @@ import OfficeKit
 
 
 func listUsers(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	let officeKitConfig = try context.container.make(OfficectlConfig.self).officeKitConfig
-	
 	let serviceId = f.getString(name: "service-id")
-	let serviceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
+	let serviceProvider: OfficeKitServiceProvider = try context.container.make()
+	let service = try serviceProvider.getDirectoryService(id: serviceId, container: context.container)
 	
 	let includeInactiveUsers = f.getBool(name: "include-suspended-users")!
 	
 	let usersFuture: Future<[String]>
-	if let googleConfig: GoogleServiceConfig = serviceConfig.unboxed() {
-		usersFuture = try getUsersList(googleConfig: googleConfig, includeInactiveUsers: includeInactiveUsers, eventLoop: context.container.eventLoop)
+	if let googleService: GoogleService = service.unboxed() {
+		usersFuture = try getUsersList(googleService: googleService, includeInactiveUsers: includeInactiveUsers, container: context.container)
+	} else if let odService: OpenDirectoryService = service.unboxed() {
+		usersFuture = try getUsersList(openDirectoryService: odService, includeInactiveUsers: includeInactiveUsers, container: context.container)
 	} else {
 		throw InvalidArgumentError(message: "Unsupported service to list users from.")
 	}
@@ -42,14 +43,12 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 	}
 }
 
-private func getUsersList(googleConfig: GoogleServiceConfig, includeInactiveUsers: Bool, eventLoop: EventLoop) throws -> Future<[String]> {
-	_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
-	
-	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-	return googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
-	.then{ _ -> Future<[String]> in
-		#warning("lol hardcoded happn.fr spotted :P")
-		let searchOp = SearchGoogleUsersOperation(searchedDomain: "happn.fr", query: includeInactiveUsers ? nil : "isSuspended=false", googleConnector: googleConnector)
-		return Future<[String]>.future(from: searchOp, eventLoop: eventLoop, resultRetriever: { try $0.result.get().map{ $0.primaryEmail.stringValue } })
-	}
+private func getUsersList(googleService: GoogleService, includeInactiveUsers: Bool, container: Container) throws -> Future<[String]> {
+	return try googleService.listAllUsers(on: container)
+	.map{ $0.map{ googleService.shortDescription(from: $0) } }
+}
+
+private func getUsersList(openDirectoryService: OpenDirectoryService, includeInactiveUsers: Bool, container: Container) throws -> Future<[String]> {
+	return try openDirectoryService.listAllUsers(on: container)
+	.map{ $0.map{ openDirectoryService.shortDescription(from: $0) } }
 }

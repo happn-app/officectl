@@ -21,17 +21,17 @@ public final class OpenDirectoryConnector : Connector {
 	public let serverHostname: String
 	public let username: String
 	public let password: String
-	public let nodeType: ODNodeType
+	public let nodeName: String?
 	
 	public var currentScope: Void?
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "OpenDirectoryConnector")
 	
-	public init(serverHostname h: String, username u: String, password p: String, nodeType t: ODNodeType) throws {
+	public init(serverHostname h: String, username u: String, password p: String, nodeName n: String?) throws {
 		serverHostname = h
 		username = u
 		password = p
-		nodeType = t
+		nodeName = n
 	}
 	
 	/** Lets the client communicate directly with the node. Use the node inside
@@ -69,7 +69,7 @@ public final class OpenDirectoryConnector : Connector {
 						kODSessionProxyUsername: self.username,
 						kODSessionProxyPassword: self.password
 					])
-					self.node = try ODNode(session: session, type: self.nodeType)
+					self.node = try ODNode(session: session, name: self.nodeName)
 					self.currentScope = scopeToAdd
 					handler(nil)
 				} catch {

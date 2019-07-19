@@ -21,10 +21,11 @@ public final class OpenDirectoryService : DirectoryService {
 	
 	public static let providerId = "internal_opendirectory"
 	
-	public enum UserIdConversionError : Error {
+	public enum ODError : Error {
 		
 		case uidMissingInDN
 		case tooManyUsersFound
+		case noRecordInRecordWrapper
 		case unsupportedServiceUserIdConversion
 		
 	}
@@ -127,8 +128,12 @@ public final class OpenDirectoryService : DirectoryService {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(fromUserId uId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
-		throw NotImplementedError()
+	public func existingUser(fromUserId dn: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
+		/* Note: I’d very much like to search the whole DN instead of the UID
+		 *       only, but I was not able to make it work. */
+		guard let uid = dn.uid else {throw ODError.uidMissingInDN}
+		let request = OpenDirectorySearchRequest(uid: uid)
+		return try existingRecord(fromSearchRequest: request, on: container)
 	}
 	
 	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
@@ -138,19 +143,24 @@ public final class OpenDirectoryService : DirectoryService {
 	}
 	
 	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
+		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
+			/* The given user is already from our service; let’s return it. */
+			return try existingUser(fromUserId: user.userId, propertiesToFetch: propertiesToFetch, on: container)
+		}
+		
 		if let (_, ldapUser) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
-			guard let uid = ldapUser.userId.uid else {throw UserIdConversionError.uidMissingInDN}
-			let request = OpenDirectorySearchRequest(uid: uid, maxResults: 2)
+			guard let uid = ldapUser.userId.uid else {throw ODError.uidMissingInDN}
+			let request = OpenDirectorySearchRequest(uid: uid)
 			return try existingRecord(fromSearchRequest: request, on: container)
 		}
 		
-		throw UserIdConversionError.unsupportedServiceUserIdConversion
+		throw ODError.unsupportedServiceUserIdConversion
 	}
 	
 	public func listAllUsers(on container: Container) throws -> Future<[ODRecordOKWrapper]> {
 		let openDirectoryConnector: OpenDirectoryConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
 		
-		let searchQuery = OpenDirectorySearchRequest(recordTypes:  [kODRecordTypeUsers], attribute: kODAttributeTypeMetaRecordName, matchType: ODMatchType(kODMatchAny), queryValues: nil, returnAttributes: nil, maximumResults: nil)
+		let searchQuery = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeMetaRecordName, matchType: ODMatchType(kODMatchAny), queryValues: nil, returnAttributes: nil, maximumResults: nil)
 		let op = SearchOpenDirectoryOperation(request: searchQuery, openDirectoryConnector: openDirectoryConnector)
 		return openDirectoryConnector.connect(scope: (), eventLoop: container.eventLoop)
 		.then{ Future<[ODRecord]>.future(from: op, eventLoop: container.eventLoop).map{ $0.compactMap{ try? ODRecordOKWrapper(record: $0) } } }
@@ -168,7 +178,14 @@ public final class OpenDirectoryService : DirectoryService {
 	
 	public let supportsUserDeletion = true
 	public func deleteUser(_ user: ODRecordOKWrapper, on container: Container) throws -> Future<Void> {
-		throw NotImplementedError()
+		let authenticator: OpenDirectoryRecordAuthenticator = try container.makeSemiSingleton(forKey: config.authenticatorSettings)
+		
+		return try self.existingUser(fromUserId: user.userId, propertiesToFetch: [], on: container)
+		.flatMap{ u in
+			#warning("TODO: Error is not correct")
+			guard let r = u?.record else {throw ODError.noRecordInRecordWrapper}
+			return Future<Void>.future(from: DeleteOpenDirectoryRecordOperation(record: r, authenticator: authenticator), eventLoop: container.eventLoop)
+		}
 	}
 	
 	public let supportsPasswordChange = true
@@ -184,6 +201,9 @@ public final class OpenDirectoryService : DirectoryService {
 	   *************** */
 	
 	private func existingRecord(fromSearchRequest request: OpenDirectorySearchRequest, on container: Container) throws -> Future<ODRecordOKWrapper?> {
+		var request = request
+		request.maximumResults = 2
+		
 		let openDirectoryConnector: OpenDirectoryConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
 		let future = openDirectoryConnector.connect(scope: (), eventLoop: container.eventLoop)
 		.then{ _ -> Future<[ODRecord]> in
@@ -192,7 +212,7 @@ public final class OpenDirectoryService : DirectoryService {
 		}
 		.thenThrowing{ objects -> ODRecordOKWrapper? in
 			guard objects.count <= 1 else {
-				throw UserIdConversionError.tooManyUsersFound
+				throw ODError.tooManyUsersFound
 			}
 			return try objects.first.flatMap{ try ODRecordOKWrapper(record: $0) }
 		}

@@ -50,7 +50,7 @@ public final class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 					attribute: request.attribute,
 					matchType: request.matchType,
 					queryValues: request.queryValues,
-					returnAttributes: request.returnAttributes,
+					returnAttributes: request.returnAttributes/* ?? kODAttributeTypeAllAttributes*/,
 					maximumResults: request.maximumResults ?? 0
 				)
 				/* The as! should be valid; OpenDirectory is simply not updated anymore

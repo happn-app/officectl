@@ -21,13 +21,13 @@ extension OpenDirectoryConnector : SemiSingletonWithFallibleInit {
 		public let serverHostname: String
 		public let username: String
 		public let password: String
-		public let nodeType: ODNodeType
+		public let nodeName: String?
 		
-		public init(serverHostname h: String, username u: String, password p: String, nodeType t: ODNodeType) {
+		public init(serverHostname h: String, username u: String, password p: String, nodeName n: String?) {
 			serverHostname = h
 			username = u
 			password = p
-			nodeType = t
+			nodeName = n
 		}
 		
 	}
@@ -40,7 +40,7 @@ extension OpenDirectoryConnector : SemiSingletonWithFallibleInit {
 	}
 	
 	public convenience init(key s: Settings) throws {
-		try self.init(serverHostname: s.serverHostname, username: s.username, password: s.password, nodeType: s.nodeType)
+		try self.init(serverHostname: s.serverHostname, username: s.username, password: s.password, nodeName: s.nodeName)
 	}
 	
 }
