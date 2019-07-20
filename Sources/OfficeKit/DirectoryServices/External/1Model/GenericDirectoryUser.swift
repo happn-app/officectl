@@ -17,7 +17,7 @@ public enum GenericDirectoryUserId : RawRepresentable, Hashable {
 	public typealias RawValue = JSON
 	
 	case native(JSON)
-	case proxy(serviceId: String, user: JSON)
+	case proxy(serviceId: String, userId: String, user: JSON)
 	
 	public init?(rawValue: JSON) {
 		guard let object = rawValue.objectValue else {return nil}
@@ -27,11 +27,12 @@ public enum GenericDirectoryUserId : RawRepresentable, Hashable {
 			self = .native(native)
 			
 		} else if let proxy = object["proxy"]?.objectValue {
-			guard proxy.count == 2 else {return nil}
+			guard proxy.count == 3 else {return nil}
 			guard let user = proxy["user"] else {return nil}
+			guard let userId = proxy["userId"]?.stringValue else {return nil}
 			guard let serviceId = proxy["serviceId"]?.stringValue else {return nil}
 			
-			self = .proxy(serviceId: serviceId, user: user)
+			self = .proxy(serviceId: serviceId, userId: userId, user: user)
 			
 		} else {
 			return nil
@@ -40,8 +41,8 @@ public enum GenericDirectoryUserId : RawRepresentable, Hashable {
 	
 	public var rawValue: JSON {
 		switch self {
-		case .native(let j):                             return .object(["native": j])
-		case .proxy(serviceId: let sid, user: let user): return .object(["proxy": ["serviceId": .string(sid), "user": user]])
+		case .native(let j):                                                 return .object(["native": j])
+		case .proxy(serviceId: let sid, userId: let userId, user: let user): return .object(["proxy": ["serviceId": .string(sid), "userId": .string(userId), "user": user]])
 		}
 	}
 	
@@ -54,6 +55,7 @@ public struct GenericDirectoryUser : DirectoryUser, Codable {
 	public typealias PersistentIdType = JSON
 	
 	public init(userId: GenericDirectoryUserId) {
+		assert(GenericDirectoryUserId(rawValue: userId.rawValue) != nil)
 		data = [DirectoryUserProperty.userId.rawValue: userId.rawValue]
 	}
 	

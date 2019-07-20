@@ -75,7 +75,28 @@ public final class GoogleService : DirectoryService {
 			/* The given user is already from our service; let’s return it. */
 			return user
 		}
-		if let (ldapService, ldapUser) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
+		
+		/* External Directory Service */
+		if let (_, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
+			if let userId = ExternalDirectoryServiceV1.userId(for: self, from: user.userId) {
+				return try logicalUser(fromUserId: userId, hints: hints)
+			}
+			throw NotImplementedError()
+		}
+		/* GitHub */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GitHubService>? {
+			throw NotImplementedError()
+		}
+		/* Google (but not myself) */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
+			throw NotImplementedError()
+		}
+		/* LDAP */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
+			throw NotImplementedError()
+		}
+		/* Open Directory */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<OpenDirectoryService>? {
 			throw NotImplementedError()
 		}
 		
@@ -110,14 +131,36 @@ public final class GoogleService : DirectoryService {
 	}
 	
 	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
-		if let (_, googleUser) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
-			return try existingUser(fromEmail: googleUser.primaryEmail, propertiesToFetch: propertiesToFetch, on: container)
+		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
+			/* The given user is already from our service. */
+			return try existingUser(fromUserId: user.userId, propertiesToFetch: propertiesToFetch, on: container)
 		}
+		
+		/* External Directory Service */
+		if let (_, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
+			if let userId = ExternalDirectoryServiceV1.userId(for: self, from: user.userId) {
+				return try existingUser(fromUserId: userId, propertiesToFetch: propertiesToFetch, on: container)
+			}
+			throw NotImplementedError()
+		}
+		/* GitHub */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GitHubService>? {
+			throw NotImplementedError()
+		}
+		/* Google (but not myself) */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
+			throw NotImplementedError()
+		}
+		/* LDAP */
 		if let (ldapService, ldapUser) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
 			return try existingGoogleUser(fromLDAP: ldapUser, ldapService: ldapService, propertiesToFetch: propertiesToFetch, on: container)
 		}
+		/* Open Directory */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<OpenDirectoryService>? {
+			throw NotImplementedError()
+		}
 		
-		throw UserIdConversionError.unsupportedServiceUserIdConversion
+		throw NotImplementedError()
 	}
 	
 	public func listAllUsers(on container: Container) throws -> Future<[GoogleUser]> {

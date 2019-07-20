@@ -16,6 +16,13 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 	
 	public static let providerId = "http_service_v1"
 	
+	public static func userId<Service : DirectoryService>(for service: Service, from genericUserId: GenericDirectoryUserId) -> Service.UserType.UserIdType? {
+		guard case .proxy(let serviceId, let userId, _) = genericUserId, serviceId == service.config.serviceId else {
+			return nil
+		}
+		return try? service.userId(fromString: userId)
+	}
+	
 	public typealias ConfigType = ExternalDirectoryServiceV1Config
 	public typealias UserType = GenericDirectoryUser
 	
@@ -72,7 +79,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 			throw NotSupportedError(message: "Creating a user from an email is not supported for service \(config.serviceId)")
 		}
 		#warning("TODO: Implement hints")
-		return GenericDirectoryUser(userId: .proxy(serviceId: "email", user: .string(email.stringValue)))
+		return GenericDirectoryUser(userId: .proxy(serviceId: "email", userId: email.stringValue, user: .string(email.stringValue)))
 	}
 	
 	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GenericDirectoryUser {
@@ -85,8 +92,9 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 			throw NotSupportedError(message: "Creating a user from service id \(service.config.serviceId) is not supported for service \(config.serviceId)")
 		}
 		#warning("TODO: Implement hints")
+		let userId = service.string(fromUserId: user.userId)
 		let jsonUser = try service.exportableJSON(from: user)
-		return GenericDirectoryUser(userId: .proxy(serviceId: service.config.serviceId, user: jsonUser))
+		return GenericDirectoryUser(userId: .proxy(serviceId: service.config.serviceId, userId: userId, user: jsonUser))
 	}
 	
 	public func existingUser(fromPersistentId pId: JSON, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GenericDirectoryUser?> {
@@ -155,6 +163,7 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 	/* Sadly, cannot be embedded in generic function. */
 	private struct ExistingUserFromUserRequest : Encodable {
 		var serviceId: String
+		var userId: String
 		var user: JSON
 		var propertiesToFetch: Set<String>
 	}
@@ -163,8 +172,9 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 			throw InternalError(message: "Cannot get external service URL to retrieve existing user from user in other service")
 		}
 		
+		let userId = service.string(fromUserId: user.userId)
 		let jsonUser = try service.exportableJSON(from: user)
-		let request = ExistingUserFromUserRequest(serviceId: service.config.serviceId, user: jsonUser, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue }))
+		let request = ExistingUserFromUserRequest(serviceId: service.config.serviceId, userId: userId, user: jsonUser, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue }))
 		let requestData = try jsonEncoder.encode(request)
 		
 		var urlRequest = URLRequest(url: url)

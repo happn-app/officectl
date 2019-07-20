@@ -28,17 +28,11 @@ extension OpenDirectoryService {
 			}
 			return ODRecordOKWrapper(id: nativeId, emails: [])
 			
-		case .proxy(serviceId: let serviceId, user: let userJSON):
+		case .proxy(serviceId: let serviceId, userId: let proxyUserIdStr, user: _):
 			switch serviceId {
-			case "email":
-				guard let emailStr = userJSON.stringValue, let email = Email(string: emailStr) else {
-					throw InvalidArgumentError(message: "Cannot convert given native id to email for service id email to retrieve logical user")
-				}
-				return try logicalUser(fromEmail: email, hints: [:])
-				
-			case "ggl":
-				guard let emailStr = userJSON["primaryEmail"]?.stringValue, let email = Email(string: emailStr) else {
-					throw InvalidArgumentError(message: "Cannot convert fetch email in given user for service ggl to retrieve logical user: \(userJSON)")
+			case "email", "ggl":
+				guard let email = Email(string: proxyUserIdStr) else {
+					throw InvalidArgumentError(message: "Cannot convert proxy user id to email: \(proxyUserIdStr)")
 				}
 				return try logicalUser(fromEmail: email, hints: [:])
 				
@@ -60,17 +54,11 @@ extension OpenDirectoryService {
 			}
 			return try existingUser(fromUserId: nativeId, propertiesToFetch: propertiesToFetch, on: container)
 			
-		case .proxy(serviceId: let serviceId, user: let userJSON):
+		case .proxy(serviceId: let serviceId, userId: let proxyUserIdStr, user: _):
 			switch serviceId {
-			case "email":
-				guard let emailStr = userJSON.stringValue, let email = Email(string: emailStr) else {
-					throw InvalidArgumentError(message: "Cannot convert given native id to email to retrieve existing user")
-				}
-				return try existingUser(fromEmail: email, propertiesToFetch: propertiesToFetch, on: container)
-				
-			case "ggl":
-				guard let emailStr = userJSON["primaryEmail"]?.stringValue, let email = Email(string: emailStr) else {
-					throw InvalidArgumentError(message: "Cannot convert fetch email in given user for service ggl to retrieve existing user: \(userJSON)")
+			case "email", "ggl":
+				guard let email = Email(string: proxyUserIdStr) else {
+					throw InvalidArgumentError(message: "Cannot convert proxy user id to email: \(proxyUserIdStr)")
 				}
 				return try existingUser(fromEmail: email, propertiesToFetch: propertiesToFetch, on: container)
 				

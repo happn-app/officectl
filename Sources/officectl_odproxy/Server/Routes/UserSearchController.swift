@@ -49,12 +49,13 @@ final class UserSearchController {
 	func fromExternalUser(_ req: Request) throws -> Future<ApiResponse<GenericDirectoryUser?>> {
 		struct Request : Decodable {
 			var serviceId: String
+			var userId: String
 			var user: JSON
 			var propertiesToFetch: Set<String>
 		}
 		let input = try req.content.syncDecode(Request.self)
 		let propertiesToFetch = Set(input.propertiesToFetch.map{ DirectoryUserProperty(stringLiteral: $0) })
-		let userId = GenericDirectoryUserId.proxy(serviceId: input.serviceId, user: input.user)
+		let userId = GenericDirectoryUserId.proxy(serviceId: input.serviceId, userId: input.userId, user: input.user)
 		
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
 		return try openDirectoryService.existingUser(fromJSONUserId: userId.rawValue, propertiesToFetch: propertiesToFetch, on: req).map{ user in

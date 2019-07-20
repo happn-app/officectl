@@ -105,12 +105,32 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			return user
 		}
 		
+		/* External Directory Service */
+		if let (_, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
+			if let userId = ExternalDirectoryServiceV1.userId(for: self, from: user.userId) {
+				return try logicalUser(fromUserId: userId, hints: hints)
+			}
+			throw NotImplementedError()
+		}
+		/* GitHub */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GitHubService>? {
+			throw NotImplementedError()
+		}
+		/* Google */
 		if let (_, user) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
 			let person = try logicalUser(fromEmail: user.primaryEmail, hints: hints).inetOrgPerson
 			if let fn = user.name.value?.familyName, person.sn.isEmpty                 {person.sn = [fn]}
 			if let fn = user.name.value?.fullName,   person.cn.isEmpty                 {person.cn = [fn]}
 			if let gn = user.name.value?.givenName,  person.givenName?.isEmpty ?? true {person.givenName = [gn]}
 			return LDAPInetOrgPersonWithObject(inetOrgPerson: person)
+		}
+		/* LDAP (but not myself) */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
+			throw NotImplementedError()
+		}
+		/* Open Directory */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<OpenDirectoryService>? {
+			throw NotImplementedError()
 		}
 		
 		throw NotImplementedError()
@@ -148,6 +168,30 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
 			/* The given user is already from our service. */
 			return try existingUser(fromUserId: user.userId, propertiesToFetch: propertiesToFetch, on: container)
+		}
+		
+		/* External Directory Service */
+		if let (_, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
+			if let userId = ExternalDirectoryServiceV1.userId(for: self, from: user.userId) {
+				return try existingUser(fromUserId: userId, propertiesToFetch: propertiesToFetch, on: container)
+			}
+			throw NotImplementedError()
+		}
+		/* GitHub */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GitHubService>? {
+			throw NotImplementedError()
+		}
+		/* Google */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
+			throw NotImplementedError()
+		}
+		/* LDAP (but not myself) */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
+			throw NotImplementedError()
+		}
+		/* Open Directory */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<OpenDirectoryService>? {
+			throw NotImplementedError()
 		}
 		
 		throw NotImplementedError()

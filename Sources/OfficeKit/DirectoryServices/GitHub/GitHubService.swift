@@ -61,8 +61,31 @@ public final class GitHubService : DirectoryService {
 			return user
 		}
 		
-		#warning("TODO: Actually error thrown below is not necessarily true… we can setup a custom property in LDAP to set the GitHub user id of a user.")
-		throw NotSupportedError(message: "There are no logical rules to convert a user from a \(OtherServiceType.self) to a GitHub user.")
+		/* External Directory Service */
+		if let (_, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
+			if let userId = ExternalDirectoryServiceV1.userId(for: self, from: user.userId) {
+				return try logicalUser(fromUserId: userId, hints: hints)
+			}
+			throw NotImplementedError()
+		}
+		/* GitHub (but not myself) */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GitHubService>? {
+			throw NotImplementedError()
+		}
+		/* Google */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
+			throw NotImplementedError()
+		}
+		/* LDAP */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
+			throw NotImplementedError()
+		}
+		/* Open Directory */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<OpenDirectoryService>? {
+			throw NotImplementedError()
+		}
+		
+		throw NotImplementedError()
 	}
 	
 	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GitHubUser?> {
@@ -78,6 +101,35 @@ public final class GitHubService : DirectoryService {
 	}
 	
 	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GitHubUser?> {
+		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
+			/* The given user is already from our service. */
+			return try existingUser(fromUserId: user.userId, propertiesToFetch: propertiesToFetch, on: container)
+		}
+		
+		/* External Directory Service */
+		if let (_, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
+			if let userId = ExternalDirectoryServiceV1.userId(for: self, from: user.userId) {
+				return try existingUser(fromUserId: userId, propertiesToFetch: propertiesToFetch, on: container)
+			}
+			throw NotImplementedError()
+		}
+		/* GitHub (but not myself) */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GitHubService>? {
+			throw NotImplementedError()
+		}
+		/* Google */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
+			throw NotImplementedError()
+		}
+		/* LDAP */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
+			throw NotImplementedError()
+		}
+		/* Open Directory */
+		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<OpenDirectoryService>? {
+			throw NotImplementedError()
+		}
+		
 		throw NotImplementedError()
 	}
 	

@@ -31,7 +31,8 @@ public protocol DirectoryService : class {
 	/** Convert the user to a user printable string. Mostly used for logging. */
 	func shortDescription(from user: UserType) -> String
 	
-	/** Converts the given user to a JSON representation.
+	/**
+	Converts the given user to a JSON representation.
 	
 	The JSON returned by this function doesn’t have to be an exact representation
 	of the given user. In particular it isn’t expected to be necessarily possible
