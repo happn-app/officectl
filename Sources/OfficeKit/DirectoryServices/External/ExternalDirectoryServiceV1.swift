@@ -16,13 +16,6 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 	
 	public static let providerId = "http_service_v1"
 	
-	public static func userId<Service : DirectoryService>(for service: Service, from genericUserId: GenericDirectoryUserId) -> Service.UserType.UserIdType? {
-		guard case .proxy(let serviceId, let userId, _) = genericUserId, serviceId == service.config.serviceId else {
-			return nil
-		}
-		return try? service.userId(fromString: userId)
-	}
-	
 	public typealias ConfigType = ExternalDirectoryServiceV1Config
 	public typealias UserType = GenericDirectoryUser
 	
@@ -55,6 +48,13 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 			throw InvalidArgumentError(message: "Invalid GenericDirectoryUserId id")
 		}
 		return id
+	}
+	
+	public func userId<Service : DirectoryService>(fromGenericUserId genericUserId: GenericDirectoryUserId, for service: Service) -> Service.UserType.UserIdType? {
+		guard case .proxy(let serviceId, let userId, _) = genericUserId, serviceId == service.config.serviceId else {
+			return nil
+		}
+		return try? service.userId(fromString: userId)
 	}
 	
 	public func shortDescription(from user: GenericDirectoryUser) -> String {

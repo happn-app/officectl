@@ -77,8 +77,8 @@ public final class GoogleService : DirectoryService {
 		}
 		
 		/* External Directory Service */
-		if let (_, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
-			if let userId = ExternalDirectoryServiceV1.userId(for: self, from: user.userId) {
+		if let (service, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
+			if let userId = service.userId(fromGenericUserId: user.userId, for: self) {
 				return try logicalUser(fromUserId: userId, hints: hints)
 			}
 			throw NotImplementedError()
@@ -137,8 +137,8 @@ public final class GoogleService : DirectoryService {
 		}
 		
 		/* External Directory Service */
-		if let (_, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
-			if let userId = ExternalDirectoryServiceV1.userId(for: self, from: user.userId) {
+		if let (service, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
+			if let userId = service.userId(fromGenericUserId: user.userId, for: self) {
 				return try existingUser(fromUserId: userId, propertiesToFetch: propertiesToFetch, on: container)
 			}
 			throw NotImplementedError()
