@@ -120,6 +120,9 @@ public final class OpenDirectoryService : DirectoryService {
 			if let userId = service.userId(fromGenericUserId: user.userId, for: self) {
 				return try logicalUser(fromUserId: userId, hints: hints)
 			}
+			if let userId = service.logicalUserId(fromGenericUserId: user.userId, for: self) {
+				return try logicalUser(fromUserId: userId, hints: hints)
+			}
 			throw NotImplementedError()
 		}
 		/* GitHub */
@@ -172,6 +175,9 @@ public final class OpenDirectoryService : DirectoryService {
 		/* External Directory Service */
 		if let (service, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
 			if let userId = service.userId(fromGenericUserId: user.userId, for: self) {
+				return try existingUser(fromUserId: userId, propertiesToFetch: propertiesToFetch, on: container)
+			}
+			if let userId = service.logicalUserId(fromGenericUserId: user.userId, for: self) {
 				return try existingUser(fromUserId: userId, propertiesToFetch: propertiesToFetch, on: container)
 			}
 			throw NotImplementedError()

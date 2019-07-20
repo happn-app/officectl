@@ -57,6 +57,24 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		return try? service.userId(fromString: userId)
 	}
 	
+	#warning("TODO: 🥴 I don’t know how to do this properly yet. For now, this works (with our config, wouldn’t work for anyone else…) Current idea is to set transformations directly in conf; I’ll have to think about it…")
+	public func logicalUserId<Service : DirectoryService>(fromGenericUserId genericUserId: GenericDirectoryUserId, for service: Service) -> Service.UserType.UserIdType? {
+		switch genericUserId {
+		case .proxy(serviceId: let serviceId, userId: let userId, user: _) where serviceId == service.config.serviceId:
+			return try? service.userId(fromString: userId)
+			
+		case .native(.string(let userIdStr)):
+			guard let dn = try? LDAPDistinguishedName(string: userIdStr), let uid = dn.uid else {return nil}
+			switch service.config.serviceId {
+			case "ldap": return LDAPDistinguishedName(uid: uid, baseDN: LDAPDistinguishedName(values: [(key: "ou", value: "people"), (key: "dc", value: "happn"), (key: "dc", value: "com")])) as? Service.UserType.UserIdType
+			case "ggl":  return Email(username: uid, domain: "happn.fr") as? Service.UserType.UserIdType
+			default: return nil
+			}
+			
+		case .native, .proxy: return nil
+		}
+	}
+	
 	public func shortDescription(from user: GenericDirectoryUser) -> String {
 		return "\(user.userId)"
 	}
