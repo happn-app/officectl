@@ -65,8 +65,10 @@ final class UserSearchController {
 	
 	func listAllUsers(_ req: Request) throws -> Future<ApiResponse<[GenericDirectoryUser]>> {
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
-		
-		throw NotImplementedError()
+		return try openDirectoryService.listAllUsers(on: req).map{ users in
+			/* Let’s convert the OpenDirectory user to a GenericDirectoryUser */
+			return try ApiResponse.data(users.map{ try GenericDirectoryUser(recordWrapper: $0, odService: openDirectoryService) })
+		}
 	}
 	
 }
