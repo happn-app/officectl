@@ -75,6 +75,9 @@ public final class GoogleService : DirectoryService {
 			/* The given user is already from our service; let’s return it. */
 			return user
 		}
+		if let (ldapService, ldapUser) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
+			throw NotImplementedError()
+		}
 		
 		throw NotImplementedError()
 	}

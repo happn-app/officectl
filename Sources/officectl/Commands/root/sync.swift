@@ -39,26 +39,16 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		return context.container.eventLoop.future()
 	}
 	
-	func usersById(from users: [AnyDirectoryUser]) throws -> [AnyHashable: AnyDirectoryUser] {
-		let grouped = Dictionary(grouping: users, by: { $0.userId })
-		return try grouped.mapValues{ ug in
-			guard let u = ug.first, ug.count == 1 else {
-				throw InternalError(message: "Invalid users list which contains at least two users with the same id.")
-			}
-			return u
-		}
-	}
-	
 	let fromDirectory = try officeKitServiceProvider.getDirectoryService(id: fromId, container: context.container)
 	let toDirectories = try toIds.map{ try officeKitServiceProvider.getDirectoryService(id: String($0), container: context.container) }
 	
 	return try fromDirectory.listAllUsers(on: context.container)
 	.flatMap{ sourceUsers -> Future<[ServiceSyncPlan]> in
 		let futures = try toDirectories.map{ toDirectory in
-			return try toDirectory.listAllUsers(on: context.container).map{ try usersById(from: $0) }
+			return try toDirectory.listAllUsers(on: context.container).map{ try groupUsersById(from: $0) }
 			.map{ (currentDestinationUsers: [AnyHashable: AnyDirectoryUser]) -> ServiceSyncPlan in
 				let directoryBlacklist = syncConfig.blacklistsByServiceId[toDirectory.config.serviceId] ?? []
-				let expectedDestinationUsers = try usersById(from: sourceUsers.compactMap{ try toDirectory.logicalUser(fromUser: $0, in: fromDirectory, hints: [:]) })
+				let expectedDestinationUsers = try groupUsersById(from: sourceUsers.compactMap{ try toDirectory.logicalUser(fromUser: $0, in: fromDirectory, hints: [:]) })
 				
 				let currentDestinationUserIds = Set(currentDestinationUsers.keys)
 				let expectedDestinationUserIds = Set(expectedDestinationUsers.keys)

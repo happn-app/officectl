@@ -17,70 +17,168 @@ import Vapor
 
 class UsersController {
 	
-	func getAllUsers(_ req: Request) throws -> Future<ApiResponse<[ApiUser]>> {
-		throw NotImplementedError()
-		#if false
+	func getAllUsers(_ req: Request) throws -> Future<ApiResponse<ApiUsersSearchResult>> {
+		/* General auth check */
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
 		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
 		
-		/* Only admins are allowed to list users. */
+		/* Only admins are allowed to list the users. */
 		guard token.payload.adm else {
 			throw Abort(.forbidden)
 		}
 		
-		let asyncConfig = try req.make(AsyncConfig.self)
-		let officeKitConfig = officectlConfig.officeKitConfig
-		let semiSingletonStore = try req.make(SemiSingletonStore.self)
-		let aliases = officeKitConfig.domainAliases
+		let logger = try req.make(Logger.self)
+		let sProvider = try req.make(OfficeKitServiceProvider.self)
 		
-		let ldapConfig = try officeKitConfig.ldapConfigOrThrow()
-		let ldapConnectorConfig = ldapConfig.connectorSettings
-		let ldapConnector: LDAPConnector = try semiSingletonStore.semiSingleton(forKey: ldapConnectorConfig)
+		let serviceIdsStr: String? = req.query["service_ids"]
+		let serviceIds = serviceIdsStr?.split(separator: ",").map(String.init)
+		let services = try serviceIds.flatMap{ try $0.map{ try sProvider.getDirectoryService(id: $0, container: req) } } ?? sProvider.getAllServices(container: req)
 		
-		let googleConfig = try officeKitConfig.googleConfigOrThrow()
-		let googleConnectorConfig = googleConfig.connectorSettings
-		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: googleConnectorConfig)
+		let serviceAndFutureUsers = services.map{ service in (service, req.future().flatMap{ try service.listAllUsers(on: req) }) }
 		
-		return Future<Void>.andAll([
-			ldapConnector.connect(scope: (), asyncConfig: asyncConfig),
-			googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, asyncConfig: asyncConfig)
-		], eventLoop: req.eventLoop)
-		.then{ _ in
-			let searchLDAPOperations = ldapConfig.allBaseDNs
-				.map{ LDAPSearchRequest(scope: .children, base: $0, searchQuery: nil, attributesToFetch: ["objectClass", "uid", "givenName", "mail", "sn", "cn", "sshPublicKey"]) }
-				.map{ SearchLDAPOperation(ldapConnector: ldapConnector, request: $0) }
-			let searchLDAPFutures = searchLDAPOperations
-				.map{ req.eventLoop.future(from: $0, queue: asyncConfig.operationQueue).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } } }
-			let searchLDAPFuture = Future.reduce([], searchLDAPFutures, eventLoop: req.eventLoop, +)
+		return Future.waitAll(serviceAndFutureUsers, eventLoop: req.eventLoop).flatMap{ servicesAndUserResults in
+			let promise = req.eventLoop.newPromise(ApiUsersSearchResult.self)
 			
-			let searchGoogleOperations = googleConfig.primaryDomains.intersection(ldapConfig.allDomains)
-				.map{ SearchGoogleUsersOperation(searchedDomain: $0, query: "isSuspended=false", googleConnector: googleConnector) }
-			let searchGoogleFutures = searchGoogleOperations
-				.map{ req.eventLoop.future(from: $0, queue: asyncConfig.operationQueue) }
-			let searchGoogleFuture = Future.reduce([], searchGoogleFutures, eventLoop: req.eventLoop, +)
-			
-			return searchLDAPFuture.and(searchGoogleFuture)
-		}
-		.then{ (ldapUsers: [LDAPInetOrgPersonWithObject], googleUsers: [GoogleUser]) -> Future<ApiResponse<[User]>> in
-			/* Let’s take all LDAP objects and merge them w/ Google objects. */
-			let users = ldapUsers.compactMap{ ldapObject -> User? in
-				guard var user = User(ldapInetOrgPersonWithObject: ldapObject) else {return nil}
-				
-				user.googleUserId = googleUsers.first(where: { $0.primaryEmail.primaryDomainVariant(aliasMap: aliases) == user.email?.primaryDomainVariant(aliasMap: aliases) })?.id
-				return user
+			/* Let’s merge the users */
+			let queue = DispatchQueue(label: "Compute merge of users")
+			queue.async{
+				do {
+					struct ServiceAndUserId : Hashable, Equatable {
+						var serviceId: String
+						var userId: AnyHashable
+					}
+					class TaggedUser : CustomStringConvertible {
+						let user: AnyDirectoryUser
+						let service: AnyDirectoryService
+						var linkedUserByServiceId: [String: TaggedUser] = [:]
+						init(service s: AnyDirectoryService, user u: AnyDirectoryUser) {service = s; user = u}
+						
+						var serviceAndUserId: ServiceAndUserId {return ServiceAndUserId(serviceId: service.config.serviceId, userId: user.userId)}
+						var description: String {return "TaggedUser<\(service.config.serviceId) - \(user)>; linkedUsers: \(linkedUserByServiceId.keys)\n\n\n"}
+						
+						func link(to linkedUser: TaggedUser) throws {
+							var visited = Set<[ServiceAndUserId]>()
+							return try link(to: linkedUser, visited: &visited)
+						}
+						
+						private func link(to linkedUser: TaggedUser, visited: inout Set<[ServiceAndUserId]>) throws {
+							guard !visited.contains([serviceAndUserId, linkedUser.serviceAndUserId]) else {return}
+							visited.insert([serviceAndUserId, linkedUser.serviceAndUserId])
+							
+							guard user.userId != linkedUser.user.userId || service.config.serviceId != linkedUser.service.config.serviceId else {
+								/* Not linking myself to myself… */
+								return
+							}
+							
+							/* Make the actual link. */
+							if let currentlyLinkedUser = linkedUserByServiceId[linkedUser.service.config.serviceId] {
+								guard currentlyLinkedUser.user.userId == linkedUser.user.userId else {
+									throw InternalError(message: "User \(self.user) is asked to be linked to \(linkedUser.user), but is also already linked to \(currentlyLinkedUser.user)")
+								}
+							} else {
+								linkedUserByServiceId[linkedUser.service.config.serviceId] = linkedUser
+							}
+							/* Make the reverse link. */
+							try linkedUser.link(to: self, visited: &visited)
+							/* Link related users. */
+							for toLink in linkedUserByServiceId.values {
+								assert(toLink.linkedUserByServiceId.values.contains(where: { $0.user.userId == user.userId && $0.service.config.serviceId == service.config.serviceId }))
+								try toLink.link(to: linkedUser, visited: &visited)
+							}
+						}
+					}
+					
+					let startComputationTime = Date()
+					
+					/* First let’s drop the unsuccessful users fetches */
+					var fetchErrorsByService = [String: ApiError]()
+					let servicesAndUsers = servicesAndUserResults.compactMap{ serviceAndUserResults -> [TaggedUser]? in
+						let service = serviceAndUserResults.0
+						switch serviceAndUserResults.1 {
+						case .failure(let error):
+							fetchErrorsByService[service.config.serviceId] = ApiError(error: error, environment: req.environment)
+							return nil
+							
+						case .success(let users):
+							return users.map{ TaggedUser(service: service, user: $0) }
+						}
+					}.flatMap{ $0 }
+					
+					let usersByServiceAndUserId = try groupCollection(servicesAndUsers, by: { taggedUser in ServiceAndUserId(serviceId: taggedUser.service.config.serviceId, userId: taggedUser.user.userId) })
+					
+					/* Now we merge the users that we do have. */
+					for (_, taggedUser) in usersByServiceAndUserId {
+						let currentUserServiceId = taggedUser.service.config.serviceId
+						for service in services {
+							let serviceId = service.config.serviceId
+							guard serviceId != currentUserServiceId else {continue}
+							guard !fetchErrorsByService.keys.contains(serviceId) else {
+								/* No need to check for a matching user for this service
+								 * as we know there was an error fetching the list of
+								 * the users in this service. */
+								continue
+							}
+							guard let logicallyLinkedUser = try? service.logicalUser(fromUser: taggedUser.user, in: taggedUser.service, hints: [:]) else {
+//								logger.debug("Error finding logically linked user with: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user: \(taggedUser.user)\n}")
+								continue
+							}
+							guard let logicallyLinkedTaggedUser = usersByServiceAndUserId[ServiceAndUserId(serviceId: serviceId, userId: logicallyLinkedUser.userId)] else {
+//								logger.debug("Found logically linked user, but user does not exist: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user: \(taggedUser.user)\n  dest user: \(logicallyLinkedUser)\n}")
+								continue
+							}
+							try taggedUser.link(to: logicallyLinkedTaggedUser)
+						}
+					}
+					
+					let validServiceIds = Set(services.map{ $0.config.serviceId }).subtracting(fetchErrorsByService.keys)
+					
+					var treatedServiceAndUserIds = Set<ServiceAndUserId>()
+					let results = try usersByServiceAndUserId.compactMap{ kv -> [String: JSON]? in
+						let (serviceAndUserId, taggedUser) = kv
+						
+						guard !treatedServiceAndUserIds.contains(serviceAndUserId) else {return nil}
+						treatedServiceAndUserIds.insert(serviceAndUserId)
+						
+						var res = try [taggedUser.service.config.serviceId: taggedUser.service.exportableJSON(from: taggedUser.user)]
+						for (linkedServiceId, linkedUser) in taggedUser.linkedUserByServiceId {
+							let linkedServiceAndUserId = ServiceAndUserId(serviceId: linkedServiceId, userId: linkedUser.user.userId)
+							guard !treatedServiceAndUserIds.contains(linkedServiceAndUserId) else {
+								throw InternalError(message: "Got already treated linked user! \(linkedServiceAndUserId) for \(serviceAndUserId)")
+							}
+							res[linkedServiceId] = try linkedUser.service.exportableJSON(from: linkedUser.user)
+							treatedServiceAndUserIds.insert(linkedServiceAndUserId)
+						}
+						for sId in validServiceIds {
+							if !res.keys.contains(sId) {
+								res[sId] = .some(nil)
+							}
+						}
+						return res
+					}
+					
+					logger.info("Computed merged users list in \(-startComputationTime.timeIntervalSinceNow) seconds")
+					promise.succeed(result: ApiUsersSearchResult(request: "TODO", results: results, errorsByServiceId: fetchErrorsByService))
+				} catch {
+					promise.fail(error: error)
+				}
 			}
 			
-			return req.future(ApiResponse.data(users))
+			return promise.futureResult.map{ ApiResponse.data($0) }
 		}
-		#endif
 	}
 	
-	func getMe(_ req: Request) throws -> Future<ApiResponse<ApiUser>> {
-		throw NotImplementedError()
+	func getMe(_ req: Request) throws -> Future<ApiResponse<ApiUserSearchResult>> {
+		/* General auth check */
+		let officectlConfig = try req.make(OfficectlConfig.self)
+		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
+		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
+		
+		let myUserId = try UserIdParameter(taggedId: token.payload.sub, container: req)
+		return try getUserNoAuthCheck(userId: myUserId, container: req)
 	}
 	
-	func getUser(_ req: Request) throws -> Future<ApiResponse<ApiUser>> {
+	func getUser(_ req: Request) throws -> Future<ApiResponse<ApiUserSearchResult>> {
 		/* General auth check */
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
@@ -89,28 +187,32 @@ class UsersController {
 		/* Parameter retrieval */
 		let userId = try req.parameters.next(UserIdParameter.self)
 		
-		/* Only admins are allowed to see aany user. Other users can only see
+		/* Only admins are allowed to see any user. Other users can only see
 		 * themselves. */
 		guard try token.payload.adm || token.payload.representsSameUserAs(userId: userId, container: req) else {
 			throw Abort(.forbidden)
 		}
 		
-		let sProvider = try req.make(OfficeKitServiceProvider.self)
+		return try getUserNoAuthCheck(userId: userId, container: req)
+	}
+	
+	private func getUserNoAuthCheck(userId: UserIdParameter, container: Container) throws -> Future<ApiResponse<ApiUserSearchResult>> {
+		let sProvider = try container.make(OfficeKitServiceProvider.self)
 		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id, hints: [:]))
 		
-		let allServices = try sProvider.getAllServices(container: req)
+		let allServices = try sProvider.getAllServices(container: container)
 		let userFutures = allServices.map{ curService in
-			req.future().flatMap{
-				try curService.existingUser(from: user, in: service, propertiesToFetch: [], on: req)
+			container.future().flatMap{
+				try curService.existingUser(from: user, in: service, propertiesToFetch: [], on: container)
 			}
 		}
-		return Future.waitAll(userFutures, eventLoop: req.eventLoop).map{ userResults in
+		return Future.waitAll(userFutures, eventLoop: container.eventLoop).map{ userResults in
 			var serviceIdToUser = [String: ApiResponse<JSON?>]()
 			for (idx, userResult) in userResults.enumerated() {
 				let service = allServices[idx]
-				serviceIdToUser[service.config.serviceId] = ApiResponse(result: userResult.flatMap{ curUser in Result{ try curUser.flatMap{ try service.exportableJSON(from: $0) } } }, environment: req.environment)
+				serviceIdToUser[service.config.serviceId] = ApiResponse(result: userResult.flatMap{ curUser in Result{ try curUser.flatMap{ try service.exportableJSON(from: $0) } } }, environment: container.environment)
 			}
-			return ApiResponse.data(ApiUser(requestedUserId: userId.taggedId, serviceUsers: serviceIdToUser))
+			return ApiResponse.data(ApiUserSearchResult(request: userId.taggedId, results: serviceIdToUser))
 		}
 	}
 	
