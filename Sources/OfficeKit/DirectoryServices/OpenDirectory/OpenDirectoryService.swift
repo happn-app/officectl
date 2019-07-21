@@ -5,7 +5,11 @@
  * Created by François Lamboley on 20/06/2019.
  */
 
-#if canImport(DirectoryService) && canImport(OpenDirectory)
+#if !canImport(DirectoryService) || !canImport(OpenDirectory)
+
+public typealias OpenDirectoryService = DummyService
+
+#else
 
 import Foundation
 import OpenDirectory

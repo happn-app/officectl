@@ -5,7 +5,11 @@
  * Created by François Lamboley on 05/07/2019.
  */
 
-#if canImport(DirectoryService) && canImport(OpenDirectory)
+#if !canImport(DirectoryService) || !canImport(OpenDirectory)
+
+public typealias ODRecordOKWrapper = DummyServiceUser
+
+#else
 
 import Foundation
 
