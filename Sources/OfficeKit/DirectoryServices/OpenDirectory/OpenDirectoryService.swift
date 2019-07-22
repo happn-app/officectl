@@ -219,7 +219,11 @@ public final class OpenDirectoryService : DirectoryService {
 	
 	public let supportsUserCreation = true
 	public func createUser(_ user: ODRecordOKWrapper, on container: Container) throws -> Future<ODRecordOKWrapper> {
-		throw NotImplementedError()
+		let openDirectoryConnector: OpenDirectoryConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		
+		let op = try CreateOpenDirectoryRecordOperation(user: user, connector: openDirectoryConnector)
+		return openDirectoryConnector.connect(scope: (), eventLoop: container.eventLoop)
+		.then{ _ in Future<ODRecordOKWrapper>.future(from: op, eventLoop: container.eventLoop).map{ try ODRecordOKWrapper(record: $0) } }
 	}
 	
 	public let supportsUserUpdate = true

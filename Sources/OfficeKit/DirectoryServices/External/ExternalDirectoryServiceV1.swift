@@ -88,16 +88,22 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 	}
 	
 	public func logicalUser(fromUserId uId: GenericDirectoryUserId, hints: [DirectoryUserProperty : Any]) throws -> GenericDirectoryUser {
-		#warning("TODO: Implement hints")
-		return GenericDirectoryUser(userId: uId)
+		var res = GenericDirectoryUser(userId: uId)
+		if let firstName = hints[.firstName] as? String {res.firstName = .set(firstName)}
+		if let lastName = hints[.lastName] as? String {res.lastName = .set(lastName)}
+		if let emails = hints[.emails] as? [Email] {res.emails = .set(emails)}
+		return res
 	}
 	
 	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GenericDirectoryUser {
 		guard config.supportsServiceIdForLogicalUserConversion("email") else {
 			throw NotSupportedError(message: "Creating a user from an email is not supported for service \(config.serviceId)")
 		}
-		#warning("TODO: Implement hints")
-		return GenericDirectoryUser(userId: .proxy(serviceId: "email", userId: email.stringValue, user: .string(email.stringValue)))
+		var res = GenericDirectoryUser(userId: .proxy(serviceId: "email", userId: email.stringValue, user: .string(email.stringValue)))
+		if let firstName = hints[.firstName] as? String {res.firstName = .set(firstName)}
+		if let lastName = hints[.lastName] as? String {res.lastName = .set(lastName)}
+		if let emails = hints[.emails] as? [Email] {res.emails = .set(emails)}
+		return res
 	}
 	
 	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GenericDirectoryUser {
@@ -109,10 +115,13 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		guard config.supportsServiceIdForLogicalUserConversion(service.config.serviceId) else {
 			throw NotSupportedError(message: "Creating a user from service id \(service.config.serviceId) is not supported for service \(config.serviceId)")
 		}
-		#warning("TODO: Implement hints")
 		let userId = service.string(fromUserId: user.userId)
 		let jsonUser = try service.exportableJSON(from: user)
-		return GenericDirectoryUser(userId: .proxy(serviceId: service.config.serviceId, userId: userId, user: jsonUser))
+		var res = GenericDirectoryUser(userId: .proxy(serviceId: service.config.serviceId, userId: userId, user: jsonUser))
+		if let firstName = hints[.firstName] as? String {res.firstName = .set(firstName)}
+		if let lastName = hints[.lastName] as? String {res.lastName = .set(lastName)}
+		if let emails = hints[.emails] as? [Email] {res.emails = .set(emails)}
+		return res
 	}
 	
 	public func existingUser(fromPersistentId pId: JSON, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GenericDirectoryUser?> {

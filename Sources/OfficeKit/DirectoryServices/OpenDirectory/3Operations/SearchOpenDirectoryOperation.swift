@@ -53,9 +53,9 @@ public final class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 					returnAttributes: request.returnAttributes/* ?? kODAttributeTypeAllAttributes*/,
 					maximumResults: request.maximumResults ?? 0
 				)
-				/* The as! should be valid; OpenDirectory is simply not updated anymore
-				 * and the returned array is not typed. But doc says this method
-				 * returns an array of ODRecord. */
+				/* The as! should be valid; OpenDirectory is simply not updated
+				 * anymore and the returned array is not typed. But doc says this
+				 * method returns an array of ODRecord. */
 				let odResults = try odQuery.resultsAllowingPartial(false) as! [ODRecord]
 				results = .success(odResults)
 			}

@@ -16,11 +16,22 @@ import Service
 
 extension OpenDirectoryService {
 	
-	func logicalUser(fromJSONUserId jsonUserId: JSON, on container: Container) throws -> ODRecordOKWrapper? {
+	func logicalUser(fromGenericDirectoryUser genericDirectoryUser: GenericDirectoryUser, on container: Container) throws -> ODRecordOKWrapper {
+		var res = try logicalUser(fromGenericDirectoryUserId: genericDirectoryUser.userId, on: container)
+		if let firstName = genericDirectoryUser.firstName.value {res.firstName = .set(firstName)}
+		if let lastName = genericDirectoryUser.lastName.value {res.lastName = .set(lastName)}
+		if let emails = genericDirectoryUser.emails.value {res.emails = .set(emails)}
+		return res
+	}
+	
+	func logicalUser(fromJSONUserId jsonUserId: JSON, on container: Container) throws -> ODRecordOKWrapper {
 		guard let userId = GenericDirectoryUserId(rawValue: jsonUserId) else {
 			throw InvalidArgumentError(message: "Cannot convert JSON to GenericDirectoryUserId")
 		}
-		
+		return try logicalUser(fromGenericDirectoryUserId: userId, on: container)
+	}
+	
+	func logicalUser(fromGenericDirectoryUserId userId: GenericDirectoryUserId, on container: Container) throws -> ODRecordOKWrapper {
 		switch userId {
 		case .native(let nativeIdJSON):
 			guard let nativeIdStr = nativeIdJSON.stringValue, let nativeId = try? LDAPDistinguishedName(string: nativeIdStr) else {

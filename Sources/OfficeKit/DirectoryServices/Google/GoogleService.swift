@@ -189,7 +189,7 @@ public final class GoogleService : DirectoryService {
 		
 		let op = CreateGoogleUserOperation(user: user, connector: googleConnector)
 		return googleConnector.connect(scope: CreateGoogleUserOperation.scopes, eventLoop: container.eventLoop)
-		.then{ _ in Future<[LDAPObject]>.future(from: op, eventLoop: container.eventLoop) }
+		.then{ _ in Future<GoogleUser>.future(from: op, eventLoop: container.eventLoop) }
 	}
 	
 	public let supportsUserUpdate = true
