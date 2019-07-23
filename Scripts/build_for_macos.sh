@@ -11,7 +11,7 @@ SANDBOX_FLAGS=
 
 
 # Let’s find Homebrew’s OpenLDAP
-SWIFT_BUILD_OPENLDAP_OPTIONS=
+SWIFT_BUILD_OPENLDAP_OPTIONS=()
 for b in "/usr/local/opt/openldap" "${HOME}/usr/homebrew/opt/openldap"; do
 	lib_dir="$b/lib"
 	include_dir="$b/include"
