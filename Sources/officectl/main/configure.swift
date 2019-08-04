@@ -39,6 +39,7 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	/* Register Services */
 	services.register(ErrorMiddleware.self)
 	services.register(SemiSingletonStore(forceClassInKeys: true))
+	services.register(try AuditLogger(path: cliParseResults.officectlConfig.auditLogsURL?.path))
 	services.register(OfficeKitServiceProvider(config: cliParseResults.officectlConfig.officeKitConfig))
 	
 	/* Register routes */

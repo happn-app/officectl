@@ -24,6 +24,7 @@ struct OfficectlConfig : Service {
 	var jwtSecret: String
 	
 	var verbose: Bool
+	var auditLogsURL: URL?
 	
 	var tmpVaultBaseURL: URL?
 	var tmpVaultIssuerName: String?
@@ -45,7 +46,8 @@ struct OfficectlConfig : Service {
 		}
 		jwtSecret = jSecret
 		
-		verbose = f.getBool(name: "verbose") ?? false
+		verbose = f.getBool(name: "verbose") ?? configYaml["verbose"].bool ?? false
+		auditLogsURL = configYaml["audit_logs_path"].string.flatMap{ URL(fileURLWithPath: $0, isDirectory: false, relativeTo: configURL) }
 		
 		tmpVaultBaseURL = configYaml["vault"]["base_url"].string.flatMap{ URL(string: $0) }
 		tmpVaultIssuerName = configYaml["vault"]["issuer_name"].string
