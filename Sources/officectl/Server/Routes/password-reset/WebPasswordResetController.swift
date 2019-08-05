@@ -40,6 +40,8 @@ final class WebPasswordResetController {
 			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}
 		}
 		.flatMap{
+			try req.make(AuditLogger.self).log(action: "Resetting password for user email:\(email).", source: .web)
+			
 			let actions = try self.resetPasswordActions(for: email, container: req)
 			guard !actions.reduce(false, { $0 || $1.resetAction.successValue?.resetAction.isExecuting ?? false }) else {
 				throw OperationAlreadyInProgressError()

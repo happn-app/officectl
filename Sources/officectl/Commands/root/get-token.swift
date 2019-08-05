@@ -21,6 +21,8 @@ func getToken(flags f: Flags, arguments args: [String], context: CommandContext)
 	let serviceId = f.getString(name: "service-id")
 	let serviceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
 	
+	try context.container.make(AuditLogger.self).log(action: "Getting token for service \(serviceId ?? "<inferred service>") with scope \(scopes ?? "<no scope defined>").", source: .cli)
+	
 	let token: Future<String>
 	if let googleConfig: GoogleServiceConfig = serviceConfig.unboxed() {
 		token = try getGoogleToken(googleConfig: googleConfig, scopesStr: scopes, eventLoop: context.container.eventLoop)

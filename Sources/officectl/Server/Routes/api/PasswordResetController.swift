@@ -86,7 +86,9 @@ class PasswordResetController {
 			guard !passwordResets.reduce(false, { $0 || $1.resetAction.successValue?.resetAction.isExecuting ?? false }) else {
 				throw OperationAlreadyInProgressError()
 			}
+			
 			/* Launch the resets. */
+			try req.make(AuditLogger.self).log(action: "Launching password reset for user \(userId.taggedId.stringValue).", source: .api(token: token.payload))
 			passwordResets.forEach{ $0.resetAction.successValue?.resetAction.start(parameters: passChangeData.newPassword, weakeningMode: .always(successDelay: 180, errorDelay: 180), handler: nil) }
 			
 			/* Return the resets response. */

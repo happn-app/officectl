@@ -21,6 +21,8 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 	
 	let includeInactiveUsers = f.getBool(name: "include-suspended-users")!
 	
+	try context.container.make(AuditLogger.self).log(action: "List all users for service \(serviceId ?? "<inferred service>"), \(includeInactiveUsers ? "" : "not ")including inactive users.", source: .cli)
+	
 	let usersFuture: Future<[String]>
 	if let googleService: GoogleService = service.unboxed() {
 		usersFuture = try getUsersList(googleService: googleService, includeInactiveUsers: includeInactiveUsers, container: context.container)

@@ -46,7 +46,10 @@ class WebCertificateRenewController {
 		
 		return try user
 		.checkLDAPPassword(container: req, checkedPassword: renewCertificateData.password)
-		.then{ _ -> Future<CertificateSerialsList> in
+		.flatMap{ _ -> Future<CertificateSerialsList> in
+			/* Let’s log the renewal of the certificate. */
+			try req.make(AuditLogger.self).log(action: "Renewing certificate for \(renewedCommonName).", source: .web)
+			
 			/* Now the user is authenticated, let’s fetch the list of current
 			 * certificates in the vault */
 			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("certs"))

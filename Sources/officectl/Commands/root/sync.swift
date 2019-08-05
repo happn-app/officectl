@@ -39,6 +39,8 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		return context.container.eventLoop.future()
 	}
 	
+	try context.container.make(AuditLogger.self).log(action: "Computing sync from service \(fromId) to \(toIds.joined(separator: ",")).", source: .cli)
+	
 	let fromDirectory = try officeKitServiceProvider.getDirectoryService(id: fromId, container: context.container)
 	let toDirectories = try toIds.map{ try officeKitServiceProvider.getDirectoryService(id: String($0), container: context.container) }
 	
@@ -90,6 +92,8 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	}
 	.flatMap{ plans in
 		/* Now let’s do the actual sync! */
+		try context.container.make(AuditLogger.self).log(action: "Applying sync from service \(fromId) to \(toIds.joined(separator: ",")).", source: .cli)
+		
 		typealias UserSyncResult = (serviceId: String, userStr: String, creationResult: Result<String?, Error>)
 		let futures = plans.flatMap{ plan in
 			plan.usersToCreate.map{ user -> Future<UserSyncResult> in

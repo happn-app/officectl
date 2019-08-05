@@ -76,6 +76,8 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 		}
 	}
 	
+	try context.container.make(AuditLogger.self).log(action: "Creating user with email “\(email.stringValue)”, first name “\(firstname)”, last name “\(lastname)” on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
+	
 	struct SkippedUser : Error {}
 	let futures = users.enumerated().map{ serviceIdxAndUser -> Future<AnyDirectoryUser> in
 		let (serviceIdx, userResult) = serviceIdxAndUser

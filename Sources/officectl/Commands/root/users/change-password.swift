@@ -45,6 +45,8 @@ func usersChangePassword(flags f: Flags, arguments args: [String], context: Comm
 		throw OperationAlreadyInProgressError()
 	}
 	
+	try context.container.make(AuditLogger.self).log(action: "Changing password of \(userIdStr) on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
+	
 	let futures = passwordResets.map{ passwordReset -> Future<Void> in
 		switch passwordReset.resetAction {
 		case .success(let userAndAction): return userAndAction.resetAction.start(parameters: newPass, weakeningMode: .alwaysInstantly, eventLoop: context.container.eventLoop)

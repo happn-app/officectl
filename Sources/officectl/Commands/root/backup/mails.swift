@@ -26,6 +26,8 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 	let linkify = try nil2throw(f.getBool(name: "linkify"), "linkify parameter")
 	let archive = try nil2throw(f.getBool(name: "archive"), "archive parameter")
 	
+	try context.container.make(AuditLogger.self).log(action: "Backing up mails w/ service \(serviceId ?? "<inferred service>"), users filter \(usersFilter?.joined(separator: ",") ?? "<no filter>"), \(linkify ? "w/": "w/o") linkification, \(archive ? "w/": "w/o") archiving.", source: .cli)
+	
 	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: context.container.eventLoop)
 	.then{ _ -> Future<[GoogleUser]> in /* Fetch users */
