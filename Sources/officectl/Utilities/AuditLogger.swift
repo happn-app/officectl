@@ -20,6 +20,7 @@ class AuditLogger : Service {
 		
 		case cli
 		case api(token: ApiAuth.Token)
+		case web
 		
 	}
 	
@@ -59,9 +60,8 @@ class AuditLogger : Service {
 			"column": JSON.number(Float(column))
 		]
 		switch source {
-		case .cli:
-			loggedDict["source"] = "cli"
-			
+		case .cli: loggedDict["source"] = "cli"
+		case .web: loggedDict["source"] = "web"
 		case .api(token: let token):
 			loggedDict["source"] = "api"
 			loggedDict["api_user"] = JSON.string(token.sub.stringValue)
@@ -76,6 +76,7 @@ class AuditLogger : Service {
 		
 		fh.seekToEndOfFile()
 		fh.write(loggedData)
+		fh.synchronizeFile()
 	}
 	
 	private let dateFormatter = ISO8601DateFormatter()

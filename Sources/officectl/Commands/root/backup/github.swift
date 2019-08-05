@@ -23,6 +23,8 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 	let orgName = try nil2throw(f.getString(name: "orgname"), "orgname")
 	let destinationFolderURL = try URL(fileURLWithPath: nil2throw(f.getString(name: "destination"), "destination"), isDirectory: true)
 	
+	try context.container.make(AuditLogger.self).log(action: "Backing up GitHub w/ service \(serviceId ?? "<inferred service>"), organization name \(orgName) to \(destinationFolderURL).", source: .cli)
+	
 	let gitHubConnector = try GitHubJWTConnector(key: gitHubConfig.connectorSettings)
 	let f = gitHubConnector.connect(scope: (), eventLoop: context.container.eventLoop)
 	.then{ _ -> Future<[GitHubRepository]> in
