@@ -15,7 +15,6 @@ import GenericJSON
 
 
 
-#if false
 class WebCertificateRenewController {
 	
 	func showLogin(_ req: Request) throws -> Future<View> {
@@ -26,13 +25,11 @@ class WebCertificateRenewController {
 		let renewCertificateData = try req.content.syncDecode(RenewCertificateData.self)
 		let renewedCommonName = renewCertificateData.email.username
 		
-		let asyncConfig = try req.make(AsyncConfig.self)
-		let officectlConfig = try req.make(OfficectlConfig.self)
-		let officeKitConfig = officectlConfig.officeKitConfig
-		let ldapConfig: LDAPServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
-		let basePeopleDN = try nil2throw(ldapConfig.peopleBaseDNPerDomain?[officeKitConfig.mainDomain(for: renewCertificateData.email.domain)], "LDAP People Base DN")
-		let user = User(email: renewCertificateData.email, basePeopleDN: basePeopleDN, setMainIdToLDAP: true)
+		let officeKitServiceProvider = try req.make(OfficeKitServiceProvider.self)
+		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService(container: req)
+		let user = try authService.logicalUser(fromEmail: renewCertificateData.email, hints: [:])
 		
+		let officectlConfig = try req.make(OfficectlConfig.self)
 		let baseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
 		let issuerName = try nil2throw(officectlConfig.tmpVaultIssuerName)
 		let token = try nil2throw(officectlConfig.tmpVaultToken)
@@ -44,8 +41,10 @@ class WebCertificateRenewController {
 			handler(.success(request), nil)
 		}
 		
-		return try user
-		.checkLDAPPassword(container: req, checkedPassword: renewCertificateData.password)
+		return try authService.authenticate(userId: user.userId, challenge: renewCertificateData.password, on: req)
+		.map{ authSuccess -> Void in
+			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}
+		}
 		.flatMap{ _ -> Future<CertificateSerialsList> in
 			/* Let’s log the renewal of the certificate. */
 			try req.make(AuditLogger.self).log(action: "Renewing certificate for \(renewedCommonName).", source: .web)
@@ -55,19 +54,19 @@ class WebCertificateRenewController {
 			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("certs"))
 			urlRequest.httpMethod = "LIST"
 			let op = AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>(request: urlRequest, authenticator: authenticate)
-			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.data }
+			return EventLoopFuture<VaultResponse<CertificateSerialsList>>.future(from: op, eventLoop: req.eventLoop).map{ $0.data }
 		}
 		.then{ certificatesList -> Future<[String]> in
 			/* Get the list of certificates to revoke */
 			let futures = certificatesList.keys.map{ id -> Future<String?> in
 				let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent(id))
 				let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
-				return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ certificateResponse in
+				return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, eventLoop: req.eventLoop).map{ certificateResponse in
 					guard certificateResponse.data.certificate.commonName == renewedCommonName else {return nil}
 					return id
 				}
 			}
-			return Future.reduce([String](), futures, eventLoop: asyncConfig.eventLoop, { full, new in
+			return Future.reduce([String](), futures, eventLoop: req.eventLoop, { full, new in
 				guard let new = new else {return full}
 				return full + [new]
 			})
@@ -80,9 +79,9 @@ class WebCertificateRenewController {
 				let json = JSON(dictionaryLiteral: ("serial_number", JSON(stringLiteral: id)))
 				urlRequest.httpBody = try! JSONEncoder().encode(json)
 				let op = AuthenticatedJSONOperation<VaultResponse<RevocationResult>>(request: urlRequest, authenticator: authenticate)
-				return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ _ in return () }
+				return EventLoopFuture<VaultResponse<RevocationResult>>.future(from: op, eventLoop: req.eventLoop).map{ _ in return () }
 			}
-			return Future.reduce((), futures, eventLoop: asyncConfig.eventLoop, { _, _ in () })
+			return Future.reduce((), futures, eventLoop: req.eventLoop, { _, _ in () })
 		}
 		.then{ _ -> Future<NewCertificate> in
 			/* Create the new certificate */
@@ -91,7 +90,7 @@ class WebCertificateRenewController {
 			let json = JSON(dictionaryLiteral: ("common_name", JSON(stringLiteral: renewedCommonName)), ("ttl", JSON(stringLiteral: ttl)))
 			urlRequest.httpBody = try! JSONEncoder().encode(json)
 			let op = AuthenticatedJSONOperation<VaultResponse<NewCertificate>>(request: urlRequest, authenticator: authenticate)
-			return asyncConfig.eventLoop.future(from: op, queue: asyncConfig.operationQueue).map{ $0.data }
+			return EventLoopFuture<VaultResponse<NewCertificate>>.future(from: op, eventLoop: req.eventLoop).map{ $0.data }
 		}
 		.then{ newCertificate -> Future<URL> in
 			let randomId = UUID().uuidString
@@ -121,8 +120,8 @@ class WebCertificateRenewController {
 			let tarOp = TarOperation(sources: [keyURL.path, certifURL.path, caURL.path], relativeTo: baseURL, destination: tarURL, compress: true, deleteSourcesOnSuccess: true)
 			tarOp.addDependency(op)
 			
-			asyncConfig.operationQueue.addOperation(op)
-			return asyncConfig.eventLoop.future(from: tarOp, queue: asyncConfig.operationQueue, resultRetriever: { _ in if let error = failure {throw error}; return tarURL })
+			defaultOperationQueueForFutureSupport.addOperation(op)
+			return EventLoopFuture<URL>.future(from: tarOp, eventLoop: req.eventLoop, queue: defaultOperationQueueForFutureSupport, resultRetriever: { _ in if let error = failure {throw error}; return tarURL })
 		}
 		.flatMap(to: Data.self, { url in
 			let fileio = try req.fileio()
@@ -218,4 +217,3 @@ class WebCertificateRenewController {
 	}
 	
 }
-#endif
