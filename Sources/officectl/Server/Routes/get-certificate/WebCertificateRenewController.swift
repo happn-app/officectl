@@ -96,9 +96,9 @@ class WebCertificateRenewController {
 			let baseName = renewedCommonName + "_" + randomId
 			let baseURL = FileManager.default.temporaryDirectory
 			
-			let keyURL = baseURL.appendingPathComponent(baseName).appendingPathExtension("key")
-			let certifURL = baseURL.appendingPathComponent(baseName).appendingPathExtension("pem")
-			let caURL = baseURL.appendingPathComponent("ca_" + randomId).appendingPathExtension("pem")
+			let keyURL = URL(fileURLWithPath: baseName + ".key", relativeTo: baseURL)
+			let certifURL = URL(fileURLWithPath: baseName + ".pem", relativeTo: baseURL)
+			let caURL = URL(fileURLWithPath: "ca_" + randomId + ".pem", relativeTo: baseURL)
 			
 			var failure: Error?
 			let op = BlockOperation{
@@ -116,7 +116,7 @@ class WebCertificateRenewController {
 			}
 			
 			let tarURL = baseURL.appendingPathComponent(randomId).appendingPathExtension("tar.bz2")
-			let tarOp = TarOperation(sources: [keyURL.path, certifURL.path, caURL.path], relativeTo: baseURL, destination: tarURL, compress: true, deleteSourcesOnSuccess: true)
+			let tarOp = TarOperation(sources: [keyURL.relativePath, certifURL.relativePath, caURL.relativePath], relativeTo: baseURL, destination: tarURL, compress: true, deleteSourcesOnSuccess: true)
 			tarOp.addDependency(op)
 			
 			defaultOperationQueueForFutureSupport.addOperation(op)
