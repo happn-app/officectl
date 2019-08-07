@@ -1,13 +1,23 @@
 #set("title") {
-	Certificate Renewal
+	happn – Get an Identity Certificate
 }
 
 #set("additional_head_tags") {
 	<script type="text/javascript" src="/js/CertificateRenewal.js"></script>
+	<style>
+		.codeblock {
+			background-color: #e0e0e0; padding: 9px;
+			white-space: nowrap;
+			overflow: auto;
+		\}
+		.comment {
+			color: #858585;
+		\}
+	</style>
 }
 
 #set("body") {
-	<h1>Certificate Renewal</h1>
+	<h1>Get an Identity Certificate</h1>
 	<form onsubmit="return form_action(this)" id="form">
 		<label>Your email or id:</label>
 		<input type="text" id="form_input_user_id" onKeyUp="show_input_errors()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
@@ -19,6 +29,81 @@
 		<input disabled="disabled" type="submit" value="Submit" id="form_submit">
 	</form>
 	<p id="error" style="color: red;"></p>
+	<hr/>
+	<div style="width: 725px; margin-left: auto; margin-right: auto;">
+		<h1>Usage and Other Info</h1>
+		<h2>Downloading Your Certificate</h2>
+		<p>
+			Login with your <b>LDAP</b> password in the form above to download a certificate to connect to the “office,”
+			“services,” “poda,” “podb,” “podc,” “pod0” and “pod2” VPNs, as well as identifying you on certain happn websites.<br/>
+			⚠️ If you already have a certificate, it will be revoked when you download a new one.
+		</p>
+		<h2>Using Your Certificate (VPN Config)</h2>
+		<p>
+			The easiest way is to use mkvisz to create the Viscosity configurations to connect to the VPN. To do this, follow the instructions below.
+		</p>
+		<h3>1/ Install mkvisz</h3>
+		<p>
+			In a Terminal:
+			<div class="codeblock">
+				<code>
+					<span class="comment"># If Homebrew is not already installed on your machine</span><br/>
+					/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"<br/>
+					<br/>
+					<span class="comment"># If you haven’t tapped happn’s formulas in your Homebrew install</span><br/>
+					brew tap happn-app/happn git@github.com:happn-app/homebrew-happn.git<br/>
+					<br/>
+					<span class="comment"># Install mkvisz</span><br/>
+					brew install happn-app/happn/mkvisz<br/>
+					<br/>
+					<span class="comment"># Important: If mkvisz was already installed, you should probably upgrade it…</span><br/>
+					brew upgrade happn-app/happn/mkvisz
+				</code>
+			</div>
+		</p>
+		<h3>2/ Generate and Open the VPN Configs</h3>
+		<p>
+			First extract the tar downloaded from this page.<br/>
+			Then, in a Terminal:
+			<div class="codeblock">
+				<code>
+					cd <i style="color: red;">path/to/extracted/folder</i><br/>
+					<span class="comment"># Create an mkvisz config (“the_pod_you_want” can be either: “poda”, “podb”, “podc”, “pod0”, “pod2”, “services” or “office”)</span><br/>
+					mkvisz -C ca_*.pem -c <i style="color: red;">firstname.lastname</i>_*.pem -k <i style="color: red;">firstname.lastname</i>_*.key -p <i style="color: red;">the_pod_you_want</i></br>
+					<span class="comment"># Repeat as needed to generate the config for all the pods you need</span><br/>
+				</code>
+			</div>
+		</p>
+		<p>
+			The command will generate a configuration file for Viscosity that you can simply open to install.
+		</p>
+		<h2>Using Your Certificate (Web Auth)</h2>
+		<h3>Installing the Certificate for Safari or Chromium-Based Browsers</h3>
+		<p>
+			In a Terminal:
+			<div class="codeblock">
+				<code>
+					cd <i style="color: red;">path/to/extracted/folder</i><br/>
+					security import <i style="color: red;">firstname.lastname</i>_*.pem<br/>
+					security import <i style="color: red;">firstname.lastname</i>_*.key
+				</code>
+			</div>
+		</p>
+		<h3>Importing the Certificate in Firefox</h3>
+		<p>
+			First convert the pem/key to a p12:
+			<div class="codeblock">
+				<code>
+					cd <i style="color: red;">path/to/extracted/folder</i><br/>
+					openssl pkcs12 -export -inkey <i style="color: red;">firstname.lastname</i>_*.key -in <i style="color: red;">firstname.lastname</i>_*.pem -out firstname.lastname.p12<br/>
+					<span class="comment"># You can set an empty password if you want.</span><br/>
+				</code>
+			</div>
+		</p>
+		<p>
+			Then import the p12 in Firefox.
+		</p>
+	</div>
 }
 
 #embed("lib/Master")
