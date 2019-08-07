@@ -74,7 +74,7 @@ function form_action(form) {
 	var form = document.getElementById("form")
 	if (typeof form === "undefined" || form === null) {show_validation_error("Internal error: cannot get the form element"); return false}
 	
-	form.action = "/certificate-renew/"
+	form.action = "/get-certificate/"
 	form.method = "post"
 	
 	return true

@@ -46,9 +46,6 @@ class WebCertificateRenewController {
 			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}
 		}
 		.flatMap{ _ -> Future<CertificateSerialsList> in
-			/* Let’s log the renewal of the certificate. */
-			try req.make(AuditLogger.self).log(action: "Renewing certificate for \(renewedCommonName).", source: .web)
-			
 			/* Now the user is authenticated, let’s fetch the list of current
 			 * certificates in the vault */
 			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("certs"))
@@ -71,8 +68,9 @@ class WebCertificateRenewController {
 				return full + [new]
 			})
 		}
-		.then{ certificateIdsToRevoke -> Future<Void> in
+		.flatMap{ certificateIdsToRevoke -> Future<Void> in
 			/* Revoke the certificates to revoke */
+			try req.make(AuditLogger.self).log(action: "Revoking \(certificateIdsToRevoke.count) certificate(s): \(certificateIdsToRevoke.joined(separator: " ")).", source: .web)
 			let futures = certificateIdsToRevoke.map{ id -> Future<Void> in
 				var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("revoke"))
 				urlRequest.httpMethod = "POST"
@@ -83,8 +81,9 @@ class WebCertificateRenewController {
 			}
 			return Future.reduce((), futures, eventLoop: req.eventLoop, { _, _ in () })
 		}
-		.then{ _ -> Future<NewCertificate> in
+		.flatMap{ _ -> Future<NewCertificate> in
 			/* Create the new certificate */
+			try req.make(AuditLogger.self).log(action: "Creating certificate w/ CN \(renewedCommonName).", source: .web)
 			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("issue").appendingPathComponent("client"))
 			urlRequest.httpMethod = "POST"
 			let json = JSON(dictionaryLiteral: ("common_name", JSON(stringLiteral: renewedCommonName)), ("ttl", JSON(stringLiteral: ttl)))

@@ -46,7 +46,7 @@ func setup_routes(_ router: Router) throws {
 	
 	/* ******** Temporary certificate renew page ******** */
 	
-//	let webCertificateRenewController = WebCertificateRenewController()
-//	router.get("certificate-renew", use: webCertificateRenewController.showLogin)
-//	router.post("certificate-renew", use: webCertificateRenewController.renewCertificate)
+	let webCertificateRenewController = WebCertificateRenewController()
+	router.get("get-certificate", use: webCertificateRenewController.showLogin)
+	router.post("get-certificate", use: webCertificateRenewController.renewCertificate)
 }

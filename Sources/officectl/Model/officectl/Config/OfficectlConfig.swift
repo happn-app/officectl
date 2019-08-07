@@ -49,10 +49,10 @@ struct OfficectlConfig : Service {
 		verbose = f.getBool(name: "verbose") ?? configYaml["verbose"].bool ?? false
 		auditLogsURL = configYaml["audit_logs_path"].string.flatMap{ URL(fileURLWithPath: $0, isDirectory: false, relativeTo: configURL) }
 		
-		tmpVaultBaseURL = configYaml["vault"]["base_url"].string.flatMap{ URL(string: $0) }
-		tmpVaultIssuerName = configYaml["vault"]["issuer_name"].string
-		tmpVaultToken = configYaml["vault"]["token"].string
-		tmpVaultTTL = configYaml["vault"]["ttl"].string
+		tmpVaultBaseURL = configYaml["vault_tmp"]["base_url"].string.flatMap{ URL(string: $0) }
+		tmpVaultIssuerName = configYaml["vault_tmp"]["issuer_name"].string
+		tmpVaultToken = configYaml["vault_tmp"]["token"].string
+		tmpVaultTTL = configYaml["vault_tmp"]["ttl"].string
 		
 		officeKitConfig = try OfficeKitConfig(genericConfig: configYaml, pathsRelativeTo: configURL)
 		syncConfig = try configYaml.optionalGenericConfig(for: "sync", domain: nil).map{ try SyncConfig(genericConfig: $0, pathsRelativeTo: configURL) }
