@@ -27,6 +27,7 @@ struct OfficectlConfig : Service {
 	var auditLogsURL: URL?
 	
 	var tmpVaultBaseURL: URL?
+	var tmpVaultRootCAName: String?
 	var tmpVaultIssuerName: String?
 	var tmpVaultToken: String?
 	var tmpVaultTTL: String?
@@ -50,6 +51,7 @@ struct OfficectlConfig : Service {
 		auditLogsURL = configYaml["audit_logs_path"].string.flatMap{ URL(fileURLWithPath: $0, isDirectory: false, relativeTo: configURL) }
 		
 		tmpVaultBaseURL = configYaml["vault_tmp"]["base_url"].string.flatMap{ URL(string: $0) }
+		tmpVaultRootCAName = configYaml["vault_tmp"]["root_ca_name"].string
 		tmpVaultIssuerName = configYaml["vault_tmp"]["issuer_name"].string
 		tmpVaultToken = configYaml["vault_tmp"]["token"].string
 		tmpVaultTTL = configYaml["vault_tmp"]["ttl"].string

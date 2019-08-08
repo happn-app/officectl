@@ -8,6 +8,7 @@
 import Foundation
 
 import OfficeKit
+import URLRequestOperation
 import Vapor
 
 import COpenSSL
@@ -31,6 +32,7 @@ class WebCertificateRenewController {
 		
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		let baseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
+		let rootCAName = try nil2throw(officectlConfig.tmpVaultRootCAName)
 		let issuerName = try nil2throw(officectlConfig.tmpVaultIssuerName)
 		let token = try nil2throw(officectlConfig.tmpVaultToken)
 		let ttl = try nil2throw(officectlConfig.tmpVaultTTL)
@@ -91,6 +93,16 @@ class WebCertificateRenewController {
 			let op = AuthenticatedJSONOperation<VaultResponse<NewCertificate>>(request: urlRequest, authenticator: authenticate)
 			return EventLoopFuture<VaultResponse<NewCertificate>>.future(from: op, eventLoop: req.eventLoop).map{ $0.data }
 		}
+		.flatMap{ newCertificate -> Future<NewCertificate> in
+			/* We add the root CA in the CA chain Vault returns… */
+			let urlRequest = URLRequest(url: baseURL.appendingPathComponent(rootCAName).appendingPathComponent("cert").appendingPathComponent("ca"))
+			let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
+			return EventLoopFuture<VaultResponse<NewCertificate>>.future(from: op, eventLoop: req.eventLoop).map{ certificateResponse in
+				var newCertificate = newCertificate
+				newCertificate.caChain.append(certificateResponse.data.certificate.pem)
+				return newCertificate
+			}
+		}
 		.then{ newCertificate -> Future<URL> in
 			let randomId = UUID().uuidString
 			let baseName = renewedCommonName + "_" + randomId
@@ -103,9 +115,9 @@ class WebCertificateRenewController {
 			var failure: Error?
 			let op = BlockOperation{
 				do {
-					let caData = Data(newCertificate.issuingCa.utf8)
 					let keyData = Data(newCertificate.privateKey.utf8)
 					let certifData = Data(newCertificate.certificate.utf8)
+					let caData = Data(newCertificate.caChain.joined(separator: "\n").utf8)
 					
 					try caData.write(to: caURL)
 					try keyData.write(to: keyURL)
@@ -154,6 +166,7 @@ class WebCertificateRenewController {
 		
 		var certificate: String
 		var issuingCa: String
+		var caChain: [String]
 		var privateKey: String
 		
 	}
@@ -173,14 +186,16 @@ class WebCertificateRenewController {
 	/* Thanks https://wiki.openssl.org/index.php/Hostname_validation */
 	private struct Certificate : Decodable {
 		
-		/* We only need the common name. */
-		var commonName: String
+		let pem: String
 		
-		init(pemData: LosslessDataConvertible) throws {
+		/* Computed from the pem. */
+		let commonName: String
+		
+		init(pem p: String) throws {
 			let bio = BIO_new(BIO_s_mem())
 			defer {BIO_free(bio)}
 			
-			let nullTerminatedData = pemData.convertToData() + Data([0])
+			let nullTerminatedData = Data(p.utf8) + Data([0])
 			_ = nullTerminatedData.withUnsafeBytes{ (key: UnsafeRawBufferPointer) -> Int32 in
 				let key = key.bindMemory(to: Int8.self).baseAddress!
 				return BIO_puts(bio, key)
@@ -206,11 +221,12 @@ class WebCertificateRenewController {
 				throw InternalError(message: "cannot convert CN field to ASN1 string")
 			}
 			commonName = String(cString: ASN1_STRING_data(commonNameASN1))
+			pem = p
 		}
 		
 		init(from decoder: Decoder) throws {
 			let container = try decoder.singleValueContainer()
-			try self.init(pemData: container.decode(String.self))
+			try self.init(pem: container.decode(String.self))
 		}
 		
 	}
