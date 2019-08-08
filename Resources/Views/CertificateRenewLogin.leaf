@@ -40,7 +40,8 @@
 		</p>
 		<h2>Using Your Certificate (VPN Config)</h2>
 		<p>
-			The easiest way is to use mkvisz to create the Viscosity configurations to connect to the VPN. To do this, follow the instructions below.
+			The easiest way is to use mkvisz to create the Viscosity configurations to connect to the VPN. To do this, follow the instructions below.<br/>
+			⚠️ If you are renewing your certificate, remember to remove the previous VPN configurations from Viscosity before importing the new one.
 		</p>
 		<h3>1/ Install mkvisz</h3>
 		<p>
