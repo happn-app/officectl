@@ -69,7 +69,7 @@
 				<code>
 					cd <i style="color: red;">path/to/extracted/folder</i><br/>
 					<span class="comment"># Create an mkvisz config (“the_pod_you_want” can be either: “poda”, “podb”, “podc”, “pod0”, “pod2”, “services” or “office”)</span><br/>
-					mkvisz -C ca_*.pem -c <i style="color: red;">firstname.lastname</i>_*.pem -k <i style="color: red;">firstname.lastname</i>_*.key -p <i style="color: red;">the_pod_you_want</i></br>
+					mkvisz -C ca.pem -c <i style="color: red;">firstname.lastname</i>.pem -k <i style="color: red;">firstname.lastname</i>.key -p <i style="color: red;">the_pod_you_want</i></br>
 					<span class="comment"># Repeat as needed to generate the config for all the pods you need</span><br/>
 				</code>
 			</div>
@@ -84,8 +84,8 @@
 			<div class="codeblock">
 				<code>
 					cd <i style="color: red;">path/to/extracted/folder</i><br/>
-					security import <i style="color: red;">firstname.lastname</i>_*.pem<br/>
-					security import <i style="color: red;">firstname.lastname</i>_*.key
+					security import <i style="color: red;">firstname.lastname</i>.pem<br/>
+					security import <i style="color: red;">firstname.lastname</i>.key
 				</code>
 			</div>
 		</p>
@@ -95,7 +95,7 @@
 			<div class="codeblock">
 				<code>
 					cd <i style="color: red;">path/to/extracted/folder</i><br/>
-					openssl pkcs12 -export -inkey <i style="color: red;">firstname.lastname</i>_*.key -in <i style="color: red;">firstname.lastname</i>_*.pem -out firstname.lastname.p12<br/>
+					openssl pkcs12 -export -inkey <i style="color: red;">firstname.lastname</i>.key -in <i style="color: red;">firstname.lastname</i>.pem -out firstname.lastname.p12<br/>
 					<span class="comment"># You can set an empty password if you want.</span><br/>
 				</code>
 			</div>

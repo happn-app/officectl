@@ -105,16 +105,16 @@ class WebCertificateRenewController {
 		}
 		.then{ newCertificate -> Future<URL> in
 			let randomId = UUID().uuidString
-			let baseName = renewedCommonName + "_" + randomId
-			let baseURL = FileManager.default.temporaryDirectory
+			let baseURL = FileManager.default.temporaryDirectory.appendingPathComponent(randomId, isDirectory: true)
 			
-			let keyURL = URL(fileURLWithPath: baseName + ".key", relativeTo: baseURL)
-			let certifURL = URL(fileURLWithPath: baseName + ".pem", relativeTo: baseURL)
-			let caURL = URL(fileURLWithPath: "ca_" + randomId + ".pem", relativeTo: baseURL)
+			let caURL = URL(fileURLWithPath: "ca.pem", relativeTo: baseURL)
+			let keyURL = URL(fileURLWithPath: renewedCommonName + ".key", relativeTo: baseURL)
+			let certifURL = URL(fileURLWithPath: renewedCommonName + ".pem", relativeTo: baseURL)
 			
 			var failure: Error?
 			let op = BlockOperation{
 				do {
+					try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true, attributes: nil)
 					let keyData = Data(newCertificate.privateKey.utf8)
 					let certifData = Data(newCertificate.certificate.utf8)
 					let caData = Data(newCertificate.caChain.joined(separator: "\n").utf8)
