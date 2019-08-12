@@ -23,7 +23,7 @@ class PasswordResetController {
 		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
 		
 		/* Parameter retrieval */
-		let userId = try req.parameters.next(UserIdParameter.self)
+		let userId = try req.parameters.next(FullUserId.self)
 		
 		/* Only admins are allowed to see all password resets. Other users can
 		 * only see their own password resets. */
@@ -48,7 +48,7 @@ class PasswordResetController {
 		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
 		
 		/* Parameter retrieval */
-		let userId = try req.parameters.next(UserIdParameter.self)
+		let userId = try req.parameters.next(FullUserId.self)
 		let passChangeData = try req.content.syncDecode(PassChangeData.self)
 		
 		/* Only admins are allowed to create a password reset for someone else

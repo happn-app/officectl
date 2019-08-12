@@ -7,31 +7,37 @@
 
 import Foundation
 
+import OfficeKit
 
 
-public struct TaggedId {
+
+struct TaggedId {
 	
-	public let tag: String
-	public let id: String
+	let tag: String
+	let id: String
 	
-	public init(tag t: String, id i: String) {
-		assert(!t.contains(":"))
+	init(string: String) throws {
+		let split = string.split(separator: ":", omittingEmptySubsequences: false)
+		
+		let t = String(split[0]) /* We do not omit empty subsequences, thus we know there will be at min 1 elmt in the resulting array */
+		let i = split.dropFirst().joined(separator: ":")
+		
+		try self.init(tag: t, id: i)
+	}
+	
+	init(tag t: String, id i: String) throws {
+		guard !i.isEmpty else {
+			throw InvalidArgumentError(message: "The id of a TaggedId cannot be empty.")
+		}
+		guard !t.contains(":") else {
+			throw InvalidArgumentError(message: "The tag of a TaggedId cannot contain a colon.")
+		}
+		
 		tag = t
 		id = i
 	}
 	
-	public init(string: String) throws {
-		let split = string.split(separator: ":", omittingEmptySubsequences: false)
-		
-		tag = String(split[0]) /* We do not omit empty subsequences, thus we know there will be at min 1 elmt in the resulting array */
-		id = split.dropFirst().joined(separator: ":")
-		
-		guard !id.isEmpty else {
-			throw InvalidArgumentError(message: "Got a TaggedId whose id part is empty. This is invalid.")
-		}
-	}
-	
-	public var stringValue: String {
+	var stringValue: String {
 		return tag + ":" + id
 	}
 	

@@ -174,7 +174,7 @@ class UsersController {
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
 		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
 		
-		let myUserId = try UserIdParameter(taggedId: token.payload.sub, container: req)
+		let myUserId = try FullUserId(taggedId: token.payload.sub, container: req)
 		return try getUserNoAuthCheck(userId: myUserId, container: req)
 	}
 	
@@ -185,7 +185,7 @@ class UsersController {
 		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
 		
 		/* Parameter retrieval */
-		let userId = try req.parameters.next(UserIdParameter.self)
+		let userId = try req.parameters.next(FullUserId.self)
 		
 		/* Only admins are allowed to see any user. Other users can only see
 		 * themselves. */
@@ -196,7 +196,7 @@ class UsersController {
 		return try getUserNoAuthCheck(userId: userId, container: req)
 	}
 	
-	private func getUserNoAuthCheck(userId: UserIdParameter, container: Container) throws -> Future<ApiResponse<ApiUserSearchResult>> {
+	private func getUserNoAuthCheck(userId: FullUserId, container: Container) throws -> Future<ApiResponse<ApiUserSearchResult>> {
 		let sProvider = try container.make(OfficeKitServiceProvider.self)
 		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id, hints: [:]))
 		

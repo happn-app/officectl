@@ -25,7 +25,7 @@ func usersChangePassword(flags f: Flags, arguments args: [String], context: Comm
 		return context.container.future()
 	}
 	
-	let userId = try UserIdParameter(string: userIdStr, container: context.container)
+	let userId = try FullUserId(string: userIdStr, container: context.container)
 	let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id, hints: [:]))
 	
 	let passwordResets = try sProvider
