@@ -21,15 +21,15 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	
 	let (url, conf) = try readYamlConfig(forcedConfigFilePath: forcedConfigPath)
 	
-	let serverConfigYaml = try conf.genericConfig(for: "server", domain: "Global config")
-	let secret = try serverConfigYaml.string(for: "secret", domain: "Server Config")
+	let serverConfigYaml = try conf.storage(forKey: "server", currentKeyPath: ["Global config"])
+	let secret = try serverConfigYaml.string(forKey: "secret", currentKeyPath: ["Server Config"])
 	let globalConf = try GlobalConfig(genericConfig: conf, pathsRelativeTo: url)
 	
 	let signatureURLPathPrefixTransform: VerifySignatureMiddleware.SignatureURLPathPrefixTransform?
-	if let transformObject = try serverConfigYaml.optionalGenericConfig(for: "signature_url_path_prefix_transform", domain: "Server Config") {
+	if let transformObject = try serverConfigYaml.optionalNonNullStorage(forKey: "signature_url_path_prefix_transform", currentKeyPath: ["Server Config"]) {
 		signatureURLPathPrefixTransform = (
-			from: try transformObject.string(for: "from", domain: "Signature URL Prefix Transform"),
-			to:   try transformObject.string(for: "to",   domain: "Signature URL Prefix Transform")
+			from: try transformObject.string(forKey: "from", currentKeyPath: ["Signature URL Prefix Transform"]),
+			to:   try transformObject.string(forKey: "to",   currentKeyPath: ["Signature URL Prefix Transform"])
 		)
 	} else {
 		signatureURLPathPrefixTransform = nil
@@ -37,8 +37,8 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	
 	/* Register the Server config */
 	do {
-		let serverHostname = try serverConfigYaml.optionalString(for: "hostname", domain: "Server Config")
-		let serverPort = try serverConfigYaml.optionalInt(for: "port", domain: "Server Config")
+		let serverHostname = try serverConfigYaml.optionalString(forKey: "hostname", currentKeyPath: ["Server Config"])
+		let serverPort = try serverConfigYaml.optionalInt(forKey: "port", currentKeyPath: ["Server Config"])
 		switch (serverHostname, serverPort) {
 		case (let hostname?, let port?): services.register(NIOServerConfig.default(hostname: hostname, port: port))
 		case (let hostname?, nil):       services.register(NIOServerConfig.default(hostname: hostname))
@@ -49,7 +49,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	
 	/* Register the OpenDirectory config */
 	do {
-		let openDirectoryServiceConfigYaml = try conf.genericConfig(for: "open_directory_config", domain: "Global config")
+		let openDirectoryServiceConfigYaml = try conf.storage(forKey: "open_directory_config", currentKeyPath: ["Global config"])
 		let openDirectoryServiceConfig = try OpenDirectoryServiceConfig(globalConfig: globalConf, providerId: OpenDirectoryService.providerId, serviceId: "_internal_od_", serviceName: "Internal Open Directory Service", genericConfig: openDirectoryServiceConfigYaml, pathsRelativeTo: url)
 		let openDirectoryService = OpenDirectoryService(config: openDirectoryServiceConfig)
 		services.register(openDirectoryService)

@@ -7,7 +7,7 @@
 
 import Foundation
 
-import GenericJSON
+import GenericStorage
 import Service
 
 
@@ -19,7 +19,7 @@ public struct DummyServiceConfig : OfficeKitServiceConfig {
 	public var serviceId: String
 	public var serviceName: String
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		throw InternalError(message: "The DummyServiceConfig cannot be instantiated")
 	}
 	

@@ -7,6 +7,8 @@
 
 import Foundation
 
+import GenericStorage
+
 
 
 public struct GitHubServiceConfig : OfficeKitServiceConfig {
@@ -31,11 +33,11 @@ public struct GitHubServiceConfig : OfficeKitServiceConfig {
 		connectorSettings = c
 	}
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
-		let domain = "GitHub Config"
-		let appId               = try genericConfig.string(for: "app_id",           domain: domain)
-		let installId           = try genericConfig.string(for: "install_id",       domain: domain)
-		let privateKeyURLString = try genericConfig.string(for: "private_key_path", domain: domain)
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+		let domain = [id]
+		let appId               = try genericConfig.string(forKey: "app_id",           currentKeyPath: domain)
+		let installId           = try genericConfig.string(forKey: "install_id",       currentKeyPath: domain)
+		let privateKeyURLString = try genericConfig.string(forKey: "private_key_path", currentKeyPath: domain)
 		
 		let connectorSettings = GitHubJWTConnector.Settings(appId: appId, installationId: installId, privateKeyURL: URL(fileURLWithPath: privateKeyURLString, isDirectory: false, relativeTo: baseURL))
 		self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings)

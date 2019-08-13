@@ -30,18 +30,3 @@ public protocol GenericStorage {
 	var dictionaryValue: [String: GenericStorage]? {get}
 	
 }
-
-
-internal extension GenericStorage {
-	
-	func optionalStorage(forKey key: String) throws -> GenericStorage? {
-		guard let s = storage(forKey: key) else {
-			throw Error.missingValue
-		}
-		guard !s.isNull else {
-			return nil
-		}
-		return s
-	}
-	
-}

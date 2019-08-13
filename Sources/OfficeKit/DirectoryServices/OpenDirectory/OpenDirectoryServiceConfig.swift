@@ -14,6 +14,8 @@ public typealias OpenDirectoryServiceConfig = DummyServiceConfig
 import Foundation
 import OpenDirectory
 
+import GenericStorage
+
 
 
 public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
@@ -56,24 +58,24 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		connectorSettings = c
 	}
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
-		let domain = "OpenDirectory Config"
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+		let domain = [id]
 		
-		let proxySettings = try genericConfig.optionalGenericConfig(for: "proxy", domain: domain).flatMap{ proxyGenericConfig -> OpenDirectoryConnector.ProxySettings in
-			let domain = "OpenDirectory Proxy Config"
+		let proxySettings = try genericConfig.optionalNonNullStorage(forKey: "proxy", currentKeyPath: domain).flatMap{ proxyGenericConfig -> OpenDirectoryConnector.ProxySettings in
+			let keyPath = domain + ["proxy"]
 			return (
-				hostname: try proxyGenericConfig.string(for: "hostname", domain: domain),
-				username: try proxyGenericConfig.string(for: "username", domain: domain),
-				password: try proxyGenericConfig.string(for: "password", domain: domain)
+				hostname: try proxyGenericConfig.string(forKey: "hostname", currentKeyPath: keyPath),
+				username: try proxyGenericConfig.string(forKey: "username", currentKeyPath: keyPath),
+				password: try proxyGenericConfig.string(forKey: "password", currentKeyPath: keyPath)
 			)
 		}
 		
-		let nodeName = try genericConfig.string(for: "node_name", domain: domain)
-		let username = try genericConfig.string(for: "admin_username", domain: domain)
-		let password = try genericConfig.string(for: "admin_password", domain: domain)
+		let nodeName = try genericConfig.string(forKey: "node_name", currentKeyPath: domain)
+		let username = try genericConfig.string(forKey: "admin_username", currentKeyPath: domain)
+		let password = try genericConfig.string(forKey: "admin_password", currentKeyPath: domain)
 		
-		let bdnDic    = try genericConfig.stringStringDic(for: "base_dn_per_domains", domain: domain)
-		let pdnString = try genericConfig.optionalString(for: "people_dn", domain: domain)
+		let bdnDic    = try genericConfig.dictionaryOfStrings(forKey: "base_dn_per_domains", currentKeyPath: domain)
+		let pdnString = try genericConfig.optionalString(forKey: "people_dn", currentKeyPath: domain)
 		
 		let connectorSettings = OpenDirectoryConnector.Settings(proxySettings: proxySettings, nodeName: nodeName, nodeCredentials: (recordType: kODRecordTypeUsers, username: username, password: password))
 		try self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString)

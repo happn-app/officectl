@@ -7,6 +7,7 @@
 
 import Foundation
 
+import GenericStorage
 import Logging
 
 
@@ -24,30 +25,30 @@ public struct OfficeKitConfig {
 	   MARK: - Init
 	   ************ */
 	
-	public init(genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
-		let domain = "OfficeKit Config"
+	public init(genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+		let domain = ["OfficeKit Config"]
 		
 		let gConfig = try GlobalConfig(genericConfig: genericConfig, pathsRelativeTo: baseURL)
 		
-		let authServiceId = try genericConfig.string(for: "auth_service_id", domain: domain)
-		let genericConfigServices = try genericConfig.stringGenericConfigDic(for: "services", domain: domain)
+		let authServiceId = try genericConfig.string(forKey: "auth_service_id", currentKeyPath: domain)
+		let genericConfigServices = try genericConfig.dictionary(forKey: "services", currentKeyPath: domain)
 		
 		var serviceConfigsBuilding = [AnyOfficeKitServiceConfig]()
 		for (serviceId, serviceInfo) in genericConfigServices {
 			guard !serviceId.contains(":") else {
-				throw ConfigError(domain: domain, key: "services", message: "The id of a service cannot contain a colon.")
+				throw InvalidArgumentError(message: "The id of a service cannot contain a colon.")
 			}
 			guard serviceId != "email" else {
-				throw ConfigError(domain: domain, key: "services", message: #"The id of a service cannot be equal to "email"."#)
+				throw InvalidArgumentError(message: #"The id of a service cannot be equal to "email"."#)
 			}
 			guard serviceId != "invalid" else {
-				throw ConfigError(domain: domain, key: "services", message: #"The id of a service cannot be equal to "invalid"."#)
+				throw InvalidArgumentError(message: #"The id of a service cannot be equal to "invalid"."#)
 			}
 			
-			let domain = "Service \(serviceId)"
-			let serviceName = try serviceInfo.string(for: "name", domain: domain)
-			let provider = try serviceInfo.string(for: "provider", domain: domain)
-			let providerConfig = try serviceInfo.genericConfig(for: "provider_config", domain: domain)
+			let keyPath = domain + ["services", serviceId]
+			let serviceName = try serviceInfo.string(forKey: "name", currentKeyPath: keyPath)
+			let provider = try serviceInfo.string(forKey: "provider", currentKeyPath: keyPath)
+			let providerConfig = try serviceInfo.storage(forKey: "provider_config", currentKeyPath: keyPath)
 			
 			switch provider {
 			case ExternalDirectoryServiceV1.providerId:

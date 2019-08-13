@@ -7,56 +7,9 @@
 
 import Foundation
 
+import GenericStorage
 
 
-public struct ConfigError : Error {
-	
-	public let domain: String?
-	public let key: String
-	public let message: String
-	
-	public init(domain d: String?, key k: String, message m: String) {
-		domain = d
-		key = k
-		message = m
-	}
-	
-}
-
-#warning("TODO: Rename to KeyedStorage and use instead of JSON as a generic of type (KeyedStorage & Codable) whenever possible")
-public protocol GenericConfig {
-	
-	/* For all this methods, the domain is only needed to generate the
-	 * ConfigError when applicable. */
-	
-	func bool(for key: String, domain: String?) throws -> Bool
-	func optionalBool(for key: String, domain: String?) throws -> Bool?
-	
-	func int(for key: String, domain: String?) throws -> Int
-	func optionalInt(for key: String, domain: String?) throws -> Int?
-	
-	func string(for key: String, domain: String?) throws -> String
-	func optionalString(for key: String, domain: String?) throws -> String?
-	
-	func url(for key: String, domain: String?) throws -> URL
-	func optionalURL(for key: String, domain: String?) throws -> URL?
-	
-	func stringArray(for key: String, domain: String?) throws -> [String]
-	func optionalStringArray(for key: String, domain: String?) throws -> [String]?
-	
-	func stringStringDic(for key: String, domain: String?) throws -> [String: String]
-	func optionalStringStringDic(for key: String, domain: String?) throws -> [String: String]?
-	
-	func stringGenericConfigDic(for key: String, domain: String?) throws -> [String: GenericConfig]
-	func optionalStringGenericConfigDic(for key: String, domain: String?) throws -> [String: GenericConfig]?
-	
-	func genericConfig(for key: String, domain: String?) throws -> GenericConfig
-	func optionalGenericConfig(for key: String, domain: String?) throws -> GenericConfig?
-	
-	func asString(domain: String?) throws -> String
-	func asStringArray(domain: String?) throws -> [String]
-
-}
 
 public protocol OfficeKitServiceConfig : Hashable {
 	
@@ -76,6 +29,6 @@ public protocol OfficeKitServiceConfig : Hashable {
 	var serviceId: String {get}
 	var serviceName: String {get}
 	
-	init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws
+	init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws
 	
 }

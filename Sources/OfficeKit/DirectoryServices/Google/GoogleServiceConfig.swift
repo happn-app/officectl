@@ -7,6 +7,8 @@
 
 import Foundation
 
+import GenericStorage
+
 
 
 public struct GoogleServiceConfig : OfficeKitServiceConfig {
@@ -33,11 +35,11 @@ public struct GoogleServiceConfig : OfficeKitServiceConfig {
 		primaryDomains = d
 	}
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
-		let domain = "Google Config"
-		let domains        = try genericConfig.stringArray(for: "domains", domain: domain)
-		let userBehalf     = try genericConfig.optionalString(for: "admin_email", domain: domain)
-		let credsURLString = try genericConfig.string(for: "superuser_json_creds", domain: domain)
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+		let domain = [id]
+		let domains        = try genericConfig.arrayOfStrings(forKey: "domains", currentKeyPath: domain)
+		let userBehalf     = try genericConfig.optionalString(forKey: "admin_email", currentKeyPath: domain)
+		let credsURLString = try genericConfig.string(forKey: "superuser_json_creds", currentKeyPath: domain)
 		
 		let connectorSettings = GoogleJWTConnector.Settings(jsonCredentialsURL: URL(fileURLWithPath: credsURLString, isDirectory: false, relativeTo: baseURL), userBehalf: userBehalf)
 		self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings, primaryDomains: Set(domains))

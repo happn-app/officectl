@@ -12,31 +12,31 @@ import Foundation
 /* A good candidate for code generation… */
 public extension GenericStorage {
 	
-	func dictionaryOfStringsValue() throws -> [String: String] {
+	func dictionaryOfStringsValue(currentKeyPath: [String] = []) throws -> [String: String] {
 		guard let o = dictionaryValue else {
-			throw Error.unexpectedType(actualValue: self)
+			throw Error.unexpectedType(actualValue: self, keyPath: currentKeyPath)
 		}
 		var res = [String: String]()
 		for (key, element) in o {
 			guard let v = element.stringValue else {
-				throw Error.unexpectedTypeInDictionary(key: key, actualValue: element)
+				throw Error.unexpectedTypeInDictionary(key: key, actualValue: element, keyPath: currentKeyPath)
 			}
 			res[key] = v
 		}
 		return res
 	}
 	
-	func dictionaryOfStrings(forKey key: String) throws -> [String: String] {
-		guard let d = try optionalDictionaryOfStrings(forKey: key) else {
-			throw Error.unexpectedNil
+	func dictionaryOfStrings(forKey key: String, currentKeyPath: [String] = []) throws -> [String: String] {
+		guard let d = try optionalDictionaryOfStrings(forKey: key, currentKeyPath: currentKeyPath) else {
+			throw Error.unexpectedNil(keyPath: currentKeyPath + [key])
 		}
 		return d
 	}
-	func optionalDictionaryOfStrings(forKey key: String) throws -> [String: String]? {
-		guard let s = try optionalStorage(forKey: key) else {
+	func optionalDictionaryOfStrings(forKey key: String, currentKeyPath: [String] = []) throws -> [String: String]? {
+		guard let s = try optionalNonNullStorage(forKey: key, currentKeyPath: currentKeyPath) else {
 			return nil
 		}
-		return try s.dictionaryOfStringsValue()
+		return try s.dictionaryOfStringsValue(currentKeyPath: currentKeyPath + [key])
 	}
 	
 }

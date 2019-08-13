@@ -7,6 +7,8 @@
 
 import Foundation
 
+import GenericStorage
+
 
 
 public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
@@ -51,14 +53,14 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 		supportsPasswordChange = spc
 	}
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
-		let domain = "External Directory Service V1"
-		let url    = try genericConfig.url(for: "url",                             domain: domain)
-		let secret = try genericConfig.string(for: "secret",                       domain: domain)
-		let suc    = try genericConfig.optionalBool(for: "supportsUserCreation",   domain: domain) ?? true
-		let suu    = try genericConfig.optionalBool(for: "supportsUserUpdate",     domain: domain) ?? true
-		let sud    = try genericConfig.optionalBool(for: "supportsUserDeletion",   domain: domain) ?? true
-		let spc    = try genericConfig.optionalBool(for: "supportsPasswordChange", domain: domain) ?? true
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+		let domain = [id]
+		let url    = try genericConfig.url(forKey: "url",                             currentKeyPath: domain)
+		let secret = try genericConfig.string(forKey: "secret",                       currentKeyPath: domain)
+		let suc    = try genericConfig.optionalBool(forKey: "supportsUserCreation",   currentKeyPath: domain) ?? true
+		let suu    = try genericConfig.optionalBool(forKey: "supportsUserUpdate",     currentKeyPath: domain) ?? true
+		let sud    = try genericConfig.optionalBool(forKey: "supportsUserDeletion",   currentKeyPath: domain) ?? true
+		let spc    = try genericConfig.optionalBool(forKey: "supportsPasswordChange", currentKeyPath: domain) ?? true
 		
 		self.init(
 			globalConfig: globalConfig,

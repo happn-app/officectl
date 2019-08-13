@@ -7,6 +7,8 @@
 
 import Foundation
 
+import GenericStorage
+
 
 
 public struct GlobalConfig : Hashable {
@@ -16,10 +18,10 @@ public struct GlobalConfig : Hashable {
 	/** Key is a domain alias, value is the actual domain */
 	public var domainAliases = [String: String]()
 	
-	public init(genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
-		let domain = "OfficeKit Global Config"
-		verbose = try genericConfig.optionalBool(for: "verbose", domain: domain) ?? false
-		domainAliases = try genericConfig.optionalStringStringDic(for: "domain_aliases", domain: domain) ?? [:]
+	public init(genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+		let domain = ["OfficeKit Global Config"]
+		verbose = try genericConfig.optionalBool(forKey: "verbose", currentKeyPath: domain) ?? false
+		domainAliases = try genericConfig.optionalDictionaryOfStrings(forKey: "domain_aliases", currentKeyPath: domain) ?? [:]
 	}
 	
 	public func mainDomain(for domain: String) -> String {

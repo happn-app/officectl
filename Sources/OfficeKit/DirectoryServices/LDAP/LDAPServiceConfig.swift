@@ -7,6 +7,8 @@
 
 import Foundation
 
+import GenericStorage
+
 
 
 public struct LDAPServiceConfig : OfficeKitServiceConfig {
@@ -62,16 +64,16 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 		adminGroupsDN = agdn
 	}
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
-		let domain = "Google Config"
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+		let domain = [id]
 		
-		let url = try genericConfig.url(for: "url", domain: domain)
-		let adminUsername = try genericConfig.optionalString(for: "admin_username", domain: domain)
-		let adminPassword = try genericConfig.optionalString(for: "admin_password", domain: domain)
+		let url = try genericConfig.url(forKey: "url", currentKeyPath: domain)
+		let adminUsername = try genericConfig.optionalString(forKey: "admin_username", currentKeyPath: domain)
+		let adminPassword = try genericConfig.optionalString(forKey: "admin_password", currentKeyPath: domain)
 		
-		let bdnDic    = try genericConfig.stringStringDic(for: "base_dn_per_domains", domain: domain)
-		let pdnString = try genericConfig.optionalString(for: "people_dn", domain: domain)
-		let adnString = try genericConfig.optionalStringArray(for: "officectl_admin_groups_dn", domain: domain) ?? []
+		let bdnDic    = try genericConfig.dictionaryOfStrings(forKey: "base_dn_per_domains", currentKeyPath: domain)
+		let pdnString = try genericConfig.optionalString(forKey: "people_dn", currentKeyPath: domain)
+		let adnString = try genericConfig.optionalArrayOfStrings(forKey: "officectl_admin_groups_dn", currentKeyPath: domain) ?? []
 		
 		
 		let connectorSettings: LDAPConnector.Settings

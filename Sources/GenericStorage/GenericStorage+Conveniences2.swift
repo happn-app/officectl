@@ -12,30 +12,30 @@ import Foundation
 /* A good candidate for code generation… */
 public extension GenericStorage {
 	
-	func arrayOfStringsValue() throws -> [String] {
+	func arrayOfStringsValue(currentKeyPath: [String] = []) throws -> [String] {
 		guard let a = arrayValue else {
-			throw Error.unexpectedType(actualValue: self)
+			throw Error.unexpectedType(actualValue: self, keyPath: currentKeyPath)
 		}
 		return try a.enumerated().map{
 			let (idx, element) = $0
 			guard let v = element.stringValue else {
-				throw Error.unexpectedTypeInArray(index: idx, actualValue: element)
+				throw Error.unexpectedTypeInArray(index: idx, actualValue: element, keyPath: currentKeyPath)
 			}
 			return v
 		}
 	}
 	
-	func arrayOfStrings(forKey key: String) throws -> [String] {
-		guard let a = try optionalArrayOfStrings(forKey: key) else {
-			throw Error.unexpectedNil
+	func arrayOfStrings(forKey key: String, currentKeyPath: [String] = []) throws -> [String] {
+		guard let a = try optionalArrayOfStrings(forKey: key, currentKeyPath: currentKeyPath) else {
+			throw Error.unexpectedNil(keyPath: currentKeyPath + [key])
 		}
 		return a
 	}
-	func optionalArrayOfStrings(forKey key: String) throws -> [String]? {
-		guard let s = try optionalStorage(forKey: key) else {
+	func optionalArrayOfStrings(forKey key: String, currentKeyPath: [String] = []) throws -> [String]? {
+		guard let s = try optionalNonNullStorage(forKey: key, currentKeyPath: currentKeyPath) else {
 			return nil
 		}
-		return try s.arrayOfStringsValue()
+		return try s.arrayOfStringsValue(currentKeyPath: currentKeyPath + [key])
 	}
 	
 }

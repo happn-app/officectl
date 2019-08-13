@@ -11,10 +11,10 @@ import Foundation
 
 enum Error : Swift.Error {
 	
-	case missingValue
-	case unexpectedNil
-	case unexpectedType(actualValue: GenericStorage)
-	case unexpectedTypeInArray(index: Int, actualValue: GenericStorage)
-	case unexpectedTypeInDictionary(key: String, actualValue: GenericStorage)
+	case missingValue(keyPath: [String])
+	case unexpectedNil(keyPath: [String])
+	case unexpectedType(actualValue: GenericStorage, keyPath: [String])
+	case unexpectedTypeInArray(index: Int, actualValue: GenericStorage, keyPath: [String])
+	case unexpectedTypeInDictionary(key: String, actualValue: GenericStorage, keyPath: [String])
 	
 }

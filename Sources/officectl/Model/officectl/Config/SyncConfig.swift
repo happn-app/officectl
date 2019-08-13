@@ -7,6 +7,7 @@
 
 import Foundation
 
+import GenericStorage
 import OfficeKit
 
 
@@ -15,11 +16,11 @@ struct SyncConfig {
 	
 	var blacklistsByServiceId: [String: Set<String>]
 	
-	init(genericConfig conf: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
-		let domain = "Sync Config"
-		let blacklistConfig = try conf.stringGenericConfigDic(for: "blacklists_by_service", domain: domain)
+	init(genericConfig conf: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+		let domain = ["Sync Config"]
+		let blacklistConfig = try conf.dictionary(forKey: "blacklists_by_service", currentKeyPath: domain)
 		
-		blacklistsByServiceId = try blacklistConfig.mapValues{ try Set($0.asStringArray(domain: domain)) }
+		blacklistsByServiceId = try blacklistConfig.mapValues{ try Set($0.arrayOfStringsValue(currentKeyPath: domain)) }
 	}
 	
 }
