@@ -8,7 +8,6 @@
 import Foundation
 
 import Async
-import GenericJSON
 import Service
 
 
@@ -75,7 +74,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	
 	func genericUser(from user: AnyDirectoryUser) throws -> GenericDirectoryUser {
 		guard let u: Base.UserType = user.unboxed() else {
-			throw InvalidArgumentError(message: "Got invalid user (\(user)) from which to create an exportable JSON.")
+			throw InvalidArgumentError(message: "Got invalid user (\(user)) from which to create a GenericUser.")
 		}
 		return try originalDirectory.genericUser(fromUser: u)
 	}

@@ -7,7 +7,6 @@
 
 import Foundation
 
-import GenericJSON
 import OfficeKit
 import Vapor
 

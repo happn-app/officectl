@@ -8,7 +8,6 @@
 import Foundation
 
 import AsyncOperationResult
-import GenericJSON
 import URLRequestOperation
 
 

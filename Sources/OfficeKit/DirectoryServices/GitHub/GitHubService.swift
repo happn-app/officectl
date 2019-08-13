@@ -8,7 +8,6 @@
 import Foundation
 
 import Async
-import GenericJSON
 import SemiSingleton
 import Service
 
