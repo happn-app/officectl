@@ -75,7 +75,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		if taggedId.tag == config.serviceId {
 			/* The generic user is from our service! We should be able to translate
 			 * if fully to our User type. */
-			guard let dnString = genericUser["dn"].value?.stringValue, let dn = try? LDAPDistinguishedName(string: dnString) else {
+			guard let dn = try? LDAPDistinguishedName(string: genericUser.userId.id) else {
 				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
 			}
 			#warning("TODO: The rest of the properties.")
