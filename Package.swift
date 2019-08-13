@@ -37,9 +37,11 @@ let package = Package(
 		.systemLibrary(name: "COpenLDAP", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])]),
 		.systemLibrary(name: "COpenSSL", pkgConfig: "openssl", providers: [.apt(["openssl", "libssl-dev"]), .brew(["openssl@1.1"])]),
 		
+		.target(name: "GenericStorage", dependencies: []),
+		
 		.target(name: "OfficeKit", dependencies: [
 			/* Dependencies in the project */
-			"COpenLDAP", "COpenSSL",
+			"COpenLDAP", "COpenSSL", "GenericStorage",
 			/* happn dependencies */
 			"RetryingOperation", "URLRequestOperation", "SemiSingleton", "EmailValidator",
 			/* External dependencies */
