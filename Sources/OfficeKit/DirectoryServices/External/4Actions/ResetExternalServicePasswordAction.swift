@@ -13,12 +13,12 @@ import Service
 
 
 
-public class ResetExternalServicePasswordAction : Action<GenericDirectoryUserId, String, Void>, ResetPasswordAction, SemiSingleton {
+public class ResetExternalServicePasswordAction : Action<TaggedId, String, Void>, ResetPasswordAction, SemiSingleton {
 	
-	public typealias SemiSingletonKey = GenericDirectoryUserId
+	public typealias SemiSingletonKey = TaggedId
 	public typealias SemiSingletonAdditionalInitInfo = (URL, ExternalServiceAuthenticator, JSONEncoder, JSONDecoder)
 	
-	public required init(key id: GenericDirectoryUserId, additionalInfo: SemiSingletonAdditionalInitInfo, store: SemiSingletonStore) {
+	public required init(key id: TaggedId, additionalInfo: SemiSingletonAdditionalInitInfo, store: SemiSingletonStore) {
 		deps = Dependencies(serviceURL: additionalInfo.0, authenticator: additionalInfo.1, jsonEncoder: additionalInfo.2, jsonDecoder: additionalInfo.3)
 		
 		super.init(subject: id)
@@ -30,10 +30,10 @@ public class ResetExternalServicePasswordAction : Action<GenericDirectoryUserId,
 		}
 		
 		struct Request : Encodable {
-			var userId: JSON
+			var userId: TaggedId
 			var newPassword: String
 		}
-		let request = Request(userId: subject.rawValue, newPassword: newPassword)
+		let request = Request(userId: subject, newPassword: newPassword)
 		let requestData = try deps.jsonEncoder.encode(request)
 		
 		var urlRequest = URLRequest(url: url)

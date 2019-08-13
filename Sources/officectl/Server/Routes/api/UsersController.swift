@@ -119,7 +119,7 @@ class UsersController {
 								 * the users in this service. */
 								continue
 							}
-							guard let logicallyLinkedUser = try? service.logicalUser(fromUser: taggedUser.user, in: taggedUser.service, hints: [:]) else {
+							guard let logicallyLinkedUser = try? service.logicalUser(fromUser: taggedUser.user, in: taggedUser.service) else {
 //								logger.debug("Error finding logically linked user with: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user: \(taggedUser.user)\n}")
 								continue
 							}
@@ -140,13 +140,13 @@ class UsersController {
 						guard !treatedServiceAndUserIds.contains(serviceAndUserId) else {return nil}
 						treatedServiceAndUserIds.insert(serviceAndUserId)
 						
-						var res = try [taggedUser.service.config.serviceId: taggedUser.service.exportableJSON(from: taggedUser.user)]
+						var res = try [taggedUser.service.config.serviceId: taggedUser.service.genericUser(fromUser: taggedUser.user).json()]
 						for (linkedServiceId, linkedUser) in taggedUser.linkedUserByServiceId {
 							let linkedServiceAndUserId = ServiceAndUserId(serviceId: linkedServiceId, userId: linkedUser.user.userId)
 							guard !treatedServiceAndUserIds.contains(linkedServiceAndUserId) else {
 								throw InternalError(message: "Got already treated linked user! \(linkedServiceAndUserId) for \(serviceAndUserId)")
 							}
-							res[linkedServiceId] = try linkedUser.service.exportableJSON(from: linkedUser.user)
+							res[linkedServiceId] = try linkedUser.service.genericUser(fromUser: linkedUser.user).json()
 							treatedServiceAndUserIds.insert(linkedServiceAndUserId)
 						}
 						for sId in validServiceIds {
@@ -198,19 +198,19 @@ class UsersController {
 	
 	private func getUserNoAuthCheck(userId: FullUserId, container: Container) throws -> Future<ApiResponse<ApiUserSearchResult>> {
 		let sProvider = try container.make(OfficeKitServiceProvider.self)
-		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id, hints: [:]))
+		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id))
 		
 		let allServices = try sProvider.getAllServices(container: container)
 		let userFutures = allServices.map{ curService in
 			container.future().flatMap{
-				try curService.existingUser(from: user, in: service, propertiesToFetch: [], on: container)
+				try curService.existingUser(fromUser: user, in: service, propertiesToFetch: [], on: container)
 			}
 		}
 		return Future.waitAll(userFutures, eventLoop: container.eventLoop).map{ userResults in
 			var serviceIdToUser = [String: ApiResponse<JSON?>]()
 			for (idx, userResult) in userResults.enumerated() {
 				let service = allServices[idx]
-				serviceIdToUser[service.config.serviceId] = ApiResponse(result: userResult.flatMap{ curUser in Result{ try curUser.flatMap{ try service.exportableJSON(from: $0) } } }, environment: container.environment)
+				serviceIdToUser[service.config.serviceId] = ApiResponse(result: userResult.flatMap{ curUser in Result{ try curUser.flatMap{ try service.genericUser(fromUser: $0).json() } } }, environment: container.environment)
 			}
 			return ApiResponse.data(ApiUserSearchResult(request: userId.taggedId, results: serviceIdToUser))
 		}

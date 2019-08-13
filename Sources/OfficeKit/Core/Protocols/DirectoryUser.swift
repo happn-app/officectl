@@ -19,6 +19,7 @@ public protocol DirectoryUser {
 	
 	var emails: RemoteProperty<[Email]> {get}
 	
+//	var fullName: RemoteProperty<String?> {get}
 	var firstName: RemoteProperty<String?> {get}
 	var lastName: RemoteProperty<String?> {get}
 	var nickname: RemoteProperty<String?> {get}
@@ -26,7 +27,17 @@ public protocol DirectoryUser {
 }
 
 
-public enum DirectoryUserProperty : RawRepresentable, Hashable, ExpressibleByStringLiteral {
+/**
+A directory user property.
+
+Tested:
+```
+let a = DirectoryUserProperty.userId
+let b = DirectoryUserProperty.custom("userId")
+a           == b           /* <-- This is true. */
+a.hashValue == b.hashValue /* <-- This is true. */
+``` */
+public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStringLiteral {
 	
 	public typealias RawValue = String
 	public typealias StringLiteralType = String
@@ -74,6 +85,10 @@ public enum DirectoryUserProperty : RawRepresentable, Hashable, ExpressibleByStr
 		}
 	}
 	
+	/** Even though `.userId == .custom("userId")` (and the same applies for hash
+	values), when switching on a value from this enum, we should prefer switching
+	on the normalized value as the case `.userId` and `.custom("userId")` are
+	indeed different. */
 	public func normalized() -> DirectoryUserProperty {
 		if case .custom(let v) = self {
 			return DirectoryUserProperty(stringLiteral: v)

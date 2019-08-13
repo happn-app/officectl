@@ -20,7 +20,7 @@ struct ResetPasswordActionAndService {
 	init(destinationService s: AnyDirectoryService, sourceUser: AnyDirectoryUser, sourceService: AnyDirectoryService, container: Container) {
 		service = s
 		resetAction = Result{
-			let user = try s.logicalUser(fromUser: sourceUser, in: sourceService, hints: [:])
+			let user = try s.logicalUser(fromUser: sourceUser, in: sourceService)
 			return try (user, s.changePasswordAction(for: user, on: container))
 		}
 	}
@@ -28,7 +28,7 @@ struct ResetPasswordActionAndService {
 	init(destinationService s: AnyDirectoryService, email: Email, container: Container) {
 		service = s
 		resetAction = Result{
-			let user = try s.logicalUser(fromEmail: email, hints: [:])
+			let user = try s.logicalUser(fromEmail: email)
 			return try (user, s.changePasswordAction(for: user, on: container))
 		}
 	}

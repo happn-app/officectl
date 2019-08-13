@@ -82,7 +82,7 @@ public class OfficeKitServiceProvider {
 			return GoogleService(config: config.unboxed()!).erased()
 			
 		case LDAPService.providerId:
-			return LDAPService(config: config.unboxed()!, domainAliases: officeKitConfig.domainAliases).erased()
+			return LDAPService(config: config.unboxed()!).erased()
 			
 		#if canImport(DirectoryService) && canImport(OpenDirectory)
 		case OpenDirectoryService.providerId:
@@ -107,7 +107,7 @@ public class OfficeKitServiceProvider {
 	private func createDirectoryAuthenticatorService(with config: AnyOfficeKitServiceConfig, container: Container) throws -> AnyDirectoryAuthenticatorService {
 		switch config.providerId {
 		case LDAPService.providerId:
-			return LDAPService(config: config.unboxed()!, domainAliases: officeKitConfig.domainAliases).erased()
+			return LDAPService(config: config.unboxed()!).erased()
 			
 		default:
 			throw InvalidArgumentError(message: "Unknown or unsupported service authenticator provider \(config.providerId)")

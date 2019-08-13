@@ -23,6 +23,7 @@ public struct ConfigError : Error {
 	
 }
 
+#warning("TODO: Rename to KeyedStorage and use instead of JSON as a generic of type (KeyedStorage & Codable) whenever possible")
 public protocol GenericConfig {
 	
 	/* For all this methods, the domain is only needed to generate the
@@ -68,10 +69,13 @@ public protocol OfficeKitServiceConfig : Hashable {
 	Restrictions on the id:
 	- It **cannot contain a colon** (“:”)
 	- It **cannot be equal to “email”** (email is a reserved name).
+	- It **cannot be equal to “invalid”** (invalid is also a reserved name).
 	
 	You must fail a config init with a serviceId that do not respect these
 	requirements. */
 	var serviceId: String {get}
 	var serviceName: String {get}
+	
+	init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws
 	
 }

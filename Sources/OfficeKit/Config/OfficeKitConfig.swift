@@ -15,11 +15,10 @@ public struct OfficeKitConfig {
 	
 	public static var logger: Logger?
 	
+	public var globalConfig: GlobalConfig
+	
 	public var authServiceConfig: AnyOfficeKitServiceConfig
 	public var serviceConfigs: [String: AnyOfficeKitServiceConfig]
-	
-	/** Key is a domain alias, value is the actual domain */
-	public var domainAliases: [String: String]
 	
 	/* ************
 	   MARK: - Init
@@ -27,7 +26,8 @@ public struct OfficeKitConfig {
 	
 	public init(genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
 		let domain = "OfficeKit Config"
-		let domainAliases = try genericConfig.optionalStringStringDic(for: "domain_aliases", domain: domain) ?? [:]
+		
+		let gConfig = try GlobalConfig(genericConfig: genericConfig, pathsRelativeTo: baseURL)
 		
 		let authServiceId = try genericConfig.string(for: "auth_service_id", domain: domain)
 		let genericConfigServices = try genericConfig.stringGenericConfigDic(for: "services", domain: domain)
@@ -40,6 +40,9 @@ public struct OfficeKitConfig {
 			guard serviceId != "email" else {
 				throw ConfigError(domain: domain, key: "services", message: #"The id of a service cannot be equal to "email"."#)
 			}
+			guard serviceId != "invalid" else {
+				throw ConfigError(domain: domain, key: "services", message: #"The id of a service cannot be equal to "invalid"."#)
+			}
 			
 			let domain = "Service \(serviceId)"
 			let serviceName = try serviceInfo.string(for: "name", domain: domain)
@@ -49,6 +52,7 @@ public struct OfficeKitConfig {
 			switch provider {
 			case ExternalDirectoryServiceV1.providerId:
 				let config = try ExternalDirectoryServiceV1Config(
+					globalConfig: gConfig,
 					providerId: provider,
 					serviceId: serviceId,
 					serviceName: serviceName,
@@ -59,6 +63,7 @@ public struct OfficeKitConfig {
 				
 			case GitHubService.providerId:
 				let config = try GitHubServiceConfig(
+					globalConfig: gConfig,
 					providerId: provider,
 					serviceId: serviceId,
 					serviceName: serviceName,
@@ -69,6 +74,7 @@ public struct OfficeKitConfig {
 				
 			case GoogleService.providerId:
 				let config = try GoogleServiceConfig(
+					globalConfig: gConfig,
 					providerId: provider,
 					serviceId: serviceId,
 					serviceName: serviceName,
@@ -79,6 +85,7 @@ public struct OfficeKitConfig {
 				
 			case LDAPService.providerId:
 				let config = try LDAPServiceConfig(
+					globalConfig: gConfig,
 					providerId: provider,
 					serviceId: serviceId,
 					serviceName: serviceName,
@@ -90,6 +97,7 @@ public struct OfficeKitConfig {
 			#if canImport(DirectoryService) && canImport(OpenDirectory)
 			case OpenDirectoryService.providerId:
 				let config = try OpenDirectoryServiceConfig(
+					globalConfig: gConfig,
 					providerId: provider,
 					serviceId: serviceId,
 					serviceName: serviceName,
@@ -104,13 +112,13 @@ public struct OfficeKitConfig {
 			}
 		}
 		
-		try self.init(serviceConfigs: serviceConfigsBuilding, authServiceId: authServiceId, domainAliases: domainAliases)
+		try self.init(globalConfig: gConfig, serviceConfigs: serviceConfigsBuilding, authServiceId: authServiceId)
 	}
 	
 	/** It is a programmer error to give an array of services containing two or
 	more services with the same id. */
-	public init(serviceConfigs s: [AnyOfficeKitServiceConfig], authServiceId: String, domainAliases da: [String: String]) throws {
-		domainAliases = da
+	public init(globalConfig gConfig: GlobalConfig, serviceConfigs s: [AnyOfficeKitServiceConfig], authServiceId: String) throws {
+		globalConfig = gConfig
 		serviceConfigs = [String: AnyOfficeKitServiceConfig](uniqueKeysWithValues: zip(s.map{ $0.serviceId }, s))
 		
 		guard let c = serviceConfigs[authServiceId] else {
@@ -147,19 +155,6 @@ public struct OfficeKitConfig {
 			}
 			return config
 		}
-	}
-	
-	public func mainDomain(for domain: String) -> String {
-		if let d = domainAliases[domain] {return d}
-		return domain
-	}
-	
-	public func equivalentDomains(for domain: String) -> Set<String> {
-		let base = mainDomain(for: domain)
-		return domainAliases.reduce([base], { currentResult, keyval in
-			if keyval.value == base {return currentResult.union([keyval.key])}
-			return currentResult
-		})
 	}
 	
 }

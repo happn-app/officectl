@@ -39,6 +39,10 @@ public final class GoogleService : DirectoryService {
 		config = c
 	}
 	
+	public func shortDescription(from user: GoogleUser) -> String {
+		return user.primaryEmail.stringValue
+	}
+	
 	public func string(fromUserId userId: Email) -> String {
 		return userId.stringValue
 	}
@@ -50,71 +54,37 @@ public final class GoogleService : DirectoryService {
 		return e
 	}
 	
-	public func shortDescription(from user: GoogleUser) -> String {
-		return user.primaryEmail.stringValue
+	public func genericUser(fromUser user: GoogleUser) throws -> GenericDirectoryUser {
+		let json = try JSON(encodable: user)
+		var res = try GenericDirectoryUser(json: json, forcedUserId: taggedId(fromUserId: user.userId))
+		res.takeStandardNonIdProperties(from: user)
+		return res
 	}
 	
-	public func exportableJSON(from user: GoogleUser) throws -> JSON {
-		return try JSON(encodable: user)
-	}
-	
-	public func logicalUser(fromPersistentId pId: String, hints: [DirectoryUserProperty : Any]) throws -> GoogleUser {
-		throw NotSupportedError(message: "It is not possible to create a Google user from its persistent id without fetching it.")
-	}
-	
-	public func logicalUser(fromUserId uId: Email, hints: [DirectoryUserProperty : Any]) throws -> GoogleUser {
-		return GoogleUser(email: uId, hints: hints)
-	}
-	
-	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GoogleUser {
-		return try logicalUser(fromUserId: email, hints: hints)
-	}
-	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GoogleUser {
-		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
-			/* The given user is already from our service; let’s return it. */
-			return user
-		}
-		
-		/* External Directory Service */
-		if let (service, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
-			if let userId = service.userId(fromGenericUserId: user.userId, for: self) {
-				return try logicalUser(fromUserId: userId, hints: hints)
+	public func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> GoogleUser {
+		let taggedId = genericUser.userId
+		if taggedId.tag == config.serviceId {
+			/* The generic user is from our service! We should be able to translate
+			 * if fully to our User type. */
+			#warning("TODO: Not elegant. We should do better but I’m lazy rn")
+			let encoded = try JSONEncoder().encode(genericUser)
+			return try JSONDecoder().decode(GoogleUser.self, from: encoded)
+			
+		} else {
+			guard let email = genericUser.mainEmail(domainMap: config.global.domainAliases) else {
+				throw InvalidArgumentError(message: "Cannot get an email from the user to create a GoogleUser")
 			}
-			if let userId = service.logicalUserId(fromGenericUserId: user.userId, for: self) {
-				return try logicalUser(fromUserId: userId, hints: hints)
-			}
-			throw NotImplementedError()
+			let res = GoogleUser(email: email)
+			#warning("Other properties…")
+			return res
 		}
-		/* GitHub */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GitHubService>? {
-			throw NotImplementedError()
-		}
-		/* Google (but not myself) */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
-			throw NotImplementedError()
-		}
-		/* LDAP */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
-			throw NotImplementedError()
-		}
-		/* Open Directory */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<OpenDirectoryService>? {
-			throw NotImplementedError()
-		}
-		
-		throw NotImplementedError()
 	}
 	
 	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(fromUserId uId: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
-		return try existingUser(fromEmail: uId, propertiesToFetch: propertiesToFetch, on: container)
-	}
-	
-	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
+	public func existingUser(fromUserId email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
 		#warning("TODO: Implement propertiesToFetch")
 		/* Note: We do **NOT** map the email to the main domain. Maybe we should? */
 		let googleConnector: GoogleJWTConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
@@ -131,42 +101,6 @@ public final class GoogleService : DirectoryService {
 			return objects.first
 		}
 		return future
-	}
-	
-	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {
-		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
-			/* The given user is already from our service. */
-			return try existingUser(fromUserId: user.userId, propertiesToFetch: propertiesToFetch, on: container)
-		}
-		
-		/* External Directory Service */
-		if let (service, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
-			if let userId = service.userId(fromGenericUserId: user.userId, for: self) {
-				return try existingUser(fromUserId: userId, propertiesToFetch: propertiesToFetch, on: container)
-			}
-			if let userId = service.logicalUserId(fromGenericUserId: user.userId, for: self) {
-				return try existingUser(fromUserId: userId, propertiesToFetch: propertiesToFetch, on: container)
-			}
-			throw NotImplementedError()
-		}
-		/* GitHub */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GitHubService>? {
-			throw NotImplementedError()
-		}
-		/* Google (but not myself) */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
-			throw NotImplementedError()
-		}
-		/* LDAP */
-		if let (ldapService, ldapUser) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
-			return try existingGoogleUser(fromLDAP: ldapUser, ldapService: ldapService, propertiesToFetch: propertiesToFetch, on: container)
-		}
-		/* Open Directory */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<OpenDirectoryService>? {
-			throw NotImplementedError()
-		}
-		
-		throw NotImplementedError()
 	}
 	
 	public func listAllUsers(on container: Container) throws -> Future<[GoogleUser]> {
@@ -220,7 +154,7 @@ public final class GoogleService : DirectoryService {
 			return email
 		}
 		.flatMap{ (email: Email) -> Future<GoogleUser?> in
-			return try self.existingUser(fromEmail: email, propertiesToFetch: propertiesToFetch, on: container)
+			return try self.existingUser(fromUserId: email, propertiesToFetch: propertiesToFetch, on: container)
 		}
 		return future
 	}

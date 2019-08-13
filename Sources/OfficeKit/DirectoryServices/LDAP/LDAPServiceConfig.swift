@@ -11,6 +11,8 @@ import Foundation
 
 public struct LDAPServiceConfig : OfficeKitServiceConfig {
 	
+	public var global: GlobalConfig
+	
 	public var providerId: String
 	
 	public var serviceId: String
@@ -33,7 +35,7 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 	- parameter peopleDNString: The DN for the people, **relative to the base
 	DN**. This is a different than the `peopleBaseDN` var in this struct, as
 	the var contains the full people DN. */
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: LDAPConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?, adminGroupsDNString: [String]) throws {
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: LDAPConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?, adminGroupsDNString: [String]) throws {
 		let adn = try adminGroupsDNString.map{ try LDAPDistinguishedName(string: $0) }
 		let bdn = try baseDNPerDomainString.mapValues{ try LDAPDistinguishedName(string: $0) }
 		
@@ -43,11 +45,13 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 			return bdn.mapValues{ pdnc + $0 }
 		}
 		
-		self.init(providerId: pId, serviceId: id, serviceName: name, connectorSettings: c, baseDNPerDomain: bdn, peopleBaseDNPerDomain: pdn, adminGroupsDN: adn)
+		self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, connectorSettings: c, baseDNPerDomain: bdn, peopleBaseDNPerDomain: pdn, adminGroupsDN: adn)
 	}
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: LDAPConnector.Settings, baseDNPerDomain bdn: [String: LDAPDistinguishedName], peopleBaseDNPerDomain pbdn: [String: LDAPDistinguishedName]?, adminGroupsDN agdn: [LDAPDistinguishedName]) {
-		precondition(id != "email" && !id.contains(":"))
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: LDAPConnector.Settings, baseDNPerDomain bdn: [String: LDAPDistinguishedName], peopleBaseDNPerDomain pbdn: [String: LDAPDistinguishedName]?, adminGroupsDN agdn: [LDAPDistinguishedName]) {
+		global = globalConfig
+		
+		precondition(id != "invalid" && id != "email" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
 		serviceName = name
@@ -58,7 +62,7 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 		adminGroupsDN = agdn
 	}
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
 		let domain = "Google Config"
 		
 		let url = try genericConfig.url(for: "url", domain: domain)
@@ -78,7 +82,7 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 			throw InvalidArgumentError(message: "Invalid config in yaml: neither both or none of admin_username & admin_password defined in an LDAP config")
 		}
 		
-		try self.init(providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)
+		try self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)
 	}
 	
 }

@@ -8,7 +8,7 @@
 import Foundation
 
 import OfficeKit
-import Vapor
+import Service
 
 
 
@@ -26,7 +26,7 @@ struct FullUserId {
 	}
 	
 	init(string: String, container: Container) throws {
-		let tid = try TaggedId(string: string)
+		let tid = TaggedId(string: string)
 		try self.init(taggedId: tid, container: container)
 	}
 	

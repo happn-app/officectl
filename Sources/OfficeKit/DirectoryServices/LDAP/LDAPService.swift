@@ -38,11 +38,13 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	public typealias AuthenticationChallenge = String
 	
 	public let config: LDAPServiceConfig
-	public let domainAliases: [String: String]
 	
-	public init(config c: LDAPServiceConfig, domainAliases aliases: [String: String]) {
+	public init(config c: LDAPServiceConfig) {
 		config = c
-		domainAliases = aliases
+	}
+	
+	public func shortDescription(from user: LDAPInetOrgPersonWithObject) -> String {
+		return user.userId.stringValue
 	}
 	
 	public func string(fromUserId userId: LDAPDistinguishedName) -> String {
@@ -53,12 +55,8 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		return try LDAPDistinguishedName(string: string)
 	}
 	
-	public func shortDescription(from user: LDAPInetOrgPersonWithObject) -> String {
-		return user.userId.stringValue
-	}
-	
-	public func exportableJSON(from user: LDAPInetOrgPersonWithObject) throws -> JSON {
-		return JSON.object(user.object.attributes.mapValues{ values in
+	public func genericUser(fromUser user: LDAPInetOrgPersonWithObject) throws -> GenericDirectoryUser {
+		let json = JSON.object(user.object.attributes.mapValues{ values in
 			JSON.array(values.map{ valueData in
 				if let valueString = String(data: valueData, encoding: .utf8) {
 					return JSON.object(["str": JSON.string(valueString)])
@@ -67,76 +65,38 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 				}
 			})
 		}.merging(["dn": JSON.string(user.inetOrgPerson.dn.stringValue)], uniquingKeysWith: { (_, new) in new }))
+		var res = try GenericDirectoryUser(json: json, forcedUserId: taggedId(fromUserId: user.userId))
+		res.takeStandardNonIdProperties(from: user)
+		return res
 	}
 	
-	public func logicalUser(fromPersistentId pId: LDAPDistinguishedName, hints: [DirectoryUserProperty : Any]) throws -> LDAPInetOrgPersonWithObject {
-		throw NotSupportedError(message: "It is not possible to create an LDAP user from its persistent id without fetching it.")
-	}
-	
-	public func logicalUser(fromUserId uId: LDAPDistinguishedName, hints: [DirectoryUserProperty : Any]) throws -> LDAPInetOrgPersonWithObject {
-		let fullNameComponents = [hints[.firstName] as? String, hints[.lastName] as? String].compactMap{ $0 }
-		let fullName = (!fullNameComponents.isEmpty ? fullNameComponents.joined(separator: " ") : nil)
-		let inetOrgPerson = LDAPInetOrgPerson(
-			dn: uId,
-			sn: (hints[.lastName] as? String).flatMap{ [$0] } ?? [],
-			cn: fullName.flatMap{ [$0] } ?? []
-		)
-		inetOrgPerson.mail = hints[.emails] as? [Email]
-		if let gn = hints[.firstName] as? String {inetOrgPerson.givenName = [gn]}
-		return LDAPInetOrgPersonWithObject(inetOrgPerson: inetOrgPerson)
-	}
-	
-	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> LDAPInetOrgPersonWithObject {
-		guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
-			throw InvalidArgumentError(message: "Cannot get logical user from \(email) when I don’t have people base DNs.")
-		}
-		guard let baseDN = peopleBaseDNPerDomain[email.domain] else {
-			throw InvalidArgumentError(message: "Cannot get logical user from \(email) because its domain people base DN is unknown.")
-		}
-		
-		var hints = hints
-		if hints[.emails] as? [Email] == nil {hints[.emails] = [email]}
-		return try logicalUser(fromUserId: LDAPDistinguishedName(uid: email.username, baseDN: baseDN), hints: hints)
-	}
-	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> LDAPInetOrgPersonWithObject {
-		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
-			/* The given user is already from our service; let’s return it. */
-			return user
-		}
-		
-		/* External Directory Service */
-		if let (service, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
-			if let userId = service.userId(fromGenericUserId: user.userId, for: self) {
-				return try logicalUser(fromUserId: userId, hints: hints)
+	public func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> LDAPInetOrgPersonWithObject {
+		let taggedId = genericUser.userId
+		if taggedId.tag == config.serviceId {
+			/* The generic user is from our service! We should be able to translate
+			 * if fully to our User type. */
+			guard let dnString = genericUser["dn"].value?.stringValue, let dn = try? LDAPDistinguishedName(string: dnString) else {
+				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
 			}
-			if let userId = service.logicalUserId(fromGenericUserId: user.userId, for: self) {
-				return try logicalUser(fromUserId: userId, hints: hints)
+			#warning("TODO: The rest of the properties.")
+			return LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: [], cn: []))
+			
+		} else {
+			guard let email = genericUser.mainEmail(domainMap: config.global.domainAliases) else {
+				throw InvalidArgumentError(message: "Cannot get an email from the user to create an LDAPInetOrgPersonWithObject")
 			}
-			throw NotImplementedError()
+			
+			guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
+				throw InvalidArgumentError(message: "Cannot get logical user from \(email) when I don’t have people base DNs.")
+			}
+			guard let baseDN = peopleBaseDNPerDomain[email.domain] else {
+				throw InvalidArgumentError(message: "Cannot get logical user from \(email) because its domain people base DN is unknown.")
+			}
+			
+			let dn = LDAPDistinguishedName(uid: email.username, baseDN: baseDN)
+			#warning("TODO: The rest of the properties.")
+			return LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: [], cn: []))
 		}
-		/* GitHub */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GitHubService>? {
-			throw NotImplementedError()
-		}
-		/* Google */
-		if let (_, user) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
-			let person = try logicalUser(fromEmail: user.primaryEmail, hints: hints).inetOrgPerson
-			if let fn = user.name.value?.familyName, person.sn.isEmpty                 {person.sn = [fn]}
-			if let fn = user.name.value?.fullName,   person.cn.isEmpty                 {person.cn = [fn]}
-			if let gn = user.name.value?.givenName,  person.givenName?.isEmpty ?? true {person.givenName = [gn]}
-			return LDAPInetOrgPersonWithObject(inetOrgPerson: person)
-		}
-		/* LDAP (but not myself) */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
-			throw NotImplementedError()
-		}
-		/* Open Directory */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<OpenDirectoryService>? {
-			throw NotImplementedError()
-		}
-		
-		throw NotImplementedError()
 	}
 	
 	public func existingUser(fromPersistentId pId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {
@@ -161,46 +121,6 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 				return ret
 			}
 		}
-	}
-	
-	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {
-		throw NotImplementedError()
-	}
-	
-	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {
-		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
-			/* The given user is already from our service. */
-			return try existingUser(fromUserId: user.userId, propertiesToFetch: propertiesToFetch, on: container)
-		}
-		
-		/* External Directory Service */
-		if let (service, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
-			if let userId = service.userId(fromGenericUserId: user.userId, for: self) {
-				return try existingUser(fromUserId: userId, propertiesToFetch: propertiesToFetch, on: container)
-			}
-			if let userId = service.logicalUserId(fromGenericUserId: user.userId, for: self) {
-				return try existingUser(fromUserId: userId, propertiesToFetch: propertiesToFetch, on: container)
-			}
-			throw NotImplementedError()
-		}
-		/* GitHub */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GitHubService>? {
-			throw NotImplementedError()
-		}
-		/* Google */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
-			throw NotImplementedError()
-		}
-		/* LDAP (but not myself) */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
-			throw NotImplementedError()
-		}
-		/* Open Directory */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<OpenDirectoryService>? {
-			throw NotImplementedError()
-		}
-		
-		throw NotImplementedError()
 	}
 	
 	public func listAllUsers(on container: Container) throws -> Future<[LDAPInetOrgPersonWithObject]> {
@@ -333,7 +253,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			}
 			/* Deduplication */
 			if !deduplicateAliases {return Set(emails)}
-			return Set(emails.map{ $0.primaryDomainVariant(aliasMap: self.domainAliases) })
+			return Set(emails.map{ $0.primaryDomainVariant(aliasMap: self.config.global.domainAliases) })
 		}
 	}
 	

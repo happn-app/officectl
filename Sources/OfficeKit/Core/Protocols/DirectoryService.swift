@@ -24,52 +24,29 @@ public protocol DirectoryService : class {
 	
 	var config: ConfigType {get}
 	
-	/** Empty ids are **not supported**. There are no other restrictions. */
-	func string(fromUserId userId: UserType.UserIdType) -> String
-	func userId(fromString string: String) throws -> UserType.UserIdType
+	init(config c: ConfigType)
 	
 	/** Convert the user to a user printable string. Mostly used for logging. */
 	func shortDescription(from user: UserType) -> String
 	
+	/** Empty ids are **not supported**. There are no other restrictions. */
+	func string(fromUserId userId: UserType.UserIdType) -> String
+	func userId(fromString string: String) throws -> UserType.UserIdType
+	
 	/**
-	Converts the given user to a JSON representation.
+	Converts the given user to a GenericDirectoryUser.
 	
-	The JSON returned by this function doesn’t have to be an exact representation
-	of the given user. In particular it isn’t expected to be necessarily possible
-	to re-create the user back from the JSON.
+	This representation can be used to create native users for other services. It
+	should contain everything it can from the original user. */
+	func genericUser(fromUser user: UserType) throws -> GenericDirectoryUser
 	
-	The JSON representation is intended to be sent to an external directory
-	service, when creating a logical user from a user from another service. */
-	func exportableJSON(from user: UserType) throws -> JSON
-	
-	/** If possible, convert the given id to a user with as much information as
-	possible in your directory.
+	/** If possible, convert the given generic user to a user with as much
+	information as possible in your directory.
 	
 	The conversion should not fetch anything from the directory. It is simply a
 	representation of how the given id _should_ be created in the directory if it
 	were to be created in it. */
-	func logicalUser(fromPersistentId pId: UserType.PersistentIdType, hints: [DirectoryUserProperty: Any]) throws -> UserType
-	/** If possible, convert the given id to a user with as much information as
-	possible in your directory.
-	
-	The conversion should not fetch anything from the directory. It is simply a
-	representation of how the given id _should_ be created in the directory if it
-	were to be created in it. */
-	func logicalUser(fromUserId uId: UserType.UserIdType, hints: [DirectoryUserProperty: Any]) throws -> UserType
-	/** If possible, convert the given email to a user with as much information
-	as possible in your directory.
-	
-	The conversion should not fetch anything from the directory. It is simply a
-	representation of how the given email _should_ be created in the directory if
-	it were to be created in it. */
-	func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> UserType
-	/** If possible, convert the given user in the given directory to a user with
-	as much information as possible in your directory.
-	
-	The conversion should not fetch anything from neither the source nor the
-	destination directory. It is simply a representation of how the given user
-	_should_ be created in the directory if it were to be created in it. */
-	func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> UserType
+	func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> UserType
 	
 	/** Fetch and return the _only_ user matching the given id.
 	
@@ -83,19 +60,6 @@ public protocol DirectoryService : class {
 	**failed** future. If _no_ users match the given id, the method should
 	return a succeeded future with a `nil` user. */
 	func existingUser(fromUserId uId: UserType.UserIdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
-	/** Fetch and return the _only_ user matching the given email.
-	
-	If _more than one_ user matches the given email, the function should return a
-	**failed** future. If _no_ users match the given email, the method should
-	return a succeeded future with a `nil` user. */
-	func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
-	/** Fetch and return the _only_ user matching the given user in the given
-	directory.
-	
-	If _more than one_ user matches the given user, the function should return a
-	**failed** future. If _no_ users match the given user, the method should
-	return a succeeded future with a `nil` user. */
-	func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
 	
 	func listAllUsers(on container: Container) throws -> Future<[UserType]>
 	
@@ -110,5 +74,42 @@ public protocol DirectoryService : class {
 	
 	var supportsPasswordChange: Bool {get}
 	func changePasswordAction(for user: UserType, on container: Container) throws -> ResetPasswordAction
+	
+}
+
+
+extension DirectoryService {
+	
+	public func taggedId(fromUserId userId: UserType.UserIdType) -> TaggedId {
+		return TaggedId(tag: config.serviceId, id: string(fromUserId: userId))
+	}
+	
+	public func genericUser(fromUserId userId: UserType.UserIdType) -> GenericDirectoryUser {
+		return GenericDirectoryUser(userId: taggedId(fromUserId: userId))
+	}
+	
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any?] = [:]) throws -> UserType {
+		var genericUser = GenericDirectoryUser(email: email)
+		genericUser.applyHints(hints)
+		return try logicalUser(fromGenericUser: genericUser)
+	}
+	
+	public func logicalUser(fromUserId userId: UserType.UserIdType, hints: [DirectoryUserProperty: Any?] = [:]) throws -> UserType {
+		var user = genericUser(fromUserId: userId)
+		user.applyHints(hints)
+		return try logicalUser(fromGenericUser: user)
+	}
+	
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any?] = [:]) throws -> UserType {
+		var genericUser = try service.genericUser(fromUser: user)
+		genericUser.applyHints(hints)
+		return try logicalUser(fromGenericUser: genericUser)
+	}
+	
+	public func existingUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?> {
+		let foreignGenericUser = try service.genericUser(fromUser: user)
+		let nativeLogicalUser = try logicalUser(fromGenericUser: foreignGenericUser)
+		return try existingUser(fromUserId: nativeLogicalUser.userId, propertiesToFetch: propertiesToFetch, on: container)
+	}
 	
 }

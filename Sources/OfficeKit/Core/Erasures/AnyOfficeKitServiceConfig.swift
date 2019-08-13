@@ -69,6 +69,10 @@ public struct AnyOfficeKitServiceConfig : OfficeKitServiceConfig {
 		box = ConcreteOfficeKitServiceConfigBox(originalConfig: object)
 	}
 	
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
+		throw InternalError(message: "AnyOfficeKitServiceConfig cannot be instantiated with a generic config…")
+	}
+	
 	public func hash(into hasher: inout Hasher) {
 		box.hash(into: &hasher)
 	}

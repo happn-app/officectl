@@ -32,7 +32,7 @@ class PasswordResetController {
 		}
 		
 		let sProvider = try req.make(OfficeKitServiceProvider.self)
-		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id, hints: [:]))
+		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id))
 		
 		let passwordResets = try sProvider
 			.getAllServices(container: req)
@@ -58,12 +58,12 @@ class PasswordResetController {
 		}
 		
 		let sProvider = try req.make(OfficeKitServiceProvider.self)
-		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id, hints: [:]))
+		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id))
 		
 		let authFuture: Future<Bool>
 		if let oldPass = passChangeData.oldPassword {
 			let authService = try sProvider.getDirectoryAuthenticatorService(container: req)
-			let authServiceUser = try authService.logicalUser(fromUser: user, in: service, hints: [:])
+			let authServiceUser = try authService.logicalUser(fromUser: user, in: service)
 			authFuture = try authService.authenticate(userId: authServiceUser.userId, challenge: oldPass, on: req)
 		} else {
 			/* Only admins are allowed to change the pass of someone without

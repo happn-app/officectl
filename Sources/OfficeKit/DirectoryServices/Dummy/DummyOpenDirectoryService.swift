@@ -19,6 +19,10 @@ public struct DummyServiceConfig : OfficeKitServiceConfig {
 	public var serviceId: String
 	public var serviceName: String
 	
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
+		throw InternalError(message: "The DummyServiceConfig cannot be instantiated")
+	}
+	
 	private init() {
 		providerId = ""
 		serviceId = ""
@@ -59,11 +63,16 @@ public final class DummyService : DirectoryService {
 	
 	public let config: DummyServiceConfig
 	
-	private init(config c: DummyServiceConfig) {
+	public init(config c: DummyServiceConfig) {
 		config = c
 	}
 	
+	public func shortDescription(from user: DummyServiceUser) -> String {
+		return "<ERROR>"
+	}
+	
 	public func string(fromUserId userId: Int) -> String {
+		/* Purposefully invalid id */
 		return ""
 	}
 	
@@ -71,27 +80,11 @@ public final class DummyService : DirectoryService {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
-	public func shortDescription(from user: DummyServiceUser) -> String {
-		return "<ERROR>"
-	}
-	
-	public func exportableJSON(from user: DummyServiceUser) throws -> JSON {
+	public func genericUser(fromUser user: DummyServiceUser) throws -> GenericDirectoryUser {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
-	public func logicalUser(fromPersistentId pId: Int, hints: [DirectoryUserProperty : Any]) throws -> DummyServiceUser {
-		throw NotAvailableOnThisPlatformError()
-	}
-	
-	public func logicalUser(fromUserId uId: Int, hints: [DirectoryUserProperty : Any]) throws -> DummyServiceUser {
-		throw NotAvailableOnThisPlatformError()
-	}
-	
-	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> DummyServiceUser {
-		throw NotAvailableOnThisPlatformError()
-	}
-	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> DummyServiceUser {
+	public func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> DummyServiceUser {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
@@ -100,14 +93,6 @@ public final class DummyService : DirectoryService {
 	}
 	
 	public func existingUser(fromUserId dn: Int, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser?> {
-		throw NotAvailableOnThisPlatformError()
-	}
-	
-	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser?> {
-		throw NotAvailableOnThisPlatformError()
-	}
-	
-	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser?> {
 		throw NotAvailableOnThisPlatformError()
 	}
 	

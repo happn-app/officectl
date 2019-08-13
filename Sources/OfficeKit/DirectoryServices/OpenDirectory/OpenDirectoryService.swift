@@ -44,6 +44,10 @@ public final class OpenDirectoryService : DirectoryService {
 		config = c
 	}
 	
+	public func shortDescription(from user: ODRecordOKWrapper) -> String {
+		return user.userId.stringValue
+	}
+	
 	public func string(fromUserId userId: LDAPDistinguishedName) -> String {
 		return userId.stringValue
 	}
@@ -52,104 +56,61 @@ public final class OpenDirectoryService : DirectoryService {
 		return try LDAPDistinguishedName(string: string)
 	}
 	
-	public func shortDescription(from user: ODRecordOKWrapper) -> String {
-		return user.userId.stringValue
-	}
-	
-	public func exportableJSON(from user: ODRecordOKWrapper) throws -> JSON {
+	public func genericUser(fromUser user: ODRecordOKWrapper) throws -> GenericDirectoryUser {
 		var ret = ["dn": JSON.string(user.userId.stringValue)]
-		guard let record = user.record else {return .object(ret)}
-		
-		/* Is this making IO? Who knows… But it shouldn’t be; doc says if
-		 * attributes is nil the method returns what’s in the cache. */
-		let attributes = try record.recordDetails(forAttributes: nil)
-		for (key, val) in attributes {
-			#warning("TODO: Log the skipped key")
-			guard let keyStr = key as? String else {continue}
-			guard keyStr != "dn" else {continue}
-			switch val {
-			case let str       as  String:  ret[keyStr] =                          JSON.object(["str": JSON.string(str)])
-			case let strArray  as [String]: ret[keyStr] = JSON.array(strArray.map{ JSON.object(["str": JSON.string($0)]) })
-			case let data      as  Data:    ret[keyStr] =                           JSON.object(["dta": JSON.string(data.base64EncodedString())])
-			case let dataArray as [Data]:   ret[keyStr] = JSON.array(dataArray.map{ JSON.object(["dta": JSON.string($0.base64EncodedString())]) })
-			default:
+		if let record = user.record {
+			/* Is this making IO? Who knows… But it shouldn’t be; doc says if
+			 * attributes is nil the method returns what’s in the cache. */
+			let attributes = try record.recordDetails(forAttributes: nil)
+			for (key, val) in attributes {
 				#warning("TODO: Log the skipped key")
-				continue
+				guard let keyStr = key as? String else {continue}
+				guard keyStr != "dn" else {continue}
+				switch val {
+				case let str       as  String:  ret[keyStr] =                          JSON.object(["str": JSON.string(str)])
+				case let strArray  as [String]: ret[keyStr] = JSON.array(strArray.map{ JSON.object(["str": JSON.string($0)]) })
+				case let data      as  Data:    ret[keyStr] =                           JSON.object(["dta": JSON.string(data.base64EncodedString())])
+				case let dataArray as [Data]:   ret[keyStr] = JSON.array(dataArray.map{ JSON.object(["dta": JSON.string($0.base64EncodedString())]) })
+				default:
+					#warning("TODO: Log the skipped key")
+					continue
+				}
 			}
 		}
-		return JSON.object(ret)
-	}
-	
-	public func logicalUser(fromPersistentId pId: UUID, hints: [DirectoryUserProperty : Any]) throws -> ODRecordOKWrapper {
-		throw NotSupportedError(message: "It is not possible to create an OpenDirectory user from its persistent id without fetching it.")
-	}
-	
-	public func logicalUser(fromUserId uId: LDAPDistinguishedName, hints: [DirectoryUserProperty : Any]) throws -> ODRecordOKWrapper {
-		let fullNameComponents = [hints[.firstName] as? String, hints[.lastName] as? String].compactMap{ $0 }
-		let fullName = (!fullNameComponents.isEmpty ? fullNameComponents.joined(separator: " ") : nil)
-		let inetOrgPerson = LDAPInetOrgPerson(
-			dn: uId,
-			sn: (hints[.lastName] as? String).flatMap{ [$0] } ?? [],
-			cn: fullName.flatMap{ [$0] } ?? []
-		)
-		let emails = hints[.emails] as? [Email]
-		inetOrgPerson.mail = emails
-		return ODRecordOKWrapper(
-			id: uId,
-			emails: emails ?? [], firstName: hints[.firstName] as? String, lastName: hints[.lastName] as? String
-		)
-	}
-	
-	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> ODRecordOKWrapper {
-		guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
-			throw InvalidArgumentError(message: "Cannot get logical user from \(email) when I don’t have people base DNs.")
-		}
-		guard let baseDN = peopleBaseDNPerDomain[email.domain] else {
-			throw InvalidArgumentError(message: "Cannot get logical user from \(email) because its domain people base DN is unknown.")
-		}
+		let json = JSON.object(ret)
 		
-		var hints = hints
-		if hints[.emails] as? [Email] == nil {hints[.emails] = [email]}
-		return try logicalUser(fromUserId: LDAPDistinguishedName(uid: email.username, baseDN: baseDN), hints: hints)
+		var res = try GenericDirectoryUser(json: json, forcedUserId: taggedId(fromUserId: user.userId))
+		res.takeStandardNonIdProperties(from: user)
+		return res
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> ODRecordOKWrapper {
-		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
-			/* The given user is already from our service; let’s return it. */
-			return user
-		}
-		
-		/* External Directory Service */
-		if let (service, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
-			if let userId = service.userId(fromGenericUserId: user.userId, for: self) {
-				return try logicalUser(fromUserId: userId, hints: hints)
+	public func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> ODRecordOKWrapper {
+		let taggedId = genericUser.userId
+		if taggedId.tag == config.serviceId {
+			/* The generic user is from our service! We should be able to translate
+			 * if fully to our User type. */
+			guard let dnString = genericUser["dn"].value?.stringValue, let dn = try? LDAPDistinguishedName(string: dnString) else {
+				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
 			}
-			if let userId = service.logicalUserId(fromGenericUserId: user.userId, for: self) {
-				return try logicalUser(fromUserId: userId, hints: hints)
+			#warning("TODO: The rest of the properties.")
+			return ODRecordOKWrapper(id: dn, emails: [])
+			
+		} else {
+			guard let email = genericUser.mainEmail(domainMap: config.global.domainAliases) else {
+				throw InvalidArgumentError(message: "Cannot get an email from the user to create an LDAPInetOrgPersonWithObject")
 			}
-			throw NotImplementedError()
+			
+			guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
+				throw InvalidArgumentError(message: "Cannot get logical user from \(email) when I don’t have people base DNs.")
+			}
+			guard let baseDN = peopleBaseDNPerDomain[email.domain] else {
+				throw InvalidArgumentError(message: "Cannot get logical user from \(email) because its domain people base DN is unknown.")
+			}
+			
+			let dn = LDAPDistinguishedName(uid: email.username, baseDN: baseDN)
+			#warning("TODO: The rest of the properties.")
+			return ODRecordOKWrapper(id: dn, emails: [])
 		}
-		/* GitHub */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GitHubService>? {
-			throw NotImplementedError()
-		}
-		/* Google */
-		if let (_, user) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
-			var ret = try logicalUser(fromEmail: user.primaryEmail, hints: hints)
-			if let gn = user.name.value?.givenName,  ret.firstName.value == nil {ret.firstName = .set(gn)}
-			if let fn = user.name.value?.familyName, ret.lastName.value  == nil {ret.lastName  = .set(fn)}
-			return ret
-		}
-		/* LDAP */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
-			throw NotImplementedError()
-		}
-		/* Open Directory (but not myself) */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<OpenDirectoryService>? {
-			throw NotImplementedError()
-		}
-		
-		throw NotImplementedError()
 	}
 	
 	public func existingUser(fromPersistentId pId: UUID, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
@@ -162,50 +123,6 @@ public final class OpenDirectoryService : DirectoryService {
 		guard let uid = dn.uid else {throw ODError.uidMissingInDN}
 		let request = OpenDirectorySearchRequest(uid: uid)
 		return try existingRecord(fromSearchRequest: request, on: container)
-	}
-	
-	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
-		#warning("TODO: Implement propertiesToFetch")
-		let request = OpenDirectorySearchRequest(uid: email.username, maxResults: 2)
-		return try existingRecord(fromSearchRequest: request, on: container)
-	}
-	
-	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<ODRecordOKWrapper?> {
-		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
-			/* The given user is already from our service. */
-			return try existingUser(fromUserId: user.userId, propertiesToFetch: propertiesToFetch, on: container)
-		}
-		
-		/* External Directory Service */
-		if let (service, user) = try dsuPairFrom(service: service, user: user) as DSUPair<ExternalDirectoryServiceV1>? {
-			if let userId = service.userId(fromGenericUserId: user.userId, for: self) {
-				return try existingUser(fromUserId: userId, propertiesToFetch: propertiesToFetch, on: container)
-			}
-			if let userId = service.logicalUserId(fromGenericUserId: user.userId, for: self) {
-				return try existingUser(fromUserId: userId, propertiesToFetch: propertiesToFetch, on: container)
-			}
-			throw NotImplementedError()
-		}
-		/* GitHub */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GitHubService>? {
-			throw NotImplementedError()
-		}
-		/* Google */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<GoogleService>? {
-			throw NotImplementedError()
-		}
-		/* LDAP */
-		if let (_, ldapUser) = try dsuPairFrom(service: service, user: user) as DSUPair<LDAPService>? {
-			guard let uid = ldapUser.userId.uid else {throw ODError.uidMissingInDN}
-			let request = OpenDirectorySearchRequest(uid: uid)
-			return try existingRecord(fromSearchRequest: request, on: container)
-		}
-		/* Open Directory (but not myself) */
-		if let (_, _) = try dsuPairFrom(service: service, user: user) as DSUPair<OpenDirectoryService>? {
-			throw NotImplementedError()
-		}
-		
-		throw NotImplementedError()
 	}
 	
 	public func listAllUsers(on container: Container) throws -> Future<[ODRecordOKWrapper]> {

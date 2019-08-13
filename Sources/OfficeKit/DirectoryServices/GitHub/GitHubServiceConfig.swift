@@ -11,6 +11,8 @@ import Foundation
 
 public struct GitHubServiceConfig : OfficeKitServiceConfig {
 	
+	public var global: GlobalConfig
+	
 	public var providerId: String
 	
 	public var serviceId: String
@@ -18,8 +20,10 @@ public struct GitHubServiceConfig : OfficeKitServiceConfig {
 	
 	public var connectorSettings: GitHubJWTConnector.Settings
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: GitHubJWTConnector.Settings) {
-		precondition(id != "email" && !id.contains(":"))
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: GitHubJWTConnector.Settings) {
+		global = globalConfig
+		
+		precondition(id != "invalid" && id != "email" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
 		serviceName = name
@@ -27,14 +31,14 @@ public struct GitHubServiceConfig : OfficeKitServiceConfig {
 		connectorSettings = c
 	}
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
 		let domain = "GitHub Config"
 		let appId               = try genericConfig.string(for: "app_id",           domain: domain)
 		let installId           = try genericConfig.string(for: "install_id",       domain: domain)
 		let privateKeyURLString = try genericConfig.string(for: "private_key_path", domain: domain)
 		
 		let connectorSettings = GitHubJWTConnector.Settings(appId: appId, installationId: installId, privateKeyURL: URL(fileURLWithPath: privateKeyURLString, isDirectory: false, relativeTo: baseURL))
-		self.init(providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings)
+		self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings)
 	}
 	
 }

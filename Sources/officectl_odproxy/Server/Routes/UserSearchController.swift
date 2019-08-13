@@ -40,30 +40,6 @@ final class UserSearchController {
 		throw NotImplementedError()
 	}
 	
-	func fromEmail(_ req: Request) throws -> Future<ApiResponse<GenericDirectoryUser?>> {
-		let openDirectoryService = try req.make(OpenDirectoryService.self)
-		
-		throw NotImplementedError()
-	}
-	
-	func fromExternalUser(_ req: Request) throws -> Future<ApiResponse<GenericDirectoryUser?>> {
-		struct Request : Decodable {
-			var serviceId: String
-			var userId: String
-			var user: JSON
-			var propertiesToFetch: Set<String>
-		}
-		let input = try req.content.syncDecode(Request.self)
-		let propertiesToFetch = Set(input.propertiesToFetch.map{ DirectoryUserProperty(stringLiteral: $0) })
-		let userId = GenericDirectoryUserId.proxy(serviceId: input.serviceId, userId: input.userId, user: input.user)
-		
-		let openDirectoryService = try req.make(OpenDirectoryService.self)
-		return try openDirectoryService.existingUser(fromJSONUserId: userId.rawValue, propertiesToFetch: propertiesToFetch, on: req).map{ user in
-			/* Let’s convert the OpenDirectory user to a GenericDirectoryUser */
-			return try ApiResponse.data(user.flatMap{ try GenericDirectoryUser(recordWrapper: $0, odService: openDirectoryService) })
-		}
-	}
-	
 	func listAllUsers(_ req: Request) throws -> Future<ApiResponse<[GenericDirectoryUser]>> {
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
 		return try openDirectoryService.listAllUsers(on: req).map{ users in

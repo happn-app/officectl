@@ -12,7 +12,7 @@ import Service
 
 
 
-public class ExternalDirectoryServiceV1 : DirectoryService {
+public final class ExternalDirectoryServiceV1 : DirectoryService {
 	
 	public static let providerId = "http_service_v1"
 	
@@ -35,93 +35,24 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 //		jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
 	}
 	
-	public func string(fromUserId userId: GenericDirectoryUserId) -> String {
-		return try! JSONEncoder().encode(userId.rawValue).base64EncodedString()
-	}
-	
-	public func userId(fromString string: String) throws -> GenericDirectoryUserId {
-		guard let jsonData = Data(base64Encoded: string) else {
-			throw InvalidArgumentError(message: "Cannot decode base64 string")
-		}
-		let json = try JSONDecoder().decode(JSON.self, from: jsonData)
-		guard let id = GenericDirectoryUserId(rawValue: json) else {
-			throw InvalidArgumentError(message: "Invalid GenericDirectoryUserId id")
-		}
-		return id
-	}
-	
-	public func userId<Service : DirectoryService>(fromGenericUserId genericUserId: GenericDirectoryUserId, for service: Service) -> Service.UserType.UserIdType? {
-		guard case .proxy(let serviceId, let userId, _) = genericUserId, serviceId == service.config.serviceId else {
-			return nil
-		}
-		return try? service.userId(fromString: userId)
-	}
-	
-	#warning("TODO: 🥴 I don’t know how to do this properly yet. For now, this works (with our config, wouldn’t work for anyone else…) Current idea is to set transformations directly in conf; I’ll have to think about it…")
-	public func logicalUserId<Service : DirectoryService>(fromGenericUserId genericUserId: GenericDirectoryUserId, for service: Service) -> Service.UserType.UserIdType? {
-		switch genericUserId {
-		case .proxy(serviceId: let serviceId, userId: let userId, user: _) where serviceId == service.config.serviceId:
-			return try? service.userId(fromString: userId)
-			
-		case .native(.string(let userIdStr)):
-			guard let dn = try? LDAPDistinguishedName(string: userIdStr), let uid = dn.uid else {return nil}
-			switch service.config.serviceId {
-			case "ldap": return LDAPDistinguishedName(uid: uid, baseDN: LDAPDistinguishedName(values: [(key: "ou", value: "people"), (key: "dc", value: "happn"), (key: "dc", value: "com")])) as? Service.UserType.UserIdType
-			case "ggl":  return Email(username: uid, domain: "happn.fr") as? Service.UserType.UserIdType
-			default: return nil
-			}
-			
-		case .native, .proxy: return nil
-		}
-	}
-	
 	public func shortDescription(from user: GenericDirectoryUser) -> String {
 		return "\(user.userId)"
 	}
 	
-	public func exportableJSON(from user: GenericDirectoryUser) throws -> JSON {
-		return try JSON(encodable: user)
+	public func string(fromUserId userId: TaggedId) -> String {
+		return userId.stringValue
 	}
 	
-	public func logicalUser(fromPersistentId pId: JSON, hints: [DirectoryUserProperty : Any]) throws -> GenericDirectoryUser {
-		throw NotImplementedError()
+	public func userId(fromString string: String) throws -> TaggedId {
+		return TaggedId(string: string)
 	}
 	
-	public func logicalUser(fromUserId uId: GenericDirectoryUserId, hints: [DirectoryUserProperty : Any]) throws -> GenericDirectoryUser {
-		var res = GenericDirectoryUser(userId: uId)
-		if let firstName = hints[.firstName] as? String {res.firstName = .set(firstName)}
-		if let lastName = hints[.lastName] as? String {res.lastName = .set(lastName)}
-		if let emails = hints[.emails] as? [Email] {res.emails = .set(emails)}
-		return res
+	public func genericUser(fromUser user: GenericDirectoryUser) throws -> GenericDirectoryUser {
+		return user
 	}
 	
-	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any]) throws -> GenericDirectoryUser {
-		guard config.supportsServiceIdForLogicalUserConversion("email") else {
-			throw NotSupportedError(message: "Creating a user from an email is not supported for service \(config.serviceId)")
-		}
-		var res = GenericDirectoryUser(userId: .proxy(serviceId: "email", userId: email.stringValue, user: .string(email.stringValue)))
-		if let firstName = hints[.firstName] as? String {res.firstName = .set(firstName)}
-		if let lastName = hints[.lastName] as? String {res.lastName = .set(lastName)}
-		if let emails = hints[.emails] as? [Email] {res.emails = .set(emails)}
-		return res
-	}
-	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any]) throws -> GenericDirectoryUser {
-		if service.config.serviceId == config.serviceId, let user: UserType = user.unboxed() {
-			/* The given user is already from our service; let’s return it. */
-			return user
-		}
-		
-		guard config.supportsServiceIdForLogicalUserConversion(service.config.serviceId) else {
-			throw NotSupportedError(message: "Creating a user from service id \(service.config.serviceId) is not supported for service \(config.serviceId)")
-		}
-		let userId = service.string(fromUserId: user.userId)
-		let jsonUser = try service.exportableJSON(from: user)
-		var res = GenericDirectoryUser(userId: .proxy(serviceId: service.config.serviceId, userId: userId, user: jsonUser))
-		if let firstName = hints[.firstName] as? String {res.firstName = .set(firstName)}
-		if let lastName = hints[.lastName] as? String {res.lastName = .set(lastName)}
-		if let emails = hints[.emails] as? [Email] {res.emails = .set(emails)}
-		return res
+	public func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> GenericDirectoryUser {
+		return genericUser
 	}
 	
 	public func existingUser(fromPersistentId pId: JSON, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GenericDirectoryUser?> {
@@ -145,63 +76,16 @@ public class ExternalDirectoryServiceV1 : DirectoryService {
 		return Future<GenericDirectoryUser?>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
 	}
 	
-	public func existingUser(fromUserId uId: GenericDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GenericDirectoryUser?> {
+	public func existingUser(fromUserId uId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GenericDirectoryUser?> {
 		guard let url = URL(string: "existing-user-from/user-id", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to retrieve existing user from user id")
 		}
 		
 		struct Request : Encodable {
-			var userId: JSON
+			var userId: TaggedId
 			var propertiesToFetch: Set<String>
 		}
-		let request = Request(userId: uId.rawValue, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue }))
-		let requestData = try jsonEncoder.encode(request)
-		
-		var urlRequest = URLRequest(url: url)
-		urlRequest.httpMethod = "POST"
-		urlRequest.httpBody = requestData
-		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-		
-		let operation = ApiRequestOperation<GenericDirectoryUser?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<GenericDirectoryUser?>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
-	}
-	
-	public func existingUser(fromEmail email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GenericDirectoryUser?> {
-		guard let url = URL(string: "existing-user-from/email", relativeTo: config.url) else {
-			throw InternalError(message: "Cannot get external service URL to retrieve existing user from email")
-		}
-		
-		struct Request : Encodable {
-			var email: Email
-			var propertiesToFetch: Set<String>
-		}
-		let request = Request(email: email, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue }))
-		let requestData = try jsonEncoder.encode(request)
-		
-		var urlRequest = URLRequest(url: url)
-		urlRequest.httpMethod = "POST"
-		urlRequest.httpBody = requestData
-		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-		
-		let operation = ApiRequestOperation<GenericDirectoryUser?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<GenericDirectoryUser?>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
-	}
-	
-	/* Sadly, cannot be embedded in generic function. */
-	private struct ExistingUserFromUserRequest : Encodable {
-		var serviceId: String
-		var userId: String
-		var user: JSON
-		var propertiesToFetch: Set<String>
-	}
-	public func existingUser<OtherServiceType : DirectoryService>(from user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GenericDirectoryUser?> {
-		guard let url = URL(string: "existing-user-from/external-user", relativeTo: config.url) else {
-			throw InternalError(message: "Cannot get external service URL to retrieve existing user from user in other service")
-		}
-		
-		let userId = service.string(fromUserId: user.userId)
-		let jsonUser = try service.exportableJSON(from: user)
-		let request = ExistingUserFromUserRequest(serviceId: service.config.serviceId, userId: userId, user: jsonUser, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue }))
+		let request = Request(userId: uId, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue }))
 		let requestData = try jsonEncoder.encode(request)
 		
 		var urlRequest = URLRequest(url: url)

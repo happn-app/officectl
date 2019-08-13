@@ -40,7 +40,7 @@ public struct GoogleUser : Hashable, Codable {
 	`nil`-like implementation of RemoteProperty that would drop absent keys
 	automatically (from encoding and decoding) but this does not seem possible.
 	So instead I do the same thing manually… A thing to check would be code
-	generation. This is a very good candidate for code generation!
+	generation. This seems like a good candidate for code generation.
 	""")
 	public init(from decoder: Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -137,7 +137,7 @@ public struct GoogleUser : Hashable, Codable {
 				hashFunction = .set(.sha1)
 				changePasswordAtNextLogin = .set(false)
 			} else {
-				#warning("TODO: Log warning that pass cannot be encrypted and won’t therefore be in the user.")
+				OfficeKitConfig.logger?.warning("Cannot encrypt password. Won’t put it in Google User.")
 			}
 		}
 	}

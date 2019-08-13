@@ -45,7 +45,7 @@ extension OpenDirectoryService {
 				guard let email = Email(string: proxyUserIdStr) else {
 					throw InvalidArgumentError(message: "Cannot convert proxy user id to email: \(proxyUserIdStr)")
 				}
-				return try logicalUser(fromEmail: email, hints: [:])
+				return try logicalUser(fromEmail: email)
 				
 			default:
 				throw InvalidArgumentError(message: "Unknown service id \(serviceId) to convert user id to retrieve logical user")

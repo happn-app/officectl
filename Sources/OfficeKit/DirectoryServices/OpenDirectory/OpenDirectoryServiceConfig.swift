@@ -18,6 +18,8 @@ import OpenDirectory
 
 public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 	
+	public var global: GlobalConfig
+	
 	public var providerId: String
 	
 	public var serviceId: String
@@ -35,7 +37,9 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		return Set(baseDNPerDomain.keys)
 	}
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: OpenDirectoryConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: OpenDirectoryConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
+		global = globalConfig
+		
 		let bdn = try baseDNPerDomainString.mapValues{ try LDAPDistinguishedName(string: $0) }
 		baseDNPerDomain = bdn
 		peopleBaseDNPerDomain = try peopleDNString.flatMap{ peopleDNString -> [String: LDAPDistinguishedName] in
@@ -44,7 +48,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 			return bdn.mapValues{ pdnc + $0 }
 		}
 		
-		precondition(id != "email" && !id.contains(":"))
+		precondition(id != "invalid" && id != "email" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
 		serviceName = name
@@ -52,7 +56,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		connectorSettings = c
 	}
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
 		let domain = "OpenDirectory Config"
 		
 		let proxySettings = try genericConfig.optionalGenericConfig(for: "proxy", domain: domain).flatMap{ proxyGenericConfig -> OpenDirectoryConnector.ProxySettings in
@@ -72,7 +76,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		let pdnString = try genericConfig.optionalString(for: "people_dn", domain: domain)
 		
 		let connectorSettings = OpenDirectoryConnector.Settings(proxySettings: proxySettings, nodeName: nodeName, nodeCredentials: (recordType: kODRecordTypeUsers, username: username, password: password))
-		try self.init(providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString)
+		try self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString)
 	}
 	
 }

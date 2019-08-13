@@ -48,6 +48,10 @@ public class AnyDirectoryAuthenticatorService : AnyDirectoryService, DirectoryAu
 		super.init(object)
 	}
 	
+	public required init(config c: AnyOfficeKitServiceConfig) {
+		fatalError("init(config:) unavailable for a directory authenticator service erasure")
+	}
+	
 	public func authenticate(userId: AnyHashable, challenge: Any, on container: Container) throws -> Future<Bool> {
 		return try box.authenticate(userId: userId, challenge: challenge, on: container)
 	}

@@ -11,6 +11,8 @@ import Foundation
 
 public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 	
+	public var global: GlobalConfig
+	
 	public var providerId: String
 	
 	public var serviceId: String
@@ -19,22 +21,23 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 	public var url: URL
 	public var secret: Data
 	
-	public var supportedServiceIdsForLogicalUserConversion: Set<String>?
 	public var supportsUserCreation: Bool
 	public var supportsUserUpdate: Bool
 	public var supportsUserDeletion: Bool
 	public var supportsPasswordChange: Bool
 	
 	public init(
+		globalConfig: GlobalConfig,
 		providerId pId: String, serviceId id: String, serviceName name: String,
 		url theURL: URL, secret s: Data,
-		supportedServiceIdsForLogicalUserConversion sids: Set<String>?,
 		supportsUserCreation suc: Bool,
 		supportsUserUpdate suu: Bool,
 		supportsUserDeletion sud: Bool,
 		supportsPasswordChange spc: Bool
 	) {
-		precondition(id != "email" && !id.contains(":"))
+		global = globalConfig
+		
+		precondition(id != "invalid" && id != "email" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
 		serviceName = name
@@ -42,37 +45,30 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 		url = theURL
 		secret = s
 		
-		supportedServiceIdsForLogicalUserConversion = sids
 		supportsUserCreation = suc
 		supportsUserUpdate = suu
 		supportsUserDeletion = sud
 		supportsPasswordChange = spc
 	}
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericConfig, pathsRelativeTo baseURL: URL?) throws {
 		let domain = "External Directory Service V1"
-		let url    = try genericConfig.url(for: "url",                                                               domain: domain)
-		let secret = try genericConfig.string(for: "secret",                                                         domain: domain)
-		let sids   = try genericConfig.optionalStringArray(for: "supported_service_ids_for_logical_user_conversion", domain: domain)
-		let suc    = try genericConfig.optionalBool(for: "supportsUserCreation",                                     domain: domain) ?? true
-		let suu    = try genericConfig.optionalBool(for: "supportsUserUpdate",                                       domain: domain) ?? true
-		let sud    = try genericConfig.optionalBool(for: "supportsUserDeletion",                                     domain: domain) ?? true
-		let spc    = try genericConfig.optionalBool(for: "supportsPasswordChange",                                   domain: domain) ?? true
+		let url    = try genericConfig.url(for: "url",                             domain: domain)
+		let secret = try genericConfig.string(for: "secret",                       domain: domain)
+		let suc    = try genericConfig.optionalBool(for: "supportsUserCreation",   domain: domain) ?? true
+		let suu    = try genericConfig.optionalBool(for: "supportsUserUpdate",     domain: domain) ?? true
+		let sud    = try genericConfig.optionalBool(for: "supportsUserDeletion",   domain: domain) ?? true
+		let spc    = try genericConfig.optionalBool(for: "supportsPasswordChange", domain: domain) ?? true
 		
 		self.init(
+			globalConfig: globalConfig,
 			providerId: pId, serviceId: id, serviceName: name,
 			url: url, secret: Data(secret.utf8),
-			supportedServiceIdsForLogicalUserConversion: sids.map{ Set($0) },
 			supportsUserCreation: suc,
 			supportsUserUpdate: suu,
 			supportsUserDeletion: sud,
 			supportsPasswordChange: spc
 		)
-	}
-	
-	public func supportsServiceIdForLogicalUserConversion(_ serviceId: String) -> Bool {
-		guard let l = supportedServiceIdsForLogicalUserConversion else {return true}
-		return l.contains(serviceId)
 	}
 	
 }

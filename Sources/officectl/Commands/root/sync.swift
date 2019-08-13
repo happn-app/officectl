@@ -50,7 +50,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 			return try toDirectory.listAllUsers(on: context.container).map{ try groupUsersById(from: $0) }
 			.map{ (currentDestinationUsers: [AnyHashable: AnyDirectoryUser]) -> ServiceSyncPlan in
 				let directoryBlacklist = syncConfig.blacklistsByServiceId[toDirectory.config.serviceId] ?? []
-				let expectedDestinationUsers = try groupUsersById(from: sourceUsers.compactMap{ try toDirectory.logicalUser(fromUser: $0, in: fromDirectory, hints: [:]) })
+				let expectedDestinationUsers = try groupUsersById(from: sourceUsers.compactMap{ try toDirectory.logicalUser(fromUser: $0, in: fromDirectory) })
 				
 				let currentDestinationUserIds = Set(currentDestinationUsers.keys)
 				let expectedDestinationUserIds = Set(expectedDestinationUsers.keys)

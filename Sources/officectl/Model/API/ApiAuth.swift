@@ -58,8 +58,8 @@ struct ApiAuth : Codable {
 			let sProvider = try container.make(OfficeKitServiceProvider.self)
 			let authService = try sProvider.getDirectoryAuthenticatorService(container: container)
 			
-			let user = try userId.service.logicalUser(fromUserId: userId.id, hints: [:])
-			let authUser = try authService.logicalUser(fromUser: user, in: userId.service, hints: [:])
+			let user = try userId.service.logicalUser(fromUserId: userId.id)
+			let authUser = try authService.logicalUser(fromUser: user, in: userId.service)
 			let authUserId = authService.string(fromUserId: authUser.userId)
 			
 			return try sub == TaggedId(tag: authService.config.serviceId, id: authUserId)

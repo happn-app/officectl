@@ -7,37 +7,31 @@
 
 import Foundation
 
-import OfficeKit
 
 
-
-struct TaggedId {
+public struct TaggedId {
 	
-	let tag: String
-	let id: String
+	public var tag: String
+	public var id: String
 	
-	init(string: String) throws {
+	public init(string: String) {
 		let split = string.split(separator: ":", omittingEmptySubsequences: false)
 		
 		let t = String(split[0]) /* We do not omit empty subsequences, thus we know there will be at min 1 elmt in the resulting array */
 		let i = split.dropFirst().joined(separator: ":")
 		
-		try self.init(tag: t, id: i)
+		self.init(tag: t, id: i)
 	}
 	
-	init(tag t: String, id i: String) throws {
-		guard !i.isEmpty else {
-			throw InvalidArgumentError(message: "The id of a TaggedId cannot be empty.")
-		}
-		guard !t.contains(":") else {
-			throw InvalidArgumentError(message: "The tag of a TaggedId cannot contain a colon.")
-		}
+	public init(tag t: String, id i: String) {
+		if i.isEmpty       {OfficeKitConfig.logger?.warning("Initing a TaggedId with an empty id value.")}
+		if t.contains(":") {OfficeKitConfig.logger?.error("Initing a TaggedId with a tag that contains a colon (tag=\(t)).")}
 		
 		tag = t
 		id = i
 	}
 	
-	var stringValue: String {
+	public var stringValue: String {
 		return tag + ":" + id
 	}
 	
@@ -51,6 +45,21 @@ extension TaggedId : Hashable {
 extension TaggedId : CustomStringConvertible {
 	
 	public var description: String {
+		return stringValue
+	}
+	
+}
+
+
+extension TaggedId : RawRepresentable {
+	
+	public typealias RawValue = String
+	
+	public init?(rawValue: String) {
+		self.init(string: rawValue)
+	}
+	
+	public var rawValue: String {
 		return stringValue
 	}
 	

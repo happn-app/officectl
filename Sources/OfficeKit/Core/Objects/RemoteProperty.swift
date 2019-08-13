@@ -37,9 +37,9 @@ public enum RemoteProperty<T> {
 	
 	public func map<U>(to type: U.Type = U.self, _ callback: (T) throws -> U) rethrows -> RemoteProperty<U> {
 		switch self {
-		case .unsupported:    return .unsupported
-		case .unset:          return .unset
-		case .set(let v): return try .set(callback(v))
+		case .unsupported: return .unsupported
+		case .unset:       return .unset
+		case .set(let v):  return try .set(callback(v))
 		}
 	}
 	

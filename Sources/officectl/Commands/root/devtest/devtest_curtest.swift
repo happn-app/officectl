@@ -25,7 +25,7 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 	#if canImport(DirectoryService) && canImport(OpenDirectory)
 	return context.container.future()
 //	let odService: OpenDirectoryService = try context.container.make(OfficeKitServiceProvider.self).getDirectoryService(id: nil, container: context.container)
-//	return try odService.deleteUser(odService.logicalUser(fromEmail: Email(string: "qtest174127@happn.fr")!, hints: [:]), on: context.container)
+//	return try odService.deleteUser(odService.logicalUser(fromEmail: Email(string: "qtest174127@happn.fr")!), on: context.container)
 	
 //	let serviceConfig: OpenDirectoryServiceConfig = try context.container.make(OfficectlConfig.self).officeKitConfig.getServiceConfig(id: nil)
 //	let authenticator: OpenDirectoryRecordAuthenticator = try context.container.makeSemiSingleton(forKey: serviceConfig.authenticatorSettings)

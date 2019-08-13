@@ -26,7 +26,7 @@ func usersChangePassword(flags f: Flags, arguments args: [String], context: Comm
 	}
 	
 	let userId = try FullUserId(string: userIdStr, container: context.container)
-	let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id, hints: [:]))
+	let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id))
 	
 	let passwordResets = try sProvider
 		.getAllServices(container: context.container)
