@@ -67,6 +67,8 @@ public final class GoogleService : DirectoryService {
 			/* The generic user is from our service! We should be able to translate
 			 * if fully to our User type. */
 			#warning("TODO: Not elegant. We should do better but I’m lazy rn")
+			var genericUser = genericUser
+			genericUser["primaryEmail"] = .set(.string(taggedId.id))
 			let encoded = try JSONEncoder().encode(genericUser)
 			return try JSONDecoder().decode(GoogleUser.self, from: encoded)
 			
