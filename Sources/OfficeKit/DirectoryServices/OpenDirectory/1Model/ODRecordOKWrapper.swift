@@ -25,20 +25,18 @@ public struct ODRecordOKWrapper : DirectoryUser {
 	public init(record r: ODRecord) throws {
 		record = r
 		
-		/* Not great… I’m not even sure the following line doesn’t do blocking IO
-		 * on the OpenDirectory Server! But I don’t really care, it’s
-		 * OpenDirectory; this Framework is an aberration… */
-		#warning("TODO: After reading the doc, it seems that passing a nil attributes list will return what’s in the cache and shouldn’t do IO.")
-		guard let idsStr = try r.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName])[kODAttributeTypeMetaRecordName] as? [String], let idStr = idsStr.first, idsStr.count == 1 else {
+		/* Is this making IO? Who knows… But it shouldn’t be; doc says if
+		 * attributes is nil the method returns what’s in the cache. */
+		let attributes = try r.recordDetails(forAttributes: nil)
+		guard let idStr = (attributes[kODAttributeTypeMetaRecordName] as? [String])?.onlyElement else {
 			throw InvalidArgumentError(message: "Cannot create an ODRecordOKWrapper if I don’t have an id or have too many ids in the record. Record is: \(r)")
 		}
 		userId = try LDAPDistinguishedName(string: idStr)
 		
-		#warning("TODO")
-		persistentId = .unsupported
-		emails = .unsupported
-		firstName = .unsupported
-		lastName = .unsupported
+		persistentId = (attributes[kODAttributeTypeGUID] as? [String])?.onlyElement.flatMap{ UUID($0) }.flatMap{ .set($0) } ?? .unset
+		emails = (try? (attributes[kODAttributeTypeEMailAddress] as? [String])?.compactMap{ try nil2throw(Email(string: $0)) }).flatMap{ .set($0) } ?? .unset
+		firstName = (attributes[kODAttributeTypeFirstName] as? [String])?.onlyElement.flatMap{ .set($0) } ?? .unset
+		lastName = (attributes[kODAttributeTypeLastName] as? [String])?.onlyElement.flatMap{ .set($0) } ?? .unset
 	}
 	
 	public init(id theId: LDAPDistinguishedName, emails e: [Email], firstName fn: String? = nil, lastName ln: String? = nil) {

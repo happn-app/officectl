@@ -23,8 +23,8 @@ final class UserController {
 		
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
 		
-		let user = try openDirectoryService.logicalUser(fromGenericDirectoryUser: input.user, on: req)
-		return try openDirectoryService.createUser(user, on: req).map{ try ApiResponse.data(GenericDirectoryUser(recordWrapper: $0, odService: openDirectoryService)) }
+		let user = try openDirectoryService.logicalUser(fromGenericUser: input.user)
+		return try openDirectoryService.createUser(user, on: req).map{ try ApiResponse.data(openDirectoryService.genericUser(fromUser: $0)) }
 	}
 	
 	func updateUser(_ req: Request) throws -> Future<View> {
@@ -42,13 +42,13 @@ final class UserController {
 	func changePassword(_ req: Request) throws -> Future<ApiResponse<String>> {
 		/* The data we should have in input. */
 		struct Request : Decodable {
-			var userId: JSON
+			var userId: TaggedId
 			var newPassword: String
 		}
 		let input = try req.content.syncDecode(Request.self)
 		
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
-		let user = try openDirectoryService.logicalUser(fromJSONUserId: input.userId, on: req)
+		let user = try openDirectoryService.logicalUser(fromGenericUser: GenericDirectoryUser(userId: input.userId))
 		
 		let ret = req.eventLoop.newPromise(ApiResponse<String>.self)
 		let resetPasswordAction = try openDirectoryService.changePasswordAction(for: user, on: req) as! ResetOpenDirectoryPasswordAction

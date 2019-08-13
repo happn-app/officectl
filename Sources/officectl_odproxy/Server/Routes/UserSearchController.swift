@@ -30,7 +30,7 @@ final class UserSearchController {
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
 		return try openDirectoryService.existingUser(fromPersistentId: pId, propertiesToFetch: propertiesToFetch, on: req).map{ user in
 			/* Let’s convert the OpenDirectory user to a GenericDirectoryUser */
-			return try ApiResponse.data(user.flatMap{ try GenericDirectoryUser(recordWrapper: $0, odService: openDirectoryService) })
+			return try ApiResponse.data(user.flatMap{ try openDirectoryService.genericUser(fromUser: $0) })
 		}
 	}
 	
@@ -44,7 +44,7 @@ final class UserSearchController {
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
 		return try openDirectoryService.listAllUsers(on: req).map{ users in
 			/* Let’s convert the OpenDirectory user to a GenericDirectoryUser */
-			return try ApiResponse.data(users.map{ try GenericDirectoryUser(recordWrapper: $0, odService: openDirectoryService) })
+			return try ApiResponse.data(users.map{ try openDirectoryService.genericUser(fromUser: $0) })
 		}
 	}
 	

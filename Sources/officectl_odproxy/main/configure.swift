@@ -23,6 +23,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	
 	let serverConfigYaml = try conf.genericConfig(for: "server", domain: "Global config")
 	let secret = try serverConfigYaml.string(for: "secret", domain: "Server Config")
+	let globalConf = try GlobalConfig(genericConfig: conf, pathsRelativeTo: url)
 	
 	let signatureURLPathPrefixTransform: VerifySignatureMiddleware.SignatureURLPathPrefixTransform?
 	if let transformObject = try serverConfigYaml.optionalGenericConfig(for: "signature_url_path_prefix_transform", domain: "Server Config") {
@@ -49,7 +50,7 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	/* Register the OpenDirectory config */
 	do {
 		let openDirectoryServiceConfigYaml = try conf.genericConfig(for: "open_directory_config", domain: "Global config")
-		let openDirectoryServiceConfig = try OpenDirectoryServiceConfig(providerId: OpenDirectoryService.providerId, serviceId: "_internal_od_", serviceName: "Internal Open Directory Service", genericConfig: openDirectoryServiceConfigYaml, pathsRelativeTo: url)
+		let openDirectoryServiceConfig = try OpenDirectoryServiceConfig(globalConfig: globalConf, providerId: OpenDirectoryService.providerId, serviceId: "_internal_od_", serviceName: "Internal Open Directory Service", genericConfig: openDirectoryServiceConfigYaml, pathsRelativeTo: url)
 		let openDirectoryService = OpenDirectoryService(config: openDirectoryServiceConfig)
 		services.register(openDirectoryService)
 	}
