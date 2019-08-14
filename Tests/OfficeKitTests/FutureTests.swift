@@ -27,9 +27,9 @@ class FutureTests : XCTestCase {
 		let f3 = futureSucceeding(in: .milliseconds(750), id: 3, eventLoop: eventLoop)
 		let r = try EventLoopFuture.waitAll([f1, f2, f3], eventLoop: eventLoop).wait()
 		XCTAssertEqual(r.count, 3)
-		XCTAssertEqual(r[0].result, 1)
-		XCTAssertNotNil(r[1].error)
-		XCTAssertEqual(r[2].result, 3)
+		XCTAssertEqual(r[0].successValue, 1)
+		XCTAssertNotNil(r[1].failureValue)
+		XCTAssertEqual(r[2].successValue, 3)
 	}
 	
 	private func futureSucceeding(in delay: DispatchTimeInterval, id: Int, eventLoop: EventLoop) -> EventLoopFuture<Int> {

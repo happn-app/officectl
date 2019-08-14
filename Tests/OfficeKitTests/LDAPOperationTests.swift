@@ -21,15 +21,15 @@ class LDAPOperationTests : XCTestCase {
 	func test1_LDAPObjectCreation() throws {
 		let connector = try getConnectedLDAPConnector()
 		
-		let op1 = CreateLDAPObjectsOperation(users: [LDAPInetOrgPerson(dn: LDAPDistinguishedName(uid: "test1", baseDN: baseDN).stringValue, sn: ["1"], cn: ["test 1"])], connector: connector)
+		let op1 = CreateLDAPObjectsOperation(users: [LDAPInetOrgPerson(dn: LDAPDistinguishedName(uid: "test1", baseDN: baseDN), sn: ["1"], cn: ["test 1"])], connector: connector)
 		try runOperationSync(op1)
 		XCTAssertEqual(try op1.resultOrThrow().count, 1)
 		XCTAssertEqual(op1.errors.count, 1)
 		XCTAssertNil(op1.errors[0])
 		
-		let op2 = CreateLDAPObjectsOperation(users: [LDAPInetOrgPerson(dn: LDAPDistinguishedName(uid: "test2", baseDN: baseDN).stringValue, sn: ["2"], cn: ["test 2"]), LDAPInetOrgPerson(dn: LDAPDistinguishedName(uid: "test1", baseDN: baseDN).stringValue, sn: ["1"], cn: ["test 1"])], connector: connector)
+		let op2 = CreateLDAPObjectsOperation(users: [LDAPInetOrgPerson(dn: LDAPDistinguishedName(uid: "test2", baseDN: baseDN), sn: ["2"], cn: ["test 2"]), LDAPInetOrgPerson(dn: LDAPDistinguishedName(uid: "test1", baseDN: baseDN), sn: ["1"], cn: ["test 1"])], connector: connector)
 		try runOperationSync(op2)
-		XCTAssertEqual(try op2.resultOrThrow().count, 1)
+		XCTAssertEqual(try op2.resultOrThrow().count, 2)
 		XCTAssertEqual(op2.errors.count, 2)
 		XCTAssertNil(op2.errors[0])
 		XCTAssertNotNil(op2.errors[1])
@@ -42,7 +42,7 @@ class LDAPOperationTests : XCTestCase {
 		try runOperationSync(op1)
 		let objects1 = try op1.resultOrThrow().results
 		XCTAssertEqual(objects1.count, 1)
-		XCTAssertEqual(objects1[0].parsedDistinguishedName, LDAPDistinguishedName(uid: "test1", baseDN: baseDN))
+		XCTAssertEqual(objects1[0].distinguishedName, LDAPDistinguishedName(uid: "test1", baseDN: baseDN))
 		XCTAssertEqual(objects1[0].attributes["sn"], [Data("1".utf8)])
 		XCTAssertNil(objects1[0].attributes["cn"])
 		
@@ -59,8 +59,8 @@ class LDAPOperationTests : XCTestCase {
 		/* We use the semi-singleton init, but purposefully not init via a
 		 * semi-singleton store. */
 		let connector = try LDAPConnector(key: ldapSettings)
-		connector.connect(scope: (), handler: { _, error in
-			expectationObject.error = error
+		connector.connect(scope: (), handler: { result in
+			expectationObject.error = result.failureValue
 		})
 		XCTWaiter().wait(for: [expectation], timeout: 3)
 		
