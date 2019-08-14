@@ -14,16 +14,16 @@ import Vapor
 
 final class UserController {
 	
-	func createUser(_ req: Request) throws -> Future<ApiResponse<GenericDirectoryUser>> {
+	func createUser(_ req: Request) throws -> Future<ApiResponse<DirectoryUserWrapper>> {
 		struct Request : Decodable {
-			var user: GenericDirectoryUser
+			var user: DirectoryUserWrapper
 		}
 		let input = try req.content.syncDecode(Request.self)
 		
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
 		
-		let user = try openDirectoryService.logicalUser(fromGenericUser: input.user)
-		return try openDirectoryService.createUser(user, on: req).map{ try ApiResponse.data(openDirectoryService.genericUser(fromUser: $0)) }
+		let user = try openDirectoryService.logicalUser(fromWrappedUser: input.user)
+		return try openDirectoryService.createUser(user, on: req).map{ try ApiResponse.data(openDirectoryService.wrappedUser(fromUser: $0)) }
 	}
 	
 	func updateUser(_ req: Request) throws -> Future<View> {
@@ -47,7 +47,7 @@ final class UserController {
 		let input = try req.content.syncDecode(Request.self)
 		
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
-		let user = try openDirectoryService.logicalUser(fromGenericUser: GenericDirectoryUser(userId: input.userId))
+		let user = try openDirectoryService.logicalUser(fromWrappedUser: DirectoryUserWrapper(userId: input.userId))
 		
 		let ret = req.eventLoop.newPromise(ApiResponse<String>.self)
 		let resetPasswordAction = try openDirectoryService.changePasswordAction(for: user, on: req) as! ResetOpenDirectoryPasswordAction

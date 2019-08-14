@@ -8,6 +8,7 @@
 import Foundation
 
 import Async
+import GenericJSON
 import Service
 
 
@@ -32,12 +33,18 @@ public protocol DirectoryService : class {
 	func string(fromUserId userId: UserType.UserIdType) -> String
 	func userId(fromString string: String) throws -> UserType.UserIdType
 	
-	/**
-	Converts the given user to a GenericDirectoryUser.
+	func string(fromPersistentId pId: UserType.PersistentIdType) -> String
+	func persistentId(fromString string: String) throws -> UserType.PersistentIdType
 	
-	This representation can be used to create native users for other services. It
-	should contain everything it can from the original user. */
-	func genericUser(fromUser user: UserType) throws -> GenericDirectoryUser
+	/**
+	Converts the given user to a JSON (generic codable storage representation).
+	
+	The representation is usually used to store as an underlying user in a
+	DirectoryUserWrapper. It should contain as much as possible from the original
+	user.
+	
+	Note: We might want to make this a non-throwable func… */
+	func json(fromUser user: UserType) throws -> JSON
 	
 	/** If possible, convert the given generic user to a user with as much
 	information as possible in your directory.
@@ -45,7 +52,7 @@ public protocol DirectoryService : class {
 	The conversion should not fetch anything from the directory. It is simply a
 	representation of how the given id _should_ be created in the directory if it
 	were to be created in it. */
-	func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> UserType
+	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> UserType
 	
 	/** Fetch and return the _only_ user matching the given id.
 	
@@ -83,31 +90,45 @@ extension DirectoryService {
 		return TaggedId(tag: config.serviceId, id: string(fromUserId: userId))
 	}
 	
-	public func genericUser(fromUserId userId: UserType.UserIdType) -> GenericDirectoryUser {
-		return GenericDirectoryUser(userId: taggedId(fromUserId: userId))
+	public func taggedId(fromPersistentId pId: UserType.PersistentIdType) -> TaggedId {
+		return TaggedId(tag: config.serviceId, id: string(fromPersistentId: pId))
+	}
+	
+	public func wrappedUser(fromUser user: UserType) throws -> DirectoryUserWrapper {
+		var ret = DirectoryUserWrapper(
+			userId: taggedId(fromUserId: user.userId),
+			persistentId: user.persistentId.value.flatMap{ taggedId(fromPersistentId: $0) },
+			underlyingUser: try json(fromUser: user)
+		)
+		ret.copyStandardNonIdProperties(fromUser: user)
+		return ret
+	}
+	
+	public func wrappedUser(fromUserId userId: UserType.UserIdType) -> DirectoryUserWrapper {
+		return DirectoryUserWrapper(userId: taggedId(fromUserId: userId))
 	}
 	
 	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any?] = [:]) throws -> UserType {
-		var genericUser = GenericDirectoryUser(email: email)
+		var genericUser = DirectoryUserWrapper(email: email)
 		genericUser.applyHints(hints)
-		return try logicalUser(fromGenericUser: genericUser)
+		return try logicalUser(fromWrappedUser: genericUser)
 	}
 	
 	public func logicalUser(fromUserId userId: UserType.UserIdType, hints: [DirectoryUserProperty: Any?] = [:]) throws -> UserType {
-		var user = genericUser(fromUserId: userId)
+		var user = wrappedUser(fromUserId: userId)
 		user.applyHints(hints)
-		return try logicalUser(fromGenericUser: user)
+		return try logicalUser(fromWrappedUser: user)
 	}
 	
 	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any?] = [:]) throws -> UserType {
-		var genericUser = try service.genericUser(fromUser: user)
+		var genericUser = try service.wrappedUser(fromUser: user)
 		genericUser.applyHints(hints)
-		return try logicalUser(fromGenericUser: genericUser)
+		return try logicalUser(fromWrappedUser: genericUser)
 	}
 	
 	public func existingUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?> {
-		let foreignGenericUser = try service.genericUser(fromUser: user)
-		let nativeLogicalUser = try logicalUser(fromGenericUser: foreignGenericUser)
+		let foreignGenericUser = try service.wrappedUser(fromUser: user)
+		let nativeLogicalUser = try logicalUser(fromWrappedUser: foreignGenericUser)
 		return try existingUser(fromUserId: nativeLogicalUser.userId, propertiesToFetch: propertiesToFetch, on: container)
 	}
 	

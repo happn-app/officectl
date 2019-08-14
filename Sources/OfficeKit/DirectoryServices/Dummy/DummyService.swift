@@ -7,6 +7,7 @@
 
 import Foundation
 
+import GenericJSON
 import GenericStorage
 import Service
 
@@ -24,32 +25,25 @@ public struct DummyServiceConfig : OfficeKitServiceConfig {
 	}
 	
 	private init() {
-		providerId = ""
-		serviceId = ""
-		serviceName = ""
+		fatalError()
 	}
 	
 }
 
 public struct DummyServiceUser : DirectoryUser {
 	
-	public typealias UserIdType = Int
-	public typealias PersistentIdType = Int
+	public typealias UserIdType = Never
+	public typealias PersistentIdType = Never
 	
-	public var userId: Int
-	public var persistentId: RemoteProperty<Int>
+	public var userId: Never
+	public var persistentId: RemoteProperty<Never>
 	public var emails: RemoteProperty<[Email]>
 	public var firstName: RemoteProperty<String?>
 	public var lastName: RemoteProperty<String?>
 	public var nickname: RemoteProperty<String?>
 	
 	private init() {
-		userId = 0
-		persistentId = .unsupported
-		emails = .unsupported
-		firstName = .unsupported
-		lastName = .unsupported
-		nickname = .unsupported
+		fatalError()
 	}
 	
 }
@@ -71,29 +65,32 @@ public final class DummyService : DirectoryService {
 		return "<ERROR>"
 	}
 	
-	public func string(fromUserId userId: Int) -> String {
-		/* Purposefully invalid id */
-		return ""
+	public func string(fromUserId userId: Never) -> String {
 	}
 	
-	public func userId(fromString string: String) throws -> Int {
+	public func userId(fromString string: String) throws -> Never {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
-	public func genericUser(fromUser user: DummyServiceUser) throws -> GenericDirectoryUser {
+	public func string(fromPersistentId pId: Never) -> String {
+	}
+	
+	public func persistentId(fromString string: String) throws -> Never {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
-	public func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> DummyServiceUser {
+	public func json(fromUser user: DummyServiceUser) throws -> JSON {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
-	public func existingUser(fromPersistentId pId: Int, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser?> {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> DummyServiceUser {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
-	public func existingUser(fromUserId dn: Int, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser?> {
-		throw NotAvailableOnThisPlatformError()
+	public func existingUser(fromPersistentId pId: Never, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser?> {
+	}
+	
+	public func existingUser(fromUserId dn: Never, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser?> {
 	}
 	
 	public func listAllUsers(on container: Container) throws -> Future<[DummyServiceUser]> {

@@ -167,8 +167,6 @@ public struct GoogleUser : Hashable, Codable {
 		case suspended, hashFunction, password, changePasswordAtNextLogin
 	}
 	
-	let objectCreationDate = Date()
-	
 }
 
 extension GoogleUser : DirectoryUser {

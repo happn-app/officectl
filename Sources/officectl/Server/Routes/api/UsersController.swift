@@ -140,13 +140,13 @@ class UsersController {
 						guard !treatedServiceAndUserIds.contains(serviceAndUserId) else {return nil}
 						treatedServiceAndUserIds.insert(serviceAndUserId)
 						
-						var res = try [taggedUser.service.config.serviceId: taggedUser.service.genericUser(fromUser: taggedUser.user).json()]
+						var res = try [taggedUser.service.config.serviceId: taggedUser.service.wrappedUser(fromUser: taggedUser.user).json()]
 						for (linkedServiceId, linkedUser) in taggedUser.linkedUserByServiceId {
 							let linkedServiceAndUserId = ServiceAndUserId(serviceId: linkedServiceId, userId: linkedUser.user.userId)
 							guard !treatedServiceAndUserIds.contains(linkedServiceAndUserId) else {
 								throw InternalError(message: "Got already treated linked user! \(linkedServiceAndUserId) for \(serviceAndUserId)")
 							}
-							res[linkedServiceId] = try linkedUser.service.genericUser(fromUser: linkedUser.user).json()
+							res[linkedServiceId] = try linkedUser.service.wrappedUser(fromUser: linkedUser.user).json()
 							treatedServiceAndUserIds.insert(linkedServiceAndUserId)
 						}
 						for sId in validServiceIds {
@@ -210,7 +210,7 @@ class UsersController {
 			var serviceIdToUser = [String: ApiResponse<JSON?>]()
 			for (idx, userResult) in userResults.enumerated() {
 				let service = allServices[idx]
-				serviceIdToUser[service.config.serviceId] = ApiResponse(result: userResult.flatMap{ curUser in Result{ try curUser.flatMap{ try service.genericUser(fromUser: $0).json() } } }, environment: container.environment)
+				serviceIdToUser[service.config.serviceId] = ApiResponse(result: userResult.flatMap{ curUser in Result{ try curUser.flatMap{ try service.wrappedUser(fromUser: $0).json() } } }, environment: container.environment)
 			}
 			return ApiResponse.data(ApiUserSearchResult(request: userId.taggedId, results: serviceIdToUser))
 		}

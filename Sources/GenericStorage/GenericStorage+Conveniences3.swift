@@ -32,8 +32,8 @@ public extension GenericStorage {
 		}
 		return d
 	}
-	func optionalDictionaryOfStrings(forKey key: String, currentKeyPath: [String] = []) throws -> [String: String]? {
-		guard let s = try optionalNonNullStorage(forKey: key, currentKeyPath: currentKeyPath) else {
+	func optionalDictionaryOfStrings(forKey key: String, errorOnMissingKey: Bool = true, currentKeyPath: [String] = []) throws -> [String: String]? {
+		guard let s = try optionalNonNullStorage(forKey: key, errorOnMissingKey: errorOnMissingKey, currentKeyPath: currentKeyPath) else {
 			return nil
 		}
 		return try s.dictionaryOfStringsValue(currentKeyPath: currentKeyPath + [key])

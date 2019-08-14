@@ -34,8 +34,8 @@ final class WebPasswordResetController {
 		let officeKitServiceProvider = try req.make(OfficeKitServiceProvider.self)
 		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService(container: req)
 		
-		let genericUser = GenericDirectoryUser(email: email)
-		let user = try authService.logicalUser(fromGenericUser: genericUser)
+		let genericUser = DirectoryUserWrapper(email: email)
+		let user = try authService.logicalUser(fromWrappedUser: genericUser)
 		return try authService.authenticate(userId: user.userId, challenge: resetPasswordData.oldPass, on: req)
 		.map{ authSuccess -> Void in
 			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}

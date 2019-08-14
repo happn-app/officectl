@@ -8,6 +8,7 @@
 import Foundation
 
 import Async
+import GenericJSON
 import SemiSingleton
 import Service
 
@@ -38,11 +39,19 @@ public final class GitHubService : DirectoryService {
 		return string
 	}
 	
-	public func genericUser(fromUser user: GitHubUser) throws -> GenericDirectoryUser {
+	public func string(fromPersistentId pId: String) -> String {
+		return pId
+	}
+	
+	public func persistentId(fromString string: String) throws -> String {
+		return string
+	}
+	
+	public func json(fromUser user: GitHubUser) throws -> JSON {
 		throw NotImplementedError()
 	}
 	
-	public func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> GitHubUser {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> GitHubUser {
 		throw NotImplementedError()
 	}
 	

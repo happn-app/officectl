@@ -49,7 +49,6 @@ extension ApiResponse : ResponseEncodable {
 	func syncEncode(for req: Request) throws -> Response {
 		let encoder = JSONEncoder()
 		encoder.dateEncodingStrategy = .iso8601
-		encoder.keyEncodingStrategy = .convertToSnakeCase
 		return try req.response(encoder.encode(self), as: .json)
 	}
 	

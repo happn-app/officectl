@@ -56,15 +56,28 @@ public final class OpenDirectoryService : DirectoryService {
 		return try LDAPDistinguishedName(string: string)
 	}
 	
-	public func genericUser(fromUser user: ODRecordOKWrapper) throws -> GenericDirectoryUser {
+	public func string(fromPersistentId pId: UUID) -> String {
+		return pId.uuidString
+	}
+	
+	public func persistentId(fromString string: String) throws -> UUID {
+		guard let uuid = UUID(uuidString: string) else {
+			throw InvalidArgumentError(message: "Invalid persistent id \(string)")
+		}
+		return uuid
+	}
+	
+	public func json(fromUser user: ODRecordOKWrapper) throws -> JSON {
 		var ret = ["dn": JSON.string(user.userId.stringValue)]
 		if let record = user.record {
 			/* Is this making IO? Who knows… But it shouldn’t be; doc says if
 			 * attributes is nil the method returns what’s in the cache. */
 			let attributes = try record.recordDetails(forAttributes: nil)
 			for (key, val) in attributes {
-				#warning("TODO: Log the skipped key")
-				guard let keyStr = key as? String else {continue}
+				guard let keyStr = key as? String else {
+					OfficeKitConfig.logger?.warning("Skipping conversion of a key in an OpenDirectory Object because it’s not a string: \(key)")
+					continue
+				}
 				guard keyStr != "dn" else {continue}
 				switch val {
 				case let str       as  String:  ret[keyStr] =                          JSON.object(["str": JSON.string(str)])
@@ -72,31 +85,27 @@ public final class OpenDirectoryService : DirectoryService {
 				case let data      as  Data:    ret[keyStr] =                           JSON.object(["dta": JSON.string(data.base64EncodedString())])
 				case let dataArray as [Data]:   ret[keyStr] = JSON.array(dataArray.map{ JSON.object(["dta": JSON.string($0.base64EncodedString())]) })
 				default:
-					#warning("TODO: Log the skipped key")
+					OfficeKitConfig.logger?.warning("Skipping conversion of a key \(keyStr) in an OpenDirectory Object because the value is not of a known type: \(val)")
 					continue
 				}
 			}
 		}
-		let json = JSON.object(ret)
-		
-		var res = try GenericDirectoryUser(json: json, forcedUserId: taggedId(fromUserId: user.userId))
-		res.takeStandardNonIdProperties(from: user)
-		return res
+		return .object(ret)
 	}
 	
-	public func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> ODRecordOKWrapper {
-		let taggedId = genericUser.userId
-		if taggedId.tag == config.serviceId {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> ODRecordOKWrapper {
+		let taggedId = userWrapper.userId
+		if taggedId.tag == config.serviceId/*, let underlying = userWrapper.underlyingUser*/ {
 			/* The generic user is from our service! We should be able to translate
 			 * if fully to our User type. */
 			guard let dn = try? LDAPDistinguishedName(string: taggedId.id) else {
 				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
 			}
-			#warning("TODO: The rest of the properties.")
+			#warning("TODO: The rest of the properties (from the underlying user).")
 			return ODRecordOKWrapper(id: dn, emails: [])
 			
 		} else {
-			guard let email = genericUser.mainEmail(domainMap: config.global.domainAliases) else {
+			guard let email = userWrapper.mainEmail(domainMap: config.global.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create an LDAPInetOrgPersonWithObject")
 			}
 			

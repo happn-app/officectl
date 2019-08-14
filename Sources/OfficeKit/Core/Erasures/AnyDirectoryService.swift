@@ -8,6 +8,7 @@
 import Foundation
 
 import Async
+import GenericJSON
 import Service
 
 
@@ -21,9 +22,12 @@ private protocol DirectoryServiceBox {
 	func string(fromUserId userId: AnyHashable) -> String
 	func userId(fromString string: String) throws -> AnyHashable
 	
-	func genericUser(from user: AnyDirectoryUser) throws -> GenericDirectoryUser
-	func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> AnyDirectoryUser
+	func string(fromPersistentId pId: AnyHashable) -> String
+	func persistentId(fromString string: String) throws -> AnyHashable
 	
+	func json(fromUser user: AnyDirectoryUser) throws -> JSON
+	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser
+
 	func existingUser(fromPersistentId pId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
 	func existingUser(fromUserId uId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
 	
@@ -72,15 +76,29 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		return try AnyHashable(originalDirectory.userId(fromString: string))
 	}
 	
-	func genericUser(from user: AnyDirectoryUser) throws -> GenericDirectoryUser {
-		guard let u: Base.UserType = user.unboxed() else {
-			throw InvalidArgumentError(message: "Got invalid user (\(user)) from which to create a GenericUser.")
+	func string(fromPersistentId pId: AnyHashable) -> String {
+		guard let typedId = pId as? Base.UserType.PersistentIdType else {
+			OfficeKitConfig.logger?.error("Asked to convert a persistend id to a string for a persistent id of unknown type in erasure: \(pId)")
+			/* The source user type is unknown, so we return a purposefully invalid
+			 * id. This is not ideal… */
+			return ""
 		}
-		return try originalDirectory.genericUser(fromUser: u)
+		return originalDirectory.string(fromPersistentId: typedId)
 	}
 	
-	func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> AnyDirectoryUser {
-		return try originalDirectory.logicalUser(fromGenericUser: genericUser).erased()
+	func persistentId(fromString string: String) throws -> AnyHashable {
+		return try AnyHashable(originalDirectory.persistentId(fromString: string))
+	}
+	
+	func json(fromUser user: AnyDirectoryUser) throws -> JSON {
+		guard let u: Base.UserType = user.unboxed() else {
+			throw InvalidArgumentError(message: "Got invalid user (\(user)) from which to create a JSON.")
+		}
+		return try originalDirectory.json(fromUser: u)
+	}
+	
+	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser {
+		return try originalDirectory.logicalUser(fromWrappedUser: userWrapper).erased()
 	}
 	
 	func existingUser(fromPersistentId pId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
@@ -169,12 +187,20 @@ public class AnyDirectoryService : DirectoryService {
 		return try box.userId(fromString: string)
 	}
 	
-	public func genericUser(fromUser user: AnyDirectoryUser) throws -> GenericDirectoryUser {
-		return try box.genericUser(from: user)
+	public func string(fromPersistentId pId: AnyHashable) -> String {
+		return box.string(fromPersistentId: pId)
 	}
 	
-	public func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> AnyDirectoryUser {
-		return try box.logicalUser(fromGenericUser: genericUser)
+	public func persistentId(fromString string: String) throws -> AnyHashable {
+		return try box.persistentId(fromString: string)
+	}
+	
+	public func json(fromUser user: AnyDirectoryUser) throws -> JSON {
+		return try box.json(fromUser: user)
+	}
+	
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser {
+		return try box.logicalUser(fromWrappedUser: userWrapper)
 	}
 	
 	public func existingUser(fromPersistentId pId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {

@@ -54,26 +54,38 @@ public final class GoogleService : DirectoryService {
 		return e
 	}
 	
-	public func genericUser(fromUser user: GoogleUser) throws -> GenericDirectoryUser {
-		let json = try JSON(encodable: user)
-		var res = try GenericDirectoryUser(json: json, forcedUserId: taggedId(fromUserId: user.userId))
-		res.takeStandardNonIdProperties(from: user)
-		return res
+	public func string(fromPersistentId pId: String) -> String {
+		return pId
 	}
 	
-	public func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> GoogleUser {
-		let taggedId = genericUser.userId
-		if taggedId.tag == config.serviceId {
+	public func persistentId(fromString string: String) throws -> String {
+		return string
+	}
+	
+	public func json(fromUser user: GoogleUser) throws -> JSON {
+		/* Not ideal… */
+		return try JSON(encodable: user)
+	}
+	
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> GoogleUser {
+		let taggedId = userWrapper.userId
+		if taggedId.tag == config.serviceId, let underlying = userWrapper.underlyingUser {
 			/* The generic user is from our service! We should be able to translate
 			 * if fully to our User type. */
 			#warning("TODO: Not elegant. We should do better but I’m lazy rn")
-			var genericUser = genericUser
-			genericUser["primaryEmail"] = .set(.string(taggedId.id))
-			let encoded = try JSONEncoder().encode(genericUser)
+			let encoded = try JSONEncoder().encode(underlying)
 			return try JSONDecoder().decode(GoogleUser.self, from: encoded)
 			
+		} else if taggedId.tag == config.serviceId {
+			/* The generic user id from our service, but there is no underlying
+			 * user… Let’s create a GoogleUser from the user id. */
+			guard let email = Email(string: taggedId.id) else {
+				throw InvalidArgumentError(message: "Got an invalid id for a GoogleService user.")
+			}
+			return GoogleUser(email: email)
+			
 		} else {
-			guard let email = genericUser.mainEmail(domainMap: config.global.domainAliases) else {
+			guard let email = userWrapper.mainEmail(domainMap: config.global.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create a GoogleUser")
 			}
 			let res = GoogleUser(email: email)

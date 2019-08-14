@@ -19,9 +19,10 @@ public extension GenericStorage {
 		return s
 	}
 	
-	func optionalNonNullStorage(forKey key: String, currentKeyPath: [String] = []) throws -> GenericStorage? {
+	func optionalNonNullStorage(forKey key: String, errorOnMissingKey: Bool = true, currentKeyPath: [String] = []) throws -> GenericStorage? {
 		guard let s = storage(forKey: key) else {
-			throw Error.missingValue(keyPath: currentKeyPath + [key])
+			if errorOnMissingKey {throw Error.missingValue(keyPath: currentKeyPath + [key])}
+			else                 {return nil}
 		}
 		guard !s.isNull else {
 			return nil
@@ -29,9 +30,10 @@ public extension GenericStorage {
 		return s
 	}
 	
-	func null(forKey key: String, currentKeyPath: [String] = []) throws {
+	func null(forKey key: String, errorOnMissingKey: Bool = true, currentKeyPath: [String] = []) throws {
 		guard let s = storage(forKey: key) else {
-			throw Error.missingValue(keyPath: currentKeyPath + [key])
+			if errorOnMissingKey {throw Error.missingValue(keyPath: currentKeyPath + [key])}
+			else                 {return}
 		}
 		guard s.isNull else {
 			throw Error.unexpectedType(actualValue: s, keyPath: currentKeyPath + [key])
@@ -44,8 +46,8 @@ public extension GenericStorage {
 		}
 		return b
 	}
-	func optionalBool(forKey key: String, currentKeyPath: [String] = []) throws -> Bool? {
-		guard let s = try optionalNonNullStorage(forKey: key, currentKeyPath: currentKeyPath) else {
+	func optionalBool(forKey key: String, errorOnMissingKey: Bool = true, currentKeyPath: [String] = []) throws -> Bool? {
+		guard let s = try optionalNonNullStorage(forKey: key, errorOnMissingKey: errorOnMissingKey, currentKeyPath: currentKeyPath) else {
 			return nil
 		}
 		guard let b = s.boolValue else {
@@ -60,8 +62,8 @@ public extension GenericStorage {
 		}
 		return i
 	}
-	func optionalInt(forKey key: String, currentKeyPath: [String] = []) throws -> Int? {
-		guard let s = try optionalNonNullStorage(forKey: key, currentKeyPath: currentKeyPath) else {
+	func optionalInt(forKey key: String, errorOnMissingKey: Bool = true, currentKeyPath: [String] = []) throws -> Int? {
+		guard let s = try optionalNonNullStorage(forKey: key, errorOnMissingKey: errorOnMissingKey, currentKeyPath: currentKeyPath) else {
 			return nil
 		}
 		guard let i = s.intValue else {
@@ -76,8 +78,8 @@ public extension GenericStorage {
 		}
 		return f
 	}
-	func optionalFloat(forKey key: String, currentKeyPath: [String] = []) throws -> Float? {
-		guard let s = try optionalNonNullStorage(forKey: key, currentKeyPath: currentKeyPath) else {
+	func optionalFloat(forKey key: String, errorOnMissingKey: Bool = true, currentKeyPath: [String] = []) throws -> Float? {
+		guard let s = try optionalNonNullStorage(forKey: key, errorOnMissingKey: errorOnMissingKey, currentKeyPath: currentKeyPath) else {
 			return nil
 		}
 		guard let f = s.floatValue else {
@@ -92,8 +94,8 @@ public extension GenericStorage {
 		}
 		return d
 	}
-	func optionalDouble(forKey key: String, currentKeyPath: [String] = []) throws -> Double? {
-		guard let s = try optionalNonNullStorage(forKey: key, currentKeyPath: currentKeyPath) else {
+	func optionalDouble(forKey key: String, errorOnMissingKey: Bool = true, currentKeyPath: [String] = []) throws -> Double? {
+		guard let s = try optionalNonNullStorage(forKey: key, errorOnMissingKey: errorOnMissingKey, currentKeyPath: currentKeyPath) else {
 			return nil
 		}
 		guard let d = s.doubleValue else {
@@ -108,8 +110,8 @@ public extension GenericStorage {
 		}
 		return s
 	}
-	func optionalString(forKey key: String, currentKeyPath: [String] = []) throws -> String? {
-		guard let s = try optionalNonNullStorage(forKey: key, currentKeyPath: currentKeyPath) else {
+	func optionalString(forKey key: String, errorOnMissingKey: Bool = true, currentKeyPath: [String] = []) throws -> String? {
+		guard let s = try optionalNonNullStorage(forKey: key, errorOnMissingKey: errorOnMissingKey, currentKeyPath: currentKeyPath) else {
 			return nil
 		}
 		guard let str = s.stringValue else {
@@ -124,8 +126,8 @@ public extension GenericStorage {
 		}
 		return u
 	}
-	func optionalURL(forKey key: String, currentKeyPath: [String] = []) throws -> URL? {
-		guard let s = try optionalNonNullStorage(forKey: key, currentKeyPath: currentKeyPath) else {
+	func optionalURL(forKey key: String, errorOnMissingKey: Bool = true, currentKeyPath: [String] = []) throws -> URL? {
+		guard let s = try optionalNonNullStorage(forKey: key, errorOnMissingKey: errorOnMissingKey, currentKeyPath: currentKeyPath) else {
 			return nil
 		}
 		guard let u = s.urlValue else {
@@ -140,8 +142,8 @@ public extension GenericStorage {
 		}
 		return d
 	}
-	func optionalData(forKey key: String, currentKeyPath: [String] = []) throws -> Data? {
-		guard let s = try optionalNonNullStorage(forKey: key, currentKeyPath: currentKeyPath) else {
+	func optionalData(forKey key: String, errorOnMissingKey: Bool = true, currentKeyPath: [String] = []) throws -> Data? {
+		guard let s = try optionalNonNullStorage(forKey: key, errorOnMissingKey: errorOnMissingKey, currentKeyPath: currentKeyPath) else {
 			return nil
 		}
 		guard let d = s.dataValue else {
@@ -156,8 +158,8 @@ public extension GenericStorage {
 		}
 		return a
 	}
-	func optionalArray(forKey key: String, currentKeyPath: [String] = []) throws -> [GenericStorage]? {
-		guard let s = try optionalNonNullStorage(forKey: key, currentKeyPath: currentKeyPath) else {
+	func optionalArray(forKey key: String, errorOnMissingKey: Bool = true, currentKeyPath: [String] = []) throws -> [GenericStorage]? {
+		guard let s = try optionalNonNullStorage(forKey: key, errorOnMissingKey: errorOnMissingKey, currentKeyPath: currentKeyPath) else {
 			return nil
 		}
 		guard let a = s.arrayValue else {
@@ -172,8 +174,8 @@ public extension GenericStorage {
 		}
 		return d
 	}
-	func optionalDictionary(forKey key: String, currentKeyPath: [String] = []) throws -> [String: GenericStorage]? {
-		guard let s = try optionalNonNullStorage(forKey: key, currentKeyPath: currentKeyPath) else {
+	func optionalDictionary(forKey key: String, errorOnMissingKey: Bool = true, currentKeyPath: [String] = []) throws -> [String: GenericStorage]? {
+		guard let s = try optionalNonNullStorage(forKey: key, errorOnMissingKey: errorOnMissingKey, currentKeyPath: currentKeyPath) else {
 			return nil
 		}
 		guard let d = s.dictionaryValue else {

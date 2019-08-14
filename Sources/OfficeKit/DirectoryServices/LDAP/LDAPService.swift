@@ -55,8 +55,16 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		return try LDAPDistinguishedName(string: string)
 	}
 	
-	public func genericUser(fromUser user: LDAPInetOrgPersonWithObject) throws -> GenericDirectoryUser {
-		let json = JSON.object(user.object.attributes.mapValues{ values in
+	public func string(fromPersistentId pId: LDAPDistinguishedName) -> String {
+		return pId.stringValue
+	}
+	
+	public func persistentId(fromString string: String) throws -> LDAPDistinguishedName {
+		return try LDAPDistinguishedName(string: string)
+	}
+	
+	public func json(fromUser user: LDAPInetOrgPersonWithObject) throws -> JSON {
+		return JSON.object(user.object.attributes.mapValues{ values in
 			JSON.array(values.map{ valueData in
 				if let valueString = String(data: valueData, encoding: .utf8) {
 					return JSON.object(["str": JSON.string(valueString)])
@@ -65,24 +73,21 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 				}
 			})
 		}.merging(["dn": JSON.string(user.inetOrgPerson.dn.stringValue)], uniquingKeysWith: { (_, new) in new }))
-		var res = try GenericDirectoryUser(json: json, forcedUserId: taggedId(fromUserId: user.userId))
-		res.takeStandardNonIdProperties(from: user)
-		return res
 	}
 	
-	public func logicalUser(fromGenericUser genericUser: GenericDirectoryUser) throws -> LDAPInetOrgPersonWithObject {
-		let taggedId = genericUser.userId
-		if taggedId.tag == config.serviceId {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> LDAPInetOrgPersonWithObject {
+		let taggedId = userWrapper.userId
+		if taggedId.tag == config.serviceId/*, let underlying = userWrapper.underlyingUser*/ {
 			/* The generic user is from our service! We should be able to translate
 			 * if fully to our User type. */
-			guard let dn = try? LDAPDistinguishedName(string: genericUser.userId.id) else {
+			guard let dn = try? LDAPDistinguishedName(string: userWrapper.userId.id) else {
 				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
 			}
-			#warning("TODO: The rest of the properties.")
+			#warning("TODO: The rest of the properties (from the underlying user).")
 			return LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: [], cn: []))
 			
 		} else {
-			guard let email = genericUser.mainEmail(domainMap: config.global.domainAliases) else {
+			guard let email = userWrapper.mainEmail(domainMap: config.global.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create an LDAPInetOrgPersonWithObject")
 			}
 			
