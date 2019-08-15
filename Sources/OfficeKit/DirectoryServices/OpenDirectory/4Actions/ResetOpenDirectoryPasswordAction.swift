@@ -47,7 +47,7 @@ public class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedName, St
 			return Future<[ODRecord]>.future(from: op, eventLoop: eventLoop)
 		}
 		.map{ users -> ODRecord in
-			guard let user = users.first, users.count == 1 else {
+			guard let user = users.onlyElement else {
 				throw InvalidArgumentError(message: "Given DN has no, or more than one matching record")
 			}
 			return user

@@ -38,7 +38,7 @@ public struct LDAPObject {
 	}
 	
 	public func singleValue(for key: String) -> Data? {
-		guard let a = attributes[key], let f = a.first, a.count == 1 else {return nil}
+		guard let a = attributes[key], let f = a.onlyElement else {return nil}
 		return f
 	}
 	

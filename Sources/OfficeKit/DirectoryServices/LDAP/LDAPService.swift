@@ -152,7 +152,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		return ldapConnector.connect(scope: (), eventLoop: container.eventLoop)
 		.then{ _ in
 			Future<[LDAPObject]>.future(from: op, eventLoop: container.eventLoop).map{ results in
-				guard let result = results.first, results.count == 1 else {
+				guard let result = results.onlyElement else {
 					throw InternalError(message: "Got no or more than one result from a CreateLDAPObjectsOperation that creates only one user.")
 				}
 				let object = try result.get()

@@ -191,7 +191,7 @@ public struct LDAPDistinguishedName {
 	
 	public var uid: String? {
 		let uids = relativeDistinguishedNameValues(for: "uid")
-		guard let uid = uids.first, uids.count == 1 else {return nil}
+		guard let uid = uids.onlyElement else {return nil}
 		
 		return uid
 	}

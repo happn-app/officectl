@@ -39,7 +39,7 @@ public class OfficeKitServiceProvider {
 			return directoryService
 		} else {
 			let configs = officeKitConfig.serviceConfigs.values.filter{ $0.providerId == DirectoryServiceType.providerId }
-			guard let config = configs.first, configs.count == 1 else {
+			guard let config = configs.onlyElement else {
 				throw InvalidArgumentError(message: "No or too many directory services found for type \(DirectoryServiceType.providerId)")
 			}
 			return try directoryService(with: config, container: container).unboxed()!

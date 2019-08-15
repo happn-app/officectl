@@ -27,7 +27,7 @@ class VerifySignatureMiddleware : Middleware {
 	
 	func respond(to request: Request, chainingTo next: Responder) throws -> Future<Response> {
 		let signatureHeaders = request.http.headers["Officectl-Signature"]
-		guard let signatureHeader = signatureHeaders.first, signatureHeaders.count == 1 else {
+		guard let signatureHeader = signatureHeaders.onlyElement else {
 			throw BasicValidationError("No or too many signature headers")
 		}
 		

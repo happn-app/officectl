@@ -11,7 +11,7 @@ import Foundation
 
 extension Collection {
 	
-	var onlyElement: Element? {
+	public var onlyElement: Element? {
 		guard let e = first, count == 1 else {
 			return nil
 		}

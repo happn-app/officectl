@@ -178,7 +178,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		}
 		
 		let mainDomainEmails = emails.map{ Set($0.map{ $0.primaryDomainVariant(aliasMap: domainMap) }) }.value
-		if let mainDomainEmails = mainDomainEmails, let e = mainDomainEmails.first, mainDomainEmails.count == 1 {
+		if let mainDomainEmails = mainDomainEmails, let e = mainDomainEmails.onlyElement {
 			return e
 		}
 		
