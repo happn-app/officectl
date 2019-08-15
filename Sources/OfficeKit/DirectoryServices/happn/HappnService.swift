@@ -174,11 +174,11 @@ public final class HappnService : UserDirectoryService {
 		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
 		
 		return happnConnector.connect(scope: GetHappnUserOperation.scopes, eventLoop: container.eventLoop)
-		.then{ _ in
+		.flatMap{ _ in
 			let op = GetHappnUserOperation(userKey: pId, connector: happnConnector)
-			return Future<HappnUser>.future(from: op, eventLoop: container.eventLoop).map{ $0 as HappnUser? }
+			return EventLoopFuture<HappnUser>.future(from: op, on: container.eventLoop).map{ $0 as HappnUser? }
 		}
-		.catchMap{ e in
+		.flatMapErrorThrowing{ e in
 			switch e {
 			case let error as NSError where error.domain == "com.happn.officectl.happn" && error.code == 25002:
 				/* User not found error*/
@@ -199,15 +199,15 @@ public final class HappnService : UserDirectoryService {
 		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
 		
 		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: container.eventLoop)
-		.then{ _ in
+		.flatMap{ _ in
 			let ids = Set(Email(string: uId)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.stringValue } ?? [uId])
-			let futures = ids.map{ id -> Future<[HappnUser]> in
+			let futures = ids.map{ id -> EventLoopFuture<[HappnUser]> in
 				let op = SearchHappnUsersOperation(query: id, happnConnector: happnConnector)
-				return Future<[HappnUser]>.future(from: op, eventLoop: container.eventLoop)
+				return EventLoopFuture<[HappnUser]>.future(from: op, on: container.eventLoop)
 			}
-			return Future.reduce([HappnUser](), futures, eventLoop: container.eventLoop, +)
+			return EventLoopFuture.reduce([HappnUser](), futures, on: container.eventLoop, +)
 		}
-		.map{ (users: [HappnUser]) -> HappnUser? in
+		.flatMapThrowing{ (users: [HappnUser]) -> HappnUser? in
 			guard users.count <= 1 else {
 				throw InvalidArgumentError(message: "Given user id has more than one user found")
 			}
@@ -219,9 +219,9 @@ public final class HappnService : UserDirectoryService {
 		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
 		
 		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: container.eventLoop)
-		.then{ _ in
+		.flatMap{ _ in
 			let searchOp = SearchHappnUsersOperation(query: nil, happnConnector: happnConnector)
-			return Future<[HappnUser]>.future(from: searchOp, eventLoop: container.eventLoop)
+			return EventLoopFuture<[HappnUser]>.future(from: searchOp, on: container.eventLoop)
 		}
 	}
 	
@@ -230,9 +230,9 @@ public final class HappnService : UserDirectoryService {
 		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
 		
 		return happnConnector.connect(scope: CreateHappnUserOperation.scopes, eventLoop: container.eventLoop)
-		.then{ _ in
+		.flatMap{ _ in
 			let op = CreateHappnUserOperation(user: user, connector: happnConnector)
-			return Future<HappnUser>.future(from: op, eventLoop: container.eventLoop)
+			return EventLoopFuture<HappnUser>.future(from: op, on: container.eventLoop)
 		}
 	}
 	
@@ -246,9 +246,9 @@ public final class HappnService : UserDirectoryService {
 		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
 		
 		return happnConnector.connect(scope: DeleteHappnUserOperation.scopes, eventLoop: container.eventLoop)
-		.then{ _ in
+		.flatMap{ _ in
 			let op = DeleteHappnUserOperation(user: user, connector: happnConnector)
-			return Future<Void>.future(from: op, eventLoop: container.eventLoop)
+			return EventLoopFuture<Void>.future(from: op, on: container.eventLoop)
 		}
 	}
 	

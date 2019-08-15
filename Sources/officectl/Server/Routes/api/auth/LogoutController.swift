@@ -7,7 +7,7 @@
 
 import Foundation
 
-import JWT
+import JWTKit
 import OfficeKit
 import Vapor
 

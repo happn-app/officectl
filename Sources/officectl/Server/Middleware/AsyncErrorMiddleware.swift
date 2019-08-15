@@ -27,14 +27,14 @@ final class AsyncErrorMiddleware : Middleware, ServiceType {
 		}
 	}
 	
-	init(processErrorHandler h: @escaping (_ request: Request, _ responder: Responder, _ error: Error) throws -> Future<Response>) {
+	init(processErrorHandler h: @escaping (_ request: Request, _ responder: Responder, _ error: Error) throws -> EventLoopFuture<Response>) {
 		processErrorHandler = h
 	}
 	
-	let processErrorHandler: (_ request: Request, _ responder: Responder, _ error: Error) throws -> Future<Response>
+	let processErrorHandler: (_ request: Request, _ responder: Responder, _ error: Error) throws -> EventLoopFuture<Response>
 	
-	func respond(to request: Request, chainingTo next: Responder) throws -> Future<Response> {
-		let futureResponse: Future<Response>
+	func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
+		let futureResponse: EventLoopFuture<Response>
 		do    {futureResponse = try next.respond(to: request)}
 		catch {futureResponse = request.eventLoop.newFailedFuture(error: error)}
 		

@@ -7,7 +7,7 @@
 
 import Foundation
 
-import JWT
+import JWTKit
 import OfficeKit
 import Vapor
 
@@ -15,7 +15,7 @@ import Vapor
 
 class LoginController {
 	
-	func login(_ req: Request) throws -> Future<ApiResponse<ApiAuth>> {
+	func login(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiAuth>> {
 		let loginData = try req.content.syncDecode(LoginData.self)
 		
 		let config = try req.make(OfficectlConfig.self)
@@ -32,7 +32,7 @@ class LoginController {
 			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}
 			return ()
 		}
-		.flatMap{ _ -> Future<Bool> in
+		.flatMap{ _ -> EventLoopFuture<Bool> in
 			return try authService.validateAdminStatus(userId: userId.userId, on: req)
 		}
 		.map{ isAdmin in

@@ -7,8 +7,7 @@
 
 import Foundation
 
-import Async
-import Service
+import Vapor
 
 
 
@@ -16,8 +15,8 @@ public protocol DirectoryAuthenticatorService : UserDirectoryService, DirectoryA
 	
 	associatedtype AuthenticationChallenge
 	
-	func authenticate(userId: UserType.IdType, challenge: AuthenticationChallenge, on container: Container) throws -> Future<Bool>
-	func validateAdminStatus(userId: UserType.IdType, on container: Container) throws -> Future<Bool>
+	func authenticate(userId: UserType.IdType, challenge: AuthenticationChallenge, on container: Container) throws -> EventLoopFuture<Bool>
+	func validateAdminStatus(userId: UserType.IdType, on container: Container) throws -> EventLoopFuture<Bool>
 	
 }
 

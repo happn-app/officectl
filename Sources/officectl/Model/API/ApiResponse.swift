@@ -47,7 +47,7 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 
 extension ApiResponse : ResponseEncodable {
 	
-	func encode(for req: Request) throws -> Future<Response> {
+	func encode(for req: Request) throws -> EventLoopFuture<Response> {
 		let encoder = JSONEncoder()
 		encoder.dateEncodingStrategy = .iso8601
 		encoder.keyEncodingStrategy = .convertToSnakeCase

@@ -14,7 +14,7 @@ import Vapor
 
 final class UserController {
 	
-	func createUser(_ req: Request) throws -> Future<ApiResponse<DirectoryUserWrapper>> {
+	func createUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<DirectoryUserWrapper>> {
 		struct Request : Decodable {
 			var user: DirectoryUserWrapper
 		}
@@ -26,7 +26,7 @@ final class UserController {
 		return try openDirectoryService.createUser(user, on: req).map{ try ApiResponse.data(openDirectoryService.wrappedUser(fromUser: $0)) }
 	}
 	
-	func updateUser(_ req: Request) throws -> Future<ApiResponse<DirectoryUserWrapper>> {
+	func updateUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<DirectoryUserWrapper>> {
 		struct Request : Decodable {
 			var user: DirectoryUserWrapper
 			var propertiesToUpdate: Set<String>
@@ -40,7 +40,7 @@ final class UserController {
 		return try openDirectoryService.updateUser(user, propertiesToUpdate: properties, on: req).map{ try ApiResponse.data(openDirectoryService.wrappedUser(fromUser: $0)) }
 	}
 	
-	func deleteUser(_ req: Request) throws -> Future<ApiResponse<String>> {
+	func deleteUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<String>> {
 		struct Request : Decodable {
 			var user: DirectoryUserWrapper
 		}
@@ -52,7 +52,7 @@ final class UserController {
 		return try openDirectoryService.deleteUser(user, on: req).map{ _ in ApiResponse.data("ok") }
 	}
 	
-	func changePassword(_ req: Request) throws -> Future<ApiResponse<String>> {
+	func changePassword(_ req: Request) throws -> EventLoopFuture<ApiResponse<String>> {
 		/* The data we should have in input. */
 		struct Request : Decodable {
 			var userId: TaggedId

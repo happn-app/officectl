@@ -15,7 +15,7 @@ import Vapor
 
 final class UserSearchController {
 	
-	func fromPersistentId(_ req: Request) throws -> Future<ApiResponse<DirectoryUserWrapper?>> {
+	func fromPersistentId(_ req: Request) throws -> EventLoopFuture<ApiResponse<DirectoryUserWrapper?>> {
 		/* The data we should have in input. */
 		struct Request : Decodable {
 			var persistentId: TaggedId
@@ -34,7 +34,7 @@ final class UserSearchController {
 		}
 	}
 	
-	func fromUserId(_ req: Request) throws -> Future<ApiResponse<DirectoryUserWrapper?>> {
+	func fromUserId(_ req: Request) throws -> EventLoopFuture<ApiResponse<DirectoryUserWrapper?>> {
 		/* The data we should have in input. */
 		struct Request : Decodable {
 			var userId: TaggedId
@@ -51,7 +51,7 @@ final class UserSearchController {
 		}
 	}
 	
-	func listAllUsers(_ req: Request) throws -> Future<ApiResponse<[DirectoryUserWrapper]>> {
+	func listAllUsers(_ req: Request) throws -> EventLoopFuture<ApiResponse<[DirectoryUserWrapper]>> {
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
 		return try openDirectoryService.listAllUsers(on: req).map{ users in
 			/* Let’s convert the OpenDirectory user to a GenericDirectoryUser */

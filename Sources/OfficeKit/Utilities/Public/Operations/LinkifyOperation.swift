@@ -7,7 +7,7 @@
 
 import Foundation
 
-import Crypto
+import OpenCrypto
 import RetryingOperation
 
 
@@ -68,7 +68,7 @@ public class LinkifyOperation : RetryingOperation {
 					#endif
 					
 					let data = try Data(contentsOf: curFileURL, options: Data.ReadingOptions.mappedIfSafe)
-					let hash = try MD5.hash(data)
+					let hash = Data(SHA256.hash(data: data))
 					if let matchURL = hashesToPaths[hash] {
 						/* We found a (potential) match! */
 						let data2 = try Data(contentsOf: matchURL, options: NSData.ReadingOptions.mappedIfSafe)
@@ -76,7 +76,7 @@ public class LinkifyOperation : RetryingOperation {
 							try FileManager.default.removeItem(at: curFileURL)
 							try FileManager.default.linkItem(at: matchURL, to: curFileURL)
 						} else {
-							OfficeKitConfig.logger?.info("Found MD5 collision between \(matchURL) and \(curFileURL)!")
+							OfficeKitConfig.logger?.info("Found SHA256 collision between \(matchURL) and \(curFileURL)!")
 						}
 					} else {
 						hashesToPaths[hash] = curFileURL

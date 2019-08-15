@@ -7,7 +7,7 @@
 
 import Foundation
 
-import Service
+import Vapor
 
 
 
@@ -71,10 +71,10 @@ public struct DSUPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 extension AnyDSUPair {
 	
 	public static func fetchAll(in services: Set<AnyUserDirectoryService>, on container: Container) throws -> EventLoopFuture<(dsuPairs: [AnyDSUPair], fetchErrorsByServices: [AnyUserDirectoryService: Error])> {
-		let serviceAndFutureUsers = services.map{ service in (service, container.future().flatMap{ try service.listAllUsers(on: container) }) }
+		let serviceAndFutureUsers = services.map{ service in (service, container.eventLoop.makeSucceededFuture(()).flatMapThrowing{ try service.listAllUsers(on: container) }.flatMap{ $0 }) }
 		let futureUsersByService = Dictionary(uniqueKeysWithValues: serviceAndFutureUsers)
 		
-		return Future.waitAll(futureUsersByService, eventLoop: container.eventLoop).map{ usersResultsByService in
+		return EventLoopFuture.waitAll(futureUsersByService, eventLoop: container.eventLoop).map{ usersResultsByService in
 			let fetchErrorsByService = usersResultsByService.compactMapValues{ $0.failureValue }
 			let userPairs = usersResultsByService.compactMap{ serviceAndUsersResult -> [AnyDSUPair]? in
 				let (service, usersResult) = serviceAndUsersResult

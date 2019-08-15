@@ -15,7 +15,7 @@ import OfficeKit
 
 
 
-func backupMails(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
+func backupMails(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
 	let officeKitConfig = try context.container.make(OfficectlConfig.self).officeKitConfig
 	
 	let serviceId = f.getString(name: "service-id")
@@ -30,22 +30,22 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 	
 	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: context.container.eventLoop)
-	.then{ _ -> Future<[GoogleUser]> in /* Fetch users */
+	.then{ _ -> EventLoopFuture<[GoogleUser]> in /* Fetch users */
 		let searchFutures = googleConfig.primaryDomains.map{ domain in
-			return Future<[GoogleUser]>.future(from: SearchGoogleUsersOperation(searchedDomain: domain, googleConnector: googleConnector), eventLoop: context.container.eventLoop)
+			return EventLoopFuture<[GoogleUser]>.future(from: SearchGoogleUsersOperation(searchedDomain: domain, googleConnector: googleConnector), eventLoop: context.container.eventLoop)
 		}
-		return Future.reduce([], searchFutures, eventLoop: context.container.eventLoop, +)
+		return EventLoopFuture.reduce([], searchFutures, eventLoop: context.container.eventLoop, +)
 	}
-	.then{ allUsers -> Future<[URL]> in /* Backup given mails */
+	.then{ allUsers -> EventLoopFuture<[URL]> in /* Backup given mails */
 		let filteredUsers = allUsers.filter{ usersFilter?.contains($0.primaryEmail.stringValue) ?? true }
 		let options = BackupMailOptions(flags: f, console: context.console, mainConnector: googleConnector, users: filteredUsers)
 		
-		return Future<[URL]>.future(from: FetchAllMailsOperation(options: options), eventLoop: context.container.eventLoop, resultRetriever: {
+		return EventLoopFuture<[URL]>.future(from: FetchAllMailsOperation(options: options), eventLoop: context.container.eventLoop, resultRetriever: {
 			try throwIfError($0.fetchError)
 			return $0.options.backedUpDestinations
 		})
 	}
-	.then{ backedUpFolders -> Future<[URL]> in /* Linkify the backed-up emails */
+	.then{ backedUpFolders -> EventLoopFuture<[URL]> in /* Linkify the backed-up emails */
 		guard linkify else {return context.container.eventLoop.future(backedUpFolders)}
 		
 		context.console.info("Optimizing backups size")
@@ -55,7 +55,7 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 			do    {return try LinkifyOperation(folderURL: url, stopOnErrors: false)}
 			catch {context.console.warning("cannot linkify backup at URL \(url.absoluteString)"); return nil}
 		}
-		let futureFromOperations = Future<[FutureResult<Void>]>.executeAll(operations, eventLoop: context.container.eventLoop, resultRetriever: { op -> Void in
+		let futureFromOperations = EventLoopFuture<[FutureResult<Void>]>.executeAll(operations, eventLoop: context.container.eventLoop, resultRetriever: { op -> Void in
 			if op.errors.count > 0 {
 				context.console.warning("got errors when linkifying backup at URL \(op.folderURL.absoluteString):")
 				for (url, error) in op.errors {
@@ -66,14 +66,14 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 		})
 		return futureFromOperations.transform(to: backedUpFolders)
 	}
-	.then{ backedUpFolders -> Future<Void> in /* Compressing the backed-up emails */
+	.then{ backedUpFolders -> EventLoopFuture<Void> in /* Compressing the backed-up emails */
 		guard archive else {return context.container.eventLoop.future()}
 		
 		context.console.info("Compressing backups")
 		let q = OperationQueue()
 		q.maxConcurrentOperationCount = 4 /* Seems fair on today’s hardware… */
 		let operations = backedUpFolders.map{ TarOperation(sources: [$0.lastPathComponent], relativeTo: $0.deletingLastPathComponent(), destination: $0.appendingPathExtension("tar.bz2"), compress: true, deleteSourcesOnSuccess: true) }
-		let futureFromOperations = Future<[FutureResult<Void>]>.executeAll(operations, eventLoop: context.container.eventLoop, resultRetriever: { op -> Void in
+		let futureFromOperations = EventLoopFuture<[FutureResult<Void>]>.executeAll(operations, eventLoop: context.container.eventLoop, resultRetriever: { op -> Void in
 			if let tarError = op.tarError {
 				context.console.warning("could not compress \(op.sources.first!): \(tarError)")
 			}
@@ -144,13 +144,13 @@ class FetchAllMailsOperation : RetryingOperation {
 			let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
 			
 			let futureAccessTokens = options.users.map{ futureAccessToken(for: $0, eventLoop: eventLoop) }
-			let f = Future.reduce(into: (tokens: [GoogleUser: String](), minExpirationDate: Date.distantFuture), futureAccessTokens, eventLoop: eventLoop, { (currentResult, newResult) in
+			let f = EventLoopFuture.reduce(into: (tokens: [GoogleUser: String](), minExpirationDate: Date.distantFuture), futureAccessTokens, eventLoop: eventLoop, { (currentResult, newResult) in
 				currentResult.minExpirationDate = min(currentResult.minExpirationDate, newResult.2)
 				currentResult.tokens[newResult.0] = newResult.1
 			})
-			.then{ (info: (tokens: [GoogleUser : String], minExpirationDate: Date)) -> Future<Void> in
+			.then{ (info: (tokens: [GoogleUser : String], minExpirationDate: Date)) -> EventLoopFuture<Void> in
 				let operation = OfflineimapRunOperation(userTokens: info.tokens, tokensMinExpirationDate: info.minExpirationDate, options: self.options)
-				return Future<Void>.future(from: operation, eventLoop: eventLoop, resultRetriever: { if let e = $0.runError {throw e} })
+				return EventLoopFuture<Void>.future(from: operation, eventLoop: eventLoop, resultRetriever: { if let e = $0.runError {throw e} })
 			}
 			try f.wait()
 			baseOperationEnded()
@@ -162,7 +162,7 @@ class FetchAllMailsOperation : RetryingOperation {
 		}
 	}
 	
-	private func futureAccessToken(for user: GoogleUser, eventLoop: EventLoop) -> Future<(GoogleUser, String, Date)> {
+	private func futureAccessToken(for user: GoogleUser, eventLoop: EventLoop) -> EventLoopFuture<(GoogleUser, String, Date)> {
 		let scope = Set(arrayLiteral: "https://mail.google.com/")
 		let connector = GoogleJWTConnector(from: options.mainConnector, userBehalf: user.primaryEmail.stringValue)
 		return connector.connect(scope: scope, eventLoop: eventLoop)

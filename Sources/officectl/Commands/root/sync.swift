@@ -24,7 +24,7 @@ private struct ServiceSyncPlan {
 }
 
 
-func sync(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
+func sync(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
 	guard let syncConfig = try context.container.make(OfficectlConfig.self).syncConfig else {
 		throw InvalidArgumentError(message: "Won’t sync without a sync config.")
 	}
@@ -90,7 +90,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		
 		typealias UserSyncResult = (serviceId: String, userStr: String, creationResult: Result<String?, Error>)
 		let futures = plans.flatMap{ plan in
-			plan.usersToCreate.map{ user -> Future<UserSyncResult> in
+			plan.usersToCreate.map{ user -> EventLoopFuture<UserSyncResult> in
 				let serviceId = plan.service.config.serviceId
 				let userStr = plan.service.shortDescription(fromUser: user)
 				do {
@@ -114,7 +114,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 			}
 		}
 		
-		return Future.waitAll(futures, eventLoop: context.container.eventLoop)
+		return EventLoopFuture.waitAll(futures, eventLoop: context.container.eventLoop)
 		.map{ results in
 			context.console.info()
 			context.console.info("********* SYNC RESULTS *********")

@@ -12,7 +12,7 @@ import OpenDirectory
 
 import NIO
 import SemiSingleton
-import Service
+import Vapor
 
 
 
@@ -40,21 +40,21 @@ public class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedName, St
 		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
 		
 		let f = deps.connector.connect(scope: (), eventLoop: eventLoop)
-		.then{ _ -> Future<[ODRecord]> in
+		.flatMap{ _ -> EventLoopFuture<[ODRecord]> in
 			/* Ideally I’d like to search for the DN directly, but for the life of
 			 * me, I cannot find a way to do this! OpenDirectory is awesome. */
 			let op = SearchOpenDirectoryOperation(uid: uid, maxResults: 2, returnAttributes: nil, openDirectoryConnector: self.deps.connector)
-			return Future<[ODRecord]>.future(from: op, eventLoop: eventLoop)
+			return EventLoopFuture<[ODRecord]>.future(from: op, on: eventLoop)
 		}
-		.map{ users -> ODRecord in
+		.flatMapThrowing{ users -> ODRecord in
 			guard let user = users.onlyElement else {
 				throw InvalidArgumentError(message: "Given DN has no, or more than one matching record")
 			}
 			return user
 		}
-		.then{ user -> Future<Void> in
+		.flatMap{ user -> EventLoopFuture<Void> in
 			let modifyUserOperation = ModifyOpenDirectoryPasswordOperation(record: user, newPassword: newPassword)
-			return Future<Void>.future(from: modifyUserOperation, eventLoop: eventLoop)
+			return EventLoopFuture<Void>.future(from: modifyUserOperation, on: eventLoop)
 		}
 		
 		f.whenSuccess{ _   in handler(.success(())) }

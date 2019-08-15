@@ -39,8 +39,8 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 		decoder.dateDecodingStrategy = .customISO8601
 		decoder.keyDecodingStrategy = .useDefaultKeys
 		
-		let f = eventLoop.future()
-		.flatMap{ _ -> EventLoopFuture<(apiUserResult: HappnApiResult<HappnUser>, adminPass: String)> in
+		let f = eventLoop.makeSucceededFuture(())
+		.flatMapThrowing{ _ -> EventLoopFuture<(apiUserResult: HappnApiResult<HappnUser>, adminPass: String)> in
 			guard case .userPass(_, let adminPass) = self.connector.authMode else {
 				throw InvalidArgumentError(message: "Cannot create an admin user without the password of the admin creating the account (non user/pass connectors are not supported)")
 			}
@@ -55,9 +55,10 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 			urlRequest.httpMethod = "POST"
 			
 			let op = AuthenticatedJSONOperation<HappnApiResult<HappnUser>>(request: urlRequest, authenticator: self.connector.authenticate, decoder: decoder)
-			return EventLoopFuture<HappnApiResult<HappnUser>>.future(from: op, eventLoop: eventLoop).map{ ($0, adminPass) }
+			return EventLoopFuture<HappnApiResult<HappnUser>>.future(from: op, on: eventLoop).map{ ($0, adminPass) }
 		}
-		.map{ (r: (apiUserResult: HappnApiResult<HappnUser>, adminPass: String)) -> (user: HappnUser, userId: String, adminPass: String) in
+		.flatMap{ $0 }
+		.flatMapThrowing{ (r: (apiUserResult: HappnApiResult<HappnUser>, adminPass: String)) -> (user: HappnUser, userId: String, adminPass: String) in
 			guard r.apiUserResult.success, let user = r.apiUserResult.data, let userId = user.id.value else {
 				throw NSError(domain: "com.happn.officectl.happn", code: r.apiUserResult.error_code, userInfo: [NSLocalizedDescriptionKey: r.apiUserResult.error ?? "Unknown error while creating the user"])
 			}
@@ -79,13 +80,13 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 			 * but could have taken anything that’s decodable: the API returns
 			 * null all the time… */
 			let op = AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequest, authenticator: self.connector.authenticate, decoder: decoder)
-			return EventLoopFuture<HappnApiResult<Int8>>.future(from: op, eventLoop: eventLoop).map{ ($0, r.user) }
+			return EventLoopFuture<HappnApiResult<Int8>>.future(from: op, on: eventLoop).map{ ($0, r.user) }
 		}
-		.map{ (r: (apiGrantResult: HappnApiResult<Int8>, user: HappnUser)) -> Void in
+		.flatMapThrowing{ (r: (apiGrantResult: HappnApiResult<Int8>, user: HappnUser)) -> HappnUser in
 			guard r.apiGrantResult.success else {
 				throw NSError(domain: "com.happn.officectl.happn", code: r.apiGrantResult.error_code, userInfo: [NSLocalizedDescriptionKey: r.apiGrantResult.error ?? "Unknown error while granting user admin access"])
 			}
-			self.result = .success(r.user)
+			return r.user
 		}
 		// 3. To set the ACLs
 		// POST /api/user-acls
@@ -94,8 +95,10 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 		//    - user_id: ...
 		// Response: null (in a standard response)
 		
-		f.whenFailure{ error in self.result = .failure(error) }
-		f.whenComplete(baseOperationEnded)
+		f.whenComplete{ r in
+			self.result = r
+			self.baseOperationEnded()
+		}
 	}
 	
 	public override var isAsynchronous: Bool {

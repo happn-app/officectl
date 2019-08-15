@@ -26,11 +26,11 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 	/* List all GitHub project’s hooks */
 //	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)
 //	let f = c.connect(scope: (), eventLoop: context.container.eventLoop)
-//	.then{ _ -> Future<[GitHubRepository]> in
+//	.then{ _ -> EventLoopFuture<[GitHubRepository]> in
 //		let op = GitHubRepositorySearchOperation(searchedOrganisation: "happn-app", gitHubConnector: c)
-//		return Future<[GitHubRepository]>.future(from: op, eventLoop: context.container.eventLoop, resultRetriever: { try $0.result.get() })
+//		return EventLoopFuture<[GitHubRepository]>.future(from: op, eventLoop: context.container.eventLoop, resultRetriever: { try $0.result.get() })
 //	}
-//	.then{ repositories -> Future<[FutureResult<[Hook]>]> in
+//	.then{ repositories -> EventLoopFuture<[FutureResult<[Hook]>]> in
 //		let ops = repositories.map{ rep -> AuthenticatedJSONOperation<[Hook]> in
 //			var config = URLRequestOperation.Config(request: URLRequest(url: URL(string: "https://api.github.com/repos/" + rep.fullName + "/hooks")!), session: nil)
 //			config.acceptableStatusCodes = nil
@@ -40,7 +40,7 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 //				handler(.success(request), nil)
 //			})
 //		}
-//		return Future<[FutureResult<[Hook]>]>.executeAll(ops, eventLoop: context.container.eventLoop)
+//		return EventLoopFuture<[FutureResult<[Hook]>]>.executeAll(ops, eventLoop: context.container.eventLoop)
 //	}
 //	.map{ hooks in
 //		let hooks = Set(hooks.flatMap{ $0.result ?? [] }.filter{ $0.config.url.absoluteString.contains("email") })

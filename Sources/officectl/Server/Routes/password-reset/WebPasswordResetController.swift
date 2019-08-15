@@ -16,17 +16,17 @@ import OfficeKit
 
 final class WebPasswordResetController {
 	
-	func showUserSelection(_ req: Request) throws -> Future<View> {
+	func showUserSelection(_ req: Request) throws -> EventLoopFuture<View> {
 		return try req.view().render("NewPasswordResetPage")
 	}
 	
-	func showResetPage(_ req: Request) throws -> Future<View> {
+	func showResetPage(_ req: Request) throws -> EventLoopFuture<View> {
 		let email = try req.parameters.next(Email.self)
 		return try multiServicesPasswordReset(for: email, container: req)
 		.flatMap{ resets in try self.renderMultiServicesPasswordReset(resets, for: email, view: req.view()) }
 	}
 	
-	func resetPassword(_ req: Request) throws -> Future<View> {
+	func resetPassword(_ req: Request) throws -> EventLoopFuture<View> {
 		let view = try req.view()
 		let email = try req.parameters.next(Email.self)
 		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
@@ -65,7 +65,7 @@ final class WebPasswordResetController {
 		return try MultiServicesPasswordReset.fetch(from: AnyDSUIdPair(service: emailService.erase(), user: emailUser.erase().userId), in: services, on: container)
 	}
 	
-	private func renderMultiServicesPasswordReset(_ multiPasswordReset: MultiServicesPasswordReset, for email: Email, view: ViewRenderer) -> Future<View> {
+	private func renderMultiServicesPasswordReset(_ multiPasswordReset: MultiServicesPasswordReset, for email: Email, view: ViewRenderer) -> EventLoopFuture<View> {
 		struct ResetPasswordStatusContext : Encodable {
 			struct ServicePasswordResetStatus : Encodable {
 				var serviceName: String

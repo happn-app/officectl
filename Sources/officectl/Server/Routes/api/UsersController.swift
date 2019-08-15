@@ -8,7 +8,7 @@
 import Foundation
 
 import GenericJSON
-import JWT
+import JWTKit
 import OfficeKit
 import SemiSingleton
 import Vapor
@@ -17,7 +17,7 @@ import Vapor
 
 class UsersController {
 	
-	func getAllUsers(_ req: Request) throws -> Future<ApiResponse<ApiUsersSearchResult>> {
+	func getAllUsers(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiUsersSearchResult>> {
 		/* General auth check */
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
@@ -45,7 +45,7 @@ class UsersController {
 		}
 	}
 	
-	func getMe(_ req: Request) throws -> Future<ApiResponse<ApiUserSearchResult>> {
+	func getMe(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiUserSearchResult>> {
 		/* General auth check */
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
@@ -55,7 +55,7 @@ class UsersController {
 		return try getUserNoAuthCheck(userId: myUserId, container: req)
 	}
 	
-	func getUser(_ req: Request) throws -> Future<ApiResponse<ApiUserSearchResult>> {
+	func getUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiUserSearchResult>> {
 		/* General auth check */
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
@@ -73,7 +73,7 @@ class UsersController {
 		return try getUserNoAuthCheck(userId: userId, container: req)
 	}
 	
-	private func getUserNoAuthCheck(userId: AnyDSUIdPair, container: Container) throws -> Future<ApiResponse<ApiUserSearchResult>> {
+	private func getUserNoAuthCheck(userId: AnyDSUIdPair, container: Container) throws -> EventLoopFuture<ApiResponse<ApiUserSearchResult>> {
 		let sProvider = try container.make(OfficeKitServiceProvider.self)
 		let officeKitConfig = try container.make(OfficectlConfig.self).officeKitConfig
 		return try MultiServicesUser.fetch(from: userId, in: sProvider.getAllUserDirectoryServices(), on: container)

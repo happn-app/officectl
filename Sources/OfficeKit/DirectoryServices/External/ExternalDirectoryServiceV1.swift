@@ -11,7 +11,7 @@ import Foundation
 #endif
 
 import GenericJSON
-import Service
+import Vapor
 
 
 
@@ -88,7 +88,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		return user.applyAndSaveHints(hints, blacklistedKeys: (allowUserIdChange ? [] : [.userId]))
 	}
 	
-	public func existingUser(fromPersistentId pId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DirectoryUserWrapper?> {
+	public func existingUser(fromPersistentId pId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<DirectoryUserWrapper?> {
 		guard let url = URL(string: "existing-user-from/persistent-id", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to retrieve existing user from persistent id")
 		}
@@ -106,10 +106,10 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<DirectoryUserWrapper?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<ExternalServiceResponse<DirectoryUserWrapper?>>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
+		return EventLoopFuture<ExternalServiceResponse<DirectoryUserWrapper?>>.future(from: operation, on: container.eventLoop).flatMapThrowing{ try $0.getData() }
 	}
 	
-	public func existingUser(fromUserId uId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DirectoryUserWrapper?> {
+	public func existingUser(fromUserId uId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<DirectoryUserWrapper?> {
 		guard let url = URL(string: "existing-user-from/user-id", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to retrieve existing user from user id")
 		}
@@ -127,20 +127,20 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<DirectoryUserWrapper?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<ExternalServiceResponse<DirectoryUserWrapper?>>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
+		return EventLoopFuture<ExternalServiceResponse<DirectoryUserWrapper?>>.future(from: operation, on: container.eventLoop).flatMapThrowing{ try $0.getData() }
 	}
 	
-	public func listAllUsers(on container: Container) throws -> Future<[DirectoryUserWrapper]> {
+	public func listAllUsers(on container: Container) throws -> EventLoopFuture<[DirectoryUserWrapper]> {
 		guard let url = URL(string: "list-all-users", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to list all users")
 		}
 		
 		let operation = ApiRequestOperation<[DirectoryUserWrapper]>(url: url, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<ExternalServiceResponse<[DirectoryUserWrapper]>>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
+		return EventLoopFuture<ExternalServiceResponse<[DirectoryUserWrapper]>>.future(from: operation, on: container.eventLoop).flatMapThrowing{ try $0.getData() }
 	}
 	
 	public var supportsUserCreation: Bool {return config.supportsUserCreation}
-	public func createUser(_ user: DirectoryUserWrapper, on container: Container) throws -> Future<DirectoryUserWrapper> {
+	public func createUser(_ user: DirectoryUserWrapper, on container: Container) throws -> EventLoopFuture<DirectoryUserWrapper> {
 		guard let url = URL(string: "create-user", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to create a user")
 		}
@@ -157,11 +157,11 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<DirectoryUserWrapper>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<ExternalServiceResponse<DirectoryUserWrapper>>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
+		return EventLoopFuture<ExternalServiceResponse<DirectoryUserWrapper>>.future(from: operation, on: container.eventLoop).flatMapThrowing{ try $0.getData() }
 	}
 	
 	public var supportsUserUpdate: Bool {return config.supportsUserUpdate}
-	public func updateUser(_ user: DirectoryUserWrapper, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DirectoryUserWrapper> {
+	public func updateUser(_ user: DirectoryUserWrapper, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<DirectoryUserWrapper> {
 		guard let url = URL(string: "update-user", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to update a user")
 		}
@@ -179,11 +179,11 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<DirectoryUserWrapper>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<ExternalServiceResponse<DirectoryUserWrapper>>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
+		return EventLoopFuture<ExternalServiceResponse<DirectoryUserWrapper>>.future(from: operation, on: container.eventLoop).flatMapThrowing{ try $0.getData() }
 	}
 	
 	public var supportsUserDeletion: Bool {return config.supportsUserDeletion}
-	public func deleteUser(_ user: DirectoryUserWrapper, on container: Container) throws -> Future<Void> {
+	public func deleteUser(_ user: DirectoryUserWrapper, on container: Container) throws -> EventLoopFuture<Void> {
 		guard let url = URL(string: "delete-user", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to delete a user")
 		}
@@ -200,7 +200,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<String>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<ExternalServiceResponse<String>>.future(from: operation, eventLoop: container.eventLoop).map{ _ in () }
+		return EventLoopFuture<DirectoryUserWrapper>.future(from: operation, on: container.eventLoop).map{ _ in () }
 	}
 	
 	public var supportsPasswordChange: Bool {return config.supportsPasswordChange}

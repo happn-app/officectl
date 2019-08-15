@@ -10,7 +10,7 @@ import Foundation
 	import FoundationNetworking
 #endif
 
-import Crypto
+import OpenCrypto
 
 
 
@@ -46,8 +46,8 @@ public class ExternalServiceAuthenticator : Authenticator {
 				body.base64EncodedData()
 			)
 			
-			let signature = try HMAC.SHA256.authenticate(signedData, key: secret)
-			request.addValue(validityStart + ":" + validityEnd + ":" + signature.base64EncodedString(), forHTTPHeaderField: "Officectl-Signature")
+			let signature = HMAC<SHA256>.authenticationCode(for: signedData, using: SymmetricKey(data: secret))
+			request.addValue(validityStart + ":" + validityEnd + ":" + Data(signature).base64EncodedString(), forHTTPHeaderField: "Officectl-Signature")
 			handler(.success(request), nil)
 		} catch {
 			handler(.failure(error), nil)

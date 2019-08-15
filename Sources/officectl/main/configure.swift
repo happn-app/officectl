@@ -8,7 +8,7 @@
 import Foundation
 
 //import FluentSQLite
-import Leaf
+//import Leaf
 import SemiSingleton
 import URLRequestOperation
 import Vapor
@@ -67,7 +67,7 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 }
 
 
-private func handleOfficectlError(request: Request, chainingTo next: Responder, error: Error) throws -> Future<Response> {
+private func handleOfficectlError(request: Request, chainingTo next: Responder, error: Error) throws -> EventLoopFuture<Response> {
 	#warning("TODO: Log the error")
 	
 	let status = (error as? Abort)?.status

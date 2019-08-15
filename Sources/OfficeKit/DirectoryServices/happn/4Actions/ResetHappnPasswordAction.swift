@@ -8,7 +8,7 @@
 import Foundation
 
 import SemiSingleton
-import Service
+import Vapor
 
 
 
@@ -31,13 +31,13 @@ public class ResetHappnPasswordAction : Action<HappnUser, String, Void>, ResetPa
 		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
 		
 		let f = deps.connector.connect(scope: ModifyHappnUserOperation.scopes, eventLoop: eventLoop)
-		.then{ _ -> Future<Void> in
+		.map{ _ -> EventLoopFuture<Void> in
 			var happnUser = self.subject.cloneForPatching()
 			
 			happnUser.password = .set(newPassword)
 			
 			let modifyUserOperation = ModifyHappnUserOperation(user: happnUser, connector: self.deps.connector)
-			return Future<Void>.future(from: modifyUserOperation, eventLoop: eventLoop)
+			return EventLoopFuture<Void>.future(from: modifyUserOperation, on: eventLoop)
 		}
 		
 		f.whenSuccess{ _   in handler(.success(())) }

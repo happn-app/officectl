@@ -21,21 +21,21 @@ public extension EventLoopFuture {
 	
 	- Important: Test the order thing; I don’t remember for sure the order stays
 	the same, though I don’t see the point of the method if it does not. */
-	static func waitAll(_ futures: [EventLoopFuture<T>], eventLoop: EventLoop) -> EventLoopFuture<[Result<T, Error>]> {
+	static func waitAll(_ futures: [EventLoopFuture<Value>], eventLoop: EventLoop) -> EventLoopFuture<[Result<Value, Error>]> {
 		/* No need for this assert, we hop the future to the event loop. */
 //		assert(futures.reduce(true, { val, future in val && future.eventLoop === eventLoop }))
-		let f0 = eventLoop.newSucceededFuture(result: [Swift.Result<T, Error>]())
+		let f0 = eventLoop.makeSucceededFuture([Swift.Result<Value, Error>]())
 		
 		let body = futures
-		.map{ $0.hopTo(eventLoop: eventLoop) }
-		.reduce(f0, { (result: EventLoopFuture<[Result<T, Error>]>, newFuture: EventLoopFuture<T>) -> EventLoopFuture<[Result<T, Error>]> in
+		.map{ $0.hop(to: eventLoop) }
+		.reduce(f0, { (result: EventLoopFuture<[Result<Value, Error>]>, newFuture: EventLoopFuture<Value>) -> EventLoopFuture<[Result<Value, Error>]> in
 			return result
-			.then{ results in
+			.flatMap{ results in
 				newFuture
 				.map{ success in
 					return results + [.success(success)]
 				}
-				.mapIfError{
+				.flatMapErrorThrowing{
 					return results + [.failure($0)]
 				}
 			}
@@ -45,7 +45,7 @@ public extension EventLoopFuture {
 	}
 	
 	#warning("TODO Swift 5.1: It will be highly probably that we’ll be able to return “some Sequence” instead of an explicit Array, which would avoid a useless conversion")
-	static func waitAll<IdType>(_ idFutureTuples: [(IdType, EventLoopFuture<T>)], eventLoop: EventLoop) -> EventLoopFuture<[(IdType, Result<T, Error>)]> {
+	static func waitAll<IdType>(_ idFutureTuples: [(IdType, EventLoopFuture<Value>)], eventLoop: EventLoop) -> EventLoopFuture<[(IdType, Result<Value, Error>)]> {
 		let ids = idFutureTuples.map{ $0.0 }
 		let futures = idFutureTuples.map{ $0.1 }
 		return waitAll(futures, eventLoop: eventLoop).map{ futureResults in
@@ -53,7 +53,7 @@ public extension EventLoopFuture {
 		}
 	}
 	
-	static func waitAll<IdType : Hashable>(_ futuresById: [IdType: EventLoopFuture<T>], eventLoop: EventLoop) -> EventLoopFuture<[IdType: Result<T, Error>]> {
+	static func waitAll<IdType : Hashable>(_ futuresById: [IdType: EventLoopFuture<Value>], eventLoop: EventLoop) -> EventLoopFuture<[IdType: Result<Value, Error>]> {
 		return waitAll(futuresById.map{ $0 }, eventLoop: eventLoop).map{ try! $0.group(by: { $0.0 }, mappingValues: { $0.1 }) }
 	}
 	

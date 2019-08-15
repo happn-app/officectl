@@ -7,15 +7,14 @@
 
 import Foundation
 
-import Async
-import Service
+import Vapor
 
 
 
 private protocol DirectoryAuthenticatorServiceBox {
 	
-	func authenticate(userId: AnyId, challenge: Any, on container: Container) throws -> Future<Bool>
-	func validateAdminStatus(userId: AnyId, on container: Container) throws -> Future<Bool>
+	func authenticate(userId: AnyId, challenge: Any, on container: Container) throws -> EventLoopFuture<Bool>
+	func validateAdminStatus(userId: AnyId, on container: Container) throws -> EventLoopFuture<Bool>
 	
 }
 
@@ -23,14 +22,14 @@ private struct ConcreteDirectoryAuthenticatorBox<Base : DirectoryAuthenticatorSe
 	
 	let originalAuthenticator: Base
 	
-	func authenticate(userId: AnyId, challenge: Any, on container: Container) throws -> Future<Bool> {
+	func authenticate(userId: AnyId, challenge: Any, on container: Container) throws -> EventLoopFuture<Bool> {
 		guard let uid: Base.UserType.IdType = userId.unbox(), let c = challenge as? Base.AuthenticationChallenge else {
 			throw InvalidArgumentError(message: "Got invalid user id (\(userId)) or auth challenge (\(challenge)) to authenticate with a directory service authenticator of type \(Base.self)")
 		}
 		return try originalAuthenticator.authenticate(userId: uid, challenge: c, on: container)
 	}
 	
-	func validateAdminStatus(userId: AnyId, on container: Container) throws -> Future<Bool> {
+	func validateAdminStatus(userId: AnyId, on container: Container) throws -> EventLoopFuture<Bool> {
 		guard let uid: Base.UserType.IdType = userId.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user id type (\(userId)) to check if user is admin with a directory service authenticator of type \(Base.self)")
 		}
@@ -72,11 +71,11 @@ public class AnyDirectoryAuthenticatorService : AnyUserDirectoryService, Directo
 		fatalError("init(config:globalConfig:) unavailable for a directory authenticator service erasure")
 	}
 	
-	public func authenticate(userId: AnyId, challenge: Any, on container: Container) throws -> Future<Bool> {
+	public func authenticate(userId: AnyId, challenge: Any, on container: Container) throws -> EventLoopFuture<Bool> {
 		return try box.authenticate(userId: userId, challenge: challenge, on: container)
 	}
 	
-	public func validateAdminStatus(userId: AnyId, on container: Container) throws -> Future<Bool> {
+	public func validateAdminStatus(userId: AnyId, on container: Container) throws -> EventLoopFuture<Bool> {
 		return try box.validateAdminStatus(userId: userId, on: container)
 	}
 	

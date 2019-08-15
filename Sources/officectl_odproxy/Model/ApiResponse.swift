@@ -41,7 +41,7 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 
 extension ApiResponse : ResponseEncodable {
 	
-	func encode(for req: Request) throws -> Future<Response> {
+	func encode(for req: Request) throws -> EventLoopFuture<Response> {
 		return try req.future(syncEncode(for: req))
 	}
 	

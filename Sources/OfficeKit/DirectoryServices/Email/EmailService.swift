@@ -8,7 +8,7 @@
 import Foundation
 
 import GenericJSON
-import Service
+import Vapor
 
 
 
@@ -94,11 +94,11 @@ public final class EmailService : UserDirectoryService {
 	}
 	
 	public func existingUser(fromPersistentId pId: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<EmailUser?> {
-		return container.eventLoop.newSucceededFuture(result: EmailUser(userId: pId))
+		return container.eventLoop.makeSucceededFuture(EmailUser(userId: pId))
 	}
 	
 	public func existingUser(fromUserId uId: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<EmailUser?> {
-		return container.eventLoop.newSucceededFuture(result: EmailUser(userId: uId))
+		return container.eventLoop.makeSucceededFuture(EmailUser(userId: uId))
 	}
 	
 	public func listAllUsers(on container: Container) throws -> EventLoopFuture<[EmailUser]> {

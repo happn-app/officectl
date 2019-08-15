@@ -7,9 +7,8 @@
 
 import Foundation
 
-import Async
 import GenericJSON
-import Service
+import Vapor
 
 
 
@@ -30,19 +29,19 @@ private protocol UserDirectoryServiceBox {
 	
 	func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout AnyDirectoryUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty>
 	
-	func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
-	func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
+	func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<AnyDirectoryUser?>
+	func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<AnyDirectoryUser?>
 	
-	func listAllUsers(on container: Container) throws -> Future<[AnyDirectoryUser]>
+	func listAllUsers(on container: Container) throws -> EventLoopFuture<[AnyDirectoryUser]>
 	
 	var supportsUserCreation: Bool {get}
-	func createUser(_ user: AnyDirectoryUser, on container: Container) throws -> Future<AnyDirectoryUser>
+	func createUser(_ user: AnyDirectoryUser, on container: Container) throws -> EventLoopFuture<AnyDirectoryUser>
 	
 	var supportsUserUpdate: Bool {get}
-	func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser>
+	func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<AnyDirectoryUser>
 	
 	var supportsUserDeletion: Bool {get}
-	func deleteUser(_ user: AnyDirectoryUser, on container: Container) throws -> Future<Void>
+	func deleteUser(_ user: AnyDirectoryUser, on container: Container) throws -> EventLoopFuture<Void>
 	
 	var supportsPasswordChange: Bool {get}
 	func changePasswordAction(for user: AnyDirectoryUser, on container: Container) throws -> ResetPasswordAction
@@ -114,26 +113,26 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 		return ret
 	}
 	
-	func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+	func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<AnyDirectoryUser?> {
 		guard let typedId: Base.UserType.PersistentIdType = pId.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid persistent user id (\(pId)) for fetching user with directory service of type \(Base.self)")
 		}
 		return try originalDirectory.existingUser(fromPersistentId: typedId, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erase() }
 	}
 	
-	func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+	func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<AnyDirectoryUser?> {
 		guard let typedId: Base.UserType.IdType = uId.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user id (\(uId)) for fetching user with directory service of type \(Base.self)")
 		}
 		return try originalDirectory.existingUser(fromUserId: typedId, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erase() }
 	}
 	
-	func listAllUsers(on container: Container) throws -> Future<[AnyDirectoryUser]> {
+	func listAllUsers(on container: Container) throws -> EventLoopFuture<[AnyDirectoryUser]> {
 		return try originalDirectory.listAllUsers(on : container).map{ $0.map{ $0.erase() } }
 	}
 	
 	var supportsUserCreation: Bool {return originalDirectory.supportsUserCreation}
-	func createUser(_ user: AnyDirectoryUser, on container: Container) throws -> Future<AnyDirectoryUser> {
+	func createUser(_ user: AnyDirectoryUser, on container: Container) throws -> EventLoopFuture<AnyDirectoryUser> {
 		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user to create (\(user)) for directory service of type \(Base.self)")
 		}
@@ -141,7 +140,7 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 	}
 	
 	var supportsUserUpdate: Bool {return originalDirectory.supportsUserUpdate}
-	func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser> {
+	func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<AnyDirectoryUser> {
 		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user to update (\(user)) for directory service of type \(Base.self)")
 		}
@@ -149,7 +148,7 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 	}
 	
 	var supportsUserDeletion: Bool {return originalDirectory.supportsUserDeletion}
-	func deleteUser(_ user: AnyDirectoryUser, on container: Container) throws -> Future<Void> {
+	func deleteUser(_ user: AnyDirectoryUser, on container: Container) throws -> EventLoopFuture<Void> {
 		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user to delete (\(user)) for directory service of type \(Base.self)")
 		}
@@ -215,30 +214,30 @@ public class AnyUserDirectoryService : AnyOfficeKitService, UserDirectoryService
 		return box.applyHints(hints, toUser: &user, allowUserIdChange: allowUserIdChange)
 	}
 	
-	public func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+	public func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<AnyDirectoryUser?> {
 		return try box.existingUser(fromPersistentId: pId, propertiesToFetch: propertiesToFetch, on: container)
 	}
 	
-	public func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+	public func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<AnyDirectoryUser?> {
 		return try box.existingUser(fromUserId: uId, propertiesToFetch: propertiesToFetch, on: container)
 	}
 	
-	public func listAllUsers(on container: Container) throws -> Future<[AnyDirectoryUser]> {
+	public func listAllUsers(on container: Container) throws -> EventLoopFuture<[AnyDirectoryUser]> {
 		return try box.listAllUsers(on: container)
 	}
 	
 	public var supportsUserCreation: Bool {return box.supportsUserCreation}
-	public func createUser(_ user: AnyDirectoryUser, on container: Container) throws -> Future<AnyDirectoryUser> {
+	public func createUser(_ user: AnyDirectoryUser, on container: Container) throws -> EventLoopFuture<AnyDirectoryUser> {
 		return try box.createUser(user, on: container)
 	}
 	
 	public var supportsUserUpdate: Bool {return box.supportsUserUpdate}
-	public func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser> {
+	public func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<AnyDirectoryUser> {
 		return try box.updateUser(user, propertiesToUpdate: propertiesToUpdate, on: container)
 	}
 	
 	public var supportsUserDeletion: Bool {return box.supportsUserDeletion}
-	public func deleteUser(_ user: AnyDirectoryUser, on container: Container) throws -> Future<Void> {
+	public func deleteUser(_ user: AnyDirectoryUser, on container: Container) throws -> EventLoopFuture<Void> {
 		return try box.deleteUser(user, on: container)
 	}
 	

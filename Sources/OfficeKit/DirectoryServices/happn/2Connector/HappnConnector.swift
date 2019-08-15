@@ -15,7 +15,7 @@ import URLRequestOperation
 #if canImport(CommonCrypto)
 	import CommonCrypto
 #else
-	import Crypto
+	import OpenCrypto
 #endif
 
 
@@ -253,7 +253,7 @@ public final class HappnConnector : Connector, Authenticator {
 			/* content is (the part in brackets is only there if the value of the
 			 * field is not empty): "url_path[?url_query];http_body;http_method" */
 			
-			let finalHMAC: Data?
+			let finalHMAC: Data
 			#if canImport(CommonCrypto)
 				var hmac = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
 				key.withUnsafeBytes{ (keyBytes: UnsafeRawBufferPointer) in
@@ -268,11 +268,9 @@ public final class HappnConnector : Connector, Authenticator {
 				}
 				finalHMAC = hmac
 			#else
-				finalHMAC = try? HMAC.SHA256.authenticate(content, key: key)
+				finalHMAC = Data(HMAC<SHA256>.authenticationCode(content, key: key))
 			#endif
-			if let hmac = finalHMAC {
-				request.setValue(hmac.reduce("", { $0 + String(format: "%02x", $1) }), forHTTPHeaderField: "Signature")
-			}
+			request.setValue(finalHMAC.reduce("", { $0 + String(format: "%02x", $1) }), forHTTPHeaderField: "Signature")
 		}
 		
 		handler(.success(request), nil)

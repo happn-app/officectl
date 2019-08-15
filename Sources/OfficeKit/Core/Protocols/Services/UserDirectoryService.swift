@@ -7,9 +7,9 @@
 
 import Foundation
 
-import Async
+import AsyncKit
 import GenericJSON
-import Service
+import Vapor
 
 
 
@@ -70,25 +70,25 @@ public protocol UserDirectoryService : OfficeKitService, UserDirectoryServiceIni
 	If _more than one_ user matches the given id, the function should return a
 	**failed** future. If _no_ users match the given id, the method should
 	return a succeeded future with a `nil` user. */
-	func existingUser(fromPersistentId pId: UserType.PersistentIdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
+	func existingUser(fromPersistentId pId: UserType.PersistentIdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<UserType?>
 	/**
 	Fetch and return the _only_ user matching the given id.
 	
 	If _more than one_ user matches the given id, the function should return a
 	**failed** future. If _no_ users match the given id, the method should
 	return a succeeded future with a `nil` user. */
-	func existingUser(fromUserId uId: UserType.IdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
+	func existingUser(fromUserId uId: UserType.IdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<UserType?>
 	
-	func listAllUsers(on container: Container) throws -> Future<[UserType]>
+	func listAllUsers(on container: Container) throws -> EventLoopFuture<[UserType]>
 	
 	var supportsUserCreation: Bool {get}
-	func createUser(_ user: UserType, on container: Container) throws -> Future<UserType>
+	func createUser(_ user: UserType, on container: Container) throws -> EventLoopFuture<UserType>
 	
 	var supportsUserUpdate: Bool {get}
-	func updateUser(_ user: UserType, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType>
+	func updateUser(_ user: UserType, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<UserType>
 	
 	var supportsUserDeletion: Bool {get}
-	func deleteUser(_ user: UserType, on container: Container) throws -> Future<Void>
+	func deleteUser(_ user: UserType, on container: Container) throws -> EventLoopFuture<Void>
 	
 	var supportsPasswordChange: Bool {get}
 	func changePasswordAction(for user: UserType, on container: Container) throws -> ResetPasswordAction
@@ -140,7 +140,7 @@ extension UserDirectoryService {
 		return try logicalUser(fromWrappedUser: service.wrappedUser(fromUser: user), hints: hints)
 	}
 	
-	public func existingUser<OtherServiceType : UserDirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?> {
+	public func existingUser<OtherServiceType : UserDirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<UserType?> {
 		let foreignGenericUser = try service.wrappedUser(fromUser: user)
 		let nativeLogicalUser = try logicalUser(fromWrappedUser: foreignGenericUser, hints: [:])
 		return try existingUser(fromUserId: nativeLogicalUser.userId, propertiesToFetch: propertiesToFetch, on: container)

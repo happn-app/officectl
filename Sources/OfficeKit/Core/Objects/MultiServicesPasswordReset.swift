@@ -7,7 +7,7 @@
 
 import Foundation
 
-import Service
+import Vapor
 
 
 
@@ -26,18 +26,18 @@ extension MultiServicesPasswordReset {
 	public func start(newPass: String, weakeningMode: WeakeningMode, eventLoop: EventLoop) throws -> EventLoopFuture<[AnyUserDirectoryService: Result<Void, Error>]> {
 		guard !isExecuting else {throw OperationAlreadyInProgressError()}
 		
-		let futures = errorsAndItemsByService.map{ serviceIdAndResetPairResult -> (AnyUserDirectoryService, Future<Void>) in
+		let futures = errorsAndItemsByService.map{ serviceIdAndResetPairResult -> (AnyUserDirectoryService, EventLoopFuture<Void>) in
 			let (service, resetPairResult) = serviceIdAndResetPairResult
 			
 			switch resetPairResult {
-			case .success(nil):            return (service, eventLoop.newSucceededFuture(result: ()))
+			case .success(nil):            return (service, eventLoop.makeSucceededFuture(()))
 			case .success(let resetPair?): return (service, resetPair.passwordReset.start(parameters: newPass, weakeningMode: weakeningMode, eventLoop: eventLoop))
-			case .failure(let error):      return (service, eventLoop.future(error: error))
+			case .failure(let error):      return (service, eventLoop.makeFailedFuture(error))
 			}
 		}
 		
-		return Future.waitAll(futures, eventLoop: eventLoop)
-		.map{ try $0.group(by: { $0.0 }, mappingValues: { $0.1 }) }
+		return EventLoopFuture<Void>.waitAll(futures, eventLoop: eventLoop)
+		.flatMapThrowing{ try $0.group(by: { $0.0 }, mappingValues: { $0.1 }) }
 	}
 	
 }

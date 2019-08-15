@@ -38,7 +38,7 @@ public struct ODRecordOKWrapper : DirectoryUser {
 		
 		let emails = (attributes[kODAttributeTypeEMailAddress] as? [String])?.compactMap{ Email(string: $0) }
 		
-		persistentId = (attributes[kODAttributeTypeGUID] as? [String])?.onlyElement.flatMap{ UUID($0) }.flatMap{ .set($0) } ?? .unset
+		persistentId = (attributes[kODAttributeTypeGUID] as? [String])?.onlyElement.flatMap{ UUID(uuidString: $0) }.flatMap{ .set($0) } ?? .unset
 		identifyingEmail = emails.flatMap{ .set($0.first) } ?? .unset
 		otherEmails = emails.flatMap{ .set(Array($0.dropFirst())) } ?? .unset
 		firstName = (attributes[kODAttributeTypeFirstName] as? [String])?.onlyElement.flatMap{ .set($0) } ?? .unset

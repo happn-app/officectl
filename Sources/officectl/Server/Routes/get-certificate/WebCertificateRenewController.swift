@@ -21,11 +21,11 @@ import GenericJSON
 
 class WebCertificateRenewController {
 	
-	func showLogin(_ req: Request) throws -> Future<View> {
+	func showLogin(_ req: Request) throws -> EventLoopFuture<View> {
 		return try req.view().render("CertificateRenewLogin")
 	}
 	
-	func renewCertificate(_ req: Request) throws -> Future<Response> {
+	func renewCertificate(_ req: Request) throws -> EventLoopFuture<Response> {
 		let renewCertificateData = try req.content.syncDecode(RenewCertificateData.self)
 		let renewedCommonName = renewCertificateData.email.username
 		
@@ -50,7 +50,7 @@ class WebCertificateRenewController {
 		.map{ authSuccess -> Void in
 			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}
 		}
-		.flatMap{ _ -> Future<CertificateSerialsList> in
+		.flatMap{ _ -> EventLoopFuture<CertificateSerialsList> in
 			/* Now the user is authenticated, let’s fetch the list of current
 			 * certificates in the vault */
 			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("certs"))
@@ -58,9 +58,9 @@ class WebCertificateRenewController {
 			let op = AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>(request: urlRequest, authenticator: authenticate)
 			return EventLoopFuture<VaultResponse<CertificateSerialsList>>.future(from: op, eventLoop: req.eventLoop).map{ $0.data }
 		}
-		.then{ certificatesList -> Future<[String]> in
+		.then{ certificatesList -> EventLoopFuture<[String]> in
 			/* Get the list of certificates to revoke */
-			let futures = certificatesList.keys.map{ id -> Future<String?> in
+			let futures = certificatesList.keys.map{ id -> EventLoopFuture<String?> in
 				let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent(id))
 				let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
 				return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, eventLoop: req.eventLoop).map{ certificateResponse in
@@ -68,15 +68,15 @@ class WebCertificateRenewController {
 					return id
 				}
 			}
-			return Future.reduce([String](), futures, eventLoop: req.eventLoop, { full, new in
+			return EventLoopFuture.reduce([String](), futures, eventLoop: req.eventLoop, { full, new in
 				guard let new = new else {return full}
 				return full + [new]
 			})
 		}
-		.flatMap{ certificateIdsToRevoke -> Future<Void> in
+		.flatMap{ certificateIdsToRevoke -> EventLoopFuture<Void> in
 			/* Revoke the certificates to revoke */
 			try req.make(AuditLogger.self).log(action: "Revoking \(certificateIdsToRevoke.count) certificate(s): \(certificateIdsToRevoke.joined(separator: " ")).", source: .web)
-			let futures = certificateIdsToRevoke.map{ id -> Future<Void> in
+			let futures = certificateIdsToRevoke.map{ id -> EventLoopFuture<Void> in
 				var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("revoke"))
 				urlRequest.httpMethod = "POST"
 				let json = JSON(dictionaryLiteral: ("serial_number", JSON(stringLiteral: id)))
@@ -84,9 +84,9 @@ class WebCertificateRenewController {
 				let op = AuthenticatedJSONOperation<VaultResponse<RevocationResult>>(request: urlRequest, authenticator: authenticate)
 				return EventLoopFuture<VaultResponse<RevocationResult>>.future(from: op, eventLoop: req.eventLoop).map{ _ in return () }
 			}
-			return Future.reduce((), futures, eventLoop: req.eventLoop, { _, _ in () })
+			return EventLoopFuture.reduce((), futures, eventLoop: req.eventLoop, { _, _ in () })
 		}
-		.flatMap{ _ -> Future<NewCertificate> in
+		.flatMap{ _ -> EventLoopFuture<NewCertificate> in
 			/* Create the new certificate */
 			try req.make(AuditLogger.self).log(action: "Creating certificate w/ CN \(renewedCommonName).", source: .web)
 			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("issue").appendingPathComponent("client"))
@@ -96,7 +96,7 @@ class WebCertificateRenewController {
 			let op = AuthenticatedJSONOperation<VaultResponse<NewCertificate>>(request: urlRequest, authenticator: authenticate)
 			return EventLoopFuture<VaultResponse<NewCertificate>>.future(from: op, eventLoop: req.eventLoop).map{ $0.data }
 		}
-		.flatMap{ newCertificate -> Future<NewCertificate> in
+		.flatMap{ newCertificate -> EventLoopFuture<NewCertificate> in
 			/* We add the root CA in the CA chain Vault returns… */
 			let urlRequest = URLRequest(url: baseURL.appendingPathComponent(rootCAName).appendingPathComponent("cert").appendingPathComponent("ca"))
 			let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
@@ -106,7 +106,7 @@ class WebCertificateRenewController {
 				return newCertificate
 			}
 		}
-		.then{ newCertificate -> Future<URL> in
+		.then{ newCertificate -> EventLoopFuture<URL> in
 			let randomId = UUID().uuidString
 			let baseURL = FileManager.default.temporaryDirectory.appendingPathComponent(randomId, isDirectory: true)
 			

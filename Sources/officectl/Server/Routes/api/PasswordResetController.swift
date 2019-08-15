@@ -7,7 +7,7 @@
 
 import Foundation
 
-import JWT
+import JWTKit
 import OfficeKit
 import SemiSingleton
 import Vapor
@@ -36,7 +36,7 @@ class PasswordResetController {
 		.map{ passwordResets in ApiResponse.data(ApiPasswordReset(requestedUserId: dsuIdPair.taggedId, multiPasswordResets: passwordResets, environment: req.environment)) }
 	}
 	
-	func createReset(_ req: Request) throws -> Future<ApiResponse<ApiPasswordReset>> {
+	func createReset(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiPasswordReset>> {
 		/* General auth check */
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
@@ -55,7 +55,7 @@ class PasswordResetController {
 		let sProvider = try req.make(OfficeKitServiceProvider.self)
 		let dsuPair = try dsuIdPair.dsuPair()
 		
-		let authFuture: Future<Bool>
+		let authFuture: EventLoopFuture<Bool>
 		if let oldPass = passChangeData.oldPassword {
 			let authService = try sProvider.getDirectoryAuthenticatorService()
 			let authServiceUser = try authService.logicalUser(fromUser: dsuPair.user, in: dsuPair.service)

@@ -14,7 +14,7 @@ import OfficeKit
 
 
 
-func getToken(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
+func getToken(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
 	let officeKitConfig = try context.container.make(OfficectlConfig.self).officeKitConfig
 	
 	let scopes = f.getString(name: "scopes")
@@ -23,7 +23,7 @@ func getToken(flags f: Flags, arguments args: [String], context: CommandContext)
 	
 	try context.container.make(AuditLogger.self).log(action: "Getting token for service \(serviceId ?? "<inferred service>") with scope \(scopes ?? "<no scope defined>").", source: .cli)
 	
-	let token: Future<String>
+	let token: EventLoopFuture<String>
 	if let googleConfig: GoogleServiceConfig = serviceConfig.unbox() {
 		token = try getGoogleToken(googleConfig: googleConfig, scopesStr: scopes, eventLoop: context.container.eventLoop)
 		
@@ -39,7 +39,7 @@ func getToken(flags f: Flags, arguments args: [String], context: CommandContext)
 	}
 }
 
-private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String?, eventLoop: EventLoop) throws -> Future<String> {
+private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String?, eventLoop: EventLoop) throws -> EventLoopFuture<String> {
 	guard let scopesStr = scopesStr else {
 		throw InvalidArgumentError(message: "The --scopes option is required to get a Google token.")
 	}
@@ -51,7 +51,7 @@ private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String
 	}
 }
 
-private func getGitHubToken(gitHubConfig: GitHubServiceConfig, scopesStr: String?, eventLoop: EventLoop) throws -> Future<String> {
+private func getGitHubToken(gitHubConfig: GitHubServiceConfig, scopesStr: String?, eventLoop: EventLoop) throws -> EventLoopFuture<String> {
 	guard scopesStr == nil else {
 		throw InvalidArgumentError(message: "Scopes are not supported to retrieve a GitHub token.")
 	}

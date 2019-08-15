@@ -14,7 +14,7 @@ import OfficeKit
 
 
 
-func usersCreate(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
+func usersCreate(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
 	let yes = f.getBool(name: "yes")!
 	let emailStr = f.getString(name: "email")!
 	let lastname = f.getString(name: "lastname")!
@@ -79,7 +79,7 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 	try context.container.make(AuditLogger.self).log(action: "Creating user with email “\(email.stringValue)”, first name “\(firstname)”, last name “\(lastname)” on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
 	
 	struct SkippedUser : Error {}
-	let futures = users.enumerated().map{ serviceIdxAndUser -> Future<AnyDirectoryUser> in
+	let futures = users.enumerated().map{ serviceIdxAndUser -> EventLoopFuture<AnyDirectoryUser> in
 		let (serviceIdx, userResult) = serviceIdxAndUser
 		let service = services[serviceIdx]
 		guard let user = userResult.successValue else {
@@ -91,7 +91,7 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 		.flatMap{ user in try service.changePasswordAction(for: user, on: context.container).start(parameters: password, weakeningMode: .alwaysInstantly, eventLoop: context.container.eventLoop).map{ user } }
 	}
 	
-	return Future.waitAll(futures, eventLoop: context.container.eventLoop)
+	return EventLoopFuture.waitAll(futures, eventLoop: context.container.eventLoop)
 	.map{ results in
 		if !yes {
 			context.console.info()

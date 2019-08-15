@@ -45,8 +45,8 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 		decoder.dateDecodingStrategy = .customISO8601
 		decoder.keyDecodingStrategy = .useDefaultKeys
 		
-		let f = eventLoop.future()
-		.flatMap{ _ -> EventLoopFuture<HappnApiResult<Int8>> in
+		let f = eventLoop.makeSucceededFuture(())
+		.flatMapThrowing{ _ -> AuthenticatedJSONOperation<HappnApiResult<Int8>> in
 			guard case .userPass(_, let adminPass) = self.connector.authMode else {
 				throw InvalidArgumentError(message: "Cannot delete a user without the password of the admin")
 			}
@@ -63,12 +63,12 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 			/* We declare a decoded type HappnApiResult<Int8>. We chose Int8,
 			 * but could have taken anything that’s decodable: the API returns
 			 * null all the time… */
-			let op = AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequest, authenticator: self.connector.authenticate, decoder: decoder)
-			return EventLoopFuture<HappnApiResult<Int8>>.future(from: op, eventLoop: eventLoop)
-		}
-		.map{ (r: HappnApiResult<Int8>) -> Void in
-			guard r.success else {
-				throw NSError(domain: "com.happn.officectl.happn", code: r.error_code, userInfo: [NSLocalizedDescriptionKey: r.error ?? "Unknown error while revoking user admin access"])
+			return AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequest, authenticator: self.connector.authenticate, decoder: decoder)
+		}.flatMap{
+			return EventLoopFuture<HappnApiResult<Int8>>.future(from: $0, on: eventLoop).flatMapThrowing{
+				guard $0.success else {
+					throw NSError(domain: "com.happn.officectl.happn", code: $0.error_code, userInfo: [NSLocalizedDescriptionKey: $0.error ?? "Unknown error while revoking user admin access"])
+				}
 			}
 		}
 		.flatMap{ _ -> EventLoopFuture<Void> in
@@ -86,16 +86,17 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 				urlRequest.httpMethod = "DELETE"
 				
 				let op = AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequest, authenticator: self.connector.authenticate, decoder: decoder)
-				return EventLoopFuture<Void>.future(from: op, eventLoop: eventLoop, resultRetriever: { _ in /* We don’t care about the error if any. */ })
+				return EventLoopFuture<Void>.future(from: op, on: eventLoop, resultRetriever: { _ in /* We don’t care about the error if any. */ })
 			} catch {
 				/* We don’t care about the error here… */
-				return eventLoop.future()
+				return eventLoop.makeSucceededFuture(())
 			}
 		}
 		
-		f.whenSuccess{        self.error = nil }
-		f.whenFailure{ err in self.error = err }
-		f.whenComplete(baseOperationEnded)
+		f.whenComplete{ r in
+			self.error = r.failureValue
+			self.baseOperationEnded()
+		}
 	}
 	
 	public override var isAsynchronous: Bool {

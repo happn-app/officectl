@@ -9,7 +9,7 @@ import Foundation
 
 import GenericJSON
 import GenericStorage
-import Service
+import Vapor
 
 
 
@@ -97,28 +97,28 @@ public final class DummyService : UserDirectoryService {
 		return []
 	}
 	
-	public func existingUser(fromPersistentId pId: Never, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser?> {
+	public func existingUser(fromPersistentId pId: Never, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<DummyServiceUser?> {
 	}
 	
-	public func existingUser(fromUserId dn: Never, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser?> {
+	public func existingUser(fromUserId dn: Never, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<DummyServiceUser?> {
 	}
 	
-	public func listAllUsers(on container: Container) throws -> Future<[DummyServiceUser]> {
+	public func listAllUsers(on container: Container) throws -> EventLoopFuture<[DummyServiceUser]> {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
 	public let supportsUserCreation = false
-	public func createUser(_ user: DummyServiceUser, on container: Container) throws -> Future<DummyServiceUser> {
+	public func createUser(_ user: DummyServiceUser, on container: Container) throws -> EventLoopFuture<DummyServiceUser> {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
 	public let supportsUserUpdate = false
-	public func updateUser(_ user: DummyServiceUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser> {
+	public func updateUser(_ user: DummyServiceUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<DummyServiceUser> {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
 	public let supportsUserDeletion = false
-	public func deleteUser(_ user: DummyServiceUser, on container: Container) throws -> Future<Void> {
+	public func deleteUser(_ user: DummyServiceUser, on container: Container) throws -> EventLoopFuture<Void> {
 		throw NotAvailableOnThisPlatformError()
 	}
 	

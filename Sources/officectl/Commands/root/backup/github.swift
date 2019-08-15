@@ -14,7 +14,7 @@ import OfficeKit
 
 
 
-func backupGitHub(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
+func backupGitHub(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
 	let officeKitConfig = try context.container.make(OfficectlConfig.self).officeKitConfig
 	
 	let serviceId = f.getString(name: "service-id")
@@ -27,12 +27,12 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 	
 	let gitHubConnector = try GitHubJWTConnector(key: gitHubConfig.connectorSettings)
 	let f = gitHubConnector.connect(scope: (), eventLoop: context.container.eventLoop)
-	.then{ _ -> Future<[GitHubRepository]> in
+	.then{ _ -> EventLoopFuture<[GitHubRepository]> in
 		context.console.info("Fetching repositories list from GitHub...")
 		let searchOp = GitHubRepositorySearchOperation(searchedOrganisation: orgName, gitHubConnector: gitHubConnector)
-		return Future<[GitHubRepository]>.future(from: searchOp, eventLoop: context.container.eventLoop)
+		return EventLoopFuture<[GitHubRepository]>.future(from: searchOp, eventLoop: context.container.eventLoop)
 	}
-	.then{ repositories -> Future<Set<String>> in
+	.then{ repositories -> EventLoopFuture<Set<String>> in
 		let promise: EventLoopPromise<Set<String>> = context.container.eventLoop.newPromise()
 		defaultDispatchQueueForFutureSupport.async{
 			let repositoryNames = Set(repositories.map{ $0.fullName })
@@ -58,11 +58,11 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 		}
 		return promise.futureResult
 	}
-	.then{ repositoryNames -> Future<([FutureResult<Void>], Set<String>)> in
+	.then{ repositoryNames -> EventLoopFuture<([FutureResult<Void>], Set<String>)> in
 		context.console.info("Updating clones...")
 		let q = OperationQueue(); q.maxConcurrentOperationCount = 7 /* We do not use the default operation queue from async config. Indeed, we are launching one sub-process per operation. We do not want a configuration suited for threads, we want one suited for launching subprocesses. */
 		let operations = repositoryNames.map{ CloneGitHubRepoOperation(in: destinationFolderURL, repoFullName: $0, accessToken: gitHubConnector.token!) }
-		return Future<[FutureResult<Void>]>
+		return EventLoopFuture<[FutureResult<Void>]>
 			.executeAll(operations, eventLoop: context.container.eventLoop, queue: q, resultRetriever: { o -> Void in try throwIfError(o.cloneError) })
 			.and(result: repositoryNames)
 	}

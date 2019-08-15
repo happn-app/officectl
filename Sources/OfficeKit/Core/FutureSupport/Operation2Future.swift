@@ -8,41 +8,40 @@
 import Foundation
 
 import NIO
-import Async
 
 
 
 public extension EventLoopFuture {
 	
-	static func future<T, O : Operation>(from operation: O, eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport, resultRetriever: @escaping (_ operation: O) throws -> T) -> EventLoopFuture<T> {
-		let promise: EventLoopPromise<T> = eventLoop.newPromise()
+	static func future<T, O : Operation>(from operation: O, on eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport, resultRetriever: @escaping (_ operation: O) throws -> T) -> EventLoopFuture<T> {
+		let promise: EventLoopPromise<T> = eventLoop.makePromise(of: T.self)
 		let resultRetrieverOperation = BlockOperation{
-			do    {promise.succeed(result: try resultRetriever(operation))}
-			catch {promise.fail(error: error)}
+			do    {promise.succeed(try resultRetriever(operation))}
+			catch {promise.fail(error)}
 		}
 		resultRetrieverOperation.addDependency(operation)
 		q.addOperations([operation, resultRetrieverOperation], waitUntilFinished: false)
 		return promise.futureResult
 	}
 	
-	static func future<O : Operation>(from operation: O, eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport) -> EventLoopFuture<O.ResultType> where O : HasResult {
-		return EventLoopFuture.future(from: operation, eventLoop: eventLoop, queue: q, resultRetriever: { try $0.resultOrThrow() })
+	static func future<O : Operation>(from operation: O, on eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport) -> EventLoopFuture<O.ResultType> where O : HasResult {
+		return EventLoopFuture.future(from: operation, on: eventLoop, queue: q, resultRetriever: { try $0.resultOrThrow() })
 	}
 	
 	/** Executes all the operations and returns an array of results. If any
 	operation failes the future fails (but all operations will run). */
-	static func reduce<R, O : Operation>(operations: [O], eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport, resultRetriever: @escaping (_ operation: O) throws -> R) -> EventLoopFuture<[R]> where T == [R] {
-		let futures = operations.map{ EventLoopFuture.future(from: $0, eventLoop: eventLoop, queue: q, resultRetriever: resultRetriever) }
+	static func reduce<R, O : Operation>(operations: [O], on eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport, resultRetriever: @escaping (_ operation: O) throws -> R) -> EventLoopFuture<[R]> where Value == [R] {
+		let futures = operations.map{ EventLoopFuture.future(from: $0, on: eventLoop, queue: q, resultRetriever: resultRetriever) }
 		
-		return self.reduce([R](), futures, eventLoop: eventLoop, { (currentResults: [R], newResult: R) -> [R] in
+		return self.reduce([R](), futures, on: eventLoop, { (currentResults: [R], newResult: R) -> [R] in
 			return currentResults + [newResult]
 		})
 	}
 	
 	/** Executes all the operations in order and stop at first failure (reduce
 	the operations). The future only succeeds if all the operations succeed. */
-	static func reduce<O : Operation>(operations: [O], eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport) -> EventLoopFuture<[O.ResultType]> where O : HasResult, T == [O.ResultType] {
-		return EventLoopFuture.reduce(operations: operations, eventLoop: eventLoop, queue: q, resultRetriever: { try $0.resultOrThrow() })
+	static func reduce<O : Operation>(operations: [O], on eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport) -> EventLoopFuture<[O.ResultType]> where O : HasResult, Value == [O.ResultType] {
+		return EventLoopFuture.reduce(operations: operations, on: eventLoop, queue: q, resultRetriever: { try $0.resultOrThrow() })
 	}
 	
 	/**
@@ -53,7 +52,7 @@ public extension EventLoopFuture {
 	Example of use, with operations returning a Boolean:
 	```
 	Input:                    [op1, op2]
-	Returns:                  Future<[FutureResult<Bool>]>
+	Returns:                  EventLoopFuture<[FutureResult<Bool>]>
 	When the future resolves: let resultForOp1 = futureSuccess[0], resultForOp2 = futureSuccess[1]
 	```
 	
@@ -67,15 +66,15 @@ public extension EventLoopFuture {
 	- parameter operation: The operation from which to retrieve the result.
 	- returns: A future (that will never fail) whose resolution will give an
 	array of future results (one result per operations given). */
-	static func executeAll<T, O : Operation>(_ operations: [O], eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport, resultRetriever: @escaping (_ operation: O) throws -> T) -> EventLoopFuture<[FutureResult<T>]> {
-		let promise: EventLoopPromise<[FutureResult<T>]> = eventLoop.newPromise()
+	static func executeAll<T, O : Operation>(_ operations: [O], on eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport, resultRetriever: @escaping (_ operation: O) throws -> T) -> EventLoopFuture<[Result<T, Error>]> {
+		let promise = eventLoop.makePromise(of: [Swift.Result<T, Error>].self)
 		let resultRetrieverOperation = BlockOperation{
-			var results = [FutureResult<T>]()
+			var results = [Swift.Result<T, Error>]()
 			for o in operations {
 				do    {results.append(.success(try resultRetriever(o)))}
-				catch {results.append(.error(error))}
+				catch {results.append(.failure(error))}
 			}
-			promise.succeed(result: results)
+			promise.succeed(results)
 		}
 		operations.forEach{ resultRetrieverOperation.addDependency($0) }
 		q.addOperations(operations + [resultRetrieverOperation], waitUntilFinished: false)
@@ -90,7 +89,7 @@ public extension EventLoopFuture {
 	Example of use, with operations returning a Boolean:
 	```
 	Input:                    [op1, op2]
-	Returns:                  Future<[FutureResult<Bool>]>
+	Returns:                  EventLoopFuture<[FutureResult<Bool>]>
 	When the future resolves: let resultForOp1 = futureSuccess[0], resultForOp2 = futureSuccess[1]
 	```
 	
@@ -100,8 +99,8 @@ public extension EventLoopFuture {
 	- parameter q: The queue on which the operations will be run.
 	- returns: A future (that will never fail) whose resolution will give an
 	array of future results (one result per operations given). */
-	static func executeAll<O : Operation>(_ operations: [O], eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport) -> EventLoopFuture<[FutureResult<O.ResultType>]> where O : HasResult {
-		return EventLoopFuture.executeAll(operations, eventLoop: eventLoop, queue: q, resultRetriever: { try $0.resultOrThrow() })
+	static func executeAll<O : Operation>(_ operations: [O], on eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport) -> EventLoopFuture<[Result<O.ResultType, Error>]> where O : HasResult {
+		return EventLoopFuture.executeAll(operations, on: eventLoop, queue: q, resultRetriever: { try $0.resultOrThrow() })
 	}
 	
 }

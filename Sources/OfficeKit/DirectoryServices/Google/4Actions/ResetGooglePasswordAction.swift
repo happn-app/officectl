@@ -8,12 +8,12 @@
 import Foundation
 
 import SemiSingleton
-import Service
+import Vapor
 
 #if canImport(CommonCrypto)
 	import CommonCrypto
 #else
-	import Crypto
+	import OpenCrypto
 #endif
 
 
@@ -48,13 +48,14 @@ public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, Reset
 			}
 			newPasswordHash = sha1
 		#else
-			newPasswordHash = try SHA1.hash(passwordData)
+			throw NotImplementedError()
+//			newPasswordHash = try SHA1.hash(passwordData)
 		#endif
 		
 		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
 		
 		let f = deps.connector.connect(scope: ModifyGoogleUserOperation.scopes, eventLoop: eventLoop)
-		.then{ _ -> Future<Void> in
+		.map{ _ -> EventLoopFuture<Void> in
 			var googleUser = self.subject.cloneForPatching()
 			
 			googleUser.password = .set(newPasswordHash.reduce("", { $0 + String(format: "%02x", $1) }))
@@ -62,7 +63,7 @@ public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, Reset
 			googleUser.changePasswordAtNextLogin = .set(false)
 			
 			let modifyUserOperation = ModifyGoogleUserOperation(user: googleUser, connector: self.deps.connector)
-			return Future<Void>.future(from: modifyUserOperation, eventLoop: eventLoop)
+			return EventLoopFuture<Void>.future(from: modifyUserOperation, on: eventLoop)
 		}
 		
 		f.whenSuccess{ _   in handler(.success(())) }

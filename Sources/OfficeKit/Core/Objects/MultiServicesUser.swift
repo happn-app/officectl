@@ -8,7 +8,7 @@
 import Foundation
 
 import NIO
-import Service
+import Vapor
 
 
 
@@ -25,11 +25,11 @@ extension MultiServicesUser {
 		
 		func getUsers(from dsuPair: AnyDSUPair, in services: Set<AnyUserDirectoryService>) -> EventLoopFuture<[AnyUserDirectoryService: Result<AnyDSUPair?, Error>]> {
 			let userFutures = services.map{ curService in
-				(curService, container.future().flatMap{
+				(curService, container.eventLoop.makeSucceededFuture(()).flatMapThrowing{
 					try curService.existingUser(fromUser: dsuPair.user, in: dsuPair.service, propertiesToFetch: [], on: container)
-				})
+				}.flatMap{ $0 })
 			}
-			return Future.waitAll(userFutures, eventLoop: container.eventLoop).map{ userResults in
+			return EventLoopFuture.waitAll(userFutures, eventLoop: container.eventLoop).flatMapThrowing{ userResults in
 				return try userResults.group(
 					by:            { $0.0 },
 					mappingValues: {
@@ -57,14 +57,14 @@ extension MultiServicesUser {
 			guard let serviceIdToTry = serviceIdsToTry.first, servicesToFetch.count > 0 else {
 				/* We have finished. Let’s return the results. */
 				let multiServicesUser = MultiServicesUser(itemsByService: allFetchedUsers, errorsByService: allFetchedErrors.mapValues{ ErrorCollection($0) })
-				return container.eventLoop.newSucceededFuture(result: multiServicesUser)
+				return container.eventLoop.makeSucceededFuture(multiServicesUser)
 			}
 			
 			triedServiceIdSource.insert(serviceIdToTry)
-			return getUsers(from: allFetchedUsers[serviceIdToTry]!!, in: servicesToFetch).flatMap(fetchStep)
+			return getUsers(from: allFetchedUsers[serviceIdToTry]!!, in: servicesToFetch).flatMapThrowing(fetchStep).flatMap{ $0 }
 		}
 		
-		return try getUsers(from: dsuIdPair.dsuPair(), in: services).flatMap(fetchStep)
+		return try getUsers(from: dsuIdPair.dsuPair(), in: services).flatMapThrowing(fetchStep).flatMap{ $0 }
 	}
 	
 	public static func fetchAll(in services: Set<AnyUserDirectoryService>, on container: Container) throws -> EventLoopFuture<(users: [MultiServicesUser], fetchErrorsByServices: [AnyUserDirectoryService: Error])> {
@@ -87,7 +87,7 @@ extension MultiServicesUser {
 	contain a DSU pair for a service that has not been declared valid. (The
 	argument is only useful when `validServices` is set to a non-`nil` value.) */
 	public static func merge(dsuPairs: Set<AnyDSUPair>, validServices: Set<AnyUserDirectoryService>? = nil, allowNonValidServices: Bool = false, eventLoop: EventLoop, dispatchQueue: DispatchQueue = defaultDispatchQueueForFutureSupport) -> EventLoopFuture<[MultiServicesUser]> {
-		let promise = eventLoop.newPromise([MultiServicesUser].self)
+		let promise = eventLoop.makePromise(of: [MultiServicesUser].self)
 		dispatchQueue.async{
 			do {
 				/* Transform the input to get something we can use (DSUPairs to LinkedUsers + extracting the list of services). */
@@ -156,9 +156,9 @@ extension MultiServicesUser {
 					return MultiServicesUser(itemsByService: res)
 				}
 				
-				promise.succeed(result: results)
+				promise.succeed(results)
 			} catch {
-				promise.fail(error: error)
+				promise.fail(error)
 			}
 		}
 		return promise.futureResult

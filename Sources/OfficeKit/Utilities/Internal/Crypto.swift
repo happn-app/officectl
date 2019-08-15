@@ -10,7 +10,7 @@ import Foundation
 	import Security
 #else
 	public typealias SecKey = Data
-	import Crypto
+	import OpenCrypto
 #endif
 
 
