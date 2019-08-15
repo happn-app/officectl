@@ -60,11 +60,12 @@ public final class ExternalDirectoryServiceV1 : DirectoryService {
 	}
 	
 	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> DirectoryUserWrapper {
-		guard userWrapper.userId.tag == config.serviceId, let underlying = userWrapper.underlyingUser else {
+		guard userWrapper.userId.tag == config.serviceId else {
 			/* Well I don’t think it’s actually possible to implement at all tbh… */
 			throw NotImplementedError()
 		}
-		return try DirectoryUserWrapper(json: underlying)
+		if let underlying = userWrapper.underlyingUser {return try DirectoryUserWrapper(json: underlying)}
+		else                                           {return     DirectoryUserWrapper(userId: TaggedId(string: userWrapper.userId.id))}
 	}
 	
 	public func existingUser(fromPersistentId pId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DirectoryUserWrapper?> {

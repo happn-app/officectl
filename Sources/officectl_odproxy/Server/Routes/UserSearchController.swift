@@ -35,9 +35,20 @@ final class UserSearchController {
 	}
 	
 	func fromUserId(_ req: Request) throws -> Future<ApiResponse<DirectoryUserWrapper?>> {
-		let openDirectoryService = try req.make(OpenDirectoryService.self)
+		/* The data we should have in input. */
+		struct Request : Decodable {
+			var userId: TaggedId
+			var propertiesToFetch: Set<String>
+		}
+		let input = try req.content.syncDecode(Request.self)
+		let propertiesToFetch = Set(input.propertiesToFetch.map{ DirectoryUserProperty(stringLiteral: $0) })
+		let uId = try LDAPDistinguishedName(string: input.userId.id)
 		
-		throw NotImplementedError()
+		let openDirectoryService = try req.make(OpenDirectoryService.self)
+		return try openDirectoryService.existingUser(fromUserId: uId, propertiesToFetch: propertiesToFetch, on: req).map{ user in
+			/* Let’s convert the OpenDirectory user to a GenericDirectoryUser */
+			return try ApiResponse.data(user.flatMap{ try openDirectoryService.wrappedUser(fromUser: $0) })
+		}
 	}
 	
 	func listAllUsers(_ req: Request) throws -> Future<ApiResponse<[DirectoryUserWrapper]>> {
