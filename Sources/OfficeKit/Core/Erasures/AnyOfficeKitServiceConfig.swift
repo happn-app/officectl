@@ -26,6 +26,8 @@ private protocol OfficeKitServiceConfigBox {
 	var serviceId: String {get}
 	var serviceName: String {get}
 	
+	var mergePriority: Int? {get}
+	
 }
 
 private struct ConcreteOfficeKitServiceConfigBox<Base : OfficeKitServiceConfig> : OfficeKitServiceConfigBox {
@@ -55,6 +57,10 @@ private struct ConcreteOfficeKitServiceConfigBox<Base : OfficeKitServiceConfig> 
 	
 	var serviceName: String {
 		return originalConfig.serviceName
+	}
+	
+	var mergePriority: Int? {
+		return originalConfig.mergePriority
 	}
 	
 	init(originalConfig v: Base) {
@@ -91,6 +97,10 @@ public struct AnyOfficeKitServiceConfig : OfficeKitServiceConfig {
 	
 	public var serviceName: String {
 		return box.serviceName
+	}
+	
+	public var mergePriority: Int? {
+		return box.mergePriority
 	}
 	
 	fileprivate let box: OfficeKitServiceConfigBox

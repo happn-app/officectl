@@ -134,19 +134,19 @@ class UsersController {
 					let validServiceIds = Set(services.map{ $0.config.serviceId }).subtracting(fetchErrorsByService.keys)
 					
 					var treatedServiceAndUserIds = Set<ServiceAndUserId>()
-					let results = try usersByServiceAndUserId.compactMap{ kv -> [String: JSON]? in
+					let results = try usersByServiceAndUserId.compactMap{ kv -> [String: DirectoryUserWrapper?]? in
 						let (serviceAndUserId, taggedUser) = kv
 						
 						guard !treatedServiceAndUserIds.contains(serviceAndUserId) else {return nil}
 						treatedServiceAndUserIds.insert(serviceAndUserId)
 						
-						var res = try [taggedUser.service.config.serviceId: taggedUser.service.wrappedUser(fromUser: taggedUser.user).json()]
+						var res: [String: DirectoryUserWrapper?] = try [taggedUser.service.config.serviceId: taggedUser.service.wrappedUser(fromUser: taggedUser.user)]
 						for (linkedServiceId, linkedUser) in taggedUser.linkedUserByServiceId {
 							let linkedServiceAndUserId = ServiceAndUserId(serviceId: linkedServiceId, userId: linkedUser.user.userId)
 							guard !treatedServiceAndUserIds.contains(linkedServiceAndUserId) else {
 								throw InternalError(message: "Got already treated linked user! \(linkedServiceAndUserId) for \(serviceAndUserId)")
 							}
-							res[linkedServiceId] = try linkedUser.service.wrappedUser(fromUser: linkedUser.user).json()
+							res[linkedServiceId] = try linkedUser.service.wrappedUser(fromUser: linkedUser.user)
 							treatedServiceAndUserIds.insert(linkedServiceAndUserId)
 						}
 						for sId in validServiceIds {
@@ -158,7 +158,8 @@ class UsersController {
 					}
 					
 					logger.info("Computed merged users list in \(-startComputationTime.timeIntervalSinceNow) seconds")
-					promise.succeed(result: ApiUsersSearchResult(request: "TODO", results: results, errorsByServiceId: fetchErrorsByService))
+					let orderedServiceIds = officectlConfig.officeKitConfig.orderedServiceConfigs.map{ $0.serviceId }
+					promise.succeed(result: ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchErrorsByService, result: results.map{ ApiUser(users: $0, orderedServicesIds: orderedServiceIds) }))
 				} catch {
 					promise.fail(error: error)
 				}
@@ -198,6 +199,7 @@ class UsersController {
 	
 	private func getUserNoAuthCheck(userId: FullUserId, container: Container) throws -> Future<ApiResponse<ApiUserSearchResult>> {
 		let sProvider = try container.make(OfficeKitServiceProvider.self)
+		let officeKitConfig = try container.make(OfficectlConfig.self).officeKitConfig
 		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id))
 		
 		let allServices = try sProvider.getAllServices(container: container)
@@ -207,12 +209,19 @@ class UsersController {
 			}
 		}
 		return Future.waitAll(userFutures, eventLoop: container.eventLoop).map{ userResults in
-			var serviceIdToUser = [String: ApiResponse<JSON?>]()
+			var serviceIdToError = [String: ApiError]()
+			var serviceIdToUser = [String: DirectoryUserWrapper?]()
 			for (idx, userResult) in userResults.enumerated() {
 				let service = allServices[idx]
-				serviceIdToUser[service.config.serviceId] = ApiResponse(result: userResult.flatMap{ curUser in Result{ try curUser.flatMap{ try service.wrappedUser(fromUser: $0).json() } } }, environment: container.environment)
+				let serviceId = service.config.serviceId
+				let result = userResult.flatMap{ curUser in Result{ try curUser.flatMap{ try service.wrappedUser(fromUser: $0) } } }
+				switch result {
+				case .success(let user):  serviceIdToUser[serviceId] = .some(user)
+				case .failure(let error): serviceIdToError[serviceId] = ApiError(error: error, environment: container.environment)
+				}
 			}
-			return ApiResponse.data(ApiUserSearchResult(request: userId.taggedId, results: serviceIdToUser))
+			let orderedServiceIds = officeKitConfig.orderedServiceConfigs.map{ $0.serviceId }
+			return ApiResponse.data(ApiUserSearchResult(request: userId.taggedId, errorsByServiceId: serviceIdToError, result: ApiUser(users: serviceIdToUser, orderedServicesIds: orderedServiceIds)))
 		}
 	}
 	

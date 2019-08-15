@@ -29,6 +29,10 @@ public protocol OfficeKitServiceConfig : Hashable {
 	var serviceId: String {get}
 	var serviceName: String {get}
 	
+	/** The priority of the service in case of conflict when mergning objects
+	from multiple services. */
+	var mergePriority: Int? {get}
+	
 	init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws
 	
 }

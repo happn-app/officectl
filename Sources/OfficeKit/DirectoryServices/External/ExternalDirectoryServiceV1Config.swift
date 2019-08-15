@@ -20,6 +20,8 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 	public var serviceId: String
 	public var serviceName: String
 	
+	public var mergePriority: Int?
+	
 	public var url: URL
 	public var secret: Data
 	
@@ -30,7 +32,7 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 	
 	public init(
 		globalConfig: GlobalConfig,
-		providerId pId: String, serviceId id: String, serviceName name: String,
+		providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?,
 		url theURL: URL, secret s: Data,
 		supportsUserCreation suc: Bool,
 		supportsUserUpdate suu: Bool,
@@ -43,6 +45,7 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 		providerId = pId
 		serviceId = id
 		serviceName = name
+		mergePriority = p
 		
 		url = theURL
 		secret = s
@@ -61,10 +64,11 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 		let suu    = try genericConfig.optionalBool(forKey: "supportsUserUpdate",     currentKeyPath: domain) ?? true
 		let sud    = try genericConfig.optionalBool(forKey: "supportsUserDeletion",   currentKeyPath: domain) ?? true
 		let spc    = try genericConfig.optionalBool(forKey: "supportsPasswordChange", currentKeyPath: domain) ?? true
+		let p      = try genericConfig.optionalInt(forKey: "mergePriority",           currentKeyPath: domain)
 		
 		self.init(
 			globalConfig: globalConfig,
-			providerId: pId, serviceId: id, serviceName: name,
+			providerId: pId, serviceId: id, serviceName: name, mergePriority: p,
 			url: url, secret: Data(secret.utf8),
 			supportsUserCreation: suc,
 			supportsUserUpdate: suu,

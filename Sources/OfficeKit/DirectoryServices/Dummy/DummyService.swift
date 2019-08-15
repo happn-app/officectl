@@ -20,6 +20,8 @@ public struct DummyServiceConfig : OfficeKitServiceConfig {
 	public var serviceId: String
 	public var serviceName: String
 	
+	public var mergePriority: Int?
+	
 	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		throw InternalError(message: "The DummyServiceConfig cannot be instantiated")
 	}

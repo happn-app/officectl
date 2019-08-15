@@ -27,6 +27,8 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 	public var serviceId: String
 	public var serviceName: String
 	
+	public var mergePriority: Int?
+	
 	public var connectorSettings: OpenDirectoryConnector.Settings
 	public var baseDNPerDomain: [String: LDAPDistinguishedName]
 	public var peopleBaseDNPerDomain: [String: LDAPDistinguishedName]?
@@ -39,7 +41,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		return Set(baseDNPerDomain.keys)
 	}
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, connectorSettings c: OpenDirectoryConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
+	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: OpenDirectoryConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
 		global = globalConfig
 		
 		let bdn = try baseDNPerDomainString.mapValues{ try LDAPDistinguishedName(string: $0) }
@@ -54,6 +56,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		providerId = pId
 		serviceId = id
 		serviceName = name
+		mergePriority = p
 		
 		connectorSettings = c
 	}
@@ -77,8 +80,10 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		let bdnDic    = try genericConfig.dictionaryOfStrings(forKey: "base_dn_per_domains", currentKeyPath: domain)
 		let pdnString = try genericConfig.optionalString(forKey: "people_dn", currentKeyPath: domain)
 		
+		let mp = try genericConfig.optionalInt(forKey: "mergePriority", currentKeyPath: domain)
+		
 		let connectorSettings = OpenDirectoryConnector.Settings(proxySettings: proxySettings, nodeName: nodeName, nodeCredentials: (recordType: kODRecordTypeUsers, username: username, password: password))
-		try self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString)
+		try self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, mergePriority: mp, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString)
 	}
 	
 }
