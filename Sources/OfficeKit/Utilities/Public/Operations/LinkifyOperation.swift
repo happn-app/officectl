@@ -76,7 +76,7 @@ public class LinkifyOperation : RetryingOperation {
 							try FileManager.default.removeItem(at: curFileURL)
 							try FileManager.default.linkItem(at: matchURL, to: curFileURL)
 						} else {
-							print("Found MD5 collision between \(matchURL) and \(curFileURL)!")
+							OfficeKitConfig.logger?.info("Found MD5 collision between \(matchURL) and \(curFileURL)!")
 						}
 					} else {
 						hashesToPaths[hash] = curFileURL

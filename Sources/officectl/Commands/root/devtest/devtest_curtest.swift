@@ -14,50 +14,10 @@ import OfficeKit
 import SemiSingleton
 import URLRequestOperation
 
-#if canImport(DirectoryService) && canImport(OpenDirectory)
-import DirectoryService
-import OpenDirectory
-#endif
-
 
 
 func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	#if canImport(DirectoryService) && canImport(OpenDirectory)
 	return context.container.future()
-//	let odService: OpenDirectoryService = try context.container.make(OfficeKitServiceProvider.self).getDirectoryService(id: nil, container: context.container)
-//	return try odService.deleteUser(odService.logicalUser(fromEmail: Email(string: "qtest174127@happn.fr")!), on: context.container)
-	
-//	let serviceConfig: OpenDirectoryServiceConfig = try context.container.make(OfficectlConfig.self).officeKitConfig.getServiceConfig(id: nil)
-//	let authenticator: OpenDirectoryRecordAuthenticator = try context.container.makeSemiSingleton(forKey: serviceConfig.authenticatorSettings)
-//	let connector: OpenDirectoryConnector = try context.container.makeSemiSingleton(forKey: serviceConfig.connectorSettings)
-//	return connector.connect(scope: (), eventLoop: context.container.eventLoop)
-//	.then{
-//		return Future<ODRecord>.future(from: SearchOpenDirectoryOperation(uid: "diradmin", openDirectoryConnector: connector), eventLoop: context.container.eventLoop)
-//	}
-//	.map{ record in
-//		print(record)
-//		//"uid=hello.world,cn=users,dc=office2,dc=happn,dc=private"
-//		_ = try connector.performOpenDirectoryCommunication{ node in
-//			guard let node = node else {return}
-//
-//			try print(node.subnodeNames())
-////			try print(node.unreachableSubnodeNames())
-////			try node.setCredentialsWithRecordType(kODRecordTypeUsers, recordName: "diradmin", password: "readacts22169.drawsily")
-//			try node.createRecord(withRecordType: kODRecordTypeUsers, name: "hello.world", attributes: [
-//				kODAttributeTypeFirstName: ["Hello"], kODAttributeTypeLastName: ["World"],
-//				kODAttributeTypeFullName: ["Hello World"],
-//				kODAttributeTypePassword: ["toto"],
-////				kODAttributeTypeMetaNodeLocation: ["/LDAPv3/127.0.0.1"],
-////				kODAttributeTypeRecordName: ["hello.world"],
-////				kODAttributeTypeMetaRecordName: ["uid=hello.world,cn=users,dc=office2,dc=happn,dc=private"],
-////				kODAttributeTypeRecordType: [kODRecordTypeUsers],
-//			])
-////			try print(node.record(withRecordType: kODRecordTypeUsers, name: "hello.world", attributes: nil))
-//		}
-//	}
-	#else
-	return context.container.future()
-	#endif
 	
 	/* List all GitHub project’s hooks */
 //	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)

@@ -75,7 +75,7 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 			}
 			completionHandler(.doNotRetry, currentURLRequest, nil)
 		} catch {
-//			print("Cannot decode JSON; error \(error), data \(fetchedData.reduce("", { $0 + String(format: "%02x", $1) }))", to: &stderrStream)
+			OfficeKitConfig.logger?.info("Cannot decode JSON; error \(error), data \(fetchedData.reduce("", { $0 + String(format: "%02x", $1) }))")
 			completionHandler(.doNotRetry, currentURLRequest, error)
 		}
 	}

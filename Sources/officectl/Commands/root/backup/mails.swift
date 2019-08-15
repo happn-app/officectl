@@ -338,8 +338,8 @@ class OfflineimapRunOperation : RetryingOperation {
 		let nc = NotificationCenter.default
 		signalNotifObservers.append(nc.addObserver(forName: NSNotification.Name(rawValue: "SigInt"),  object: nil, queue: signalQueue) { [weak self] _ in self?.interruptReceived() })
 		signalNotifObservers.append(nc.addObserver(forName: NSNotification.Name(rawValue: "SigTerm"), object: nil, queue: signalQueue) { [weak self] _ in self?.terminateReceived() })
-		signal(SIGINT,  { _ in print("Received SIGINT");  NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SigInt"),  object: nil) })
-		signal(SIGTERM, { _ in print("Received SIGTERM"); NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SigTerm"), object: nil) })
+		signal(SIGINT,  { _ in OfficeKitConfig.logger?.info("Received SIGINT");  NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SigInt"),  object: nil) })
+		signal(SIGTERM, { _ in OfficeKitConfig.logger?.info("Received SIGTERM"); NotificationCenter.default.post(name: NSNotification.Name(rawValue: "SigTerm"), object: nil) })
 	}
 	
 	private func releaseSignalHandlers() {

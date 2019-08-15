@@ -35,7 +35,7 @@ func getToken(flags f: Flags, arguments args: [String], context: CommandContext)
 	}
 	
 	return token.map{
-		print("token: \($0)")
+		context.console.output("token: " + $0, style: .plain)
 	}
 }
 

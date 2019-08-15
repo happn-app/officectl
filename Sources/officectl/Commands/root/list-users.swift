@@ -34,6 +34,7 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 	
 	return usersFuture
 	.then{ users -> Future<Void> in
+		#warning("TODO: Use context.console to log stuff, not print.")
 		var i = 1
 		for user in users {
 			print(user + ",", terminator: "")

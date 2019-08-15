@@ -62,7 +62,7 @@ public final class ModifyLDAPPasswordsOperation : RetryingOperation {
 				/* Debug the generated berval data. */
 //				var data = Data()
 //				for i in 0..<bv.bv_len {data.append(UInt8((Int(bv.bv_val.advanced(by: Int(i)).pointee) + 256) % 256))}
-//				print(data.reduce("", { $0 + String(format: "%02x", $1) }))
+//				OfficeKitConfig.logger?.debug(data.reduce("", { $0 + String(format: "%02x", $1) }))
 				
 				/* We use the synchronous version of the function. See long comment
 				 * in search operation for details. */

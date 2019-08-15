@@ -8,13 +8,14 @@
 import Foundation
 
 import LegibleError
+import OfficeKit
 import Vapor
 
 
 
 do {try app(.detect()).run()}
 catch {
-	print("Error creating or running the App."/* to stderr */)
-	print("   error \(error.legibleLocalizedDescription)"/* to stderr */)
+	print("Error creating or running the App.", to: &stderrStream)
+	print("   error \(error.legibleLocalizedDescription)", to: &stderrStream)
 	exit(Int32((error as NSError).code))
 }

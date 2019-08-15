@@ -59,7 +59,7 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 			defer {_ = ldap_msgfree(searchResultMessagePtr)}
 			
 			guard searchResultError == LDAP_SUCCESS else {
-//				print("Cannot search LDAP: \(String(cString: ldap_err2string(searchResultError)))", to: &stderrStream)
+				OfficeKitConfig.logger?.info("Cannot search LDAP: \(String(cString: ldap_err2string(searchResultError)))")
 				results = RError(domain: "com.happn.officectl.openldap", code: Int(searchResultError), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(searchResultError))])
 				return
 			}
@@ -73,7 +73,7 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 				switch ber_tag_t(ldap_msgtype(currentMessage)) {
 				case LDAP_RES_SEARCH_ENTRY: /* A search result */
 					guard let dnCString = ldap_get_dn(ldapPtr, currentMessage) else {
-						print("Cannot get DN for a search entry", to: &stderrStream)
+						OfficeKitConfig.logger?.info("Cannot get DN for search entry")
 						continue
 					}
 					defer {ldap_memfree(dnCString)}
@@ -91,7 +91,7 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 							/* To retrieve the error message: ldap_err2string(ldapPtr.pointee.ld_errno)
 							 * But does not work because ldapPtr is an Opaque Pointer
 							 * (because it is opaque in the OpenLDAP headers...) */
-							print("Cannot get value set for attribute \(currentAttributeString)", to: &stderrStream)
+							OfficeKitConfig.logger?.info("Cannot get value set for attribute \(currentAttributeString)")
 							continue
 						}
 						var swiftValues = [Data]()
@@ -114,7 +114,7 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 					var referrals: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?
 					let err = ldap_parse_reference(ldapPtr, currentMessage, &referrals, nil /* Server Controls */, 0 /* Do not free the message */)
 					guard err == LDAP_SUCCESS else {
-						print("Cannot get search reference: got error \(String(cString: ldap_err2string(err)))", to: &stderrStream)
+						OfficeKitConfig.logger?.info("Cannot get search reference: got error \(String(cString: ldap_err2string(err)))")
 						continue
 					}
 					
@@ -134,7 +134,7 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 					()
 					
 				default:
-					print("Got unknown message of type \(ldap_msgtype(currentMessage)). Ignoring.", to: &stderrStream)
+					OfficeKitConfig.logger?.info("Got unknown message of type \(ldap_msgtype(currentMessage)). Ignoring.")
 				}
 			}
 			results = .success((results: swiftResults, references: swiftReferences))
