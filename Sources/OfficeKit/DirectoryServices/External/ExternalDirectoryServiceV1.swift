@@ -86,7 +86,7 @@ public final class ExternalDirectoryServiceV1 : DirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<DirectoryUserWrapper?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<DirectoryUserWrapper?>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
+		return Future<ExternalServiceResponse<DirectoryUserWrapper?>>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
 	}
 	
 	public func existingUser(fromUserId uId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DirectoryUserWrapper?> {
@@ -107,7 +107,7 @@ public final class ExternalDirectoryServiceV1 : DirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<DirectoryUserWrapper?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<DirectoryUserWrapper?>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
+		return Future<ExternalServiceResponse<DirectoryUserWrapper?>>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
 	}
 	
 	public func listAllUsers(on container: Container) throws -> Future<[DirectoryUserWrapper]> {
@@ -116,7 +116,7 @@ public final class ExternalDirectoryServiceV1 : DirectoryService {
 		}
 		
 		let operation = ApiRequestOperation<[DirectoryUserWrapper]>(url: url, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<[DirectoryUserWrapper]>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
+		return Future<ExternalServiceResponse<[DirectoryUserWrapper]>>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
 	}
 	
 	public var supportsUserCreation: Bool {return config.supportsUserCreation}
@@ -137,7 +137,7 @@ public final class ExternalDirectoryServiceV1 : DirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<DirectoryUserWrapper>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<DirectoryUserWrapper>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
+		return Future<ExternalServiceResponse<DirectoryUserWrapper>>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
 	}
 	
 	public var supportsUserUpdate: Bool {return config.supportsUserUpdate}
@@ -159,7 +159,7 @@ public final class ExternalDirectoryServiceV1 : DirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<DirectoryUserWrapper>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<DirectoryUserWrapper>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
+		return Future<ExternalServiceResponse<DirectoryUserWrapper>>.future(from: operation, eventLoop: container.eventLoop).map{ try $0.getData() }
 	}
 	
 	public var supportsUserDeletion: Bool {return config.supportsUserDeletion}
@@ -180,7 +180,7 @@ public final class ExternalDirectoryServiceV1 : DirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<String>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return Future<DirectoryUserWrapper>.future(from: operation, eventLoop: container.eventLoop).map{ _ in () }
+		return Future<ExternalServiceResponse<String>>.future(from: operation, eventLoop: container.eventLoop).map{ _ in () }
 	}
 	
 	public var supportsPasswordChange: Bool {return config.supportsPasswordChange}

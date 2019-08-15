@@ -26,16 +26,30 @@ final class UserController {
 		return try openDirectoryService.createUser(user, on: req).map{ try ApiResponse.data(openDirectoryService.wrappedUser(fromUser: $0)) }
 	}
 	
-	func updateUser(_ req: Request) throws -> Future<View> {
+	func updateUser(_ req: Request) throws -> Future<ApiResponse<DirectoryUserWrapper>> {
+		struct Request : Decodable {
+			var user: DirectoryUserWrapper
+			var propertiesToUpdate: Set<String>
+		}
+		let input = try req.content.syncDecode(Request.self)
+		let properties = Set(input.propertiesToUpdate.map{ DirectoryUserProperty(stringLiteral: $0 )})
+		
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
 		
-		throw NotImplementedError()
+		let user = try openDirectoryService.logicalUser(fromWrappedUser: input.user)
+		return try openDirectoryService.updateUser(user, propertiesToUpdate: properties, on: req).map{ try ApiResponse.data(openDirectoryService.wrappedUser(fromUser: $0)) }
 	}
 	
-	func deleteUser(_ req: Request) throws -> Future<View> {
+	func deleteUser(_ req: Request) throws -> Future<ApiResponse<String>> {
+		struct Request : Decodable {
+			var user: DirectoryUserWrapper
+		}
+		let input = try req.content.syncDecode(Request.self)
+		
 		let openDirectoryService = try req.make(OpenDirectoryService.self)
 		
-		throw NotImplementedError()
+		let user = try openDirectoryService.logicalUser(fromWrappedUser: input.user)
+		return try openDirectoryService.deleteUser(user, on: req).map{ _ in ApiResponse.data("ok") }
 	}
 	
 	func changePassword(_ req: Request) throws -> Future<ApiResponse<String>> {
