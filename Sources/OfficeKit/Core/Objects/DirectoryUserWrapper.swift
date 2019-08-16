@@ -35,7 +35,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	}
 	
 	public init(userId uid: TaggedId, persistentId pId: TaggedId? = nil, underlyingUser u: JSON? = nil) {
-		if TaggedId(rawValue: uid.rawValue) == uid {
+		if TaggedId(string: uid.rawValue) != uid {
 			OfficeKitConfig.logger?.error("Initing a DirectoryUserWrapper with a TaggedId whose string representation does not converts back to itself: \(uid)")
 		}
 		userId = uid
