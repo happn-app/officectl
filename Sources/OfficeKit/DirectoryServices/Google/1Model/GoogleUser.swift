@@ -183,7 +183,7 @@ extension GoogleUser : DirectoryUser {
 	}
 	
 	public var emails: RemoteProperty<[Email]> {
-		return aliases.map{ [primaryEmail] + ($0 ?? []) }
+		return .set([primaryEmail] + ((aliases.value ?? []) ?? []))
 	}
 	
 	public var firstName: RemoteProperty<String?> {

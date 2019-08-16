@@ -41,9 +41,7 @@ public protocol DirectoryService : class {
 	
 	The representation is usually used to store as an underlying user in a
 	DirectoryUserWrapper. It should contain as much as possible from the original
-	user.
-	
-	Note: We might want to make this a non-throwable func… */
+	user. */
 	func json(fromUser user: UserType) throws -> JSON
 	
 	/** If possible, convert the given generic user to a user with as much

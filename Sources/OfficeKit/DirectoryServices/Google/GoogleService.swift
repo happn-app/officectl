@@ -63,7 +63,7 @@ public final class GoogleService : DirectoryService {
 	}
 	
 	public func json(fromUser user: GoogleUser) throws -> JSON {
-		/* Not ideal… */
+		#warning("TODO (Note: Goes with the TODO related to JSONEncoder in logicalUser from wrapped user below.)")
 		return try JSON(encodable: user)
 	}
 	
