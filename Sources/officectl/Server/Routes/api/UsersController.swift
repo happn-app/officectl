@@ -28,7 +28,7 @@ class UsersController {
 			throw Abort(.forbidden)
 		}
 		
-		let logger = try req.make(Logger.self)
+		let logger = try? req.make(Logger.self)
 		let sProvider = try req.make(OfficeKitServiceProvider.self)
 		
 		let serviceIdsStr: String? = req.query["service_ids"]
@@ -92,12 +92,12 @@ class UsersController {
 					let startComputationTime = Date()
 					
 					/* First let’s drop the unsuccessful users fetches */
-					var fetchErrorsByService = [String: ApiError]()
+					var fetchErrorsByService = [String: [ApiError]]()
 					let servicesAndUsers = servicesAndUserResults.compactMap{ serviceAndUserResults -> [TaggedUser]? in
 						let service = serviceAndUserResults.0
 						switch serviceAndUserResults.1 {
 						case .failure(let error):
-							fetchErrorsByService[service.config.serviceId] = ApiError(error: error, environment: req.environment)
+							fetchErrorsByService[service.config.serviceId] = [ApiError(error: error, environment: req.environment)]
 							return nil
 							
 						case .success(let users):
@@ -120,11 +120,11 @@ class UsersController {
 								continue
 							}
 							guard let logicallyLinkedUser = try? service.logicalUser(fromUser: taggedUser.user, in: taggedUser.service) else {
-//								logger.debug("Error finding logically linked user with: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user: \(taggedUser.user)\n}")
+//								logger?.debug("Error finding logically linked user with: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user: \(taggedUser.user)\n}")
 								continue
 							}
 							guard let logicallyLinkedTaggedUser = usersByServiceAndUserId[ServiceAndUserId(serviceId: serviceId, userId: logicallyLinkedUser.userId)] else {
-//								logger.debug("Found logically linked user, but user does not exist: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user: \(taggedUser.user)\n  dest user: \(logicallyLinkedUser)\n}")
+//								logger?.debug("Found logically linked user, but user does not exist: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user: \(taggedUser.user)\n  dest user: \(logicallyLinkedUser)\n}")
 								continue
 							}
 							try taggedUser.link(to: logicallyLinkedTaggedUser)
@@ -157,7 +157,7 @@ class UsersController {
 						return res
 					}
 					
-					logger.info("Computed merged users list in \(-startComputationTime.timeIntervalSinceNow) seconds")
+					logger?.info("Computed merged users list in \(-startComputationTime.timeIntervalSinceNow) seconds")
 					let orderedServiceIds = officectlConfig.officeKitConfig.orderedServiceConfigs.map{ $0.serviceId }
 					promise.succeed(result: ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchErrorsByService, result: results.map{ ApiUser(users: $0, orderedServicesIds: orderedServiceIds) }))
 				} catch {
@@ -198,30 +198,76 @@ class UsersController {
 	}
 	
 	private func getUserNoAuthCheck(userId: FullUserId, container: Container) throws -> Future<ApiResponse<ApiUserSearchResult>> {
+		let logger = try? container.make(Logger.self)
 		let sProvider = try container.make(OfficeKitServiceProvider.self)
 		let officeKitConfig = try container.make(OfficectlConfig.self).officeKitConfig
 		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id))
 		
 		let allServices = try sProvider.getAllServices(container: container)
-		let userFutures = allServices.map{ curService in
+		let servicesById = try groupCollection(allServices, by: { $0.config.serviceId })
+		
+		var allFetchedUsers = [String: AnyDirectoryUser?]()
+		var allFetchedErrors = [String: [Error]]()
+		var triedServiceIdSource = Set<String>()
+		
+		var nextFetchStepRec: ((_ fetchedUsersAndErrors: [String: Result<AnyDirectoryUser?, Error>]) throws -> EventLoopFuture<ApiResponse<ApiUserSearchResult>>)!
+		let nextFetchStep = { (fetchedUsersAndErrors: [String: Result<AnyDirectoryUser?, Error>]) throws -> EventLoopFuture<ApiResponse<ApiUserSearchResult>> in
+			/* Try and fetch the users that were not successfully fetched. */
+			allFetchedErrors = allFetchedErrors.merging(fetchedUsersAndErrors.compactMapValues{ $0.failureValue.flatMap{ [$0] } }, uniquingKeysWith: { old, new in old + new })
+			allFetchedErrors = allFetchedErrors.filter{ !allFetchedUsers.keys.contains($0.key) }
+			allFetchedUsers  = allFetchedUsers.merging(fetchedUsersAndErrors.compactMapValues{ $0.successValue }, uniquingKeysWith: { old, new in
+				logger?.error("Got a user fetched twice for id \(String(describing: old?.userId ?? new?.userId)). old user = \(String(describing: old)), new user = \(String(describing: new))")
+				return new
+			})
+			
+			#warning("TODO: Only try and re-fetched users whose fetch error was a “I don’t have enough info to fetch” error.")
+			let servicesToFetch = allServices.filter{ allFetchedErrors.keys.contains($0.config.serviceId) }
+			/* Line below: All the service ids for which we have a user that we do not already have tried fetching from. */
+			let serviceIdsToTry = Set(allFetchedUsers.compactMap{ $0.value != nil ? $0.key : nil }).subtracting(triedServiceIdSource)
+			
+			guard let serviceIdToTry = serviceIdsToTry.first, servicesToFetch.count > 0 else {
+				var allFetchedUserWrappers = [String: DirectoryUserWrapper?]()
+				for (serviceId, user) in allFetchedUsers {
+					do    {allFetchedUserWrappers[serviceId] = try user.flatMap{ try servicesById[serviceId]!.wrappedUser(fromUser: $0) }}
+					catch {allFetchedErrors[serviceId] = (allFetchedErrors[serviceId] ?? []) + [error]}
+				}
+				
+				let orderedServiceIds = officeKitConfig.orderedServiceConfigs.map{ $0.serviceId }
+				let res = ApiResponse.data(
+					ApiUserSearchResult(
+						request: userId.taggedId,
+						errorsByServiceId: allFetchedErrors.mapValues{ $0.map{ ApiError(error: $0, environment: container.environment) } },
+						result: ApiUser(users: allFetchedUserWrappers, orderedServicesIds: orderedServiceIds)
+					)
+				)
+				return container.eventLoop.newSucceededFuture(result: res)
+			}
+			
+			triedServiceIdSource.insert(serviceIdToTry)
+			return self.getUsersNoAuthCheck(from: allFetchedUsers[serviceIdToTry]!!, in: servicesById[serviceIdToTry]!, for: servicesToFetch, container: container)
+			.flatMap(nextFetchStepRec)
+		}
+		nextFetchStepRec = nextFetchStep
+		
+		/* First, we try and fetch the users directly from the source logical user
+		 * (from the tagged id given in input). */
+		return getUsersNoAuthCheck(from: user, in: service, for: allServices, container: container)
+		.flatMap(nextFetchStep)
+	}
+	
+	private func getUsersNoAuthCheck(from user: AnyDirectoryUser, in service: AnyDirectoryService, for services: [AnyDirectoryService], container: Container) -> EventLoopFuture<[String: Result<AnyDirectoryUser?, Error>]> {
+		let userFutures = services.map{ curService in
 			container.future().flatMap{
 				try curService.existingUser(fromUser: user, in: service, propertiesToFetch: [], on: container)
 			}
 		}
 		return Future.waitAll(userFutures, eventLoop: container.eventLoop).map{ userResults in
-			var serviceIdToError = [String: ApiError]()
-			var serviceIdToUser = [String: DirectoryUserWrapper?]()
+			var res = [String: Result<AnyDirectoryUser?, Error>]()
 			for (idx, userResult) in userResults.enumerated() {
-				let service = allServices[idx]
-				let serviceId = service.config.serviceId
-				let result = userResult.flatMap{ curUser in Result{ try curUser.flatMap{ try service.wrappedUser(fromUser: $0) } } }
-				switch result {
-				case .success(let user):  serviceIdToUser[serviceId] = .some(user)
-				case .failure(let error): serviceIdToError[serviceId] = ApiError(error: error, environment: container.environment)
-				}
+				let service = services[idx]
+				res[service.config.serviceId] = userResult.map{ curUser in curUser?.erased() }
 			}
-			let orderedServiceIds = officeKitConfig.orderedServiceConfigs.map{ $0.serviceId }
-			return ApiResponse.data(ApiUserSearchResult(request: userId.taggedId, errorsByServiceId: serviceIdToError, result: ApiUser(users: serviceIdToUser, orderedServicesIds: orderedServiceIds)))
+			return res
 		}
 	}
 	
