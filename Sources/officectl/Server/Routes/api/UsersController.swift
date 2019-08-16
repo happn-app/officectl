@@ -213,12 +213,13 @@ class UsersController {
 		var nextFetchStepRec: ((_ fetchedUsersAndErrors: [String: Result<AnyDirectoryUser?, Error>]) throws -> EventLoopFuture<ApiResponse<ApiUserSearchResult>>)!
 		let nextFetchStep = { (fetchedUsersAndErrors: [String: Result<AnyDirectoryUser?, Error>]) throws -> EventLoopFuture<ApiResponse<ApiUserSearchResult>> in
 			/* Try and fetch the users that were not successfully fetched. */
-			allFetchedErrors = allFetchedErrors.merging(fetchedUsersAndErrors.compactMapValues{ $0.failureValue.flatMap{ [$0] } }, uniquingKeysWith: { old, new in old + new })
-			allFetchedErrors = allFetchedErrors.filter{ !allFetchedUsers.keys.contains($0.key) }
 			allFetchedUsers  = allFetchedUsers.merging(fetchedUsersAndErrors.compactMapValues{ $0.successValue }, uniquingKeysWith: { old, new in
 				logger?.error("Got a user fetched twice for id \(String(describing: old?.userId ?? new?.userId)). old user = \(String(describing: old)), new user = \(String(describing: new))")
 				return new
 			})
+			
+			allFetchedErrors = allFetchedErrors.merging(fetchedUsersAndErrors.compactMapValues{ $0.failureValue.flatMap{ [$0] } }, uniquingKeysWith: { old, new in old + new })
+			allFetchedErrors = allFetchedErrors.filter{ !allFetchedUsers.keys.contains($0.key) }
 			
 			#warning("TODO: Only try and re-fetched users whose fetch error was a “I don’t have enough info to fetch” error.")
 			let servicesToFetch = allServices.filter{ allFetchedErrors.keys.contains($0.config.serviceId) }
