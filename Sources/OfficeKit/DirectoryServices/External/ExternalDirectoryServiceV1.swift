@@ -60,12 +60,26 @@ public final class ExternalDirectoryServiceV1 : DirectoryService {
 	}
 	
 	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> DirectoryUserWrapper {
-		guard userWrapper.userId.tag == config.serviceId else {
-			/* Well I don’t think it’s actually possible to implement at all tbh… */
-			throw NotImplementedError()
+		if userWrapper.userId.tag == config.serviceId {
+			let userId = TaggedId(string: userWrapper.userId.id)
+			guard let underlying = userWrapper.underlyingUser else {
+				return DirectoryUserWrapper(userId: userId)
+			}
+			let u = try? DirectoryUserWrapper(json: underlying, forcedUserId: userId)
+			if let u = u {return u}
+			else {
+				OfficeKitConfig.logger?.warning("Invalid wrapped user given to an external directory service. Returning a user with only the id setup. User is \(userWrapper)")
+				return DirectoryUserWrapper(userId: userId)
+			}
+			
+		} else {
+			for s in config.wrappedUserToUserIdConversionStrategies {
+				if let id = try? s.convertUserToId(userWrapper) {
+					return DirectoryUserWrapper(userId: TaggedId(string: id))
+				}
+			}
+			throw InvalidArgumentError(message: "No conversion strategy matches user \(userWrapper)")
 		}
-		if let underlying = userWrapper.underlyingUser {return try DirectoryUserWrapper(json: underlying)}
-		else                                           {return     DirectoryUserWrapper(userId: TaggedId(string: userWrapper.userId.id))}
 	}
 	
 	public func existingUser(fromPersistentId pId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DirectoryUserWrapper?> {

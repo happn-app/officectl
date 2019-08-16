@@ -30,6 +30,8 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 	public var supportsUserDeletion: Bool
 	public var supportsPasswordChange: Bool
 	
+	public var wrappedUserToUserIdConversionStrategies: [WrappedUserToUserIdConversionStrategy]
+	
 	public init(
 		globalConfig: GlobalConfig,
 		providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?,
@@ -37,7 +39,8 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 		supportsUserCreation suc: Bool,
 		supportsUserUpdate suu: Bool,
 		supportsUserDeletion sud: Bool,
-		supportsPasswordChange spc: Bool
+		supportsPasswordChange spc: Bool,
+		wrappedUserToUserIdConversionStrategies wutuics: [WrappedUserToUserIdConversionStrategy]
 	) {
 		global = globalConfig
 		
@@ -54,17 +57,22 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 		supportsUserUpdate = suu
 		supportsUserDeletion = sud
 		supportsPasswordChange = spc
+		
+		wrappedUserToUserIdConversionStrategies = wutuics
 	}
 	
 	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		let domain = [id]
-		let url    = try genericConfig.url(forKey: "url",                             currentKeyPath: domain)
-		let secret = try genericConfig.string(forKey: "secret",                       currentKeyPath: domain)
-		let suc    = try genericConfig.optionalBool(forKey: "supportsUserCreation",   currentKeyPath: domain) ?? true
-		let suu    = try genericConfig.optionalBool(forKey: "supportsUserUpdate",     currentKeyPath: domain) ?? true
-		let sud    = try genericConfig.optionalBool(forKey: "supportsUserDeletion",   currentKeyPath: domain) ?? true
-		let spc    = try genericConfig.optionalBool(forKey: "supportsPasswordChange", currentKeyPath: domain) ?? true
-		let p      = try genericConfig.optionalInt(forKey: "mergePriority",           currentKeyPath: domain)
+		let url    = try genericConfig.url(forKey: "url",                     currentKeyPath: domain)
+		let secret = try genericConfig.string(forKey: "secret",               currentKeyPath: domain)
+		let suc    = try genericConfig.bool(forKey: "supportsUserCreation",   currentKeyPath: domain)
+		let suu    = try genericConfig.bool(forKey: "supportsUserUpdate",     currentKeyPath: domain)
+		let sud    = try genericConfig.bool(forKey: "supportsUserDeletion",   currentKeyPath: domain)
+		let spc    = try genericConfig.bool(forKey: "supportsPasswordChange", currentKeyPath: domain)
+		let p      = try genericConfig.optionalInt(forKey: "mergePriority",   currentKeyPath: domain)
+		
+		let wcs = try genericConfig.optionalArray(forKey: "wrappedUserToUserIdConversionStrategies", currentKeyPath: domain)
+		let strategies = try wcs?.map{ try WrappedUserToUserIdConversionStrategy(genericStorage: $0, domainAliases: globalConfig.domainAliases, currentKeyPath: domain) }
 		
 		self.init(
 			globalConfig: globalConfig,
@@ -73,7 +81,8 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 			supportsUserCreation: suc,
 			supportsUserUpdate: suu,
 			supportsUserDeletion: sud,
-			supportsPasswordChange: spc
+			supportsPasswordChange: spc,
+			wrappedUserToUserIdConversionStrategies: strategies ?? []
 		)
 	}
 	

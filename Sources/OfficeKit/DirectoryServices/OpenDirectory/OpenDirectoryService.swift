@@ -108,17 +108,11 @@ public final class OpenDirectoryService : DirectoryService {
 			guard let email = userWrapper.mainEmail(domainMap: config.global.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create an LDAPInetOrgPersonWithObject")
 			}
-			
-			guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
-				throw InvalidArgumentError(message: "Cannot get logical user from \(email) when I don’t have people base DNs.")
+			guard let dn = config.baseDNs.dn(fromEmail: email) else {
+				throw InvalidArgumentError(message: "Cannot get dn from \(email).")
 			}
-			guard let baseDN = peopleBaseDNPerDomain[email.domain] else {
-				throw InvalidArgumentError(message: "Cannot get logical user from \(email) because its domain people base DN is unknown.")
-			}
-			
-			let dn = LDAPDistinguishedName(uid: email.username, baseDN: baseDN)
 			#warning("TODO: The rest of the properties.")
-			return ODRecordOKWrapper(id: dn, emails: [])
+			return ODRecordOKWrapper(id: dn, emails: [email])
 		}
 	}
 	

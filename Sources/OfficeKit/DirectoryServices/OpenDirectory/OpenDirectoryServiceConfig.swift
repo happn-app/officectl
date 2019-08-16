@@ -30,27 +30,10 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 	public var mergePriority: Int?
 	
 	public var connectorSettings: OpenDirectoryConnector.Settings
-	public var baseDNPerDomain: [String: LDAPDistinguishedName]
-	public var peopleBaseDNPerDomain: [String: LDAPDistinguishedName]?
-	
-	public var allBaseDNs: Set<LDAPDistinguishedName> {
-		return Set(baseDNPerDomain.values)
-	}
-	
-	public var allDomains: Set<String> {
-		return Set(baseDNPerDomain.keys)
-	}
+	public var baseDNs: LDAPBaseDNs
 	
 	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: OpenDirectoryConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
 		global = globalConfig
-		
-		let bdn = try baseDNPerDomainString.mapValues{ try LDAPDistinguishedName(string: $0) }
-		baseDNPerDomain = bdn
-		peopleBaseDNPerDomain = try peopleDNString.flatMap{ peopleDNString -> [String: LDAPDistinguishedName] in
-			guard !peopleDNString.isEmpty else {return bdn}
-			let pdnc = try LDAPDistinguishedName(string: peopleDNString)
-			return bdn.mapValues{ pdnc + $0 }
-		}
 		
 		precondition(id != "invalid" && id != "email" && !id.contains(":"))
 		providerId = pId
@@ -59,6 +42,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		mergePriority = p
 		
 		connectorSettings = c
+		baseDNs = try LDAPBaseDNs(baseDNPerDomainString: baseDNPerDomainString, peopleDNString: peopleDNString)
 	}
 	
 	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {

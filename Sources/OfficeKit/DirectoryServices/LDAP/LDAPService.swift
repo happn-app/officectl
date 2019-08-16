@@ -80,7 +80,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		if taggedId.tag == config.serviceId/*, let underlying = userWrapper.underlyingUser*/ {
 			/* The generic user is from our service! We should be able to translate
 			 * if fully to our User type. */
-			guard let dn = try? LDAPDistinguishedName(string: userWrapper.userId.id) else {
+			guard let dn = try? LDAPDistinguishedName(string: taggedId.id) else {
 				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
 			}
 			#warning("TODO: The rest of the properties (from the underlying user).")
@@ -90,15 +90,9 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			guard let email = userWrapper.mainEmail(domainMap: config.global.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create an LDAPInetOrgPersonWithObject")
 			}
-			
-			guard let peopleBaseDNPerDomain = config.peopleBaseDNPerDomain else {
-				throw InvalidArgumentError(message: "Cannot get logical user from \(email) when I don’t have people base DNs.")
+			guard let dn = config.baseDNs.dn(fromEmail: email) else {
+				throw InvalidArgumentError(message: "Cannot get dn from \(email).")
 			}
-			guard let baseDN = peopleBaseDNPerDomain[email.domain] else {
-				throw InvalidArgumentError(message: "Cannot get logical user from \(email) because its domain people base DN is unknown.")
-			}
-			
-			let dn = LDAPDistinguishedName(uid: email.username, baseDN: baseDN)
 			#warning("TODO: The rest of the properties.")
 			return LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: [], cn: []))
 		}
@@ -133,7 +127,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		
 		return ldapConnector.connect(scope: (), eventLoop: container.eventLoop)
 		.then{ _ in
-			let futures = self.config.allBaseDNs.map{ dn -> Future<[LDAPInetOrgPersonWithObject]> in
+			let futures = self.config.baseDNs.allBaseDNs.map{ dn -> Future<[LDAPInetOrgPersonWithObject]> in
 				let searchOp = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: dn, searchQuery: nil, attributesToFetch: nil))
 				return Future<[LDAPInetOrgPerson]>.future(from: searchOp, eventLoop: container.eventLoop).map{
 					$0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) }

@@ -43,10 +43,10 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		underlyingUser = u
 	}
 	
-	public init(json: JSON) throws {
+	public init(json: JSON, forcedUserId: TaggedId?) throws {
 		underlyingUser = json[CodingKeys.underlyingUser.rawValue]
 		
-		userId = try TaggedId(string: json.string(forKey: CodingKeys.userId.rawValue))
+		userId = try forcedUserId ?? TaggedId(string: json.string(forKey: CodingKeys.userId.rawValue))
 		persistentId = try json.optionalString(forKey: CodingKeys.persistentId.rawValue, errorOnMissingKey: false).flatMap{ .set(TaggedId(string: $0)) } ?? .unsupported
 		
 		emails = (try json.optionalArrayOfStrings(forKey: CodingKeys.emails.rawValue, errorOnMissingKey: false)?.map{ try nil2throw(Email(string: $0)) }).flatMap{ .set($0) } ?? .unsupported
