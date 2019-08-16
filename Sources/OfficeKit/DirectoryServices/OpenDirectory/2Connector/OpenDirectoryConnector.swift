@@ -87,31 +87,4 @@ public final class OpenDirectoryConnector : Connector {
 	
 }
 
-
-@available(*, deprecated, message: "Set node credentials directly in the connector.")
-public final class OpenDirectoryRecordAuthenticator : Authenticator {
-	
-	public typealias RequestType = ODRecord
-	
-	public let username: String
-	public let password: String
-	
-	public init(username u: String, password p: String) throws {
-		username = u
-		password = p
-	}
-	
-	public func authenticate(request: ODRecord, handler: @escaping (Result<ODRecord, Error>, Any?) -> Void) {
-		DispatchQueue(label: "OpenDirectory Record Authenticator Queue").async{
-			do {
-				try request.setNodeCredentials(self.username, password: self.password)
-				handler(.success(request), nil)
-			} catch {
-				handler(.failure(error), nil)
-			}
-		}
-	}
-	
-}
-
 #endif

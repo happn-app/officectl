@@ -72,32 +72,4 @@ extension OpenDirectoryConnector : SemiSingletonWithFallibleInit {
 	
 }
 
-
-extension OpenDirectoryRecordAuthenticator : SemiSingletonWithFallibleInit {
-	
-	public struct Settings : Hashable {
-		
-		public let username: String
-		public let password: String
-		
-		public init(username u: String, password p: String) {
-			username = u
-			password = p
-		}
-		
-	}
-	
-	public typealias SemiSingletonKey = Settings
-	public typealias SemiSingletonAdditionalInitInfo = Void
-	
-	public convenience init(key s: Settings, additionalInfo: Void, store: SemiSingletonStore) throws {
-		try self.init(key: s)
-	}
-	
-	public convenience init(key s: Settings) throws {
-		try self.init(username: s.username, password: s.password)
-	}
-	
-}
-
 #endif
