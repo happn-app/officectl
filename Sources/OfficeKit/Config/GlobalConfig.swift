@@ -18,6 +18,9 @@ public struct GlobalConfig : Hashable {
 	/** Key is a domain alias, value is the actual domain */
 	public var domainAliases = [String: String]()
 	
+	public init() {
+	}
+	
 	public init(genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		let domain = ["OfficeKit Global Config"]
 		verbose = try genericConfig.optionalBool(forKey: "verbose", currentKeyPath: domain) ?? false

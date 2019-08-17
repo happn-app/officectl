@@ -27,7 +27,7 @@ class WebCertificateRenewController {
 		let renewedCommonName = renewCertificateData.email.username
 		
 		let officeKitServiceProvider = try req.make(OfficeKitServiceProvider.self)
-		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService(container: req)
+		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService()
 		let user = try authService.logicalUser(fromEmail: renewCertificateData.email)
 		
 		let officectlConfig = try req.make(OfficectlConfig.self)

@@ -19,17 +19,17 @@ func usersChangePassword(flags f: Flags, arguments args: [String], context: Comm
 	let serviceIds = f.getString(name: "service-ids")?.split(separator: ",").map(String.init)
 	
 	let sProvider = try context.container.make(OfficeKitServiceProvider.self)
-	let services = (try serviceIds?.map{ try sProvider.getDirectoryService(id: $0, container: context.container) } ?? sProvider.getAllServices(container: context.container)).filter{ $0.supportsUserCreation }
+	let services = (try serviceIds?.map{ try sProvider.getDirectoryService(id: $0) } ?? sProvider.getAllServices()).filter{ $0.supportsUserCreation }
 	guard !services.isEmpty else {
 		context.console.warning("Nothing to do.")
 		return context.container.future()
 	}
 	
-	let userId = try FullUserId(string: userIdStr, container: context.container)
-	let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id))
+	let userId = try AnyDSUIdPair(string: userIdStr, servicesProvider: context.container.make())
+	let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.userId))
 	
 	let passwordResets = try sProvider
-		.getAllServices(container: context.container)
+		.getAllServices()
 		.filter{ $0.supportsPasswordChange }
 		.map{ ResetPasswordActionAndService(destinationService: $0, sourceUser: user, sourceService: service, container: context.container) }
 	

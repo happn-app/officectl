@@ -19,21 +19,21 @@ class LoginController {
 		let loginData = try req.content.syncDecode(LoginData.self)
 		
 		let config = try req.make(OfficectlConfig.self)
-		let authService = try req.make(OfficeKitServiceProvider.self).getDirectoryAuthenticatorService(container: req)
+		let authService = try req.make(OfficeKitServiceProvider.self).getDirectoryAuthenticatorService()
 		
-		let userId = try FullUserId(string: loginData.username, container: req)
+		let userId = try AnyDSUIdPair(string: loginData.username, servicesProvider: req.make())
 		guard userId.service.config.serviceId == authService.config.serviceId else {
 			throw BasicValidationError("Tried to login with an id which is not from the auth service.")
 		}
 		
 		
-		return try authService.authenticate(userId: userId.id, challenge: loginData.password, on: req)
+		return try authService.authenticate(userId: userId.userId, challenge: loginData.password, on: req)
 		.map{ authSuccess -> Void in
 			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}
 			return ()
 		}
 		.flatMap{ _ -> Future<Bool> in
-			return try authService.validateAdminStatus(userId: userId.id, on: req)
+			return try authService.validateAdminStatus(userId: userId.userId, on: req)
 		}
 		.map{ isAdmin in
 			/* The password of the user is verified. Let’s return the relevant

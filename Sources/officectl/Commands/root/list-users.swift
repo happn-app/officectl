@@ -17,7 +17,7 @@ import OfficeKit
 func listUsers(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
 	let serviceId = f.getString(name: "service-id")
 	let serviceProvider: OfficeKitServiceProvider = try context.container.make()
-	let service = try serviceProvider.getDirectoryService(id: serviceId, container: context.container)
+	let service = try serviceProvider.getDirectoryService(id: serviceId)
 	
 	let includeInactiveUsers = f.getBool(name: "include-suspended-users")!
 	

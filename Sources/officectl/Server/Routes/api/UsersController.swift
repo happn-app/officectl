@@ -33,7 +33,7 @@ class UsersController {
 		
 		let serviceIdsStr: String? = req.query["service_ids"]
 		let serviceIds = serviceIdsStr?.split(separator: ",").map(String.init)
-		let services = try serviceIds.flatMap{ try $0.map{ try sProvider.getDirectoryService(id: $0, container: req) } } ?? sProvider.getAllServices(container: req)
+		let services = try serviceIds.flatMap{ try $0.map{ try sProvider.getDirectoryService(id: $0) } } ?? sProvider.getAllServices()
 		
 		let serviceAndFutureUsers = services.map{ service in (service, req.future().flatMap{ try service.listAllUsers(on: req) }) }
 		
@@ -175,7 +175,7 @@ class UsersController {
 		guard let bearer = req.http.headers.bearerAuthorization else {throw Abort(.unauthorized)}
 		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
 		
-		let myUserId = try FullUserId(taggedId: token.payload.sub, container: req)
+		let myUserId = try AnyDSUIdPair(taggedId: token.payload.sub, servicesProvider: req.make())
 		return try getUserNoAuthCheck(userId: myUserId, container: req)
 	}
 	
@@ -186,7 +186,7 @@ class UsersController {
 		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
 		
 		/* Parameter retrieval */
-		let userId = try req.parameters.next(FullUserId.self)
+		let userId = try req.parameters.next(AnyDSUIdPair.self)
 		
 		/* Only admins are allowed to see any user. Other users can only see
 		 * themselves. */
@@ -197,13 +197,13 @@ class UsersController {
 		return try getUserNoAuthCheck(userId: userId, container: req)
 	}
 	
-	private func getUserNoAuthCheck(userId: FullUserId, container: Container) throws -> Future<ApiResponse<ApiUserSearchResult>> {
+	private func getUserNoAuthCheck(userId: AnyDSUIdPair, container: Container) throws -> Future<ApiResponse<ApiUserSearchResult>> {
 		let logger = try? container.make(Logger.self)
 		let sProvider = try container.make(OfficeKitServiceProvider.self)
 		let officeKitConfig = try container.make(OfficectlConfig.self).officeKitConfig
-		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id))
+		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.userId))
 		
-		let allServices = try sProvider.getAllServices(container: container)
+		let allServices = try sProvider.getAllServices()
 		let servicesById = try groupCollection(allServices, by: { $0.config.serviceId })
 		
 		var allFetchedUsers = [String: AnyDirectoryUser?]()

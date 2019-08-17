@@ -32,7 +32,7 @@ final class WebPasswordResetController {
 		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
 		
 		let officeKitServiceProvider = try req.make(OfficeKitServiceProvider.self)
-		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService(container: req)
+		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService()
 		
 		let genericUser = DirectoryUserWrapper(email: email)
 		let user = try authService.logicalUser(fromWrappedUser: genericUser)
@@ -63,7 +63,7 @@ final class WebPasswordResetController {
 	private func resetPasswordActions(for email: Email, container: Container) throws -> [ResetPasswordActionAndService] {
 		let officeKitServiceProvider = try container.make(OfficeKitServiceProvider.self)
 		return try officeKitServiceProvider
-			.getAllServices(container: container)
+			.getAllServices()
 			.sorted{ $0.config.serviceName < $1.config.serviceName }
 			.filter{ $0.supportsPasswordChange }
 			.map{ ResetPasswordActionAndService(destinationService: $0, email: email, container: container) }

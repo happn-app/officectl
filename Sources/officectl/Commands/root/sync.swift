@@ -41,8 +41,8 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	
 	try context.container.make(AuditLogger.self).log(action: "Computing sync from service \(fromId) to \(toIds.joined(separator: ",")).", source: .cli)
 	
-	let fromDirectory = try officeKitServiceProvider.getDirectoryService(id: fromId, container: context.container)
-	let toDirectories = try toIds.map{ try officeKitServiceProvider.getDirectoryService(id: String($0), container: context.container) }
+	let fromDirectory = try officeKitServiceProvider.getDirectoryService(id: fromId)
+	let toDirectories = try toIds.map{ try officeKitServiceProvider.getDirectoryService(id: String($0)) }
 	
 	return try fromDirectory.listAllUsers(on: context.container)
 	.flatMap{ sourceUsers -> Future<[ServiceSyncPlan]> in

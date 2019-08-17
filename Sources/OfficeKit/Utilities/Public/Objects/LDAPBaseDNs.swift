@@ -22,6 +22,11 @@ public struct LDAPBaseDNs : Hashable {
 		return Set(baseDNPerDomain.keys)
 	}
 	
+	public init(baseDNPerDomain bdn: [String: LDAPDistinguishedName], peopleDN: LDAPDistinguishedName?) {
+		baseDNPerDomain = bdn
+		peopleBaseDNPerDomain = peopleDN.flatMap{ peopleDN in bdn.mapValues{ peopleDN + $0 } }
+	}
+	
 	public init(baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
 		let bdn = try baseDNPerDomainString.mapValues{ try LDAPDistinguishedName(string: $0) }
 		

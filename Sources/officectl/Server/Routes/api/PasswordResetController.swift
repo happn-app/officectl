@@ -23,22 +23,22 @@ class PasswordResetController {
 		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
 		
 		/* Parameter retrieval */
-		let userId = try req.parameters.next(FullUserId.self)
+		let dsuIdPair = try req.parameters.next(AnyDSUIdPair.self)
 		
 		/* Only admins are allowed to see all password resets. Other users can
 		 * only see their own password resets. */
-		guard try token.payload.adm || token.payload.representsSameUserAs(userId: userId, container: req) else {
+		guard try token.payload.adm || token.payload.representsSameUserAs(userId: dsuIdPair, container: req) else {
 			throw Abort(.forbidden)
 		}
 		
 		let sProvider = try req.make(OfficeKitServiceProvider.self)
-		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id))
+		let (service, user) = try (dsuIdPair.service, dsuIdPair.service.logicalUser(fromUserId: dsuIdPair.userId))
 		
 		let passwordResets = try sProvider
-			.getAllServices(container: req)
+			.getAllServices()
 			.filter{ $0.supportsPasswordChange }
 			.map{ ResetPasswordActionAndService(destinationService: $0, sourceUser: user, sourceService: service, container: req) }
-		return try ApiResponse.data(ApiPasswordReset(userId: userId.taggedId, passwordResetAndServices: passwordResets, environment: req.environment))
+		return try ApiResponse.data(ApiPasswordReset(userId: dsuIdPair.taggedId, passwordResetAndServices: passwordResets, environment: req.environment))
 	}
 	
 	func createReset(_ req: Request) throws -> Future<ApiResponse<ApiPasswordReset>> {
@@ -48,7 +48,7 @@ class PasswordResetController {
 		let token = try JWT<ApiAuth.Token>(from: bearer.token, verifiedUsing: .hs256(key: officectlConfig.jwtSecret))
 		
 		/* Parameter retrieval */
-		let userId = try req.parameters.next(FullUserId.self)
+		let userId = try req.parameters.next(AnyDSUIdPair.self)
 		let passChangeData = try req.content.syncDecode(PassChangeData.self)
 		
 		/* Only admins are allowed to create a password reset for someone else
@@ -58,12 +58,12 @@ class PasswordResetController {
 		}
 		
 		let sProvider = try req.make(OfficeKitServiceProvider.self)
-		let (service, user) = try (userId.service, userId.service.logicalUser(fromUserId: userId.id))
+		let dsuPair = try userId.dsuPair()
 		
 		let authFuture: Future<Bool>
 		if let oldPass = passChangeData.oldPassword {
-			let authService = try sProvider.getDirectoryAuthenticatorService(container: req)
-			let authServiceUser = try authService.logicalUser(fromUser: user, in: service)
+			let authService = try sProvider.getDirectoryAuthenticatorService()
+			let authServiceUser = try authService.logicalUser(fromUser: dsuPair.user, in: dsuPair.service)
 			authFuture = try authService.authenticate(userId: authServiceUser.userId, challenge: oldPass, on: req)
 		} else {
 			/* Only admins are allowed to change the pass of someone without
@@ -78,9 +78,9 @@ class PasswordResetController {
 			/* The password of the user is verified. Let’s launch the resets!
 			 * First, get them all. */
 			let passwordResets = try sProvider
-				.getAllServices(container: req)
+				.getAllServices()
 				.filter{ $0.supportsPasswordChange }
-				.map{ ResetPasswordActionAndService(destinationService: $0, sourceUser: user, sourceService: service, container: req) }
+				.map{ ResetPasswordActionAndService(destinationService: $0, sourceUser: dsuPair.user, sourceService: dsuPair.service, container: req) }
 			
 			/* Verify none of the resets are already executing. */
 			guard !passwordResets.reduce(false, { $0 || $1.resetAction.successValue?.resetAction.isExecuting ?? false }) else {
