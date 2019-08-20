@@ -43,9 +43,9 @@ struct ApiAuth : Codable {
 		/** Is the user admin? */
 		var adm: Bool
 		
-		init(userId: AnyDSUIdPair, admin: Bool, validityDuration: TimeInterval) {
+		init(dsuIdPair: AnyDSUIdPair, admin: Bool, validityDuration: TimeInterval) {
 			adm = admin
-			sub = userId.taggedId
+			sub = dsuIdPair.taggedId
 			exp = Date(timeIntervalSinceNow: validityDuration)
 		}
 		
@@ -54,15 +54,10 @@ struct ApiAuth : Codable {
 			guard exp.timeIntervalSinceNow > 0 else {throw Abort(.unauthorized)}
 		}
 		
-		func representsSameUserAs(userId: AnyDSUIdPair, container: Container) throws -> Bool {
+		func representsSameUserAs(dsuIdPair: AnyDSUIdPair, container: Container) throws -> Bool {
 			let sProvider = try container.make(OfficeKitServiceProvider.self)
 			let authService = try sProvider.getDirectoryAuthenticatorService()
-			
-			let user = try userId.service.logicalUser(fromUserId: userId.userId)
-			let authUser = try authService.logicalUser(fromUser: user, in: userId.service)
-			let authUserId = authService.string(fromUserId: authUser.userId)
-			
-			return try sub == TaggedId(tag: authService.config.serviceId, id: authUserId)
+			return try sub == dsuIdPair.dsuPair().hop(to: authService).taggedId
 		}
 		
 	}

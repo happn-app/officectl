@@ -38,7 +38,7 @@ class LoginController {
 		.map{ isAdmin in
 			/* The password of the user is verified. Let’s return the relevant
 			 * data. */
-			let token = ApiAuth.Token(userId: userId, admin: isAdmin, validityDuration: 30*60) /* 30 minutes */
+			let token = ApiAuth.Token(dsuIdPair: userId, admin: isAdmin, validityDuration: 30*60) /* 30 minutes */
 			guard let tokenString = String(data: try JWT(payload: token).sign(using: .hs256(key: config.jwtSecret)), encoding: .utf8) else {
 				throw Abort(.internalServerError)
 			}

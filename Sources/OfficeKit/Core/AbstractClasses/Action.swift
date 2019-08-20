@@ -33,15 +33,16 @@ not have all the conveniences the Operations do (dependencies, queues, etc.). An
 Action is not in itself a SemiSingleton, however it is more or less expected
 that subclasses are. In particular, an Action has an option to keep a strong
 reference to itself, and automatically clear it at a given point in time. */
-public class Action<SubjectType, ParametersType, ResultType> {
+public class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	
 	public var isExecuting: Bool {
 		return stateSyncQueue.sync{ currentState.isRunning }
 	}
 	
-	/** Is the operation weak? If not, the action keeps a strong reference to
-	itself, thus preventing itself from being deallocated. This is useful mainly
-	for subclasses that are semi-singletons.
+	/**
+	Is the operation weak? If not, the action keeps a strong reference to itself,
+	thus preventing itself from being deallocated. This is useful mainly for
+	subclasses that are semi-singletons.
 	
 	The following is true: `if isWeak then !isExecuting`. However, it is
 	possible to have a non executing weak action.
@@ -73,7 +74,8 @@ public class Action<SubjectType, ParametersType, ResultType> {
 		OfficeKitConfig.logger?.debug("Deiniting a \(type(of: self))")
 	}
 	
-	/** Start the action.
+	/**
+	Start the action.
 	
 	If you try to start a running operation, the handler will be called with an
 	error.
@@ -170,7 +172,8 @@ public class Action<SubjectType, ParametersType, ResultType> {
       MARK: - For Subclasses
 	   ********************** */
 	
-	/** This method is reserved for subclasses; do **not** call it directly.
+	/**
+	This method is reserved for subclasses; do **not** call it directly.
 	
 	Start the action here. You do not need to call `super`, though you can.
 	

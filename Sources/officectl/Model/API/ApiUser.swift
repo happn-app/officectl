@@ -20,23 +20,30 @@ struct ApiUser : Encodable {
 	var lastName: String?
 	var nickname: String?
 	
-	var underlyingUsersByServiceId: [String: JSON?]
+	var usersByServiceId: [String: DirectoryUserWrapper?]
 	
-	init(users: [String: DirectoryUserWrapper?], orderedServicesIds: [String]) {
-		underlyingUsersByServiceId = users.mapValues{ $0?.underlyingUser }
+	init(multiUsers: MultiServicesUser, validServicesIds: Set<String>? = nil, orderedServicesIds: [String]) throws {
+		let usersByServiceId: [String: DirectoryUserWrapper?]
+		if let validServicesIds = validServicesIds?.sorted() {usersByServiceId = try Dictionary(uniqueKeysWithValues: zip(validServicesIds, validServicesIds.map{ try multiUsers[$0]?.userWrapper() }))}
+		else                                                 {usersByServiceId = try multiUsers.pairsByServiceId.mapValues{ try $0.userWrapper() }}
+		self.init(usersByServiceId: usersByServiceId, orderedServicesIds: orderedServicesIds)
+	}
+	
+	init(usersByServiceId users: [String: DirectoryUserWrapper?], orderedServicesIds: [String]) {
+		usersByServiceId = users
 		
 		let orderedAndUniquedServicesIds = ApiUser.addMissingElements(from: Array(users.keys), to: ApiUser.addMissingElements(from: orderedServicesIds, to: []))
-		let sortedUsers = orderedAndUniquedServicesIds.compactMap{ users[$0] }
-		assert(sortedUsers.count == users.count)
+		let sortedUserWrappers = orderedAndUniquedServicesIds.compactMap{ users[$0] }
+		assert(sortedUserWrappers.count == users.count)
 		
-		emails = sortedUsers.reduce(nil, { currentEmails, user in
+		emails = sortedUserWrappers.reduce(nil, { currentEmails, user in
 			guard let newEmails = user?.emails.value else {return currentEmails}
 			return ApiUser.addMissingElements(from: newEmails, to: currentEmails ?? [])
 		})
 		
-		firstName = sortedUsers.compactMap{ $0?.firstName.value }.first ?? nil
-		lastName  = sortedUsers.compactMap{ $0?.lastName.value  }.first ?? nil
-		nickname  = sortedUsers.compactMap{ $0?.nickname.value  }.first ?? nil
+		firstName = sortedUserWrappers.lazy.compactMap{ $0?.firstName.value }.first ?? nil
+		lastName  = sortedUserWrappers.lazy.compactMap{ $0?.lastName.value  }.first ?? nil
+		nickname  = sortedUserWrappers.lazy.compactMap{ $0?.nickname.value  }.first ?? nil
 	}
 	
 	/* Shame OrderedSet does not exist in Swift… Will not add a dependency just for that though. */

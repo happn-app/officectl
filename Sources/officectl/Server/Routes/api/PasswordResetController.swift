@@ -27,7 +27,7 @@ class PasswordResetController {
 		
 		/* Only admins are allowed to see all password resets. Other users can
 		 * only see their own password resets. */
-		guard try token.payload.adm || token.payload.representsSameUserAs(userId: dsuIdPair, container: req) else {
+		guard try token.payload.adm || token.payload.representsSameUserAs(dsuIdPair: dsuIdPair, container: req) else {
 			throw Abort(.forbidden)
 		}
 		
@@ -53,7 +53,7 @@ class PasswordResetController {
 		
 		/* Only admins are allowed to create a password reset for someone else
 		 * than themselves. */
-		guard try token.payload.adm || token.payload.representsSameUserAs(userId: userId, container: req) else {
+		guard try token.payload.adm || token.payload.representsSameUserAs(dsuIdPair: userId, container: req) else {
 			throw Abort(.forbidden)
 		}
 		
