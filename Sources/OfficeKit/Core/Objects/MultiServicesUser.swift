@@ -8,6 +8,7 @@
 import Foundation
 
 import NIO
+import Service
 
 
 
@@ -59,6 +60,58 @@ internal class LinkedUser : CustomStringConvertible {
 
 
 public struct MultiServicesUser {
+	
+	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: [AnyDirectoryService], on container: Container) throws -> EventLoopFuture<(MultiServicesUser, [String: [Error]])> {
+		#warning("TODO: Properties to fetch")
+		let servicesById = try services.group(by: { $0.config.serviceId })
+		
+		var allFetchedUsers = [String: AnyDSUPair?]()
+		var allFetchedErrors = [String: [Error]]()
+		var triedServiceIdSource = Set<String>()
+		
+		func getUsers(from dsuPair: AnyDSUPair, in services: [AnyDirectoryService]) -> EventLoopFuture<[String: Result<AnyDSUPair?, Error>]> {
+			let userFutures = services.map{ curService in
+				container.future().flatMap{
+					try curService.existingUser(fromUser: dsuPair.user, in: dsuPair.service, propertiesToFetch: [], on: container)
+				}
+			}
+			return Future.waitAll(userFutures, eventLoop: container.eventLoop).map{ userResults in
+				var res = [String: Result<AnyDSUPair?, Error>]()
+				for (idx, userResult) in userResults.enumerated() {
+					let service = services[idx]
+					res[service.config.serviceId] = userResult.map{ curUser in curUser.flatMap{ curUser -> AnyDSUPair in AnyDSUPair(service: service, user: curUser) } }
+				}
+				return res
+			}
+		}
+		
+		func fetchStep(fetchedUsersAndErrors: [String: Result<AnyDSUPair?, Error>]) throws -> EventLoopFuture<(MultiServicesUser, [String: [Error]])> {
+			/* Try and fetch the users that were not successfully fetched. */
+			allFetchedUsers = allFetchedUsers.merging(fetchedUsersAndErrors.compactMapValues{ $0.successValue }, uniquingKeysWith: { old, new in
+				OfficeKitConfig.logger?.error("Got a user fetched twice for id \(String(describing: old?.user.userId ?? new?.user.userId)). old user = \(String(describing: old)), new user = \(String(describing: new))")
+				return new
+			})
+			
+			allFetchedErrors = allFetchedErrors.merging(fetchedUsersAndErrors.compactMapValues{ $0.failureValue.flatMap{ [$0] } }, uniquingKeysWith: { old, new in old + new })
+			allFetchedErrors = allFetchedErrors.filter{ !allFetchedUsers.keys.contains($0.key) }
+			
+			#warning("TODO: Only try and re-fetched users whose fetch error was a “I don’t have enough info to fetch” error.")
+			let servicesToFetch = services.filter{ allFetchedErrors.keys.contains($0.config.serviceId) }
+			/* Line below: All the service ids for which we have a user that we do not already have tried fetching from. */
+			let serviceIdsToTry = Set(allFetchedUsers.compactMap{ $0.value != nil ? $0.key : nil }).subtracting(triedServiceIdSource)
+			
+			guard let serviceIdToTry = serviceIdsToTry.first, servicesToFetch.count > 0 else {
+				/* We have finished. Let’s return the results. */
+				let multiServicesUser = MultiServicesUser(pairsByServiceId: allFetchedUsers)
+				return container.eventLoop.newSucceededFuture(result: (multiServicesUser, allFetchedErrors))
+			}
+			
+			triedServiceIdSource.insert(serviceIdToTry)
+			return getUsers(from: allFetchedUsers[serviceIdToTry]!!, in: servicesToFetch).flatMap(fetchStep)
+		}
+		
+		return try getUsers(from: dsuIdPair.dsuPair(), in: services).flatMap(fetchStep)
+	}
 	
 	public static func merge(dsuPairs: Set<AnyDSUPair>, eventLoop: EventLoop, dispatchQueue: DispatchQueue = defaultDispatchQueueForFutureSupport) -> EventLoopFuture<[MultiServicesUser]> {
 		let promise = eventLoop.newPromise([MultiServicesUser].self)
@@ -128,17 +181,17 @@ public struct MultiServicesUser {
 		return promise.futureResult
 	}
 	
-	public let pairsByServiceId: [String: AnyDSUPair]
+	public let pairsByServiceId: [String: AnyDSUPair?]
 	
 	public var services: Set<String> {
 		return Set(pairsByServiceId.keys)
 	}
 	
-	public subscript(serviceId: String) -> AnyDSUPair? {
+	public subscript(serviceId: String) -> AnyDSUPair?? {
 		return pairsByServiceId[serviceId]
 	}
 	
-	public subscript<ServiceType : DirectoryService>(service: ServiceType) -> AnyDSUPair? {
+	public subscript<ServiceType : DirectoryService>(service: ServiceType) -> AnyDSUPair?? {
 		return pairsByServiceId[service.config.serviceId]
 	}
 	

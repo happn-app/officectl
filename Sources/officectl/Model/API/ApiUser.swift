@@ -24,8 +24,8 @@ struct ApiUser : Encodable {
 	
 	init(multiUsers: MultiServicesUser, validServicesIds: Set<String>? = nil, orderedServicesIds: [String]) throws {
 		let usersByServiceId: [String: DirectoryUserWrapper?]
-		if let validServicesIds = validServicesIds?.sorted() {usersByServiceId = try Dictionary(uniqueKeysWithValues: zip(validServicesIds, validServicesIds.map{ try multiUsers[$0]?.userWrapper() }))}
-		else                                                 {usersByServiceId = try multiUsers.pairsByServiceId.mapValues{ try $0.userWrapper() }}
+		if let validServicesIds = validServicesIds?.sorted() {usersByServiceId = try Dictionary(uniqueKeysWithValues: zip(validServicesIds, validServicesIds.map{ try multiUsers[$0]??.userWrapper() }))}
+		else                                                 {usersByServiceId = try multiUsers.pairsByServiceId.mapValues{ try $0?.userWrapper() }}
 		self.init(usersByServiceId: usersByServiceId, orderedServicesIds: orderedServicesIds)
 	}
 	
