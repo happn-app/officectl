@@ -15,7 +15,7 @@ import OfficeKit
 struct ApiSearchResult<RequestType : Encodable, ResultType : Encodable> : Encodable {
 	
 	var request: RequestType
-	var errorsByServiceId: [String: [ApiError]]
+	var errorsByServiceId: [String: ApiError]
 	
 	var result: ResultType
 	

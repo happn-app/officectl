@@ -61,7 +61,7 @@ internal class LinkedUser : CustomStringConvertible {
 
 public struct MultiServicesUser {
 	
-	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: [AnyDirectoryService], on container: Container) throws -> EventLoopFuture<(MultiServicesUser, [String: [Error]])> {
+	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: [AnyDirectoryService], on container: Container) throws -> EventLoopFuture<MultiServicesUser> {
 		#warning("TODO: Properties to fetch")
 		let servicesById = try services.group(by: { $0.config.serviceId })
 		
@@ -85,25 +85,24 @@ public struct MultiServicesUser {
 			}
 		}
 		
-		func fetchStep(fetchedUsersAndErrors: [String: Result<AnyDSUPair?, Error>]) throws -> EventLoopFuture<(MultiServicesUser, [String: [Error]])> {
+		func fetchStep(fetchedUsersAndErrors: [String: Result<AnyDSUPair?, Error>]) throws -> EventLoopFuture<MultiServicesUser> {
 			/* Try and fetch the users that were not successfully fetched. */
 			allFetchedUsers = allFetchedUsers.merging(fetchedUsersAndErrors.compactMapValues{ $0.successValue }, uniquingKeysWith: { old, new in
 				OfficeKitConfig.logger?.error("Got a user fetched twice for id \(String(describing: old?.user.userId ?? new?.user.userId)). old user = \(String(describing: old)), new user = \(String(describing: new))")
 				return new
 			})
-			
 			allFetchedErrors = allFetchedErrors.merging(fetchedUsersAndErrors.compactMapValues{ $0.failureValue.flatMap{ [$0] } }, uniquingKeysWith: { old, new in old + new })
-			allFetchedErrors = allFetchedErrors.filter{ !allFetchedUsers.keys.contains($0.key) }
 			
 			#warning("TODO: Only try and re-fetched users whose fetch error was a “I don’t have enough info to fetch” error.")
-			let servicesToFetch = services.filter{ allFetchedErrors.keys.contains($0.config.serviceId) }
+			/* Line below: All the service ids for which we haven’t already successfully fetched a user (or its absence from the service). */
+			let servicesToFetch = services.filter{ !allFetchedUsers.keys.contains($0.config.serviceId) }
 			/* Line below: All the service ids for which we have a user that we do not already have tried fetching from. */
 			let serviceIdsToTry = Set(allFetchedUsers.compactMap{ $0.value != nil ? $0.key : nil }).subtracting(triedServiceIdSource)
 			
 			guard let serviceIdToTry = serviceIdsToTry.first, servicesToFetch.count > 0 else {
 				/* We have finished. Let’s return the results. */
-				let multiServicesUser = MultiServicesUser(pairsByServiceId: allFetchedUsers)
-				return container.eventLoop.newSucceededFuture(result: (multiServicesUser, allFetchedErrors))
+				let multiServicesUser = MultiServicesUser(pairsByServiceId: allFetchedUsers, errorsByServiceId: allFetchedErrors.mapValues{ ErrorCollection($0) })
+				return container.eventLoop.newSucceededFuture(result: multiServicesUser)
 			}
 			
 			triedServiceIdSource.insert(serviceIdToTry)
@@ -181,10 +180,23 @@ public struct MultiServicesUser {
 		return promise.futureResult
 	}
 	
+	public let errorsAndPairsByServiceId: [String: Result<AnyDSUPair?, Error>]
 	public let pairsByServiceId: [String: AnyDSUPair?]
+	public let errorsByServiceId: [String: Error]
 	
-	public var services: Set<String> {
-		return Set(pairsByServiceId.keys)
+	public let services: Set<String>
+	
+	/** Creates the MultiServicesUser with the given pairs and errors. If, for a
+	given service there is a user and some errors, the user will be chosen. */
+	init(pairsByServiceId pbsi: [String: AnyDSUPair?] = [:], errorsByServiceId ebsi: [String: Error] = [:]) {
+		self.init(errorsAndPairsByServiceId: pbsi.mapValues{ .success($0) }.merging(ebsi.mapValues{ .failure($0) }, uniquingKeysWith: { old, _ in old }))
+	}
+	
+	init(errorsAndPairsByServiceId eapbsi: [String: Result<AnyDSUPair?, Error>]) {
+		errorsAndPairsByServiceId = eapbsi
+		pairsByServiceId = eapbsi.compactMapValues{ $0.successValue }
+		errorsByServiceId = eapbsi.compactMapValues{ $0.failureValue }
+		services = Set(errorsAndPairsByServiceId.keys)
 	}
 	
 	public subscript(serviceId: String) -> AnyDSUPair?? {

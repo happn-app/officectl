@@ -40,12 +40,12 @@ class UsersController {
 		return Future.waitAll(serviceAndFutureUsers, eventLoop: req.eventLoop).flatMap{ servicesAndUserResults in
 			let startComputationTime = Date()
 			/* First let’s drop the unsuccessful users fetches */
-			var fetchErrorsByService = [String: [ApiError]]()
+			var fetchErrorsByService = [String: ApiError]()
 			let userPairs = servicesAndUserResults.compactMap{ serviceAndUserResults -> [AnyDSUPair]? in
 				let service = serviceAndUserResults.0
 				switch serviceAndUserResults.1 {
 				case .failure(let error):
-					fetchErrorsByService[service.config.serviceId] = [ApiError(error: error, environment: req.environment)]
+					fetchErrorsByService[service.config.serviceId] = ApiError(error: error, environment: req.environment)
 					return nil
 					
 				case .success(let users):
@@ -98,13 +98,12 @@ class UsersController {
 		let sProvider = try container.make(OfficeKitServiceProvider.self)
 		let officeKitConfig = try container.make(OfficectlConfig.self).officeKitConfig
 		return try MultiServicesUser.fetch(from: userId, in: sProvider.getAllServices(), on: container)
-		.map{ multiUserAndErrors in
-			let (multiUser, errorsByServiceId) = multiUserAndErrors
+		.map{ multiUser in
 			let orderedServiceIds = officeKitConfig.orderedServiceConfigs.map{ $0.serviceId }
 			return try ApiResponse.data(
 				ApiUserSearchResult(
 					request: userId.taggedId,
-					errorsByServiceId: errorsByServiceId.mapValues{ $0.map{ ApiError(error: $0, environment: container.environment) } },
+					errorsByServiceId: multiUser.errorsByServiceId.mapValues{ ApiError(error: $0, environment: container.environment) },
 					result: ApiUser(multiUsers: multiUser, orderedServicesIds: orderedServiceIds)
 				)
 			)
