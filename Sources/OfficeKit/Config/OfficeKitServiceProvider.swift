@@ -17,12 +17,12 @@ public class OfficeKitServiceProvider {
 		officeKitConfig = cfg
 	}
 	
-	public func getAllServices() throws -> [AnyDirectoryService] {
+	public func getAllServices() throws -> Set<AnyDirectoryService> {
 		for (k, v) in officeKitConfig.serviceConfigs {
 			guard servicesCache[k] == nil else {continue}
 			servicesCache[k] = try directoryService(with: v)
 		}
-		return Array(servicesCache.values)
+		return Set(servicesCache.values)
 	}
 	
 	public func getDirectoryService(id: String?) throws -> AnyDirectoryService {
@@ -54,6 +54,11 @@ public class OfficeKitServiceProvider {
 			}
 			return try directoryService(with: config).unboxed()!
 		}
+	}
+	
+	public func getDirectoryServices(ids: Set<String>?) throws -> Set<AnyDirectoryService> {
+		guard let ids = ids else {return try getAllServices()}
+		return try Set(ids.map{ try getDirectoryService(id: $0) })
 	}
 	
 	public func getDirectoryAuthenticatorService() throws -> AnyDirectoryAuthenticatorService {

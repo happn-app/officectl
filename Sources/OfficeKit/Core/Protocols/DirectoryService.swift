@@ -13,7 +13,7 @@ import Service
 
 
 
-public protocol DirectoryService : class {
+public protocol DirectoryService : class, Hashable {
 	
 	/** The id of the linked provider, e.g. "internal_openldap". Those are static
 	in OfficeKit. */
@@ -128,6 +128,19 @@ extension DirectoryService {
 		let foreignGenericUser = try service.wrappedUser(fromUser: user)
 		let nativeLogicalUser = try logicalUser(fromWrappedUser: foreignGenericUser)
 		return try existingUser(fromUserId: nativeLogicalUser.userId, propertiesToFetch: propertiesToFetch, on: container)
+	}
+	
+}
+
+
+extension DirectoryService {
+	
+	public static func ==(_ lhs: Self, _ rhs: Self) -> Bool {
+		return lhs.config.serviceId == rhs.config.serviceId
+	}
+	
+	public func hash(into hasher: inout Hasher) {
+		hasher.combine(config.serviceId)
 	}
 	
 }

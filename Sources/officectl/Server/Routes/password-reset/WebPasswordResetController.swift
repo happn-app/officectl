@@ -22,8 +22,8 @@ final class WebPasswordResetController {
 	
 	func showResetPage(_ req: Request) throws -> Future<View> {
 		let email = try req.parameters.next(Email.self)
-		let actions = try resetPasswordActions(for: email, container: req)
-		return try renderResetPasswordActions(actions, for: email, view: req.view())
+		let actions = try multiServicesPasswordReset(for: email, container: req)
+		return try renderMultiServicesPasswordReset(actions, for: email, view: req.view())
 	}
 	
 	func resetPassword(_ req: Request) throws -> Future<View> {
@@ -43,13 +43,9 @@ final class WebPasswordResetController {
 		.flatMap{
 			try req.make(AuditLogger.self).log(action: "Resetting password for user email:\(email).", source: .web)
 			
-			let actions = try self.resetPasswordActions(for: email, container: req)
-			guard !actions.reduce(false, { $0 || $1.resetAction.successValue?.resetAction.isExecuting ?? false }) else {
-				throw OperationAlreadyInProgressError()
-			}
-			
-			actions.forEach{ $0.resetAction.successValue?.resetAction.start(parameters: resetPasswordData.newPass, weakeningMode: .always(successDelay: 180, errorDelay: 180), handler: nil) }
-			return self.renderResetPasswordActions(actions, for: email, view: view)
+			let multiPasswordReset = try self.multiServicesPasswordReset(for: email, container: req)
+			_ = try multiPasswordReset.start(newPass: resetPasswordData.newPass, weakeningMode: .always(successDelay: 180, errorDelay: 180), eventLoop: req.eventLoop)
+			return self.renderMultiServicesPasswordReset(multiPasswordReset, for: email, view: view)
 		}
 	}
 	
@@ -60,16 +56,18 @@ final class WebPasswordResetController {
 		
 	}
 	
-	private func resetPasswordActions(for email: Email, container: Container) throws -> [ResetPasswordActionAndService] {
-		let officeKitServiceProvider = try container.make(OfficeKitServiceProvider.self)
-		return try officeKitServiceProvider
-			.getAllServices()
-			.sorted{ $0.config.serviceName < $1.config.serviceName }
-			.filter{ $0.supportsPasswordChange }
-			.map{ ResetPasswordActionAndService(destinationService: $0, email: email, container: container) }
+	private func multiServicesPasswordReset(for email: Email, container: Container) throws -> MultiServicesPasswordReset {
+		#warning("TODO")
+		throw NotImplementedError()
+//		let officeKitServiceProvider = try container.make(OfficeKitServiceProvider.self)
+//		return try officeKitServiceProvider
+//			.getAllServices()
+//			.sorted{ $0.config.serviceName < $1.config.serviceName }
+//			.filter{ $0.supportsPasswordChange }
+//			.map{ ResetPasswordActionAndService(destinationService: $0, email: email, container: container) }
 	}
 	
-	private func renderResetPasswordActions(_ resetPasswordActions: [ResetPasswordActionAndService], for email: Email, view: ViewRenderer) -> Future<View> {
+	private func renderMultiServicesPasswordReset(_ multiPasswordReset: MultiServicesPasswordReset, for email: Email, view: ViewRenderer) -> Future<View> {
 		struct ResetPasswordStatusContext : Encodable {
 			struct ServicePasswordResetStatus : Encodable {
 				var serviceName: String
@@ -86,13 +84,13 @@ final class WebPasswordResetController {
 		
 		let context = ResetPasswordStatusContext(
 			userEmail: email.stringValue,
-			isExecuting: resetPasswordActions.reduce(false, { $0 || $1.resetAction.successValue?.resetAction.isExecuting ?? false }),
-			servicesResetStatus: resetPasswordActions.map{
+			isExecuting: multiPasswordReset.isExecuting,
+			servicesResetStatus: multiPasswordReset.errorsAndItemsByService.map{
 				ResetPasswordStatusContext.ServicePasswordResetStatus(
-					serviceName: $0.service.config.serviceName,
-					isExecuting: $0.resetAction.successValue?.resetAction.isExecuting ?? false,
-					hasRun: !($0.resetAction.successValue?.resetAction.isWeak ?? false),
-					errorStr: ($0.resetAction.failureValue ?? $0.resetAction.successValue?.resetAction.result?.failureValue)?.legibleLocalizedDescription
+					serviceName: $0.key.config.serviceName,
+					isExecuting: $0.value.successValue??.passwordReset.isExecuting ?? false,
+					hasRun: !($0.value.successValue??.passwordReset.isWeak ?? false),
+					errorStr: ($0.value.failureValue ?? $0.value.successValue??.passwordReset.result?.failureValue)?.legibleLocalizedDescription
 				)
 			}
 		)

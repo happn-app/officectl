@@ -19,3 +19,11 @@ func generateRandomPassword(length: Int = 13) -> String {
 func groupUsersById<S : Sequence>(from users: S) throws -> [AnyHashable: AnyDirectoryUser] where S.Element == AnyDirectoryUser {
 	return try users.group(by: { $0.userId })
 }
+
+extension Dictionary {
+	
+	func mapKeys<T : Hashable>(_ transform: (Key) throws -> T) rethrows -> [T: Value] {
+		return try Dictionary<T, Value>(uniqueKeysWithValues: map{ try (transform($0.key), $0.value) })
+	}
+	
+}

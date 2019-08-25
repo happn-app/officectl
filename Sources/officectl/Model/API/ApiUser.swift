@@ -22,18 +22,16 @@ struct ApiUser : Encodable {
 	
 	var usersByServiceId: [String: DirectoryUserWrapper?]
 	
-	init(multiUsers: MultiServicesUser, validServicesIds: Set<String>? = nil, orderedServicesIds: [String]) throws {
-		let usersByServiceId: [String: DirectoryUserWrapper?]
-		if let validServicesIds = validServicesIds?.sorted() {usersByServiceId = try Dictionary(uniqueKeysWithValues: zip(validServicesIds, validServicesIds.map{ try multiUsers[$0]??.userWrapper() }))}
-		else                                                 {usersByServiceId = try multiUsers.pairsByServiceId.mapValues{ try $0?.userWrapper() }}
-		self.init(usersByServiceId: usersByServiceId, orderedServicesIds: orderedServicesIds)
+	init(multiUsers: MultiServicesUser, orderedServices: [AnyDirectoryService]) throws {
+		#warning("TODO: Note that we ignore the errors by service ids. Is this what we really want?")
+		try self.init(usersByService: multiUsers.itemsByService.mapValues{ try $0?.userWrapper() }, orderedServices: orderedServices)
 	}
 	
-	init(usersByServiceId users: [String: DirectoryUserWrapper?], orderedServicesIds: [String]) {
-		usersByServiceId = users
+	init(usersByService users: [AnyDirectoryService: DirectoryUserWrapper?], orderedServices: [AnyDirectoryService]) {
+		usersByServiceId = users.mapKeys{ $0.config.serviceId }
 		
-		let orderedAndUniquedServicesIds = ApiUser.addMissingElements(from: Array(users.keys), to: ApiUser.addMissingElements(from: orderedServicesIds, to: []))
-		let sortedUserWrappers = orderedAndUniquedServicesIds.compactMap{ users[$0] }
+		let orderedAndUniquedServices = ApiUser.addMissingElements(from: orderedServices + Array(users.keys), to: [])
+		let sortedUserWrappers = orderedAndUniquedServices.compactMap{ users[$0] }
 		assert(sortedUserWrappers.count == users.count)
 		
 		emails = sortedUserWrappers.reduce(nil, { currentEmails, user in

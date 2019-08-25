@@ -33,19 +33,19 @@ class UsersController {
 		
 		let serviceIdsStr: String? = req.query["service_ids"]
 		let serviceIds = serviceIdsStr?.split(separator: ",").map(String.init)
-		let services = try serviceIds.flatMap{ try $0.map{ try sProvider.getDirectoryService(id: $0) } } ?? sProvider.getAllServices()
+		let services = try Set(serviceIds.flatMap{ try $0.map{ try sProvider.getDirectoryService(id: $0) } } ?? Array(sProvider.getAllServices()))
 		
 		let serviceAndFutureUsers = services.map{ service in (service, req.future().flatMap{ try service.listAllUsers(on: req) }) }
 		
 		return Future.waitAll(serviceAndFutureUsers, eventLoop: req.eventLoop).flatMap{ servicesAndUserResults in
 			let startComputationTime = Date()
 			/* First let’s drop the unsuccessful users fetches */
-			var fetchErrorsByService = [String: ApiError]()
+			var fetchErrorsByService = [AnyDirectoryService: ApiError]()
 			let userPairs = servicesAndUserResults.compactMap{ serviceAndUserResults -> [AnyDSUPair]? in
 				let service = serviceAndUserResults.0
 				switch serviceAndUserResults.1 {
 				case .failure(let error):
-					fetchErrorsByService[service.config.serviceId] = ApiError(error: error, environment: req.environment)
+					fetchErrorsByService[service] = ApiError(error: error, environment: req.environment)
 					return nil
 					
 				case .success(let users):
@@ -54,11 +54,11 @@ class UsersController {
 			}.flatMap{ $0 }
 			
 			/* Merge the users we fetched */
-			let orderedServiceIds = officectlConfig.officeKitConfig.orderedServiceConfigs.map{ $0.serviceId }
-			let validServiceIds = Set(services.map{ $0.config.serviceId }).subtracting(fetchErrorsByService.keys)
-			return MultiServicesUser.merge(dsuPairs: Set(userPairs), eventLoop: req.eventLoop).map{
-				let ret = try ApiResponse.data(ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchErrorsByService, result: $0.map{
-					try ApiUser(multiUsers: $0, validServicesIds: validServiceIds, orderedServicesIds: orderedServiceIds)
+			let orderedServices = try officectlConfig.officeKitConfig.orderedServiceConfigs.map{ try sProvider.getDirectoryService(id: $0.serviceId) }
+			let validServices = services.subtracting(fetchErrorsByService.keys)
+			return MultiServicesUser.merge(dsuPairs: Set(userPairs), validServices: validServices, eventLoop: req.eventLoop).map{
+				let ret = try ApiResponse.data(ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchErrorsByService.mapKeys{ $0.config.serviceId }, result: $0.map{
+					try ApiUser(multiUsers: $0, orderedServices: orderedServices)
 				}))
 				logger?.info("Computed merged users list in \(-startComputationTime.timeIntervalSinceNow) seconds")
 				return ret
@@ -99,12 +99,12 @@ class UsersController {
 		let officeKitConfig = try container.make(OfficectlConfig.self).officeKitConfig
 		return try MultiServicesUser.fetch(from: userId, in: sProvider.getAllServices(), on: container)
 		.map{ multiUser in
-			let orderedServiceIds = officeKitConfig.orderedServiceConfigs.map{ $0.serviceId }
+			let orderedServices = try officeKitConfig.orderedServiceConfigs.map{ try sProvider.getDirectoryService(id: $0.serviceId) }
 			return try ApiResponse.data(
 				ApiUserSearchResult(
 					request: userId.taggedId,
-					errorsByServiceId: multiUser.errorsByServiceId.mapValues{ ApiError(error: $0, environment: container.environment) },
-					result: ApiUser(multiUsers: multiUser, orderedServicesIds: orderedServiceIds)
+					errorsByServiceId: Dictionary(uniqueKeysWithValues: multiUser.errorsByService.map{ ($0.key.config.serviceId, ApiError(error: $0.value, environment: container.environment)) }),
+					result: ApiUser(multiUsers: multiUser, orderedServices: orderedServices)
 				)
 			)
 		}

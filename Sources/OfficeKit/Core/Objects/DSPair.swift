@@ -132,7 +132,9 @@ public struct DSUIdPair<DirectoryServiceType : DirectoryService> : Hashable {
 	
 }
 
+
 /** A PasswordReset, and its DSUPair. */
+public typealias AnyDSPasswordResetPair = DSPasswordResetPair<AnyDirectoryService>
 public struct DSPasswordResetPair<DirectoryServiceType : DirectoryService> {
 	
 	public let dsuPair: DSUPair<DirectoryServiceType>

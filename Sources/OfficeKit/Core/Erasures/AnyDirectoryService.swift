@@ -15,6 +15,15 @@ import Service
 
 private protocol DirectoryServiceBox {
 	
+	/* *** Hashable *** */
+	
+	func unbox<T : DirectoryService>() -> T?
+	
+	func hash(into hasher: inout Hasher)
+	func isEqual(_ other: DirectoryServiceBox) -> Bool
+	
+	/* *** DirectoryService *** */
+	
 	var config: AnyOfficeKitServiceConfig {get}
 	
 	func shortDescription(from user: AnyDirectoryUser) -> String
@@ -27,7 +36,7 @@ private protocol DirectoryServiceBox {
 	
 	func json(fromUser user: AnyDirectoryUser) throws -> JSON
 	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser
-
+	
 	func existingUser(fromPersistentId pId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
 	func existingUser(fromUserId uId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
 	
@@ -50,6 +59,19 @@ private protocol DirectoryServiceBox {
 private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceBox {
 	
 	let originalDirectory: Base
+	
+	func unbox<T>() -> T? where T : DirectoryService {
+		return originalDirectory as? T
+	}
+	
+	func hash(into hasher: inout Hasher) {
+		originalDirectory.hash(into: &hasher)
+	}
+	
+	func isEqual(_ other: DirectoryServiceBox) -> Bool {
+		guard let otherAsBase: Base = other.unbox() else {return false}
+		return otherAsBase == originalDirectory
+	}
 	
 	var config: AnyOfficeKitServiceConfig {
 		return originalDirectory.config.erased()
@@ -169,6 +191,14 @@ public class AnyDirectoryService : DirectoryService {
 	
 	public required init(config c: AnyOfficeKitServiceConfig) {
 		fatalError("init(config:) unavailable for a directory service erasure")
+	}
+	
+	public func hash(into hasher: inout Hasher) {
+		box.hash(into: &hasher)
+	}
+	
+	public static func ==(_ lhs: AnyDirectoryService, _ rhs: AnyDirectoryService) -> Bool {
+		return lhs.box.isEqual(rhs.box)
 	}
 	
 	public var config: AnyOfficeKitServiceConfig {

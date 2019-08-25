@@ -27,7 +27,7 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 	}
 	
 	let sProvider = try context.container.make(OfficeKitServiceProvider.self)
-	let services = (try serviceIds?.map{ try sProvider.getDirectoryService(id: $0) } ?? sProvider.getAllServices()).filter{ $0.supportsUserCreation }
+	let services = try Array(sProvider.getDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsUserCreation })
 	guard !services.isEmpty else {
 		context.console.warning("Nothing to do.")
 		return context.container.future()
