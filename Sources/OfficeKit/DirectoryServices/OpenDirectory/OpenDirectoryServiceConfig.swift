@@ -35,7 +35,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: OpenDirectoryConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
 		global = globalConfig
 		
-		precondition(id != "invalid" && id != "email" && !id.contains(":"))
+		precondition(id != "invalid" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
 		serviceName = name

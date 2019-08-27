@@ -42,7 +42,6 @@ public struct LDAPInetOrgPersonWithObject {
 extension LDAPInetOrgPersonWithObject : DirectoryUser {
 	
 	public typealias UserIdType = LDAPDistinguishedName
-	#warning("TODO: Honestly, I don’t know what type the persistent id of an LDAP object is.")
 	public typealias PersistentIdType = LDAPDistinguishedName
 	
 	public var userId: LDAPDistinguishedName {
@@ -50,7 +49,7 @@ extension LDAPInetOrgPersonWithObject : DirectoryUser {
 	}
 	
 	public var persistentId: RemoteProperty<LDAPDistinguishedName> {
-		#warning("TODO")
+		#warning("TODO (LDAP does not have a built-in persistent id. We must define the property that is used for this in the config.)")
 		return .unsupported
 	}
 	

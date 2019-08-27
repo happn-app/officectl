@@ -30,10 +30,6 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	 *       to Codable so we’ll keep JSON, at least for now. */
 	public var underlyingUser: JSON?
 	
-	public init(email: Email) {
-		self.init(userId: TaggedId(tag: "email", id: email.stringValue))
-	}
-	
 	public init(userId uid: TaggedId, persistentId pId: TaggedId? = nil, underlyingUser u: JSON? = nil) {
 		if TaggedId(string: uid.rawValue) != uid {
 			OfficeKitConfig.logger?.error("Initing a DirectoryUserWrapper with a TaggedId whose string representation does not converts back to itself: \(uid)")
@@ -160,23 +156,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		}
 	}
 	
-	public var isEmailUser: Bool {
-		return userId.tag == "email"
-	}
-	
-	/** Return the email value of the id if the id is an email (`isEmailUser` is
-	`true`). Might return `nil` even if `isEmailUser` is `true` if the value of
-	the id is an invalid email. */
-	public var userIdEmail: Email? {
-		guard isEmailUser else {return nil}
-		return Email(string: userId.id)
-	}
-	
 	public func mainEmail(domainMap: [String: String] = [:]) -> Email? {
-		if let email = userIdEmail {
-			return email
-		}
-		
 		let mainDomainEmails = emails.map{ Set($0.map{ $0.primaryDomainVariant(aliasMap: domainMap) }) }.value
 		if let mainDomainEmails = mainDomainEmails, let e = mainDomainEmails.onlyElement {
 			return e

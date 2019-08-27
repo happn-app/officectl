@@ -25,7 +25,7 @@ struct ApiPasswordReset : Codable {
 		init(passwordResetPair: AnyDSPasswordResetPair, environment: Environment) {
 			userId = passwordResetPair.dsuPair.taggedId.id
 			
-			hasRun = passwordResetPair.passwordReset.isWeak
+			hasRun = !passwordResetPair.passwordReset.isWeak
 			isExecuting = passwordResetPair.passwordReset.isExecuting
 			error = passwordResetPair.passwordReset.result?.failureValue.flatMap{ ApiError(error: $0, environment: environment) }
 		}

@@ -44,7 +44,7 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 	) {
 		global = globalConfig
 		
-		precondition(id != "invalid" && id != "email" && !id.contains(":"))
+		precondition(id != "invalid" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
 		serviceName = name

@@ -27,7 +27,7 @@ public struct GitHubServiceConfig : OfficeKitServiceConfig {
 	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: GitHubJWTConnector.Settings) {
 		global = globalConfig
 		
-		precondition(id != "invalid" && id != "email" && !id.contains(":"))
+		precondition(id != "invalid" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
 		serviceName = name

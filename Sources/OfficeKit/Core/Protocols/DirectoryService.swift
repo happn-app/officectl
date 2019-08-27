@@ -13,7 +13,7 @@ import Service
 
 
 
-public protocol DirectoryService : class, Hashable {
+public protocol DirectoryService : class, DirectoryServiceInit, Hashable {
 	
 	/** The id of the linked provider, e.g. "internal_openldap". Those are static
 	in OfficeKit. */
@@ -106,8 +106,14 @@ extension DirectoryService {
 		return DirectoryUserWrapper(userId: taggedId(fromUserId: userId))
 	}
 	
-	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any?] = [:]) throws -> UserType {
-		var genericUser = DirectoryUserWrapper(email: email)
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any?] = [:], servicesProvider: OfficeKitServiceProvider) throws -> UserType {
+		return try logicalUser(fromEmail: email, hints: hints, emailService: servicesProvider.getDirectoryService(id: nil))
+	}
+	
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any?] = [:], emailService: EmailService) throws -> UserType {
+		/* Do NOT use emailService.wrappedUser(fromUserId: email) because other
+		 * services won’t be able to find an email if you do. */
+		var genericUser = try emailService.wrappedUser(fromUser: emailService.logicalUser(fromUserId: email))
 		genericUser.applyHints(hints)
 		return try logicalUser(fromWrappedUser: genericUser)
 	}
@@ -141,6 +147,28 @@ extension DirectoryService {
 	
 	public func hash(into hasher: inout Hasher) {
 		hasher.combine(config.serviceId)
+	}
+	
+}
+
+
+
+public protocol DirectoryServiceInit {
+	
+	static var configType: OfficeKitServiceConfigInit.Type {get}
+	static func erasedService(anyConfig c: Any) -> AnyDirectoryService?
+	
+}
+
+public extension DirectoryService {
+	
+	static var configType: OfficeKitServiceConfigInit.Type {
+		return ConfigType.self
+	}
+	
+	static func erasedService(anyConfig c: Any) -> AnyDirectoryService? {
+		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unboxed() else {return nil}
+		return self.init(config: c).erased()
 	}
 	
 }

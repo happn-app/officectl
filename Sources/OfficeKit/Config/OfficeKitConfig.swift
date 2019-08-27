@@ -14,7 +14,22 @@ import Logging
 
 public struct OfficeKitConfig {
 	
-	public static var logger: Logger?
+	static public var logger: Logger?
+	
+	#warning("TODO: Allow clients of OfficeKit to register their own services!")
+	static public private(set) var registeredServices: [String : DirectoryServiceInit.Type] = {
+		var res: [String : DirectoryServiceInit.Type] = [
+			EmailService.providerId:               EmailService.self,
+			ExternalDirectoryServiceV1.providerId: ExternalDirectoryServiceV1.self,
+			GitHubService.providerId:              GitHubService.self,
+			GoogleService.providerId:              GoogleService.self,
+			LDAPService.providerId:                LDAPService.self
+		]
+		#if canImport(DirectoryService) && canImport(OpenDirectory)
+			res[OpenDirectoryService.providerId] = OpenDirectoryService.self
+		#endif
+		return res
+	}()
 	
 	public var globalConfig: GlobalConfig
 	
@@ -55,9 +70,6 @@ public struct OfficeKitConfig {
 			guard !serviceId.contains(":") else {
 				throw InvalidArgumentError(message: "The id of a service cannot contain a colon.")
 			}
-			guard serviceId != "email" else {
-				throw InvalidArgumentError(message: #"The id of a service cannot be equal to "email"."#)
-			}
 			guard serviceId != "invalid" else {
 				throw InvalidArgumentError(message: #"The id of a service cannot be equal to "invalid"."#)
 			}
@@ -67,67 +79,18 @@ public struct OfficeKitConfig {
 			let provider = try serviceInfo.string(forKey: "provider", currentKeyPath: keyPath)
 			let providerConfig = try serviceInfo.storage(forKey: "provider_config", currentKeyPath: keyPath)
 			
-			switch provider {
-			case ExternalDirectoryServiceV1.providerId:
-				let config = try ExternalDirectoryServiceV1Config(
-					globalConfig: gConfig,
-					providerId: provider,
-					serviceId: serviceId,
-					serviceName: serviceName,
-					genericConfig: providerConfig,
-					pathsRelativeTo: baseURL
-				)
-				serviceConfigsBuilding.append(config.erased())
-				
-			case GitHubService.providerId:
-				let config = try GitHubServiceConfig(
-					globalConfig: gConfig,
-					providerId: provider,
-					serviceId: serviceId,
-					serviceName: serviceName,
-					genericConfig: providerConfig,
-					pathsRelativeTo: baseURL
-				)
-				serviceConfigsBuilding.append(config.erased())
-				
-			case GoogleService.providerId:
-				let config = try GoogleServiceConfig(
-					globalConfig: gConfig,
-					providerId: provider,
-					serviceId: serviceId,
-					serviceName: serviceName,
-					genericConfig: providerConfig,
-					pathsRelativeTo: baseURL
-				)
-				serviceConfigsBuilding.append(config.erased())
-				
-			case LDAPService.providerId:
-				let config = try LDAPServiceConfig(
-					globalConfig: gConfig,
-					providerId: provider,
-					serviceId: serviceId,
-					serviceName: serviceName,
-					genericConfig: providerConfig,
-					pathsRelativeTo: baseURL
-				)
-				serviceConfigsBuilding.append(config.erased())
-				
-			#if canImport(DirectoryService) && canImport(OpenDirectory)
-			case OpenDirectoryService.providerId:
-				let config = try OpenDirectoryServiceConfig(
-					globalConfig: gConfig,
-					providerId: provider,
-					serviceId: serviceId,
-					serviceName: serviceName,
-					genericConfig: providerConfig,
-					pathsRelativeTo: baseURL
-				)
-				serviceConfigsBuilding.append(config.erased())
-			#endif
-				
-			default:
-				throw InvalidArgumentError(message: "Unknown or unsupported service provider \(provider)")
+			guard let providerType = OfficeKitConfig.registeredServices[provider] else {
+				throw InvalidArgumentError(message: "Unregistered service provider \(provider)")
 			}
+			let config = try providerType.configType.erasedConfig(
+				globalConfig: gConfig,
+				providerId: provider,
+				serviceId: serviceId,
+				serviceName: serviceName,
+				genericConfig: providerConfig,
+				pathsRelativeTo: baseURL
+			)
+			serviceConfigsBuilding.append(config)
 		}
 		
 		try self.init(globalConfig: gConfig, serviceConfigs: serviceConfigsBuilding, authServiceId: authServiceId)

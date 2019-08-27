@@ -106,7 +106,7 @@ public final class OpenDirectoryService : DirectoryService {
 			
 		} else {
 			guard let email = userWrapper.mainEmail(domainMap: config.global.domainAliases) else {
-				throw InvalidArgumentError(message: "Cannot get an email from the user to create an LDAPInetOrgPersonWithObject")
+				throw InvalidArgumentError(message: "Cannot get an email from the user to create an ODRecordOKWrapper")
 			}
 			guard let dn = config.baseDNs.dn(fromEmail: email) else {
 				throw InvalidArgumentError(message: "Cannot get dn from \(email).")

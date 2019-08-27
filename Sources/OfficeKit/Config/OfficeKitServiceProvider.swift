@@ -85,28 +85,14 @@ public class OfficeKitServiceProvider {
 	}
 	
 	private func createDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyDirectoryService {
-		#warning("TODO: Somehow register the service providers and automate the init instead of switching on provider id!")
-		switch config.providerId {
-		case ExternalDirectoryServiceV1.providerId:
-			return ExternalDirectoryServiceV1(config: config.unboxed()!).erased()
-			
-		case GitHubService.providerId:
-			return GitHubService(config: config.unboxed()!).erased()
-			
-		case GoogleService.providerId:
-			return GoogleService(config: config.unboxed()!).erased()
-			
-		case LDAPService.providerId:
-			return LDAPService(config: config.unboxed()!).erased()
-			
-		#if canImport(DirectoryService) && canImport(OpenDirectory)
-		case OpenDirectoryService.providerId:
-			return OpenDirectoryService(config: config.unboxed()!).erased()
-		#endif
-			
-		default:
-			throw InvalidArgumentError(message: "Unknown or unsupported service provider \(config.providerId)")
+		guard let providerType = OfficeKitConfig.registeredServices[config.providerId] else {
+			throw InvalidArgumentError(message: "Unregistered service provider \(config.providerId)")
 		}
+		
+		guard let service = providerType.erasedService(anyConfig: config) else {
+			throw InternalError(message: "Cannot init service with given config")
+		}
+		return service
 	}
 	
 	private func directoryAuthenticatorService(with config: AnyOfficeKitServiceConfig) throws -> AnyDirectoryAuthenticatorService {

@@ -33,7 +33,7 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 		return context.container.future()
 	}
 	
-	let users = services.map{ s in Result{ try s.logicalUser(fromEmail: email, hints: [.firstName: firstname, .lastName: lastname, .password: password]) } }
+	let users = services.map{ s in Result{ try s.logicalUser(fromEmail: email, hints: [.firstName: firstname, .lastName: lastname, .password: password], servicesProvider: sProvider) } }
 	
 	var skippedSomeUsers = false
 	for (idx, user) in users.enumerated() {

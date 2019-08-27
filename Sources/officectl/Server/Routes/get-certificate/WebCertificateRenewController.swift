@@ -28,7 +28,7 @@ class WebCertificateRenewController {
 		
 		let officeKitServiceProvider = try req.make(OfficeKitServiceProvider.self)
 		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService()
-		let user = try authService.logicalUser(fromEmail: renewCertificateData.email)
+		let user = try authService.logicalUser(fromEmail: renewCertificateData.email, servicesProvider: officeKitServiceProvider)
 		
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		let baseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
