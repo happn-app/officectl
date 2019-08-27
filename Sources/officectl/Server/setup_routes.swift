@@ -15,10 +15,12 @@ import Vapor
 func setup_routes(_ router: Router) throws {
 	router.get("api", "services", use: { req in
 		try ApiResponse.data(
-			req.make(OfficectlConfig.self).officeKitConfig.serviceConfigs.map{ kv -> ApiService in
+			req.make(OfficectlConfig.self).officeKitConfig.serviceConfigs
+			.map{ kv -> ApiService in
 				let (_, config) = kv
 				return ApiService(providerId: config.providerId, serviceId: config.serviceId, serviceFullName: config.serviceName)
 			}
+			.sorted(by: { $0.serviceFullName < $1.serviceFullName })
 		)
 	})
 	
