@@ -33,7 +33,8 @@ private protocol DirectoryUserBox {
 	var userId: AnyHashable {get}
 	var persistentId: RemoteProperty<AnyHashable> {get}
 	
-	var emails: RemoteProperty<[Email]> {get}
+	var identifyingEmail: RemoteProperty<Email?> {get}
+	var otherEmails: RemoteProperty<[Email]> {get}
 	
 	var firstName: RemoteProperty<String?> {get}
 	var lastName: RemoteProperty<String?> {get}
@@ -57,8 +58,12 @@ private struct ConcreteUserBox<Base : DirectoryUser> : DirectoryUserBox {
 		}
 	}
 	
-	var emails: RemoteProperty<[Email]> {
-		return originalUser.emails
+	var identifyingEmail: RemoteProperty<Email?> {
+		return originalUser.identifyingEmail
+	}
+	
+	var otherEmails: RemoteProperty<[Email]> {
+		return originalUser.otherEmails
 	}
 	
 	var firstName: RemoteProperty<String?> {
@@ -90,8 +95,12 @@ public struct AnyDirectoryUser : DirectoryUser {
 		return box.persistentId
 	}
 	
-	public var emails: RemoteProperty<[Email]> {
-		return box.emails
+	public var identifyingEmail: RemoteProperty<Email?> {
+		return box.identifyingEmail
+	}
+	
+	public var otherEmails: RemoteProperty<[Email]> {
+		return box.otherEmails
 	}
 	
 	public var firstName: RemoteProperty<String?> {

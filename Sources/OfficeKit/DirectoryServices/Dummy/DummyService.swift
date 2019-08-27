@@ -39,7 +39,8 @@ public struct DummyServiceUser : DirectoryUser {
 	
 	public var userId: Never
 	public var persistentId: RemoteProperty<Never>
-	public var emails: RemoteProperty<[Email]>
+	public var identifyingEmail: RemoteProperty<Email?>
+	public var otherEmails: RemoteProperty<[Email]>
 	public var firstName: RemoteProperty<String?>
 	public var lastName: RemoteProperty<String?>
 	public var nickname: RemoteProperty<String?>

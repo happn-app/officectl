@@ -35,7 +35,7 @@ struct ApiUser : Encodable {
 		assert(sortedUserWrappers.count == users.count)
 		
 		emails = sortedUserWrappers.reduce(nil, { currentEmails, user in
-			guard let newEmails = user?.emails.value else {return currentEmails}
+			guard let newEmails = user?.emails else {return currentEmails}
 			return ApiUser.addMissingElements(from: newEmails, to: currentEmails ?? [])
 		})
 		

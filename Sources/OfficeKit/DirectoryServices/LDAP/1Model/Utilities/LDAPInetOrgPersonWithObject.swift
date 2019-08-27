@@ -53,9 +53,16 @@ extension LDAPInetOrgPersonWithObject : DirectoryUser {
 		return .unsupported
 	}
 	
-	public var emails: RemoteProperty<[Email]> {
+	public var identifyingEmail: RemoteProperty<Email?> {
 		if let e = inetOrgPerson.mail {
-			return .set(e)
+			return .set(e.first)
+		}
+		return .unset
+	}
+	
+	public var otherEmails: RemoteProperty<[Email]> {
+		if let e = inetOrgPerson.mail {
+			return .set(Array(e.dropFirst()))
 		}
 		return .unset
 	}

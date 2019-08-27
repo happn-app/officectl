@@ -17,12 +17,21 @@ public protocol DirectoryUser {
 	var userId: UserIdType {get}
 	var persistentId: RemoteProperty<PersistentIdType> {get}
 	
-	var emails: RemoteProperty<[Email]> {get}
+	var identifyingEmail: RemoteProperty<Email?> {get}
+	var otherEmails: RemoteProperty<[Email]> {get}
 	
 //	var fullName: RemoteProperty<String?> {get}
 	var firstName: RemoteProperty<String?> {get}
 	var lastName: RemoteProperty<String?> {get}
 	var nickname: RemoteProperty<String?> {get}
+	
+}
+
+extension DirectoryUser {
+	
+	public var emails: [Email] {
+		return (identifyingEmail.map{ $0.flatMap{ [$0] } ?? [] }.value ?? []) + (otherEmails.value ?? [])
+	}
 	
 }
 
@@ -45,7 +54,8 @@ public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStr
 	case userId
 	case persistentId
 	
-	case emails
+	case identifyingEmail
+	case otherEmails
 	
 	case firstName
 	case lastName
@@ -57,14 +67,15 @@ public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStr
 	
 	public init(stringLiteral value: String) {
 		switch value {
-		case "userId":       self = .userId
-		case "persistentId": self = .persistentId
-		case "emails":       self = .emails
-		case "firstName":    self = .firstName
-		case "lastName":     self = .lastName
-		case "nickname":     self = .nickname
-		case "password":     self = .password
-		default:             self = .custom(value)
+		case "userId":           self = .userId
+		case "persistentId":     self = .persistentId
+		case "identifyingEmail": self = .identifyingEmail
+		case "otherEmails":      self = .otherEmails
+		case "firstName":        self = .firstName
+		case "lastName":         self = .lastName
+		case "nickname":         self = .nickname
+		case "password":         self = .password
+		default:                 self = .custom(value)
 		}
 	}
 	
@@ -74,14 +85,15 @@ public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStr
 	
 	public var rawValue: String {
 		switch self {
-		case .userId:        return "userId"
-		case .persistentId:  return "persistentId"
-		case .emails:        return "emails"
-		case .firstName:     return "firstName"
-		case .lastName:      return "lastName"
-		case .nickname:      return "nickname"
-		case .password:      return "password"
-		case .custom(let v): return v
+		case .userId:           return "userId"
+		case .persistentId:     return "persistentId"
+		case .identifyingEmail: return "identifyingEmail"
+		case .otherEmails:      return "otherEmails"
+		case .firstName:        return "firstName"
+		case .lastName:         return "lastName"
+		case .nickname:         return "nickname"
+		case .password:         return "password"
+		case .custom(let v):    return v
 		}
 	}
 	

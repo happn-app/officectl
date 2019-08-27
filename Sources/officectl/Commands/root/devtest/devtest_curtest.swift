@@ -17,7 +17,15 @@ import URLRequestOperation
 
 
 func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	return context.container.future()
+//	return context.container.future()
+	
+	let sProvider = try context.container.make(OfficeKitServiceProvider.self)
+	let gService: GoogleService = try sProvider.getDirectoryService(id: nil)
+	let ldapService: LDAPService = try sProvider.getDirectoryService(id: nil)
+	
+	return try gService.existingUser(fromUserId: Email(string: "francois.lamboley@happn.fr")!, propertiesToFetch: [], on: context.container)
+	.flatMap{ u in try ldapService.existingUser(fromUser: u!, in: gService, propertiesToFetch: [], on: context.container) }
+	.map{ _ in () }
 	
 	/* List all GitHub project’s hooks */
 //	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)

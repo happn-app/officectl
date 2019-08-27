@@ -35,8 +35,7 @@ public final class CreateOpenDirectoryRecordOperation : RetryingOperation, HasRe
 		guard let lastNameValue = user.lastName.value, let lastName = lastNameValue else {
 			throw InvalidArgumentError(message: "No lastName in user asked to be created.")
 		}
-		let emails = user.emails.value ?? []
-		self.init(userId: userId, firstName: firstName, lastName: lastName, fullName: nil, emails: emails, connector: connector)
+		self.init(userId: userId, firstName: firstName, lastName: lastName, fullName: nil, emails: user.emails, connector: connector)
 	}
 	
 	/**

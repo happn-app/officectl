@@ -17,7 +17,8 @@ public struct GitHubUser : DirectoryUser {
 	public var userId: String
 	public var persistentId: RemoteProperty<String>
 	
-	public var emails: RemoteProperty<[Email]>
+	public var identifyingEmail: RemoteProperty<Email?>
+	public var otherEmails: RemoteProperty<[Email]>
 	
 	public var firstName: RemoteProperty<String?>
 	public var lastName: RemoteProperty<String?>

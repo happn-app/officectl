@@ -33,17 +33,21 @@ public struct ODRecordOKWrapper : DirectoryUser {
 		}
 		userId = try LDAPDistinguishedName(string: idStr)
 		
+		let emails = (attributes[kODAttributeTypeEMailAddress] as? [String])?.compactMap{ Email(string: $0) }
+		
 		persistentId = (attributes[kODAttributeTypeGUID] as? [String])?.onlyElement.flatMap{ UUID($0) }.flatMap{ .set($0) } ?? .unset
-		emails = (try? (attributes[kODAttributeTypeEMailAddress] as? [String])?.compactMap{ try nil2throw(Email(string: $0)) }).flatMap{ .set($0) } ?? .unset
+		identifyingEmail = emails.flatMap{ .set($0.first) } ?? .unset
+		otherEmails = emails.flatMap{ .set(Array($0.dropFirst())) } ?? .unset
 		firstName = (attributes[kODAttributeTypeFirstName] as? [String])?.onlyElement.flatMap{ .set($0) } ?? .unset
 		lastName = (attributes[kODAttributeTypeLastName] as? [String])?.onlyElement.flatMap{ .set($0) } ?? .unset
 	}
 	
-	public init(id theId: LDAPDistinguishedName, emails e: [Email], firstName fn: String? = nil, lastName ln: String? = nil) {
+	public init(id theId: LDAPDistinguishedName, identifyingEmail ie: Email?, otherEmails oe: [Email], firstName fn: String? = nil, lastName ln: String? = nil) {
 		userId = theId
 		persistentId = .unset
 		
-		emails = .set(e)
+		identifyingEmail = .set(ie)
+		otherEmails = .set(oe)
 		firstName = fn.map{ .set($0) } ?? .unset
 		lastName = ln.map{ .set($0) } ?? .unset
 	}
@@ -53,7 +57,8 @@ public struct ODRecordOKWrapper : DirectoryUser {
 	public var userId: LDAPDistinguishedName
 	public var persistentId: RemoteProperty<UUID>
 	
-	public var emails: RemoteProperty<[Email]>
+	public var identifyingEmail: RemoteProperty<Email?>
+	public var otherEmails: RemoteProperty<[Email]>
 	
 	public var firstName: RemoteProperty<String?>
 	public var lastName: RemoteProperty<String?>

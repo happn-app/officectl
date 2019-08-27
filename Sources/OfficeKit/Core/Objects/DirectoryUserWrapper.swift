@@ -20,7 +20,8 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	public var userId: TaggedId
 	public var persistentId: RemoteProperty<TaggedId> = .unsupported
 	
-	public var emails: RemoteProperty<[Email]> = .unsupported
+	public var identifyingEmail: RemoteProperty<Email?> = .unsupported
+	public var otherEmails: RemoteProperty<[Email]> = .unsupported
 	
 	public var firstName: RemoteProperty<String?> = .unsupported
 	public var lastName: RemoteProperty<String?> = .unsupported
@@ -45,7 +46,8 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		userId = try forcedUserId ?? TaggedId(string: json.string(forKey: CodingKeys.userId.rawValue))
 		persistentId = try json.optionalString(forKey: CodingKeys.persistentId.rawValue, errorOnMissingKey: false).flatMap{ .set(TaggedId(string: $0)) } ?? .unsupported
 		
-		emails = (try json.optionalArrayOfStrings(forKey: CodingKeys.emails.rawValue, errorOnMissingKey: false)?.map{ try nil2throw(Email(string: $0)) }).flatMap{ .set($0) } ?? .unsupported
+		identifyingEmail = try json.optionalString(forKey: CodingKeys.identifyingEmail.rawValue, errorOnMissingKey: false).flatMap{ try .set(nil2throw(Email(string: $0))) } ?? .unsupported
+		otherEmails = (try json.optionalArrayOfStrings(forKey: CodingKeys.otherEmails.rawValue, errorOnMissingKey: false)?.map{ try nil2throw(Email(string: $0)) }).flatMap{ .set($0) } ?? .unsupported
 		
 		if (try? json.null(forKey: CodingKeys.firstName.rawValue)) != nil {
 			firstName = .set(nil)
@@ -72,7 +74,8 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		userId = try container.decode(TaggedId.self, forKey: .userId)
 		persistentId = try container.decodeIfPresent(RemoteProperty<TaggedId>.self, forKey: .persistentId) ?? .unsupported
 		
-		emails = try container.decodeIfPresent(RemoteProperty<[Email]>.self, forKey: .emails) ?? .unsupported
+		identifyingEmail = try container.decodeIfPresent(RemoteProperty<Email?>.self, forKey: .identifyingEmail) ?? .unsupported
+		otherEmails = try container.decodeIfPresent(RemoteProperty<[Email]>.self, forKey: .otherEmails) ?? .unsupported
 		
 		firstName = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .firstName) ?? .unsupported
 		lastName = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .lastName) ?? .unsupported
@@ -87,7 +90,8 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		try container.encode(userId, forKey: .userId)
 		try container.encodeIfSet(persistentId, forKey: .persistentId)
 		
-		try container.encodeIfSet(emails, forKey: .emails)
+		try container.encodeIfSet(identifyingEmail, forKey: .identifyingEmail)
+		try container.encodeIfSet(otherEmails, forKey: .otherEmails)
 		
 		try container.encodeIfSet(firstName, forKey: .firstName)
 		try container.encodeIfSet(lastName, forKey: .lastName)
@@ -104,7 +108,8 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		/* userId added above. */
 		if let pId = persistentId.value {res[CodingKeys.persistentId.rawValue] = .string(pId.stringValue)}
 		
-		if let e = emails.value {res[CodingKeys.emails.rawValue] = .array(e.map{ .string($0.stringValue) })}
+		if let e = identifyingEmail.value {res[CodingKeys.identifyingEmail.rawValue] = e.flatMap{ .string($0.stringValue) } ?? .null}
+		if let e = otherEmails.value      {res[CodingKeys.otherEmails.rawValue]      = .array(e.map{ .string($0.stringValue) })}
 		
 		if let fn = firstName.value {res[CodingKeys.firstName.rawValue] = fn.flatMap{ .string($0) } ?? .null}
 		if let ln = lastName.value  {res[CodingKeys.lastName.rawValue]  = ln.flatMap{ .string($0) } ?? .null}
@@ -114,7 +119,8 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	}
 	
 	public mutating func copyStandardNonIdProperties<U : DirectoryUser>(fromUser user: U) {
-		emails = user.emails
+		identifyingEmail = user.identifyingEmail
+		otherEmails = user.otherEmails
 		
 		firstName = user.firstName
 		lastName = user.lastName
@@ -132,15 +138,24 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 			case (.persistentId, let s as String):   persistentId = .set(TaggedId(string: s))
 			case (.persistentId, let t as TaggedId): persistentId = .set(t)
 				
-			case (.emails, nil):               emails = .unset
-			case (.emails, let e as [Email]):  emails = .set(e)
-			case (.emails, let s as [String]):
+			case (.identifyingEmail, nil):             identifyingEmail = .unset
+			case (.identifyingEmail, let e as Email):  identifyingEmail = .set(e)
+			case (.identifyingEmail, let s as String):
+				guard let e = Email(string: s) else {
+					OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value is an invalid email: \(String(describing: v))")
+					continue
+				}
+				identifyingEmail = .set(e)
+				
+			case (.otherEmails, nil):               otherEmails = .unset
+			case (.otherEmails, let e as [Email]):  otherEmails = .set(e)
+			case (.otherEmails, let s as [String]):
 				guard let e = try? s.map({ try nil2throw(Email(string: $0)) }) else {
 					OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value has invalid email(s): \(String(describing: v))")
 					continue
 				}
-				emails = .set(e)
-					
+				otherEmails = .set(e)
+				
 			case (.firstName, nil):             firstName = .unset
 			case (.firstName, let s as String): firstName = .set(s)
 				
@@ -157,12 +172,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	}
 	
 	public func mainEmail(domainMap: [String: String] = [:]) -> Email? {
-		let mainDomainEmails = emails.map{ Set($0.map{ $0.primaryDomainVariant(aliasMap: domainMap) }) }.value
-		if let mainDomainEmails = mainDomainEmails, let e = mainDomainEmails.onlyElement {
-			return e
-		}
-		
-		return nil
+		return identifyingEmail.map{ $0?.primaryDomainVariant(aliasMap: domainMap) }.value ?? nil
 	}
 	
 	/* ***************
@@ -172,7 +182,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	private enum CodingKeys : String, CodingKey {
 		case underlyingUser
 		case userId, persistentId
-		case emails
+		case identifyingEmail, otherEmails
 		case firstName, lastName, nickname
 	}
 	

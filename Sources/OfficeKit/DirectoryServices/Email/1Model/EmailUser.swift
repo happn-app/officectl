@@ -17,7 +17,8 @@ public struct EmailUser : DirectoryUser {
 	public var userId: Email
 	public var persistentId: RemoteProperty<Email> {return .set(userId)}
 	
-	public var emails: RemoteProperty<[Email]> {return .set([userId])}
+	public var identifyingEmail: RemoteProperty<Email?> {return .set(userId)}
+	public var otherEmails: RemoteProperty<[Email]> {return .unsupported}
 	
 	public var firstName: RemoteProperty<String?> {return .unsupported}
 	public var lastName:  RemoteProperty<String?> {return .unsupported}

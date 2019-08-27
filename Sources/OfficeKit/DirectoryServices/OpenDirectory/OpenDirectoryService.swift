@@ -102,7 +102,7 @@ public final class OpenDirectoryService : DirectoryService {
 				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
 			}
 			#warning("TODO: The rest of the properties (from the underlying user).")
-			return ODRecordOKWrapper(id: dn, emails: [])
+			return ODRecordOKWrapper(id: dn, identifyingEmail: nil, otherEmails: [])
 			
 		} else {
 			guard let email = userWrapper.mainEmail(domainMap: config.global.domainAliases) else {
@@ -112,7 +112,7 @@ public final class OpenDirectoryService : DirectoryService {
 				throw InvalidArgumentError(message: "Cannot get dn from \(email).")
 			}
 			#warning("TODO: The rest of the properties.")
-			return ODRecordOKWrapper(id: dn, emails: [email])
+			return ODRecordOKWrapper(id: dn, identifyingEmail: email, otherEmails: [])
 		}
 	}
 	
