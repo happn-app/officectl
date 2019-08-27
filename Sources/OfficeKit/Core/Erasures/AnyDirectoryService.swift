@@ -25,6 +25,7 @@ private protocol DirectoryServiceBox {
 	/* *** DirectoryService *** */
 	
 	var config: AnyOfficeKitServiceConfig {get}
+	var globalConfig: GlobalConfig {get}
 	
 	func shortDescription(from user: AnyDirectoryUser) -> String
 	
@@ -75,6 +76,10 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	
 	var config: AnyOfficeKitServiceConfig {
 		return originalDirectory.config.erased()
+	}
+	
+	var globalConfig: GlobalConfig {
+		return originalDirectory.globalConfig
 	}
 	
 	func shortDescription(from user: AnyDirectoryUser) -> String {
@@ -189,8 +194,8 @@ public class AnyDirectoryService : DirectoryService {
 		box = ConcreteDirectoryBox(originalDirectory: object)
 	}
 	
-	public required init(config c: AnyOfficeKitServiceConfig) {
-		fatalError("init(config:) unavailable for a directory service erasure")
+	public required init(config c: AnyOfficeKitServiceConfig, globalConfig gc: GlobalConfig) {
+		fatalError("init(config:globalConfig:) unavailable for a directory service erasure")
 	}
 	
 	public func hash(into hasher: inout Hasher) {
@@ -203,6 +208,10 @@ public class AnyDirectoryService : DirectoryService {
 	
 	public var config: AnyOfficeKitServiceConfig {
 		return box.config
+	}
+	
+	public var globalConfig: GlobalConfig {
+		return box.globalConfig
 	}
 	
 	public func shortDescription(from user: AnyDirectoryUser) -> String {

@@ -22,9 +22,11 @@ public final class GitHubService : DirectoryService {
 	public typealias UserType = GitHubUser
 	
 	public let config: GitHubServiceConfig
+	public let globalConfig: GlobalConfig
 	
-	public init(config c: GitHubServiceConfig) {
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
 		config = c
+		globalConfig = gc
 	}
 	
 	public func shortDescription(from user: GitHubUser) -> String {

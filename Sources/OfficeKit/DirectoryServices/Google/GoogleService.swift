@@ -34,9 +34,11 @@ public final class GoogleService : DirectoryService {
 	public typealias UserType = GoogleUser
 	
 	public let config: GoogleServiceConfig
+	public let globalConfig: GlobalConfig
 	
-	public init(config c: GoogleServiceConfig) {
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
 		config = c
+		globalConfig = gc
 	}
 	
 	public func shortDescription(from user: GoogleUser) -> String {
@@ -85,7 +87,7 @@ public final class GoogleService : DirectoryService {
 			return GoogleUser(email: email)
 			
 		} else {
-			guard let email = userWrapper.mainEmail(domainMap: config.global.domainAliases) else {
+			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create a GoogleUser")
 			}
 			let res = GoogleUser(email: email)

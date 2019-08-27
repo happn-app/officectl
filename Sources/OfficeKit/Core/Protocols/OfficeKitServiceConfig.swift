@@ -32,7 +32,7 @@ public protocol OfficeKitServiceConfig : OfficeKitServiceConfigInit, Hashable {
 	from multiple services. */
 	var mergePriority: Int? {get}
 	
-	init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws
+	init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws
 	
 }
 
@@ -40,14 +40,14 @@ public protocol OfficeKitServiceConfig : OfficeKitServiceConfigInit, Hashable {
 
 public protocol OfficeKitServiceConfigInit {
 	
-	static func erasedConfig(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws -> AnyOfficeKitServiceConfig
+	static func erasedConfig(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws -> AnyOfficeKitServiceConfig
 	
 }
 
 public extension OfficeKitServiceConfig {
 	
-	static func erasedConfig(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws -> AnyOfficeKitServiceConfig {
-		return try self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, genericConfig: genericConfig, pathsRelativeTo: baseURL).erased()
+	static func erasedConfig(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws -> AnyOfficeKitServiceConfig {
+		return try self.init(providerId: pId, serviceId: id, serviceName: name, mergePriority: p, keyedConfig: keyedConfig, pathsRelativeTo: baseURL).erased()
 	}
 	
 }

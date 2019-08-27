@@ -20,8 +20,6 @@ import GenericStorage
 
 public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 	
-	public var global: GlobalConfig
-	
 	public var providerId: String
 	
 	public var serviceId: String
@@ -32,9 +30,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 	public var connectorSettings: OpenDirectoryConnector.Settings
 	public var baseDNs: LDAPBaseDNs
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: OpenDirectoryConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
-		global = globalConfig
-		
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: OpenDirectoryConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
 		precondition(id != "invalid" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
@@ -45,29 +41,27 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		baseDNs = try LDAPBaseDNs(baseDNPerDomainString: baseDNPerDomainString, peopleDNString: peopleDNString)
 	}
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		let domain = [id]
 		
-		let proxySettings = try genericConfig.optionalNonNullStorage(forKey: "proxy", currentKeyPath: domain).flatMap{ proxyGenericConfig -> OpenDirectoryConnector.ProxySettings in
+		let proxySettings = try keyedConfig.optionalNonNullStorage(forKey: "proxy", currentKeyPath: domain).flatMap{ proxyKeyedConfig -> OpenDirectoryConnector.ProxySettings in
 			let keyPath = domain + ["proxy"]
 			return (
-				hostname: try proxyGenericConfig.string(forKey: "hostname", currentKeyPath: keyPath),
-				username: try proxyGenericConfig.string(forKey: "username", currentKeyPath: keyPath),
-				password: try proxyGenericConfig.string(forKey: "password", currentKeyPath: keyPath)
+				hostname: try proxyKeyedConfig.string(forKey: "hostname", currentKeyPath: keyPath),
+				username: try proxyKeyedConfig.string(forKey: "username", currentKeyPath: keyPath),
+				password: try proxyKeyedConfig.string(forKey: "password", currentKeyPath: keyPath)
 			)
 		}
 		
-		let nodeName = try genericConfig.string(forKey: "node_name", currentKeyPath: domain)
-		let username = try genericConfig.string(forKey: "admin_username", currentKeyPath: domain)
-		let password = try genericConfig.string(forKey: "admin_password", currentKeyPath: domain)
+		let nodeName = try keyedConfig.string(forKey: "node_name", currentKeyPath: domain)
+		let username = try keyedConfig.string(forKey: "admin_username", currentKeyPath: domain)
+		let password = try keyedConfig.string(forKey: "admin_password", currentKeyPath: domain)
 		
-		let bdnDic    = try genericConfig.dictionaryOfStrings(forKey: "base_dn_per_domains", currentKeyPath: domain)
-		let pdnString = try genericConfig.optionalString(forKey: "people_dn", currentKeyPath: domain)
-		
-		let mp = try genericConfig.optionalInt(forKey: "mergePriority", currentKeyPath: domain)
+		let bdnDic    = try keyedConfig.dictionaryOfStrings(forKey: "base_dn_per_domains", currentKeyPath: domain)
+		let pdnString = try keyedConfig.optionalString(forKey: "people_dn", currentKeyPath: domain)
 		
 		let connectorSettings = OpenDirectoryConnector.Settings(proxySettings: proxySettings, nodeName: nodeName, nodeCredentials: (recordType: kODRecordTypeUsers, username: username, password: password))
-		try self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, mergePriority: mp, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString)
+		try self.init(providerId: pId, serviceId: id, serviceName: name, mergePriority: p, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString)
 	}
 	
 }

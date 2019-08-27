@@ -13,8 +13,6 @@ import GenericStorage
 
 public struct GoogleServiceConfig : OfficeKitServiceConfig {
 	
-	public var global: GlobalConfig
-	
 	public var providerId: String
 	
 	public var serviceId: String
@@ -25,9 +23,7 @@ public struct GoogleServiceConfig : OfficeKitServiceConfig {
 	public var connectorSettings: GoogleJWTConnector.Settings
 	public var primaryDomains: Set<String>
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: GoogleJWTConnector.Settings, primaryDomains d: Set<String>) {
-		global = globalConfig
-		
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: GoogleJWTConnector.Settings, primaryDomains d: Set<String>) {
 		precondition(id != "invalid" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
@@ -38,15 +34,14 @@ public struct GoogleServiceConfig : OfficeKitServiceConfig {
 		primaryDomains = d
 	}
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		let domain = [id]
-		let domains        = try genericConfig.arrayOfStrings(forKey: "domains",      currentKeyPath: domain)
-		let userBehalf     = try genericConfig.optionalString(forKey: "admin_email",  currentKeyPath: domain)
-		let credsURLString = try genericConfig.string(forKey: "superuser_json_creds", currentKeyPath: domain)
-		let mp             = try genericConfig.optionalInt(forKey: "mergePriority",   currentKeyPath: domain)
+		let domains        = try keyedConfig.arrayOfStrings(forKey: "domains",      currentKeyPath: domain)
+		let userBehalf     = try keyedConfig.optionalString(forKey: "admin_email",  currentKeyPath: domain)
+		let credsURLString = try keyedConfig.string(forKey: "superuser_json_creds", currentKeyPath: domain)
 		
 		let connectorSettings = GoogleJWTConnector.Settings(jsonCredentialsURL: URL(fileURLWithPath: credsURLString, isDirectory: false, relativeTo: baseURL), userBehalf: userBehalf)
-		self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, mergePriority: mp, connectorSettings: connectorSettings, primaryDomains: Set(domains))
+		self.init(providerId: pId, serviceId: id, serviceName: name, mergePriority: p, connectorSettings: connectorSettings, primaryDomains: Set(domains))
 	}
 	
 }

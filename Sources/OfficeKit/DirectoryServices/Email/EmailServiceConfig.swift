@@ -13,8 +13,6 @@ import GenericStorage
 
 public struct EmailServiceConfig : OfficeKitServiceConfig {
 	
-	public var global: GlobalConfig
-	
 	public var providerId: String
 	
 	public var serviceId: String
@@ -22,15 +20,13 @@ public struct EmailServiceConfig : OfficeKitServiceConfig {
 	
 	public var mergePriority: Int?
 	
-	public init(globalConfig gcfg: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
-		global = gcfg
-		
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		precondition(id != "invalid" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
 		serviceName = name
 		
-		mergePriority = nil
+		mergePriority = p
 	}
 	
 }

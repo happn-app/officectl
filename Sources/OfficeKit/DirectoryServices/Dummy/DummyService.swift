@@ -22,7 +22,7 @@ public struct DummyServiceConfig : OfficeKitServiceConfig {
 	
 	public var mergePriority: Int?
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		throw InternalError(message: "The DummyServiceConfig cannot be instantiated")
 	}
 	
@@ -59,9 +59,11 @@ public final class DummyService : DirectoryService {
 	public typealias UserIdType = DummyServiceUser
 	
 	public let config: DummyServiceConfig
+	public let globalConfig: GlobalConfig
 	
-	public init(config c: DummyServiceConfig) {
+	public init(config c: DummyServiceConfig, globalConfig gc: GlobalConfig) {
 		config = c
+		globalConfig = gc
 	}
 	
 	public func shortDescription(from user: DummyServiceUser) -> String {

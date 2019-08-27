@@ -13,8 +13,6 @@ import GenericStorage
 
 public struct LDAPServiceConfig : OfficeKitServiceConfig {
 	
-	public var global: GlobalConfig
-	
 	public var providerId: String
 	
 	public var serviceId: String
@@ -30,16 +28,14 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 	- parameter peopleDNString: The DN for the people, **relative to the base
 	DN**. This is a different than the `peopleBaseDN` var in this struct, as
 	the var contains the full people DN. */
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: LDAPConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?, adminGroupsDNString: [String]) throws {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: LDAPConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?, adminGroupsDNString: [String]) throws {
 		let adn = try adminGroupsDNString.map{ try LDAPDistinguishedName(string: $0) }
 		let bdn = try LDAPBaseDNs(baseDNPerDomainString: baseDNPerDomainString, peopleDNString: peopleDNString)
 		
-		self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, mergePriority: p, connectorSettings: c, baseDNs: bdn, adminGroupsDN: adn)
+		self.init(providerId: pId, serviceId: id, serviceName: name, mergePriority: p, connectorSettings: c, baseDNs: bdn, adminGroupsDN: adn)
 	}
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: LDAPConnector.Settings, baseDNs bdn: LDAPBaseDNs, adminGroupsDN agdn: [LDAPDistinguishedName]) {
-		global = globalConfig
-		
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: LDAPConnector.Settings, baseDNs bdn: LDAPBaseDNs, adminGroupsDN agdn: [LDAPDistinguishedName]) {
 		precondition(id != "invalid" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
@@ -51,18 +47,16 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 		baseDNs = bdn
 	}
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		let domain = [id]
 		
-		let url = try genericConfig.url(forKey: "url", currentKeyPath: domain)
-		let adminUsername = try genericConfig.optionalString(forKey: "admin_username", currentKeyPath: domain)
-		let adminPassword = try genericConfig.optionalString(forKey: "admin_password", currentKeyPath: domain)
+		let url = try keyedConfig.url(forKey: "url", currentKeyPath: domain)
+		let adminUsername = try keyedConfig.optionalString(forKey: "admin_username", currentKeyPath: domain)
+		let adminPassword = try keyedConfig.optionalString(forKey: "admin_password", currentKeyPath: domain)
 		
-		let bdnDic    = try genericConfig.dictionaryOfStrings(forKey: "base_dn_per_domains", currentKeyPath: domain)
-		let pdnString = try genericConfig.optionalString(forKey: "people_dn", currentKeyPath: domain)
-		let adnString = try genericConfig.optionalArrayOfStrings(forKey: "officectl_admin_groups_dn", currentKeyPath: domain) ?? []
-		
-		let mp = try genericConfig.optionalInt(forKey: "mergePriority", currentKeyPath: domain)
+		let bdnDic    = try keyedConfig.dictionaryOfStrings(forKey: "base_dn_per_domains", currentKeyPath: domain)
+		let pdnString = try keyedConfig.optionalString(forKey: "people_dn", currentKeyPath: domain)
+		let adnString = try keyedConfig.optionalArrayOfStrings(forKey: "officectl_admin_groups_dn", currentKeyPath: domain) ?? []
 		
 		
 		let connectorSettings: LDAPConnector.Settings
@@ -73,7 +67,7 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 			throw InvalidArgumentError(message: "Invalid config in yaml: neither both or none of admin_username & admin_password defined in an LDAP config")
 		}
 		
-		try self.init(globalConfig: globalConfig, providerId: pId, serviceId: id, serviceName: name, mergePriority: mp, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)
+		try self.init(providerId: pId, serviceId: id, serviceName: name, mergePriority: p, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)
 	}
 	
 }

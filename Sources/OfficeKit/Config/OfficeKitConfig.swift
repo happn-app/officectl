@@ -77,17 +77,18 @@ public struct OfficeKitConfig {
 			let keyPath = domain + ["services", serviceId]
 			let serviceName = try serviceInfo.string(forKey: "name", currentKeyPath: keyPath)
 			let provider = try serviceInfo.string(forKey: "provider", currentKeyPath: keyPath)
+			let priority = try serviceInfo.optionalInt(forKey: "merge_priority", errorOnMissingKey: false, currentKeyPath: keyPath)
 			let providerConfig = try serviceInfo.storage(forKey: "provider_config", currentKeyPath: keyPath)
 			
 			guard let providerType = OfficeKitConfig.registeredServices[provider] else {
 				throw InvalidArgumentError(message: "Unregistered service provider \(provider)")
 			}
 			let config = try providerType.configType.erasedConfig(
-				globalConfig: gConfig,
 				providerId: provider,
 				serviceId: serviceId,
 				serviceName: serviceName,
-				genericConfig: providerConfig,
+				mergePriority: priority,
+				keyedConfig: providerConfig,
 				pathsRelativeTo: baseURL
 			)
 			serviceConfigsBuilding.append(config)

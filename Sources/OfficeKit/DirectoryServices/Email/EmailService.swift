@@ -12,17 +12,19 @@ import Service
 
 
 
-public class EmailService : DirectoryService {
+public final class EmailService : DirectoryService {
 	
 	public static let providerId = "internal_email"
 	
-	public var config: EmailServiceConfig
+	public let config: EmailServiceConfig
+	public let globalConfig: GlobalConfig
 	
 	public typealias ConfigType = EmailServiceConfig
 	public typealias UserType = EmailUser
 	
-	public required init(config c: EmailServiceConfig) {
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
 		config = c
+		globalConfig = gc
 	}
 	
 	public func shortDescription(from user: EmailUser) -> String {
@@ -63,7 +65,7 @@ public class EmailService : DirectoryService {
 			}
 			return EmailUser(userId: email)
 		} else {
-			guard let email = userWrapper.mainEmail(domainMap: config.global.domainAliases) else {
+			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create an EmailUser")
 			}
 			return EmailUser(userId: email)

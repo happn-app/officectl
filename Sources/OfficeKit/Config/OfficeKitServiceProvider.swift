@@ -89,7 +89,7 @@ public class OfficeKitServiceProvider {
 			throw InvalidArgumentError(message: "Unregistered service provider \(config.providerId)")
 		}
 		
-		guard let service = providerType.erasedService(anyConfig: config) else {
+		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig) else {
 			throw InternalError(message: "Cannot init service with given config")
 		}
 		return service
@@ -108,7 +108,7 @@ public class OfficeKitServiceProvider {
 	private func createDirectoryAuthenticatorService(with config: AnyOfficeKitServiceConfig) throws -> AnyDirectoryAuthenticatorService {
 		switch config.providerId {
 		case LDAPService.providerId:
-			return LDAPService(config: config.unboxed()!).erased()
+			return LDAPService(config: config.unboxed()!, globalConfig: officeKitConfig.globalConfig).erased()
 			
 		default:
 			throw InvalidArgumentError(message: "Unknown or unsupported service authenticator provider \(config.providerId)")

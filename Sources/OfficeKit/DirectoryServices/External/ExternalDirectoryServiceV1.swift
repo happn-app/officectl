@@ -20,9 +20,11 @@ public final class ExternalDirectoryServiceV1 : DirectoryService {
 	public typealias UserType = DirectoryUserWrapper
 	
 	public let config: ExternalDirectoryServiceV1Config
+	public let globalConfig: GlobalConfig
 	
-	public init(config c: ExternalDirectoryServiceV1Config) {
+	public init(config c: ExternalDirectoryServiceV1Config, globalConfig gc: GlobalConfig) {
 		config = c
+		globalConfig = gc
 		authenticator = ExternalServiceAuthenticator(secret: c.secret)
 		
 		/* Note: We assume JSON encoder/decoder are thread-safe.
@@ -74,7 +76,7 @@ public final class ExternalDirectoryServiceV1 : DirectoryService {
 			
 		} else {
 			for s in config.wrappedUserToUserIdConversionStrategies {
-				if let id = try? s.convertUserToId(userWrapper) {
+				if let id = try? s.convertUserToId(userWrapper, globalConfig: globalConfig) {
 					return DirectoryUserWrapper(userId: TaggedId(string: id))
 				}
 			}

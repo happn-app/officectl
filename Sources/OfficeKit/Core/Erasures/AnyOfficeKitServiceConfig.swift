@@ -75,7 +75,7 @@ public struct AnyOfficeKitServiceConfig : OfficeKitServiceConfig {
 		box = ConcreteOfficeKitServiceConfigBox(originalConfig: object)
 	}
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		throw InternalError(message: "AnyOfficeKitServiceConfig cannot be instantiated with a generic config…")
 	}
 	

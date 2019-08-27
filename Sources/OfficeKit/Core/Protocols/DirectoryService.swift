@@ -23,8 +23,9 @@ public protocol DirectoryService : class, DirectoryServiceInit, Hashable {
 	associatedtype UserType : DirectoryUser
 	
 	var config: ConfigType {get}
+	var globalConfig: GlobalConfig {get}
 	
-	init(config c: ConfigType)
+	init(config c: ConfigType, globalConfig gc: GlobalConfig)
 	
 	/** Convert the user to a user printable string. Mostly used for logging. */
 	func shortDescription(from user: UserType) -> String
@@ -156,7 +157,7 @@ extension DirectoryService {
 public protocol DirectoryServiceInit {
 	
 	static var configType: OfficeKitServiceConfigInit.Type {get}
-	static func erasedService(anyConfig c: Any) -> AnyDirectoryService?
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyDirectoryService?
 	
 }
 
@@ -166,9 +167,9 @@ public extension DirectoryService {
 		return ConfigType.self
 	}
 	
-	static func erasedService(anyConfig c: Any) -> AnyDirectoryService? {
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyDirectoryService? {
 		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unboxed() else {return nil}
-		return self.init(config: c).erased()
+		return self.init(config: c, globalConfig: gc).erased()
 	}
 	
 }

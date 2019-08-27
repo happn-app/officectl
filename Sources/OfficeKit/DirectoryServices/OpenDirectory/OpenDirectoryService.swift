@@ -39,9 +39,11 @@ public final class OpenDirectoryService : DirectoryService {
 	public typealias AuthenticationChallenge = String
 	
 	public let config: OpenDirectoryServiceConfig
+	public let globalConfig: GlobalConfig
 	
-	public init(config c: OpenDirectoryServiceConfig) {
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
 		config = c
+		globalConfig = gc
 	}
 	
 	public func shortDescription(from user: ODRecordOKWrapper) -> String {
@@ -105,7 +107,7 @@ public final class OpenDirectoryService : DirectoryService {
 			return ODRecordOKWrapper(id: dn, identifyingEmail: nil, otherEmails: [])
 			
 		} else {
-			guard let email = userWrapper.mainEmail(domainMap: config.global.domainAliases) else {
+			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create an ODRecordOKWrapper")
 			}
 			guard let dn = config.baseDNs.dn(fromEmail: email) else {

@@ -13,8 +13,6 @@ import GenericStorage
 
 public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 	
-	public var global: GlobalConfig
-	
 	public var providerId: String
 	
 	public var serviceId: String
@@ -33,7 +31,6 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 	public var wrappedUserToUserIdConversionStrategies: [WrappedUserToUserIdConversionStrategy]
 	
 	public init(
-		globalConfig: GlobalConfig,
 		providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?,
 		url theURL: URL, secret s: Data,
 		supportsUserCreation suc: Bool,
@@ -42,8 +39,6 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 		supportsPasswordChange spc: Bool,
 		wrappedUserToUserIdConversionStrategies wutuics: [WrappedUserToUserIdConversionStrategy]
 	) {
-		global = globalConfig
-		
 		precondition(id != "invalid" && !id.contains(":"))
 		providerId = pId
 		serviceId = id
@@ -61,21 +56,19 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 		wrappedUserToUserIdConversionStrategies = wutuics
 	}
 	
-	public init(globalConfig: GlobalConfig, providerId pId: String, serviceId id: String, serviceName name: String, genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		let domain = [id]
-		let url    = try genericConfig.url(forKey: "url",                     currentKeyPath: domain)
-		let secret = try genericConfig.string(forKey: "secret",               currentKeyPath: domain)
-		let suc    = try genericConfig.bool(forKey: "supportsUserCreation",   currentKeyPath: domain)
-		let suu    = try genericConfig.bool(forKey: "supportsUserUpdate",     currentKeyPath: domain)
-		let sud    = try genericConfig.bool(forKey: "supportsUserDeletion",   currentKeyPath: domain)
-		let spc    = try genericConfig.bool(forKey: "supportsPasswordChange", currentKeyPath: domain)
-		let p      = try genericConfig.optionalInt(forKey: "mergePriority",   currentKeyPath: domain)
+		let url    = try keyedConfig.url(forKey: "url",                       currentKeyPath: domain)
+		let secret = try keyedConfig.string(forKey: "secret",                 currentKeyPath: domain)
+		let suc    = try keyedConfig.bool(forKey: "supports_user_creation",   currentKeyPath: domain)
+		let suu    = try keyedConfig.bool(forKey: "supports_user_update",     currentKeyPath: domain)
+		let sud    = try keyedConfig.bool(forKey: "supports_user_deletion",   currentKeyPath: domain)
+		let spc    = try keyedConfig.bool(forKey: "supports_password_change", currentKeyPath: domain)
 		
-		let wcs = try genericConfig.optionalArray(forKey: "wrappedUserToUserIdConversionStrategies", currentKeyPath: domain)
-		let strategies = try wcs?.map{ try WrappedUserToUserIdConversionStrategy(genericStorage: $0, domainAliases: globalConfig.domainAliases, currentKeyPath: domain) }
+		let wcs = try keyedConfig.optionalArray(forKey: "wrapped_user_to_user_id_conversion_strategies", currentKeyPath: domain)
+		let strategies = try wcs?.map{ try WrappedUserToUserIdConversionStrategy(genericStorage: $0, currentKeyPath: domain) }
 		
 		self.init(
-			globalConfig: globalConfig,
 			providerId: pId, serviceId: id, serviceName: name, mergePriority: p,
 			url: url, secret: Data(secret.utf8),
 			supportsUserCreation: suc,

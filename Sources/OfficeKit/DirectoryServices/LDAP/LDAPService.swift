@@ -38,9 +38,11 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	public typealias AuthenticationChallenge = String
 	
 	public let config: LDAPServiceConfig
+	public let globalConfig: GlobalConfig
 	
-	public init(config c: LDAPServiceConfig) {
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
 		config = c
+		globalConfig = gc
 	}
 	
 	public func shortDescription(from user: LDAPInetOrgPersonWithObject) -> String {
@@ -87,7 +89,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			return LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: [], cn: []))
 			
 		} else {
-			guard let email = userWrapper.mainEmail(domainMap: config.global.domainAliases) else {
+			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create an LDAPInetOrgPersonWithObject")
 			}
 			guard let dn = config.baseDNs.dn(fromEmail: email) else {
@@ -252,7 +254,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			}
 			/* Deduplication */
 			if !deduplicateAliases {return Set(emails)}
-			return Set(emails.map{ $0.primaryDomainVariant(aliasMap: self.config.global.domainAliases) })
+			return Set(emails.map{ $0.primaryDomainVariant(aliasMap: self.globalConfig.domainAliases) })
 		}
 	}
 	

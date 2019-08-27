@@ -50,8 +50,8 @@ public func configure(_ config: inout Config, _ env: inout Environment, _ servic
 	/* Register the OpenDirectory config */
 	do {
 		let openDirectoryServiceConfigYaml = try conf.storage(forKey: "open_directory_config", currentKeyPath: ["Global config"])
-		let openDirectoryServiceConfig = try OpenDirectoryServiceConfig(globalConfig: globalConf, providerId: OpenDirectoryService.providerId, serviceId: "_internal_od_", serviceName: "Internal Open Directory Service", genericConfig: openDirectoryServiceConfigYaml, pathsRelativeTo: url)
-		let openDirectoryService = OpenDirectoryService(config: openDirectoryServiceConfig)
+		let openDirectoryServiceConfig = try OpenDirectoryServiceConfig(providerId: OpenDirectoryService.providerId, serviceId: "_internal_od_", serviceName: "Internal Open Directory Service", mergePriority: nil, keyedConfig: openDirectoryServiceConfigYaml, pathsRelativeTo: url)
+		let openDirectoryService = OpenDirectoryService(config: openDirectoryServiceConfig, globalConfig: globalConf)
 		services.register(openDirectoryService)
 	}
 	
