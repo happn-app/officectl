@@ -45,8 +45,8 @@ public struct GoogleUser : Hashable, Codable {
 	public init(from decoder: Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
 		
-		kind = try container.decodeIfPresent(RemoteProperty<Kind>.self, forKey: .kind) ?? .unset
-		etag = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .kind) ?? .unset
+		kind = try container.decode(Kind.self, forKey: .kind)
+		etag = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .etag) ?? .unset
 		
 		id = try container.decodeIfPresent(RemoteProperty<String>.self, forKey: .id) ?? .unset
 		customerId = try container.decodeIfPresent(RemoteProperty<String>.self, forKey: .customerId) ?? .unset
@@ -74,7 +74,7 @@ public struct GoogleUser : Hashable, Codable {
 	public func encode(to encoder: Encoder) throws {
 		var container = encoder.container(keyedBy: CodingKeys.self)
 
-		try container.encodeIfSet(kind, forKey: .kind)
+		try container.encode(kind, forKey: .kind)
 		try container.encodeIfSet(etag, forKey: .etag)
 		
 		try container.encodeIfSet(id, forKey: .id)
@@ -100,7 +100,7 @@ public struct GoogleUser : Hashable, Codable {
 		try container.encodeIfSet(changePasswordAtNextLogin, forKey: .changePasswordAtNextLogin)
 	}
 	
-	public var kind: RemoteProperty<Kind> = .unset
+	public var kind: Kind = .user
 	public var etag: RemoteProperty<String?> = .unset
 	
 	public var id: RemoteProperty<String> = .unset

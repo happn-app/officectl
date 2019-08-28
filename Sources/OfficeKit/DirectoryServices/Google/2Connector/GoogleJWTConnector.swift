@@ -101,7 +101,7 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 	}
 	
 	/* ***************
-      MARK: - Private
+	   MARK: - Private
 	   *************** */
 	
 	private var auth: Auth?
