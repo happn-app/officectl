@@ -23,7 +23,8 @@ public struct OfficeKitConfig {
 			ExternalDirectoryServiceV1.providerId: ExternalDirectoryServiceV1.self,
 			GitHubService.providerId:              GitHubService.self,
 			GoogleService.providerId:              GoogleService.self,
-			LDAPService.providerId:                LDAPService.self
+			LDAPService.providerId:                LDAPService.self,
+			HappnService.providerId:               HappnService.self
 		]
 		#if canImport(DirectoryService) && canImport(OpenDirectory)
 			res[OpenDirectoryService.providerId] = OpenDirectoryService.self
