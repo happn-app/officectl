@@ -16,6 +16,7 @@ import Service
 public struct DummyServiceConfig : OfficeKitServiceConfig {
 	
 	public var providerId: String
+	public let isHelperService = true
 	
 	public var serviceId: String
 	public var serviceName: String

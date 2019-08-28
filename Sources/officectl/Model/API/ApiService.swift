@@ -16,4 +16,6 @@ struct ApiService : Codable {
 	var serviceId: String
 	var serviceFullName: String
 	
+	var isHelperService: Bool
+	
 }

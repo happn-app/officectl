@@ -16,6 +16,11 @@ public protocol OfficeKitServiceConfig : OfficeKitServiceConfigInit, Hashable {
 	/** The provider id for which the config is for. */
 	var providerId: String {get}
 	
+	/** If `true`, the service won’t be included in the list of all the services
+	by the service provider. It will still be returned if explicitly fetched,
+	either by id or by type. */
+	var isHelperService: Bool {get}
+	
 	/** The id of the instance of the provider, e.g. "happn_ldap". Defined by the
 	caller.
 	

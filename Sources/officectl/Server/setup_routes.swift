@@ -18,7 +18,7 @@ func setup_routes(_ router: Router) throws {
 			req.make(OfficectlConfig.self).officeKitConfig.serviceConfigs
 			.map{ kv -> ApiService in
 				let (_, config) = kv
-				return ApiService(providerId: config.providerId, serviceId: config.serviceId, serviceFullName: config.serviceName)
+				return ApiService(providerId: config.providerId, serviceId: config.serviceId, serviceFullName: config.serviceName, isHelperService: config.isHelperService)
 			}
 			.sorted(by: { $0.serviceFullName < $1.serviceFullName })
 		)

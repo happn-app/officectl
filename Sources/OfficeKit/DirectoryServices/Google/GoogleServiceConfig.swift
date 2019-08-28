@@ -14,6 +14,7 @@ import GenericStorage
 public struct GoogleServiceConfig : OfficeKitServiceConfig {
 	
 	public var providerId: String
+	public let isHelperService = false
 	
 	public var serviceId: String
 	public var serviceName: String

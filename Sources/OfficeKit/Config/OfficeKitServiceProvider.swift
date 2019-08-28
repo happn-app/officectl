@@ -22,7 +22,7 @@ public class OfficeKitServiceProvider {
 			guard servicesCache[k] == nil else {continue}
 			servicesCache[k] = try directoryService(with: v)
 		}
-		return Set(servicesCache.values)
+		return Set(servicesCache.values.filter{ !$0.config.isHelperService })
 	}
 	
 	public func getDirectoryService(id: String?) throws -> AnyDirectoryService {

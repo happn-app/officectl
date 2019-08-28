@@ -14,6 +14,7 @@ import GenericStorage
 public struct EmailServiceConfig : OfficeKitServiceConfig {
 	
 	public var providerId: String
+	public let isHelperService = true
 	
 	public var serviceId: String
 	public var serviceName: String

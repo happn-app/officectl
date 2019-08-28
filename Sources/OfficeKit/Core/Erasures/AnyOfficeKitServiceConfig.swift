@@ -23,6 +23,8 @@ private protocol OfficeKitServiceConfigBox {
 	/* *** OfficeKitServiceConfig *** */
 	
 	var providerId: String {get}
+	var isHelperService: Bool {get}
+	
 	var serviceId: String {get}
 	var serviceName: String {get}
 	
@@ -49,6 +51,10 @@ private struct ConcreteOfficeKitServiceConfigBox<Base : OfficeKitServiceConfig> 
 	
 	var providerId: String {
 		return originalConfig.providerId
+	}
+	
+	var isHelperService: Bool {
+		return originalConfig.isHelperService
 	}
 	
 	var serviceId: String {
@@ -89,6 +95,10 @@ public struct AnyOfficeKitServiceConfig : OfficeKitServiceConfig {
 	
 	public var providerId: String {
 		return box.providerId
+	}
+	
+	public var isHelperService: Bool {
+		return box.isHelperService
 	}
 	
 	public var serviceId: String {

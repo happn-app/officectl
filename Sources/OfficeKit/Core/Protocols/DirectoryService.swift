@@ -15,8 +15,8 @@ import Service
 
 public protocol DirectoryService : class, DirectoryServiceInit, Hashable {
 	
-	/** The id of the linked provider, e.g. "internal_openldap". Those are static
-	in OfficeKit. */
+	/** The id of the linked provider, e.g. "internal_openldap". External
+	provider ids (not built-in OfficeKit) must not have the “internal_” prefix. */
 	static var providerId: String {get}
 	
 	associatedtype ConfigType : OfficeKitServiceConfig
