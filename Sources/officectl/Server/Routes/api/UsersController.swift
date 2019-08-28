@@ -59,7 +59,7 @@ class UsersController {
 			return MultiServicesUser.merge(dsuPairs: Set(userPairs), validServices: validServices, eventLoop: req.eventLoop).map{
 				let ret = try ApiResponse.data(ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchErrorsByService.mapKeys{ $0.config.serviceId }, result: $0.map{
 					try ApiUser(multiUsers: $0, orderedServices: orderedServices)
-				}))
+				}.sorted{ ($0.lastName ?? "") < ($1.lastName ?? "") }))
 				logger?.info("Computed merged users list in \(-startComputationTime.timeIntervalSinceNow) seconds")
 				return ret
 			}
