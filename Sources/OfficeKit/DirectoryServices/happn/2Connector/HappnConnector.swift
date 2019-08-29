@@ -17,13 +17,24 @@ import URLRequestOperation
 
 
 
-public class HappnConnector : Connector, Authenticator {
+public final class HappnConnector : Connector, Authenticator {
+	
+	public enum AuthMode : Hashable {
+		
+		case userPass(username: String, password: String)
+		case refreshToken(String)
+		
+	}
 	
 	public typealias ScopeType = Set<String>
 	public typealias RequestType = URLRequest
 	
-	let clientId: String
-	let clientSecret: String
+	public let baseURL: URL
+	
+	public let clientId: String
+	public let clientSecret: String
+	
+	public let authMode: AuthMode
 	
 	public var currentScope: Set<String>? {
 		return auth?.scope
@@ -37,18 +48,21 @@ public class HappnConnector : Connector, Authenticator {
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "HappnConnector Connection Queue")
 	
-	public init(clientId id: String, clientSecret s: String, username u: String, password p: String) {
-		clientId = id
-		clientSecret = s
-		
-		authMode = .userPass(username: u, password: p)
+	public convenience init(baseURL url: URL, clientId id: String, clientSecret s: String, username u: String, password p: String) {
+		self.init(baseURL: url, clientId: id, clientSecret: s, authMode: .userPass(username: u, password: p))
 	}
 	
-	public init(clientId id: String, clientSecret s: String, refreshToken t: String) {
+	public convenience init(baseURL url: URL, clientId id: String, clientSecret s: String, refreshToken t: String) {
+		self.init(baseURL: url, clientId: id, clientSecret: s, authMode: .refreshToken(t))
+	}
+	
+	public init(baseURL url: URL, clientId id: String, clientSecret s: String, authMode a: AuthMode) {
+		baseURL = url
+		
 		clientId = id
 		clientSecret = s
 		
-		authMode = .refreshToken(t)
+		authMode = a
 	}
 	
 	/* ********************************
@@ -98,7 +112,6 @@ public class HappnConnector : Connector, Authenticator {
 	   *************** */
 	
 	private var auth: Auth?
-	private let authMode: AuthMode
 	
 	private struct Auth {
 		
@@ -112,15 +125,8 @@ public class HappnConnector : Connector, Authenticator {
 		
 	}
 	
-	private enum AuthMode {
-		
-		case userPass(username: String, password: String)
-		case refreshToken(String)
-		
-	}
-	
 	private func unsafeConnect(scope: Set<String>, authMode: AuthMode, handler: @escaping (Error?) -> Void) {
-		let url = URL(string: "https://api.happn.fr/connect/oauth/token")!
+		let url = URL(string: "connect/oauth/token", relativeTo: baseURL)!
 		var components = URLComponents()
 		components.queryItems = [
 			URLQueryItem(name: "scope", value: scope.joined(separator: " ")),
@@ -182,7 +188,7 @@ public class HappnConnector : Connector, Authenticator {
 	public func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
 		guard let auth = auth else {handler(nil); return}
 		
-		var request = URLRequest(url: URL(string: "https://api.happn.fr/connect/oauth/revoke-token")!)
+		var request = URLRequest(url: URL(string: "connect/oauth/revoke-token", relativeTo: baseURL)!)
 		request.setValue("OAuth=\"\(auth.accessToken)\"", forHTTPHeaderField: "Authorization")
 		let op = URLRequestOperation(request: request)
 		op.completionBlock = {
