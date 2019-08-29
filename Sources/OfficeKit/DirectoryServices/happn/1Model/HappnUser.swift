@@ -22,7 +22,7 @@ public struct HappnUser : Hashable, Codable {
 		
 		type = try container.decode(HappnType.self, forKey: .type)
 		
-		login = try container.decode(String.self, forKey: .login)
+		login = try container.decode(String?.self, forKey: .login)
 		id = try container.decodeIfPresent(RemoteProperty<String>.self, forKey: .id) ?? .unset
 		
 		firstName = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .first_name) ?? .unset

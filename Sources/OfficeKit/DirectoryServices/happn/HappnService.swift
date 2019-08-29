@@ -92,7 +92,13 @@ public final class HappnService : DirectoryService {
 	}
 	
 	public func listAllUsers(on container: Container) throws -> EventLoopFuture<[HappnUser]> {
-		throw NotImplementedError()
+		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		
+		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: container.eventLoop)
+		.then{ _ in
+			let searchOp = SearchHappnUsersOperation(query: nil, happnConnector: happnConnector)
+			return Future<[HappnUser]>.future(from: searchOp, eventLoop: container.eventLoop)
+		}
 	}
 	
 	public let supportsUserCreation = true
