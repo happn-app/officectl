@@ -45,7 +45,7 @@ public struct HappnUser : Hashable, Codable {
 	
 	public var type: HappnType = .client
 	
-	public var login: String
+	public var login: String?
 	public var id: RemoteProperty<String> = .unset
 	
 	/* Technically I think the type is more RemoteProperty<String> but it does
@@ -55,7 +55,7 @@ public struct HappnUser : Hashable, Codable {
 	public var lastName: RemoteProperty<String?> = .unset
 	public var nickname: RemoteProperty<String?> = .unset
 	
-	public init(login l: String, hints: [DirectoryUserProperty: Any] = [:]) {
+	public init(login l: String?, hints: [DirectoryUserProperty: Any] = [:]) {
 		login = l
 		
 		firstName = (hints[.firstName] as? String).flatMap{ .set($0) } ?? .unset
@@ -88,10 +88,10 @@ public struct HappnUser : Hashable, Codable {
 
 extension HappnUser : DirectoryUser {
 	
-	public typealias UserIdType = String
+	public typealias UserIdType = String?
 	public typealias PersistentIdType = String
 	
-	public var userId: String {
+	public var userId: String? {
 		return login
 	}
 	public var persistentId: RemoteProperty<String> {
@@ -99,7 +99,7 @@ extension HappnUser : DirectoryUser {
 	}
 	
 	public var identifyingEmail: RemoteProperty<Email?> {
-		return .set(Email(string: login))
+		return .set(login.flatMap{ Email(string: $0) })
 	}
 	public var otherEmails: RemoteProperty<[Email]> {
 		return .set([])

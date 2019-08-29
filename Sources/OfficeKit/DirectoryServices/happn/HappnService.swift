@@ -29,14 +29,17 @@ public final class HappnService : DirectoryService {
 	}
 	
 	public func shortDescription(from user: HappnUser) -> String {
-		return user.login
+		return user.login ?? "<null user id>"
 	}
 	
-	public func string(fromUserId userId: String) -> String {
-		return userId
+	public func string(fromUserId userId: String?) -> String {
+		return userId ?? "__officectl_internal__null_happn_id__"
 	}
 	
-	public func userId(fromString string: String) throws -> String {
+	public func userId(fromString string: String) throws -> String? {
+		guard string != "__officectl_internal__null_happn_id__" else {
+			return nil
+		}
 		return string
 	}
 	
@@ -49,18 +52,42 @@ public final class HappnService : DirectoryService {
 	}
 	
 	public func json(fromUser user: HappnUser) throws -> JSON {
-		throw NotImplementedError()
+		#warning("TODO (Note: Goes with the TODO related to JSONEncoder in logicalUser from wrapped user below.)")
+		return try JSON(encodable: user)
 	}
 	
 	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> HappnUser {
-		throw NotImplementedError()
+		let taggedId = userWrapper.userId
+		if taggedId.tag == config.serviceId, let underlying = userWrapper.underlyingUser {
+			/* The generic user is from our service! We should be able to translate
+			 * if fully to our User type. */
+			#warning("TODO: Not elegant. We should do better but I’m lazy rn")
+			let encoded = try JSONEncoder().encode(underlying)
+			return try JSONDecoder().decode(HappnUser.self, from: encoded)
+			
+		} else if taggedId.tag == config.serviceId {
+			/* The generic user id from our service, but there is no underlying
+			 * user… Let’s create a GoogleUser from the user id. */
+			guard let email = Email(string: taggedId.id) else {
+				throw InvalidArgumentError(message: "Got an invalid id for a HappnService user.")
+			}
+			return HappnUser(login: email.stringValue)
+			
+		} else {
+			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
+				throw InvalidArgumentError(message: "Cannot get an email from the user to create a GoogleUser")
+			}
+			let res = HappnUser(login: email.stringValue)
+			#warning("Other properties…")
+			return res
+		}
 	}
 	
 	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<HappnUser?> {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(fromUserId uId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<HappnUser?> {
+	public func existingUser(fromUserId uId: String?, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<HappnUser?> {
 		throw NotImplementedError()
 	}
 	
@@ -87,5 +114,5 @@ public final class HappnService : DirectoryService {
 	public func changePasswordAction(for user: HappnUser, on container: Container) throws -> ResetPasswordAction {
 		throw NotImplementedError()
 	}
-
+	
 }
