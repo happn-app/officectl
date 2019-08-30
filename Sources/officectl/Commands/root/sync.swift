@@ -44,24 +44,18 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	let fromDirectory = try officeKitServiceProvider.getDirectoryService(id: fromId)
 	let toDirectories = try toIds.map{ try officeKitServiceProvider.getDirectoryService(id: String($0)) }
 	
-	return try fromDirectory.listAllUsers(on: context.container)
-	.flatMap{ sourceUsers -> Future<[ServiceSyncPlan]> in
-		let futures = try toDirectories.map{ toDirectory in
-			return try toDirectory.listAllUsers(on: context.container).map{ try groupUsersById(from: $0) }
-			.map{ (currentDestinationUsers: [AnyDirectoryUserId: AnyDirectoryUser]) -> ServiceSyncPlan in
-				let directoryBlacklist = syncConfig.blacklistsByServiceId[toDirectory.config.serviceId] ?? []
-				let expectedDestinationUsers = try groupUsersById(from: sourceUsers.compactMap{ try toDirectory.logicalUser(fromUser: $0, in: fromDirectory) })
-				
-				let currentDestinationUserIds = Set(currentDestinationUsers.keys)
-				let expectedDestinationUserIds = Set(expectedDestinationUsers.keys)
-				let userIdsToCreate = expectedDestinationUserIds.subtracting(currentDestinationUserIds)
-				let userIdsToDelete = currentDestinationUserIds.subtracting(expectedDestinationUserIds)
-				let usersToCreate = Array(expectedDestinationUsers.filter{ userIdsToCreate.contains($0.key) && !directoryBlacklist.contains(toDirectory.string(fromUserId: $0.key)) }.values)
-				let usersToDelete = Array(currentDestinationUsers.filter{  userIdsToDelete.contains($0.key) && !directoryBlacklist.contains(toDirectory.string(fromUserId: $0.key)) }.values)
-				return ServiceSyncPlan(service: toDirectory, usersToCreate: usersToCreate, usersToDelete: usersToDelete)
-			}
+	return try MultiServicesUser.fetchAll(in: Set([fromDirectory] + toDirectories), on: context.container).map{
+		let (users, fetchErrorsByService) = $0
+		guard fetchErrorsByService.count == 0 else {
+			throw ErrorCollection(Array(fetchErrorsByService.values))
 		}
-		return Future.reduce([ServiceSyncPlan](), futures, eventLoop: context.container.eventLoop, { $0 + [$1] })
+		
+		return try toDirectories.map{ toDirectory in
+			let directoryBlacklist = syncConfig.blacklistsByServiceId[toDirectory.config.serviceId] ?? []
+			let usersToCreate = try users.filter{ $0[toDirectory]   == .some(nil) }.compactMap{ try $0[fromDirectory]!?.hop(to: toDirectory).user }.filter{ !directoryBlacklist.contains(toDirectory.string(fromUserId: $0.userId)) }
+			let usersToDelete =     users.filter{ $0[fromDirectory] == .some(nil) }.compactMap{     $0[toDirectory]!?.user                        }.filter{ !directoryBlacklist.contains(toDirectory.string(fromUserId: $0.userId)) }
+			return ServiceSyncPlan(service: toDirectory, usersToCreate: usersToCreate, usersToDelete: usersToDelete)
+		}
 	}
 	.map{ (plans: [ServiceSyncPlan]) -> [ServiceSyncPlan] in
 		/* Let’s verify the user is ok with the plan */
