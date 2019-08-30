@@ -16,7 +16,7 @@ func generateRandomPassword(length: Int = 13) -> String {
 	return String((0..<length).map{ _ in chars.randomElement()! })
 }
 
-func groupUsersById<S : Sequence>(from users: S) throws -> [AnyHashable: AnyDirectoryUser] where S.Element == AnyDirectoryUser {
+func groupUsersById<S : Sequence>(from users: S) throws -> [AnyDirectoryUserId: AnyDirectoryUser] where S.Element == AnyDirectoryUser {
 	return try users.group(by: { $0.userId })
 }
 

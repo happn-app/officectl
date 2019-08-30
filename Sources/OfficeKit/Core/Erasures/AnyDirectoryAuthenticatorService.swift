@@ -14,8 +14,8 @@ import Service
 
 private protocol DirectoryAuthenticatorServiceBox {
 	
-	func authenticate<UserIdType : Hashable, AuthenticationChallenge>(userId: UserIdType, challenge: AuthenticationChallenge, on container: Container) throws -> Future<Bool>
-	func validateAdminStatus<UserIdType : Hashable>(userId: UserIdType, on container: Container) throws -> Future<Bool>
+	func authenticate(userId: AnyDirectoryUserId, challenge: Any, on container: Container) throws -> Future<Bool>
+	func validateAdminStatus(userId: AnyDirectoryUserId, on container: Container) throws -> Future<Bool>
 	
 }
 
@@ -23,16 +23,16 @@ private struct ConcreteDirectoryAuthenticatorBox<Base : DirectoryAuthenticatorSe
 	
 	let originalAuthenticator: Base
 	
-	func authenticate<UserIdType : Hashable, AuthenticationChallenge>(userId: UserIdType, challenge: AuthenticationChallenge, on container: Container) throws -> Future<Bool> {
-		guard let uid = userId as? Base.UserType.UserIdType, let c = challenge as? Base.AuthenticationChallenge else {
-			throw InvalidArgumentError(message: "Got invalid user id type (\(UserIdType.self)) or auth challenge type (\(AuthenticationChallenge.self)) to authenticate with a directory service authenticator of type \(Base.self)")
+	func authenticate(userId: AnyDirectoryUserId, challenge: Any, on container: Container) throws -> Future<Bool> {
+		guard let uid: Base.UserType.UserIdType = userId.unboxed(), let c = challenge as? Base.AuthenticationChallenge else {
+			throw InvalidArgumentError(message: "Got invalid user id (\(userId)) or auth challenge (\(challenge)) to authenticate with a directory service authenticator of type \(Base.self)")
 		}
 		return try originalAuthenticator.authenticate(userId: uid, challenge: c, on: container)
 	}
 	
-	func validateAdminStatus<UserIdType : Hashable>(userId: UserIdType, on container: Container) throws -> Future<Bool> {
-		guard let uid = userId as? Base.UserType.UserIdType else {
-			throw InvalidArgumentError(message: "Got invalid user id type (\(UserIdType.self)) to check if user is admin with a directory service authenticator of type \(Base.self)")
+	func validateAdminStatus(userId: AnyDirectoryUserId, on container: Container) throws -> Future<Bool> {
+		guard let uid: Base.UserType.UserIdType = userId.unboxed() else {
+			throw InvalidArgumentError(message: "Got invalid user id type (\(userId)) to check if user is admin with a directory service authenticator of type \(Base.self)")
 		}
 		return try originalAuthenticator.validateAdminStatus(userId: uid, on: container)
 	}
@@ -52,11 +52,11 @@ public class AnyDirectoryAuthenticatorService : AnyDirectoryService, DirectoryAu
 		fatalError("init(config:globalConfig:) unavailable for a directory authenticator service erasure")
 	}
 	
-	public func authenticate(userId: AnyHashable, challenge: Any, on container: Container) throws -> Future<Bool> {
+	public func authenticate(userId: AnyDirectoryUserId, challenge: Any, on container: Container) throws -> Future<Bool> {
 		return try box.authenticate(userId: userId, challenge: challenge, on: container)
 	}
 	
-	public func validateAdminStatus(userId: AnyHashable, on container: Container) throws -> Future<Bool> {
+	public func validateAdminStatus(userId: AnyDirectoryUserId, on container: Container) throws -> Future<Bool> {
 		return try box.validateAdminStatus(userId: userId, on: container)
 	}
 	

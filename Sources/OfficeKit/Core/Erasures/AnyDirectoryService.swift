@@ -29,17 +29,17 @@ private protocol DirectoryServiceBox {
 	
 	func shortDescription(from user: AnyDirectoryUser) -> String
 	
-	func string(fromUserId userId: AnyHashable) -> String
-	func userId(fromString string: String) throws -> AnyHashable
+	func string(fromUserId userId: AnyDirectoryUserId) -> String
+	func userId(fromString string: String) throws -> AnyDirectoryUserId
 	
-	func string(fromPersistentId pId: AnyHashable) -> String
-	func persistentId(fromString string: String) throws -> AnyHashable
+	func string(fromPersistentId pId: AnyDirectoryUserId) -> String
+	func persistentId(fromString string: String) throws -> AnyDirectoryUserId
 	
 	func json(fromUser user: AnyDirectoryUser) throws -> JSON
 	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser
 	
-	func existingUser(fromPersistentId pId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
-	func existingUser(fromUserId uId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
+	func existingUser(fromPersistentId pId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
+	func existingUser(fromUserId uId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
 	
 	func listAllUsers(on container: Container) throws -> Future<[AnyDirectoryUser]>
 	
@@ -89,8 +89,8 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		return originalDirectory.shortDescription(from: u)
 	}
 	
-	func string(fromUserId userId: AnyHashable) -> String {
-		guard let typedId = userId as? Base.UserType.UserIdType else {
+	func string(fromUserId userId: AnyDirectoryUserId) -> String {
+		guard let typedId: Base.UserType.UserIdType = userId.unboxed() else {
 			OfficeKitConfig.logger?.error("Asked to convert a user id to a string for a user id of unknown type in erasure: \(userId)")
 			/* The source user type is unknown, so we return a purposefully invalid
 			 * id. This is not ideal… */
@@ -99,12 +99,12 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		return originalDirectory.string(fromUserId: typedId)
 	}
 	
-	func userId(fromString string: String) throws -> AnyHashable {
-		return try AnyHashable(originalDirectory.userId(fromString: string))
+	func userId(fromString string: String) throws -> AnyDirectoryUserId {
+		return try AnyDirectoryUserId(originalDirectory.userId(fromString: string))
 	}
 	
-	func string(fromPersistentId pId: AnyHashable) -> String {
-		guard let typedId = pId as? Base.UserType.PersistentIdType else {
+	func string(fromPersistentId pId: AnyDirectoryUserId) -> String {
+		guard let typedId: Base.UserType.PersistentIdType = pId.unboxed() else {
 			OfficeKitConfig.logger?.error("Asked to convert a persistend id to a string for a persistent id of unknown type in erasure: \(pId)")
 			/* The source user type is unknown, so we return a purposefully invalid
 			 * id. This is not ideal… */
@@ -113,8 +113,8 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		return originalDirectory.string(fromPersistentId: typedId)
 	}
 	
-	func persistentId(fromString string: String) throws -> AnyHashable {
-		return try AnyHashable(originalDirectory.persistentId(fromString: string))
+	func persistentId(fromString string: String) throws -> AnyDirectoryUserId {
+		return try AnyDirectoryUserId(originalDirectory.persistentId(fromString: string))
 	}
 	
 	func json(fromUser user: AnyDirectoryUser) throws -> JSON {
@@ -128,15 +128,15 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		return try originalDirectory.logicalUser(fromWrappedUser: userWrapper).erased()
 	}
 	
-	func existingUser(fromPersistentId pId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
-		guard let typedId = pId as? Base.UserType.PersistentIdType else {
+	func existingUser(fromPersistentId pId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+		guard let typedId: Base.UserType.PersistentIdType = pId.unboxed() else {
 			throw InvalidArgumentError(message: "Got invalid persistent user id (\(pId)) for fetching user with directory service of type \(Base.self)")
 		}
 		return try originalDirectory.existingUser(fromPersistentId: typedId, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
 	}
 	
-	func existingUser(fromUserId uId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
-		guard let typedId = uId as? Base.UserType.UserIdType else {
+	func existingUser(fromUserId uId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+		guard let typedId: Base.UserType.UserIdType = uId.unboxed() else {
 			throw InvalidArgumentError(message: "Got invalid user id (\(uId)) for fetching user with directory service of type \(Base.self)")
 		}
 		return try originalDirectory.existingUser(fromUserId: typedId, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
@@ -218,19 +218,19 @@ public class AnyDirectoryService : DirectoryService {
 		return box.shortDescription(from: user)
 	}
 	
-	public func string(fromUserId userId: AnyHashable) -> String {
+	public func string(fromUserId userId: AnyDirectoryUserId) -> String {
 		return box.string(fromUserId: userId)
 	}
 	
-	public func userId(fromString string: String) throws -> AnyHashable {
+	public func userId(fromString string: String) throws -> AnyDirectoryUserId {
 		return try box.userId(fromString: string)
 	}
 	
-	public func string(fromPersistentId pId: AnyHashable) -> String {
+	public func string(fromPersistentId pId: AnyDirectoryUserId) -> String {
 		return box.string(fromPersistentId: pId)
 	}
 	
-	public func persistentId(fromString string: String) throws -> AnyHashable {
+	public func persistentId(fromString string: String) throws -> AnyDirectoryUserId {
 		return try box.persistentId(fromString: string)
 	}
 	
@@ -242,11 +242,11 @@ public class AnyDirectoryService : DirectoryService {
 		return try box.logicalUser(fromWrappedUser: userWrapper)
 	}
 	
-	public func existingUser(fromPersistentId pId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+	public func existingUser(fromPersistentId pId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
 		return try box.existingUser(fromPersistentId: pId, propertiesToFetch: propertiesToFetch, on: container)
 	}
 	
-	public func existingUser(fromUserId uId: AnyHashable, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
+	public func existingUser(fromUserId uId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
 		return try box.existingUser(fromUserId: uId, propertiesToFetch: propertiesToFetch, on: container)
 	}
 	

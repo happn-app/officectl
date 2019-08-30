@@ -13,11 +13,11 @@ import Foundation
  *
  * public struct AnyDirectoryUser : DirectoryUser {
  *    public init<U : DirectoryUser>(_ user: U) {
- *       erasureForId = { AnyHashable(user.id) }
+ *       erasureForId = { AnyDirectoryUserId(user.id) }
  *       erasureForEmail = { user.email }
  *       ...
  *    }
- *    public var id: AnyHashable {
+ *    public var id: AnyDirectoryUserId {
  *       return erasureForId()
  *    }
  *    public var email: RemoteProperty<Email?> {
@@ -30,8 +30,8 @@ import Foundation
 
 private protocol DirectoryUserBox {
 	
-	var userId: AnyHashable {get}
-	var persistentId: RemoteProperty<AnyHashable> {get}
+	var userId: AnyDirectoryUserId {get}
+	var persistentId: RemoteProperty<AnyDirectoryUserId> {get}
 	
 	var identifyingEmail: RemoteProperty<Email?> {get}
 	var otherEmails: RemoteProperty<[Email]> {get}
@@ -46,13 +46,13 @@ private struct ConcreteUserBox<Base : DirectoryUser> : DirectoryUserBox {
 	
 	let originalUser: Base
 	
-	var userId: AnyHashable {
-		return AnyHashable(originalUser.userId)
+	var userId: AnyDirectoryUserId {
+		return AnyDirectoryUserId(originalUser.userId)
 	}
 	
-	var persistentId: RemoteProperty<AnyHashable> {
+	var persistentId: RemoteProperty<AnyDirectoryUserId> {
 		switch originalUser.persistentId {
-		case .set(let pId): return .set(AnyHashable(pId))
+		case .set(let pId): return .set(AnyDirectoryUserId(pId))
 		case .unset:        return .unset
 		case .unsupported:  return .unsupported
 		}
@@ -80,18 +80,18 @@ private struct ConcreteUserBox<Base : DirectoryUser> : DirectoryUserBox {
 
 public struct AnyDirectoryUser : DirectoryUser {
 	
-	public typealias UserIdType = AnyHashable
-	public typealias PersistentIdType = AnyHashable
+	public typealias UserIdType = AnyDirectoryUserId
+	public typealias PersistentIdType = AnyDirectoryUserId
 	
 	public init<U : DirectoryUser>(_ user: U) {
 		box = ConcreteUserBox(originalUser: user)
 	}
 	
-	public var userId: AnyHashable {
+	public var userId: AnyDirectoryUserId {
 		return box.userId
 	}
 	
-	public var persistentId: RemoteProperty<AnyHashable> {
+	public var persistentId: RemoteProperty<AnyDirectoryUserId> {
 		return box.persistentId
 	}
 	

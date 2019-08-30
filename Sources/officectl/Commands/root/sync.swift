@@ -48,7 +48,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	.flatMap{ sourceUsers -> Future<[ServiceSyncPlan]> in
 		let futures = try toDirectories.map{ toDirectory in
 			return try toDirectory.listAllUsers(on: context.container).map{ try groupUsersById(from: $0) }
-			.map{ (currentDestinationUsers: [AnyHashable: AnyDirectoryUser]) -> ServiceSyncPlan in
+			.map{ (currentDestinationUsers: [AnyDirectoryUserId: AnyDirectoryUser]) -> ServiceSyncPlan in
 				let directoryBlacklist = syncConfig.blacklistsByServiceId[toDirectory.config.serviceId] ?? []
 				let expectedDestinationUsers = try groupUsersById(from: sourceUsers.compactMap{ try toDirectory.logicalUser(fromUser: $0, in: fromDirectory) })
 				
