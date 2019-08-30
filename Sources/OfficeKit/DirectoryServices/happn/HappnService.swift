@@ -75,7 +75,7 @@ public final class HappnService : DirectoryService {
 			
 		} else {
 			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
-				throw InvalidArgumentError(message: "Cannot get an email from the user to create a GoogleUser")
+				throw InvalidArgumentError(message: "Cannot get an email from the user to create a HappnUser")
 			}
 			let res = HappnUser(login: email.stringValue)
 			#warning("Other properties…")
