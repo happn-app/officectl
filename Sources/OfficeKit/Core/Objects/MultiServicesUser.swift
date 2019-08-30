@@ -30,11 +30,13 @@ extension MultiServicesUser {
 				})
 			}
 			return Future.waitAll(userFutures, eventLoop: container.eventLoop).map{ userResults in
-				var res = [AnyDirectoryService: Result<AnyDSUPair?, Error>]()
-				for (service, userResult) in userResults {
-					res[service] = userResult.map{ curUser in curUser.flatMap{ curUser -> AnyDSUPair in AnyDSUPair(service: service, user: curUser) } }
-				}
-				return res
+				return try userResults.group(
+					by:            { $0.0 },
+					mappingValues: {
+						let (service, userOrError) = $0
+						return userOrError.map{ curUser in curUser.flatMap{ curUser -> AnyDSUPair in AnyDSUPair(service: service, user: curUser) } }
+					}
+				)
 			}
 		}
 		
@@ -63,6 +65,14 @@ extension MultiServicesUser {
 		}
 		
 		return try getUsers(from: dsuIdPair.dsuPair(), in: services).flatMap(fetchStep)
+	}
+	
+	public static func fetchAll(in services: Set<AnyDirectoryService>, on container: Container) throws -> EventLoopFuture<(users: [MultiServicesUser], fetchErrorsByServices: [AnyDirectoryService: Error])> {
+		return try AnyDSUPair.fetchAll(in: services, on: container).flatMap{
+			let (pairs, fetchErrorsByService) = $0
+			let validServices = services.subtracting(fetchErrorsByService.keys)
+			return MultiServicesUser.merge(dsuPairs: Set(pairs), validServices: validServices, eventLoop: container.eventLoop).map{ ($0, fetchErrorsByService) }
+		}
 	}
 	
 	/**

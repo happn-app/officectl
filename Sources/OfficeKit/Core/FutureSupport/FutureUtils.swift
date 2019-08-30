@@ -53,4 +53,8 @@ public extension EventLoopFuture {
 		}
 	}
 	
+	static func waitAll<IdType : Hashable>(_ futuresById: [IdType: EventLoopFuture<T>], eventLoop: EventLoop) -> EventLoopFuture<[IdType: Result<T, Error>]> {
+		return waitAll(futuresById.map{ $0 }, eventLoop: eventLoop).map{ try! $0.group(by: { $0.0 }, mappingValues: { $0.1 }) }
+	}
+	
 }

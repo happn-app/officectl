@@ -28,41 +28,20 @@ class UsersController {
 			throw Abort(.forbidden)
 		}
 		
-		let logger = try? req.make(Logger.self)
+//		let logger = try? req.make(Logger.self)
 		let sProvider = try req.make(OfficeKitServiceProvider.self)
 		
 		let serviceIdsStr: String? = req.query["service_ids"]
 		let serviceIds = serviceIdsStr?.split(separator: ",").map(String.init)
 		let services = try Set(serviceIds.flatMap{ try $0.map{ try sProvider.getDirectoryService(id: $0) } } ?? Array(sProvider.getAllServices()))
 		
-		let serviceAndFutureUsers = services.map{ service in (service, req.future().flatMap{ try service.listAllUsers(on: req) }) }
-		
-		return Future.waitAll(serviceAndFutureUsers, eventLoop: req.eventLoop).flatMap{ servicesAndUserResults in
-			let startComputationTime = Date()
-			/* First let’s drop the unsuccessful users fetches */
-			var fetchErrorsByService = [AnyDirectoryService: ApiError]()
-			let userPairs = servicesAndUserResults.compactMap{ serviceAndUserResults -> [AnyDSUPair]? in
-				let service = serviceAndUserResults.0
-				switch serviceAndUserResults.1 {
-				case .failure(let error):
-					fetchErrorsByService[service] = ApiError(error: error, environment: req.environment)
-					return nil
-					
-				case .success(let users):
-					return users.map{ AnyDSUPair(service: service, user: $0) }
-				}
-			}.flatMap{ $0 }
-			
-			/* Merge the users we fetched */
+		return try MultiServicesUser.fetchAll(in: services, on: req).map{
+			let (users, fetchErrorsByService) = $0
+			let fetchApiErrorsByService = fetchErrorsByService.mapValues{ ApiError(error: $0, environment: req.environment) }
 			let orderedServices = try officectlConfig.officeKitConfig.orderedServiceConfigs.map{ try sProvider.getDirectoryService(id: $0.serviceId) }
-			let validServices = services.subtracting(fetchErrorsByService.keys)
-			return MultiServicesUser.merge(dsuPairs: Set(userPairs), validServices: validServices, eventLoop: req.eventLoop).map{
-				let ret = try ApiResponse.data(ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchErrorsByService.mapKeys{ $0.config.serviceId }, result: $0.map{
-					try ApiUser(multiUsers: $0, orderedServices: orderedServices)
-				}.sorted{ ($0.lastName ?? "") < ($1.lastName ?? "") }))
-				logger?.info("Computed merged users list in \(-startComputationTime.timeIntervalSinceNow) seconds")
-				return ret
-			}
+			return try ApiResponse.data(ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchApiErrorsByService.mapKeys{ $0.config.serviceId }, result: users.map{
+				try ApiUser(multiUsers: $0, orderedServices: orderedServices)
+			}.sorted{ ($0.lastName ?? "") < ($1.lastName ?? "") }))
 		}
 	}
 	

@@ -68,6 +68,25 @@ public struct DSUPair<DirectoryServiceType : DirectoryService> : Hashable {
 	
 }
 
+extension AnyDSUPair {
+	
+	public static func fetchAll(in services: Set<AnyDirectoryService>, on container: Container) throws -> EventLoopFuture<(dsuPairs: [AnyDSUPair], fetchErrorsByServices: [AnyDirectoryService: Error])> {
+		let serviceAndFutureUsers = services.map{ service in (service, container.future().flatMap{ try service.listAllUsers(on: container) }) }
+		let futureUsersByService = Dictionary(uniqueKeysWithValues: serviceAndFutureUsers)
+		
+		return Future.waitAll(futureUsersByService, eventLoop: container.eventLoop).map{ usersResultsByService in
+			let fetchErrorsByService = usersResultsByService.compactMapValues{ $0.failureValue }
+			let userPairs = usersResultsByService.compactMap{ serviceAndUsersResult -> [AnyDSUPair]? in
+				let (service, usersResult) = serviceAndUsersResult
+				return usersResult.successValue?.map{ AnyDSUPair(service: service, user: $0) }
+			}.flatMap{ $0 }
+			
+			return (userPairs, fetchErrorsByService)
+		}
+	}
+	
+}
+
 
 public typealias AnyDSUIdPair = DSUIdPair<AnyDirectoryService>
 public struct DSUIdPair<DirectoryServiceType : DirectoryService> : Hashable {
