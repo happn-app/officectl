@@ -84,11 +84,49 @@ public final class HappnService : DirectoryService {
 	}
 	
 	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<HappnUser?> {
-		throw NotImplementedError()
+		#warning("TODO: properties to fetch")
+		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		
+		return happnConnector.connect(scope: GetHappnUserOperation.scopes, eventLoop: container.eventLoop)
+		.then{ _ in
+			let op = GetHappnUserOperation(userKey: pId, connector: happnConnector)
+			return Future<HappnUser>.future(from: op, eventLoop: container.eventLoop).map{ $0 as HappnUser? }
+		}
+		.catchMap{ e in
+			switch e {
+			case let error as NSError where error.domain == "com.happn.officectl.happn" && error.code == 25002:
+				/* User not found error*/
+				return nil
+				
+			default: throw e
+			}
+		}
 	}
 	
 	public func existingUser(fromUserId uId: String?, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<HappnUser?> {
-		throw NotImplementedError()
+		guard let uId = uId else {
+			/* Yes. It’s ugly. But the only admin user with a nil login is 244. */
+			return try existingUser(fromPersistentId: "244", propertiesToFetch: propertiesToFetch, on: container)
+		}
+		
+		#warning("TODO: properties to fetch")
+		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		
+		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: container.eventLoop)
+		.then{ _ in
+			let ids = Set(Email(string: uId)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.stringValue } ?? [uId])
+			let futures = ids.map{ id -> Future<[HappnUser]> in
+				let op = SearchHappnUsersOperation(query: id, happnConnector: happnConnector)
+				return Future<[HappnUser]>.future(from: op, eventLoop: container.eventLoop)
+			}
+			return Future.reduce([HappnUser](), futures, eventLoop: container.eventLoop, +)
+		}
+		.map{ (users: [HappnUser]) -> HappnUser? in
+			guard users.count <= 1 else {
+				throw InvalidArgumentError(message: "Given user id has more than one user found")
+			}
+			return users.first
+		}
 	}
 	
 	public func listAllUsers(on container: Container) throws -> EventLoopFuture<[HappnUser]> {

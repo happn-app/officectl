@@ -15,7 +15,7 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = [HappnUser]
 	
-	public static let scopes = Set(arrayLiteral: "admin_scopes")
+	public static let scopes = Set(arrayLiteral: "admin_read", "admin_search_user")
 	
 	public let connector: HappnConnector
 	public let request: String?
@@ -62,12 +62,13 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 				self.baseOperationEnded()
 				return
 			}
-			guard o.success, let users = o.data else {
-				self.result = .failure(NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: o.error ?? "Unknown error while fetching the users"]))
+			guard o.success else {
+				self.result = .failure(NSError(domain: "com.happn.officectl.happn", code: o.error_code, userInfo: [NSLocalizedDescriptionKey: o.error ?? "Unknown error while fetching the users"]))
 				self.baseOperationEnded()
 				return
 			}
 			
+			let users = o.data ?? []
 			self.users.append(contentsOf: users)
 			if users.count >= limit/2 {self.fetchNextPage(currentOffset: currentOffset + limit)}
 			else                      {self.result = .success(self.users); self.baseOperationEnded()}

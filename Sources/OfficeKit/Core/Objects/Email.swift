@@ -54,6 +54,13 @@ public struct Email {
 		return self
 	}
 	
+	/** Key of the alias map is a domain alias, value is the actual domain. */
+	public func allDomainVariants(aliasMap: [String: String]) -> Set<Email> {
+		let primaryDomain = aliasMap[domain] ?? domain
+		let variants = aliasMap.filter{ $0.value == primaryDomain }.keys
+		return Set(variants.map{ Email(self, newDomain: $0) }).union([Email(self, newDomain: primaryDomain)])
+	}
+	
 }
 
 
@@ -83,29 +90,6 @@ extension Email : CustomStringConvertible {
 	
 	public var description: String {
 		return stringValue
-	}
-	
-}
-
-
-
-public extension LDAPDistinguishedName {
-	
-	/** Create a DN from an email.
-	
-	Result will be of the form:
-	
-	    uid=username,MIDDLE_DN,dc=subdomain1,dc=subdomain2...
-	
-	Example: For `francois.lamboley@example.com`, with middle dn `ou=people`,
-	you’ll get:
-	
-	    uid=francois.lamboley,ou=people,dc=example,dc=com */
-	@available(*, deprecated, message: "This method assumes the DN will be of the form uid=username,MIDDLE_DN,dc=subdomain1,dc=subdomain2... which is a stretch.")
-	init(email: Email, middleDN: LDAPDistinguishedName) {
-		values = [(key: "uid", value: email.username)] + middleDN.values + email.domain.split(separator: ".").map{
-			(key: "dc", value: String($0))
-		}
 	}
 	
 }
