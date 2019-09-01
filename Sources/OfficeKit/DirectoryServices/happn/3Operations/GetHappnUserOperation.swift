@@ -43,18 +43,18 @@ public final class GetHappnUserOperation : RetryingOperation, HasResult {
 		decoder.keyDecodingStrategy = .useDefaultKeys
 		let op = AuthenticatedJSONOperation<HappnApiResult<HappnUser>>(url: url, authenticator: connector.authenticate, decoder: decoder)
 		op.completionBlock = {
+			defer {self.baseOperationEnded()}
+			
 			guard let o = op.result.successValue else {
 				self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the user"]))
-				return self.baseOperationEnded()
+				return
 			}
 			guard o.success, let user = o.data else {
 				self.result = .failure(NSError(domain: "com.happn.officectl.happn", code: o.error_code, userInfo: [NSLocalizedDescriptionKey: o.error ?? "Unknown error while fetching the user"]))
-				self.baseOperationEnded()
 				return
 			}
 			
 			self.result = .success(user)
-			self.baseOperationEnded()
 		}
 		op.start()
 	}

@@ -19,6 +19,8 @@ import URLRequestOperation
 
 public final class HappnConnector : Connector, Authenticator {
 	
+	public static let nullLoginUserId = "244"
+	
 	public enum AuthMode : Hashable {
 		
 		case userPass(username: String, password: String)

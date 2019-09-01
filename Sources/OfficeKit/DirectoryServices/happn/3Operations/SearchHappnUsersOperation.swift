@@ -64,8 +64,7 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 			}
 			guard o.success else {
 				self.result = .failure(NSError(domain: "com.happn.officectl.happn", code: o.error_code, userInfo: [NSLocalizedDescriptionKey: o.error ?? "Unknown error while fetching the users"]))
-				self.baseOperationEnded()
-				return
+				return self.baseOperationEnded()
 			}
 			
 			let users = o.data ?? []

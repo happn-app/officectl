@@ -28,6 +28,8 @@ public struct HappnUser : Hashable, Codable {
 		firstName = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .first_name) ?? .unset
 		lastName  = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .last_name)  ?? .unset
 		nickname  = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .nickname)   ?? .unset
+		
+		password = try container.decodeIfPresent(RemoteProperty<String>.self, forKey: .password) ?? .unset
 	}
 	
 	public func encode(to encoder: Encoder) throws {
@@ -41,6 +43,8 @@ public struct HappnUser : Hashable, Codable {
 		try container.encodeIfSet(firstName, forKey: .first_name)
 		try container.encodeIfSet(lastName,  forKey: .last_name)
 		try container.encodeIfSet(nickname,  forKey: .nickname)
+		
+		try container.encodeIfSet(password,  forKey: .password)
 	}
 	
 	public var type: HappnType = .client
@@ -55,12 +59,16 @@ public struct HappnUser : Hashable, Codable {
 	public var lastName: RemoteProperty<String?> = .unset
 	public var nickname: RemoteProperty<String?> = .unset
 	
+	public var password: RemoteProperty<String> = .unset
+	
 	public init(login l: String?, hints: [DirectoryUserProperty: Any] = [:]) {
 		login = l
 		
 		firstName = (hints[.firstName] as? String).flatMap{ .set($0) } ?? .unset
 		lastName  = (hints[.lastName]  as? String).flatMap{ .set($0) } ?? .unset
 		nickname  = (hints[.nickname]  as? String).flatMap{ .set($0) } ?? .unset
+		
+		password  = (hints[.password] as? String).flatMap{ .set($0) } ?? .unset
 	}
 
 	public static func ==(_ user1: HappnUser, _ user2: HappnUser) -> Bool {
@@ -81,6 +89,7 @@ public struct HappnUser : Hashable, Codable {
 		case type
 		case login, id
 		case first_name, last_name, nickname
+		case password
 	}
 	
 }

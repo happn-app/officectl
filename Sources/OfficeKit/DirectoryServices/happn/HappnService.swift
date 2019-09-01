@@ -9,6 +9,7 @@ import Foundation
 
 import GenericJSON
 import NIO
+import SemiSingleton
 import Vapor
 
 
@@ -106,7 +107,7 @@ public final class HappnService : DirectoryService {
 	public func existingUser(fromUserId uId: String?, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<HappnUser?> {
 		guard let uId = uId else {
 			/* Yes. It’s ugly. But the only admin user with a nil login is 244. */
-			return try existingUser(fromPersistentId: "244", propertiesToFetch: propertiesToFetch, on: container)
+			return try existingUser(fromPersistentId: HappnConnector.nullLoginUserId, propertiesToFetch: propertiesToFetch, on: container)
 		}
 		
 		#warning("TODO: properties to fetch")
@@ -156,7 +157,9 @@ public final class HappnService : DirectoryService {
 	
 	public let supportsPasswordChange = true
 	public func changePasswordAction(for user: HappnUser, on container: Container) throws -> ResetPasswordAction {
-		throw NotImplementedError()
+		let semiSingletonStore: SemiSingletonStore = try container.make()
+		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
+		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: happnConnector) as ResetHappnPasswordAction
 	}
 	
 }
