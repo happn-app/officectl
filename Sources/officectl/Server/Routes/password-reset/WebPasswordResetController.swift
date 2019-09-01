@@ -87,7 +87,7 @@ final class WebPasswordResetController {
 				ResetPasswordStatusContext.ServicePasswordResetStatus(
 					serviceName: $0.key.config.serviceName,
 					isExecuting: $0.value.successValue??.passwordReset.isExecuting ?? false,
-					hasRun: !($0.value.successValue??.passwordReset.isWeak ?? false),
+					hasRun: !($0.value.successValue.flatMap{ $0?.passwordReset.isWeak ?? true } ?? false),// !($0.value.successValue??.passwordReset.isWeak ?? false),
 					errorStr: ($0.value.failureValue ?? $0.value.successValue??.passwordReset.result?.failureValue)?.legibleLocalizedDescription
 				)
 			}
