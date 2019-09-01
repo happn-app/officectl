@@ -20,7 +20,7 @@ func setup_routes(_ router: Router) throws {
 				let (_, config) = kv
 				return ApiService(providerId: config.providerId, serviceId: config.serviceId, serviceFullName: config.serviceName, isHelperService: config.isHelperService)
 			}
-			.sorted(by: { $0.serviceFullName < $1.serviceFullName })
+			.sorted(by: { $0.serviceFullName.localizedCompare($1.serviceFullName) != .orderedDescending })
 		)
 	})
 	

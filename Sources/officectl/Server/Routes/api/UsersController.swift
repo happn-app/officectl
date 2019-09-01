@@ -41,7 +41,7 @@ class UsersController {
 			let orderedServices = try officectlConfig.officeKitConfig.orderedServiceConfigs.map{ try sProvider.getDirectoryService(id: $0.serviceId) }
 			return try ApiResponse.data(ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchApiErrorsByService.mapKeys{ $0.config.serviceId }, result: users.map{
 				try ApiUser(multiUsers: $0, orderedServices: orderedServices)
-			}.sorted{ ($0.lastName ?? "") < ($1.lastName ?? "") }))
+			}.sorted{ ($0.lastName ?? "").localizedCompare($1.lastName ?? "") != .orderedDescending }))
 		}
 	}
 	

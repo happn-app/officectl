@@ -83,7 +83,7 @@ final class WebPasswordResetController {
 		let context = ResetPasswordStatusContext(
 			userEmail: email.stringValue,
 			isExecuting: multiPasswordReset.isExecuting,
-			servicesResetStatus: multiPasswordReset.errorsAndItemsByService.sorted(by: { $0.key.config.serviceName < $1.key.config.serviceName }).map{
+			servicesResetStatus: multiPasswordReset.errorsAndItemsByService.sorted(by: { $0.key.config.serviceName.localizedCompare($1.key.config.serviceName) != .orderedDescending }).map{
 				ResetPasswordStatusContext.ServicePasswordResetStatus(
 					serviceName: $0.key.config.serviceName,
 					isExecuting: $0.value.successValue??.passwordReset.isExecuting ?? false,
