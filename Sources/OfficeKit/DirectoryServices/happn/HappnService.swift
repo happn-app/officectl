@@ -152,7 +152,13 @@ public final class HappnService : DirectoryService {
 	
 	public let supportsUserDeletion = true
 	public func deleteUser(_ user: HappnUser, on container: Container) throws -> EventLoopFuture<Void> {
-		throw NotImplementedError()
+		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		
+		return happnConnector.connect(scope: DeleteHappnUserOperation.scopes, eventLoop: container.eventLoop)
+		.then{ _ in
+			let op = DeleteHappnUserOperation(user: user, connector: happnConnector)
+			return Future<Void>.future(from: op, eventLoop: container.eventLoop)
+		}
 	}
 	
 	public let supportsPasswordChange = true

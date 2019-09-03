@@ -30,11 +30,13 @@ public final class GetHappnUserOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		guard let url = URL(string: userKey, relativeTo: URL(string: "api/users/", relativeTo: connector.baseURL)!) else {
+		guard
+			let url = URL(string: userKey, relativeTo: URL(string: "api/users/", relativeTo: connector.baseURL)!),
+			var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true)
+		else {
 			result = .failure(InternalError(message: "Cannot build URL to get happn user with key \(userKey)"))
 			return baseOperationEnded()
 		}
-		var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true)!
 		urlComponents.queryItems = [
 			URLQueryItem(name: "fields", value: "id,first_name,last_name,acl,login,nickname")
 		]

@@ -22,8 +22,8 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 	let sProvider = try context.container.make(OfficeKitServiceProvider.self)
 	let hService: HappnService = try sProvider.getDirectoryService(id: nil)
 	
-	return try hService.existingUser(fromUserId: "ldap.test@happn.fr", propertiesToFetch: [], on: context.container)
-	.flatMap{ u in try hService.changePasswordAction(for: u!, on: context.container).start(parameters: "Qwerty@42", weakeningMode: .defaultMode, eventLoop: context.container.eventLoop) }
+	return try hService.existingUser(fromUserId: "lfap.tset@happn.fr", propertiesToFetch: [], on: context.container)
+	.flatMap{ u in try hService.deleteUser(u!, on: context.container) }
 	
 	/* List all GitHub project’s hooks */
 //	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)
