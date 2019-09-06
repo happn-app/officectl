@@ -43,7 +43,7 @@ public final class GetHappnUserOperation : RetryingOperation, HasResult {
 		
 		let decoder = JSONDecoder()
 		decoder.keyDecodingStrategy = .useDefaultKeys
-		let op = AuthenticatedJSONOperation<HappnApiResult<HappnUser>>(url: url, authenticator: connector.authenticate, decoder: decoder)
+		let op = AuthenticatedJSONOperation<HappnApiResult<HappnUser>>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
 		op.completionBlock = {
 			defer {self.baseOperationEnded()}
 			

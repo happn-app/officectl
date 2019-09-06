@@ -43,13 +43,11 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 		decoder.keyDecodingStrategy = .useDefaultKeys
 		
 		let f = eventLoop.future()
-		.map{ _ -> String in
-			guard case .userPass(_, let pass) = self.connector.authMode else {
+		.flatMap{ _ -> EventLoopFuture<HappnApiResult<Int8>> in
+			guard case .userPass(_, let adminPass) = self.connector.authMode else {
 				throw InvalidArgumentError(message: "Cannot delete a user without the password of the admin")
 			}
-			return pass
-		}
-		.flatMap{ adminPass -> EventLoopFuture<HappnApiResult<Int8>> in
+			
 			var urlRequest = URLRequest(url: URL(string: "api/administrators/", relativeTo: self.connector.baseURL)!)
 			urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 			urlRequest.httpBody = try JSONEncoder().encode(JSON.object([
@@ -67,7 +65,7 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 		}
 		.map{ (r: HappnApiResult<Int8>) -> Void in
 			guard r.success else {
-				throw NSError(domain: "com.happn.officectl.happn", code: r.error_code, userInfo: [NSLocalizedDescriptionKey: r.error ?? "Unknown error while fetching the user"])
+				throw NSError(domain: "com.happn.officectl.happn", code: r.error_code, userInfo: [NSLocalizedDescriptionKey: r.error ?? "Unknown error while revoking user admin access"])
 			}
 		}
 		.flatMap{ _ -> EventLoopFuture<Void> in
@@ -91,14 +89,10 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 				return eventLoop.future()
 			}
 		}
-		f.whenSuccess{
-			self.error = nil
-			self.baseOperationEnded()
-		}
-		f.whenFailure{ error in
-			self.error = error
-			self.baseOperationEnded()
-		}
+		
+		f.whenSuccess{        self.error = nil }
+		f.whenFailure{ err in self.error = err }
+		f.whenComplete(baseOperationEnded)
 	}
 	
 	public override var isAsynchronous: Bool {

@@ -17,6 +17,13 @@ public struct HappnUser : Hashable, Codable {
 		
 	}
 	
+	public enum Gender : String, Codable {
+		
+		case male
+		case female
+		
+	}
+	
 	public init(from decoder: Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
 		
@@ -28,6 +35,16 @@ public struct HappnUser : Hashable, Codable {
 		firstName = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .first_name) ?? .unset
 		lastName  = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .last_name)  ?? .unset
 		nickname  = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .nickname)   ?? .unset
+		
+		gender = try container.decodeIfPresent(RemoteProperty<Gender>.self, forKey: .gender) ?? .unset
+		
+		let dateStr = try container.decodeIfPresent(RemoteProperty<String>.self, forKey: .birth_date) ?? .unset
+		birthDate = try dateStr.map{
+			guard let date = HappnUser.birthDateFormatter.date(from: $0) else {
+				throw DecodingError.dataCorruptedError(forKey: .birth_date, in: container, debugDescription: "Cannot decode birth date")
+			}
+			return date
+		}
 		
 		password = try container.decodeIfPresent(RemoteProperty<String>.self, forKey: .password) ?? .unset
 	}
@@ -44,7 +61,10 @@ public struct HappnUser : Hashable, Codable {
 		try container.encodeIfSet(lastName,  forKey: .last_name)
 		try container.encodeIfSet(nickname,  forKey: .nickname)
 		
-		try container.encodeIfSet(password,  forKey: .password)
+		try container.encodeIfSet(gender,                                                         forKey: .gender)
+		try container.encodeIfSet(birthDate.map{ HappnUser.birthDateFormatter.string(from: $0) }, forKey: .birth_date)
+		
+		try container.encodeIfSet(password, forKey: .password)
 	}
 	
 	public var type: HappnType = .client
@@ -59,6 +79,9 @@ public struct HappnUser : Hashable, Codable {
 	public var lastName: RemoteProperty<String?> = .unset
 	public var nickname: RemoteProperty<String?> = .unset
 	
+	public var gender: RemoteProperty<Gender> = .unset
+	public var birthDate: RemoteProperty<Date> = .unset
+	
 	public var password: RemoteProperty<String> = .unset
 	
 	public init(login l: String?, hints: [DirectoryUserProperty: Any] = [:]) {
@@ -68,9 +91,13 @@ public struct HappnUser : Hashable, Codable {
 		lastName  = (hints[.lastName]  as? String).flatMap{ .set($0) } ?? .unset
 		nickname  = (hints[.nickname]  as? String).flatMap{ .set($0) } ?? .unset
 		
-		password  = (hints[.password] as? String).flatMap{ .set($0) } ?? .unset
+		#warning("TODO")
+		gender = (hints[.custom("gender")] as? Gender).flatMap{ .set($0) } ?? .set(.male)
+		birthDate = (hints[.custom("birthdate")] as? Date).flatMap{ .set($0) } ?? .set(Date(timeIntervalSinceNow: -21*366*24*60*60))
+		
+		password = (hints[.password] as? String).flatMap{ .set($0) } ?? .set("toto")
 	}
-
+	
 	public static func ==(_ user1: HappnUser, _ user2: HappnUser) -> Bool {
 		return user1.login == user2.login
 	}
@@ -89,8 +116,17 @@ public struct HappnUser : Hashable, Codable {
 		case type
 		case login, id
 		case first_name, last_name, nickname
+		case gender, birth_date
 		case password
 	}
+	
+	private static let birthDateFormatter: DateFormatter = {
+		let dateFormatter = DateFormatter()
+		dateFormatter.dateFormat = "yyyy-MM-dd"
+		dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+		dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+		return dateFormatter
+	}()
 	
 }
 

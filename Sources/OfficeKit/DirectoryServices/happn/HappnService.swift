@@ -142,7 +142,13 @@ public final class HappnService : DirectoryService {
 	
 	public let supportsUserCreation = true
 	public func createUser(_ user: HappnUser, on container: Container) throws -> EventLoopFuture<HappnUser> {
-		throw NotImplementedError()
+		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		
+		return happnConnector.connect(scope: CreateHappnUserOperation.scopes, eventLoop: container.eventLoop)
+		.then{ _ in
+			let op = CreateHappnUserOperation(user: user, connector: happnConnector)
+			return Future<Void>.future(from: op, eventLoop: container.eventLoop)
+		}
 	}
 	
 	public let supportsUserUpdate = true

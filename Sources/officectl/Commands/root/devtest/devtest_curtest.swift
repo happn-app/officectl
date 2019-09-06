@@ -21,9 +21,12 @@ func curTest(flags f: Flags, arguments args: [String], context: CommandContext) 
 	
 	let sProvider = try context.container.make(OfficeKitServiceProvider.self)
 	let hService: HappnService = try sProvider.getDirectoryService(id: nil)
+	let eService: EmailService = try sProvider.getDirectoryService(id: nil)
 	
-	return try hService.existingUser(fromUserId: "lfap.tset@happn.fr", propertiesToFetch: [], on: context.container)
-	.flatMap{ u in try hService.deleteUser(u!, on: context.container) }
+	let u = try! hService.logicalUser(fromEmail: Email(string: "ldap.test@happn.fr")!, hints: [.firstName: "LDAP", .lastName: "Test", .custom("gender"): HappnUser.Gender.male], emailService: eService)
+	return try hService.createUser(u, on: context.container).map{ _ in }
+//	return try hService.existingUser(fromUserId: "lfap.tset@happn.fr", propertiesToFetch: [], on: context.container)
+//	.flatMap{ u in try hService.deleteUser(u!, on: context.container) }
 	
 	/* List all GitHub project’s hooks */
 //	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)

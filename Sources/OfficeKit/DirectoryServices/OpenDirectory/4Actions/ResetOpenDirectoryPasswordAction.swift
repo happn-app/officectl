@@ -56,14 +56,9 @@ public class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedName, St
 			let modifyUserOperation = ModifyOpenDirectoryPasswordOperation(record: user, newPassword: newPassword)
 			return Future<Void>.future(from: modifyUserOperation, eventLoop: eventLoop)
 		}
-		f.whenSuccess{ _ in
-			/* Success! Let’s call the handler. */
-			handler(.success(()))
-		}
-		f.whenFailure{ error in
-			/* Error. Let’s call the handler. */
-			handler(.failure(error))
-		}
+		
+		f.whenSuccess{ _   in handler(.success(())) }
+		f.whenFailure{ err in handler(.failure(err)) }
 	}
 	
 	private struct Dependencies {

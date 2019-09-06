@@ -39,14 +39,9 @@ public class ResetHappnPasswordAction : Action<HappnUser, String, Void>, ResetPa
 			let modifyUserOperation = ModifyHappnUserOperation(user: happnUser, connector: self.deps.connector)
 			return Future<Void>.future(from: modifyUserOperation, eventLoop: eventLoop)
 		}
-		f.whenSuccess{ _ in
-			/* Success! Let’s call the handler. */
-			handler(.success(()))
-		}
-		f.whenFailure{ error in
-			/* Error. Let’s call the handler. */
-			handler(.failure(error))
-		}
+		
+		f.whenSuccess{ _   in handler(.success(())) }
+		f.whenFailure{ err in handler(.failure(err)) }
 	}
 	
 	private struct Dependencies {
