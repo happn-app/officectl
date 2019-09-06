@@ -61,7 +61,7 @@ public final class ExternalDirectoryServiceV1 : DirectoryService {
 		return user.json()
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> DirectoryUserWrapper {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> DirectoryUserWrapper {
 		if userWrapper.userId.tag == config.serviceId {
 			let userId = TaggedId(string: userWrapper.userId.id)
 			guard let underlying = userWrapper.underlyingUser else {

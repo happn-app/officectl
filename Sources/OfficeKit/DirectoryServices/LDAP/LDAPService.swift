@@ -77,7 +77,8 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		}.merging(["dn": JSON.string(user.inetOrgPerson.dn.stringValue)], uniquingKeysWith: { (_, new) in new }))
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> LDAPInetOrgPersonWithObject {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> LDAPInetOrgPersonWithObject {
+		let userWrapper = userWrapper.applyingAndSavingHints(hints)
 		let taggedId = userWrapper.userId
 		if taggedId.tag == config.serviceId/*, let underlying = userWrapper.underlyingUser*/ {
 			/* The generic user is from our service! We should be able to translate
@@ -85,7 +86,7 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			guard let dn = try? LDAPDistinguishedName(string: taggedId.id) else {
 				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
 			}
-			#warning("TODO: The rest of the properties (from the underlying user).")
+			#warning("TODO: The rest of the properties (from the underlying user and/or the hints).")
 			return LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: [], cn: []))
 			
 		} else {
@@ -95,8 +96,20 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 			guard let dn = config.baseDNs.dn(fromEmail: email) else {
 				throw InvalidArgumentError(message: "Cannot get dn from \(email).")
 			}
-			#warning("TODO: The rest of the properties.")
-			return LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: [], cn: []))
+			let lastname = userWrapper.lastName.value?.flatMap{ $0 }
+			let firstname = userWrapper.firstName.value?.flatMap{ $0 }
+			let fullname: String?
+			switch (firstname, lastname) {
+			case (let fn?, let ln?): fullname = fn + " " + ln
+			case (let fn?, nil):     fullname = fn
+			case (nil, let sn?):     fullname = sn
+			case (nil, nil):         fullname = nil
+			}
+			let ret = LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: lastname.flatMap{ [$0] } ?? [], cn: fullname.flatMap{ [$0] } ?? []))
+			ret.inetOrgPerson.givenName = firstname.flatMap{ [$0] } ?? []
+			ret.inetOrgPerson.userPassword = hints[.password].flatMap{ $0 }
+			ret.inetOrgPerson.mail = userWrapper.emails
+			return ret
 		}
 	}
 	

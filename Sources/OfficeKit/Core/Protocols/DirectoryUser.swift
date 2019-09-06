@@ -46,7 +46,7 @@ let b = DirectoryUserProperty.custom("userId")
 a           == b           /* <-- This is true. */
 a.hashValue == b.hashValue /* <-- This is true. */
 ``` */
-public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStringLiteral {
+public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStringLiteral, Codable {
 	
 	public typealias RawValue = String
 	public typealias StringLiteralType = String

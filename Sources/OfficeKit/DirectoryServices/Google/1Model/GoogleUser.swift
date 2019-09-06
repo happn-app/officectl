@@ -125,13 +125,13 @@ public struct GoogleUser : Hashable, Codable {
 	public var password: RemoteProperty<String?> = .unset
 	public var changePasswordAtNextLogin: RemoteProperty<Bool> = .unset
 	
-	public init(email: Email, hints: [DirectoryUserProperty: Any] = [:]) {
+	public init(email: Email, hints: [DirectoryUserProperty: String?] = [:]) {
 		primaryEmail = email
 		
-		if let firstName = hints[.firstName] as? String, let lastName = hints[.lastName] as? String {
+		if let firstName = hints[.firstName].flatMap({ $0 }), let lastName = hints[.lastName].flatMap({ $0 }) {
 			name = .set(Name(givenName: firstName, familyName: lastName, fullName: firstName + " " + lastName))
 		}
-		if let pass = hints[.password] as? String {
+		if let pass = hints[.password].flatMap({ $0 }) {
 			if let passHash = try? SHA1.hash(Data(pass.utf8)) {
 				password = .set(passHash.reduce("", { $0 + String(format: "%02x", $1) }))
 				hashFunction = .set(.sha1)

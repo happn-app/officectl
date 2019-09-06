@@ -95,7 +95,7 @@ public final class OpenDirectoryService : DirectoryService {
 		return .object(ret)
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> ODRecordOKWrapper {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty : String?]) throws -> ODRecordOKWrapper {
 		let taggedId = userWrapper.userId
 		if taggedId.tag == config.serviceId/*, let underlying = userWrapper.underlyingUser*/ {
 			/* The generic user is from our service! We should be able to translate
@@ -103,7 +103,7 @@ public final class OpenDirectoryService : DirectoryService {
 			guard let dn = try? LDAPDistinguishedName(string: taggedId.id) else {
 				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
 			}
-			#warning("TODO: The rest of the properties (from the underlying user).")
+			#warning("TODO: The rest of the properties (from the underlying user and/or the hints).")
 			return ODRecordOKWrapper(id: dn, identifyingEmail: nil, otherEmails: [])
 			
 		} else {

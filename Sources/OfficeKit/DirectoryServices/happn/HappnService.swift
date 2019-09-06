@@ -57,7 +57,7 @@ public final class HappnService : DirectoryService {
 		return try JSON(encodable: user)
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> HappnUser {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> HappnUser {
 		let taggedId = userWrapper.userId
 		if taggedId.tag == config.serviceId, let underlying = userWrapper.underlyingUser {
 			/* The generic user is from our service! We should be able to translate
@@ -65,6 +65,7 @@ public final class HappnService : DirectoryService {
 			#warning("TODO: Not elegant. We should do better but I’m lazy rn")
 			let encoded = try JSONEncoder().encode(underlying)
 			return try JSONDecoder().decode(HappnUser.self, from: encoded)
+			#warning("TODO: hints?")
 			
 		} else if taggedId.tag == config.serviceId {
 			/* The generic user id from our service, but there is no underlying
@@ -72,13 +73,13 @@ public final class HappnService : DirectoryService {
 			guard let email = Email(string: taggedId.id) else {
 				throw InvalidArgumentError(message: "Got an invalid id for a HappnService user.")
 			}
-			return HappnUser(login: email.stringValue)
+			return HappnUser(login: email.stringValue, hints: hints)
 			
 		} else {
 			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create a HappnUser")
 			}
-			let res = HappnUser(login: email.stringValue)
+			let res = HappnUser(login: email.stringValue, hints: hints)
 			#warning("Other properties…")
 			return res
 		}

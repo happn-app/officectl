@@ -31,17 +31,40 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	 *       to Codable so we’ll keep JSON, at least for now. */
 	public var underlyingUser: JSON?
 	
-	public init(userId uid: TaggedId, persistentId pId: TaggedId? = nil, underlyingUser u: JSON? = nil) {
+	/** An attempt at something at some point. Can probably be removed (set to
+	private in the mean time). */
+	private var savedHints = [DirectoryUserProperty: String?]()
+	
+	public init(userId uid: TaggedId, persistentId pId: TaggedId? = nil, underlyingUser u: JSON? = nil, hints: [DirectoryUserProperty: String?] = [:]) {
 		if TaggedId(string: uid.rawValue) != uid {
 			OfficeKitConfig.logger?.error("Initing a DirectoryUserWrapper with a TaggedId whose string representation does not converts back to itself: \(uid)")
 		}
 		userId = uid
 		persistentId = pId.map{ .set($0) } ?? .unsupported
+		
 		underlyingUser = u
+		savedHints = hints
+	}
+	
+	public init(copying other: DirectoryUserWrapper) {
+		userId = other.userId
+		persistentId = other.persistentId
+		
+		identifyingEmail = other.identifyingEmail
+		otherEmails = other.otherEmails
+		
+		firstName = other.firstName
+		lastName = other.lastName
+		nickname = other.nickname
+		
+		underlyingUser = other.underlyingUser
+		
+		savedHints = other.savedHints
 	}
 	
 	public init(json: JSON, forcedUserId: TaggedId?) throws {
 		underlyingUser = json[CodingKeys.underlyingUser.rawValue]
+		savedHints = json[CodingKeys.savedHints.rawValue]?.objectValue?.mapKeys{ DirectoryUserProperty(stringLiteral: $0) }.compactMapValues{ $0.stringValue } ?? [:]
 		
 		userId = try forcedUserId ?? TaggedId(string: json.string(forKey: CodingKeys.userId.rawValue))
 		persistentId = try json.optionalString(forKey: CodingKeys.persistentId.rawValue, errorOnMissingKey: false).flatMap{ .set(TaggedId(string: $0)) } ?? .unsupported
@@ -70,6 +93,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
 		
 		underlyingUser = try container.decodeIfPresent(JSON.self, forKey: .underlyingUser)
+		savedHints = try container.decodeIfPresent([DirectoryUserProperty: String?].self, forKey: .savedHints) ?? [:]
 		
 		userId = try container.decode(TaggedId.self, forKey: .userId)
 		persistentId = try container.decodeIfPresent(RemoteProperty<TaggedId>.self, forKey: .persistentId) ?? .unsupported
@@ -86,6 +110,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		var container = encoder.container(keyedBy: CodingKeys.self)
 
 		try container.encode(underlyingUser, forKey: .underlyingUser)
+		try container.encode(savedHints, forKey: .savedHints)
 		
 		try container.encode(userId, forKey: .userId)
 		try container.encodeIfSet(persistentId, forKey: .persistentId)
@@ -98,12 +123,13 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		try container.encodeIfSet(nickname, forKey: .nickname)
 	}
 	
-	public func json() -> JSON {
+	public func json(includeSavedHints: Bool = false) -> JSON {
 		var res: [String: JSON] = [
 			CodingKeys.userId.rawValue: .string(userId.stringValue)
 		]
 		
 		if let u = underlyingUser {res[CodingKeys.underlyingUser.rawValue] = u}
+		if includeSavedHints {res[CodingKeys.savedHints.rawValue] = .object(savedHints.mapKeys{ $0.rawValue }.mapValues{ $0.flatMap{ .string($0) } ?? .null })}
 		
 		/* userId added above. */
 		if let pId = persistentId.value {res[CodingKeys.persistentId.rawValue] = .string(pId.stringValue)}
@@ -127,20 +153,33 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		nickname = user.nickname
 	}
 	
-	public mutating func applyHints(_ hints: [DirectoryUserProperty: Any?], blacklistedKeys: Set<DirectoryUserProperty> = [.userId]) {
+	public func applyingAndSavingHints(_ hints: [DirectoryUserProperty: String?], blacklistedKeys: Set<DirectoryUserProperty> = [.userId], replaceAllPreviouslySavedHints: Bool = false) -> DirectoryUserWrapper {
+		var ret = DirectoryUserWrapper(copying: self)
+		ret.applyAndSaveHints(hints, blacklistedKeys: blacklistedKeys, replaceAllPreviouslySavedHints: replaceAllPreviouslySavedHints)
+		return ret
+	}
+	
+	/** Applies the hints it can, and trump all saved hints with the new ones. If
+	`replaceAllPreviouslySavedHints` is `true`, will also delete previously saved
+	hints in the user. Blacklisted keys are not saved. */
+	public mutating func applyAndSaveHints(_ hints: [DirectoryUserProperty: String?], blacklistedKeys: Set<DirectoryUserProperty> = [.userId], replaceAllPreviouslySavedHints: Bool = false) {
+		if replaceAllPreviouslySavedHints {
+			savedHints = [:]
+		}
+		
 		for (k, v) in hints {
 			guard !blacklistedKeys.contains(k) else {continue}
+			
+			savedHints[k] = v
+			
 			switch (k, v) {
-			case (.userId, let s as String):   userId = TaggedId(string: s)
-			case (.userId, let t as TaggedId): userId = t
+			case (.userId, let s?): userId = TaggedId(string: s)
 				
-			case (.persistentId, nil):               persistentId = .unset
-			case (.persistentId, let s as String):   persistentId = .set(TaggedId(string: s))
-			case (.persistentId, let t as TaggedId): persistentId = .set(t)
+			case (.persistentId, nil):      persistentId = .unset
+			case (.persistentId, let s?):   persistentId = .set(TaggedId(string: s))
 				
 			case (.identifyingEmail, nil):             identifyingEmail = .unset
-			case (.identifyingEmail, let e as Email):  identifyingEmail = .set(e)
-			case (.identifyingEmail, let s as String):
+			case (.identifyingEmail, let s?):
 				guard let e = Email(string: s) else {
 					OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value is an invalid email: \(String(describing: v))")
 					continue
@@ -148,25 +187,27 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 				identifyingEmail = .set(e)
 				
 			case (.otherEmails, nil):               otherEmails = .unset
-			case (.otherEmails, let e as [Email]):  otherEmails = .set(e)
-			case (.otherEmails, let s as [String]):
-				guard let e = try? s.map({ try nil2throw(Email(string: $0)) }) else {
+			case (.otherEmails, let s?):
+				/* Yes. We cannot represent an element in the list which contains a
+				 * comma. Maybe one day we’ll do the generic thing… */
+				let l = s.split(separator: ",")
+				guard let e = try? l.map({ try nil2throw(Email(string: String($0))) }) else {
 					OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value has invalid email(s): \(String(describing: v))")
 					continue
 				}
 				otherEmails = .set(e)
 				
-			case (.firstName, nil):             firstName = .unset
-			case (.firstName, let s as String): firstName = .set(s)
+			case (.firstName, nil):    firstName = .unset
+			case (.firstName, let s?): firstName = .set(s)
 				
-			case (.lastName, nil):             lastName = .unset
-			case (.lastName, let s as String): lastName = .set(s)
+			case (.lastName, nil):    lastName = .unset
+			case (.lastName, let s?): lastName = .set(s)
 				
-			case (.nickname, nil):             nickname = .unset
-			case (.nickname, let s as String): nickname = .set(s)
+			case (.nickname, nil):    nickname = .unset
+			case (.nickname, let s?): nickname = .set(s)
 				
 			default:
-				OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value has not a compatible type: \(String(describing: v))")
+				OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value has not a compatible type or key is unknown: \(String(describing: v))")
 			}
 		}
 	}
@@ -181,6 +222,8 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	
 	private enum CodingKeys : String, CodingKey {
 		case underlyingUser
+		case savedHints
+		
 		case userId, persistentId
 		case identifyingEmail, otherEmails
 		case firstName, lastName, nickname

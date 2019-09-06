@@ -51,7 +51,7 @@ public protocol DirectoryService : class, DirectoryServiceInit, Hashable {
 	The conversion should not fetch anything from the directory. It is simply a
 	representation of how the given id _should_ be created in the directory if it
 	were to be created in it. */
-	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> UserType
+	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> UserType
 	
 	/** Fetch and return the _only_ user matching the given id.
 	
@@ -103,37 +103,27 @@ extension DirectoryService {
 		return ret
 	}
 	
-	public func wrappedUser(fromUserId userId: UserType.UserIdType) -> DirectoryUserWrapper {
-		return DirectoryUserWrapper(userId: taggedId(fromUserId: userId))
-	}
-	
-	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any?] = [:], servicesProvider: OfficeKitServiceProvider) throws -> UserType {
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: String?] = [:], servicesProvider: OfficeKitServiceProvider) throws -> UserType {
 		return try logicalUser(fromEmail: email, hints: hints, emailService: servicesProvider.getDirectoryService(id: nil))
 	}
 	
-	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: Any?] = [:], emailService: EmailService) throws -> UserType {
-		/* Do NOT use emailService.wrappedUser(fromUserId: email) because other
-		 * services won’t be able to find an email if you do. */
-		var genericUser = try emailService.wrappedUser(fromUser: emailService.logicalUser(fromUserId: email))
-		genericUser.applyHints(hints)
-		return try logicalUser(fromWrappedUser: genericUser)
+	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: String?] = [:], emailService: EmailService) throws -> UserType {
+		let genericUser = try emailService.wrappedUser(fromUser: emailService.logicalUser(fromUserId: email))
+		return try logicalUser(fromWrappedUser: genericUser, hints: hints)
 	}
 	
-	public func logicalUser(fromUserId userId: UserType.UserIdType, hints: [DirectoryUserProperty: Any?] = [:]) throws -> UserType {
-		var user = wrappedUser(fromUserId: userId)
-		user.applyHints(hints)
-		return try logicalUser(fromWrappedUser: user)
+	public func logicalUser(fromUserId userId: UserType.UserIdType, hints: [DirectoryUserProperty: String?] = [:]) throws -> UserType {
+		let user = DirectoryUserWrapper(userId: taggedId(fromUserId: userId))
+		return try logicalUser(fromWrappedUser: user, hints: hints)
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: Any?] = [:]) throws -> UserType {
-		var genericUser = try service.wrappedUser(fromUser: user)
-		genericUser.applyHints(hints)
-		return try logicalUser(fromWrappedUser: genericUser)
+	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: String?] = [:]) throws -> UserType {
+		return try logicalUser(fromWrappedUser: service.wrappedUser(fromUser: user), hints: hints)
 	}
 	
 	public func existingUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?> {
 		let foreignGenericUser = try service.wrappedUser(fromUser: user)
-		let nativeLogicalUser = try logicalUser(fromWrappedUser: foreignGenericUser)
+		let nativeLogicalUser = try logicalUser(fromWrappedUser: foreignGenericUser, hints: [:])
 		return try existingUser(fromUserId: nativeLogicalUser.userId, propertiesToFetch: propertiesToFetch, on: container)
 	}
 	

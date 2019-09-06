@@ -57,7 +57,7 @@ public final class EmailService : DirectoryService {
 		return .string(user.userId.stringValue)
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> EmailUser {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> EmailUser {
 		let taggedId = userWrapper.userId
 		if taggedId.tag == config.serviceId {
 			guard let email = Email(string: taggedId.id) else {

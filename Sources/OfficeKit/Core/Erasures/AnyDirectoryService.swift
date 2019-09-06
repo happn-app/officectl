@@ -36,7 +36,7 @@ private protocol DirectoryServiceBox {
 	func persistentId(fromString string: String) throws -> AnyDirectoryUserId
 	
 	func json(fromUser user: AnyDirectoryUser) throws -> JSON
-	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser
+	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> AnyDirectoryUser
 	
 	func existingUser(fromPersistentId pId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
 	func existingUser(fromUserId uId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
@@ -124,8 +124,8 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		return try originalDirectory.json(fromUser: u)
 	}
 	
-	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser {
-		return try originalDirectory.logicalUser(fromWrappedUser: userWrapper).erased()
+	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> AnyDirectoryUser {
+		return try originalDirectory.logicalUser(fromWrappedUser: userWrapper, hints: hints).erased()
 	}
 	
 	func existingUser(fromPersistentId pId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
@@ -238,8 +238,8 @@ public class AnyDirectoryService : DirectoryService {
 		return try box.json(fromUser: user)
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser {
-		return try box.logicalUser(fromWrappedUser: userWrapper)
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> AnyDirectoryUser {
+		return try box.logicalUser(fromWrappedUser: userWrapper, hints: hints)
 	}
 	
 	public func existingUser(fromPersistentId pId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {

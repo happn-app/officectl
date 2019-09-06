@@ -84,18 +84,17 @@ public struct HappnUser : Hashable, Codable {
 	
 	public var password: RemoteProperty<String> = .unset
 	
-	public init(login l: String?, hints: [DirectoryUserProperty: Any] = [:]) {
+	public init(login l: String?, hints: [DirectoryUserProperty: String?] = [:]) {
 		login = l
 		
-		firstName = (hints[.firstName] as? String).flatMap{ .set($0) } ?? .unset
-		lastName  = (hints[.lastName]  as? String).flatMap{ .set($0) } ?? .unset
-		nickname  = (hints[.nickname]  as? String).flatMap{ .set($0) } ?? .unset
+		firstName = hints[.firstName]?.flatMap{ .set($0) } ?? .unset
+		lastName  = hints[.lastName]?.flatMap{ .set($0) }  ?? .unset
+		nickname  = hints[.nickname]?.flatMap{ .set($0) }  ?? .unset
 		
-		#warning("TODO")
-		gender = (hints[.custom("gender")] as? Gender).flatMap{ .set($0) } ?? .set(.male)
-		birthDate = (hints[.custom("birthdate")] as? Date).flatMap{ .set($0) } ?? .set(Date(timeIntervalSinceNow: -21*366*24*60*60))
+		gender = hints[.custom("gender")]?.flatMap{ Gender(rawValue: $0) }.flatMap{ .set($0) } ?? .set(.male) /* Male by default. */
+		birthDate = hints[.custom("birthdate")]?.flatMap{ HappnUser.birthDateFormatter.date(from: $0) }.flatMap{ .set($0) } ?? .set(Date(timeIntervalSinceNow: -21*366*24*60*60)) /* ~21 yo by default */
 		
-		password = (hints[.password] as? String).flatMap{ .set($0) } ?? .set("toto")
+		password = hints[.password]?.flatMap{ .set($0) } ?? .unset
 	}
 	
 	public static func ==(_ user1: HappnUser, _ user2: HappnUser) -> Bool {

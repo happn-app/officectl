@@ -69,7 +69,7 @@ public final class GoogleService : DirectoryService {
 		return try JSON(encodable: user)
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> GoogleUser {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> GoogleUser {
 		let taggedId = userWrapper.userId
 		if taggedId.tag == config.serviceId, let underlying = userWrapper.underlyingUser {
 			/* The generic user is from our service! We should be able to translate
@@ -77,6 +77,7 @@ public final class GoogleService : DirectoryService {
 			#warning("TODO: Not elegant. We should do better but I’m lazy rn")
 			let encoded = try JSONEncoder().encode(underlying)
 			return try JSONDecoder().decode(GoogleUser.self, from: encoded)
+			#warning("TODO: hints?")
 			
 		} else if taggedId.tag == config.serviceId {
 			/* The generic user id from our service, but there is no underlying
@@ -84,13 +85,13 @@ public final class GoogleService : DirectoryService {
 			guard let email = Email(string: taggedId.id) else {
 				throw InvalidArgumentError(message: "Got an invalid id for a GoogleService user.")
 			}
-			return GoogleUser(email: email)
+			return GoogleUser(email: email, hints: hints)
 			
 		} else {
 			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create a GoogleUser")
 			}
-			let res = GoogleUser(email: email)
+			let res = GoogleUser(email: email, hints: hints)
 			#warning("Other properties…")
 			return res
 		}

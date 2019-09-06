@@ -53,7 +53,7 @@ public final class GitHubService : DirectoryService {
 		throw NotImplementedError()
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> GitHubUser {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> GitHubUser {
 		throw NotImplementedError()
 	}
 	

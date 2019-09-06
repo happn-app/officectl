@@ -97,7 +97,7 @@ public final class DummyService : DirectoryService {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> DummyServiceUser {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty : String?]) throws -> DummyServiceUser {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
