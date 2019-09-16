@@ -232,7 +232,7 @@ public final class HappnService : DirectoryService {
 		return happnConnector.connect(scope: CreateHappnUserOperation.scopes, eventLoop: container.eventLoop)
 		.then{ _ in
 			let op = CreateHappnUserOperation(user: user, connector: happnConnector)
-			return Future<Void>.future(from: op, eventLoop: container.eventLoop)
+			return Future<HappnUser>.future(from: op, eventLoop: container.eventLoop)
 		}
 	}
 	
