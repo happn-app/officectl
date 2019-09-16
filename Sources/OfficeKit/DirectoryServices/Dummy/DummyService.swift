@@ -97,8 +97,12 @@ public final class DummyService : DirectoryService {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty : String?]) throws -> DummyServiceUser {
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> DummyServiceUser {
 		throw NotAvailableOnThisPlatformError()
+	}
+	
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout DummyServiceUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+		return []
 	}
 	
 	public func existingUser(fromPersistentId pId: Never, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser?> {

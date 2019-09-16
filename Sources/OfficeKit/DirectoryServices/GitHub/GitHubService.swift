@@ -53,8 +53,22 @@ public final class GitHubService : DirectoryService {
 		throw NotImplementedError()
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> GitHubUser {
+	public func logicalUser(fromJSON json: JSON) throws -> GitHubUser {
 		throw NotImplementedError()
+	}
+	
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> GitHubUser {
+		if userWrapper.sourceServiceId == config.serviceId, let underlyingUser = userWrapper.underlyingUser {
+			return try logicalUser(fromJSON: underlyingUser)
+		}
+		
+		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
+		
+		throw NotImplementedError()
+	}
+	
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout GitHubUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+		return []
 	}
 	
 	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GitHubUser?> {

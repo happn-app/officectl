@@ -23,13 +23,16 @@ public struct ODRecordOKWrapper : DirectoryUser {
 	public typealias PersistentIdType = UUID
 	
 	public init(record r: ODRecord) throws {
-		record = r
-		
 		/* Is this making IO? Who knows… But it shouldn’t be; doc says if
 		 * attributes is nil the method returns what’s in the cache. */
 		let attributes = try r.recordDetails(forAttributes: nil)
+		try self.init(recordAttributes: attributes)
+		record = r
+	}
+	
+	public init(recordAttributes attributes: [AnyHashable: Any]) throws {
 		guard let idStr = (attributes[kODAttributeTypeMetaRecordName] as? [String])?.onlyElement else {
-			throw InvalidArgumentError(message: "Cannot create an ODRecordOKWrapper if I don’t have an id or have too many ids in the record. Record is: \(r)")
+			throw InvalidArgumentError(message: "Cannot create an ODRecordOKWrapper if I don’t have an id or have too many ids in the record. Record attributes: \(attributes)")
 		}
 		userId = try LDAPDistinguishedName(string: idStr)
 		

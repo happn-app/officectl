@@ -61,27 +61,28 @@ public final class ExternalDirectoryServiceV1 : DirectoryService {
 		return user.json()
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> DirectoryUserWrapper {
-		if userWrapper.userId.tag == config.serviceId {
-			let userId = TaggedId(string: userWrapper.userId.id)
-			guard let underlying = userWrapper.underlyingUser else {
-				return DirectoryUserWrapper(userId: userId)
-			}
-			let u = try? DirectoryUserWrapper(json: underlying, forcedUserId: userId)
-			if let u = u {return u}
-			else {
-				OfficeKitConfig.logger?.warning("Invalid wrapped user given to an external directory service. Returning a user with only the id setup. User is \(userWrapper)")
-				return DirectoryUserWrapper(userId: userId)
-			}
-			
-		} else {
-			for s in config.wrappedUserToUserIdConversionStrategies {
-				if let id = try? s.convertUserToId(userWrapper, globalConfig: globalConfig) {
-					return DirectoryUserWrapper(userId: TaggedId(string: id))
-				}
-			}
-			throw InvalidArgumentError(message: "No conversion strategy matches user \(userWrapper)")
+	public func logicalUser(fromJSON json: JSON) throws -> DirectoryUserWrapper {
+		return try DirectoryUserWrapper(json: json, forcedUserId: nil)
+	}
+	
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> DirectoryUserWrapper {
+		if userWrapper.sourceServiceId == config.serviceId {
+			if let underlyingUser = userWrapper.underlyingUser {return try logicalUser(fromJSON: underlyingUser)}
+			else                                               {return DirectoryUserWrapper(userId: TaggedId(string: userWrapper.userId.id))}
 		}
+		
+		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
+		
+		for s in config.wrappedUserToUserIdConversionStrategies {
+			if let id = try? s.convertUserToId(userWrapper, globalConfig: globalConfig) {
+				return DirectoryUserWrapper(userId: TaggedId(string: id))
+			}
+		}
+		throw InvalidArgumentError(message: "No conversion strategy matches user \(userWrapper)")
+	}
+	
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout DirectoryUserWrapper, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+		return user.applyAndSaveHints(hints, blacklistedKeys: (allowUserIdChange ? [] : [.userId]))
 	}
 	
 	public func existingUser(fromPersistentId pId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DirectoryUserWrapper?> {

@@ -53,36 +53,120 @@ public final class HappnService : DirectoryService {
 	}
 	
 	public func json(fromUser user: HappnUser) throws -> JSON {
-		#warning("TODO (Note: Goes with the TODO related to JSONEncoder in logicalUser from wrapped user below.)")
+		/* Probably not optimal in terms of speed, but works well and avoids
+		 * having a shit-ton of glue to create in the GoogleUser (or in this
+		 * method). */
 		return try JSON(encodable: user)
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> HappnUser {
-		let taggedId = userWrapper.userId
-		if taggedId.tag == config.serviceId, let underlying = userWrapper.underlyingUser {
-			/* The generic user is from our service! We should be able to translate
-			 * if fully to our User type. */
-			#warning("TODO: Not elegant. We should do better but I’m lazy rn")
-			let encoded = try JSONEncoder().encode(underlying)
-			return try JSONDecoder().decode(HappnUser.self, from: encoded)
-			#warning("TODO: hints?")
-			
-		} else if taggedId.tag == config.serviceId {
-			/* The generic user id from our service, but there is no underlying
-			 * user… Let’s create a GoogleUser from the user id. */
-			guard let email = Email(string: taggedId.id) else {
-				throw InvalidArgumentError(message: "Got an invalid id for a HappnService user.")
+	public func logicalUser(fromJSON json: JSON) throws -> HappnUser {
+		/* Probably not optimal in terms of speed, but works well and avoids
+		 * having a shit-ton of glue to create in the GoogleUser (or in this
+		 * method). */
+		let encoded = try JSONEncoder().encode(json)
+		return try JSONDecoder().decode(HappnUser.self, from: encoded)
+	}
+	
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> HappnUser {
+		if userWrapper.sourceServiceId == config.serviceId {
+			if let underlyingUser = userWrapper.underlyingUser {return try logicalUser(fromJSON: underlyingUser)}
+			else {
+				/* The generic user id from our service, but there is no underlying
+				 * user… Let’s create a HappnUser from the user id. */
+				return HappnUser(login: userWrapper.userId.id)
 			}
-			return HappnUser(login: email.stringValue, hints: hints)
-			
-		} else {
-			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
-				throw InvalidArgumentError(message: "Cannot get an email from the user to create a HappnUser")
-			}
-			let res = HappnUser(login: email.stringValue, hints: hints)
-			#warning("Other properties…")
-			return res
 		}
+		
+		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
+		
+		guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
+			throw InvalidArgumentError(message: "Cannot get an email from the user to create a HappnUser")
+		}
+		var res = HappnUser(login: email.stringValue)
+		if userWrapper.firstName != .unsupported {res.firstName = userWrapper.firstName}
+		if userWrapper.lastName  != .unsupported {res.lastName  = userWrapper.lastName}
+		if userWrapper.nickname  != .unsupported {res.nickname  = userWrapper.nickname}
+		return res
+	}
+	
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout HappnUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+		var res = Set<DirectoryUserProperty>()
+		/* For all changes below we nullify the record because changing the record
+		 * is not something that is possible and we want the record wrapper and
+		 * its underlying record to be in sync. So all changes to the wrapper must
+		 * be done with a nullification of the underlying record. */
+		for (property, value) in hints {
+			switch property {
+			case .userId:
+				guard allowUserIdChange else {continue}
+				user.login = value
+				res.insert(.identifyingEmail)
+				res.insert(.userId)
+				
+			case .identifyingEmail:
+				guard allowUserIdChange else {continue}
+				guard hints[.userId] == nil else {
+					if hints[.userId] != value {
+						OfficeKitConfig.logger?.warning("Invalid hints given for a HappnUser: both userId and identifyingEmail are defined with different values. Only userId will be used.")
+					}
+					continue
+				}
+				guard let email = value.flatMap({ Email(string: $0) }) else {
+					OfficeKitConfig.logger?.warning("Invalid value for an identifying email of a happn user.")
+					continue
+				}
+				user.login = email.stringValue
+				res.insert(.identifyingEmail)
+				res.insert(.userId)
+				
+			case .persistentId:
+				guard let id = value else {
+					OfficeKitConfig.logger?.warning("Invalid value for a persistent id of a happn user.")
+					continue
+				}
+				user.id = .set(id)
+				res.insert(.persistentId)
+				
+			case .firstName:
+				user.firstName = .set(value)
+				res.insert(.firstName)
+				
+			case .lastName:
+				user.lastName = .set(value)
+				res.insert(.lastName)
+				
+			case .nickname:
+				user.nickname = .set(value)
+				res.insert(.nickname)
+				
+			case .password:
+				guard let pass = value else {
+					OfficeKitConfig.logger?.warning("The password of a happn user cannot be removed.")
+					continue
+				}
+				OfficeKitConfig.logger?.warning("Setting the password of a happn user via hints can lead to unexpected results (including security flaws for this user). Please use the dedicated method to set the password in the service.")
+				user.password = .set(pass)
+				res.insert(.password)
+				
+			case .custom("gender"):
+				guard let gender = value.flatMap({ HappnUser.Gender(rawValue: $0) }) else {
+					OfficeKitConfig.logger?.warning("Invalid gender for a happn user.")
+					continue
+				}
+				user.gender = .set(gender)
+				
+			case .custom("birthdate"):
+				guard let birthdate = value.flatMap({ HappnUser.birthDateFormatter.date(from: $0) }) else {
+					OfficeKitConfig.logger?.warning("Invalid gender for a happn user.")
+					continue
+				}
+				user.birthDate = .set(birthdate)
+				
+			case .otherEmails, .custom:
+				(/*nop (not supported)*/)
+			}
+		}
+		return res
 	}
 	
 	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<HappnUser?> {

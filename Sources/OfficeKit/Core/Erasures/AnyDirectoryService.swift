@@ -36,7 +36,9 @@ private protocol DirectoryServiceBox {
 	func persistentId(fromString string: String) throws -> AnyDirectoryUserId
 	
 	func json(fromUser user: AnyDirectoryUser) throws -> JSON
-	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> AnyDirectoryUser
+	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser
+	
+	func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout AnyDirectoryUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty>
 	
 	func existingUser(fromPersistentId pId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
 	func existingUser(fromUserId uId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?>
@@ -124,8 +126,19 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		return try originalDirectory.json(fromUser: u)
 	}
 	
-	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> AnyDirectoryUser {
-		return try originalDirectory.logicalUser(fromWrappedUser: userWrapper, hints: hints).erased()
+	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser {
+		return try originalDirectory.logicalUser(fromWrappedUser: userWrapper).erased()
+	}
+	
+	func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout AnyDirectoryUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+		guard var u: Base.UserType = user.unboxed() else {
+			OfficeKitConfig.logger?.error("Asked to apply hints to a user of unknown type in erasure: \(user)")
+			/* The source user type is unknown, so we do nothing. */
+			return []
+		}
+		let ret = originalDirectory.applyHints(hints, toUser: &u, allowUserIdChange: allowUserIdChange)
+		user = u.erased()
+		return ret
 	}
 	
 	func existingUser(fromPersistentId pId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
@@ -238,8 +251,12 @@ public class AnyDirectoryService : DirectoryService {
 		return try box.json(fromUser: user)
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> AnyDirectoryUser {
-		return try box.logicalUser(fromWrappedUser: userWrapper, hints: hints)
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser {
+		return try box.logicalUser(fromWrappedUser: userWrapper)
+	}
+	
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout AnyDirectoryUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+		return box.applyHints(hints, toUser: &user, allowUserIdChange: allowUserIdChange)
 	}
 	
 	public func existingUser(fromPersistentId pId: AnyDirectoryUserId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {

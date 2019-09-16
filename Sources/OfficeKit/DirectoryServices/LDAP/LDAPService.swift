@@ -77,40 +77,143 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 		}.merging(["dn": JSON.string(user.inetOrgPerson.dn.stringValue)], uniquingKeysWith: { (_, new) in new }))
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> LDAPInetOrgPersonWithObject {
-		let userWrapper = userWrapper.applyingAndSavingHints(hints)
-		let taggedId = userWrapper.userId
-		if taggedId.tag == config.serviceId/*, let underlying = userWrapper.underlyingUser*/ {
-			/* The generic user is from our service! We should be able to translate
-			 * if fully to our User type. */
-			guard let dn = try? LDAPDistinguishedName(string: taggedId.id) else {
-				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
-			}
-			#warning("TODO: The rest of the properties (from the underlying user and/or the hints).")
-			return LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: [], cn: []))
-			
-		} else {
-			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
-				throw InvalidArgumentError(message: "Cannot get an email from the user to create an LDAPInetOrgPersonWithObject")
-			}
-			guard let dn = config.baseDNs.dn(fromEmail: email) else {
-				throw InvalidArgumentError(message: "Cannot get dn from \(email).")
-			}
-			let lastname = userWrapper.lastName.value?.flatMap{ $0 }
-			let firstname = userWrapper.firstName.value?.flatMap{ $0 }
-			let fullname: String?
-			switch (firstname, lastname) {
-			case (let fn?, let ln?): fullname = fn + " " + ln
-			case (let fn?, nil):     fullname = fn
-			case (nil, let sn?):     fullname = sn
-			case (nil, nil):         fullname = nil
-			}
-			let ret = LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: lastname.flatMap{ [$0] } ?? [], cn: fullname.flatMap{ [$0] } ?? []))
-			ret.inetOrgPerson.givenName = firstname.flatMap{ [$0] } ?? []
-			ret.inetOrgPerson.userPassword = hints[.password].flatMap{ $0 }
-			ret.inetOrgPerson.mail = userWrapper.emails
-			return ret
+	public func logicalUser(fromJSON json: JSON) throws -> LDAPInetOrgPersonWithObject {
+		guard let object = json.objectValue, let dnStr = object["dn"]?.stringValue, let dn = try? LDAPDistinguishedName(string: dnStr) else {
+			throw InvalidArgumentError(message: "Invalid json: does not have a valid dn value.")
 		}
+		let ldapObjectAttributes = try object.filter{ $0.key != "dn" }.mapValues{ value -> [Data] in
+			guard case .array(let array) = value else {throw InvalidArgumentError(message: "Invalid value in JSON for an LDAP user: attribute value is not an array")}
+			return try array.map{ arrayValue in
+				guard case .object(let object) = arrayValue else {throw InvalidArgumentError(message: "Invalid value in JSON for an LDAP user: attribute value has a non-object element")}
+				guard object.count == 1 else {throw InvalidArgumentError(message: "Invalid value in JSON for an LDAP user: attribute value has an object containing more than one element")}
+				if let strValue = object["str"]?.stringValue {
+					return Data(strValue.utf8)
+				} else if let dataStrValue = object["dta"]?.stringValue {
+					guard let data = Data(base64Encoded: dataStrValue) else {
+						throw InvalidArgumentError(message: "Invalid value in JSON for an LDAP user: attribute value has an object whose \"dta\" key does not contain valid base64 data.")
+					}
+					return data
+				} else {
+					throw InvalidArgumentError(message: "Invalid value in JSON for an LDAP user: attribute value has an object which does not contain a valid \"str\" or \"dta\" key.")
+				}
+			}
+		}
+		let ldapObject = LDAPObject(distinguishedName: dn, attributes: ldapObjectAttributes)
+		guard let ret = LDAPInetOrgPersonWithObject(object: ldapObject) else {
+			throw InvalidArgumentError(message: "Cannot create a valid LDAPInetOrgPersonWithObject with the given attributes")
+		}
+		return ret
+	}
+	
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> LDAPInetOrgPersonWithObject {
+		if userWrapper.sourceServiceId == config.serviceId {
+			if let underlyingUser = userWrapper.underlyingUser {return try logicalUser(fromJSON: underlyingUser)}
+			else {
+				guard let dn = try? LDAPDistinguishedName(string: userWrapper.userId.id) else {
+					throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
+				}
+				return LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: [], cn: []))
+			}
+		}
+		
+		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
+		
+		guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
+			throw InvalidArgumentError(message: "Cannot get an email from the user to create an LDAPInetOrgPersonWithObject")
+		}
+		guard let dn = config.baseDNs.dn(fromEmail: email) else {
+			throw InvalidArgumentError(message: "Cannot get dn from \(email).")
+		}
+		let lastName = userWrapper.lastName.value?.flatMap{ $0 }
+		let firstName = userWrapper.firstName.value?.flatMap{ $0 }
+		let fullname = fullNameFrom(firstName: firstName, lastName: lastName)
+		let ret = LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: lastName.flatMap{ [$0] } ?? [], cn: fullname.flatMap{ [$0] } ?? []))
+		ret.inetOrgPerson.givenName = firstName.flatMap{ [$0] } ?? []
+		ret.inetOrgPerson.mail = userWrapper.emails
+		return ret
+	}
+	
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout LDAPInetOrgPersonWithObject, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+		var newLDAPObject = user.object
+		var res = Set<DirectoryUserProperty>()
+		for (property, value) in hints {
+			switch property {
+			case .userId:
+				guard allowUserIdChange else {continue}
+				guard let dn = value.flatMap({ try? LDAPDistinguishedName(string: $0) }) else {
+					OfficeKitConfig.logger?.warning("Invalid value for the user id of an LDAP user; not applying hint: \(value ?? "<null>")")
+					continue
+				}
+				newLDAPObject.distinguishedName = dn
+				res.insert(.userId)
+				
+			case .persistentId:
+				OfficeKitConfig.logger?.warning("Changing the persistent id of an LDAP user is not supported.")
+				
+			case .identifyingEmail:
+				guard let emailStr = value else {
+					if hints[.otherEmails].flatMap({ $0 }) != nil {
+						OfficeKitConfig.logger?.warning("Setting all emails of LDAP user to nil even though other emails is not nil because the identifying email hint is set to nil.")
+					}
+					newLDAPObject.attributes[LDAPInetOrgPerson.propNameMail] = nil
+					continue
+				}
+				guard let email = Email(string: emailStr) else {
+					OfficeKitConfig.logger?.warning("Invalid value for an identifying email; not applying this hint nor otherEmails: \(value ?? "<null>")")
+					continue
+				}
+				/* Yes. We cannot represent an element in the list which contains a
+				 * comma. Maybe one day we’ll do the generic thing… */
+				let otherEmails: [Email]
+				let otherEmailsStrArray = hints[.otherEmails]??.split(separator: ",")
+				if let emails = try? otherEmailsStrArray?.map({ try nil2throw(Email(string: String($0))) }) {
+					otherEmails = emails
+					res.insert(.otherEmails)
+				} else {
+					otherEmails = []
+				}
+				res.insert(.identifyingEmail)
+				newLDAPObject.attributes[LDAPInetOrgPerson.propNameMail] = [Data(email.stringValue.utf8)] + otherEmails.map{ Data($0.stringValue.utf8) }
+				
+			case .otherEmails:
+				if value != nil && hints[.identifyingEmail].flatMap({ $0 }) == nil {
+					OfficeKitConfig.logger?.warning("Unsupported config for an LDAP user: other emails is set but identifying email is not. For an LDAP user the identifying user is the first one.")
+				}
+				
+			case .firstName:
+				newLDAPObject.attributes[LDAPInetOrgPerson.propNameGivenName] = value.flatMap{ [Data($0.utf8)] } ?? []
+				let sn = newLDAPObject.attributes[LDAPInetOrgPerson.propNameSN]?.first.flatMap{ String(data: $0, encoding: .utf8) }
+				/* Updating cn (full name) */
+				newLDAPObject.attributes[LDAPInetOrgPerson.propNameCN] = fullNameFrom(firstName: value, lastName: sn).flatMap{ [Data($0.utf8)] } ?? []
+				
+				res.insert(.firstName)
+				res.insert(.custom("cn"))
+				
+			case .lastName:
+				newLDAPObject.attributes[LDAPInetOrgPerson.propNameSN] = value.flatMap{ [Data($0.utf8)] } ?? []
+				let gn = newLDAPObject.attributes[LDAPInetOrgPerson.propNameGivenName]?.first.flatMap{ String(data: $0, encoding: .utf8) }
+				/* Updating cn (full name) */
+				newLDAPObject.attributes[LDAPInetOrgPerson.propNameCN] = fullNameFrom(firstName: gn, lastName: value).flatMap{ [Data($0.utf8)] } ?? []
+				
+				res.insert(.lastName)
+				res.insert(.custom("cn"))
+				
+			case .password:
+				OfficeKitConfig.logger?.warning("Updating the password of an LDAP user might have unexpected consequences including security concerns. Please change the password of a user using the dedicated password change method.")
+				newLDAPObject.attributes[LDAPInetOrgPerson.propNameUserPassword] = value.flatMap{ [Data($0.utf8)] } ?? []
+				
+			case .nickname, .custom:
+				(/*nop (not supported)*/)
+			}
+		}
+		
+		guard let u = LDAPInetOrgPersonWithObject(object: newLDAPObject) else {
+			OfficeKitConfig.logger?.warning("There was an unexpected error creating the inet org person from the LDAP object. Cannot apply hints.")
+			return []
+		}
+		
+		user = u
+		return res
 	}
 	
 	public func existingUser(fromPersistentId pId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<LDAPInetOrgPersonWithObject?> {

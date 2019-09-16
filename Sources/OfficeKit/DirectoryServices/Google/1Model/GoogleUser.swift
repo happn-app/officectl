@@ -125,21 +125,8 @@ public struct GoogleUser : Hashable, Codable {
 	public var password: RemoteProperty<String?> = .unset
 	public var changePasswordAtNextLogin: RemoteProperty<Bool> = .unset
 	
-	public init(email: Email, hints: [DirectoryUserProperty: String?] = [:]) {
+	public init(email: Email) {
 		primaryEmail = email
-		
-		if let firstName = hints[.firstName].flatMap({ $0 }), let lastName = hints[.lastName].flatMap({ $0 }) {
-			name = .set(Name(givenName: firstName, familyName: lastName, fullName: firstName + " " + lastName))
-		}
-		if let pass = hints[.password].flatMap({ $0 }) {
-			if let passHash = try? SHA1.hash(Data(pass.utf8)) {
-				password = .set(passHash.reduce("", { $0 + String(format: "%02x", $1) }))
-				hashFunction = .set(.sha1)
-				changePasswordAtNextLogin = .set(false)
-			} else {
-				OfficeKitConfig.logger?.warning("Cannot encrypt password. Won’t put it in Google User.")
-			}
-		}
 	}
 	
 	public static func ==(_ user1: GoogleUser, _ user2: GoogleUser) -> Bool {

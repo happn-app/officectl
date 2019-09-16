@@ -57,19 +57,40 @@ public final class EmailService : DirectoryService {
 		return .string(user.userId.stringValue)
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> EmailUser {
-		let taggedId = userWrapper.userId
-		if taggedId.tag == config.serviceId {
-			guard let email = Email(string: taggedId.id) else {
-				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but whose id is not a valid email string.")
-			}
-			return EmailUser(userId: email)
-		} else {
-			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
-				throw InvalidArgumentError(message: "Cannot get an email from the user to create an EmailUser")
-			}
-			return EmailUser(userId: email)
+	public func logicalUser(fromJSON json: JSON) throws -> EmailUser {
+		guard let emailStr = json.stringValue, let email = Email(string: emailStr) else {
+			throw InvalidArgumentError(message: "Invalid json representing an EmailUser")
 		}
+		return EmailUser(userId: email)
+	}
+	
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> EmailUser {
+		if userWrapper.sourceServiceId == config.serviceId {
+			if let underlyingUser = userWrapper.underlyingUser {return try logicalUser(fromJSON: underlyingUser)}
+			else {
+				guard let email = Email(string: userWrapper.userId.id) else {
+					throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid email.")
+				}
+				return EmailUser(userId: email)
+			}
+		}
+		
+		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
+		
+		guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
+			throw InvalidArgumentError(message: "Cannot get an email from the wrapped user to create an EmailUser")
+		}
+		return EmailUser(userId: email)
+	}
+	
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout EmailUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+		guard allowUserIdChange else {return []}
+		
+		let newEmailHintStr = hints[.identifyingEmail].flatMap({ $0 }) ?? hints[.userId].flatMap({ $0 }) ?? hints[.persistentId].flatMap({ $0 })
+		guard let newEmailStr = newEmailHintStr, let newEmail = Email(string: newEmailStr) else {return []}
+		
+		user.userId = newEmail
+		return [.userId, .persistentId, .identifyingEmail]
 	}
 	
 	public func existingUser(fromPersistentId pId: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<EmailUser?> {

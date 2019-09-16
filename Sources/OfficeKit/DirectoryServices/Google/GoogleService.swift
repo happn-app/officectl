@@ -8,6 +8,7 @@
 import Foundation
 
 import Async
+import Crypto
 import GenericJSON
 import SemiSingleton
 import Service
@@ -65,36 +66,90 @@ public final class GoogleService : DirectoryService {
 	}
 	
 	public func json(fromUser user: GoogleUser) throws -> JSON {
-		#warning("TODO (Note: Goes with the TODO related to JSONEncoder in logicalUser from wrapped user below.)")
+		/* Probably not optimal in terms of speed, but works well and avoids
+		 * having a shit-ton of glue to create in the GoogleUser (or in this
+		 * method). */
 		return try JSON(encodable: user)
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> GoogleUser {
-		let taggedId = userWrapper.userId
-		if taggedId.tag == config.serviceId, let underlying = userWrapper.underlyingUser {
-			/* The generic user is from our service! We should be able to translate
-			 * if fully to our User type. */
-			#warning("TODO: Not elegant. We should do better but I’m lazy rn")
-			let encoded = try JSONEncoder().encode(underlying)
-			return try JSONDecoder().decode(GoogleUser.self, from: encoded)
-			#warning("TODO: hints?")
-			
-		} else if taggedId.tag == config.serviceId {
-			/* The generic user id from our service, but there is no underlying
-			 * user… Let’s create a GoogleUser from the user id. */
-			guard let email = Email(string: taggedId.id) else {
-				throw InvalidArgumentError(message: "Got an invalid id for a GoogleService user.")
+	public func logicalUser(fromJSON json: JSON) throws -> GoogleUser {
+		/* Probably not optimal in terms of speed, but works well and avoids
+		 * having a shit-ton of glue to create in the GoogleUser (or in this
+		 * method). */
+		let encoded = try JSONEncoder().encode(json)
+		return try JSONDecoder().decode(GoogleUser.self, from: encoded)
+	}
+	
+	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> GoogleUser {
+		if userWrapper.sourceServiceId == config.serviceId {
+			if let underlyingUser = userWrapper.underlyingUser {return try logicalUser(fromJSON: underlyingUser)}
+			else {
+				/* The generic user id from our service, but there is no underlying
+				 * user… Let’s create a GoogleUser from the user id. */
+				guard let email = Email(string: userWrapper.userId.id) else {
+					throw InvalidArgumentError(message: "Got an invalid id for a GoogleService user.")
+				}
+				return GoogleUser(email: email)
 			}
-			return GoogleUser(email: email, hints: hints)
-			
-		} else {
-			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
-				throw InvalidArgumentError(message: "Cannot get an email from the user to create a GoogleUser")
-			}
-			let res = GoogleUser(email: email, hints: hints)
-			#warning("Other properties…")
-			return res
 		}
+		
+		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
+		
+		guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
+			throw InvalidArgumentError(message: "Cannot get an email from the user to create a GoogleUser")
+		}
+		var res = GoogleUser(email: email)
+		if let otherEmails = userWrapper.otherEmails.value {res.aliases = .set(otherEmails)}
+		if let firstName = userWrapper.firstName.value.flatMap({ $0 }), let lastName = userWrapper.lastName.value.flatMap({ $0 }) {
+			res.name = .set(GoogleUser.Name(givenName: firstName, familyName: lastName, fullName: firstName + " " + lastName))
+		}
+		return res
+	}
+	
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout GoogleUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+		/* TODO: Maybe migrate this to a switch one day… */
+		var res = Set<DirectoryUserProperty>()
+		if allowUserIdChange {
+			if let email = hints[.userId].flatMap({ $0 }).flatMap({ Email(string: $0) }) {
+				if hints[.identifyingEmail] != nil && hints[.identifyingEmail] != hints[.userId] {
+					OfficeKitConfig.logger?.warning("Invalid hints given for a GoogleUser: both userId and identifyingEmail are defined with different values. Only userId will be used.")
+				}
+				user.primaryEmail = email
+				res.insert(.userId)
+			} else if let identifyingEmail = hints[.identifyingEmail].flatMap({ $0 }).flatMap({ Email(string: $0) }) {
+				user.primaryEmail = identifyingEmail
+				res.insert(.identifyingEmail)
+			}
+		}
+		if let persistentId = hints[.persistentId].flatMap({ $0 }) {
+			user.id = .set(persistentId)
+			res.insert(.persistentId)
+		}
+		if let otherEmailsStr = hints[.otherEmails].flatMap({ $0 }) {
+			/* Yes. We cannot represent an element in the list which contains a
+			 * comma. Maybe one day we’ll do the generic thing… */
+			let emailsStrArray = otherEmailsStr.split(separator: ",")
+			if let emails = try? emailsStrArray.map({ try nil2throw(Email(string: String($0))) }) {
+				user.aliases = .set(emails)
+				res.insert(.otherEmails)
+			}
+		}
+		if let firstName = hints[.firstName].flatMap({ $0 }), let lastName = hints[.lastName].flatMap({ $0 }) {
+			user.name = .set(GoogleUser.Name(givenName: firstName, familyName: lastName, fullName: firstName + " " + lastName))
+			res.insert(.firstName)
+			res.insert(.lastName)
+		}
+		if let pass = hints[.password].flatMap({ $0 }) {
+			if let passHash = try? SHA1.hash(Data(pass.utf8)) {
+				user.password = .set(passHash.reduce("", { $0 + String(format: "%02x", $1) }))
+				user.hashFunction = .set(.sha1)
+				user.changePasswordAtNextLogin = .set(false)
+				res.insert(.password)
+			} else {
+				OfficeKitConfig.logger?.warning("Cannot encrypt password. Won’t put it in Google User.")
+			}
+		}
+		return res
 	}
 	
 	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<GoogleUser?> {

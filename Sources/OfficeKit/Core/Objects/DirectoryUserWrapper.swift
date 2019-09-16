@@ -35,6 +35,10 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	private in the mean time). */
 	private var savedHints = [DirectoryUserProperty: String?]()
 	
+	public var sourceServiceId: String {
+		return userId.tag
+	}
+	
 	public init(userId uid: TaggedId, persistentId pId: TaggedId? = nil, underlyingUser u: JSON? = nil, hints: [DirectoryUserProperty: String?] = [:]) {
 		if TaggedId(string: uid.rawValue) != uid {
 			OfficeKitConfig.logger?.error("Initing a DirectoryUserWrapper with a TaggedId whose string representation does not converts back to itself: \(uid)")
@@ -161,24 +165,29 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	
 	/** Applies the hints it can, and trump all saved hints with the new ones. If
 	`replaceAllPreviouslySavedHints` is `true`, will also delete previously saved
-	hints in the user. Blacklisted keys are not saved. */
-	public mutating func applyAndSaveHints(_ hints: [DirectoryUserProperty: String?], blacklistedKeys: Set<DirectoryUserProperty> = [.userId], replaceAllPreviouslySavedHints: Bool = false) {
+	hints in the user. Blacklisted keys are not saved.
+	
+	- Returns: The keys that have been modified. */
+	@discardableResult
+	public mutating func applyAndSaveHints(_ hints: [DirectoryUserProperty: String?], blacklistedKeys: Set<DirectoryUserProperty> = [.userId], replaceAllPreviouslySavedHints: Bool = false) -> Set<DirectoryUserProperty> {
 		if replaceAllPreviouslySavedHints {
 			savedHints = [:]
 		}
 		
+		var modifiedKeys = Set<DirectoryUserProperty>()
 		for (k, v) in hints {
 			guard !blacklistedKeys.contains(k) else {continue}
 			
 			savedHints[k] = v
 			
+			var touchedKey = true
 			switch (k, v) {
 			case (.userId, let s?): userId = TaggedId(string: s)
 				
-			case (.persistentId, nil):      persistentId = .unset
-			case (.persistentId, let s?):   persistentId = .set(TaggedId(string: s))
+			case (.persistentId, nil):    persistentId = .unset
+			case (.persistentId, let s?): persistentId = .set(TaggedId(string: s))
 				
-			case (.identifyingEmail, nil):             identifyingEmail = .unset
+			case (.identifyingEmail, nil): identifyingEmail = .unset
 			case (.identifyingEmail, let s?):
 				guard let e = Email(string: s) else {
 					OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value is an invalid email: \(String(describing: v))")
@@ -208,8 +217,11 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 				
 			default:
 				OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value has not a compatible type or key is unknown: \(String(describing: v))")
+				touchedKey = false
 			}
+			if touchedKey {modifiedKeys.insert(k)}
 		}
+		return modifiedKeys
 	}
 	
 	public func mainEmail(domainMap: [String: String] = [:]) -> Email? {

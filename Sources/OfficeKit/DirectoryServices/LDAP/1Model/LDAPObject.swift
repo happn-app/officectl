@@ -13,7 +13,7 @@ import Foundation
 object. */
 public struct LDAPObject {
 	
-	public let distinguishedName: LDAPDistinguishedName
+	public var distinguishedName: LDAPDistinguishedName
 	public var attributes: [String: [Data]]
 	
 	public init(distinguishedNameString dn: String, attributes attrs: [String: [Data]]) throws {

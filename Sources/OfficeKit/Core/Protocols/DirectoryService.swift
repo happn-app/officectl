@@ -45,21 +45,44 @@ public protocol DirectoryService : class, DirectoryServiceInit, Hashable {
 	user. */
 	func json(fromUser user: UserType) throws -> JSON
 	
-	/** If possible, convert the given generic user to a user with as much
-	information as possible in your directory.
+	/**
+	If possible, converts the given generic user to a user for the service with
+	as much information as possible.
 	
 	The conversion should not fetch anything from the directory. It is simply a
 	representation of how the given id _should_ be created in the directory if it
-	were to be created in it. */
-	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> UserType
+	were to be created in it.
 	
-	/** Fetch and return the _only_ user matching the given id.
+	Generally, the method implementation should first check the source service id
+	of the given user (which is actually the tag of the tagged id of the wrapped
+	user).
+	If the user comes from your own service (the source service id of the user
+	and your service id are equal), you should directly convert the underlying
+	user of the given user (this is the equivalent of doing the reverse of
+	`json(fromUser:)`).
+	Otherwise (the user comes from an unknown service), you should apply custom
+	rules to create a user from the generic properties available in the wrapped
+	user.
+	
+	If the user wrapper has data that is inconsistent with the underlying user,
+	the result of the method is undefined. Implementations can, but are not
+	required to validate the user wrapper for consistency with its underlying
+	user. */
+	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> UserType
+	
+	/** Returns the properties that were successfully applied to the user. */
+	@discardableResult
+	func applyHints(_ hints: [DirectoryUserProperty: String?], toUser user: inout UserType, allowUserIdChange: Bool) -> Set<DirectoryUserProperty>
+	
+	/**
+	Fetch and return the _only_ user matching the given id.
 	
 	If _more than one_ user matches the given id, the function should return a
 	**failed** future. If _no_ users match the given id, the method should
 	return a succeeded future with a `nil` user. */
 	func existingUser(fromPersistentId pId: UserType.PersistentIdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
-	/** Fetch and return the _only_ user matching the given id.
+	/**
+	Fetch and return the _only_ user matching the given id.
 	
 	If _more than one_ user matches the given id, the function should return a
 	**failed** future. If _no_ users match the given id, the method should
@@ -100,6 +123,12 @@ extension DirectoryService {
 			underlyingUser: try json(fromUser: user)
 		)
 		ret.copyStandardNonIdProperties(fromUser: user)
+		return ret
+	}
+	
+	public func logicalUser(fromWrappedUser user: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> UserType {
+		var ret = try logicalUser(fromWrappedUser: user)
+		applyHints(hints, toUser: &ret, allowUserIdChange: false)
 		return ret
 	}
 	

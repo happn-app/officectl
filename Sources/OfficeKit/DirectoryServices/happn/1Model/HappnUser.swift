@@ -84,17 +84,10 @@ public struct HappnUser : Hashable, Codable {
 	
 	public var password: RemoteProperty<String> = .unset
 	
-	public init(login l: String?, hints: [DirectoryUserProperty: String?] = [:]) {
+	public init(login l: String?) {
 		login = l
-		
-		firstName = hints[.firstName]?.flatMap{ .set($0) } ?? .unset
-		lastName  = hints[.lastName]?.flatMap{ .set($0) }  ?? .unset
-		nickname  = hints[.nickname]?.flatMap{ .set($0) }  ?? .unset
-		
-		gender = hints[.custom("gender")]?.flatMap{ Gender(rawValue: $0) }.flatMap{ .set($0) } ?? .set(.male) /* Male by default. */
-		birthDate = hints[.custom("birthdate")]?.flatMap{ HappnUser.birthDateFormatter.date(from: $0) }.flatMap{ .set($0) } ?? .set(Date(timeIntervalSinceNow: -21*366*24*60*60)) /* ~21 yo by default */
-		
-		password = hints[.password]?.flatMap{ .set($0) } ?? .unset
+		gender = .set(.male) /* Male users by default */
+		birthDate = .set(Date(timeIntervalSinceNow: -21*366*24*60*60)) /* ~21 yo by default */
 	}
 	
 	public static func ==(_ user1: HappnUser, _ user2: HappnUser) -> Bool {
@@ -111,6 +104,14 @@ public struct HappnUser : Hashable, Codable {
 		return ret
 	}
 	
+	internal static let birthDateFormatter: DateFormatter = {
+		let dateFormatter = DateFormatter()
+		dateFormatter.dateFormat = "yyyy-MM-dd"
+		dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+		dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+		return dateFormatter
+	}()
+	
 	private enum CodingKeys : String, CodingKey {
 		case type
 		case login, id
@@ -118,14 +119,6 @@ public struct HappnUser : Hashable, Codable {
 		case gender, birth_date
 		case password
 	}
-	
-	private static let birthDateFormatter: DateFormatter = {
-		let dateFormatter = DateFormatter()
-		dateFormatter.dateFormat = "yyyy-MM-dd"
-		dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
-		dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-		return dateFormatter
-	}()
 	
 }
 
