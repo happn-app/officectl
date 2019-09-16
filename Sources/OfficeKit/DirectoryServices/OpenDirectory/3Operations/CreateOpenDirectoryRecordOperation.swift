@@ -91,7 +91,9 @@ public final class CreateOpenDirectoryRecordOperation : RetryingOperation, HasRe
 				 * with a UID <= 500 are invisble. */
 				var maxUID = 501
 				for odResult in odResults {
-					let attributes = try odResult.recordDetails(forAttributes: [kODAttributeTypeUniqueID])
+					/* The kODAttributeTypeUniqueID should already be fetched, so
+					 * asking for nil here is ok. */
+					let attributes = try odResult.recordDetails(forAttributes: nil)
 					guard let uids = attributes[kODAttributeTypeUniqueID] as? [Any] else {
 						continue
 					}
@@ -119,7 +121,9 @@ public final class CreateOpenDirectoryRecordOperation : RetryingOperation, HasRe
 				
 				var attrs = recordAttributes
 				attrs[kODAttributeTypeUniqueID] = [String(maxUID)]
-				result = .success(try node.createRecord(withRecordType: recordType, name: recordName, attributes: attrs))
+				let createdNode = try node.createRecord(withRecordType: recordType, name: recordName, attributes: attrs)
+				_ = try? createdNode.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName]) /* We prefetch the record name for ease of future use */
+				result = .success(createdNode)
 			}
 		} catch {
 			result = .failure(error)
