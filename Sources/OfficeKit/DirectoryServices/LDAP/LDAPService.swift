@@ -356,7 +356,6 @@ public final class LDAPService : DirectoryService, DirectoryAuthenticatorService
 	}
 	
 	public func fetchUniqueEmails(from user: LDAPInetOrgPersonWithObject, deduplicateAliases: Bool = true, on container: Container) throws -> Future<Set<Email>> {
-		#warning("TODO: Consider whether we want to use the emails already in the user (if applicable)")
 		return try fetchProperties([LDAPInetOrgPerson.propNameMail], from: user.userId, on: container)
 		.map{ properties in
 			guard let emailDataArray = properties[LDAPInetOrgPerson.propNameMail] else {
