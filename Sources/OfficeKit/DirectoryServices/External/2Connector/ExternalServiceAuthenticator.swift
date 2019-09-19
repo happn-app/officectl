@@ -22,7 +22,8 @@ public class ExternalServiceAuthenticator : Authenticator {
 	}
 	
 	public func authenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
-		#warning("TODO: https://datatracker.ietf.org/doc/draft-cavage-http-signatures/?include_text=1. Note that at the time of writing, the revision is spec 11 and is not finalized.")
+		/* TODO one day, maybe: https://datatracker.ietf.org/doc/draft-cavage-http-signatures/?include_text=1.
+		 * Note that at the time of writing, the revision is spec 11 and is not finalized. */
 		do {
 			var request = request
 			
