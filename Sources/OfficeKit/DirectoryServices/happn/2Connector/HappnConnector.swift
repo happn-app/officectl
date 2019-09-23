@@ -39,7 +39,11 @@ public final class HappnConnector : Connector, Authenticator {
 	public let authMode: AuthMode
 	
 	public var currentScope: Set<String>? {
-		return auth?.scope
+		guard let auth = auth else {return nil}
+		/* We let a 21 secs leeway in which we consider we’re not connected to
+		 * mitigate time difference between the server and our local time. */
+		guard auth.expirationDate.timeIntervalSinceNow > 21 else {return nil}
+		return auth.scope
 	}
 	public var accessToken: String? {
 		return auth?.accessToken
@@ -194,8 +198,11 @@ public final class HappnConnector : Connector, Authenticator {
 		request.setValue("OAuth=\"\(auth.accessToken)\"", forHTTPHeaderField: "Authorization")
 		let op = URLRequestOperation(request: request)
 		op.completionBlock = {
-			if op.finalError == nil {self.auth = nil}
-			handler(op.finalError)
+			/* We consider the 410 status code to be normal (usually it will be an
+			 * invalid token, which we don’t care about as we’re disconnecting). */
+			let error = (op.statusCode == 410 ? nil : op.finalError)
+			if error == nil {self.auth = nil}
+			handler(error)
 		}
 		op.start()
 	}
