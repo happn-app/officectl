@@ -57,11 +57,11 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		return try LDAPDistinguishedName(string: string)
 	}
 	
-	public func string(fromPersistentId pId: LDAPDistinguishedName) -> String {
+	public func string(fromPersistentUserId pId: LDAPDistinguishedName) -> String {
 		return pId.stringValue
 	}
 	
-	public func persistentId(fromString string: String) throws -> LDAPDistinguishedName {
+	public func persistentUserId(fromString string: String) throws -> LDAPDistinguishedName {
 		return try LDAPDistinguishedName(string: string)
 	}
 	

@@ -35,7 +35,7 @@ public final class OpenDirectoryService : UserDirectoryService {
 	}
 	
 	public typealias ConfigType = OpenDirectoryServiceConfig
-	public typealias UserIdType = ODRecordOKWrapper
+	public typealias IdType = ODRecordOKWrapper
 	public typealias AuthenticationChallenge = String
 	
 	public let config: OpenDirectoryServiceConfig
@@ -58,11 +58,11 @@ public final class OpenDirectoryService : UserDirectoryService {
 		return try LDAPDistinguishedName(string: string)
 	}
 	
-	public func string(fromPersistentId pId: UUID) -> String {
+	public func string(fromPersistentUserId pId: UUID) -> String {
 		return pId.uuidString
 	}
 	
-	public func persistentId(fromString string: String) throws -> UUID {
+	public func persistentUserId(fromString string: String) throws -> UUID {
 		guard let uuid = UUID(uuidString: string) else {
 			throw InvalidArgumentError(message: "Invalid persistent id \(string)")
 		}

@@ -44,11 +44,11 @@ public final class HappnService : UserDirectoryService {
 		return string
 	}
 	
-	public func string(fromPersistentId pId: String) -> String {
+	public func string(fromPersistentUserId pId: String) -> String {
 		return pId
 	}
 	
-	public func persistentId(fromString string: String) throws -> String {
+	public func persistentUserId(fromString string: String) throws -> String {
 		return string
 	}
 	

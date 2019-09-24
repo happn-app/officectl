@@ -19,7 +19,7 @@ import OpenDirectory
 
 public struct ODRecordOKWrapper : DirectoryUser {
 	
-	public typealias UserIdType = LDAPDistinguishedName
+	public typealias IdType = LDAPDistinguishedName
 	public typealias PersistentIdType = UUID
 	
 	public init(record r: ODRecord) throws {

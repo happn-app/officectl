@@ -11,10 +11,10 @@ import Foundation
 
 public protocol DirectoryUser {
 	
-	associatedtype UserIdType : Hashable
+	associatedtype IdType : Hashable
 	associatedtype PersistentIdType : Hashable
 	
-	var userId: UserIdType {get}
+	var userId: IdType {get}
 	var persistentId: RemoteProperty<PersistentIdType> {get}
 	
 	var identifyingEmail: RemoteProperty<Email?> {get}

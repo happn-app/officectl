@@ -80,7 +80,7 @@ private struct ConcreteUserBox<Base : DirectoryUser> : DirectoryUserBox {
 
 public struct AnyDirectoryUser : DirectoryUser {
 	
-	public typealias UserIdType = AnyDirectoryUserId
+	public typealias IdType = AnyDirectoryUserId
 	public typealias PersistentIdType = AnyDirectoryUserId
 	
 	public init<U : DirectoryUser>(_ user: U) {

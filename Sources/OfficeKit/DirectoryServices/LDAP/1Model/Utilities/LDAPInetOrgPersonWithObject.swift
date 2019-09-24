@@ -41,7 +41,7 @@ public struct LDAPInetOrgPersonWithObject {
 
 extension LDAPInetOrgPersonWithObject : DirectoryUser {
 	
-	public typealias UserIdType = LDAPDistinguishedName
+	public typealias IdType = LDAPDistinguishedName
 	public typealias PersistentIdType = LDAPDistinguishedName
 	
 	public var userId: LDAPDistinguishedName {

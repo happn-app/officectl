@@ -92,12 +92,12 @@ public typealias AnyDSUIdPair = DSUIdPair<AnyUserDirectoryService>
 public struct DSUIdPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 	
 	public let service: DirectoryServiceType
-	public let userId: DirectoryServiceType.UserType.UserIdType
+	public let userId: DirectoryServiceType.UserType.IdType
 	
 	public let serviceId: String
 	public let taggedId: TaggedId
 	
-	public init(service s: DirectoryServiceType, user u: DirectoryServiceType.UserType.UserIdType) {
+	public init(service s: DirectoryServiceType, user u: DirectoryServiceType.UserType.IdType) {
 		service = s
 		userId = u
 		

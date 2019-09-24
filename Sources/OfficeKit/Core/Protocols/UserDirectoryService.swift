@@ -32,11 +32,11 @@ public protocol UserDirectoryService : class, DirectoryServiceInit, Hashable {
 	func shortDescription(from user: UserType) -> String
 	
 	/** Empty ids are **not supported**. There are no other restrictions. */
-	func string(fromUserId userId: UserType.UserIdType) -> String
-	func userId(fromString string: String) throws -> UserType.UserIdType
+	func string(fromUserId userId: UserType.IdType) -> String
+	func userId(fromString string: String) throws -> UserType.IdType
 	
-	func string(fromPersistentId pId: UserType.PersistentIdType) -> String
-	func persistentId(fromString string: String) throws -> UserType.PersistentIdType
+	func string(fromPersistentUserId pId: UserType.PersistentIdType) -> String
+	func persistentUserId(fromString string: String) throws -> UserType.PersistentIdType
 	
 	/**
 	Converts the given user to a JSON (generic codable storage representation).
@@ -88,7 +88,7 @@ public protocol UserDirectoryService : class, DirectoryServiceInit, Hashable {
 	If _more than one_ user matches the given id, the function should return a
 	**failed** future. If _no_ users match the given id, the method should
 	return a succeeded future with a `nil` user. */
-	func existingUser(fromUserId uId: UserType.UserIdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
+	func existingUser(fromUserId uId: UserType.IdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?>
 	
 	func listAllUsers(on container: Container) throws -> Future<[UserType]>
 	
@@ -109,18 +109,18 @@ public protocol UserDirectoryService : class, DirectoryServiceInit, Hashable {
 
 extension UserDirectoryService {
 	
-	public func taggedId(fromUserId userId: UserType.UserIdType) -> TaggedId {
+	public func taggedId(fromUserId userId: UserType.IdType) -> TaggedId {
 		return TaggedId(tag: config.serviceId, id: string(fromUserId: userId))
 	}
 	
-	public func taggedId(fromPersistentId pId: UserType.PersistentIdType) -> TaggedId {
-		return TaggedId(tag: config.serviceId, id: string(fromPersistentId: pId))
+	public func taggedId(fromPersistentUserId pId: UserType.PersistentIdType) -> TaggedId {
+		return TaggedId(tag: config.serviceId, id: string(fromPersistentUserId: pId))
 	}
 	
 	public func wrappedUser(fromUser user: UserType) throws -> DirectoryUserWrapper {
 		var ret = DirectoryUserWrapper(
 			userId: taggedId(fromUserId: user.userId),
-			persistentId: user.persistentId.value.flatMap{ taggedId(fromPersistentId: $0) },
+			persistentId: user.persistentId.value.flatMap{ taggedId(fromPersistentUserId: $0) },
 			underlyingUser: try json(fromUser: user)
 		)
 		ret.copyStandardNonIdProperties(fromUser: user)
@@ -142,7 +142,7 @@ extension UserDirectoryService {
 		return try logicalUser(fromWrappedUser: genericUser, hints: hints)
 	}
 	
-	public func logicalUser(fromUserId userId: UserType.UserIdType, hints: [DirectoryUserProperty: String?] = [:]) throws -> UserType {
+	public func logicalUser(fromUserId userId: UserType.IdType, hints: [DirectoryUserProperty: String?] = [:]) throws -> UserType {
 		let user = DirectoryUserWrapper(userId: taggedId(fromUserId: userId))
 		return try logicalUser(fromWrappedUser: user, hints: hints)
 	}

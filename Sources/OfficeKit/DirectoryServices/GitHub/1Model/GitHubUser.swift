@@ -11,7 +11,7 @@ import Foundation
 
 public struct GitHubUser : DirectoryUser {
 	
-	public typealias UserIdType = String
+	public typealias IdType = String
 	public typealias PersistentIdType = String
 	
 	public var userId: String

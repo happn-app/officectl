@@ -24,14 +24,14 @@ private struct ConcreteDirectoryAuthenticatorBox<Base : DirectoryAuthenticatorSe
 	let originalAuthenticator: Base
 	
 	func authenticate(userId: AnyDirectoryUserId, challenge: Any, on container: Container) throws -> Future<Bool> {
-		guard let uid: Base.UserType.UserIdType = userId.unboxed(), let c = challenge as? Base.AuthenticationChallenge else {
+		guard let uid: Base.UserType.IdType = userId.unboxed(), let c = challenge as? Base.AuthenticationChallenge else {
 			throw InvalidArgumentError(message: "Got invalid user id (\(userId)) or auth challenge (\(challenge)) to authenticate with a directory service authenticator of type \(Base.self)")
 		}
 		return try originalAuthenticator.authenticate(userId: uid, challenge: c, on: container)
 	}
 	
 	func validateAdminStatus(userId: AnyDirectoryUserId, on container: Container) throws -> Future<Bool> {
-		guard let uid: Base.UserType.UserIdType = userId.unboxed() else {
+		guard let uid: Base.UserType.IdType = userId.unboxed() else {
 			throw InvalidArgumentError(message: "Got invalid user id type (\(userId)) to check if user is admin with a directory service authenticator of type \(Base.self)")
 		}
 		return try originalAuthenticator.validateAdminStatus(userId: uid, on: container)

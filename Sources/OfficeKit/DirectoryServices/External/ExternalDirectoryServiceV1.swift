@@ -52,11 +52,11 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		return TaggedId(string: string)
 	}
 	
-	public func string(fromPersistentId pId: TaggedId) -> String {
+	public func string(fromPersistentUserId pId: TaggedId) -> String {
 		return pId.stringValue
 	}
 	
-	public func persistentId(fromString string: String) throws -> TaggedId {
+	public func persistentUserId(fromString string: String) throws -> TaggedId {
 		return TaggedId(string: string)
 	}
 	

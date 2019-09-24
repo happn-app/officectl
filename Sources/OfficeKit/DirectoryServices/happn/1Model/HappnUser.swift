@@ -125,7 +125,7 @@ public struct HappnUser : Hashable, Codable {
 
 extension HappnUser : DirectoryUser {
 	
-	public typealias UserIdType = String?
+	public typealias IdType = String?
 	public typealias PersistentIdType = String
 	
 	public var userId: String? {

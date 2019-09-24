@@ -158,7 +158,7 @@ public struct GoogleUser : Hashable, Codable {
 
 extension GoogleUser : DirectoryUser {
 	
-	public typealias UserIdType = Email
+	public typealias IdType = Email
 	public typealias PersistentIdType = String
 	
 	public var userId: Email {

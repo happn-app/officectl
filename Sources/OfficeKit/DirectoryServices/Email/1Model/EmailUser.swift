@@ -11,7 +11,7 @@ import Foundation
 
 public struct EmailUser : DirectoryUser {
 	
-	public typealias UserIdType = Email
+	public typealias IdType = Email
 	public typealias PersistentIdType = Email
 	
 	public var userId: Email

@@ -14,7 +14,7 @@ import Logging
 
 public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	
-	public typealias UserIdType = TaggedId
+	public typealias IdType = TaggedId
 	public typealias PersistentIdType = TaggedId
 	
 	public var userId: TaggedId

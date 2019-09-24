@@ -42,11 +42,11 @@ public final class EmailService : UserDirectoryService {
 		return email
 	}
 	
-	public func string(fromPersistentId pId: Email) -> String {
+	public func string(fromPersistentUserId pId: Email) -> String {
 		return pId.stringValue
 	}
 	
-	public func persistentId(fromString string: String) throws -> Email {
+	public func persistentUserId(fromString string: String) throws -> Email {
 		guard let email = Email(string: string) else {
 			throw InvalidArgumentError(message: "Malformed email \(string)")
 		}

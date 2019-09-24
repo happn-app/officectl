@@ -35,7 +35,7 @@ public struct DummyServiceConfig : OfficeKitServiceConfig {
 
 public struct DummyServiceUser : DirectoryUser {
 	
-	public typealias UserIdType = Never
+	public typealias IdType = Never
 	public typealias PersistentIdType = Never
 	
 	public var userId: Never
@@ -78,10 +78,10 @@ public final class DummyService : UserDirectoryService {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
-	public func string(fromPersistentId pId: Never) -> String {
+	public func string(fromPersistentUserId pId: Never) -> String {
 	}
 	
-	public func persistentId(fromString string: String) throws -> Never {
+	public func persistentUserId(fromString string: String) throws -> Never {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
