@@ -13,6 +13,7 @@ import Service
 
 
 
+/* TODO: One day, split the Service part of the UserDirectoryService. */
 public protocol UserDirectoryService : class, DirectoryServiceInit, Hashable {
 	
 	/** The id of the linked provider, e.g. "internal_openldap". External
