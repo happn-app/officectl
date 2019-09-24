@@ -39,7 +39,7 @@ private struct ConcreteDirectoryAuthenticatorBox<Base : DirectoryAuthenticatorSe
 	
 }
 
-public class AnyDirectoryAuthenticatorService : AnyDirectoryService, DirectoryAuthenticatorService {
+public class AnyDirectoryAuthenticatorService : AnyUserDirectoryService, DirectoryAuthenticatorService {
 	
 	public typealias AuthenticationChallenge = Any
 	
@@ -59,13 +59,13 @@ public class AnyDirectoryAuthenticatorService : AnyDirectoryService, DirectoryAu
 	 * be a pain to copy and modify two erasures each time there’s a modification
 	 * in the DirectoryService… */
 	
-	override init<T : DirectoryService>(ds object: T) {
+	override init<T : UserDirectoryService>(uds object: T) {
 		fatalError()
 	}
 	
 	init<T : DirectoryAuthenticatorService>(das object: T) {
 		box = ConcreteDirectoryAuthenticatorBox(originalAuthenticator: object)
-		super.init(ds: object)
+		super.init(uds: object)
 	}
 	
 	public required init(config c: AnyOfficeKitServiceConfig, globalConfig gc: GlobalConfig) {

@@ -15,7 +15,7 @@ import Service
 
 
 
-public final class GoogleService : DirectoryService {
+public final class GoogleService : UserDirectoryService {
 	
 	public static let providerId = "internal_google"
 	

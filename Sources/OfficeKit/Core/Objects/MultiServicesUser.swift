@@ -15,15 +15,15 @@ import Service
 public typealias MultiServicesUser = MultiServicesItem<AnyDSUPair?>
 extension MultiServicesUser {
 	
-	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyDirectoryService>, on container: Container) throws -> EventLoopFuture<MultiServicesUser> {
+	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, on container: Container) throws -> EventLoopFuture<MultiServicesUser> {
 		#warning("TODO: Properties to fetch")
 		let servicesById = try services.group(by: { $0.config.serviceId })
 		
-		var allFetchedUsers = [AnyDirectoryService: AnyDSUPair?]()
-		var allFetchedErrors = [AnyDirectoryService: [Error]]()
-		var triedServiceIdSource = Set<AnyDirectoryService>()
+		var allFetchedUsers = [AnyUserDirectoryService: AnyDSUPair?]()
+		var allFetchedErrors = [AnyUserDirectoryService: [Error]]()
+		var triedServiceIdSource = Set<AnyUserDirectoryService>()
 		
-		func getUsers(from dsuPair: AnyDSUPair, in services: Set<AnyDirectoryService>) -> EventLoopFuture<[AnyDirectoryService: Result<AnyDSUPair?, Error>]> {
+		func getUsers(from dsuPair: AnyDSUPair, in services: Set<AnyUserDirectoryService>) -> EventLoopFuture<[AnyUserDirectoryService: Result<AnyDSUPair?, Error>]> {
 			let userFutures = services.map{ curService in
 				(curService, container.future().flatMap{
 					try curService.existingUser(fromUser: dsuPair.user, in: dsuPair.service, propertiesToFetch: [], on: container)
@@ -40,7 +40,7 @@ extension MultiServicesUser {
 			}
 		}
 		
-		func fetchStep(fetchedUsersAndErrors: [AnyDirectoryService: Result<AnyDSUPair?, Error>]) throws -> EventLoopFuture<MultiServicesUser> {
+		func fetchStep(fetchedUsersAndErrors: [AnyUserDirectoryService: Result<AnyDSUPair?, Error>]) throws -> EventLoopFuture<MultiServicesUser> {
 			/* Try and fetch the users that were not successfully fetched. */
 			allFetchedUsers = allFetchedUsers.merging(fetchedUsersAndErrors.compactMapValues{ $0.successValue }, uniquingKeysWith: { old, new in
 				OfficeKitConfig.logger?.error("Got a user fetched twice for id \(String(describing: old?.user.userId ?? new?.user.userId)). old user = \(String(describing: old)), new user = \(String(describing: new))")
@@ -67,7 +67,7 @@ extension MultiServicesUser {
 		return try getUsers(from: dsuIdPair.dsuPair(), in: services).flatMap(fetchStep)
 	}
 	
-	public static func fetchAll(in services: Set<AnyDirectoryService>, on container: Container) throws -> EventLoopFuture<(users: [MultiServicesUser], fetchErrorsByServices: [AnyDirectoryService: Error])> {
+	public static func fetchAll(in services: Set<AnyUserDirectoryService>, on container: Container) throws -> EventLoopFuture<(users: [MultiServicesUser], fetchErrorsByServices: [AnyUserDirectoryService: Error])> {
 		return try AnyDSUPair.fetchAll(in: services, on: container).flatMap{
 			let (pairs, fetchErrorsByService) = $0
 			let validServices = services.subtracting(fetchErrorsByService.keys)
@@ -86,15 +86,15 @@ extension MultiServicesUser {
 	If the `allowNonValidServices` arg is set to `true`, the returned users might
 	contain a DSU pair for a service that has not been declared valid. (The
 	argument is only useful when `validServices` is set to a non-`nil` value.) */
-	public static func merge(dsuPairs: Set<AnyDSUPair>, validServices: Set<AnyDirectoryService>? = nil, allowNonValidServices: Bool = false, eventLoop: EventLoop, dispatchQueue: DispatchQueue = defaultDispatchQueueForFutureSupport) -> EventLoopFuture<[MultiServicesUser]> {
+	public static func merge(dsuPairs: Set<AnyDSUPair>, validServices: Set<AnyUserDirectoryService>? = nil, allowNonValidServices: Bool = false, eventLoop: EventLoop, dispatchQueue: DispatchQueue = defaultDispatchQueueForFutureSupport) -> EventLoopFuture<[MultiServicesUser]> {
 		let promise = eventLoop.newPromise([MultiServicesUser].self)
 		dispatchQueue.async{
 			do {
 				/* Transform the input to get something we can use (DSUPairs to LinkedUsers + extracting the list of services). */
-				let services: Set<AnyDirectoryService>
+				let services: Set<AnyUserDirectoryService>
 				let linkedUsersByDSUPair: [AnyDSUPair: LinkedUser]
 				do {
-					var servicesBuilding = Set<AnyDirectoryService>()
+					var servicesBuilding = Set<AnyUserDirectoryService>()
 					var linkedUsersByDSUPairBuilding = [AnyDSUPair: LinkedUser](minimumCapacity: dsuPairs.count)
 					for pair in dsuPairs {
 						assert(linkedUsersByDSUPairBuilding[pair] == nil)
@@ -137,7 +137,7 @@ extension MultiServicesUser {
 						return nil
 					}
 					
-					var res: [AnyDirectoryService: AnyDSUPair?] = [linkedUser.dsuPair.service: linkedUser.dsuPair]
+					var res: [AnyUserDirectoryService: AnyDSUPair?] = [linkedUser.dsuPair.service: linkedUser.dsuPair]
 					for subLinkedUser in linkedUser.linkedUserByServiceId.values {
 						guard !treatedDSUPairs.contains(subLinkedUser.dsuPair) else {
 							throw InternalError(message: "Got already treated linked user! \(subLinkedUser.dsuPair) for \(dsuPair)")
@@ -170,7 +170,7 @@ extension MultiServicesUser {
 private class LinkedUser : CustomStringConvertible {
 	
 	let dsuPair: AnyDSUPair
-	var linkedUserByServiceId: [AnyDirectoryService: LinkedUser] = [:]
+	var linkedUserByServiceId: [AnyUserDirectoryService: LinkedUser] = [:]
 	
 	var description: String {
 		return "LinkedUser<\("service.config.serviceId") - \("user")>; linkedUsers: \("linkedUserByServiceId.keys")"

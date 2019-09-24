@@ -14,7 +14,7 @@ import Service
 
 
 
-public final class GitHubService : DirectoryService {
+public final class GitHubService : UserDirectoryService {
 	
 	public static let providerId = "internal_github"
 	

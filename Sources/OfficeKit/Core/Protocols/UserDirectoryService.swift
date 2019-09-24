@@ -1,5 +1,5 @@
 /*
- * DirectoryService.swift
+ * UserDirectoryService.swift
  * OfficeKit
  *
  * Created by François Lamboley on 22/05/2019.
@@ -13,7 +13,7 @@ import Service
 
 
 
-public protocol DirectoryService : class, DirectoryServiceInit, Hashable {
+public protocol UserDirectoryService : class, DirectoryServiceInit, Hashable {
 	
 	/** The id of the linked provider, e.g. "internal_openldap". External
 	provider ids (not built-in OfficeKit) must not have the “internal_” prefix. */
@@ -106,7 +106,7 @@ public protocol DirectoryService : class, DirectoryServiceInit, Hashable {
 }
 
 
-extension DirectoryService {
+extension UserDirectoryService {
 	
 	public func taggedId(fromUserId userId: UserType.UserIdType) -> TaggedId {
 		return TaggedId(tag: config.serviceId, id: string(fromUserId: userId))
@@ -146,11 +146,11 @@ extension DirectoryService {
 		return try logicalUser(fromWrappedUser: user, hints: hints)
 	}
 	
-	public func logicalUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: String?] = [:]) throws -> UserType {
+	public func logicalUser<OtherServiceType : UserDirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [DirectoryUserProperty: String?] = [:]) throws -> UserType {
 		return try logicalUser(fromWrappedUser: service.wrappedUser(fromUser: user), hints: hints)
 	}
 	
-	public func existingUser<OtherServiceType : DirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?> {
+	public func existingUser<OtherServiceType : UserDirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<UserType?> {
 		let foreignGenericUser = try service.wrappedUser(fromUser: user)
 		let nativeLogicalUser = try logicalUser(fromWrappedUser: foreignGenericUser, hints: [:])
 		return try existingUser(fromUserId: nativeLogicalUser.userId, propertiesToFetch: propertiesToFetch, on: container)
@@ -159,7 +159,7 @@ extension DirectoryService {
 }
 
 
-extension DirectoryService {
+extension UserDirectoryService {
 	
 	public static func ==(_ lhs: Self, _ rhs: Self) -> Bool {
 		return lhs.config.serviceId == rhs.config.serviceId
@@ -176,17 +176,17 @@ extension DirectoryService {
 public protocol DirectoryServiceInit {
 	
 	static var configType: OfficeKitServiceConfigInit.Type {get}
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyDirectoryService?
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyUserDirectoryService?
 	
 }
 
-public extension DirectoryService {
+public extension UserDirectoryService {
 	
 	static var configType: OfficeKitServiceConfigInit.Type {
 		return ConfigType.self
 	}
 	
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyDirectoryService? {
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyUserDirectoryService? {
 		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unboxed() else {return nil}
 		return self.init(config: c, globalConfig: gc).erased()
 	}

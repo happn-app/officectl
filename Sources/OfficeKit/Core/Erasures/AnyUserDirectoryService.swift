@@ -1,5 +1,5 @@
 /*
- * AnyDirectoryService.swift
+ * AnyUserDirectoryService.swift
  * OfficeKit
  *
  * Created by François Lamboley on 27/06/2019.
@@ -13,14 +13,14 @@ import Service
 
 
 
-private protocol DirectoryServiceBox {
+private protocol UserDirectoryServiceBox {
 	
 	/* *** Hashable *** */
 	
-	func unbox<T : DirectoryService>() -> T?
+	func unbox<T : UserDirectoryService>() -> T?
 	
 	func hash(into hasher: inout Hasher)
-	func isEqual(_ other: DirectoryServiceBox) -> Bool
+	func isEqual(_ other: UserDirectoryServiceBox) -> Bool
 	
 	/* *** DirectoryService *** */
 	
@@ -59,11 +59,11 @@ private protocol DirectoryServiceBox {
 	
 }
 
-private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceBox {
+private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirectoryServiceBox {
 	
 	let originalDirectory: Base
 	
-	func unbox<T>() -> T? where T : DirectoryService {
+	func unbox<T>() -> T? where T : UserDirectoryService {
 		return originalDirectory as? T
 	}
 	
@@ -71,7 +71,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 		originalDirectory.hash(into: &hasher)
 	}
 	
-	func isEqual(_ other: DirectoryServiceBox) -> Bool {
+	func isEqual(_ other: UserDirectoryServiceBox) -> Bool {
 		guard let otherAsBase: Base = other.unbox() else {return false}
 		return otherAsBase == originalDirectory
 	}
@@ -193,7 +193,7 @@ private struct ConcreteDirectoryBox<Base : DirectoryService> : DirectoryServiceB
 	
 }
 
-public class AnyDirectoryService : DirectoryService {
+public class AnyUserDirectoryService : UserDirectoryService {
 	
 	public static var providerId: String {
 		assertionFailure("Please do not use providerId on AnyDirectoryService. This is an erasure for a concrete DirectoryService type.")
@@ -203,10 +203,8 @@ public class AnyDirectoryService : DirectoryService {
 	public typealias ConfigType = AnyOfficeKitServiceConfig
 	public typealias UserType = AnyDirectoryUser
 	
-	/* See AnyDirectoryAuthenticatorService as to why, but we used to have an
-	 * unnamed init here. I’d have liked it to stay unnamed but it’s annoying. */
-	init<T : DirectoryService>(ds object: T) {
-		box = ConcreteDirectoryBox(originalDirectory: object)
+	init<T : UserDirectoryService>(uds object: T) {
+		box = ConcreteUserDirectoryBox(originalDirectory: object)
 	}
 	
 	public required init(config c: AnyOfficeKitServiceConfig, globalConfig gc: GlobalConfig) {
@@ -217,7 +215,7 @@ public class AnyDirectoryService : DirectoryService {
 		box.hash(into: &hasher)
 	}
 	
-	public static func ==(_ lhs: AnyDirectoryService, _ rhs: AnyDirectoryService) -> Bool {
+	public static func ==(_ lhs: AnyUserDirectoryService, _ rhs: AnyUserDirectoryService) -> Bool {
 		return lhs.box.isEqual(rhs.box)
 	}
 	
@@ -293,27 +291,27 @@ public class AnyDirectoryService : DirectoryService {
 		return try box.changePasswordAction(for: user, on: container)
 	}
 	
-	fileprivate let box: DirectoryServiceBox
+	fileprivate let box: UserDirectoryServiceBox
 	
 }
 
-extension DirectoryService {
+extension UserDirectoryService {
 	
-	public func erased() -> AnyDirectoryService {
-		if let erased = self as? AnyDirectoryService {
+	public func erased() -> AnyUserDirectoryService {
+		if let erased = self as? AnyUserDirectoryService {
 			return erased
 		}
 		
-		return AnyDirectoryService(ds: self)
+		return AnyUserDirectoryService(uds: self)
 	}
 	
-	public func unboxed<DirectoryType : DirectoryService>() -> DirectoryType? {
-		guard let anyService = self as? AnyDirectoryService else {
+	public func unboxed<DirectoryType : UserDirectoryService>() -> DirectoryType? {
+		guard let anyService = self as? AnyUserDirectoryService else {
 			/* Nothing to unbox, just return self */
 			return self as? DirectoryType
 		}
 		
-		return (anyService.box as? ConcreteDirectoryBox<DirectoryType>)?.originalDirectory ?? (anyService.box as? ConcreteDirectoryBox<AnyDirectoryService>)?.originalDirectory.unboxed()
+		return (anyService.box as? ConcreteUserDirectoryBox<DirectoryType>)?.originalDirectory ?? (anyService.box as? ConcreteUserDirectoryBox<AnyUserDirectoryService>)?.originalDirectory.unboxed()
 	}
 	
 }

@@ -14,7 +14,7 @@ import Service
 public typealias MultiServicesPasswordReset = MultiServicesItem<AnyDSPasswordResetPair?>
 extension MultiServicesPasswordReset {
 	
-	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyDirectoryService>, on container: Container) throws -> EventLoopFuture<MultiServicesPasswordReset> {
+	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, on container: Container) throws -> EventLoopFuture<MultiServicesPasswordReset> {
 		return try MultiServicesUser.fetch(from: dsuIdPair, in: services, on: container)
 		.map{ user in user.mapItems{ try $0.flatMap{ try $0.service.supportsPasswordChange ? AnyDSPasswordResetPair(dsuPair: $0, on: container) : nil } } }
 	}
@@ -23,10 +23,10 @@ extension MultiServicesPasswordReset {
 		return itemsByService.reduce(false, { $0 || $1.value?.passwordReset.isExecuting ?? false })
 	}
 	
-	public func start(newPass: String, weakeningMode: WeakeningMode, eventLoop: EventLoop) throws -> EventLoopFuture<[AnyDirectoryService: Result<Void, Error>]> {
+	public func start(newPass: String, weakeningMode: WeakeningMode, eventLoop: EventLoop) throws -> EventLoopFuture<[AnyUserDirectoryService: Result<Void, Error>]> {
 		guard !isExecuting else {throw OperationAlreadyInProgressError()}
 		
-		let futures = errorsAndItemsByService.map{ serviceIdAndResetPairResult -> (AnyDirectoryService, Future<Void>) in
+		let futures = errorsAndItemsByService.map{ serviceIdAndResetPairResult -> (AnyUserDirectoryService, Future<Void>) in
 			let (service, resetPairResult) = serviceIdAndResetPairResult
 			
 			switch resetPairResult {

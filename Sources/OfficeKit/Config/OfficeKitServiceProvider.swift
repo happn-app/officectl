@@ -17,7 +17,7 @@ public class OfficeKitServiceProvider {
 		officeKitConfig = cfg
 	}
 	
-	public func getAllServices() throws -> Set<AnyDirectoryService> {
+	public func getAllServices() throws -> Set<AnyUserDirectoryService> {
 		for (k, v) in officeKitConfig.serviceConfigs {
 			guard servicesCache[k] == nil else {continue}
 			servicesCache[k] = try directoryService(with: v)
@@ -25,19 +25,19 @@ public class OfficeKitServiceProvider {
 		return Set(servicesCache.values.filter{ !$0.config.isHelperService })
 	}
 	
-	public func getDirectoryService(id: String?) throws -> AnyDirectoryService {
+	public func getDirectoryService(id: String?) throws -> AnyUserDirectoryService {
 		let config = try officeKitConfig.getServiceConfig(id: id)
 		return try directoryService(with: config)
 	}
 	
-	public func getDirectoryService<DirectoryServiceType : DirectoryService>(id: String?) throws -> DirectoryServiceType {
+	public func getDirectoryService<DirectoryServiceType : UserDirectoryService>(id: String?) throws -> DirectoryServiceType {
 		/* Special case: the erasure. If we try and get the erasure, we should
 		 * call the specialized method instead.
 		 * Another solution would be to specialize the unboxed() method of the
 		 * erasure type to return the erasure if called with an erasure type, but
 		 * it’s weird(er)… */
-		guard DirectoryServiceType.self != AnyDirectoryService.self else {
-			let s: AnyDirectoryService = try getDirectoryService(id: id)
+		guard DirectoryServiceType.self != AnyUserDirectoryService.self else {
+			let s: AnyUserDirectoryService = try getDirectoryService(id: id)
 			return s as! DirectoryServiceType
 		}
 		
@@ -56,7 +56,7 @@ public class OfficeKitServiceProvider {
 		}
 	}
 	
-	public func getDirectoryServices(ids: Set<String>?) throws -> Set<AnyDirectoryService> {
+	public func getDirectoryServices(ids: Set<String>?) throws -> Set<AnyUserDirectoryService> {
 		guard let ids = ids else {return try getAllServices()}
 		return try Set(ids.map{ try getDirectoryService(id: $0) })
 	}
@@ -71,10 +71,10 @@ public class OfficeKitServiceProvider {
 	
 	private let officeKitConfig: OfficeKitConfig
 	
-	private var servicesCache = [String: AnyDirectoryService]()
+	private var servicesCache = [String: AnyUserDirectoryService]()
 	private var directoryAuthenticatorServiceCache: AnyDirectoryAuthenticatorService?
 	
-	private func directoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyDirectoryService {
+	private func directoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyUserDirectoryService {
 		if let service = servicesCache[config.serviceId] {
 			return service
 		}
@@ -84,7 +84,7 @@ public class OfficeKitServiceProvider {
 		return service
 	}
 	
-	private func createDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyDirectoryService {
+	private func createDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyUserDirectoryService {
 		guard let providerType = OfficeKitConfig.registeredServices[config.providerId] else {
 			throw InvalidArgumentError(message: "Unregistered service provider \(config.providerId)")
 		}

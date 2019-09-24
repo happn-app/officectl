@@ -12,7 +12,7 @@ import Service
 
 
 
-public final class EmailService : DirectoryService {
+public final class EmailService : UserDirectoryService {
 	
 	public static let providerId = "internal_email"
 	

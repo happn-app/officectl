@@ -22,12 +22,12 @@ struct ApiUser : Encodable {
 	
 	var usersByServiceId: [String: DirectoryUserWrapper?]
 	
-	init(multiUsers: MultiServicesUser, orderedServices: [AnyDirectoryService]) throws {
+	init(multiUsers: MultiServicesUser, orderedServices: [AnyUserDirectoryService]) throws {
 		#warning("TODO: Note that we ignore the errors by service ids. Is this what we really want?")
 		try self.init(usersByService: multiUsers.itemsByService.mapValues{ try $0?.userWrapper() }, orderedServices: orderedServices)
 	}
 	
-	init(usersByService users: [AnyDirectoryService: DirectoryUserWrapper?], orderedServices: [AnyDirectoryService]) {
+	init(usersByService users: [AnyUserDirectoryService: DirectoryUserWrapper?], orderedServices: [AnyUserDirectoryService]) {
 		usersByServiceId = users.mapKeys{ $0.config.serviceId }
 		
 		let orderedAndUniquedServices = ApiUser.addMissingElements(from: orderedServices + Array(users.keys), to: [])

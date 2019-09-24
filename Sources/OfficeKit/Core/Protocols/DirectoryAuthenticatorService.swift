@@ -12,7 +12,7 @@ import Service
 
 
 
-public protocol DirectoryAuthenticatorService : DirectoryService {
+public protocol DirectoryAuthenticatorService : UserDirectoryService {
 	
 	associatedtype AuthenticationChallenge
 	

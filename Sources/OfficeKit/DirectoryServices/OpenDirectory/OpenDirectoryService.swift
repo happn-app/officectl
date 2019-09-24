@@ -21,7 +21,7 @@ import Service
 
 
 
-public final class OpenDirectoryService : DirectoryService {
+public final class OpenDirectoryService : UserDirectoryService {
 	
 	public static let providerId = "internal_opendirectory"
 	

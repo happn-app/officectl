@@ -11,10 +11,10 @@ import Foundation
 
 public struct MultiServicesItem<ItemType> {
 	
-	public var errorsAndItemsByService: [AnyDirectoryService: Result<ItemType, Error>]
+	public var errorsAndItemsByService: [AnyUserDirectoryService: Result<ItemType, Error>]
 	
-	public var itemsByService:  [AnyDirectoryService: ItemType] {return errorsAndItemsByService.compactMapValues{ $0.successValue }}
-	public var errorsByService: [AnyDirectoryService: Error]    {return errorsAndItemsByService.compactMapValues{ $0.failureValue }}
+	public var itemsByService:  [AnyUserDirectoryService: ItemType] {return errorsAndItemsByService.compactMapValues{ $0.successValue }}
+	public var errorsByService: [AnyUserDirectoryService: Error]    {return errorsAndItemsByService.compactMapValues{ $0.failureValue }}
 	
 	public var errorsAndItemsByServiceId: [String: Result<ItemType, Error>] {
 		return errorsAndItemsByService.mapKeys{ $0.config.serviceId }
@@ -23,21 +23,21 @@ public struct MultiServicesItem<ItemType> {
 	public var itemsByServiceId:  [String: ItemType] {return itemsByService.mapKeys{  $0.config.serviceId }}
 	public var errorsByServiceId: [String: Error]    {return errorsByService.mapKeys{ $0.config.serviceId }}
 	
-	public var services: Set<AnyDirectoryService> {
+	public var services: Set<AnyUserDirectoryService> {
 		return Set(errorsAndItemsByService.keys)
 	}
 	
 	/** Creates the MultiServicesUser with the given pairs and errors. If, for a
 	given service there is a user and some errors, the user will be chosen. */
-	init(itemsByService pbsi: [AnyDirectoryService: ItemType] = [:], errorsByService ebsi: [AnyDirectoryService: Error] = [:]) {
+	init(itemsByService pbsi: [AnyUserDirectoryService: ItemType] = [:], errorsByService ebsi: [AnyUserDirectoryService: Error] = [:]) {
 		self.init(errorsAndItemsByService: pbsi.mapValues{ .success($0) }.merging(ebsi.mapValues{ .failure($0) }, uniquingKeysWith: { old, _ in old }))
 	}
 	
-	init(errorsAndItemsByService eapbsi: [AnyDirectoryService: Result<ItemType, Error>]) {
+	init(errorsAndItemsByService eapbsi: [AnyUserDirectoryService: Result<ItemType, Error>]) {
 		errorsAndItemsByService = eapbsi
 	}
 	
-	public subscript<ServiceType : DirectoryService>(service: ServiceType) -> ItemType? {
+	public subscript<ServiceType : UserDirectoryService>(service: ServiceType) -> ItemType? {
 		return itemsByService[service.erased()]
 	}
 	

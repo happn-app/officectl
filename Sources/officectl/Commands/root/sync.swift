@@ -16,7 +16,7 @@ import OfficeKit
 
 private struct ServiceSyncPlan {
 	
-	var service: AnyDirectoryService
+	var service: AnyUserDirectoryService
 	
 	var usersToCreate: [AnyDirectoryUser]
 	var usersToDelete: [AnyDirectoryUser]

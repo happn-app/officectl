@@ -14,7 +14,7 @@ import Vapor
 
 
 
-public final class HappnService : DirectoryService {
+public final class HappnService : UserDirectoryService {
 	
 	public static var providerId = "internal_happn"
 	

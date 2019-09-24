@@ -14,7 +14,7 @@ import Service
 
 
 
-public final class LDAPService : DirectoryService, DirectoryAuthenticatorService {
+public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorService {
 	
 	public static var providerId = "internal_openldap"
 	

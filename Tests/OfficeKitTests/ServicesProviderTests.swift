@@ -38,7 +38,7 @@ class ServicesProviderTests : XCTestCase {
 	
 	func testFetchLDAPConfAsAny() {
 		do {
-			let _: AnyDirectoryService = try servicesProvider.getDirectoryService(id: ldapConfForTests.serviceId)
+			let _: AnyUserDirectoryService = try servicesProvider.getDirectoryService(id: ldapConfForTests.serviceId)
 		} catch {
 			XCTFail("Cannot fetch erased LDAP service with id")
 		}

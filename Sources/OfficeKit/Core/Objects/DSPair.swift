@@ -11,8 +11,8 @@ import Service
 
 
 
-public typealias AnyDSUPair = DSUPair<AnyDirectoryService>
-public struct DSUPair<DirectoryServiceType : DirectoryService> : Hashable {
+public typealias AnyDSUPair = DSUPair<AnyUserDirectoryService>
+public struct DSUPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 	
 	public let service: DirectoryServiceType
 	public let user: DirectoryServiceType.UserType
@@ -31,7 +31,7 @@ public struct DSUPair<DirectoryServiceType : DirectoryService> : Hashable {
 		taggedId = TaggedId(tag: serviceId, id: service.string(fromUserId: user.userId))
 	}
 	
-	public init?<SourceServiceType : DirectoryService>(service s: SourceServiceType, user u: SourceServiceType.UserType) {
+	public init?<SourceServiceType : UserDirectoryService>(service s: SourceServiceType, user u: SourceServiceType.UserType) {
 		guard let s: DirectoryServiceType = s.unboxed() else {
 			return nil
 		}
@@ -46,7 +46,7 @@ public struct DSUPair<DirectoryServiceType : DirectoryService> : Hashable {
 		self.init(service: s, user: u)
 	}
 	
-	public func hop<NewDirectoryServiceType : DirectoryService>(to newService: NewDirectoryServiceType) throws -> DSUPair<NewDirectoryServiceType> {
+	public func hop<NewDirectoryServiceType : UserDirectoryService>(to newService: NewDirectoryServiceType) throws -> DSUPair<NewDirectoryServiceType> {
 		return try DSUPair<NewDirectoryServiceType>(service: newService, user: newService.logicalUser(fromUser: user, in: service))
 	}
 	
@@ -70,7 +70,7 @@ public struct DSUPair<DirectoryServiceType : DirectoryService> : Hashable {
 
 extension AnyDSUPair {
 	
-	public static func fetchAll(in services: Set<AnyDirectoryService>, on container: Container) throws -> EventLoopFuture<(dsuPairs: [AnyDSUPair], fetchErrorsByServices: [AnyDirectoryService: Error])> {
+	public static func fetchAll(in services: Set<AnyUserDirectoryService>, on container: Container) throws -> EventLoopFuture<(dsuPairs: [AnyDSUPair], fetchErrorsByServices: [AnyUserDirectoryService: Error])> {
 		let serviceAndFutureUsers = services.map{ service in (service, container.future().flatMap{ try service.listAllUsers(on: container) }) }
 		let futureUsersByService = Dictionary(uniqueKeysWithValues: serviceAndFutureUsers)
 		
@@ -88,8 +88,8 @@ extension AnyDSUPair {
 }
 
 
-public typealias AnyDSUIdPair = DSUIdPair<AnyDirectoryService>
-public struct DSUIdPair<DirectoryServiceType : DirectoryService> : Hashable {
+public typealias AnyDSUIdPair = DSUIdPair<AnyUserDirectoryService>
+public struct DSUIdPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 	
 	public let service: DirectoryServiceType
 	public let userId: DirectoryServiceType.UserType.UserIdType
@@ -105,7 +105,7 @@ public struct DSUIdPair<DirectoryServiceType : DirectoryService> : Hashable {
 		taggedId = TaggedId(tag: serviceId, id: service.string(fromUserId: userId))
 	}
 	
-	public init?<SourceServiceType : DirectoryService>(service s: SourceServiceType, user u: SourceServiceType.UserType) {
+	public init?<SourceServiceType : UserDirectoryService>(service s: SourceServiceType, user u: SourceServiceType.UserType) {
 		guard let dsu = DSUPair<DirectoryServiceType>(service: s, user: u) else {
 			return nil
 		}
@@ -153,8 +153,8 @@ public struct DSUIdPair<DirectoryServiceType : DirectoryService> : Hashable {
 
 
 /** A PasswordReset, and its DSUPair. */
-public typealias AnyDSPasswordResetPair = DSPasswordResetPair<AnyDirectoryService>
-public struct DSPasswordResetPair<DirectoryServiceType : DirectoryService> {
+public typealias AnyDSPasswordResetPair = DSPasswordResetPair<AnyUserDirectoryService>
+public struct DSPasswordResetPair<DirectoryServiceType : UserDirectoryService> {
 	
 	public let dsuPair: DSUPair<DirectoryServiceType>
 	public let passwordReset: ResetPasswordAction

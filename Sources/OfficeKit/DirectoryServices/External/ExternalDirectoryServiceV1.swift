@@ -15,7 +15,7 @@ import Service
 
 
 
-public final class ExternalDirectoryServiceV1 : DirectoryService {
+public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	
 	public static let providerId = "http_service_v1"
 	

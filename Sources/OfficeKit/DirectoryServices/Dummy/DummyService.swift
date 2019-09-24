@@ -52,7 +52,7 @@ public struct DummyServiceUser : DirectoryUser {
 	
 }
 
-public final class DummyService : DirectoryService {
+public final class DummyService : UserDirectoryService {
 	
 	public static let providerId = "dummy"
 	
