@@ -1,4 +1,4 @@
-FROM happn/swift-builder:5.0.1-RELEASE
+FROM happn/swift-builder:5.1-RELEASE
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   libldap2-dev \
