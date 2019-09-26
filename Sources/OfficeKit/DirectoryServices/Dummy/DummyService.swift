@@ -72,10 +72,6 @@ public final class DummyService : DirectoryService {
 	}
 	
 	public func string(fromUserId userId: Never) -> String {
-		/* Remove when we have Swift 5.1 compiler in Linux… */
-		#if swift(<5.1)
-		fatalError()
-		#endif
 	}
 	
 	public func userId(fromString string: String) throws -> Never {
@@ -83,10 +79,6 @@ public final class DummyService : DirectoryService {
 	}
 	
 	public func string(fromPersistentId pId: Never) -> String {
-		/* Remove when we have Swift 5.1 compiler in Linux… */
-		#if swift(<5.1)
-		fatalError()
-		#endif
 	}
 	
 	public func persistentId(fromString string: String) throws -> Never {
@@ -106,17 +98,9 @@ public final class DummyService : DirectoryService {
 	}
 	
 	public func existingUser(fromPersistentId pId: Never, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser?> {
-		/* Remove when we have Swift 5.1 compiler in Linux… */
-		#if swift(<5.1)
-		fatalError()
-		#endif
 	}
 	
 	public func existingUser(fromUserId dn: Never, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<DummyServiceUser?> {
-		/* Remove when we have Swift 5.1 compiler in Linux… */
-		#if swift(<5.1)
-		fatalError()
-		#endif
 	}
 	
 	public func listAllUsers(on container: Container) throws -> Future<[DummyServiceUser]> {
