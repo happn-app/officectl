@@ -13,6 +13,7 @@ private protocol OfficeKitServiceBox {
 	
 	/* *** Hashable *** */
 	
+	/* Needed only for the hashable erasure. NOT for other erasure stuff. */
 	func unbox<T : OfficeKitService>() -> T?
 	
 	func hash(into hasher: inout Hasher)
@@ -104,7 +105,7 @@ extension OfficeKitService {
 	}
 	
 	public func unboxed<DirectoryType : OfficeKitService>() -> DirectoryType? {
-		guard let anyService = self as? AnyOfficeKitService else {
+		guard let anyService = self as? AnyOfficeKitService, !(DirectoryType.self is AnyOfficeKitService.Type) else {
 			/* Nothing to unbox, just return self */
 			return self as? DirectoryType
 		}

@@ -262,7 +262,7 @@ extension UserDirectoryService {
 	}
 	
 	public func unboxed<DirectoryType : UserDirectoryService>() -> DirectoryType? {
-		guard let anyService = self as? AnyUserDirectoryService else {
+		guard let anyService = self as? AnyUserDirectoryService, !(DirectoryType.self is AnyUserDirectoryService.Type) else {
 			/* Nothing to unbox, just return self */
 			return self as? DirectoryType
 		}

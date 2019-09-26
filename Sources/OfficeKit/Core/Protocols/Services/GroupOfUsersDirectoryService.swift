@@ -33,7 +33,7 @@ public protocol GroupOfUsersDirectoryService : UserDirectoryService, GroupOfUser
 public protocol GroupOfUsersDirectoryServiceInit {
 	
 	static var configType: OfficeKitServiceConfigInit.Type {get}
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyGroupOfUsersDirectoryService?
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyGroupOfUsersDirectoryService?
 	
 }
 
@@ -43,8 +43,13 @@ public extension GroupOfUsersDirectoryService {
 		return ConfigType.self
 	}
 	
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyGroupOfUsersDirectoryService? {
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyGroupOfUsersDirectoryService? {
 		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unboxed() else {return nil}
+		
+		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unboxed() as Self? }).first(where: { $0.config.serviceId == c.serviceId }) {
+			return alreadyInstantiated.erased()
+		}
+		
 		return self.init(config: c, globalConfig: gc).erased()
 	}
 	

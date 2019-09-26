@@ -46,18 +46,27 @@ extension OfficeKitService {
 public protocol OfficeKitServiceInit {
 	
 	static var configType: OfficeKitServiceConfigInit.Type {get}
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyOfficeKitService?
+	/* The service provider does not have enough info to do the service
+	 * de-duplication. We have to do it in the implementation of this method, and
+	 * of all the other *Init protocols. Hence the cachedServices argument. */
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyOfficeKitService?
 	
 }
 
+/* Implementation of OfficeKitServiceInit */
 public extension OfficeKitService {
 	
 	static var configType: OfficeKitServiceConfigInit.Type {
 		return ConfigType.self
 	}
 	
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyOfficeKitService? {
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyOfficeKitService? {
 		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unboxed() else {return nil}
+		
+		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unboxed() as Self? }).first(where: { $0.config.serviceId == c.serviceId }) {
+			return alreadyInstantiated.erased()
+		}
+		
 		return self.init(config: c, globalConfig: gc).erased()
 	}
 	

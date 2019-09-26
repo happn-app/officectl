@@ -39,8 +39,14 @@ class ServicesProviderTests : XCTestCase {
 		let _: LDAPService = try servicesProvider.getUserDirectoryService(id: ldapConfForTests.serviceId)
 	}
 	
-	func testFetchLDAPConfAsAny() throws {
+	func testFetchLDAPConfAsAnyUserDirectoryService() throws {
 		let _: AnyUserDirectoryService = try servicesProvider.getUserDirectoryService(id: ldapConfForTests.serviceId)
+	}
+	
+	func testFetchLDAPConfAsAnyUserDirectoryServiceWithGetService() throws {
+		/* The service has to be fetched once before with the correct type. */
+		let _ = try servicesProvider.getUserDirectoryService(id: ldapConfForTests.serviceId)
+		let _: AnyUserDirectoryService = try servicesProvider.getService(id: ldapConfForTests.serviceId)
 	}
 	
 	func testFetchLDAPConfAsGenericConfAndSpecificConfGivesEqualUnboxedObjects() throws {

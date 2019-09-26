@@ -157,7 +157,7 @@ extension UserDirectoryService {
 public protocol UserDirectoryServiceInit {
 	
 	static var configType: OfficeKitServiceConfigInit.Type {get}
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyUserDirectoryService?
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyUserDirectoryService?
 	
 }
 
@@ -167,8 +167,13 @@ public extension UserDirectoryService {
 		return ConfigType.self
 	}
 	
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyUserDirectoryService? {
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyUserDirectoryService? {
 		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unboxed() else {return nil}
+		
+		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unboxed() as Self? }).first(where: { $0.config.serviceId == c.serviceId }) {
+			return alreadyInstantiated.erased()
+		}
+		
 		return self.init(config: c, globalConfig: gc).erased()
 	}
 	

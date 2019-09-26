@@ -96,7 +96,7 @@ extension DirectoryAuthenticatorService {
 	}
 	
 	public func unboxed<DirectoryType : DirectoryAuthenticatorService>() -> DirectoryType? {
-		guard let anyAuth = self as? AnyDirectoryAuthenticatorService else {
+		guard let anyAuth = self as? AnyDirectoryAuthenticatorService, !(DirectoryType.self is AnyDirectoryAuthenticatorService.Type) else {
 			/* Nothing to unbox, just return self */
 			return self as? DirectoryType
 		}
