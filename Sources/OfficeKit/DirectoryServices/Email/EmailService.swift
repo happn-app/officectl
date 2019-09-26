@@ -27,7 +27,7 @@ public final class EmailService : UserDirectoryService {
 		globalConfig = gc
 	}
 	
-	public func shortDescription(from user: EmailUser) -> String {
+	public func shortDescription(fromUser user: EmailUser) -> String {
 		return user.userId.stringValue
 	}
 	

@@ -29,7 +29,7 @@ public final class HappnService : UserDirectoryService {
 		globalConfig = gc
 	}
 	
-	public func shortDescription(from user: HappnUser) -> String {
+	public func shortDescription(fromUser user: HappnUser) -> String {
 		return user.login ?? "<null user id>"
 	}
 	

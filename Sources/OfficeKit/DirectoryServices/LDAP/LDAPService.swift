@@ -45,7 +45,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		globalConfig = gc
 	}
 	
-	public func shortDescription(from user: LDAPInetOrgPersonWithObject) -> String {
+	public func shortDescription(fromUser user: LDAPInetOrgPersonWithObject) -> String {
 		return user.userId.stringValue
 	}
 	

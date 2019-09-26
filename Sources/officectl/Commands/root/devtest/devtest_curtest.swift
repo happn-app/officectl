@@ -17,16 +17,11 @@ import URLRequestOperation
 
 
 func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-//	return context.container.future()
-	
 	let sProvider = try context.container.make(OfficeKitServiceProvider.self)
-	let hService: HappnService = try sProvider.getDirectoryService(id: nil)
-	let eService: EmailService = try sProvider.getDirectoryService(id: nil)
+	let services = try sProvider.getAllServices()
+	print(services)
 	
-	let u = try! hService.logicalUser(fromEmail: Email(string: "ldap.test.1@happn.fr")!, hints: [.firstName: "LDAP", .lastName: "Not a Test (But a Test Quand Même)", .password: "toto"], emailService: eService)
-	return try hService.createUser(u, on: context.container).map{ _ in }
-//	return try hService.existingUser(fromUserId: "ldap.test.1@happn.fr", propertiesToFetch: [], on: context.container)
-//	.flatMap{ u in try hService.deleteUser(u!, on: context.container) }
+	return context.container.future()
 	
 	/* List all GitHub project’s hooks */
 //	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)

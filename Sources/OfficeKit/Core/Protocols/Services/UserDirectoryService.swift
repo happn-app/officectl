@@ -13,23 +13,12 @@ import Service
 
 
 
-/* TODO: One day, split the Service part of the UserDirectoryService. */
-public protocol UserDirectoryService : class, DirectoryServiceInit, Hashable {
+public protocol UserDirectoryService : OfficeKitService, UserDirectoryServiceInit {
 	
-	/** The id of the linked provider, e.g. "internal_openldap". External
-	provider ids (not built-in OfficeKit) must not have the “internal_” prefix. */
-	static var providerId: String {get}
-	
-	associatedtype ConfigType : OfficeKitServiceConfig
 	associatedtype UserType : DirectoryUser
 	
-	var config: ConfigType {get}
-	var globalConfig: GlobalConfig {get}
-	
-	init(config c: ConfigType, globalConfig gc: GlobalConfig)
-	
 	/** Convert the user to a user printable string. Mostly used for logging. */
-	func shortDescription(from user: UserType) -> String
+	func shortDescription(fromUser user: UserType) -> String
 	
 	/** Empty ids are **not supported**. There are no other restrictions. */
 	func string(fromUserId userId: UserType.IdType) -> String
@@ -134,7 +123,7 @@ extension UserDirectoryService {
 	}
 	
 	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: String?] = [:], servicesProvider: OfficeKitServiceProvider) throws -> UserType {
-		return try logicalUser(fromEmail: email, hints: hints, emailService: servicesProvider.getDirectoryService(id: nil))
+		return try logicalUser(fromEmail: email, hints: hints, emailService: servicesProvider.getUserDirectoryService(id: nil))
 	}
 	
 	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: String?] = [:], emailService: EmailService) throws -> UserType {
@@ -160,21 +149,12 @@ extension UserDirectoryService {
 }
 
 
-extension UserDirectoryService {
-	
-	public static func ==(_ lhs: Self, _ rhs: Self) -> Bool {
-		return lhs.config.serviceId == rhs.config.serviceId
-	}
-	
-	public func hash(into hasher: inout Hasher) {
-		hasher.combine(config.serviceId)
-	}
-	
-}
 
+/* **********************
+   MARK: - Erasure Things
+   ********************** */
 
-
-public protocol DirectoryServiceInit {
+public protocol UserDirectoryServiceInit {
 	
 	static var configType: OfficeKitServiceConfigInit.Type {get}
 	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig) -> AnyUserDirectoryService?

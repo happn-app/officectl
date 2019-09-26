@@ -42,7 +42,7 @@ public final class GoogleService : UserDirectoryService {
 		globalConfig = gc
 	}
 	
-	public func shortDescription(from user: GoogleUser) -> String {
+	public func shortDescription(fromUser user: GoogleUser) -> String {
 		return user.primaryEmail.stringValue
 	}
 	

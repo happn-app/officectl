@@ -58,8 +58,8 @@ final class WebPasswordResetController {
 	
 	private func multiServicesPasswordReset(for email: Email, container: Container) throws -> EventLoopFuture<MultiServicesPasswordReset> {
 		let sProvider = try container.make(OfficeKitServiceProvider.self)
-		let emailService: EmailService = try sProvider.getDirectoryService(id: nil)
-		let services = try sProvider.getAllServices().filter{ $0.supportsPasswordChange }
+		let emailService: EmailService = try sProvider.getUserDirectoryService(id: nil)
+		let services = try sProvider.getAllUserDirectoryServices().filter{ $0.supportsPasswordChange }
 		
 		let emailUser = try emailService.logicalUser(fromUserId: email)
 		return try MultiServicesPasswordReset.fetch(from: AnyDSUIdPair(service: emailService.erased(), user: emailUser.erased().userId), in: services, on: container)

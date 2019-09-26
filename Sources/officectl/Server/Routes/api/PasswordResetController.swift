@@ -32,7 +32,7 @@ class PasswordResetController {
 		}
 		
 		let sProvider = try req.make(OfficeKitServiceProvider.self)
-		return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllServices(), on: req)
+		return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), on: req)
 		.map{ passwordResets in ApiResponse.data(ApiPasswordReset(requestedUserId: dsuIdPair.taggedId, multiPasswordResets: passwordResets, environment: req.environment)) }
 	}
 	
@@ -71,7 +71,7 @@ class PasswordResetController {
 		.map{ verifiedOldPass in guard verifiedOldPass else {throw Abort(.forbidden)} }
 		.flatMap{ _ in
 			/* The password of the user is verified. Let’s fetch the resets! */
-			return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllServices(), on: req)
+			return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), on: req)
 		}
 		.map{ resets in
 			/* Then launch them. */

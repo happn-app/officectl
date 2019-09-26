@@ -41,8 +41,8 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 	
 	try context.container.make(AuditLogger.self).log(action: "Computing sync from service \(fromId) to \(toIds.joined(separator: ",")).", source: .cli)
 	
-	let fromDirectory = try officeKitServiceProvider.getDirectoryService(id: fromId)
-	let toDirectories = try toIds.map{ try officeKitServiceProvider.getDirectoryService(id: String($0)) }
+	let fromDirectory = try officeKitServiceProvider.getUserDirectoryService(id: fromId)
+	let toDirectories = try toIds.map{ try officeKitServiceProvider.getUserDirectoryService(id: String($0)) }
 	
 	return try MultiServicesUser.fetchAll(in: Set([fromDirectory] + toDirectories), on: context.container).map{
 		let (users, fetchErrorsByService) = $0
@@ -67,12 +67,12 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 			if !plan.usersToCreate.isEmpty {
 				printedSomething = true
 				textPlan += ConsoleText.newLine + "   - Users creation:" + ConsoleText.newLine
-				plan.usersToCreate.forEach{ textPlan += "      \(plan.service.shortDescription(from: $0))".consoleText() + ConsoleText.newLine }
+				plan.usersToCreate.forEach{ textPlan += "      \(plan.service.shortDescription(fromUser: $0))".consoleText() + ConsoleText.newLine }
 			}
 			if !plan.usersToDelete.isEmpty {
 				printedSomething = true
 				textPlan += ConsoleText.newLine + "   - Users deletion (currently not implemented):" + ConsoleText.newLine
-				plan.usersToDelete.forEach{ textPlan += "      \(plan.service.shortDescription(from: $0))".consoleText() + ConsoleText.newLine }
+				plan.usersToDelete.forEach{ textPlan += "      \(plan.service.shortDescription(fromUser: $0))".consoleText() + ConsoleText.newLine }
 			}
 			if !printedSomething {
 				textPlan += "   <Nothing to do for this service>" + ConsoleText.newLine
@@ -92,7 +92,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext) thr
 		let futures = plans.flatMap{ plan in
 			plan.usersToCreate.map{ user -> Future<UserSyncResult> in
 				let serviceId = plan.service.config.serviceId
-				let userStr = plan.service.shortDescription(from: user)
+				let userStr = plan.service.shortDescription(fromUser: user)
 				do {
 					/* Create the user */
 					return try plan.service.createUser(user, on: context.container)

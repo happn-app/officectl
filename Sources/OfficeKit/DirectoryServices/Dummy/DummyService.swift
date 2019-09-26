@@ -67,7 +67,7 @@ public final class DummyService : UserDirectoryService {
 		globalConfig = gc
 	}
 	
-	public func shortDescription(from user: DummyServiceUser) -> String {
+	public func shortDescription(fromUser user: DummyServiceUser) -> String {
 		return "<ERROR>"
 	}
 	

@@ -40,7 +40,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 //		jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
 	}
 	
-	public func shortDescription(from user: DirectoryUserWrapper) -> String {
+	public func shortDescription(fromUser user: DirectoryUserWrapper) -> String {
 		return "\(user.userId)"
 	}
 	

@@ -17,8 +17,8 @@ public struct OfficeKitConfig {
 	static public var logger: Logger?
 	
 	#warning("TODO: Allow clients of OfficeKit to register their own services!")
-	static public private(set) var registeredServices: [String : DirectoryServiceInit.Type] = {
-		var res: [String : DirectoryServiceInit.Type] = [
+	static public private(set) var registeredServices: [String : OfficeKitServiceInit.Type] = {
+		var res: [String : OfficeKitServiceInit.Type] = [
 			EmailService.providerId:               EmailService.self,
 			ExternalDirectoryServiceV1.providerId: ExternalDirectoryServiceV1.self,
 			GitHubService.providerId:              GitHubService.self,

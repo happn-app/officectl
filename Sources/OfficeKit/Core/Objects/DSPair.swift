@@ -118,7 +118,7 @@ public struct DSUIdPair<DirectoryServiceType : UserDirectoryService> : Hashable 
 	}
 	
 	public init(taggedId tid: TaggedId, servicesProvider: OfficeKitServiceProvider) throws {
-		service = try servicesProvider.getDirectoryService(id: tid.tag)
+		service = try servicesProvider.getUserDirectoryService(id: tid.tag)
 		userId = try service.userId(fromString: tid.id)
 		
 		serviceId = service.config.serviceId

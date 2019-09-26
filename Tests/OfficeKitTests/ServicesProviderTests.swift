@@ -18,7 +18,14 @@ class ServicesProviderTests : XCTestCase {
 	override func setUp() {
 		super.setUp()
 		
-		let config = try! OfficeKitConfig(globalConfig: globalConf, serviceConfigs: [ldapConfForTests.erased()], authServiceId: ldapConfForTests.serviceId)
+		let fakeHappnConfig = HappnServiceConfig(
+			providerId: HappnService.providerId,
+			serviceId: "hppn",
+			serviceName: "happn",
+			mergePriority: nil,
+			connectorSettings: HappnConnector.Settings(baseURL: URL(string: "https://happn.invalid")!, clientId: "fake", clientSecret: "fake", username: "fake@example.org", password: "fake")
+		)
+		let config = try! OfficeKitConfig(globalConfig: globalConf, serviceConfigs: [ldapConfForTests.erased(), fakeHappnConfig.erased()], authServiceId: ldapConfForTests.serviceId)
 		servicesProvider = OfficeKitServiceProvider(config: config)
 	}
 	
@@ -28,20 +35,18 @@ class ServicesProviderTests : XCTestCase {
 		servicesProvider = nil
 	}
 	
-	func testFetchLDAPConf() {
-		do {
-			let _: LDAPService = try servicesProvider.getDirectoryService(id: ldapConfForTests.serviceId)
-		} catch {
-			XCTFail("Cannot fetch LDAP service with id")
-		}
+	func testFetchLDAPConf() throws {
+		let _: LDAPService = try servicesProvider.getUserDirectoryService(id: ldapConfForTests.serviceId)
 	}
 	
-	func testFetchLDAPConfAsAny() {
-		do {
-			let _: AnyUserDirectoryService = try servicesProvider.getDirectoryService(id: ldapConfForTests.serviceId)
-		} catch {
-			XCTFail("Cannot fetch erased LDAP service with id")
-		}
+	func testFetchLDAPConfAsAny() throws {
+		let _: AnyUserDirectoryService = try servicesProvider.getUserDirectoryService(id: ldapConfForTests.serviceId)
+	}
+	
+	func testFetchLDAPConfAsGenericConfAndSpecificConfGivesEqualUnboxedObjects() throws {
+		let s1: LDAPService = try servicesProvider.getService(id: ldapConfForTests.serviceId)
+		let s2: LDAPService = try servicesProvider.getUserDirectoryService(id: ldapConfForTests.serviceId)
+		XCTAssert(s1 === s2)
 	}
 	
 }

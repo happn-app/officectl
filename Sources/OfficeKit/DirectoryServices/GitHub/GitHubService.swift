@@ -29,7 +29,7 @@ public final class GitHubService : UserDirectoryService {
 		globalConfig = gc
 	}
 	
-	public func shortDescription(from user: GitHubUser) -> String {
+	public func shortDescription(fromUser user: GitHubUser) -> String {
 		return user.userId
 	}
 	

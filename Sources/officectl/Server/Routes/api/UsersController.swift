@@ -33,12 +33,12 @@ class UsersController {
 		
 		let serviceIdsStr: String? = req.query["service_ids"]
 		let serviceIds = serviceIdsStr?.split(separator: ",").map(String.init)
-		let services = try Set(serviceIds.flatMap{ try $0.map{ try sProvider.getDirectoryService(id: $0) } } ?? Array(sProvider.getAllServices()))
+		let services = try Set(serviceIds.flatMap{ try $0.map{ try sProvider.getUserDirectoryService(id: $0) } } ?? Array(sProvider.getAllUserDirectoryServices()))
 		
 		return try MultiServicesUser.fetchAll(in: services, on: req).map{
 			let (users, fetchErrorsByService) = $0
 			let fetchApiErrorsByService = fetchErrorsByService.mapValues{ ApiError(error: $0, environment: req.environment) }
-			let orderedServices = try officectlConfig.officeKitConfig.orderedServiceConfigs.map{ try sProvider.getDirectoryService(id: $0.serviceId) }
+			let orderedServices = try officectlConfig.officeKitConfig.orderedServiceConfigs.map{ try sProvider.getUserDirectoryService(id: $0.serviceId) }
 			return try ApiResponse.data(ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchApiErrorsByService.mapKeys{ $0.config.serviceId }, result: users.map{
 				try ApiUser(multiUsers: $0, orderedServices: orderedServices)
 			}.sorted{ ($0.lastName ?? "").localizedCompare($1.lastName ?? "") != .orderedDescending }))
@@ -76,9 +76,9 @@ class UsersController {
 	private func getUserNoAuthCheck(userId: AnyDSUIdPair, container: Container) throws -> Future<ApiResponse<ApiUserSearchResult>> {
 		let sProvider = try container.make(OfficeKitServiceProvider.self)
 		let officeKitConfig = try container.make(OfficectlConfig.self).officeKitConfig
-		return try MultiServicesUser.fetch(from: userId, in: sProvider.getAllServices(), on: container)
+		return try MultiServicesUser.fetch(from: userId, in: sProvider.getAllUserDirectoryServices(), on: container)
 		.map{ multiUser in
-			let orderedServices = try officeKitConfig.orderedServiceConfigs.map{ try sProvider.getDirectoryService(id: $0.serviceId) }
+			let orderedServices = try officeKitConfig.orderedServiceConfigs.map{ try sProvider.getUserDirectoryService(id: $0.serviceId) }
 			return try ApiResponse.data(
 				ApiUserSearchResult(
 					request: userId.taggedId,

@@ -13,11 +13,11 @@ import Foundation
  *
  * public struct AnyDirectoryUser : DirectoryUser {
  *    public init<U : DirectoryUser>(_ user: U) {
- *       erasureForId = { AnyDirectoryUserId(user.id) }
+ *       erasureForId = { AnyId(user.id) }
  *       erasureForEmail = { user.email }
  *       ...
  *    }
- *    public var id: AnyDirectoryUserId {
+ *    public var id: AnyId {
  *       return erasureForId()
  *    }
  *    public var email: RemoteProperty<Email?> {
@@ -30,8 +30,8 @@ import Foundation
 
 private protocol DirectoryUserBox {
 	
-	var userId: AnyDirectoryUserId {get}
-	var persistentId: RemoteProperty<AnyDirectoryUserId> {get}
+	var userId: AnyId {get}
+	var persistentId: RemoteProperty<AnyId> {get}
 	
 	var identifyingEmail: RemoteProperty<Email?> {get}
 	var otherEmails: RemoteProperty<[Email]> {get}
@@ -46,16 +46,12 @@ private struct ConcreteUserBox<Base : DirectoryUser> : DirectoryUserBox {
 	
 	let originalUser: Base
 	
-	var userId: AnyDirectoryUserId {
-		return AnyDirectoryUserId(originalUser.userId)
+	var userId: AnyId {
+		return AnyId(originalUser.userId)
 	}
 	
-	var persistentId: RemoteProperty<AnyDirectoryUserId> {
-		switch originalUser.persistentId {
-		case .set(let pId): return .set(AnyDirectoryUserId(pId))
-		case .unset:        return .unset
-		case .unsupported:  return .unsupported
-		}
+	var persistentId: RemoteProperty<AnyId> {
+		return originalUser.persistentId.map{ AnyId($0) }
 	}
 	
 	var identifyingEmail: RemoteProperty<Email?> {
@@ -80,18 +76,18 @@ private struct ConcreteUserBox<Base : DirectoryUser> : DirectoryUserBox {
 
 public struct AnyDirectoryUser : DirectoryUser {
 	
-	public typealias IdType = AnyDirectoryUserId
-	public typealias PersistentIdType = AnyDirectoryUserId
+	public typealias IdType = AnyId
+	public typealias PersistentIdType = AnyId
 	
 	public init<U : DirectoryUser>(_ user: U) {
 		box = ConcreteUserBox(originalUser: user)
 	}
 	
-	public var userId: AnyDirectoryUserId {
+	public var userId: AnyId {
 		return box.userId
 	}
 	
-	public var persistentId: RemoteProperty<AnyDirectoryUserId> {
+	public var persistentId: RemoteProperty<AnyId> {
 		return box.persistentId
 	}
 	

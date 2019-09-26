@@ -27,7 +27,7 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 	}
 	
 	let sProvider = try context.container.make(OfficeKitServiceProvider.self)
-	let services = try Array(sProvider.getDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsUserCreation })
+	let services = try Array(sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsUserCreation })
 	guard !services.isEmpty else {
 		context.console.warning("Nothing to do.")
 		return context.container.future()
@@ -66,7 +66,7 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 						return
 							ConsoleText.newLine +
 							ConsoleText(stringLiteral: "   - \(service.config.serviceId) (\(service.config.serviceName)): ") +
-							ConsoleText(stringLiteral: service.shortDescription(from: user))
+							ConsoleText(stringLiteral: service.shortDescription(fromUser: user))
 					}
 				).reduce(ConsoleText(), +) + ConsoleText.newLine +
 			ConsoleText.newLine + ConsoleText(stringLiteral: "Is this ok?")
@@ -103,7 +103,7 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 			let serviceId = service.config.serviceId
 			switch result {
 			case .failure(_ as SkippedUser): (/* nop! (The user is skipped; this is a “normal” error and the error is shown before.) */)
-			case .success(let user):         context.console.info("✅ \(serviceId): \(service.shortDescription(from: user))")
+			case .success(let user):         context.console.info("✅ \(serviceId): \(service.shortDescription(fromUser: user))")
 			case .failure(let error):        context.console.info("🛑 \(serviceId): \(error)")
 			}
 		}

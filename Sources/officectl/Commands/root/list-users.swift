@@ -17,7 +17,7 @@ import OfficeKit
 func listUsers(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
 	let serviceId = f.getString(name: "service-id")
 	let serviceProvider: OfficeKitServiceProvider = try context.container.make()
-	let service = try serviceProvider.getDirectoryService(id: serviceId)
+	let service = try serviceProvider.getUserDirectoryService(id: serviceId)
 	
 	let includeInactiveUsers = f.getBool(name: "include-suspended-users")!
 	
@@ -48,10 +48,10 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 
 private func getUsersList(googleService: GoogleService, includeInactiveUsers: Bool, container: Container) throws -> Future<[String]> {
 	return try googleService.listAllUsers(on: container)
-	.map{ $0.map{ googleService.shortDescription(from: $0) } }
+	.map{ $0.map{ googleService.shortDescription(fromUser: $0) } }
 }
 
 private func getUsersList(openDirectoryService: OpenDirectoryService, includeInactiveUsers: Bool, container: Container) throws -> Future<[String]> {
 	return try openDirectoryService.listAllUsers(on: container)
-	.map{ $0.map{ openDirectoryService.shortDescription(from: $0) } }
+	.map{ $0.map{ openDirectoryService.shortDescription(fromUser: $0) } }
 }

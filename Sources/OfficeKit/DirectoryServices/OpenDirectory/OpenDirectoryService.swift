@@ -46,7 +46,7 @@ public final class OpenDirectoryService : UserDirectoryService {
 		globalConfig = gc
 	}
 	
-	public func shortDescription(from user: ODRecordOKWrapper) -> String {
+	public func shortDescription(fromUser user: ODRecordOKWrapper) -> String {
 		return user.userId.stringValue
 	}
 	
