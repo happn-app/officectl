@@ -57,7 +57,7 @@ public class AnyId : Hashable {
 
 extension Hashable {
 	
-	public func erased() -> AnyId {
+	public func erase() -> AnyId {
 		if let erased = self as? AnyId {
 			return erased
 		}
@@ -65,13 +65,13 @@ extension Hashable {
 		return AnyId(self)
 	}
 	
-	public func unboxed<UserIdType : Hashable>() -> UserIdType? {
+	public func unbox<UserIdType : Hashable>() -> UserIdType? {
 		guard let anyUserId = self as? AnyId else {
 			/* Nothing to unbox, just return self */
 			return self as? UserIdType
 		}
 		
-		return (anyUserId.box as? ConcreteIdBox<UserIdType>)?.originalUserId ?? (anyUserId.box as? ConcreteIdBox<AnyId>)?.originalUserId.unboxed()
+		return (anyUserId.box as? ConcreteIdBox<UserIdType>)?.originalUserId ?? (anyUserId.box as? ConcreteIdBox<AnyId>)?.originalUserId.unbox()
 	}
 	
 }

@@ -58,14 +58,14 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 	}
 	
 	func shortDescription(fromUser user: AnyDirectoryUser) -> String {
-		guard let u: Base.UserType = user.unboxed() else {
+		guard let u: Base.UserType = user.unbox() else {
 			return "UnknownAnyDirectoryUser<\(user)>"
 		}
 		return originalDirectory.shortDescription(fromUser: u)
 	}
 	
 	func string(fromUserId userId: AnyId) -> String {
-		guard let typedId: Base.UserType.IdType = userId.unboxed() else {
+		guard let typedId: Base.UserType.IdType = userId.unbox() else {
 			OfficeKitConfig.logger?.error("Asked to convert a user id to a string for a user id of unknown type in erasure: \(userId)")
 			/* The source user type is unknown, so we return a purposefully invalid
 			 * id. This is not ideal… */
@@ -79,7 +79,7 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 	}
 	
 	func string(fromPersistentUserId pId: AnyId) -> String {
-		guard let typedId: Base.UserType.PersistentIdType = pId.unboxed() else {
+		guard let typedId: Base.UserType.PersistentIdType = pId.unbox() else {
 			OfficeKitConfig.logger?.error("Asked to convert a persistend id to a string for a persistent id of unknown type in erasure: \(pId)")
 			/* The source user type is unknown, so we return a purposefully invalid
 			 * id. This is not ideal… */
@@ -93,64 +93,64 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 	}
 	
 	func json(fromUser user: AnyDirectoryUser) throws -> JSON {
-		guard let u: Base.UserType = user.unboxed() else {
+		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user (\(user)) from which to create a JSON.")
 		}
 		return try originalDirectory.json(fromUser: u)
 	}
 	
 	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser {
-		return try originalDirectory.logicalUser(fromWrappedUser: userWrapper).erased()
+		return try originalDirectory.logicalUser(fromWrappedUser: userWrapper).erase()
 	}
 	
 	func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout AnyDirectoryUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
-		guard var u: Base.UserType = user.unboxed() else {
+		guard var u: Base.UserType = user.unbox() else {
 			OfficeKitConfig.logger?.error("Asked to apply hints to a user of unknown type in erasure: \(user)")
 			/* The source user type is unknown, so we do nothing. */
 			return []
 		}
 		let ret = originalDirectory.applyHints(hints, toUser: &u, allowUserIdChange: allowUserIdChange)
-		user = u.erased()
+		user = u.erase()
 		return ret
 	}
 	
 	func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
-		guard let typedId: Base.UserType.PersistentIdType = pId.unboxed() else {
+		guard let typedId: Base.UserType.PersistentIdType = pId.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid persistent user id (\(pId)) for fetching user with directory service of type \(Base.self)")
 		}
-		return try originalDirectory.existingUser(fromPersistentId: typedId, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
+		return try originalDirectory.existingUser(fromPersistentId: typedId, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erase() }
 	}
 	
 	func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser?> {
-		guard let typedId: Base.UserType.IdType = uId.unboxed() else {
+		guard let typedId: Base.UserType.IdType = uId.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user id (\(uId)) for fetching user with directory service of type \(Base.self)")
 		}
-		return try originalDirectory.existingUser(fromUserId: typedId, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erased() }
+		return try originalDirectory.existingUser(fromUserId: typedId, propertiesToFetch: propertiesToFetch, on: container).map{ $0?.erase() }
 	}
 	
 	func listAllUsers(on container: Container) throws -> Future<[AnyDirectoryUser]> {
-		return try originalDirectory.listAllUsers(on : container).map{ $0.map{ $0.erased() } }
+		return try originalDirectory.listAllUsers(on : container).map{ $0.map{ $0.erase() } }
 	}
 	
 	var supportsUserCreation: Bool {return originalDirectory.supportsUserCreation}
 	func createUser(_ user: AnyDirectoryUser, on container: Container) throws -> Future<AnyDirectoryUser> {
-		guard let u: Base.UserType = user.unboxed() else {
+		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user to create (\(user)) for directory service of type \(Base.self)")
 		}
-		return try originalDirectory.createUser(u, on: container).map{ $0.erased() }
+		return try originalDirectory.createUser(u, on: container).map{ $0.erase() }
 	}
 	
 	var supportsUserUpdate: Bool {return originalDirectory.supportsUserUpdate}
 	func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> Future<AnyDirectoryUser> {
-		guard let u: Base.UserType = user.unboxed() else {
+		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user to update (\(user)) for directory service of type \(Base.self)")
 		}
-		return try originalDirectory.updateUser(u, propertiesToUpdate: propertiesToUpdate, on: container).map{ $0.erased() }
+		return try originalDirectory.updateUser(u, propertiesToUpdate: propertiesToUpdate, on: container).map{ $0.erase() }
 	}
 	
 	var supportsUserDeletion: Bool {return originalDirectory.supportsUserDeletion}
 	func deleteUser(_ user: AnyDirectoryUser, on container: Container) throws -> Future<Void> {
-		guard let u: Base.UserType = user.unboxed() else {
+		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user to delete (\(user)) for directory service of type \(Base.self)")
 		}
 		return try originalDirectory.deleteUser(u, on: container)
@@ -158,7 +158,7 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 	
 	var supportsPasswordChange: Bool {return originalDirectory.supportsPasswordChange}
 	func changePasswordAction(for user: AnyDirectoryUser, on container: Container) throws -> ResetPasswordAction {
-		guard let u: Base.UserType = user.unboxed() else {
+		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user (\(user)) to retrieve password action for directory service of type \(Base.self)")
 		}
 		return try originalDirectory.changePasswordAction(for: u, on: container)
@@ -253,7 +253,7 @@ public class AnyUserDirectoryService : AnyOfficeKitService, UserDirectoryService
 
 extension UserDirectoryService {
 	
-	public func erased() -> AnyUserDirectoryService {
+	public func erase() -> AnyUserDirectoryService {
 		if let erased = self as? AnyUserDirectoryService {
 			return erased
 		}
@@ -261,13 +261,13 @@ extension UserDirectoryService {
 		return AnyUserDirectoryService(uds: self)
 	}
 	
-	public func unboxed<DirectoryType : UserDirectoryService>() -> DirectoryType? {
+	public func unbox<DirectoryType : UserDirectoryService>() -> DirectoryType? {
 		guard let anyService = self as? AnyUserDirectoryService, !(DirectoryType.self is AnyUserDirectoryService.Type) else {
 			/* Nothing to unbox, just return self */
 			return self as? DirectoryType
 		}
 		
-		return (anyService.box as? ConcreteUserDirectoryBox<DirectoryType>)?.originalDirectory ?? (anyService.box as? ConcreteUserDirectoryBox<AnyUserDirectoryService>)?.originalDirectory.unboxed()
+		return (anyService.box as? ConcreteUserDirectoryBox<DirectoryType>)?.originalDirectory ?? (anyService.box as? ConcreteUserDirectoryBox<AnyUserDirectoryService>)?.originalDirectory.unbox()
 	}
 	
 }

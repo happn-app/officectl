@@ -120,7 +120,7 @@ public struct AnyOfficeKitServiceConfig : OfficeKitServiceConfig {
 
 extension OfficeKitServiceConfig {
 	
-	public func erased() -> AnyOfficeKitServiceConfig {
+	public func erase() -> AnyOfficeKitServiceConfig {
 		if let erased = self as? AnyOfficeKitServiceConfig {
 			return erased
 		}
@@ -128,13 +128,13 @@ extension OfficeKitServiceConfig {
 		return AnyOfficeKitServiceConfig(self)
 	}
 	
-	public func unboxed<ConfigType : OfficeKitServiceConfig>() -> ConfigType? {
+	public func unbox<ConfigType : OfficeKitServiceConfig>() -> ConfigType? {
 		guard let anyConfig = self as? AnyOfficeKitServiceConfig else {
 			/* Nothing to unbox, just return self */
 			return self as? ConfigType
 		}
 		
-		return (anyConfig.box as? ConcreteOfficeKitServiceConfigBox<ConfigType>)?.originalConfig ?? (anyConfig.box as? ConcreteOfficeKitServiceConfigBox<AnyOfficeKitServiceConfig>)?.originalConfig.unboxed()
+		return (anyConfig.box as? ConcreteOfficeKitServiceConfigBox<ConfigType>)?.originalConfig ?? (anyConfig.box as? ConcreteOfficeKitServiceConfigBox<AnyOfficeKitServiceConfig>)?.originalConfig.unbox()
 	}
 	
 }

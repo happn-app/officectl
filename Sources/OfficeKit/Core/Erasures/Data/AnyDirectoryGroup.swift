@@ -83,7 +83,7 @@ public struct AnyDirectoryGroup : DirectoryGroup {
 
 extension DirectoryGroup {
 	
-	public func erased() -> AnyDirectoryGroup {
+	public func erase() -> AnyDirectoryGroup {
 		if let erased = self as? AnyDirectoryGroup {
 			return erased
 		}
@@ -91,13 +91,13 @@ extension DirectoryGroup {
 		return AnyDirectoryGroup(self)
 	}
 	
-	public func unboxed<GroupType : DirectoryGroup>() -> GroupType? {
+	public func unbox<GroupType : DirectoryGroup>() -> GroupType? {
 		guard let anyGroup = self as? AnyDirectoryGroup else {
 			/* Nothing to unbox, just return self */
 			return self as? GroupType
 		}
 		
-		return (anyGroup.box as? ConcreteDirectoryBox<GroupType>)?.originalGroup ?? (anyGroup.box as? ConcreteDirectoryBox<AnyDirectoryGroup>)?.originalGroup.unboxed()
+		return (anyGroup.box as? ConcreteDirectoryBox<GroupType>)?.originalGroup ?? (anyGroup.box as? ConcreteDirectoryBox<AnyDirectoryGroup>)?.originalGroup.unbox()
 	}
 	
 }

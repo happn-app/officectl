@@ -25,7 +25,7 @@ class ServicesProviderTests : XCTestCase {
 			mergePriority: nil,
 			connectorSettings: HappnConnector.Settings(baseURL: URL(string: "https://happn.invalid")!, clientId: "fake", clientSecret: "fake", username: "fake@example.org", password: "fake")
 		)
-		let config = try! OfficeKitConfig(globalConfig: globalConf, serviceConfigs: [ldapConfForTests.erased(), fakeHappnConfig.erased()], authServiceId: ldapConfForTests.serviceId)
+		let config = try! OfficeKitConfig(globalConfig: globalConf, serviceConfigs: [ldapConfForTests.erase(), fakeHappnConfig.erase()], authServiceId: ldapConfForTests.serviceId)
 		servicesProvider = OfficeKitServiceProvider(config: config)
 	}
 	

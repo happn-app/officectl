@@ -52,7 +52,7 @@ public protocol OfficeKitServiceConfigInit {
 public extension OfficeKitServiceConfig {
 	
 	static func erasedConfig(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws -> AnyOfficeKitServiceConfig {
-		return try self.init(providerId: pId, serviceId: id, serviceName: name, mergePriority: p, keyedConfig: keyedConfig, pathsRelativeTo: baseURL).erased()
+		return try self.init(providerId: pId, serviceId: id, serviceName: name, mergePriority: p, keyedConfig: keyedConfig, pathsRelativeTo: baseURL).erase()
 	}
 	
 }

@@ -41,13 +41,13 @@ public extension DirectoryAuthenticatorService {
 	}
 	
 	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyDirectoryAuthenticatorService? {
-		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unboxed() else {return nil}
+		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unbox() else {return nil}
 		
-		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unboxed() as Self? }).first(where: { $0.config.serviceId == c.serviceId }) {
-			return alreadyInstantiated.erased()
+		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unbox() as Self? }).first(where: { $0.config.serviceId == c.serviceId }) {
+			return alreadyInstantiated.erase()
 		}
 		
-		return self.init(config: c, globalConfig: gc).erased()
+		return self.init(config: c, globalConfig: gc).erase()
 	}
 	
 }

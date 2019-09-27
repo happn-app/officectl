@@ -32,14 +32,14 @@ public struct DSUPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 	}
 	
 	public init?<SourceServiceType : UserDirectoryService>(service s: SourceServiceType, user u: SourceServiceType.UserType) {
-		guard let s: DirectoryServiceType = s.unboxed() else {
+		guard let s: DirectoryServiceType = s.unbox() else {
 			return nil
 		}
 		
-		guard let u: DirectoryServiceType.UserType = u.unboxed() else {
+		guard let u: DirectoryServiceType.UserType = u.unbox() else {
 			/* In theory we can fatalError here. However, because we’re a server
 			 * and must not crash, let’s play it safe. */
-			OfficeKitConfig.logger?.error("Got impossible situation where service is unboxed to \(DirectoryServiceType.self), but the user is not unboxed to this directory user type!")
+			OfficeKitConfig.logger?.error("Got impossible situation where service is unbox to \(DirectoryServiceType.self), but the user is not unbox to this directory user type!")
 			return nil
 		}
 		

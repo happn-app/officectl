@@ -62,7 +62,7 @@ final class WebPasswordResetController {
 		let services = try sProvider.getAllUserDirectoryServices().filter{ $0.supportsPasswordChange }
 		
 		let emailUser = try emailService.logicalUser(fromUserId: email)
-		return try MultiServicesPasswordReset.fetch(from: AnyDSUIdPair(service: emailService.erased(), user: emailUser.erased().userId), in: services, on: container)
+		return try MultiServicesPasswordReset.fetch(from: AnyDSUIdPair(service: emailService.erase(), user: emailUser.erase().userId), in: services, on: container)
 	}
 	
 	private func renderMultiServicesPasswordReset(_ multiPasswordReset: MultiServicesPasswordReset, for email: Email, view: ViewRenderer) -> Future<View> {

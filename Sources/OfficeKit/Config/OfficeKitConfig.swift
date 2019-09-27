@@ -134,13 +134,13 @@ public struct OfficeKitConfig {
 		
 		if let id = id {
 			let untypedConfig = try getServiceConfig(id: id)
-			guard let config: ConfigType = untypedConfig.unboxed() else {
+			guard let config: ConfigType = untypedConfig.unbox() else {
 				throw InvalidArgumentError(message: "Service config with id \(id) does not have expected type \(ConfigType.self).")
 			}
 			return config
 			
 		} else {
-			let configs = serviceConfigs.values.compactMap{ $0.unboxed() as ConfigType? }
+			let configs = serviceConfigs.values.compactMap{ $0.unbox() as ConfigType? }
 			guard let config = configs.onlyElement else {
 				throw InvalidArgumentError(message: "Asked to retrieve a service config of type \(ConfigType.self) with no id specified, but no or more service configs are present for this type.")
 			}

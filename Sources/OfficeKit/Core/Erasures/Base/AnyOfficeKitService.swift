@@ -44,7 +44,7 @@ private struct ConcreteOfficeKitBox<Base : OfficeKitService> : OfficeKitServiceB
 	}
 	
 	var config: AnyOfficeKitServiceConfig {
-		return originalService.config.erased()
+		return originalService.config.erase()
 	}
 	
 	var globalConfig: GlobalConfig {
@@ -96,7 +96,7 @@ public class AnyOfficeKitService : OfficeKitService {
 
 extension OfficeKitService {
 	
-	public func erased() -> AnyOfficeKitService {
+	public func erase() -> AnyOfficeKitService {
 		if let erased = self as? AnyOfficeKitService {
 			return erased
 		}
@@ -104,13 +104,13 @@ extension OfficeKitService {
 		return AnyOfficeKitService(s: self)
 	}
 	
-	public func unboxed<DirectoryType : OfficeKitService>() -> DirectoryType? {
+	public func unbox<DirectoryType : OfficeKitService>() -> DirectoryType? {
 		guard let anyService = self as? AnyOfficeKitService, !(DirectoryType.self is AnyOfficeKitService.Type) else {
 			/* Nothing to unbox, just return self */
 			return self as? DirectoryType
 		}
 		
-		return (anyService.box as? ConcreteOfficeKitBox<DirectoryType>)?.originalService ?? (anyService.box as? ConcreteOfficeKitBox<AnyOfficeKitService>)?.originalService.unboxed()
+		return (anyService.box as? ConcreteOfficeKitBox<DirectoryType>)?.originalService ?? (anyService.box as? ConcreteOfficeKitBox<AnyOfficeKitService>)?.originalService.unbox()
 	}
 	
 }

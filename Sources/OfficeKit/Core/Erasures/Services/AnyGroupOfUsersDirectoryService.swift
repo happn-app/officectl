@@ -33,21 +33,21 @@ private struct ConcreteGroupOfUsersDirectoryServiceBox<Base : GroupOfUsersDirect
 	}
 	
 	func shortDescription(fromGroup group: AnyDirectoryGroup) -> String {
-		guard let g: Base.GroupType = group.unboxed() else {
+		guard let g: Base.GroupType = group.unbox() else {
 			return "UnknownAnyDirectoryGroupOfUsers<\(group)>"
 		}
 		return originalDirectory.shortDescription(fromGroup: g)
 	}
 	
 	func listUsers(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryUser]> {
-		guard let g: Base.GroupType = group.unboxed() else {
+		guard let g: Base.GroupType = group.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid group (\(group)) from which to list users in.")
 		}
 		return try originalDirectory.listUsers(inGroup: g, on: container).map{ $0.map{ AnyDirectoryUser($0) } }
 	}
 	
 	func listGroups(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
-		guard let g: Base.GroupType = group.unboxed() else {
+		guard let g: Base.GroupType = group.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid group (\(group)) from which to list users in.")
 		}
 		return try originalDirectory.listGroups(inGroup: g, on: container).map{ $0.map{ AnyDirectoryGroup($0) } }
@@ -90,7 +90,7 @@ public class AnyGroupOfUsersDirectoryService : AnyUserDirectoryService, GroupOfU
 
 extension GroupOfUsersDirectoryService {
 	
-	public func erased() -> AnyGroupOfUsersDirectoryService {
+	public func erase() -> AnyGroupOfUsersDirectoryService {
 		if let erased = self as? AnyGroupOfUsersDirectoryService {
 			return erased
 		}
@@ -98,13 +98,13 @@ extension GroupOfUsersDirectoryService {
 		return AnyGroupOfUsersDirectoryService(gouds: self)
 	}
 	
-	public func unboxed<DirectoryType : GroupOfUsersDirectoryService>() -> DirectoryType? {
+	public func unbox<DirectoryType : GroupOfUsersDirectoryService>() -> DirectoryType? {
 		guard let anyService = self as? AnyGroupOfUsersDirectoryService, !(DirectoryType.self is AnyGroupOfUsersDirectoryService.Type) else {
 			/* Nothing to unbox, just return self */
 			return self as? DirectoryType
 		}
 		
-		return (anyService.box as? ConcreteGroupOfUsersDirectoryServiceBox<DirectoryType>)?.originalDirectory ?? (anyService.box as? ConcreteGroupOfUsersDirectoryServiceBox<AnyGroupOfUsersDirectoryService>)?.originalDirectory.unboxed()
+		return (anyService.box as? ConcreteGroupOfUsersDirectoryServiceBox<DirectoryType>)?.originalDirectory ?? (anyService.box as? ConcreteGroupOfUsersDirectoryServiceBox<AnyGroupOfUsersDirectoryService>)?.originalDirectory.unbox()
 	}
 	
 }

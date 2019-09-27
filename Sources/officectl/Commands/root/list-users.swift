@@ -24,9 +24,9 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 	try context.container.make(AuditLogger.self).log(action: "List all users for service \(serviceId ?? "<inferred service>"), \(includeInactiveUsers ? "" : "not ")including inactive users.", source: .cli)
 	
 	let usersFuture: Future<[String]>
-	if let googleService: GoogleService = service.unboxed() {
+	if let googleService: GoogleService = service.unbox() {
 		usersFuture = try getUsersList(googleService: googleService, includeInactiveUsers: includeInactiveUsers, container: context.container)
-	} else if let odService: OpenDirectoryService = service.unboxed() {
+	} else if let odService: OpenDirectoryService = service.unbox() {
 		usersFuture = try getUsersList(openDirectoryService: odService, includeInactiveUsers: includeInactiveUsers, container: context.container)
 	} else {
 		throw InvalidArgumentError(message: "Unsupported service to list users from.")

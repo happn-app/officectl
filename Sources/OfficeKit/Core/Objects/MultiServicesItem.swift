@@ -38,7 +38,7 @@ public struct MultiServicesItem<ItemType> {
 	}
 	
 	public subscript<ServiceType : UserDirectoryService>(service: ServiceType) -> ItemType? {
-		return itemsByService[service.erased()]
+		return itemsByService[service.erase()]
 	}
 	
 	public func map<NewItemType>(to type: NewItemType.Type = NewItemType.self, _ callback: (Result<ItemType, Error>) -> Result<NewItemType, Error>) -> MultiServicesItem<NewItemType> {

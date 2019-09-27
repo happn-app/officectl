@@ -24,10 +24,10 @@ func getToken(flags f: Flags, arguments args: [String], context: CommandContext)
 	try context.container.make(AuditLogger.self).log(action: "Getting token for service \(serviceId ?? "<inferred service>") with scope \(scopes ?? "<no scope defined>").", source: .cli)
 	
 	let token: Future<String>
-	if let googleConfig: GoogleServiceConfig = serviceConfig.unboxed() {
+	if let googleConfig: GoogleServiceConfig = serviceConfig.unbox() {
 		token = try getGoogleToken(googleConfig: googleConfig, scopesStr: scopes, eventLoop: context.container.eventLoop)
 		
-	} else if let gitHubConfig: GitHubServiceConfig = serviceConfig.unboxed() {
+	} else if let gitHubConfig: GitHubServiceConfig = serviceConfig.unbox() {
 		token = try getGitHubToken(gitHubConfig: gitHubConfig, scopesStr: scopes, eventLoop: context.container.eventLoop)
 		
 	} else {

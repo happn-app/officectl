@@ -24,14 +24,14 @@ private struct ConcreteDirectoryAuthenticatorBox<Base : DirectoryAuthenticatorSe
 	let originalAuthenticator: Base
 	
 	func authenticate(userId: AnyId, challenge: Any, on container: Container) throws -> Future<Bool> {
-		guard let uid: Base.UserType.IdType = userId.unboxed(), let c = challenge as? Base.AuthenticationChallenge else {
+		guard let uid: Base.UserType.IdType = userId.unbox(), let c = challenge as? Base.AuthenticationChallenge else {
 			throw InvalidArgumentError(message: "Got invalid user id (\(userId)) or auth challenge (\(challenge)) to authenticate with a directory service authenticator of type \(Base.self)")
 		}
 		return try originalAuthenticator.authenticate(userId: uid, challenge: c, on: container)
 	}
 	
 	func validateAdminStatus(userId: AnyId, on container: Container) throws -> Future<Bool> {
-		guard let uid: Base.UserType.IdType = userId.unboxed() else {
+		guard let uid: Base.UserType.IdType = userId.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user id type (\(userId)) to check if user is admin with a directory service authenticator of type \(Base.self)")
 		}
 		return try originalAuthenticator.validateAdminStatus(userId: uid, on: container)
@@ -87,7 +87,7 @@ public class AnyDirectoryAuthenticatorService : AnyUserDirectoryService, Directo
 
 extension DirectoryAuthenticatorService {
 	
-	public func erased() -> AnyDirectoryAuthenticatorService {
+	public func erase() -> AnyDirectoryAuthenticatorService {
 		if let erased = self as? AnyDirectoryAuthenticatorService {
 			return erased
 		}
@@ -95,13 +95,13 @@ extension DirectoryAuthenticatorService {
 		return AnyDirectoryAuthenticatorService(das: self)
 	}
 	
-	public func unboxed<DirectoryType : DirectoryAuthenticatorService>() -> DirectoryType? {
+	public func unbox<DirectoryType : DirectoryAuthenticatorService>() -> DirectoryType? {
 		guard let anyAuth = self as? AnyDirectoryAuthenticatorService, !(DirectoryType.self is AnyDirectoryAuthenticatorService.Type) else {
 			/* Nothing to unbox, just return self */
 			return self as? DirectoryType
 		}
 		
-		return (anyAuth.box as? ConcreteDirectoryAuthenticatorBox<DirectoryType>)?.originalAuthenticator ?? (anyAuth.box as? ConcreteDirectoryAuthenticatorBox<AnyDirectoryAuthenticatorService>)?.originalAuthenticator.unboxed()
+		return (anyAuth.box as? ConcreteDirectoryAuthenticatorBox<DirectoryType>)?.originalAuthenticator ?? (anyAuth.box as? ConcreteDirectoryAuthenticatorBox<AnyDirectoryAuthenticatorService>)?.originalAuthenticator.unbox()
 	}
 	
 }

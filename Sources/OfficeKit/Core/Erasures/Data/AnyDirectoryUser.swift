@@ -116,7 +116,7 @@ public struct AnyDirectoryUser : DirectoryUser {
 
 extension DirectoryUser {
 	
-	public func erased() -> AnyDirectoryUser {
+	public func erase() -> AnyDirectoryUser {
 		if let erased = self as? AnyDirectoryUser {
 			return erased
 		}
@@ -124,13 +124,13 @@ extension DirectoryUser {
 		return AnyDirectoryUser(self)
 	}
 	
-	public func unboxed<UserType : DirectoryUser>() -> UserType? {
+	public func unbox<UserType : DirectoryUser>() -> UserType? {
 		guard let anyUser = self as? AnyDirectoryUser else {
 			/* Nothing to unbox, just return self */
 			return self as? UserType
 		}
 		
-		return (anyUser.box as? ConcreteUserBox<UserType>)?.originalUser ?? (anyUser.box as? ConcreteUserBox<AnyDirectoryUser>)?.originalUser.unboxed()
+		return (anyUser.box as? ConcreteUserBox<UserType>)?.originalUser ?? (anyUser.box as? ConcreteUserBox<AnyDirectoryUser>)?.originalUser.unbox()
 	}
 	
 }

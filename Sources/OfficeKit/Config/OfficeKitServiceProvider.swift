@@ -39,7 +39,7 @@ public class OfficeKitServiceProvider {
 	
 	public func getService<ServiceType : OfficeKitService>(id: String?) throws -> ServiceType {
 		if let id = id {
-			guard let service: ServiceType = try getService(id: id).unboxed() else {
+			guard let service: ServiceType = try getService(id: id).unbox() else {
 				throw InvalidArgumentError(message: "Service with id \(id) does not have the correct type")
 			}
 			return service
@@ -49,7 +49,7 @@ public class OfficeKitServiceProvider {
 			guard let config = configs.onlyElement else {
 				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerId)")
 			}
-			return try queue.sync{ try service(with: config) }.unboxed()!
+			return try queue.sync{ try service(with: config) }.unbox()!
 		}
 	}
 	
@@ -79,7 +79,7 @@ public class OfficeKitServiceProvider {
 	
 	public func getUserDirectoryService<ServiceType : UserDirectoryService>(id: String?) throws -> ServiceType {
 		if let id = id {
-			guard let service: ServiceType = try getUserDirectoryService(id: id).unboxed() else {
+			guard let service: ServiceType = try getUserDirectoryService(id: id).unbox() else {
 				throw InvalidArgumentError(message: "Service with id \(id) does not have the correct type")
 			}
 			return service
@@ -89,7 +89,7 @@ public class OfficeKitServiceProvider {
 			guard let config = configs.onlyElement else {
 				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerId)")
 			}
-			return try queue.sync{ try userDirectoryService(with: config) }.unboxed()!
+			return try queue.sync{ try userDirectoryService(with: config) }.unbox()!
 		}
 	}
 	
@@ -118,7 +118,7 @@ public class OfficeKitServiceProvider {
 	
 	public func getGroupOfUsersDirectoryService<ServiceType : GroupOfUsersDirectoryService>(id: String?) throws -> ServiceType {
 		if let id = id {
-			guard let service: ServiceType = try getGroupOfUsersDirectoryService(id: id).unboxed() else {
+			guard let service: ServiceType = try getGroupOfUsersDirectoryService(id: id).unbox() else {
 				throw InvalidArgumentError(message: "Service with id \(id) does not have the correct type")
 			}
 			return service
@@ -128,7 +128,7 @@ public class OfficeKitServiceProvider {
 			guard let config = configs.onlyElement else {
 				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerId)")
 			}
-			return try queue.sync{ try groupOfUsersDirectoryService(with: config) }.unboxed()!
+			return try queue.sync{ try groupOfUsersDirectoryService(with: config) }.unbox()!
 		}
 	}
 	
@@ -146,7 +146,7 @@ public class OfficeKitServiceProvider {
 	}
 	
 	public func getDirectoryAuthenticatorService<ServiceType : DirectoryAuthenticatorService>() throws -> ServiceType {
-		guard let service: ServiceType = try getDirectoryAuthenticatorService().unboxed() else {
+		guard let service: ServiceType = try getDirectoryAuthenticatorService().unbox() else {
 			throw InvalidArgumentError(message: "Directory authenticator service does not have the correct type")
 		}
 		return service
