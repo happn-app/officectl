@@ -22,17 +22,19 @@ public class OfficeKitServiceProvider {
 	   ****************************************** */
 	
 	public func getAllServices() throws -> Set<AnyOfficeKitService> {
-		for config in officeKitConfig.serviceConfigs.values {
-			_ = try service(with: config)
+		return try queue.sync{
+			for config in officeKitConfig.serviceConfigs.values {
+				_ = try service(with: config)
+			}
+			return Set(servicesCache.values.filter{ !$0.config.isHelperService })
 		}
-		return Set(servicesCache.values.filter{ !$0.config.isHelperService })
 	}
 	
 	/* Convenience that avoids having to explicitly give the AnyOfficeKitService
 	 * type to the compiler when using get Service for AnyOfficeKitService. */
 	public func getService(id: String?) throws -> AnyOfficeKitService {
 		let config = try officeKitConfig.getServiceConfig(id: id)
-		return try service(with: config)
+		return try queue.sync{ try service(with: config) }
 	}
 	
 	public func getService<ServiceType : OfficeKitService>(id: String?) throws -> ServiceType {
@@ -47,12 +49,13 @@ public class OfficeKitServiceProvider {
 			guard let config = configs.onlyElement else {
 				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerId)")
 			}
-			return try service(with: config).unboxed()!
+			return try queue.sync{ try service(with: config) }.unboxed()!
 		}
 	}
-
+	
 	public func getServices(ids: Set<String>?) throws -> Set<AnyOfficeKitService> {
 		guard let ids = ids else {return try getAllServices()}
+		/* Note: Not ideal, we lock the queue for each service id (in the getService(id:) method)… */
 		return try Set(ids.map{ try getService(id: $0) })
 	}
 	
@@ -61,20 +64,17 @@ public class OfficeKitServiceProvider {
 	   *************************************** */
 	
 	public func getAllUserDirectoryServices() throws -> Set<AnyUserDirectoryService> {
-		for config in officeKitConfig.serviceConfigs.values where OfficeKitConfig.registeredServices[config.providerId] is UserDirectoryService.Type {
-			_ = try userDirectoryService(with: config)
+		return try queue.sync{
+			for config in officeKitConfig.serviceConfigs.values where OfficeKitConfig.registeredServices[config.providerId] is UserDirectoryService.Type {
+				_ = try userDirectoryService(with: config)
+			}
+			return Set(userDirectoryServicesCache.values.filter{ !$0.config.isHelperService })
 		}
-		return Set(userDirectoryServicesCache.values.filter{ !$0.config.isHelperService })
 	}
 	
 	public func getUserDirectoryService(id: String?) throws -> AnyUserDirectoryService {
 		let config = try officeKitConfig.getServiceConfig(id: id)
-		return try userDirectoryService(with: config)
-	}
-	
-	public func getUserDirectoryServices(ids: Set<String>?) throws -> Set<AnyUserDirectoryService> {
-		guard let ids = ids else {return try getAllUserDirectoryServices()}
-		return try Set(ids.map{ try getUserDirectoryService(id: $0) })
+		return try queue.sync{ try userDirectoryService(with: config) }
 	}
 	
 	public func getUserDirectoryService<ServiceType : UserDirectoryService>(id: String?) throws -> ServiceType {
@@ -89,8 +89,13 @@ public class OfficeKitServiceProvider {
 			guard let config = configs.onlyElement else {
 				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerId)")
 			}
-			return try userDirectoryService(with: config).unboxed()!
+			return try queue.sync{ try userDirectoryService(with: config) }.unboxed()!
 		}
+	}
+	
+	public func getUserDirectoryServices(ids: Set<String>?) throws -> Set<AnyUserDirectoryService> {
+		guard let ids = ids else {return try getAllUserDirectoryServices()}
+		return try Set(ids.map{ try getUserDirectoryService(id: $0) })
 	}
 	
 	/* *************************************************
@@ -98,20 +103,17 @@ public class OfficeKitServiceProvider {
 	   ************************************************* */
 	
 	public func getAllGroupOfUsersDirectoryServices() throws -> Set<AnyGroupOfUsersDirectoryService> {
-		for config in officeKitConfig.serviceConfigs.values where OfficeKitConfig.registeredServices[config.providerId] is GroupOfUsersDirectoryService.Type {
-			_ = try groupOfUsersDirectoryService(with: config)
+		return try queue.sync{
+			for config in officeKitConfig.serviceConfigs.values where OfficeKitConfig.registeredServices[config.providerId] is GroupOfUsersDirectoryService.Type {
+				_ = try groupOfUsersDirectoryService(with: config)
+			}
+			return Set(groupOfUsersDirectoryServicesCache.values.filter{ !$0.config.isHelperService })
 		}
-		return Set(groupOfUsersDirectoryServicesCache.values.filter{ !$0.config.isHelperService })
 	}
 	
 	public func getGroupOfUsersDirectoryService(id: String?) throws -> AnyGroupOfUsersDirectoryService {
 		let config = try officeKitConfig.getServiceConfig(id: id)
-		return try groupOfUsersDirectoryService(with: config)
-	}
-	
-	public func getGroupOfUsersDirectoryServices(ids: Set<String>?) throws -> Set<AnyGroupOfUsersDirectoryService> {
-		guard let ids = ids else {return try getAllGroupOfUsersDirectoryServices()}
-		return try Set(ids.map{ try getGroupOfUsersDirectoryService(id: $0) })
+		return try queue.sync{ try groupOfUsersDirectoryService(with: config) }
 	}
 	
 	public func getGroupOfUsersDirectoryService<ServiceType : GroupOfUsersDirectoryService>(id: String?) throws -> ServiceType {
@@ -126,8 +128,13 @@ public class OfficeKitServiceProvider {
 			guard let config = configs.onlyElement else {
 				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerId)")
 			}
-			return try groupOfUsersDirectoryService(with: config).unboxed()!
+			return try queue.sync{ try groupOfUsersDirectoryService(with: config) }.unboxed()!
 		}
+	}
+	
+	public func getGroupOfUsersDirectoryServices(ids: Set<String>?) throws -> Set<AnyGroupOfUsersDirectoryService> {
+		guard let ids = ids else {return try getAllGroupOfUsersDirectoryServices()}
+		return try Set(ids.map{ try getGroupOfUsersDirectoryService(id: $0) })
 	}
 	
 	/* ***********************************************
@@ -135,7 +142,7 @@ public class OfficeKitServiceProvider {
 	   *********************************************** */
 	
 	public func getDirectoryAuthenticatorService() throws -> AnyDirectoryAuthenticatorService {
-		return try directoryAuthenticatorService(with: officeKitConfig.authServiceConfig)
+		return try queue.sync{ try directoryAuthenticatorService(with: officeKitConfig.authServiceConfig) }
 	}
 	
 	public func getDirectoryAuthenticatorService<ServiceType : DirectoryAuthenticatorService>() throws -> ServiceType {
@@ -150,6 +157,8 @@ public class OfficeKitServiceProvider {
 	   *************** */
 	
 	private let officeKitConfig: OfficeKitConfig
+	
+	private let queue = DispatchQueue(label: "Service Provider Queue")
 	
 	private var servicesCache = [String: AnyOfficeKitService]()
 	private var userDirectoryServicesCache = [String: AnyUserDirectoryService]()

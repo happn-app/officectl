@@ -32,10 +32,10 @@ public struct OfficeKitConfig {
 		return res
 	}()
 	
-	public var globalConfig: GlobalConfig
+	public let globalConfig: GlobalConfig
 	
-	public var authServiceConfig: AnyOfficeKitServiceConfig
-	public var serviceConfigs: [String: AnyOfficeKitServiceConfig]
+	public let authServiceConfig: AnyOfficeKitServiceConfig
+	public let serviceConfigs: [String: AnyOfficeKitServiceConfig]
 	
 	public var orderedServiceConfigs: [AnyOfficeKitServiceConfig] {
 		return serviceConfigs.values.sorted(by: { s1, s2 in
