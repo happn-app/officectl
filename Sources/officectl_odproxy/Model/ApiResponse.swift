@@ -41,15 +41,19 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 
 extension ApiResponse : ResponseEncodable {
 	
-	func encode(for req: Request) throws -> EventLoopFuture<Response> {
-		return try req.future(syncEncode(for: req))
+	func encodeResponse(for request: Request) -> EventLoopFuture<Response> {
+		return request.eventLoop.makeSucceededFuture(()).flatMapThrowing{ try self.syncEncode(for: request) }
 	}
 	
 	/* Convenience, not part of the protocol. */
 	func syncEncode(for req: Request) throws -> Response {
 		let encoder = JSONEncoder()
 		encoder.dateEncodingStrategy = .iso8601
-		return try req.response(encoder.encode(self), as: .json)
+		
+		var headers = HTTPHeaders()
+		headers.replaceOrAdd(name: .contentType, value: HTTPMediaType.json.serialize())
+		
+		return try Response(headers: headers, body: Response.Body(data: encoder.encode(self)))
 	}
 	
 }

@@ -25,33 +25,40 @@ class VerifySignatureMiddleware : Middleware {
 		signatureURLPathPrefixTransform = t
 	}
 	
-	func respond(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
-		let signatureHeaders = request.http.headers["Officectl-Signature"]
+	func respond(to request: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
+		do    {return try respondThrowing(to: request, chainingTo: next)}
+		catch {return request.eventLoop.makeFailedFuture(error)}
+	}
+	
+	func respondThrowing(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
+		let signatureHeaders = request.headers["Officectl-Signature"]
 		guard let signatureHeader = signatureHeaders.onlyElement else {
-			throw BasicValidationError("No or too many signature headers")
+			throw Abort(.badRequest, reason: "No or too many signature headers")
 		}
 		
 		let split = signatureHeader.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
 		guard split.count == 3 else {
-			throw BasicValidationError("Incorrectly signed request (incorrect number of components in signature)")
+			throw Abort(.badRequest, reason: "Incorrectly signed request (incorrect number of components in signature)")
 		}
 		let validityStartStr = split[0]
 		let validityEndStr = split[1]
 		guard let validityStart = TimeInterval(validityStartStr), let validityEnd = TimeInterval(validityEndStr) else {
-			throw BasicValidationError("Incorrectly signed request (either start or end validity time are incorrect)")
+			throw Abort(.badRequest, reason: "Incorrectly signed request (either start or end validity time are incorrect)")
 		}
 		
 		let t = Date().timeIntervalSince1970
 		guard validityStart <= t && t <= validityEnd else {
-			throw BasicValidationError("Request is no longer or not yet valid")
+			throw Abort(.badRequest, reason: "Request is no longer or not yet valid")
 		}
 		
 		guard let requestSignature = Data(base64Encoded: split[2]) else {
-			throw BasicValidationError("Incorrectly signed request (signature is not valid base64)")
+			throw Abort(.badRequest, reason: "Incorrectly signed request (signature is not valid base64)")
 		}
 		
-		let body = request.http.body.data ?? Data()
-		let requestURLPath = try transformURLPath(request.http.url.path)
+		var bodyBuffer = request.body.data
+		let bodyBufferLength = bodyBuffer?.readableBytes ?? 0
+		let body = bodyBuffer?.readBytes(length: bodyBufferLength).flatMap{ Data($0) } ?? Data()
+		let requestURLPath = try transformURLPath(request.url.path)
 		
 		let sepData = Data(":".utf8)
 		let signedData = (
@@ -60,19 +67,19 @@ class VerifySignatureMiddleware : Middleware {
 			Data(requestURLPath.utf8).base64EncodedData()   + sepData +
 			body.base64EncodedData()
 		)
-		let computedSignature = try HMAC.SHA256.authenticate(signedData, key: secret)
+		let computedSignature = Data(HMAC<SHA256>.authenticationCode(for: signedData, using: SymmetricKey(data: secret)))
 		
 		guard requestSignature == computedSignature else {
-			throw BasicValidationError("Incorrectly signed request")
+			throw Abort(.badRequest, reason: "Incorrectly signed request")
 		}
 		
-		return try next.respond(to: request)
+		return next.respond(to: request)
 	}
 	
 	private func transformURLPath(_ path: String) throws -> String {
 		guard let t = signatureURLPathPrefixTransform else {return path}
 		guard let r = path.range(of: t.from), r.lowerBound == path.startIndex else {
-			throw BasicValidationError("Cannot validate the signature because the path does not have the expected prefix.")
+			throw Abort(.badRequest, reason: "Cannot validate the signature because the path does not have the expected prefix.")
 		}
 		
 		var ret = path

@@ -15,22 +15,31 @@ import Vapor
 
 final class UserSearchController {
 	
+	let openDirectoryService: OpenDirectoryService
+	
+	#warning("From what I understand, we should not keep a reference to the container; only to the services we need, and pass the event loop to the ones who need it. However, for now the services take a container directly, and this might not be easy to change…")
+	let container: Container
+	
+	init(openDirectoryService ods: OpenDirectoryService, container c: Container) {
+		openDirectoryService = ods
+		container = c
+	}
+	
 	func fromPersistentId(_ req: Request) throws -> EventLoopFuture<ApiResponse<DirectoryUserWrapper?>> {
 		/* The data we should have in input. */
 		struct Request : Decodable {
 			var persistentId: TaggedId
 			var propertiesToFetch: Set<String>
 		}
-		let input = try req.content.syncDecode(Request.self)
+		let input = try req.content.decode(Request.self)
 		let propertiesToFetch = Set(input.propertiesToFetch.map{ DirectoryUserProperty(stringLiteral: $0) })
-		guard let pId = UUID(input.persistentId.id) else {
+		guard let pId = UUID(uuidString: input.persistentId.id) else {
 			throw InvalidArgumentError(message: "Invalid persistend id \(input.persistentId)")
 		}
 		
-		let openDirectoryService = try req.make(OpenDirectoryService.self)
-		return try openDirectoryService.existingUser(fromPersistentId: pId, propertiesToFetch: propertiesToFetch, on: req).map{ user in
+		return try openDirectoryService.existingUser(fromPersistentId: pId, propertiesToFetch: propertiesToFetch, on: container).flatMapThrowing{ user in
 			/* Let’s convert the OpenDirectory user to a GenericDirectoryUser */
-			return try ApiResponse.data(user.flatMap{ try openDirectoryService.wrappedUser(fromUser: $0) })
+			return try ApiResponse.data(user.flatMap{ try self.openDirectoryService.wrappedUser(fromUser: $0) })
 		}
 	}
 	
@@ -40,22 +49,20 @@ final class UserSearchController {
 			var userId: TaggedId
 			var propertiesToFetch: Set<String>
 		}
-		let input = try req.content.syncDecode(Request.self)
+		let input = try req.content.decode(Request.self)
 		let propertiesToFetch = Set(input.propertiesToFetch.map{ DirectoryUserProperty(stringLiteral: $0) })
 		let uId = try LDAPDistinguishedName(string: input.userId.id)
 		
-		let openDirectoryService = try req.make(OpenDirectoryService.self)
-		return try openDirectoryService.existingUser(fromUserId: uId, propertiesToFetch: propertiesToFetch, on: req).map{ user in
+		return try openDirectoryService.existingUser(fromUserId: uId, propertiesToFetch: propertiesToFetch, on: container).flatMapThrowing{ user in
 			/* Let’s convert the OpenDirectory user to a GenericDirectoryUser */
-			return try ApiResponse.data(user.flatMap{ try openDirectoryService.wrappedUser(fromUser: $0) })
+			return try ApiResponse.data(user.flatMap{ try self.openDirectoryService.wrappedUser(fromUser: $0) })
 		}
 	}
 	
 	func listAllUsers(_ req: Request) throws -> EventLoopFuture<ApiResponse<[DirectoryUserWrapper]>> {
-		let openDirectoryService = try req.make(OpenDirectoryService.self)
-		return try openDirectoryService.listAllUsers(on: req).map{ users in
+		return try openDirectoryService.listAllUsers(on: container).flatMapThrowing{ users in
 			/* Let’s convert the OpenDirectory user to a GenericDirectoryUser */
-			return try ApiResponse.data(users.map{ try openDirectoryService.wrappedUser(fromUser: $0) })
+			return try ApiResponse.data(users.map{ try self.openDirectoryService.wrappedUser(fromUser: $0) })
 		}
 	}
 	

@@ -34,12 +34,11 @@ func app(_ env: Environment) throws -> Application {
 		throw InvalidArgumentError(message: "The --config-file or --verbose options can only be specified once.")
 	}
 	
-	var config = Config.default()
-	var services = Services.default()
-	try configure(&config, &env, &services, forcedConfigPath: forcedConfigPath, verbose: verbose)
+	let configureOptions = try prepareConfigure(forcedConfigPath: forcedConfigPath, verbose: verbose)
+	let app = Application(environment: env, configure: { s in
+		configureServices(&s, configureOptions: configureOptions)
+	})
 	
-	let app = try Application(config: config, environment: env, services: services)
 	try boot(app)
-	
 	return app
 }
