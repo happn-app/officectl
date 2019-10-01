@@ -384,6 +384,8 @@ class OfflineimapRunOperation : RetryingOperation {
 			/* About the sslcacertfile:
 			 *    - When using the system (macOS) Python, we must use the dummycert trick (sslcacertfile = ~/.dummycert_for_python.pem);
 			 *    - When using homebrew’s Python2 (offlineimap uses Python2…), we must specify the cacert file. We use the one from openssl. */
+			/* About the ssl_version:
+			 *    - When using Python2 w/ OpenSSL 1.1.1, offlineimap cannot validate Gogle’s certificate. We can fix that by forcing using the TLS 1.2 protocol. (youhou) */
 			return """
 			[Account AccountUserID_\(user.id.value!)]
 			localrepository = LocalRepoID_\(user.id.value!)
@@ -399,6 +401,7 @@ class OfflineimapRunOperation : RetryingOperation {
 			remoteuser = \(user.primaryEmail.stringValue)
 			oauth2_access_token = \(token)
 			sslcacertfile = /usr/local/etc/openssl/cert.pem
+			ssl_version = tls1_2
 			
 			"""
 		}.joined(separator: "\n")
