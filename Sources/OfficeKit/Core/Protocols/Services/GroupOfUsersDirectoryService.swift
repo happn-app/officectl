@@ -20,6 +20,8 @@ public protocol GroupOfUsersDirectoryService : UserDirectoryService, GroupOfUser
 	func shortDescription(fromGroup group: GroupType) -> String
 	
 	func listUsers(inGroup group: GroupType, on container: Container) throws -> EventLoopFuture<[UserType]>
+	
+	var supportsEmbeddedGroupsOfUsers: Bool {get}
 	func listGroups(inGroup group: GroupType, on container: Container) throws -> EventLoopFuture<[GroupType]>
 	
 }
