@@ -39,10 +39,26 @@ struct DevicesContext : Encodable {
 	<table>
 		<tr>
 			<th>Name</th>
+			<th>Model Name</th>
+			<th>OS Version</th>
+			<th>Last Seen</th>
+			<th>UDID</th>
+			<th>Phone Number</th>
+			<th>Serial Number</th>
+			<th>Wifi MAC Address</th>
+			<th>Bluetooth MAC Address</th>
 		</tr>
 		#for(device in devices) {
 			<tr>
 				<td>#(device.name)</td>
+				<td>#(device.modelName)</td>
+				<td>#(device.osVersion)</td>
+				<td>#(device.dateLastSeen)</td>
+				<td>#(device.udid)</td>
+				<td>#(device.phoneNumber)</td>
+				<td>#(device.serialNumber)</td>
+				<td>#(device.wifiMAC)</td>
+				<td>#(device.bluetoothMAC)</td>
 			</tr>
 		}
 	</table>

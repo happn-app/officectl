@@ -35,13 +35,24 @@ final class IosTestDevicesController {
 		let officectlConfig = try req.make(OfficectlConfig.self)
 		let token = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
-		let f = getAllDevices(token: token, eventLoop: req.eventLoop).map{ (devices: [SimpleMDMDevice]) -> Void in
-			print(devices)
-			return ()
+		return getAllDevices(token: token, eventLoop: req.eventLoop).map{ devices in
+			devices.filter{ $0.relationships.deviceGroup.id == 61452 }.sorted(by: { $0.attributes.deviceName < $1.attributes.deviceName }).map{
+				DevicesContext.Device(
+					name: $0.attributes.deviceName,
+					dateLastSeen: $0.attributes.lastSeenAt,
+					osVersion: $0.attributes.osVersion,
+					modelName: $0.attributes.modelName,
+					udid: $0.attributes.uniqueIdentifier,
+					phoneNumber: $0.attributes.phoneNumber,
+					serialNumber: $0.attributes.serialNumber,
+					wifiMAC: $0.attributes.wifiMac,
+					bluetoothMAC: $0.attributes.bluetoothMac
+				)
+			}
 		}
-		
-		let context = DevicesContext(devices: [DevicesContext.Device(name: "hello", dateLastSeen: nil, osVersion: nil, modelName: nil, udid: nil, phoneNumber: nil, serialNumber: nil, wifiMAC: nil, bluetoothMAC: nil)])
-		return try req.view().render("IosTestDevicesList", context)
+		.flatMap{ devices in
+			try req.view().render("IosTestDevicesList", DevicesContext(devices: devices))
+		}
 	}
 	
 	private struct SimpleMDMDevice : Decodable {
