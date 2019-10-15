@@ -51,4 +51,9 @@ func setup_routes(_ router: Router) throws {
 	let webCertificateRenewController = WebCertificateRenewController()
 	router.get("get-certificate", use: webCertificateRenewController.showLogin)
 	router.post("get-certificate", use: webCertificateRenewController.renewCertificate)
+	
+	/* ******** Temporary test iOS devices list ******** */
+	
+	let iOSTestDevicesController = IosTestDevicesController()
+	router.get("ios-test-devices", use: iOSTestDevicesController.showTestDevicesList)
 }
