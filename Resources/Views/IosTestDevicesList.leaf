@@ -29,7 +29,15 @@ struct DevicesContext : Encodable {
 			padding: 7px;
 		\}
 		th {
-			background-color: #e0e0e0; padding: 9px;
+			padding: 9px;
+			background-color: #e0e0e0;
+		\}
+		tr:nth-child(odd) {
+			background-color: #f3f3f3;
+		\}
+		.monospace {
+			font-size: 110%;
+			font-family: monospace;
 		\}
 	</style>
 }
@@ -41,11 +49,10 @@ struct DevicesContext : Encodable {
 			<th>Name</th>
 			<th>Model Name</th>
 			<th>OS Version</th>
-			<th>Last Seen</th>
 			<th>UDID</th>
-			<th>Phone Number</th>
 			<th>Serial Number</th>
-			<th>Wifi MAC Address</th>
+			<th>Phone Number</th>
+			<th>Wi-Fi MAC Address</th>
 			<th>Bluetooth MAC Address</th>
 		</tr>
 		#for(device in devices) {
@@ -53,12 +60,11 @@ struct DevicesContext : Encodable {
 				<td>#(device.name)</td>
 				<td>#(device.modelName)</td>
 				<td>#(device.osVersion)</td>
-				<td>#(device.dateLastSeen)</td>
-				<td>#(device.udid)</td>
+				<td class="monospace">#(device.udid)</td>
+				<td class="monospace">#(device.serialNumber)</td>
 				<td>#(device.phoneNumber)</td>
-				<td>#(device.serialNumber)</td>
-				<td>#(device.wifiMAC)</td>
-				<td>#(device.bluetoothMAC)</td>
+				<td class="monospace">#(device.wifiMAC)</td>
+				<td class="monospace">#(device.bluetoothMAC)</td>
 			</tr>
 		}
 	</table>
