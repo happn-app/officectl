@@ -1,0 +1,73 @@
+#/* The context structure
+struct DevicesContext : Encodable {
+	struct Device : Encodable {
+		var name: String
+		var dateLastSeen: String?
+		var osVersion: String?
+		var modelName: String?
+		var udid: String?
+		var phoneNumber: String?
+		var serialNumber: String?
+		var wifiMAC: String?
+		var bluetoothMAC: String?
+	}
+	var devices: [Device]
+}
+*/
+
+#set("title") {
+	happn – List of iOS Test Devices
+}
+
+#set("additional_head_tags") {
+	<style>
+		table, th, td {
+			border: 1px solid black;
+			border-collapse: collapse;
+		\}
+		th, td {
+			padding: 7px;
+		\}
+		th {
+			padding: 9px;
+			background-color: #e0e0e0;
+		\}
+		tr:nth-child(odd) {
+			background-color: #f3f3f3;
+		\}
+		.monospace {
+			font-size: 110%;
+			font-family: monospace;
+		\}
+	</style>
+}
+
+#set("body") {
+	<h1>List of iOS Test Devices</h1>
+	<table>
+		<tr>
+			<th>Name</th>
+			<th>Model Name</th>
+			<th>OS Version</th>
+			<th>UDID</th>
+			<th>Serial Number</th>
+			<th>Phone Number</th>
+			<th>Wi-Fi MAC Address</th>
+			<th>Bluetooth MAC Address</th>
+		</tr>
+		#for(device in devices) {
+			<tr>
+				<td>#(device.name)</td>
+				<td>#(device.modelName)</td>
+				<td>#(device.osVersion)</td>
+				<td class="monospace">#(device.udid)</td>
+				<td class="monospace">#(device.serialNumber)</td>
+				<td>#(device.phoneNumber)</td>
+				<td class="monospace">#(device.wifiMAC)</td>
+				<td class="monospace">#(device.bluetoothMAC)</td>
+			</tr>
+		}
+	</table>
+}
+
+#embed("lib/Master")

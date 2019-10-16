@@ -32,6 +32,8 @@ struct OfficectlConfig : Service {
 	var tmpVaultToken: String?
 	var tmpVaultTTL: String?
 	
+	var tmpSimpleMDMToken: String?
+	
 	var officeKitConfig: OfficeKitConfig
 	var syncConfig: SyncConfig?
 	
@@ -55,6 +57,8 @@ struct OfficectlConfig : Service {
 		tmpVaultIssuerName = configYaml["vault_tmp"]["issuer_name"].string
 		tmpVaultToken = configYaml["vault_tmp"]["token"].string
 		tmpVaultTTL = configYaml["vault_tmp"]["ttl"].string
+		
+		tmpSimpleMDMToken = configYaml["simplemdm_tmp"]["access_key"].string
 		
 		officeKitConfig = try OfficeKitConfig(genericConfig: configYaml, pathsRelativeTo: configURL)
 		syncConfig = try configYaml.optionalNonNullStorage(forKey: "sync").map{ try SyncConfig(genericConfig: $0, pathsRelativeTo: configURL) }
