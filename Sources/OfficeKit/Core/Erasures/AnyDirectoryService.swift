@@ -203,7 +203,9 @@ public class AnyDirectoryService : DirectoryService {
 	public typealias ConfigType = AnyOfficeKitServiceConfig
 	public typealias UserType = AnyDirectoryUser
 	
-	init<T : DirectoryService>(_ object: T) {
+	/* See AnyDirectoryAuthenticatorService as to why, but we used to have an
+	 * unnamed init here. I’d have liked it to stay unnamed but it’s annoying. */
+	init<T : DirectoryService>(ds object: T) {
 		box = ConcreteDirectoryBox(originalDirectory: object)
 	}
 	
@@ -302,7 +304,7 @@ extension DirectoryService {
 			return erased
 		}
 		
-		return AnyDirectoryService(self)
+		return AnyDirectoryService(ds: self)
 	}
 	
 	public func unboxed<DirectoryType : DirectoryService>() -> DirectoryType? {

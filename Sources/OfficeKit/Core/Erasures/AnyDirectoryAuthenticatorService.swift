@@ -43,9 +43,29 @@ public class AnyDirectoryAuthenticatorService : AnyDirectoryService, DirectoryAu
 	
 	public typealias AuthenticationChallenge = Any
 	
-	override init<T : DirectoryAuthenticatorService>(_ object: T) {
+	/* About the init here. Before latest Swift to date (running on master rn for
+	 * bugfix reasons on Linux), we could override super’s init with (super init
+	 * argument used to be unnamed):
+	 *    override init<T : DirectoryAuthenticatorService>(_ object: T)
+	 * W/ latest Swift we get an error that we’re overriding with incompatible
+	 * argument type (which tbf is not wrong).
+	 * For now we simply dissociate the init w/ a DirectoryService and a
+	 * DirectoryAuthenticatorService, and crash w/ a DirectoryService in the
+	 * AnyDirectoryAuthenticatorService.
+	 * A better solution would be for AnyDirectoryAuthenticatorService not to
+	 * inherit from AnyDirectoryService and implement all the methods from
+	 * DirectoryService too, keeping an AnyDirectoryService internally if needed.
+	 * I’m not doing that for now because I don’t have codegen for now and it’d
+	 * be a pain to copy and modify two erasures each time there’s a modification
+	 * in the DirectoryService… */
+	
+	override init<T : DirectoryService>(ds object: T) {
+		fatalError()
+	}
+	
+	init<T : DirectoryAuthenticatorService>(das object: T) {
 		box = ConcreteDirectoryAuthenticatorBox(originalAuthenticator: object)
-		super.init(object)
+		super.init(ds: object)
 	}
 	
 	public required init(config c: AnyOfficeKitServiceConfig, globalConfig gc: GlobalConfig) {
@@ -72,7 +92,7 @@ extension DirectoryAuthenticatorService {
 			return erased
 		}
 		
-		return AnyDirectoryAuthenticatorService(self)
+		return AnyDirectoryAuthenticatorService(das: self)
 	}
 	
 	public func unboxed<DirectoryType : DirectoryAuthenticatorService>() -> DirectoryType? {
