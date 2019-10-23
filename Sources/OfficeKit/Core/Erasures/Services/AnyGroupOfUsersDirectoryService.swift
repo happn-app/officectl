@@ -20,6 +20,8 @@ private protocol GroupOfUsersDirectoryServiceBox {
 	func shortDescription(fromGroup group: AnyDirectoryGroup) -> String
 	
 	func listUsers(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryUser]>
+	
+	var supportsEmbeddedGroupsOfUsers: Bool {get}
 	func listGroups(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryGroup]>
 	
 }
@@ -44,6 +46,10 @@ private struct ConcreteGroupOfUsersDirectoryServiceBox<Base : GroupOfUsersDirect
 			throw InvalidArgumentError(message: "Got invalid group (\(group)) from which to list users in.")
 		}
 		return try originalDirectory.listUsers(inGroup: g, on: container).map{ $0.map{ AnyDirectoryUser($0) } }
+	}
+	
+	var supportsEmbeddedGroupsOfUsers: Bool {
+		return originalDirectory.supportsEmbeddedGroupsOfUsers
 	}
 	
 	func listGroups(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
@@ -78,6 +84,10 @@ public class AnyGroupOfUsersDirectoryService : AnyUserDirectoryService, GroupOfU
 	
 	public func listUsers(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryUser]> {
 		return try box.listUsers(inGroup: group, on: container)
+	}
+	
+	public var supportsEmbeddedGroupsOfUsers: Bool {
+		return box.supportsEmbeddedGroupsOfUsers
 	}
 	
 	public func listGroups(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
