@@ -48,7 +48,7 @@ let package = Package(
 			/* happn dependencies */
 			"RetryingOperation", "URLRequestOperation", "SemiSingleton", "EmailValidator",
 			/* External dependencies */
-			"NIO", "OpenCrypto"/*, "Service"*/, "ConsoleKit"/*, "Async"*/, "JWTKit", "GenericJSON"
+			"NIO", "OpenCrypto"/*, "Service"*/, "ConsoleKit"/*, "Async"*/, "JWTKit", "GenericJSON", "Yaml"
 			/* IMHO this one shouldn’t be needed, but I can’t seem to get rid of it
 			 * in Xcode. Works well with SPM CLI. */
 			,"Vapor"
