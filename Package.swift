@@ -14,6 +14,9 @@ let package = Package(
 	platforms: [
 		.macOS(.v10_13)
 	],
+	products: [
+		.library(name: "OfficeKit", targets: ["OfficeKit"])
+	],
 	dependencies: [
 		.package(url: "https://github.com/happn-tech/URLRequestOperation.git", from: "1.1.7"),
 		.package(url: "https://github.com/happn-tech/RetryingOperation.git", from: "1.1.4"),
