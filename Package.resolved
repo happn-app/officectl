@@ -32,9 +32,9 @@
         "package": "console-kit",
         "repositoryURL": "https://github.com/vapor/console-kit.git",
         "state": {
-          "branch": "4.0.0-alpha.3",
-          "revision": "62c3896613362eb5448e7e096daa5005c67b4dd0",
-          "version": null
+          "branch": null,
+          "revision": "5b91c2dc93781e4b36cb4c667972670eac90e6e7",
+          "version": "4.0.0-beta.1"
         }
       },
       {
@@ -89,6 +89,15 @@
           "branch": null,
           "revision": "c615c01e461e8a3495ba4ea75f5d671c76820105",
           "version": "1.0.1"
+        }
+      },
+      {
+        "package": "multipart-kit",
+        "repositoryURL": "https://github.com/vapor/multipart-kit.git",
+        "state": {
+          "branch": null,
+          "revision": "a941d7a1d685c83df09077f6190808ff2a7f4dce",
+          "version": "4.0.0-beta.1"
         }
       },
       {
@@ -203,9 +212,18 @@
         "package": "vapor",
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
-          "branch": "4.0.0-alpha.3.2",
-          "revision": "4efc07f4f5b7cf6e2e5126792dc4032864f1c464",
-          "version": null
+          "branch": null,
+          "revision": "3d8bbd5eb2b556debbb51da8ac7357f34b7b0a8e",
+          "version": "4.0.0-beta.1"
+        }
+      },
+      {
+        "package": "websocket-kit",
+        "repositoryURL": "https://github.com/vapor/websocket-kit.git",
+        "state": {
+          "branch": null,
+          "revision": "66c0ea58398f055b5a0d92b0d5f4c32ef0c02eeb",
+          "version": "2.0.0-beta.1"
         }
       },
       {
