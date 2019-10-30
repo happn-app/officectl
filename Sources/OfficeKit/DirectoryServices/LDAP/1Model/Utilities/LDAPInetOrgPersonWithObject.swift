@@ -21,8 +21,8 @@ import Foundation
  * a whole object hierarchy that mirrors LDAP’s hierarchy. */
 public struct LDAPInetOrgPersonWithObject {
 	
-	let inetOrgPerson: LDAPInetOrgPerson
-	let object: LDAPObject
+	public let inetOrgPerson: LDAPInetOrgPerson
+	public let object: LDAPObject
 	
 	public init?(object o: LDAPObject) {
 		guard let p = LDAPInetOrgPerson(object: o) else {return nil}
