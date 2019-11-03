@@ -62,7 +62,7 @@ public final class DummyService : UserDirectoryService {
 	public let config: DummyServiceConfig
 	public let globalConfig: GlobalConfig
 	
-	public init(config c: DummyServiceConfig, globalConfig gc: GlobalConfig) {
+	public init(config c: DummyServiceConfig, globalConfig gc: GlobalConfig, application: Application) {
 		config = c
 		globalConfig = gc
 	}
@@ -97,33 +97,33 @@ public final class DummyService : UserDirectoryService {
 		return []
 	}
 	
-	public func existingUser(fromPersistentId pId: Never, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<DummyServiceUser?> {
+	public func existingUser(fromPersistentId pId: Never, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<DummyServiceUser?> {
 	}
 	
-	public func existingUser(fromUserId dn: Never, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<DummyServiceUser?> {
+	public func existingUser(fromUserId dn: Never, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<DummyServiceUser?> {
 	}
 	
-	public func listAllUsers(on container: Container) throws -> EventLoopFuture<[DummyServiceUser]> {
+	public func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[DummyServiceUser]> {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
 	public let supportsUserCreation = false
-	public func createUser(_ user: DummyServiceUser, on container: Container) throws -> EventLoopFuture<DummyServiceUser> {
+	public func createUser(_ user: DummyServiceUser, on eventLoop: EventLoop) throws -> EventLoopFuture<DummyServiceUser> {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
 	public let supportsUserUpdate = false
-	public func updateUser(_ user: DummyServiceUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<DummyServiceUser> {
+	public func updateUser(_ user: DummyServiceUser, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<DummyServiceUser> {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
 	public let supportsUserDeletion = false
-	public func deleteUser(_ user: DummyServiceUser, on container: Container) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: DummyServiceUser, on eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
 	public let supportsPasswordChange = false
-	public func changePasswordAction(for user: DummyServiceUser, on container: Container) throws -> ResetPasswordAction {
+	public func changePasswordAction(for user: DummyServiceUser, on eventLoop: EventLoop) throws -> ResetPasswordAction {
 		throw NotAvailableOnThisPlatformError()
 	}
 	

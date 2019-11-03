@@ -70,28 +70,28 @@ public protocol UserDirectoryService : OfficeKitService, UserDirectoryServiceIni
 	If _more than one_ user matches the given id, the function should return a
 	**failed** future. If _no_ users match the given id, the method should
 	return a succeeded future with a `nil` user. */
-	func existingUser(fromPersistentId pId: UserType.PersistentIdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<UserType?>
+	func existingUser(fromPersistentId pId: UserType.PersistentIdType, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<UserType?>
 	/**
 	Fetch and return the _only_ user matching the given id.
 	
 	If _more than one_ user matches the given id, the function should return a
 	**failed** future. If _no_ users match the given id, the method should
 	return a succeeded future with a `nil` user. */
-	func existingUser(fromUserId uId: UserType.IdType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<UserType?>
+	func existingUser(fromUserId uId: UserType.IdType, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<UserType?>
 	
-	func listAllUsers(on container: Container) throws -> EventLoopFuture<[UserType]>
+	func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[UserType]>
 	
 	var supportsUserCreation: Bool {get}
-	func createUser(_ user: UserType, on container: Container) throws -> EventLoopFuture<UserType>
+	func createUser(_ user: UserType, on eventLoop: EventLoop) throws -> EventLoopFuture<UserType>
 	
 	var supportsUserUpdate: Bool {get}
-	func updateUser(_ user: UserType, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<UserType>
+	func updateUser(_ user: UserType, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<UserType>
 	
 	var supportsUserDeletion: Bool {get}
-	func deleteUser(_ user: UserType, on container: Container) throws -> EventLoopFuture<Void>
+	func deleteUser(_ user: UserType, on eventLoop: EventLoop) throws -> EventLoopFuture<Void>
 	
 	var supportsPasswordChange: Bool {get}
-	func changePasswordAction(for user: UserType, on container: Container) throws -> ResetPasswordAction
+	func changePasswordAction(for user: UserType, on eventLoop: EventLoop) throws -> ResetPasswordAction
 	
 }
 
@@ -140,10 +140,10 @@ extension UserDirectoryService {
 		return try logicalUser(fromWrappedUser: service.wrappedUser(fromUser: user), hints: hints)
 	}
 	
-	public func existingUser<OtherServiceType : UserDirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<UserType?> {
+	public func existingUser<OtherServiceType : UserDirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<UserType?> {
 		let foreignGenericUser = try service.wrappedUser(fromUser: user)
 		let nativeLogicalUser = try logicalUser(fromWrappedUser: foreignGenericUser, hints: [:])
-		return try existingUser(fromUserId: nativeLogicalUser.userId, propertiesToFetch: propertiesToFetch, on: container)
+		return try existingUser(fromUserId: nativeLogicalUser.userId, propertiesToFetch: propertiesToFetch, on: eventLoop)
 	}
 	
 }
@@ -157,7 +157,7 @@ extension UserDirectoryService {
 public protocol UserDirectoryServiceInit {
 	
 	static var configType: OfficeKitServiceConfigInit.Type {get}
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyUserDirectoryService?
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, application: Application, cachedServices: [AnyOfficeKitService]?) -> AnyUserDirectoryService?
 	
 }
 
@@ -167,14 +167,14 @@ public extension UserDirectoryService {
 		return ConfigType.self
 	}
 	
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyUserDirectoryService? {
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, application: Application, cachedServices: [AnyOfficeKitService]?) -> AnyUserDirectoryService? {
 		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unbox() else {return nil}
 		
 		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unbox() as Self? }).first(where: { $0.config.serviceId == c.serviceId }) {
 			return alreadyInstantiated.erase()
 		}
 		
-		return self.init(config: c, globalConfig: gc).erase()
+		return self.init(config: c, globalConfig: gc, application: application).erase()
 	}
 	
 }

@@ -24,9 +24,13 @@ public final class HappnService : UserDirectoryService {
 	public let config: HappnServiceConfig
 	public let globalConfig: GlobalConfig
 	
-	public init(config c: HappnServiceConfig, globalConfig gc: GlobalConfig) {
+	/* Required services */
+	public let semiSingletonStore: SemiSingletonStore
+	
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig, application: Application) {
 		config = c
 		globalConfig = gc
+		semiSingletonStore = application.make()
 	}
 	
 	public func shortDescription(fromUser user: HappnUser) -> String {
@@ -169,14 +173,14 @@ public final class HappnService : UserDirectoryService {
 		return res
 	}
 	
-	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<HappnUser?> {
+	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<HappnUser?> {
 		#warning("TODO: properties to fetch")
-		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		
-		return happnConnector.connect(scope: GetHappnUserOperation.scopes, eventLoop: container.eventLoop)
+		return happnConnector.connect(scope: GetHappnUserOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let op = GetHappnUserOperation(userKey: pId, connector: happnConnector)
-			return EventLoopFuture<HappnUser>.future(from: op, on: container.eventLoop).map{ $0 as HappnUser? }
+			return EventLoopFuture<HappnUser>.future(from: op, on: eventLoop).map{ $0 as HappnUser? }
 		}
 		.flatMapErrorThrowing{ e in
 			switch e {
@@ -189,23 +193,23 @@ public final class HappnService : UserDirectoryService {
 		}
 	}
 	
-	public func existingUser(fromUserId uId: String?, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<HappnUser?> {
+	public func existingUser(fromUserId uId: String?, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<HappnUser?> {
 		guard let uId = uId else {
 			/* Yes. It’s ugly. But the only admin user with a nil login is 244. */
-			return try existingUser(fromPersistentId: HappnConnector.nullLoginUserId, propertiesToFetch: propertiesToFetch, on: container)
+			return try existingUser(fromPersistentId: HappnConnector.nullLoginUserId, propertiesToFetch: propertiesToFetch, on: eventLoop)
 		}
 		
 		#warning("TODO: properties to fetch")
-		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		
-		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: container.eventLoop)
+		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let ids = Set(Email(string: uId)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.stringValue } ?? [uId])
 			let futures = ids.map{ id -> EventLoopFuture<[HappnUser]> in
 				let op = SearchHappnUsersOperation(query: id, happnConnector: happnConnector)
-				return EventLoopFuture<[HappnUser]>.future(from: op, on: container.eventLoop)
+				return EventLoopFuture<[HappnUser]>.future(from: op, on: eventLoop)
 			}
-			return EventLoopFuture.reduce([HappnUser](), futures, on: container.eventLoop, +)
+			return EventLoopFuture.reduce([HappnUser](), futures, on: eventLoop, +)
 		}
 		.flatMapThrowing{ (users: [HappnUser]) -> HappnUser? in
 			guard users.count <= 1 else {
@@ -215,46 +219,45 @@ public final class HappnService : UserDirectoryService {
 		}
 	}
 	
-	public func listAllUsers(on container: Container) throws -> EventLoopFuture<[HappnUser]> {
-		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+	public func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[HappnUser]> {
+		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		
-		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: container.eventLoop)
+		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let searchOp = SearchHappnUsersOperation(query: nil, happnConnector: happnConnector)
-			return EventLoopFuture<[HappnUser]>.future(from: searchOp, on: container.eventLoop)
+			return EventLoopFuture<[HappnUser]>.future(from: searchOp, on: eventLoop)
 		}
 	}
 	
 	public let supportsUserCreation = true
-	public func createUser(_ user: HappnUser, on container: Container) throws -> EventLoopFuture<HappnUser> {
-		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+	public func createUser(_ user: HappnUser, on eventLoop: EventLoop) throws -> EventLoopFuture<HappnUser> {
+		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		
-		return happnConnector.connect(scope: CreateHappnUserOperation.scopes, eventLoop: container.eventLoop)
+		return happnConnector.connect(scope: CreateHappnUserOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let op = CreateHappnUserOperation(user: user, connector: happnConnector)
-			return EventLoopFuture<HappnUser>.future(from: op, on: container.eventLoop)
+			return EventLoopFuture<HappnUser>.future(from: op, on: eventLoop)
 		}
 	}
 	
 	public let supportsUserUpdate = true
-	public func updateUser(_ user: HappnUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<HappnUser> {
+	public func updateUser(_ user: HappnUser, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<HappnUser> {
 		throw NotImplementedError()
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: HappnUser, on container: Container) throws -> EventLoopFuture<Void> {
-		let happnConnector: HappnConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+	public func deleteUser(_ user: HappnUser, on eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
+		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		
-		return happnConnector.connect(scope: DeleteHappnUserOperation.scopes, eventLoop: container.eventLoop)
+		return happnConnector.connect(scope: DeleteHappnUserOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let op = DeleteHappnUserOperation(user: user, connector: happnConnector)
-			return EventLoopFuture<Void>.future(from: op, on: container.eventLoop)
+			return EventLoopFuture<Void>.future(from: op, on: eventLoop)
 		}
 	}
 	
 	public let supportsPasswordChange = true
-	public func changePasswordAction(for user: HappnUser, on container: Container) throws -> ResetPasswordAction {
-		let semiSingletonStore: SemiSingletonStore = try container.make()
+	public func changePasswordAction(for user: HappnUser, on eventLoop: EventLoop) throws -> ResetPasswordAction {
 		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: happnConnector) as ResetHappnPasswordAction
 	}

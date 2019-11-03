@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Vapor
+
 
 
 public protocol OfficeKitService : class, Hashable, OfficeKitServiceInit {
@@ -20,7 +22,7 @@ public protocol OfficeKitService : class, Hashable, OfficeKitServiceInit {
 	var config: ConfigType {get}
 	var globalConfig: GlobalConfig {get}
 	
-	init(config c: ConfigType, globalConfig gc: GlobalConfig)
+	init(config c: ConfigType, globalConfig gc: GlobalConfig, application: Application)
 	
 }
 
@@ -49,7 +51,7 @@ public protocol OfficeKitServiceInit {
 	/* The service provider does not have enough info to do the service
 	 * de-duplication. We have to do it in the implementation of this method, and
 	 * of all the other *Init protocols. Hence the cachedServices argument. */
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyOfficeKitService?
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, application: Application, cachedServices: [AnyOfficeKitService]?) -> AnyOfficeKitService?
 	
 }
 
@@ -60,14 +62,14 @@ public extension OfficeKitService {
 		return ConfigType.self
 	}
 	
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyOfficeKitService? {
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, application: Application, cachedServices: [AnyOfficeKitService]?) -> AnyOfficeKitService? {
 		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unbox() else {return nil}
 		
 		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unbox() as Self? }).first(where: { $0.config.serviceId == c.serviceId }) {
 			return alreadyInstantiated.erase()
 		}
 		
-		return self.init(config: c, globalConfig: gc).erase()
+		return self.init(config: c, globalConfig: gc, application: application).erase()
 	}
 	
 }

@@ -36,9 +36,13 @@ public final class GoogleService : UserDirectoryService {
 	public let config: GoogleServiceConfig
 	public let globalConfig: GlobalConfig
 	
-	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
+	/* Required services */
+	public let semiSingletonStore: SemiSingletonStore
+	
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig, application: Application) {
 		config = c
 		globalConfig = gc
+		semiSingletonStore = application.make()
 	}
 	
 	public func shortDescription(fromUser user: GoogleUser) -> String {
@@ -151,19 +155,19 @@ public final class GoogleService : UserDirectoryService {
 		return res
 	}
 	
-	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<GoogleUser?> {
+	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<GoogleUser?> {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(fromUserId email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<GoogleUser?> {
+	public func existingUser(fromUserId email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<GoogleUser?> {
 		#warning("TODO: Implement propertiesToFetch")
 		/* Note: We do **NOT** map the email to the main domain. Maybe we should? */
-		let googleConnector: GoogleJWTConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		
-		let future = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: container.eventLoop)
+		let future = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ -> EventLoopFuture<[GoogleUser]> in
 			let op = SearchGoogleUsersOperation(searchedDomain: email.domain, query: #"email="\#(email.stringValue)""#, googleConnector: googleConnector)
-			return EventLoopFuture<[GoogleUser]>.future(from: op, on: container.eventLoop)
+			return EventLoopFuture<[GoogleUser]>.future(from: op, on: eventLoop)
 		}
 		.flatMapThrowing{ objects -> GoogleUser? in
 			guard objects.count <= 1 else {
@@ -174,63 +178,43 @@ public final class GoogleService : UserDirectoryService {
 		return future
 	}
 	
-	public func listAllUsers(on container: Container) throws -> EventLoopFuture<[GoogleUser]> {
-		let googleConnector: GoogleJWTConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+	public func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[GoogleUser]> {
+		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		
-		return googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: container.eventLoop)
+		return googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let futures = self.config.primaryDomains.map{ domain -> EventLoopFuture<[GoogleUser]> in
 				let searchOp = SearchGoogleUsersOperation(searchedDomain: domain, query: "isSuspended=false", googleConnector: googleConnector)
-				return EventLoopFuture<[GoogleUser]>.future(from: searchOp, on: container.eventLoop)
+				return EventLoopFuture<[GoogleUser]>.future(from: searchOp, on: eventLoop)
 			}
 			/* Merging all the users from all the domains. */
-			return EventLoopFuture.reduce([GoogleUser](), futures, on: container.eventLoop, +)
+			return EventLoopFuture.reduce([GoogleUser](), futures, on: eventLoop, +)
 		}
 	}
 	
 	public let supportsUserCreation = true
-	public func createUser(_ user: GoogleUser, on container: Container) throws -> EventLoopFuture<GoogleUser> {
-		let googleConnector: GoogleJWTConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+	public func createUser(_ user: GoogleUser, on eventLoop: EventLoop) throws -> EventLoopFuture<GoogleUser> {
+		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		
 		let op = CreateGoogleUserOperation(user: user, connector: googleConnector)
-		return googleConnector.connect(scope: CreateGoogleUserOperation.scopes, eventLoop: container.eventLoop)
-		.flatMap{ _ in EventLoopFuture<GoogleUser>.future(from: op, on: container.eventLoop) }
+		return googleConnector.connect(scope: CreateGoogleUserOperation.scopes, eventLoop: eventLoop)
+		.flatMap{ _ in EventLoopFuture<GoogleUser>.future(from: op, on: eventLoop) }
 	}
 	
 	public let supportsUserUpdate = true
-	public func updateUser(_ user: GoogleUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<GoogleUser> {
+	public func updateUser(_ user: GoogleUser, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<GoogleUser> {
 		throw NotImplementedError()
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: GoogleUser, on container: Container) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: GoogleUser, on eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
 		throw NotImplementedError()
 	}
 	
 	public let supportsPasswordChange = true
-	public func changePasswordAction(for user: GoogleUser, on container: Container) throws -> ResetPasswordAction {
-		let semiSingletonStore: SemiSingletonStore = try container.make()
+	public func changePasswordAction(for user: GoogleUser, on eventLoop: EventLoop) throws -> ResetPasswordAction {
 		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: googleConnector) as ResetGooglePasswordAction
-	}
-	
-	/* ***************
-	   MARK: - Private
-	   *************** */
-	
-	private func existingGoogleUser(fromLDAP ldapUser: LDAPService.UserType, ldapService: LDAPService, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<GoogleUser?> {
-		let future = try ldapService.fetchUniqueEmails(from: ldapUser, on: container).flatMapThrowing{ emails in
-			guard emails.count <= 1 else {throw UserIdConversionError.multipleEmailInLDAP}
-			guard let email = emails.first else {throw UserIdConversionError.noEmailInLDAP}
-			return email
-		}
-		.flatMapThrowing{ (email: Email) -> EventLoopFuture<GoogleUser?> in
-			try self.existingUser(fromUserId: email, propertiesToFetch: propertiesToFetch, on: container)
-		}
-		.flatMap{ f in
-			f
-		}
-		return future
 	}
 	
 }

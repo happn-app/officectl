@@ -22,7 +22,7 @@ public final class EmailService : UserDirectoryService {
 	public typealias ConfigType = EmailServiceConfig
 	public typealias UserType = EmailUser
 	
-	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig, application: Application) {
 		config = c
 		globalConfig = gc
 	}
@@ -93,35 +93,35 @@ public final class EmailService : UserDirectoryService {
 		return [.userId, .persistentId, .identifyingEmail]
 	}
 	
-	public func existingUser(fromPersistentId pId: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<EmailUser?> {
-		return container.eventLoop.makeSucceededFuture(EmailUser(userId: pId))
+	public func existingUser(fromPersistentId pId: Email, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<EmailUser?> {
+		return eventLoop.makeSucceededFuture(EmailUser(userId: pId))
 	}
 	
-	public func existingUser(fromUserId uId: Email, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<EmailUser?> {
-		return container.eventLoop.makeSucceededFuture(EmailUser(userId: uId))
+	public func existingUser(fromUserId uId: Email, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<EmailUser?> {
+		return eventLoop.makeSucceededFuture(EmailUser(userId: uId))
 	}
 	
-	public func listAllUsers(on container: Container) throws -> EventLoopFuture<[EmailUser]> {
+	public func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[EmailUser]> {
 		throw NotSupportedError()
 	}
 	
 	public let supportsUserCreation = false
-	public func createUser(_ user: EmailUser, on container: Container) throws -> EventLoopFuture<EmailUser> {
+	public func createUser(_ user: EmailUser, on eventLoop: EventLoop) throws -> EventLoopFuture<EmailUser> {
 		throw NotSupportedError()
 	}
 	
 	public let supportsUserUpdate = false
-	public func updateUser(_ user: EmailUser, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<EmailUser> {
+	public func updateUser(_ user: EmailUser, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<EmailUser> {
 		throw NotSupportedError()
 	}
 	
 	public let supportsUserDeletion = false
-	public func deleteUser(_ user: EmailUser, on container: Container) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: EmailUser, on eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
 		throw NotSupportedError()
 	}
 	
 	public let supportsPasswordChange = false
-	public func changePasswordAction(for user: EmailUser, on container: Container) throws -> ResetPasswordAction {
+	public func changePasswordAction(for user: EmailUser, on eventLoop: EventLoop) throws -> ResetPasswordAction {
 		throw NotSupportedError()
 	}
 

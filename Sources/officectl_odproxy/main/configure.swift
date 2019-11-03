@@ -14,28 +14,15 @@ import Yaml
 
 
 
-struct ConfigureOptions {
+func configureServices(_ app: Application, forcedConfigPath: String?, verbose: Bool) throws {
+	configureURLRequestOperation(verbose)
+	configureRetryingOperation(verbose)
+	configureSemiSingleton(verbose)
 	
-	var verbose: Bool
-	
-	var serverSecret: String
-	var globalConf: GlobalConfig
-	
-	let signatureURLPathPrefixTransform: VerifySignatureMiddleware.SignatureURLPathPrefixTransform?
-	
-	let serverHostname: String?
-	let serverPort: Int?
-	
-	let openDirectoryConfig: OpenDirectoryServiceConfig
-	
-}
-
-
-func prepareConfigure(forcedConfigPath: String?, verbose: Bool) throws -> ConfigureOptions {
 	let (url, conf) = try readYamlConfig(forcedConfigFilePath: forcedConfigPath)
 	
 	let serverConfigYaml = try conf.storage(forKey: "server", currentKeyPath: ["Global config"])
-	let secret = try serverConfigYaml.string(forKey: "secret", currentKeyPath: ["Server Config"])
+	let serverSecret = try serverConfigYaml.string(forKey: "secret", currentKeyPath: ["Server Config"])
 	let globalConf = try GlobalConfig(genericConfig: conf, pathsRelativeTo: url)
 	
 	let signatureURLPathPrefixTransform: VerifySignatureMiddleware.SignatureURLPathPrefixTransform?
@@ -48,55 +35,37 @@ func prepareConfigure(forcedConfigPath: String?, verbose: Bool) throws -> Config
 		signatureURLPathPrefixTransform = nil
 	}
 	
-	let serverHostname = try serverConfigYaml.optionalString(forKey: "hostname", currentKeyPath: ["Server Config"])
-	let serverPort = try serverConfigYaml.optionalInt(forKey: "port", currentKeyPath: ["Server Config"])
-	
-	let openDirectoryServiceConfigYaml = try conf.storage(forKey: "open_directory_config", currentKeyPath: ["Global config"])
-	let openDirectoryServiceConfig = try OpenDirectoryServiceConfig(providerId: OpenDirectoryService.providerId, serviceId: "_internal_od_", serviceName: "Internal Open Directory Service", mergePriority: nil, keyedConfig: openDirectoryServiceConfigYaml, pathsRelativeTo: url)
-	
-	return ConfigureOptions(
-		verbose: verbose,
-		serverSecret: secret,
-		globalConf: globalConf,
-		signatureURLPathPrefixTransform: signatureURLPathPrefixTransform,
-		serverHostname: serverHostname,
-		serverPort: serverPort,
-		openDirectoryConfig: openDirectoryServiceConfig
-	)
-}
-
-
-func configureServices(_ services: inout Services, configureOptions: ConfigureOptions) {
-	configureURLRequestOperation(configureOptions.verbose)
-	configureRetryingOperation(configureOptions.verbose)
-	configureSemiSingleton(configureOptions.verbose)
-	
 	/* Register the Server config */
-	switch (configureOptions.serverHostname, configureOptions.serverPort) {
-	case (let hostname?, let port?): services.register(HTTPServer.Configuration.self, { c in .init(hostname: hostname, port: port) })
-	case (let hostname?, nil):       services.register(HTTPServer.Configuration.self, { c in .init(hostname: hostname)             })
-	case (nil,           let port?): services.register(HTTPServer.Configuration.self, { c in .init(                    port: port) })
-	case (nil,           nil):       (/*nop*/)
+	do {
+		let serverHostname = try serverConfigYaml.optionalString(forKey: "hostname", currentKeyPath: ["Server Config"])
+		let serverPort = try serverConfigYaml.optionalInt(forKey: "port", currentKeyPath: ["Server Config"])
+		switch (serverHostname, serverPort) {
+		case (let hostname?, let port?): app.register(HTTPServer.Configuration.self, { c in .init(hostname: hostname, port: port) })
+		case (let hostname?, nil):       app.register(HTTPServer.Configuration.self, { c in .init(hostname: hostname)             })
+		case (nil,           let port?): app.register(HTTPServer.Configuration.self, { c in .init(                    port: port) })
+		case (nil,           nil):       (/*nop*/)
+		}
 	}
 	
 	/* Register the OpenDirectory config */
-	services.register(OpenDirectoryService.self, { c in
-		return OpenDirectoryService(config: configureOptions.openDirectoryConfig, globalConfig: configureOptions.globalConf)
+	app.register(OpenDirectoryService.self, { c in
+		let openDirectoryServiceConfigYaml = try conf.storage(forKey: "open_directory_config", currentKeyPath: ["Global config"])
+		let openDirectoryServiceConfig = try OpenDirectoryServiceConfig(providerId: OpenDirectoryService.providerId, serviceId: "_internal_od_", serviceName: "Internal Open Directory Service", mergePriority: nil, keyedConfig: openDirectoryServiceConfigYaml, pathsRelativeTo: url)
+		return OpenDirectoryService(config: openDirectoryServiceConfig, globalConfig: globalConf, application: app)
 	})
 	
 	/* Register additional services */
-	services.register(SemiSingletonStore.self, { c in SemiSingletonStore(forceClassInKeys: true) })
-	
-	/* Register the routes to the router */
-	services.extend(Routes.self, routes)
+	app.register(SemiSingletonStore.self, { c in SemiSingletonStore(forceClassInKeys: true) })
 	
 	/* Register middleware */
-	services.register(MiddlewareConfiguration.self, { c in
+	app.register(MiddlewareConfiguration.self, { c in
 		 var middlewares = MiddlewareConfiguration() /* Create _empty_ middleware config */
 		 middlewares.use(ErrorMiddleware(handleError)) /* Catches errors and converts to HTTP response */
-		 middlewares.use(VerifySignatureMiddleware(secret: Data(configureOptions.serverSecret.utf8), signatureURLPathPrefixTransform: configureOptions.signatureURLPathPrefixTransform))
+		 middlewares.use(VerifySignatureMiddleware(secret: Data(serverSecret.utf8), signatureURLPathPrefixTransform: signatureURLPathPrefixTransform))
 		 return middlewares
 	})
+	
+	try routes(app)
 }
 
 

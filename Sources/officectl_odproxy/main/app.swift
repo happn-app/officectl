@@ -34,10 +34,8 @@ func app(_ env: Environment) throws -> Application {
 		throw InvalidArgumentError(message: "The --config-file or --verbose options can only be specified once.")
 	}
 	
-	let configureOptions = try prepareConfigure(forcedConfigPath: forcedConfigPath, verbose: verbose)
-	let app = Application(environment: env, configure: { s in
-		configureServices(&s, configureOptions: configureOptions)
-	})
+	let app = Application(environment: env)
+	try configureServices(app, forcedConfigPath: forcedConfigPath, verbose: verbose)
 	
 	try boot(app)
 	return app

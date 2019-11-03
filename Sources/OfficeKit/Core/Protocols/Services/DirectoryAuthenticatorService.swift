@@ -15,8 +15,8 @@ public protocol DirectoryAuthenticatorService : UserDirectoryService, DirectoryA
 	
 	associatedtype AuthenticationChallenge
 	
-	func authenticate(userId: UserType.IdType, challenge: AuthenticationChallenge, on container: Container) throws -> EventLoopFuture<Bool>
-	func validateAdminStatus(userId: UserType.IdType, on container: Container) throws -> EventLoopFuture<Bool>
+	func authenticate(userId: UserType.IdType, challenge: AuthenticationChallenge, on eventLoop: EventLoop) throws -> EventLoopFuture<Bool>
+	func validateAdminStatus(userId: UserType.IdType, on eventLoop: EventLoop) throws -> EventLoopFuture<Bool>
 	
 }
 
@@ -29,7 +29,7 @@ public protocol DirectoryAuthenticatorService : UserDirectoryService, DirectoryA
 public protocol DirectoryAuthenticatorServiceInit {
 	
 	static var configType: OfficeKitServiceConfigInit.Type {get}
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyDirectoryAuthenticatorService?
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, application: Application, cachedServices: [AnyOfficeKitService]?) -> AnyDirectoryAuthenticatorService?
 	
 }
 
@@ -39,14 +39,14 @@ public extension DirectoryAuthenticatorService {
 		return ConfigType.self
 	}
 	
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyDirectoryAuthenticatorService? {
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, application: Application, cachedServices: [AnyOfficeKitService]?) -> AnyDirectoryAuthenticatorService? {
 		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unbox() else {return nil}
 		
 		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unbox() as Self? }).first(where: { $0.config.serviceId == c.serviceId }) {
 			return alreadyInstantiated.erase()
 		}
 		
-		return self.init(config: c, globalConfig: gc).erase()
+		return self.init(config: c, globalConfig: gc, application: application).erase()
 	}
 	
 }

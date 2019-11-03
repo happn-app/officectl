@@ -13,8 +13,8 @@ import Vapor
 
 private protocol DirectoryAuthenticatorServiceBox {
 	
-	func authenticate(userId: AnyId, challenge: Any, on container: Container) throws -> EventLoopFuture<Bool>
-	func validateAdminStatus(userId: AnyId, on container: Container) throws -> EventLoopFuture<Bool>
+	func authenticate(userId: AnyId, challenge: Any, on eventLoop: EventLoop) throws -> EventLoopFuture<Bool>
+	func validateAdminStatus(userId: AnyId, on eventLoop: EventLoop) throws -> EventLoopFuture<Bool>
 	
 }
 
@@ -22,18 +22,18 @@ private struct ConcreteDirectoryAuthenticatorBox<Base : DirectoryAuthenticatorSe
 	
 	let originalAuthenticator: Base
 	
-	func authenticate(userId: AnyId, challenge: Any, on container: Container) throws -> EventLoopFuture<Bool> {
+	func authenticate(userId: AnyId, challenge: Any, on eventLoop: EventLoop) throws -> EventLoopFuture<Bool> {
 		guard let uid: Base.UserType.IdType = userId.unbox(), let c = challenge as? Base.AuthenticationChallenge else {
 			throw InvalidArgumentError(message: "Got invalid user id (\(userId)) or auth challenge (\(challenge)) to authenticate with a directory service authenticator of type \(Base.self)")
 		}
-		return try originalAuthenticator.authenticate(userId: uid, challenge: c, on: container)
+		return try originalAuthenticator.authenticate(userId: uid, challenge: c, on: eventLoop)
 	}
 	
-	func validateAdminStatus(userId: AnyId, on container: Container) throws -> EventLoopFuture<Bool> {
+	func validateAdminStatus(userId: AnyId, on eventLoop: EventLoop) throws -> EventLoopFuture<Bool> {
 		guard let uid: Base.UserType.IdType = userId.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user id type (\(userId)) to check if user is admin with a directory service authenticator of type \(Base.self)")
 		}
-		return try originalAuthenticator.validateAdminStatus(userId: uid, on: container)
+		return try originalAuthenticator.validateAdminStatus(userId: uid, on: eventLoop)
 	}
 	
 }
@@ -67,16 +67,16 @@ public class AnyDirectoryAuthenticatorService : AnyUserDirectoryService, Directo
 		super.init(uds: object)
 	}
 	
-	public required init(config c: AnyOfficeKitServiceConfig, globalConfig gc: GlobalConfig) {
+	public required init(config c: AnyOfficeKitServiceConfig, globalConfig gc: GlobalConfig, application: Application) {
 		fatalError("init(config:globalConfig:) unavailable for a directory authenticator service erasure")
 	}
 	
-	public func authenticate(userId: AnyId, challenge: Any, on container: Container) throws -> EventLoopFuture<Bool> {
-		return try box.authenticate(userId: userId, challenge: challenge, on: container)
+	public func authenticate(userId: AnyId, challenge: Any, on eventLoop: EventLoop) throws -> EventLoopFuture<Bool> {
+		return try box.authenticate(userId: userId, challenge: challenge, on: eventLoop)
 	}
 	
-	public func validateAdminStatus(userId: AnyId, on container: Container) throws -> EventLoopFuture<Bool> {
-		return try box.validateAdminStatus(userId: userId, on: container)
+	public func validateAdminStatus(userId: AnyId, on eventLoop: EventLoop) throws -> EventLoopFuture<Bool> {
+		return try box.validateAdminStatus(userId: userId, on: eventLoop)
 	}
 	
 	fileprivate let box: DirectoryAuthenticatorServiceBox

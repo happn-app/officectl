@@ -18,8 +18,8 @@ import Vapor
 
 public class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedName, String, Void>, ResetPasswordAction, SemiSingleton {
 	
-	public static func additionalInfo(from container: Container) throws -> OpenDirectoryConnector {
-		return try container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make())
+	public static func additionalInfo(from application: Application) throws -> OpenDirectoryConnector {
+		return try application.make(SemiSingletonStore.self).semiSingleton(forKey: application.make())
 	}
 	
 	public typealias SemiSingletonKey = LDAPDistinguishedName

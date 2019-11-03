@@ -16,12 +16,8 @@ final class UserController {
 	
 	let openDirectoryService: OpenDirectoryService
 	
-	#warning("From what I understand, we should not keep a reference to the container; only to the services we need, and pass the event loop to the ones who need it. However, for now the services take a container directly, and this might not be easy to change…")
-	let container: Container
-	
-	init(openDirectoryService ods: OpenDirectoryService, container c: Container) {
+	init(openDirectoryService ods: OpenDirectoryService) {
 		openDirectoryService = ods
-		container = c
 	}
 	
 	func createUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<DirectoryUserWrapper>> {
@@ -31,7 +27,7 @@ final class UserController {
 		let input = try req.content.decode(Request.self)
 		
 		let user = try openDirectoryService.logicalUser(fromWrappedUser: input.user)
-		return try openDirectoryService.createUser(user, on: container).flatMapThrowing{ try ApiResponse.data(self.openDirectoryService.wrappedUser(fromUser: $0)) }
+		return try openDirectoryService.createUser(user, on: req.eventLoop).flatMapThrowing{ try ApiResponse.data(self.openDirectoryService.wrappedUser(fromUser: $0)) }
 	}
 	
 	func updateUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<DirectoryUserWrapper>> {
@@ -43,7 +39,7 @@ final class UserController {
 		let properties = Set(input.propertiesToUpdate.map{ DirectoryUserProperty(stringLiteral: $0 )})
 		
 		let user = try openDirectoryService.logicalUser(fromWrappedUser: input.user)
-		return try openDirectoryService.updateUser(user, propertiesToUpdate: properties, on: container).flatMapThrowing{ try ApiResponse.data(self.openDirectoryService.wrappedUser(fromUser: $0)) }
+		return try openDirectoryService.updateUser(user, propertiesToUpdate: properties, on: req.eventLoop).flatMapThrowing{ try ApiResponse.data(self.openDirectoryService.wrappedUser(fromUser: $0)) }
 	}
 	
 	func deleteUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<String>> {
@@ -53,7 +49,7 @@ final class UserController {
 		let input = try req.content.decode(Request.self)
 		
 		let user = try openDirectoryService.logicalUser(fromWrappedUser: input.user)
-		return try openDirectoryService.deleteUser(user, on: container).map{ _ in ApiResponse.data("ok") }
+		return try openDirectoryService.deleteUser(user, on: req.eventLoop).map{ _ in ApiResponse.data("ok") }
 	}
 	
 	func changePassword(_ req: Request) throws -> EventLoopFuture<ApiResponse<String>> {
@@ -67,7 +63,7 @@ final class UserController {
 		let user = try openDirectoryService.logicalUser(fromWrappedUser: DirectoryUserWrapper(userId: input.userId))
 		
 		let ret = req.eventLoop.makePromise(of: ApiResponse<String>.self)
-		let resetPasswordAction = try openDirectoryService.changePasswordAction(for: user, on: container) as! ResetOpenDirectoryPasswordAction
+		let resetPasswordAction = try openDirectoryService.changePasswordAction(for: user, on: req.eventLoop) as! ResetOpenDirectoryPasswordAction
 		resetPasswordAction.start(parameters: input.newPassword, weakeningMode: .alwaysInstantly, handler: { result in
 			switch result {
 			case .success:            ret.succeed(ApiResponse.data("ok"))

@@ -42,9 +42,13 @@ public final class OpenDirectoryService : UserDirectoryService {
 	public let config: OpenDirectoryServiceConfig
 	public let globalConfig: GlobalConfig
 	
-	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
+	/* Required services */
+	public let semiSingletonStore: SemiSingletonStore
+	
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig, application: Application) {
 		config = c
 		globalConfig = gc
+		semiSingletonStore = application.make()
 	}
 	
 	public func shortDescription(fromUser user: ODRecordOKWrapper) -> String {
@@ -223,57 +227,56 @@ public final class OpenDirectoryService : UserDirectoryService {
 		return res
 	}
 	
-	public func existingUser(fromPersistentId pId: UUID, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<ODRecordOKWrapper?> {
+	public func existingUser(fromPersistentId pId: UUID, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<ODRecordOKWrapper?> {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(fromUserId dn: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<ODRecordOKWrapper?> {
+	public func existingUser(fromUserId dn: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<ODRecordOKWrapper?> {
 		/* Note: I’d very much like to search the whole DN instead of the UID
 		 *       only, but I was not able to make it work. */
 		guard let uid = dn.uid else {throw ODError.uidMissingInDN}
 		let request = OpenDirectorySearchRequest(uid: uid)
-		return try existingRecord(fromSearchRequest: request, on: container)
+		return try existingRecord(fromSearchRequest: request, on: eventLoop)
 	}
 	
-	public func listAllUsers(on container: Container) throws -> EventLoopFuture<[ODRecordOKWrapper]> {
-		let openDirectoryConnector: OpenDirectoryConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+	public func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[ODRecordOKWrapper]> {
+		let openDirectoryConnector: OpenDirectoryConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		
 		let searchQuery = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeMetaRecordName, matchType: ODMatchType(kODMatchAny), queryValues: nil, returnAttributes: [kODAttributeTypeEMailAddress, kODAttributeTypeFullName], maximumResults: nil)
 		let op = SearchOpenDirectoryOperation(request: searchQuery, openDirectoryConnector: openDirectoryConnector)
-		return openDirectoryConnector.connect(scope: (), eventLoop: container.eventLoop)
-		.flatMap{ EventLoopFuture<[ODRecord]>.future(from: op, on: container.eventLoop).map{ $0.compactMap{ try? ODRecordOKWrapper(record: $0) } } }
+		return openDirectoryConnector.connect(scope: (), eventLoop: eventLoop)
+		.flatMap{ EventLoopFuture<[ODRecord]>.future(from: op, on: eventLoop).map{ $0.compactMap{ try? ODRecordOKWrapper(record: $0) } } }
 	}
 	
 	public let supportsUserCreation = true
-	public func createUser(_ user: ODRecordOKWrapper, on container: Container) throws -> EventLoopFuture<ODRecordOKWrapper> {
-		let openDirectoryConnector: OpenDirectoryConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
+	public func createUser(_ user: ODRecordOKWrapper, on eventLoop: EventLoop) throws -> EventLoopFuture<ODRecordOKWrapper> {
+		let openDirectoryConnector: OpenDirectoryConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		
 		let op = try CreateOpenDirectoryRecordOperation(user: user, connector: openDirectoryConnector)
-		return openDirectoryConnector.connect(scope: (), eventLoop: container.eventLoop)
-		.flatMap{ _ in EventLoopFuture<ODRecordOKWrapper>.future(from: op, on: container.eventLoop).flatMapThrowing{ try ODRecordOKWrapper(record: $0) } }
+		return openDirectoryConnector.connect(scope: (), eventLoop: eventLoop)
+		.flatMap{ _ in EventLoopFuture<ODRecordOKWrapper>.future(from: op, on: eventLoop).flatMapThrowing{ try ODRecordOKWrapper(record: $0) } }
 	}
 	
 	public let supportsUserUpdate = true
-	public func updateUser(_ user: ODRecordOKWrapper, propertiesToUpdate: Set<DirectoryUserProperty>, on container: Container) throws -> EventLoopFuture<ODRecordOKWrapper> {
+	public func updateUser(_ user: ODRecordOKWrapper, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<ODRecordOKWrapper> {
 		throw NotImplementedError()
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: ODRecordOKWrapper, on container: Container) throws -> EventLoopFuture<Void> {
-		return try self.existingUser(fromUserId: user.userId, propertiesToFetch: [], on: container)
+	public func deleteUser(_ user: ODRecordOKWrapper, on eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
+		return try self.existingUser(fromUserId: user.userId, propertiesToFetch: [], on: eventLoop)
 		.flatMapThrowing{ u in
 			#warning("TODO: Error is not correct")
 			guard let r = u?.record else {throw ODError.noRecordInRecordWrapper}
 			return r
 		}
 		.flatMap{ r in
-			return EventLoopFuture<Void>.future(from: DeleteOpenDirectoryRecordOperation(record: r), on: container.eventLoop)
+			return EventLoopFuture<Void>.future(from: DeleteOpenDirectoryRecordOperation(record: r), on: eventLoop)
 		}
 	}
 	
 	public let supportsPasswordChange = true
-	public func changePasswordAction(for user: ODRecordOKWrapper, on container: Container) throws -> ResetPasswordAction {
-		let semiSingletonStore: SemiSingletonStore = try container.make()
+	public func changePasswordAction(for user: ODRecordOKWrapper, on eventLoop: EventLoop) throws -> ResetPasswordAction {
 		let openDirectoryConnector: OpenDirectoryConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		return semiSingletonStore.semiSingleton(forKey: user.userId, additionalInitInfo: openDirectoryConnector) as ResetOpenDirectoryPasswordAction
 	}
@@ -282,15 +285,15 @@ public final class OpenDirectoryService : UserDirectoryService {
 	   MARK: - Private
 	   *************** */
 	
-	private func existingRecord(fromSearchRequest request: OpenDirectorySearchRequest, on container: Container) throws -> EventLoopFuture<ODRecordOKWrapper?> {
+	private func existingRecord(fromSearchRequest request: OpenDirectorySearchRequest, on eventLoop: EventLoop) throws -> EventLoopFuture<ODRecordOKWrapper?> {
 		var request = request
 		request.maximumResults = 2
 		
-		let openDirectoryConnector: OpenDirectoryConnector = try container.makeSemiSingleton(forKey: config.connectorSettings)
-		let future = openDirectoryConnector.connect(scope: (), eventLoop: container.eventLoop)
+		let openDirectoryConnector: OpenDirectoryConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
+		let future = openDirectoryConnector.connect(scope: (), eventLoop: eventLoop)
 		.flatMap{ _ -> EventLoopFuture<[ODRecord]> in
 			let op = SearchOpenDirectoryOperation(request: request, openDirectoryConnector: openDirectoryConnector)
-			return EventLoopFuture<[ODRecord]>.future(from: op, on: container.eventLoop)
+			return EventLoopFuture<[ODRecord]>.future(from: op, on: eventLoop)
 		}
 		.flatMapThrowing{ objects -> ODRecordOKWrapper? in
 			guard objects.count <= 1 else {

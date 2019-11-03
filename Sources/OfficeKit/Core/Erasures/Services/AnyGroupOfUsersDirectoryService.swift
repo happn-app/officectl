@@ -18,10 +18,10 @@ private protocol GroupOfUsersDirectoryServiceBox {
 	
 	func shortDescription(fromGroup group: AnyDirectoryGroup) -> String
 	
-	func listUsers(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryUser]>
+	func listUsers(inGroup group: AnyDirectoryGroup, on eventLoop: EventLoop) throws -> EventLoopFuture<[AnyDirectoryUser]>
 	
 	var supportsEmbeddedGroupsOfUsers: Bool {get}
-	func listGroups(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryGroup]>
+	func listGroups(inGroup group: AnyDirectoryGroup, on eventLoop: EventLoop) throws -> EventLoopFuture<[AnyDirectoryGroup]>
 	
 }
 
@@ -40,22 +40,22 @@ private struct ConcreteGroupOfUsersDirectoryServiceBox<Base : GroupOfUsersDirect
 		return originalDirectory.shortDescription(fromGroup: g)
 	}
 	
-	func listUsers(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryUser]> {
+	func listUsers(inGroup group: AnyDirectoryGroup, on eventLoop: EventLoop) throws -> EventLoopFuture<[AnyDirectoryUser]> {
 		guard let g: Base.GroupType = group.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid group (\(group)) from which to list users in.")
 		}
-		return try originalDirectory.listUsers(inGroup: g, on: container).map{ $0.map{ AnyDirectoryUser($0) } }
+		return try originalDirectory.listUsers(inGroup: g, on: eventLoop).map{ $0.map{ AnyDirectoryUser($0) } }
 	}
 	
 	var supportsEmbeddedGroupsOfUsers: Bool {
 		return originalDirectory.supportsEmbeddedGroupsOfUsers
 	}
 	
-	func listGroups(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
+	func listGroups(inGroup group: AnyDirectoryGroup, on eventLoop: EventLoop) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
 		guard let g: Base.GroupType = group.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid group (\(group)) from which to list users in.")
 		}
-		return try originalDirectory.listGroups(inGroup: g, on: container).map{ $0.map{ AnyDirectoryGroup($0) } }
+		return try originalDirectory.listGroups(inGroup: g, on: eventLoop).map{ $0.map{ AnyDirectoryGroup($0) } }
 	}
 	
 }
@@ -73,7 +73,7 @@ public class AnyGroupOfUsersDirectoryService : AnyUserDirectoryService, GroupOfU
 		super.init(uds: object)
 	}
 	
-	public required init(config c: AnyOfficeKitServiceConfig, globalConfig gc: GlobalConfig) {
+	public required init(config c: AnyOfficeKitServiceConfig, globalConfig gc: GlobalConfig, application: Application) {
 		fatalError("init(config:globalConfig:) unavailable for a directory service erasure")
 	}
 	
@@ -81,16 +81,16 @@ public class AnyGroupOfUsersDirectoryService : AnyUserDirectoryService, GroupOfU
 		return box.shortDescription(fromGroup: group)
 	}
 	
-	public func listUsers(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryUser]> {
-		return try box.listUsers(inGroup: group, on: container)
+	public func listUsers(inGroup group: AnyDirectoryGroup, on eventLoop: EventLoop) throws -> EventLoopFuture<[AnyDirectoryUser]> {
+		return try box.listUsers(inGroup: group, on: eventLoop)
 	}
 	
 	public var supportsEmbeddedGroupsOfUsers: Bool {
 		return box.supportsEmbeddedGroupsOfUsers
 	}
 	
-	public func listGroups(inGroup group: AnyDirectoryGroup, on container: Container) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
-		return try box.listGroups(inGroup: group, on: container)
+	public func listGroups(inGroup group: AnyDirectoryGroup, on eventLoop: EventLoop) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
+		return try box.listGroups(inGroup: group, on: eventLoop)
 	}
 	
 	fileprivate let box: GroupOfUsersDirectoryServiceBox

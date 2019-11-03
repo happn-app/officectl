@@ -15,7 +15,7 @@ import Vapor
 public typealias MultiServicesUser = MultiServicesItem<AnyDSUPair?>
 extension MultiServicesUser {
 	
-	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, on container: Container) throws -> EventLoopFuture<MultiServicesUser> {
+	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, on eventLoop: EventLoop) throws -> EventLoopFuture<MultiServicesUser> {
 		#warning("TODO: Properties to fetch")
 		let servicesById = try services.group(by: { $0.config.serviceId })
 		
@@ -25,11 +25,11 @@ extension MultiServicesUser {
 		
 		func getUsers(from dsuPair: AnyDSUPair, in services: Set<AnyUserDirectoryService>) -> EventLoopFuture<[AnyUserDirectoryService: Result<AnyDSUPair?, Error>]> {
 			let userFutures = services.map{ curService in
-				(curService, container.eventLoop.makeSucceededFuture(()).flatMapThrowing{
-					try curService.existingUser(fromUser: dsuPair.user, in: dsuPair.service, propertiesToFetch: [], on: container)
+				(curService, eventLoop.makeSucceededFuture(()).flatMapThrowing{
+					try curService.existingUser(fromUser: dsuPair.user, in: dsuPair.service, propertiesToFetch: [], on: eventLoop)
 				}.flatMap{ $0 })
 			}
-			return EventLoopFuture.waitAll(userFutures, eventLoop: container.eventLoop).flatMapThrowing{ userResults in
+			return EventLoopFuture.waitAll(userFutures, eventLoop: eventLoop).flatMapThrowing{ userResults in
 				return try userResults.group(
 					by:            { $0.0 },
 					mappingValues: {
@@ -57,7 +57,7 @@ extension MultiServicesUser {
 			guard let serviceIdToTry = serviceIdsToTry.first, servicesToFetch.count > 0 else {
 				/* We have finished. Let’s return the results. */
 				let multiServicesUser = MultiServicesUser(itemsByService: allFetchedUsers, errorsByService: allFetchedErrors.mapValues{ ErrorCollection($0) })
-				return container.eventLoop.makeSucceededFuture(multiServicesUser)
+				return eventLoop.makeSucceededFuture(multiServicesUser)
 			}
 			
 			triedServiceIdSource.insert(serviceIdToTry)
@@ -67,11 +67,11 @@ extension MultiServicesUser {
 		return try getUsers(from: dsuIdPair.dsuPair(), in: services).flatMapThrowing(fetchStep).flatMap{ $0 }
 	}
 	
-	public static func fetchAll(in services: Set<AnyUserDirectoryService>, on container: Container) throws -> EventLoopFuture<(users: [MultiServicesUser], fetchErrorsByServices: [AnyUserDirectoryService: Error])> {
-		return try AnyDSUPair.fetchAll(in: services, on: container).flatMap{
+	public static func fetchAll(in services: Set<AnyUserDirectoryService>, on eventLoop: EventLoop) throws -> EventLoopFuture<(users: [MultiServicesUser], fetchErrorsByServices: [AnyUserDirectoryService: Error])> {
+		return try AnyDSUPair.fetchAll(in: services, on: eventLoop).flatMap{
 			let (pairs, fetchErrorsByService) = $0
 			let validServices = services.subtracting(fetchErrorsByService.keys)
-			return MultiServicesUser.merge(dsuPairs: Set(pairs), validServices: validServices, eventLoop: container.eventLoop).map{ ($0, fetchErrorsByService) }
+			return MultiServicesUser.merge(dsuPairs: Set(pairs), validServices: validServices, eventLoop: eventLoop).map{ ($0, fetchErrorsByService) }
 		}
 	}
 	

@@ -14,8 +14,8 @@ import Vapor
 
 public class ResetHappnPasswordAction : Action<HappnUser, String, Void>, ResetPasswordAction, SemiSingleton {
 	
-	public static func additionalInfo(from container: Container) throws -> HappnConnector {
-		return try (container.make(SemiSingletonStore.self).semiSingleton(forKey: container.make()))
+	public static func additionalInfo(from application: Application) throws -> HappnConnector {
+		return (application.make(SemiSingletonStore.self).semiSingleton(forKey: application.make()))
 	}
 	
 	public typealias SemiSingletonKey = HappnUser

@@ -12,17 +12,17 @@ import Vapor
 
 
 
-func routes(_ r: inout Routes, _ c: Container) throws {
-	let openDirectoryService: OpenDirectoryService = try c.make()
+func routes(_ app: Application) throws {
+	let openDirectoryService: OpenDirectoryService = app.make()
 	
-	let userSearchController = UserSearchController(openDirectoryService: openDirectoryService, container: c)
-	r.post("existing-user-from", "persistent-id", use: userSearchController.fromPersistentId)
-	r.post("existing-user-from", "user-id",       use: userSearchController.fromUserId)
-	r.get("list-all-users",                       use: userSearchController.listAllUsers)
+	let userSearchController = UserSearchController(openDirectoryService: openDirectoryService)
+	app.post("existing-user-from", "persistent-id", use: userSearchController.fromPersistentId)
+	app.post("existing-user-from", "user-id",       use: userSearchController.fromUserId)
+	app.get("list-all-users",                       use: userSearchController.listAllUsers)
 	
-	let userController = UserController(openDirectoryService: openDirectoryService, container: c)
-	r.post("create-user",     use: userController.createUser)
-	r.post("update-user",     use: userController.updateUser)
-	r.post("delete-user",     use: userController.deleteUser)
-	r.post("change-password", use: userController.changePassword)
+	let userController = UserController(openDirectoryService: openDirectoryService)
+	app.post("create-user",     use: userController.createUser)
+	app.post("update-user",     use: userController.updateUser)
+	app.post("delete-user",     use: userController.deleteUser)
+	app.post("change-password", use: userController.changePassword)
 }
