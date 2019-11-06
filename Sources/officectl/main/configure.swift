@@ -17,7 +17,7 @@ import OfficeKit
 
 
 
-func configure(_ config: inout Config, _ env: inout Environment, _ services: inout Services) throws {
+func configure(_ app: Application) throws {
 	/* Let’s parse the CL arguments with Guaka (I did not find a way to do what I
 	 * wanted CLI-wise with Vapor) :( */
 	let cliParseResults = parse_cli()
@@ -25,33 +25,34 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	configureRetryingOperation(cliParseResults.officectlConfig)
 	configureURLRequestOperation(cliParseResults.officectlConfig)
 	/* Register the services/configs we got from CLI, if any */
-	services.register(cliParseResults.officectlConfig)
+	app.register(instance: cliParseResults.officectlConfig)
 	if let p = cliParseResults.officectlConfig.staticDataDirURL?.path {
-		services.register{ container -> DirectoryConfig in
-			return DirectoryConfig(workDir: p.hasSuffix("/") ? p : p + "/")
-		}
+		app.register(DirectoryConfiguration.self, { _ in DirectoryConfiguration(workingDirectory: p.hasSuffix("/") ? p : p + "/") })
 	}
 	
 	/* Register providers */
-//	try services.register(FluentSQLiteProvider())
-	try services.register(LeafProvider())
+//	try app.register(FluentSQLiteProvider())
+	try app.register(LeafProvider())
 	
 	/* Register Services */
-	services.register(ErrorMiddleware.self)
-	services.register(SemiSingletonStore(forceClassInKeys: true))
-	services.register(try AuditLogger(path: cliParseResults.officectlConfig.auditLogsURL?.path))
-	services.register(OfficeKitServiceProvider(config: cliParseResults.officectlConfig.officeKitConfig))
+	/* Note: I don’t really know the difference between registering an instance
+	 *       and registering a singleton. I _think_ registering a singleton will
+	 *       defer the initialization of the singleton until it is used, whilst
+	 *       you have to init the instance directly to be able to register one. */
+	app.register(instance: SemiSingletonStore(forceClassInKeys: true))
+	app.register(instance: try AuditLogger(path: cliParseResults.officectlConfig.auditLogsURL?.path))
+	app.register(singleton: OfficeKitServiceProvider.self, { app in OfficeKitServiceProvider(config: cliParseResults.officectlConfig.officeKitConfig, application: app) })
 	
 	/* Register routes */
-	let router = EngineRouter(caseInsensitive: true)
-	try setup_routes(router)
-	services.register(router, as: Router.self)
+	try setup_routes(app)
 	
 	/* Register middlewares */
-	var middlewares = MiddlewareConfig()
-	middlewares.use(AsyncErrorMiddleware(processErrorHandler: handleOfficectlError)) /* Catches errors and converts them to HTTP response */
-	middlewares.use(FileMiddleware.self) /* Serves files from the “Public” directory */
-	services.register(middlewares)
+	app.register(MiddlewareConfiguration.self, { app in
+		var middlewares = MiddlewareConfiguration()
+		middlewares.use(AsyncErrorMiddleware(processErrorHandler: handleOfficectlError)) /* Catches errors and converts them to HTTP response */
+		middlewares.use(app.make(FileMiddleware.self)) /* Serves files from the “Public” directory */
+		return middlewares
+	})
 	
 	/* Set preferred services */
 	config.prefer(LeafRenderer.self, for: ViewRenderer.self)
@@ -61,9 +62,11 @@ func configure(_ config: inout Config, _ env: inout Environment, _ services: ino
 	
 	/* Register the Guaka command wrapper. Guaka does the argument parsing
 	 * because I wasn’t able to do what I wanted with Vapor’s :( */
-	var commandConfig = CommandConfig()
-	commandConfig.use(cliParseResults.wrapperCommand, as: "guaka", isDefault: true)
-	services.register(commandConfig)
+	app.register(CommandConfiguration.self, { app in
+		var commandConfig = CommandConfiguration()
+		commandConfig.use(cliParseResults.wrapperCommand, as: "guaka", isDefault: true)
+		return commandConfig
+	})
 }
 
 

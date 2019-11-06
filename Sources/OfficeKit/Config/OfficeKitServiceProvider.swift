@@ -21,7 +21,8 @@ public class OfficeKitServiceProvider {
 	
 	- Important: It is assumed the application will not be deallocated while the
 	service office kit service provider is staying alive. */
-	public init(config cfg: OfficeKitConfig, application: Application) {
+	public init(config cfg: OfficeKitConfig, application app: Application) {
+		application = app
 		officeKitConfig = cfg
 	}
 	
