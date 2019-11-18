@@ -16,12 +16,14 @@ import URLRequestOperation
 
 
 
-func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> Future<Void> {
-	let sProvider = try context.container.make(OfficeKitServiceProvider.self)
+func curTest(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
+	let eventLoop = app.make(EventLoop.self)
+	let sProvider = app.make(OfficeKitServiceProvider.self)
+	
 	let services = try sProvider.getAllServices()
 	print(services)
 	
-	return context.container.future()
+	return eventLoop.future()
 	
 	/* List all GitHub project’s hooks */
 //	let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)

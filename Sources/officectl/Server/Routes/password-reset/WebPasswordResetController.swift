@@ -16,37 +16,38 @@ import OfficeKit
 
 final class WebPasswordResetController {
 	
-	func showUserSelection(_ req: Request) throws -> EventLoopFuture<View> {
-		return try req.view().render("NewPasswordResetPage")
+	func showUserSelection(_ req: Request) -> EventLoopFuture<View> {
+		return req.leaf.render("NewPasswordResetPage")
 	}
 	
 	func showResetPage(_ req: Request) throws -> EventLoopFuture<View> {
-		let email = try req.parameters.next(Email.self)
-		return try multiServicesPasswordReset(for: email, container: req)
-		.flatMap{ resets in try self.renderMultiServicesPasswordReset(resets, for: email, view: req.view()) }
+		let email = try Email.getAsParameter(named: "email", from: req)
+		return try multiServicesPasswordReset(for: email, request: req)
+			.flatMap{ resets in self.renderMultiServicesPasswordReset(resets, for: email, viewRenderer: req.leaf) }
 	}
 	
 	func resetPassword(_ req: Request) throws -> EventLoopFuture<View> {
-		let view = try req.view()
-		let email = try req.parameters.next(Email.self)
-		let resetPasswordData = try req.content.syncDecode(ResetPasswordData.self)
+		let email = try Email.getAsParameter(named: "email", from: req)
+		let resetPasswordData = try req.content.decode(ResetPasswordData.self)
 		
-		let officeKitServiceProvider = try req.make(OfficeKitServiceProvider.self)
+		let officeKitServiceProvider = req.make(OfficeKitServiceProvider.self)
 		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService()
 		
 		let user = try authService.logicalUser(fromEmail: email, servicesProvider: officeKitServiceProvider)
-		return try authService.authenticate(userId: user.userId, challenge: resetPasswordData.oldPass, on: req)
-		.map{ authSuccess -> Void in
-			guard authSuccess else {throw BasicValidationError("Cannot login with these credentials.")}
+		return try authService.authenticate(userId: user.userId, challenge: resetPasswordData.oldPass, on: req.eventLoop)
+		.flatMapThrowing{ authSuccess -> Void in
+			guard authSuccess else {throw InvalidArgumentError(message: "Cannot login with these credentials.")}
 		}
-		.flatMap{
+		.flatMapThrowing{
 			try req.make(AuditLogger.self).log(action: "Resetting password for user email:\(email).", source: .web)
-			return try self.multiServicesPasswordReset(for: email, container: req)
+			return try self.multiServicesPasswordReset(for: email, request: req)
 		}
-		.flatMap{ (multiPasswordReset: MultiServicesPasswordReset) in
+		.flatMap{ $0 }
+		.flatMapThrowing{ (multiPasswordReset: MultiServicesPasswordReset) in
 			_ = try multiPasswordReset.start(newPass: resetPasswordData.newPass, weakeningMode: .always(successDelay: 180, errorDelay: 180), eventLoop: req.eventLoop)
-			return self.renderMultiServicesPasswordReset(multiPasswordReset, for: email, view: view)
+			return self.renderMultiServicesPasswordReset(multiPasswordReset, for: email, viewRenderer: req.leaf)
 		}
+		.flatMap{ $0 }
 	}
 	
 	private struct ResetPasswordData : Decodable {
@@ -56,16 +57,16 @@ final class WebPasswordResetController {
 		
 	}
 	
-	private func multiServicesPasswordReset(for email: Email, container: Container) throws -> EventLoopFuture<MultiServicesPasswordReset> {
-		let sProvider = try container.make(OfficeKitServiceProvider.self)
+	private func multiServicesPasswordReset(for email: Email, request: Request) throws -> EventLoopFuture<MultiServicesPasswordReset> {
+		let sProvider = request.make(OfficeKitServiceProvider.self)
 		let emailService: EmailService = try sProvider.getUserDirectoryService(id: nil)
 		let services = try sProvider.getAllUserDirectoryServices().filter{ $0.supportsPasswordChange }
 		
 		let emailUser = try emailService.logicalUser(fromUserId: email)
-		return try MultiServicesPasswordReset.fetch(from: AnyDSUIdPair(service: emailService.erase(), user: emailUser.erase().userId), in: services, on: container)
+		return try MultiServicesPasswordReset.fetch(from: AnyDSUIdPair(service: emailService.erase(), user: emailUser.erase().userId), in: services, on: request.eventLoop)
 	}
 	
-	private func renderMultiServicesPasswordReset(_ multiPasswordReset: MultiServicesPasswordReset, for email: Email, view: ViewRenderer) -> EventLoopFuture<View> {
+	private func renderMultiServicesPasswordReset(_ multiPasswordReset: MultiServicesPasswordReset, for email: Email, viewRenderer: ViewRenderer) -> EventLoopFuture<View> {
 		struct ResetPasswordStatusContext : Encodable {
 			struct ServicePasswordResetStatus : Encodable {
 				var serviceName: String
@@ -92,7 +93,7 @@ final class WebPasswordResetController {
 				)
 			}
 		)
-		return view.render("PasswordResetStatusPage", context)
+		return viewRenderer.render("PasswordResetStatusPage", context)
 	}
 	
 }

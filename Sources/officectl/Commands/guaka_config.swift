@@ -21,7 +21,11 @@ struct GuakaCommandParseResult {
 }
 
 
-func parse_cli() -> GuakaCommandParseResult {
+/* Not sure we should be passing the app directly. However, Vapor 3 gave access
+ * to the container from the CommandContext, but Vapor 4 does not. So we create
+ * the VaporWrapperForGuakaCommand with a reference to the app, and give the app
+ * to the VaporWrapperForGuakaCommand.Run */
+func parse_cli(_ app: Application) -> GuakaCommandParseResult {
 	var result: GuakaCommandParseResult?
 	let createSetWrapperCommandHandler = { (run: @escaping VaporWrapperForGuakaCommand.Run) -> (_ cmd: Guaka.Command, _ flags: Guaka.Flags, _ args: [String]) -> Void in
 		return { (_ cmd: Guaka.Command, _ flags: Guaka.Flags, _ args: [String]) -> Void in
@@ -31,7 +35,7 @@ func parse_cli() -> GuakaCommandParseResult {
 			
 			result = GuakaCommandParseResult(
 				officectlConfig: officectlConfig,
-				wrapperCommand: VaporWrapperForGuakaCommand(guakaCommand: cmd, guakaFlags: flags, guakaArgs: args, run: run)
+				wrapperCommand: VaporWrapperForGuakaCommand(guakaCommand: cmd, guakaFlags: flags, guakaArgs: args, app: app, run: run)
 			)
 		}
 	}

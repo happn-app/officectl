@@ -1,7 +1,7 @@
 <html>
 	<head>
-		<title>#get(title)</title>
-		#get(additional_head_tags)
+		<title>#import("title")</title>
+		#import("additional_head_tags")
 	</head>
-	<body>#get(body)</body>
+	<body>#import("body")</body>
 </html>

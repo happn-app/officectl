@@ -47,11 +47,20 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 
 extension ApiResponse : ResponseEncodable {
 	
-	func encode(for req: Request) throws -> EventLoopFuture<Response> {
-		let encoder = JSONEncoder()
-		encoder.dateEncodingStrategy = .iso8601
-		encoder.keyEncodingStrategy = .convertToSnakeCase
-		return try req.future(req.response(encoder.encode(self), as: .json))
+	func encodeResponse(for request: Request) -> EventLoopFuture<Response> {
+		let response = Response()
+		do {
+			try response.content.encode(self, as: .json)
+			return request.eventLoop.makeSucceededFuture(response)
+		} catch {
+			return request.eventLoop.makeFailedFuture(error)
+		}
+		
+//		let encoder = JSONEncoder()
+//		encoder.dateEncodingStrategy = .iso8601
+//		encoder.keyEncodingStrategy = .convertToSnakeCase
+//		do    {return try req.eventLoop.makeSucceededFuture(req.response(encoder.encode(self), as: .json))}
+//		catch {return req.eventLoop.makeFailedFuture(error)}
 	}
 	
 }

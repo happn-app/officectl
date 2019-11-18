@@ -14,26 +14,28 @@ import OfficeKit
 
 
 
-func listUsers(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+func listUsers(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
+	let eventLoop = app.make(EventLoop.self)
+	
 	let serviceId = f.getString(name: "service-id")
-	let serviceProvider: OfficeKitServiceProvider = try context.container.make()
+	let serviceProvider: OfficeKitServiceProvider = app.make()
 	let service = try serviceProvider.getUserDirectoryService(id: serviceId)
 	
 	let includeInactiveUsers = f.getBool(name: "include-suspended-users")!
 	
-	try context.container.make(AuditLogger.self).log(action: "List all users for service \(serviceId ?? "<inferred service>"), \(includeInactiveUsers ? "" : "not ")including inactive users.", source: .cli)
+	try app.make(AuditLogger.self).log(action: "List all users for service \(serviceId ?? "<inferred service>"), \(includeInactiveUsers ? "" : "not ")including inactive users.", source: .cli)
 	
 	let usersFuture: EventLoopFuture<[String]>
 	if let googleService: GoogleService = service.unbox() {
-		usersFuture = try getUsersList(googleService: googleService, includeInactiveUsers: includeInactiveUsers, container: context.container)
+		usersFuture = try getUsersList(googleService: googleService, includeInactiveUsers: includeInactiveUsers, on: eventLoop)
 	} else if let odService: OpenDirectoryService = service.unbox() {
-		usersFuture = try getUsersList(openDirectoryService: odService, includeInactiveUsers: includeInactiveUsers, container: context.container)
+		usersFuture = try getUsersList(openDirectoryService: odService, includeInactiveUsers: includeInactiveUsers, on: eventLoop)
 	} else {
 		throw InvalidArgumentError(message: "Unsupported service to list users from.")
 	}
 	
 	return usersFuture
-	.then{ users -> EventLoopFuture<Void> in
+	.flatMap{ users -> EventLoopFuture<Void> in
 		#warning("TODO: Use context.console to log stuff, not print.")
 		var i = 1
 		for user in users {
@@ -42,16 +44,16 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 			i += 1
 		}
 		print()
-		return context.container.eventLoop.newSucceededFuture(result: ())
+		return eventLoop.makeSucceededFuture(())
 	}
 }
 
-private func getUsersList(googleService: GoogleService, includeInactiveUsers: Bool, container: Container) throws -> EventLoopFuture<[String]> {
-	return try googleService.listAllUsers(on: container)
+private func getUsersList(googleService: GoogleService, includeInactiveUsers: Bool, on eventLoop: EventLoop) throws -> EventLoopFuture<[String]> {
+	return try googleService.listAllUsers(on: eventLoop)
 	.map{ $0.map{ googleService.shortDescription(fromUser: $0) } }
 }
 
-private func getUsersList(openDirectoryService: OpenDirectoryService, includeInactiveUsers: Bool, container: Container) throws -> EventLoopFuture<[String]> {
-	return try openDirectoryService.listAllUsers(on: container)
+private func getUsersList(openDirectoryService: OpenDirectoryService, includeInactiveUsers: Bool, on eventLoop: EventLoop) throws -> EventLoopFuture<[String]> {
+	return try openDirectoryService.listAllUsers(on: eventLoop)
 	.map{ $0.map{ openDirectoryService.shortDescription(fromUser: $0) } }
 }

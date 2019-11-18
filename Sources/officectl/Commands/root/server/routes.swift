@@ -14,6 +14,10 @@ import OfficeKit
 
 
 
-func serverRoutes(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	return try RoutesCommand(router: context.container.make()).run(using: context)
+func serverRoutes(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
+	let eventLoop = app.make(EventLoop.self)
+	
+	var context = context
+	try RoutesCommand(routes: app.make()).run(using: &context)
+	return eventLoop.makeSucceededFuture(())
 }

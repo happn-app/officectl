@@ -12,11 +12,12 @@ import Vapor
 
 
 
-extension Email : Parameter {
+extension Email {
 	
-	public static func resolveParameter(_ emailStr: String, on container: Container) throws -> Email {
-		guard let email = Email(string: emailStr) else {
-			throw BasicValidationError("Invalid email")
+	public static func getAsParameter(named parameterName: String, from request: Request) throws -> Email {
+		let str = try nil2throw(request.parameters.get(parameterName))
+		guard let email = Email(string: str) else {
+			throw InvalidArgumentError(message: "Invalid email")
 		}
 		return email
 	}

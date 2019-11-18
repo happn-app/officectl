@@ -15,13 +15,13 @@ import OfficeKit
 
 
 
-struct OfficectlConfig : Service {
+struct OfficectlConfig {
 	
 	var staticDataDirURL: URL?
 	var serverHost: String
 	var serverPort: Int
 	
-	var jwtSecret: String
+	var jwtSecret: Data
 	
 	var verbose: Bool
 	var auditLogsURL: URL?
@@ -47,7 +47,7 @@ struct OfficectlConfig : Service {
 		guard let jSecret = f.getString(name: "jwt-secret") ?? configYaml["server"]["jwt_secret"].string else {
 			throw MissingFieldError("JWT Secret")
 		}
-		jwtSecret = jSecret
+		jwtSecret = Data(jSecret.utf8)
 		
 		verbose = f.getBool(name: "verbose") ?? configYaml["verbose"].bool ?? false
 		auditLogsURL = configYaml["audit_logs_path"].string.flatMap{ URL(fileURLWithPath: $0, isDirectory: false, relativeTo: configURL) }

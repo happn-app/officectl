@@ -8,7 +8,7 @@
 import Foundation
 
 //import FluentSQLite
-//import Leaf
+import Leaf
 import SemiSingleton
 import URLRequestOperation
 import Vapor
@@ -20,7 +20,7 @@ import OfficeKit
 func configure(_ app: Application) throws {
 	/* Let’s parse the CL arguments with Guaka (I did not find a way to do what I
 	 * wanted CLI-wise with Vapor) :( */
-	let cliParseResults = parse_cli()
+	let cliParseResults = parse_cli(app)
 	configureSemiSingleton(cliParseResults.officectlConfig)
 	configureRetryingOperation(cliParseResults.officectlConfig)
 	configureURLRequestOperation(cliParseResults.officectlConfig)
@@ -31,8 +31,9 @@ func configure(_ app: Application) throws {
 	}
 	
 	/* Register providers */
-//	try app.register(FluentSQLiteProvider())
-	try app.register(LeafProvider())
+//	app.register(FluentSQLiteProvider.self, { _ in return FluentSQLiteProvider() })
+	app.register(LeafConfig.self, { app in return LeafConfig(rootDirectory: app.make(DirectoryConfiguration.self).viewsDirectory) })
+	app.register(LeafProvider.self, { _ in return LeafProvider() })
 	
 	/* Register Services */
 	/* Note: I don’t really know the difference between registering an instance
@@ -54,14 +55,21 @@ func configure(_ app: Application) throws {
 		return middlewares
 	})
 	
-	/* Set preferred services */
-	config.prefer(LeafRenderer.self, for: ViewRenderer.self)
+	/* Set preferred services (not available in Vapor 4 anymore?) */
+//	config.prefer(LeafRenderer.self, for: ViewRenderer.self)
+	
+	/* Register Request services (whatever that means…) */
+	#warning("TODO: Understand these. Are they made the correct way? Why are they even needed?")
+	app.register(request: AuditLogger.self, { request in request.application.make() })
+	app.register(request: OfficectlConfig.self, { request in request.application.make() })
+	app.register(request: OfficeKitServiceProvider.self, { request in request.application.make() })
 	
 	/* Set OfficeKit options */
 	WeakeningMode.defaultMode = .onSuccess(delay: 13*60) /* 13 minutes */
 	
 	/* Register the Guaka command wrapper. Guaka does the argument parsing
-	 * because I wasn’t able to do what I wanted with Vapor’s :( */
+	 * because I wasn’t able to do what I wanted with Vapor’s :(
+	 * Note I did not retry with Vapor 4. Maybe it has a way to do what I want. */
 	app.register(CommandConfiguration.self, { app in
 		var commandConfig = CommandConfiguration()
 		commandConfig.use(cliParseResults.wrapperCommand, as: "guaka", isDefault: true)
@@ -76,20 +84,18 @@ private func handleOfficectlError(request: Request, chainingTo next: Responder, 
 	let status = (error as? Abort)?.status
 	let is404 = status?.code == 404
 	let context = [
-		"error_title": is404 ? "Page Not Found" : "Unknown Error",
-		"error_description": is404 ? "This page was not found. Please go away!" : "\(error)"
+		"errorTitle": is404 ? "Page Not Found" : "Unknown Error",
+		"errorDescription": is404 ? "This page was not found. Please go away!" : "\(error)"
 	]
-	if request.http.url.pathComponents.first == "/" && request.http.url.pathComponents.dropFirst().first == "api" {
-//		return try request.make(ErrorMiddleware.self).respond(to: request, chainingTo: next)
-		let response = try request.response(http: HTTPResponse(
-			status: status ?? .internalServerError,
-			headers: (error as? Abort)?.headers ?? [:],
-			body: JSONEncoder().encode(error.asApiResponse(environment: request.environment))
-		))
-		return request.future(response)
+	
+	if request.url.path.components(separatedBy: "/").first == "api" {
+		let response = Response(status: status ?? .internalServerError, headers: (error as? Abort)?.headers ?? [:])
+		response.body = try .init(data: JSONEncoder().encode(error.asApiResponse(environment: request.application.environment)))
+		response.headers.replaceOrAdd(name: .contentType, value: "application/json; charset=utf-8")
+		return request.eventLoop.makeSucceededFuture(response)
 	} else {
-		return try request.view().render("ErrorPage", context).then{ view in
-			return view.encode(status: status ?? .internalServerError, for: request)
+		return request.leaf.render("ErrorPage", context).flatMap{ view in
+			return view.encodeResponse(status: status ?? .internalServerError, for: request)
 		}
 	}
 }

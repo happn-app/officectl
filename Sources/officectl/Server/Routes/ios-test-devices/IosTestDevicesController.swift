@@ -35,7 +35,7 @@ final class IosTestDevicesController {
 			var devices: [Device]
 		}
 		
-		let officectlConfig = try req.make(OfficectlConfig.self)
+		let officectlConfig = req.make(OfficectlConfig.self)
 		let token = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		return getAllDevices(token: token, eventLoop: req.eventLoop).map{ devices in
@@ -54,7 +54,7 @@ final class IosTestDevicesController {
 			}
 		}
 		.flatMap{ devices in
-			try req.view().render("IosTestDevicesList", DevicesContext(devices: devices))
+			req.leaf.render("IosTestDevicesList", DevicesContext(devices: devices))
 		}
 	}
 	
@@ -173,8 +173,8 @@ final class IosTestDevicesController {
 		decoder.dateDecodingStrategy = .iso8601
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
 		let op = AuthenticatedJSONOperation<Response>(url: urlComponents.url!, authenticator: authenticate, decoder: decoder)
-		return EventLoopFuture<Response>.future(from: op, eventLoop: eventLoop)
-		.flatMap{ response in
+		return EventLoopFuture<Response>.future(from: op, on: eventLoop)
+		.flatMapThrowing{ response in
 			if !response.hasMore {
 				return eventLoop.future(response.data)
 			}
@@ -184,6 +184,7 @@ final class IosTestDevicesController {
 			}
 			return self.getAllDevices(startingAfter: latestDevice, token: token, eventLoop: eventLoop).map{ response.data + $0 }
 		}
+		.flatMap{ $0 }
 	}
 	
 }

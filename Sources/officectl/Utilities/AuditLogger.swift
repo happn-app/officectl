@@ -14,7 +14,7 @@ import Vapor
 
 
 #warning("TODO: When I find one, use a FileLogger instead of manually writing to the file?")
-class AuditLogger : Service {
+class AuditLogger {
 	
 	enum ActionSource {
 		

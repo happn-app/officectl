@@ -1,4 +1,4 @@
-#/* The context structure
+#comment:
 struct DevicesContext : Encodable {
 	struct Device : Encodable {
 		var name: String
@@ -13,36 +13,38 @@ struct DevicesContext : Encodable {
 	}
 	var devices: [Device]
 }
-*/
+#endcomment
 
-#set("title") {
-	happn – List of iOS Test Devices
-}
+#extend("lib/Master"):
 
-#set("additional_head_tags") {
+
+
+#export("title", "happn – List of iOS Test Devices")
+
+#export("additional_head_tags"):
 	<style>
 		table, th, td {
 			border: 1px solid black;
 			border-collapse: collapse;
-		\}
+		}
 		th, td {
 			padding: 7px;
-		\}
+		}
 		th {
 			padding: 9px;
-			background-color: #e0e0e0;
-		\}
+			background-color: \#e0e0e0;
+		}
 		tr:nth-child(odd) {
-			background-color: #f3f3f3;
-		\}
+			background-color: \#f3f3f3;
+		}
 		.monospace {
 			font-size: 110%;
 			font-family: monospace;
-		\}
+		}
 	</style>
-}
+#endexport
 
-#set("body") {
+#export("body"):
 	<h1>List of iOS Test Devices</h1>
 	<table>
 		<tr>
@@ -55,7 +57,7 @@ struct DevicesContext : Encodable {
 			<th>Wi-Fi MAC Address</th>
 			<th>Bluetooth MAC Address</th>
 		</tr>
-		#for(device in devices) {
+		#for(device in devices):
 			<tr>
 				<td>#(device.name)</td>
 				<td>#(device.modelName)</td>
@@ -66,8 +68,10 @@ struct DevicesContext : Encodable {
 				<td class="monospace">#(device.wifiMAC)</td>
 				<td class="monospace">#(device.bluetoothMAC)</td>
 			</tr>
-		}
+		#endfor
 	</table>
-}
+#endexport
 
-#embed("lib/Master")
+
+
+#endextend

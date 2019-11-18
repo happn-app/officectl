@@ -12,12 +12,11 @@ import Vapor
 
 
 
-extension AnyDSUIdPair : Parameter {
+extension AnyDSUIdPair {
 	
-	public typealias ResolvedParameter = AnyDSUIdPair
-	
-	public static func resolveParameter(_ parameter: String, on container: Container) throws -> AnyDSUIdPair {
-		return try AnyDSUIdPair(string: parameter, servicesProvider: container.make())
+	public static func getAsParameter(named parameterName: String, from request: Request) throws -> AnyDSUIdPair {
+		let str = try nil2throw(request.parameters.get(parameterName))
+		return try AnyDSUIdPair(string: str, servicesProvider: request.make())
 	}
 	
 }

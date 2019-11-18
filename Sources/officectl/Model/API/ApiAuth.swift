@@ -54,8 +54,8 @@ struct ApiAuth : Codable {
 			guard exp.timeIntervalSinceNow > 0 else {throw Abort(.unauthorized)}
 		}
 		
-		func representsSameUserAs(dsuIdPair: AnyDSUIdPair, container: Container) throws -> Bool {
-			let sProvider = try container.make(OfficeKitServiceProvider.self)
+		func representsSameUserAs(dsuIdPair: AnyDSUIdPair, request: Request) throws -> Bool {
+			let sProvider = request.make(OfficeKitServiceProvider.self)
 			let authService = try sProvider.getDirectoryAuthenticatorService()
 			return try sub == dsuIdPair.dsuPair().hop(to: authService).taggedId
 		}

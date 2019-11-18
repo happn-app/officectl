@@ -14,15 +14,17 @@ import OfficeKit
 
 
 
-func usersChangePassword(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+func usersChangePassword(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
+	let eventLoop = app.make(EventLoop.self)
+	
 	let userIdStr = f.getString(name: "user-id")!
 	let serviceIds = f.getString(name: "service-ids")?.split(separator: ",").map(String.init)
 	
-	let sProvider = try context.container.make(OfficeKitServiceProvider.self)
+	let sProvider = app.make(OfficeKitServiceProvider.self)
 	let services = try sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsUserCreation }
 	guard !services.isEmpty else {
 		context.console.warning("Nothing to do.")
-		return context.container.future()
+		return eventLoop.future()
 	}
 	
 	/* Let’s ask for the new password */
@@ -30,11 +32,11 @@ func usersChangePassword(flags f: Flags, arguments args: [String], context: Comm
 	let newPassConfirmation = context.console.ask("New password (again): ", isSecure: true)
 	guard newPass == newPassConfirmation else {throw InvalidArgumentError(message: "Try again")}
 	
-	let dsuIdPair = try AnyDSUIdPair(string: userIdStr, servicesProvider: context.container.make())
-	return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), on: context.container)
-	.flatMap{ passwordResets in
-		try context.container.make(AuditLogger.self).log(action: "Changing password of \(dsuIdPair.taggedId) on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
-		return try passwordResets.start(newPass: newPass, weakeningMode: .alwaysInstantly, eventLoop: context.container.eventLoop)
+	let dsuIdPair = try AnyDSUIdPair(string: userIdStr, servicesProvider: app.make())
+	return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), on: eventLoop)
+	.flatMapThrowing{ passwordResets in
+		try app.make(AuditLogger.self).log(action: "Changing password of \(dsuIdPair.taggedId) on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
+		return try passwordResets.start(newPass: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)
 		.map{ results in
 			context.console.info()
 			context.console.info("********* PASSWORD CHANGES RESULTS *********")
@@ -48,4 +50,5 @@ func usersChangePassword(flags f: Flags, arguments args: [String], context: Comm
 			}
 		}
 	}
+	.flatMap{ $0 }
 }

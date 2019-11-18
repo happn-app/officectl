@@ -24,7 +24,7 @@ let package = Package(
 		.package(url: "https://github.com/apple/swift-nio.git", from: "2.6.0"),
 		.package(url: "https://github.com/klaas/Guaka.git", .upToNextMinor(from: "0.3.0")),
 		/* Leaf is still in 4.0.0-alpha. We need beta to be compatible with Vapor 4.0.0-beta… */
-//		.package(url: "https://github.com/vapor/leaf.git", from: "4.0.0-alpha"),
+		.package(url: "https://github.com/vapor/leaf.git", from: "4.0.0-beta"),
 		.package(url: "https://github.com/vapor/vapor.git", from: "4.0.0-beta"),
 		/* OpenCrypto is still in alpha */
 		.package(url: "https://github.com/vapor/open-crypto.git", from: "4.0.0-alpha"),
@@ -52,7 +52,7 @@ let package = Package(
 		]),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
 		
-		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor"/*, "Leaf"*/, "OpenCrypto", "Guaka", "Yaml", "JWTKit", "LegibleError"])
+		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "OpenCrypto", "Guaka", "Yaml", "JWTKit", "LegibleError"])
 		
 	] + platformDependentTargets
 )

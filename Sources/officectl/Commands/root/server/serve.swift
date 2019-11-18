@@ -14,11 +14,13 @@ import OfficeKit
 
 
 
-func serverServe(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	let config = try context.container.make(OfficectlConfig.self)
+func serverServe(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
+	let eventLoop = app.make(EventLoop.self)
+	let config = app.make(OfficectlConfig.self)
 	
-	var context = context
-	context.options["port"] = String(config.serverPort)
-	context.options["hostname"] = config.serverHost
-	return try ServeCommand(server: context.container.make()).run(using: context)
+	var input = CommandInput(arguments: ["fake vapor", "--port", String(config.serverPort), "--hostname", config.serverHost])
+	let signature = try ServeCommand.Signature(from: &input)
+	
+	try app.make(ServeCommand.self).run(using: context, signature: signature)
+	return eventLoop.makeSucceededFuture(())
 }

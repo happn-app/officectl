@@ -30,21 +30,21 @@ func setup_routes(_ app: Application) throws {
 	let usersController = UsersController()
 	app.get("api", "users", use: usersController.getAllUsers)
 	app.get("api", "users", "me", use: usersController.getMe)
-	app.get("api", "users", AnyDSUIdPair.parameter, use: usersController.getUser)
+	app.get("api", "users", ":dsuid-pair", use: usersController.getUser)
 	
 	/* Intentionnally not giving access to listing of all resets: We do not keep
 	 * a table of the lists of password resets, and it would not be trivial to do
 	 * so we just don’t do it. */
 	let passwordResetController = PasswordResetController()
-	app.get("api", "password-resets", AnyDSUIdPair.parameter, use: passwordResetController.getReset)
-	app.put("api", "password-resets", AnyDSUIdPair.parameter, use: passwordResetController.createReset)
+	app.get("api", "password-resets", ":dsuid-pair", use: passwordResetController.getReset)
+	app.put("api", "password-resets", ":dsuid-pair", use: passwordResetController.createReset)
 	
 	/* ******** Temporary password reset page ******** */
 	
 	let webPasswordResetController = WebPasswordResetController()
 	app.get("password-reset", use: webPasswordResetController.showUserSelection)
-	app.get("password-reset",  Email.parameter, use: webPasswordResetController.showResetPage)
-	app.post("password-reset", Email.parameter, use: webPasswordResetController.resetPassword)
+	app.get("password-reset",  ":email", use: webPasswordResetController.showResetPage)
+	app.post("password-reset", ":email", use: webPasswordResetController.resetPassword)
 	
 	/* ******** Temporary certificate renew page ******** */
 	

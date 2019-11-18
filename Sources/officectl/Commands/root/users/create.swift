@@ -14,7 +14,9 @@ import OfficeKit
 
 
 
-func usersCreate(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+func usersCreate(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
+	let eventLoop = app.make(EventLoop.self)
+	
 	let yes = f.getBool(name: "yes")!
 	let emailStr = f.getString(name: "email")!
 	let lastname = f.getString(name: "lastname")!
@@ -26,11 +28,11 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 		throw InvalidArgumentError(message: "Invalid email \(emailStr)")
 	}
 	
-	let sProvider = try context.container.make(OfficeKitServiceProvider.self)
+	let sProvider = app.make(OfficeKitServiceProvider.self)
 	let services = try Array(sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsUserCreation })
 	guard !services.isEmpty else {
 		context.console.warning("Nothing to do.")
-		return context.container.future()
+		return eventLoop.future()
 	}
 	
 	let users = services.map{ s in Result{ try s.logicalUser(fromEmail: email, hints: [.firstName: firstname, .lastName: lastname, .password: password], servicesProvider: sProvider) } }
@@ -44,7 +46,7 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 	}
 	guard users.contains(where: { $0.successValue != nil }) else {
 		context.console.warning("Nothing to do.")
-		return context.container.future()
+		return eventLoop.future()
 	}
 	if skippedSomeUsers {context.console.info()}
 	
@@ -76,22 +78,22 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 		}
 	}
 	
-	try context.container.make(AuditLogger.self).log(action: "Creating user with email “\(email.stringValue)”, first name “\(firstname)”, last name “\(lastname)” on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
+	try app.make(AuditLogger.self).log(action: "Creating user with email “\(email.stringValue)”, first name “\(firstname)”, last name “\(lastname)” on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
 	
 	struct SkippedUser : Error {}
 	let futures = users.enumerated().map{ serviceIdxAndUser -> EventLoopFuture<AnyDirectoryUser> in
 		let (serviceIdx, userResult) = serviceIdxAndUser
 		let service = services[serviceIdx]
 		guard let user = userResult.successValue else {
-			return context.container.future(error: SkippedUser())
+			return eventLoop.future(error: SkippedUser())
 		}
 		
-		return context.container.future()
-		.flatMap{ _    in try service.createUser(user, on: context.container) }
-		.flatMap{ user in try service.changePasswordAction(for: user, on: context.container).start(parameters: password, weakeningMode: .alwaysInstantly, eventLoop: context.container.eventLoop).map{ user } }
+		return eventLoop.future()
+		.flatMapThrowing{ _    in try service.createUser(user, on: eventLoop) }.flatMap{ $0 }
+		.flatMapThrowing{ user in try service.changePasswordAction(for: user, on: eventLoop).start(parameters: password, weakeningMode: .alwaysInstantly, eventLoop: eventLoop).map{ user } }.flatMap{ $0 }
 	}
 	
-	return EventLoopFuture.waitAll(futures, eventLoop: context.container.eventLoop)
+	return EventLoopFuture.waitAll(futures, eventLoop: eventLoop)
 	.map{ results in
 		if !yes {
 			context.console.info()

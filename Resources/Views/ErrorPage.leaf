@@ -1,8 +1,16 @@
-#set("title") {#get(error_title)}
+#extend("lib/Master"):
 
-#set("body") {
-	<h1>Error: #get(error_title)</h1>
-	<p>#get(error_description)</p>
-}
 
-#embed("lib/Master")
+
+#export("title"):#(errorTitle)#endexport
+
+#export("additional_head_tags", "")
+
+#export("body"):
+	<h1>Error: #(errorTitle)</h1>
+	<p>#(errorDescription)</p>
+#endexport
+
+
+
+#endextend
