@@ -22,7 +22,7 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 	let gitHubConfig: GitHubServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
 	
 	let orgName = try nil2throw(f.getString(name: "orgname"), "orgname")
-	let destinationFolderURL = try URL(fileURLWithPath: nil2throw(f.getString(name: "destination"), "destination"), isDirectory: true)
+	let destinationFolderURL = try URL(fileURLWithPath: nil2throw(f.getString(name: "downloads-destination-folder"), "downloads-destination-folder"), isDirectory: true)
 	
 	try app.make(AuditLogger.self).log(action: "Backing up GitHub w/ service \(serviceId ?? "<inferred service>"), organization name \(orgName) to \(destinationFolderURL).", source: .cli)
 	

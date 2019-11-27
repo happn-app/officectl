@@ -71,7 +71,7 @@ func parse_cli(_ app: Application) -> GuakaCommandParseResult {
 	]
 	
 	let backupFlags = [
-		Flag(longName: "destination", type: String.self, description: "The enclosing folder destination for the backup.", required: true, inheritable: true)
+		Flag(longName: "downloads-destination-folder", type: String.self, description: "The enclosing folder destination for the backup.", required: true, inheritable: true),
 	]
 	
 	let syncFlags = [
@@ -86,20 +86,25 @@ func parse_cli(_ app: Application) -> GuakaCommandParseResult {
 	let _              = Command(usage: "sync",       flags: syncFlags,      parent: rootCommand, run: createSetWrapperCommandHandler(sync))
 	let usersCommand   = Command(usage: "users",      flags: [],             parent: rootCommand, run: createSetWrapperCommandHandler(users))
 	let serverCommand  = Command(usage: "server",     flags: [],             parent: rootCommand, run: createSetWrapperCommandHandler(server))
-
+	
 	
 	/* *************************
 	   MARK: backup sub-commands
 	   ************************* */
 	
 	let backupMailsFlags = [
-		Flag(longName: "emails-to-backup",            type: String.self, description: "A comma-separated list of emails to backup. If an email is not in the directory, it is skipped. If not specified, all emails are backed up.", required: false),
-		Flag(longName: "offlineimap-config-file",     type: String.self, description: "The path to the config file to use (WILL BE OVERWRITTEN) for offlineimap.", required: true),
-		Flag(longName: "max-concurrent-account-sync", type: Int.self,    description: "The maximum number of concurrent sync that will be done by offlineimap.", required: false),
-		Flag(longName: "offlineimap-output",          type: String.self, description: "A path to a file in which the offlineimap output will be written.", required: false),
-		Flag(longName: "linkify",                     value: false,      description: "Whether to “linkify” the backups. Linkifying consists in scanning the backup for duplicate files and de-duplicating the files by replacing the duplicate with a hard link."),
-		Flag(longName: "archive",                     value: false,      description: "Whether to archive the backup (create a tar bz2 file and remove the directory)."),
-		Flag(longName: "service-id",                  type: String.self, description: "The id of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.", required: false)
+		Flag(longName: "service-id",                   type: String.self, description: "The id of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.", required: false),
+		
+		Flag(longName: "offlineimap-config-file",      type: String.self, description: "The path to the config file to use (WILL BE OVERWRITTEN) for offlineimap.", required: true),
+		Flag(longName: "max-concurrent-account-sync",  type: Int.self,    description: "The maximum number of concurrent sync that will be done by offlineimap.", required: false),
+		Flag(longName: "offlineimap-output",           type: String.self, description: "A path to a file in which the offlineimap output will be written.", required: false),
+		
+		Flag(longName: "disabled-email-suffix",        type: String.self, description: "When downloading emails, if the username of the email has the given suffix, the resulting destination will be the same email without the suffix in the username. The emails to backup given will be searched with and without the suffix.", required: false),
+		
+		Flag(longName: "archive",                      value: false,      description: "Whether to archive the backup (create a tar bz2 file and remove the directory)."),
+		Flag(longName: "nolinkify",                    value: false,      description: "Before archiving, whether to “linkify” the backups (ignored when not archiving). Linkifying consists in scanning the backup for duplicate files and de-duplicating the files by replacing the duplicates with a hard link."),
+		Flag(longName: "no-skip-if-archive-exists",    value: false,      description: "Ignored when not archiving. If the archive for an email already exists, do NOT skip the backup for this email, overwrite the existing archive."),
+		Flag(longName: "archives-destination-folder",  type: String.self, description: "The path in which the archives will be put. Defaults to pwd. Required iif archive is set.", required: false)
 	]
 	
 	let backupGitHubFlags = [
@@ -107,8 +112,22 @@ func parse_cli(_ app: Application) -> GuakaCommandParseResult {
 		Flag(longName: "service-id", type: String.self, description: "The id of the GitHub service to use to do the backup. Required if there are more than one GitHub service in officectl conf, otherwise the only GitHub service is used.", required: false)
 	]
 	
-	let _ = Command(usage: "mails",  flags: backupMailsFlags,  parent: backupCommand, run: createSetWrapperCommandHandler(backupMails))
-	let _ = Command(usage: "github", flags: backupGitHubFlags, parent: backupCommand, run: createSetWrapperCommandHandler(backupGitHub))
+	let backupMailsLongHelp = """
+	Backup the given mails (or all mails in the given service if none are specified) to a directory.
+	
+	It is a common practice to rename an email into username.disabled@domain.com when a user is gone
+	from the company, in order to free the username and be able to create an alias to username for
+	another user in the company.
+	The “disabled-email-suffix” option allows you to make officectl aware of such a practice to simplify
+	the backup process, and avoid getting an email archive named username.disabled.
+	Whenever the suffix is set, "username" and "username"+"suffix" are considered to be the same users.
+	You can pass whichever when specifying emails to backup, the destination folder will always be
+	"username". Additionally both versions of the email will be searched in the directory when the emails
+	to backup are specified. If both versions exist in the directory, an error will be thrown and the
+	backup command will fail.
+	"""
+	let _ = Command(usage: "mails",  shortMessage: "Backup the given mails (or all if none specified)", longMessage: backupMailsLongHelp, flags: backupMailsFlags,  parent: backupCommand, run: createSetWrapperCommandHandler(backupMails))
+	let _ = Command(usage: "github",                                                                                                      flags: backupGitHubFlags, parent: backupCommand, run: createSetWrapperCommandHandler(backupGitHub))
 	
 	
 	/* *************************
