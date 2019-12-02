@@ -77,7 +77,8 @@ struct OfficectlConfig {
 		} else {
 			let searchedURLs = [
 				fm.homeDirectoryForCurrentUser.appendingPathComponent(".config/officectl/officectl.yaml", isDirectory: false),
-				URL(fileURLWithPath: "/etc/officectl/officectl.yaml", isDirectory: false)
+				URL(fileURLWithPath: "/etc/officectl/officectl.yaml", isDirectory: false),
+				URL(fileURLWithPath: "/usr/local/etc/officectl/officectl.yaml", isDirectory: false)
 			]
 			guard let firstURL = searchedURLs.first(where: { fm.fileExists(atPath: $0.path, isDirectory: &isDir) && !isDir.boolValue }) else {
 				throw MissingFieldError("Config file path")

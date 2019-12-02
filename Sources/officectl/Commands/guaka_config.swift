@@ -47,7 +47,7 @@ func parse_cli(_ app: Application) -> GuakaCommandParseResult {
 	let rootFlags = [
 		Flag(shortName: "v", longName: "verbose", type: Bool.self, description: "Asks to be more verbose.", required: false, inheritable: true),
 		
-		Flag(longName: "config-file", type: String.self, description: "The path to an officectl config file. Defaults to ~/.config/officectl/officectl.yaml and then /etc/officectl/officectl.yaml.", inheritable: true),
+		Flag(longName: "config-file", type: String.self, description: "The path to an officectl config file. Defaults to ~/.config/officectl/officectl.yaml, then /etc/officectl/officectl.yaml and finally /usr/local/etc/officectl/officectl.yaml.", inheritable: true),
 		
 		Flag(longName: "static-data-dir", type: String.self, description: "The path to the data dir (containing the static resources for officectl).", inheritable: true),
 		Flag(longName: "jwt-secret",      type: String.self, description: "The secret to use for generating the JWT tokens.",                          inheritable: true),
