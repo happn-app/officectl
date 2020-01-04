@@ -7,8 +7,6 @@
 
 import Foundation
 
-import Vapor
-
 
 
 private protocol OfficeKitServiceBox {
@@ -72,7 +70,7 @@ public class AnyOfficeKitService : OfficeKitService {
 		box = ConcreteOfficeKitBox(originalService: object)
 	}
 	
-	public required init(config c: AnyOfficeKitServiceConfig, globalConfig gc: GlobalConfig, application: Application) {
+	public required init(config c: AnyOfficeKitServiceConfig, globalConfig gc: GlobalConfig) {
 		fatalError("init(config:globalConfig:) unavailable for a directory service erasure")
 	}
 	

@@ -8,12 +8,18 @@
 import Foundation
 
 import GenericJSON
+import NIO
 import OpenCrypto
 import SemiSingleton
-import Vapor
+import ServiceKit
 
 
 
+/** A Googl Apps service.
+
+Dependencies:
+- Event-loop
+- Semi-singleton store */
 public final class GoogleService : UserDirectoryService {
 	
 	public static let providerId = "internal_google"
@@ -36,13 +42,9 @@ public final class GoogleService : UserDirectoryService {
 	public let config: GoogleServiceConfig
 	public let globalConfig: GlobalConfig
 	
-	/* Required services */
-	public let semiSingletonStore: SemiSingletonStore
-	
-	public init(config c: ConfigType, globalConfig gc: GlobalConfig, application: Application) {
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
 		config = c
 		globalConfig = gc
-		semiSingletonStore = application.make()
 	}
 	
 	public func shortDescription(fromUser user: GoogleUser) -> String {
@@ -155,14 +157,15 @@ public final class GoogleService : UserDirectoryService {
 		return res
 	}
 	
-	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<GoogleUser?> {
+	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<GoogleUser?> {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(fromUserId email: Email, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<GoogleUser?> {
+	public func existingUser(fromUserId email: Email, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<GoogleUser?> {
 		#warning("TODO: Implement propertiesToFetch")
 		/* Note: We do **NOT** map the email to the main domain. Maybe we should? */
-		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
+		let eventLoop = try services.eventLoop()
+		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		let future = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ -> EventLoopFuture<[GoogleUser]> in
@@ -178,8 +181,9 @@ public final class GoogleService : UserDirectoryService {
 		return future
 	}
 	
-	public func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[GoogleUser]> {
-		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
+	public func listAllUsers(using services: Services) throws -> EventLoopFuture<[GoogleUser]> {
+		let eventLoop = try services.eventLoop()
+		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		return googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
@@ -193,8 +197,9 @@ public final class GoogleService : UserDirectoryService {
 	}
 	
 	public let supportsUserCreation = true
-	public func createUser(_ user: GoogleUser, on eventLoop: EventLoop) throws -> EventLoopFuture<GoogleUser> {
-		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
+	public func createUser(_ user: GoogleUser, using services: Services) throws -> EventLoopFuture<GoogleUser> {
+		let eventLoop = try services.eventLoop()
+		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		let op = CreateGoogleUserOperation(user: user, connector: googleConnector)
 		return googleConnector.connect(scope: CreateGoogleUserOperation.scopes, eventLoop: eventLoop)
@@ -202,17 +207,18 @@ public final class GoogleService : UserDirectoryService {
 	}
 	
 	public let supportsUserUpdate = true
-	public func updateUser(_ user: GoogleUser, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<GoogleUser> {
+	public func updateUser(_ user: GoogleUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<GoogleUser> {
 		throw NotImplementedError()
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: GoogleUser, on eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: GoogleUser, using services: Services) throws -> EventLoopFuture<Void> {
 		throw NotImplementedError()
 	}
 	
 	public let supportsPasswordChange = true
-	public func changePasswordAction(for user: GoogleUser, on eventLoop: EventLoop) throws -> ResetPasswordAction {
+	public func changePasswordAction(for user: GoogleUser, using services: Services) throws -> ResetPasswordAction {
+		let semiSingletonStore = try services.semiSingletonStore()
 		let googleConnector: GoogleJWTConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: googleConnector) as ResetGooglePasswordAction
 	}

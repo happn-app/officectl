@@ -12,14 +12,14 @@ import OpenDirectory
 
 import NIO
 import SemiSingleton
-import Vapor
+import ServiceKit
 
 
 
 public class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedName, String, Void>, ResetPasswordAction, SemiSingleton {
 	
-	public static func additionalInfo(from application: Application) throws -> OpenDirectoryConnector {
-		return try application.make(SemiSingletonStore.self).semiSingleton(forKey: application.make())
+	public static func additionalInfo(from services: Services) throws -> OpenDirectoryConnector {
+		return try services.semiSingleton(forKey: services.make())
 	}
 	
 	public typealias SemiSingletonKey = LDAPDistinguishedName

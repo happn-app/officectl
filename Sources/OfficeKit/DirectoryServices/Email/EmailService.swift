@@ -8,7 +8,8 @@
 import Foundation
 
 import GenericJSON
-import Vapor
+import NIO
+import ServiceKit
 
 
 
@@ -22,7 +23,7 @@ public final class EmailService : UserDirectoryService {
 	public typealias ConfigType = EmailServiceConfig
 	public typealias UserType = EmailUser
 	
-	public init(config c: ConfigType, globalConfig gc: GlobalConfig, application: Application) {
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
 		config = c
 		globalConfig = gc
 	}
@@ -93,35 +94,37 @@ public final class EmailService : UserDirectoryService {
 		return [.userId, .persistentId, .identifyingEmail]
 	}
 	
-	public func existingUser(fromPersistentId pId: Email, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<EmailUser?> {
+	public func existingUser(fromPersistentId pId: Email, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<EmailUser?> {
+		let eventLoop = try services.eventLoop()
 		return eventLoop.makeSucceededFuture(EmailUser(userId: pId))
 	}
 	
-	public func existingUser(fromUserId uId: Email, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<EmailUser?> {
+	public func existingUser(fromUserId uId: Email, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<EmailUser?> {
+		let eventLoop = try services.eventLoop()
 		return eventLoop.makeSucceededFuture(EmailUser(userId: uId))
 	}
 	
-	public func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[EmailUser]> {
+	public func listAllUsers(using services: Services) throws -> EventLoopFuture<[EmailUser]> {
 		throw NotSupportedError()
 	}
 	
 	public let supportsUserCreation = false
-	public func createUser(_ user: EmailUser, on eventLoop: EventLoop) throws -> EventLoopFuture<EmailUser> {
+	public func createUser(_ user: EmailUser, using services: Services) throws -> EventLoopFuture<EmailUser> {
 		throw NotSupportedError()
 	}
 	
 	public let supportsUserUpdate = false
-	public func updateUser(_ user: EmailUser, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<EmailUser> {
+	public func updateUser(_ user: EmailUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<EmailUser> {
 		throw NotSupportedError()
 	}
 	
 	public let supportsUserDeletion = false
-	public func deleteUser(_ user: EmailUser, on eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: EmailUser, using services: Services) throws -> EventLoopFuture<Void> {
 		throw NotSupportedError()
 	}
 	
 	public let supportsPasswordChange = false
-	public func changePasswordAction(for user: EmailUser, on eventLoop: EventLoop) throws -> ResetPasswordAction {
+	public func changePasswordAction(for user: EmailUser, using services: Services) throws -> ResetPasswordAction {
 		throw NotSupportedError()
 	}
 

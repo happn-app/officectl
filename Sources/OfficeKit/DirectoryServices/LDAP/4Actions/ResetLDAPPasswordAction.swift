@@ -8,14 +8,14 @@
 import Foundation
 
 import SemiSingleton
-import Vapor
+import ServiceKit
 
 
 
 public class ResetLDAPPasswordAction : Action<LDAPDistinguishedName, String, Void>, ResetPasswordAction, SemiSingleton {
 	
-	public static func additionalInfo(from application: Application) throws -> LDAPConnector {
-		return try application.make(SemiSingletonStore.self).semiSingleton(forKey: application.make())
+	public static func additionalInfo(using services: Services) throws -> LDAPConnector {
+		return try services.semiSingleton(forKey: services.make())
 	}
 	
 	public typealias SemiSingletonKey = LDAPDistinguishedName

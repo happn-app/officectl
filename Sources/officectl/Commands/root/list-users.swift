@@ -48,12 +48,12 @@ func listUsers(flags f: Flags, arguments args: [String], context: CommandContext
 	}
 }
 
-private func getUsersList(googleService: GoogleService, includeInactiveUsers: Bool, on eventLoop: EventLoop) throws -> EventLoopFuture<[String]> {
+private func getUsersList(googleService: GoogleService, includeInactiveUsers: Bool, using services: Services) throws -> EventLoopFuture<[String]> {
 	return try googleService.listAllUsers(on: eventLoop)
 	.map{ $0.map{ googleService.shortDescription(fromUser: $0) } }
 }
 
-private func getUsersList(openDirectoryService: OpenDirectoryService, includeInactiveUsers: Bool, on eventLoop: EventLoop) throws -> EventLoopFuture<[String]> {
+private func getUsersList(openDirectoryService: OpenDirectoryService, includeInactiveUsers: Bool, using services: Services) throws -> EventLoopFuture<[String]> {
 	return try openDirectoryService.listAllUsers(on: eventLoop)
 	.map{ $0.map{ openDirectoryService.shortDescription(fromUser: $0) } }
 }

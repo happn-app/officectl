@@ -8,21 +8,12 @@
 import Foundation
 
 import SemiSingleton
-import Vapor
 
 
 
 public class OfficeKitServiceProvider {
 	
-	/**
-	- Note: Not sure passing and storing the Application is a good idea. For now
-	I’m doing this because it is, I think, the way to have the least
-	modifications for the migration to Vapor 4 from 3.
-	
-	- Important: It is assumed the application will not be deallocated while the
-	service office kit service provider is staying alive. */
-	public init(config cfg: OfficeKitConfig, application app: Application) {
-		application = app
+	public init(config cfg: OfficeKitConfig) {
 		officeKitConfig = cfg
 	}
 	
@@ -33,7 +24,7 @@ public class OfficeKitServiceProvider {
 	public func getAllServices() throws -> Set<AnyOfficeKitService> {
 		return try queue.sync{
 			for config in officeKitConfig.serviceConfigs.values {
-				_ = try service(with: config, application: application)
+				_ = try service(with: config)
 			}
 			return Set(servicesCache.values.filter{ !$0.config.isHelperService })
 		}
@@ -43,7 +34,7 @@ public class OfficeKitServiceProvider {
 	 * type to the compiler when using get Service for AnyOfficeKitService. */
 	public func getService(id: String?) throws -> AnyOfficeKitService {
 		let config = try officeKitConfig.getServiceConfig(id: id)
-		return try queue.sync{ try service(with: config, application: application) }
+		return try queue.sync{ try service(with: config) }
 	}
 	
 	public func getService<ServiceType : OfficeKitService>(id: String?) throws -> ServiceType {
@@ -58,7 +49,7 @@ public class OfficeKitServiceProvider {
 			guard let config = configs.onlyElement else {
 				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerId)")
 			}
-			return try queue.sync{ try service(with: config, application: application) }.unbox()!
+			return try queue.sync{ try service(with: config) }.unbox()!
 		}
 	}
 	
@@ -165,8 +156,6 @@ public class OfficeKitServiceProvider {
 	   MARK: - Private
 	   *************** */
 	
-	private weak var application: Application!
-	
 	private let officeKitConfig: OfficeKitConfig
 	
 	private let queue = DispatchQueue(label: "Service Provider Queue")
@@ -180,22 +169,22 @@ public class OfficeKitServiceProvider {
 	   MARK: Generic OfficeKit Service Creation
 	   **************************************** */
 	
-	private func service(with config: AnyOfficeKitServiceConfig, application: Application) throws -> AnyOfficeKitService {
+	private func service(with config: AnyOfficeKitServiceConfig) throws -> AnyOfficeKitService {
 		if let service = servicesCache[config.serviceId] {
 			return service
 		}
 		
-		let service = try createService(with: config, application: application)
+		let service = try createService(with: config)
 		servicesCache[config.serviceId] = service
 		return service
 	}
 	
-	private func createService(with config: AnyOfficeKitServiceConfig, application: Application) throws -> AnyOfficeKitService {
+	private func createService(with config: AnyOfficeKitServiceConfig) throws -> AnyOfficeKitService {
 		guard let providerType = OfficeKitConfig.registeredServices[config.providerId] else {
 			throw InvalidArgumentError(message: "Unregistered service provider \(config.providerId)")
 		}
 		
-		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, application: application, cachedServices: Array(servicesCache.values)) else {
+		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, cachedServices: Array(servicesCache.values)) else {
 			throw InternalError(message: "Cannot init service with given config")
 		}
 		return service
@@ -221,7 +210,7 @@ public class OfficeKitServiceProvider {
 			throw InvalidArgumentError(message: "Unregistered or invalid type for service provider \(config.providerId)")
 		}
 		
-		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, application: application, cachedServices: Array(servicesCache.values)) else {
+		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, cachedServices: Array(servicesCache.values)) else {
 			throw InternalError(message: "Cannot init service with given config")
 		}
 		return service
@@ -248,7 +237,7 @@ public class OfficeKitServiceProvider {
 			throw InvalidArgumentError(message: "Unregistered or invalid type for service provider \(config.providerId)")
 		}
 		
-		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, application: application, cachedServices: Array(servicesCache.values)) else {
+		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, cachedServices: Array(servicesCache.values)) else {
 			throw InternalError(message: "Cannot init service with given config")
 		}
 		return service
@@ -275,7 +264,7 @@ public class OfficeKitServiceProvider {
 			throw InvalidArgumentError(message: "Unregistered or invalid type for service provider \(config.providerId)")
 		}
 		
-		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, application: application, cachedServices: Array(servicesCache.values)) else {
+		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, cachedServices: Array(servicesCache.values)) else {
 			throw InternalError(message: "Cannot init service with given config")
 		}
 		return service

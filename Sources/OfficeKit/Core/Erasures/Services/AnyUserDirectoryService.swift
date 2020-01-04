@@ -8,7 +8,8 @@
 import Foundation
 
 import GenericJSON
-import Vapor
+import NIO
+import ServiceKit
 
 
 
@@ -29,22 +30,22 @@ private protocol UserDirectoryServiceBox {
 	
 	func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout AnyDirectoryUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty>
 	
-	func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<AnyDirectoryUser?>
-	func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<AnyDirectoryUser?>
+	func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<AnyDirectoryUser?>
+	func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<AnyDirectoryUser?>
 	
-	func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[AnyDirectoryUser]>
+	func listAllUsers(using services: Services) throws -> EventLoopFuture<[AnyDirectoryUser]>
 	
 	var supportsUserCreation: Bool {get}
-	func createUser(_ user: AnyDirectoryUser, on eventLoop: EventLoop) throws -> EventLoopFuture<AnyDirectoryUser>
+	func createUser(_ user: AnyDirectoryUser, using services: Services) throws -> EventLoopFuture<AnyDirectoryUser>
 	
 	var supportsUserUpdate: Bool {get}
-	func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<AnyDirectoryUser>
+	func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<AnyDirectoryUser>
 	
 	var supportsUserDeletion: Bool {get}
-	func deleteUser(_ user: AnyDirectoryUser, on eventLoop: EventLoop) throws -> EventLoopFuture<Void>
+	func deleteUser(_ user: AnyDirectoryUser, using services: Services) throws -> EventLoopFuture<Void>
 	
 	var supportsPasswordChange: Bool {get}
-	func changePasswordAction(for user: AnyDirectoryUser, on eventLoop: EventLoop) throws -> ResetPasswordAction
+	func changePasswordAction(for user: AnyDirectoryUser, using services: Services) throws -> ResetPasswordAction
 	
 }
 
@@ -113,54 +114,54 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 		return ret
 	}
 	
-	func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<AnyDirectoryUser?> {
+	func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<AnyDirectoryUser?> {
 		guard let typedId: Base.UserType.PersistentIdType = pId.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid persistent user id (\(pId)) for fetching user with directory service of type \(Base.self)")
 		}
-		return try originalDirectory.existingUser(fromPersistentId: typedId, propertiesToFetch: propertiesToFetch, on: eventLoop).map{ $0?.erase() }
+		return try originalDirectory.existingUser(fromPersistentId: typedId, propertiesToFetch: propertiesToFetch, using: services).map{ $0?.erase() }
 	}
 	
-	func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<AnyDirectoryUser?> {
+	func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<AnyDirectoryUser?> {
 		guard let typedId: Base.UserType.IdType = uId.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user id (\(uId)) for fetching user with directory service of type \(Base.self)")
 		}
-		return try originalDirectory.existingUser(fromUserId: typedId, propertiesToFetch: propertiesToFetch, on: eventLoop).map{ $0?.erase() }
+		return try originalDirectory.existingUser(fromUserId: typedId, propertiesToFetch: propertiesToFetch, using: services).map{ $0?.erase() }
 	}
 	
-	func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[AnyDirectoryUser]> {
-		return try originalDirectory.listAllUsers(on : eventLoop).map{ $0.map{ $0.erase() } }
+	func listAllUsers(using services: Services) throws -> EventLoopFuture<[AnyDirectoryUser]> {
+		return try originalDirectory.listAllUsers(using : services).map{ $0.map{ $0.erase() } }
 	}
 	
 	var supportsUserCreation: Bool {return originalDirectory.supportsUserCreation}
-	func createUser(_ user: AnyDirectoryUser, on eventLoop: EventLoop) throws -> EventLoopFuture<AnyDirectoryUser> {
+	func createUser(_ user: AnyDirectoryUser, using services: Services) throws -> EventLoopFuture<AnyDirectoryUser> {
 		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user to create (\(user)) for directory service of type \(Base.self)")
 		}
-		return try originalDirectory.createUser(u, on: eventLoop).map{ $0.erase() }
+		return try originalDirectory.createUser(u, using: services).map{ $0.erase() }
 	}
 	
 	var supportsUserUpdate: Bool {return originalDirectory.supportsUserUpdate}
-	func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<AnyDirectoryUser> {
+	func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<AnyDirectoryUser> {
 		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user to update (\(user)) for directory service of type \(Base.self)")
 		}
-		return try originalDirectory.updateUser(u, propertiesToUpdate: propertiesToUpdate, on: eventLoop).map{ $0.erase() }
+		return try originalDirectory.updateUser(u, propertiesToUpdate: propertiesToUpdate, using: services).map{ $0.erase() }
 	}
 	
 	var supportsUserDeletion: Bool {return originalDirectory.supportsUserDeletion}
-	func deleteUser(_ user: AnyDirectoryUser, on eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
+	func deleteUser(_ user: AnyDirectoryUser, using services: Services) throws -> EventLoopFuture<Void> {
 		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user to delete (\(user)) for directory service of type \(Base.self)")
 		}
-		return try originalDirectory.deleteUser(u, on: eventLoop)
+		return try originalDirectory.deleteUser(u, using: services)
 	}
 	
 	var supportsPasswordChange: Bool {return originalDirectory.supportsPasswordChange}
-	func changePasswordAction(for user: AnyDirectoryUser, on eventLoop: EventLoop) throws -> ResetPasswordAction {
+	func changePasswordAction(for user: AnyDirectoryUser, using services: Services) throws -> ResetPasswordAction {
 		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user (\(user)) to retrieve password action for directory service of type \(Base.self)")
 		}
-		return try originalDirectory.changePasswordAction(for: u, on: eventLoop)
+		return try originalDirectory.changePasswordAction(for: u, using: services)
 	}
 	
 }
@@ -178,7 +179,7 @@ public class AnyUserDirectoryService : AnyOfficeKitService, UserDirectoryService
 		super.init(s: object)
 	}
 	
-	public required init(config c: AnyOfficeKitServiceConfig, globalConfig gc: GlobalConfig, application: Application) {
+	public required init(config c: AnyOfficeKitServiceConfig, globalConfig gc: GlobalConfig) {
 		fatalError("init(config:globalConfig:) unavailable for a directory service erasure")
 	}
 	
@@ -214,36 +215,36 @@ public class AnyUserDirectoryService : AnyOfficeKitService, UserDirectoryService
 		return box.applyHints(hints, toUser: &user, allowUserIdChange: allowUserIdChange)
 	}
 	
-	public func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<AnyDirectoryUser?> {
-		return try box.existingUser(fromPersistentId: pId, propertiesToFetch: propertiesToFetch, on: eventLoop)
+	public func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<AnyDirectoryUser?> {
+		return try box.existingUser(fromPersistentId: pId, propertiesToFetch: propertiesToFetch, using: services)
 	}
 	
-	public func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<AnyDirectoryUser?> {
-		return try box.existingUser(fromUserId: uId, propertiesToFetch: propertiesToFetch, on: eventLoop)
+	public func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<AnyDirectoryUser?> {
+		return try box.existingUser(fromUserId: uId, propertiesToFetch: propertiesToFetch, using: services)
 	}
 	
-	public func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[AnyDirectoryUser]> {
-		return try box.listAllUsers(on: eventLoop)
+	public func listAllUsers(using services: Services) throws -> EventLoopFuture<[AnyDirectoryUser]> {
+		return try box.listAllUsers(using: services)
 	}
 	
 	public var supportsUserCreation: Bool {return box.supportsUserCreation}
-	public func createUser(_ user: AnyDirectoryUser, on eventLoop: EventLoop) throws -> EventLoopFuture<AnyDirectoryUser> {
-		return try box.createUser(user, on: eventLoop)
+	public func createUser(_ user: AnyDirectoryUser, using services: Services) throws -> EventLoopFuture<AnyDirectoryUser> {
+		return try box.createUser(user, using: services)
 	}
 	
 	public var supportsUserUpdate: Bool {return box.supportsUserUpdate}
-	public func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<AnyDirectoryUser> {
-		return try box.updateUser(user, propertiesToUpdate: propertiesToUpdate, on: eventLoop)
+	public func updateUser(_ user: AnyDirectoryUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<AnyDirectoryUser> {
+		return try box.updateUser(user, propertiesToUpdate: propertiesToUpdate, using: services)
 	}
 	
 	public var supportsUserDeletion: Bool {return box.supportsUserDeletion}
-	public func deleteUser(_ user: AnyDirectoryUser, on eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
-		return try box.deleteUser(user, on: eventLoop)
+	public func deleteUser(_ user: AnyDirectoryUser, using services: Services) throws -> EventLoopFuture<Void> {
+		return try box.deleteUser(user, using: services)
 	}
 	
 	public var supportsPasswordChange: Bool {return box.supportsPasswordChange}
-	public func changePasswordAction(for user: AnyDirectoryUser, on eventLoop: EventLoop) throws -> ResetPasswordAction {
-		return try box.changePasswordAction(for: user, on: eventLoop)
+	public func changePasswordAction(for user: AnyDirectoryUser, using services: Services) throws -> ResetPasswordAction {
+		return try box.changePasswordAction(for: user, using: services)
 	}
 	
 	fileprivate let box: UserDirectoryServiceBox

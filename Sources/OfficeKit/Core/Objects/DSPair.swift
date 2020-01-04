@@ -7,7 +7,8 @@
 
 import Foundation
 
-import Vapor
+import NIO
+import ServiceKit
 
 
 
@@ -50,8 +51,8 @@ public struct DSUPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 		return try DSUPair<NewDirectoryServiceType>(service: newService, user: newService.logicalUser(fromUser: user, in: service))
 	}
 	
-	public func passwordResetPair(on eventLoop: EventLoop) throws -> DSPasswordResetPair<DirectoryServiceType>? {
-		return try DSPasswordResetPair<DirectoryServiceType>(dsuPair: self, on: eventLoop)
+	public func passwordResetPair(using services: Services) throws -> DSPasswordResetPair<DirectoryServiceType>? {
+		return try DSPasswordResetPair<DirectoryServiceType>(dsuPair: self, using: services)
 	}
 	
 	public func userWrapper() throws -> DirectoryUserWrapper {
@@ -70,8 +71,9 @@ public struct DSUPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 
 extension AnyDSUPair {
 	
-	public static func fetchAll(in services: Set<AnyUserDirectoryService>, on eventLoop: EventLoop) throws -> EventLoopFuture<(dsuPairs: [AnyDSUPair], fetchErrorsByServices: [AnyUserDirectoryService: Error])> {
-		let serviceAndFutureUsers = services.map{ service in (service, eventLoop.makeSucceededFuture(()).flatMapThrowing{ try service.listAllUsers(on: eventLoop) }.flatMap{ $0 }) }
+	public static func fetchAll(in services: Set<AnyUserDirectoryService>, using depServices: Services) throws -> EventLoopFuture<(dsuPairs: [AnyDSUPair], fetchErrorsByServices: [AnyUserDirectoryService: Error])> {
+		let eventLoop = try depServices.eventLoop()
+		let serviceAndFutureUsers = services.map{ service in (service, eventLoop.makeSucceededFuture(()).flatMapThrowing{ try service.listAllUsers(using: depServices) }.flatMap{ $0 }) }
 		let futureUsersByService = Dictionary(uniqueKeysWithValues: serviceAndFutureUsers)
 		
 		return EventLoopFuture.waitAll(futureUsersByService, eventLoop: eventLoop).map{ usersResultsByService in
@@ -159,13 +161,13 @@ public struct DSPasswordResetPair<DirectoryServiceType : UserDirectoryService> {
 	public let dsuPair: DSUPair<DirectoryServiceType>
 	public let passwordReset: ResetPasswordAction
 	
-	public init?(dsuPair p: DSUPair<DirectoryServiceType>, on eventLoop: EventLoop) throws {
+	public init?(dsuPair p: DSUPair<DirectoryServiceType>, using services: Services) throws {
 		guard p.service.supportsPasswordChange else {
 			return nil
 		}
 		
 		dsuPair = p
-		passwordReset = try p.service.changePasswordAction(for: p.user, on: eventLoop)
+		passwordReset = try p.service.changePasswordAction(for: p.user, using: services)
 	}
 	
 }

@@ -8,15 +8,16 @@
 import Foundation
 
 import NIO
-import Vapor
+import ServiceKit
 
 
 
 public typealias MultiServicesUser = MultiServicesItem<AnyDSUPair?>
 extension MultiServicesUser {
 	
-	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, on eventLoop: EventLoop) throws -> EventLoopFuture<MultiServicesUser> {
+	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) throws -> EventLoopFuture<MultiServicesUser> {
 		#warning("TODO: Properties to fetch")
+		let eventLoop = try depServices.eventLoop()
 		let servicesById = try services.group(by: { $0.config.serviceId })
 		
 		var allFetchedUsers = [AnyUserDirectoryService: AnyDSUPair?]()
@@ -26,7 +27,7 @@ extension MultiServicesUser {
 		func getUsers(from dsuPair: AnyDSUPair, in services: Set<AnyUserDirectoryService>) -> EventLoopFuture<[AnyUserDirectoryService: Result<AnyDSUPair?, Error>]> {
 			let userFutures = services.map{ curService in
 				(curService, eventLoop.makeSucceededFuture(()).flatMapThrowing{
-					try curService.existingUser(fromUser: dsuPair.user, in: dsuPair.service, propertiesToFetch: [], on: eventLoop)
+					try curService.existingUser(fromUser: dsuPair.user, in: dsuPair.service, propertiesToFetch: [], using: depServices)
 				}.flatMap{ $0 })
 			}
 			return EventLoopFuture.waitAll(userFutures, eventLoop: eventLoop).flatMapThrowing{ userResults in
@@ -67,8 +68,9 @@ extension MultiServicesUser {
 		return try getUsers(from: dsuIdPair.dsuPair(), in: services).flatMapThrowing(fetchStep).flatMap{ $0 }
 	}
 	
-	public static func fetchAll(in services: Set<AnyUserDirectoryService>, on eventLoop: EventLoop) throws -> EventLoopFuture<(users: [MultiServicesUser], fetchErrorsByServices: [AnyUserDirectoryService: Error])> {
-		return try AnyDSUPair.fetchAll(in: services, on: eventLoop).flatMap{
+	public static func fetchAll(in services: Set<AnyUserDirectoryService>, using depServices: Services) throws -> EventLoopFuture<(users: [MultiServicesUser], fetchErrorsByServices: [AnyUserDirectoryService: Error])> {
+		let eventLoop = try depServices.eventLoop()
+		return try AnyDSUPair.fetchAll(in: services, using: depServices).flatMap{
 			let (pairs, fetchErrorsByService) = $0
 			let validServices = services.subtracting(fetchErrorsByService.keys)
 			return MultiServicesUser.merge(dsuPairs: Set(pairs), validServices: validServices, eventLoop: eventLoop).map{ ($0, fetchErrorsByService) }

@@ -8,8 +8,9 @@
 import Foundation
 
 import GenericJSON
+import NIO
 import SemiSingleton
-import Vapor
+import ServiceKit
 
 
 
@@ -23,7 +24,7 @@ public final class GitHubService : UserDirectoryService {
 	public let config: GitHubServiceConfig
 	public let globalConfig: GlobalConfig
 	
-	public init(config c: ConfigType, globalConfig gc: GlobalConfig, application: Application) {
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
 		config = c
 		globalConfig = gc
 	}
@@ -70,35 +71,35 @@ public final class GitHubService : UserDirectoryService {
 		return []
 	}
 	
-	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<GitHubUser?> {
+	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<GitHubUser?> {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(fromUserId uId: String, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<GitHubUser?> {
+	public func existingUser(fromUserId uId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<GitHubUser?> {
 		throw NotImplementedError()
 	}
 	
-	public func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[GitHubUser]> {
+	public func listAllUsers(using services: Services) throws -> EventLoopFuture<[GitHubUser]> {
 		throw NotImplementedError()
 	}
 	
 	public let supportsUserCreation = true
-	public func createUser(_ user: GitHubUser, on eventLoop: EventLoop) throws -> EventLoopFuture<GitHubUser> {
+	public func createUser(_ user: GitHubUser, using services: Services) throws -> EventLoopFuture<GitHubUser> {
 		throw NotImplementedError()
 	}
 	
 	public let supportsUserUpdate = false
-	public func updateUser(_ user: GitHubUser, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<GitHubUser> {
+	public func updateUser(_ user: GitHubUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<GitHubUser> {
 		throw NotSupportedError(message: "Not sure what updating a user would mean for GitHub as the users use personal accounts.")
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: GitHubUser, on eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: GitHubUser, using services: Services) throws -> EventLoopFuture<Void> {
 		throw NotImplementedError()
 	}
 	
 	public let supportsPasswordChange = false
-	public func changePasswordAction(for user: GitHubUser, on eventLoop: EventLoop) throws -> ResetPasswordAction {
+	public func changePasswordAction(for user: GitHubUser, using services: Services) throws -> ResetPasswordAction {
 		throw NotSupportedError(message: "Cannot change the user’s password on GitHub as users use their personal accounts.")
 	}
 	

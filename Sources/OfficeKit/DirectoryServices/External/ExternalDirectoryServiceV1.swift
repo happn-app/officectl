@@ -12,10 +12,16 @@ import Foundation
 
 import GenericJSON
 import SemiSingleton
-import Vapor
+import NIO
+import ServiceKit
 
 
 
+/** A service that uses an external http service to handle the requests.
+
+Dependencies:
+- Event-loop
+- Semi-singleton store */
 public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	
 	public static let providerId = "http_service_v1"
@@ -26,13 +32,9 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	public let config: ExternalDirectoryServiceV1Config
 	public let globalConfig: GlobalConfig
 	
-	/* Required services */
-	public let semiSingletonStore: SemiSingletonStore
-	
-	public init(config c: ExternalDirectoryServiceV1Config, globalConfig gc: GlobalConfig, application: Application) {
+	public init(config c: ExternalDirectoryServiceV1Config, globalConfig gc: GlobalConfig) {
 		config = c
 		globalConfig = gc
-		semiSingletonStore = application.make()
 		
 		authenticator = ExternalServiceAuthenticator(secret: c.secret)
 		
@@ -94,7 +96,9 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		return user.applyAndSaveHints(hints, blacklistedKeys: (allowUserIdChange ? [] : [.userId]))
 	}
 	
-	public func existingUser(fromPersistentId pId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<DirectoryUserWrapper?> {
+	public func existingUser(fromPersistentId pId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<DirectoryUserWrapper?> {
+		let eventLoop = try services.eventLoop()
+		
 		guard let url = URL(string: "existing-user-from/persistent-id", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to retrieve existing user from persistent id")
 		}
@@ -115,7 +119,9 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		return EventLoopFuture<ExternalServiceResponse<DirectoryUserWrapper?>>.future(from: operation, on: eventLoop).flatMapThrowing{ try $0.getData() }
 	}
 	
-	public func existingUser(fromUserId uId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<DirectoryUserWrapper?> {
+	public func existingUser(fromUserId uId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<DirectoryUserWrapper?> {
+		let eventLoop = try services.eventLoop()
+		
 		guard let url = URL(string: "existing-user-from/user-id", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to retrieve existing user from user id")
 		}
@@ -136,7 +142,9 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		return EventLoopFuture<ExternalServiceResponse<DirectoryUserWrapper?>>.future(from: operation, on: eventLoop).flatMapThrowing{ try $0.getData() }
 	}
 	
-	public func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[DirectoryUserWrapper]> {
+	public func listAllUsers(using services: Services) throws -> EventLoopFuture<[DirectoryUserWrapper]> {
+		let eventLoop = try services.eventLoop()
+		
 		guard let url = URL(string: "list-all-users", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to list all users")
 		}
@@ -146,7 +154,9 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	}
 	
 	public var supportsUserCreation: Bool {return config.supportsUserCreation}
-	public func createUser(_ user: DirectoryUserWrapper, on eventLoop: EventLoop) throws -> EventLoopFuture<DirectoryUserWrapper> {
+	public func createUser(_ user: DirectoryUserWrapper, using services: Services) throws -> EventLoopFuture<DirectoryUserWrapper> {
+		let eventLoop = try services.eventLoop()
+		
 		guard let url = URL(string: "create-user", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to create a user")
 		}
@@ -167,7 +177,9 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	}
 	
 	public var supportsUserUpdate: Bool {return config.supportsUserUpdate}
-	public func updateUser(_ user: DirectoryUserWrapper, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<DirectoryUserWrapper> {
+	public func updateUser(_ user: DirectoryUserWrapper, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<DirectoryUserWrapper> {
+		let eventLoop = try services.eventLoop()
+		
 		guard let url = URL(string: "update-user", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to update a user")
 		}
@@ -189,7 +201,9 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	}
 	
 	public var supportsUserDeletion: Bool {return config.supportsUserDeletion}
-	public func deleteUser(_ user: DirectoryUserWrapper, on eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: DirectoryUserWrapper, using services: Services) throws -> EventLoopFuture<Void> {
+		let eventLoop = try services.eventLoop()
+		
 		guard let url = URL(string: "delete-user", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to delete a user")
 		}
@@ -210,7 +224,8 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	}
 	
 	public var supportsPasswordChange: Bool {return config.supportsPasswordChange}
-	public func changePasswordAction(for user: DirectoryUserWrapper, on eventLoop: EventLoop) throws -> ResetPasswordAction {
+	public func changePasswordAction(for user: DirectoryUserWrapper, using services: Services) throws -> ResetPasswordAction {
+		let semiSingletonStore = try services.semiSingletonStore()
 		return semiSingletonStore.semiSingleton(forKey: user.userId, additionalInitInfo: (config.url, authenticator, jsonEncoder, jsonDecoder)) as ResetExternalServicePasswordAction
 	}
 	

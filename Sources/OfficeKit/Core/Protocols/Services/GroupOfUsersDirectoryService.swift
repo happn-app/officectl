@@ -8,7 +8,8 @@
 import Foundation
 
 import GenericJSON
-import Vapor
+import NIO
+import ServiceKit
 
 
 
@@ -18,10 +19,10 @@ public protocol GroupOfUsersDirectoryService : UserDirectoryService, GroupOfUser
 	
 	func shortDescription(fromGroup group: GroupType) -> String
 	
-	func listUsers(inGroup group: GroupType, on eventLoop: EventLoop) throws -> EventLoopFuture<[UserType]>
+	func listUsers(inGroup group: GroupType, using services: Services) throws -> EventLoopFuture<[UserType]>
 	
 	var supportsEmbeddedGroupsOfUsers: Bool {get}
-	func listGroups(inGroup group: GroupType, on eventLoop: EventLoop) throws -> EventLoopFuture<[GroupType]>
+	func listGroups(inGroup group: GroupType, using services: Services) throws -> EventLoopFuture<[GroupType]>
 	
 }
 
@@ -34,7 +35,7 @@ public protocol GroupOfUsersDirectoryService : UserDirectoryService, GroupOfUser
 public protocol GroupOfUsersDirectoryServiceInit {
 	
 	static var configType: OfficeKitServiceConfigInit.Type {get}
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, application: Application, cachedServices: [AnyOfficeKitService]?) -> AnyGroupOfUsersDirectoryService?
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyGroupOfUsersDirectoryService?
 	
 }
 
@@ -44,14 +45,14 @@ public extension GroupOfUsersDirectoryService {
 		return ConfigType.self
 	}
 	
-	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, application: Application, cachedServices: [AnyOfficeKitService]?) -> AnyGroupOfUsersDirectoryService? {
+	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyGroupOfUsersDirectoryService? {
 		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unbox() else {return nil}
 		
 		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unbox() as Self? }).first(where: { $0.config.serviceId == c.serviceId }) {
 			return alreadyInstantiated.erase()
 		}
 		
-		return self.init(config: c, globalConfig: gc, application: application).erase()
+		return self.init(config: c, globalConfig: gc).erase()
 	}
 	
 }

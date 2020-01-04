@@ -7,8 +7,9 @@
 
 import Foundation
 
+import NIO
 import SemiSingleton
-import Vapor
+import ServiceKit
 
 #if canImport(CommonCrypto)
 	import CommonCrypto
@@ -20,8 +21,8 @@ import Vapor
 
 public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, ResetPasswordAction, SemiSingleton {
 	
-	public static func additionalInfo(from application: Application) throws -> GoogleJWTConnector {
-		return try (application.make(SemiSingletonStore.self).semiSingleton(forKey: application.make()))
+	public static func additionalInfo(from services: Services) throws -> GoogleJWTConnector {
+		return try (services.semiSingleton(forKey: services.make()))
 	}
 	
 	public typealias SemiSingletonKey = GoogleUser

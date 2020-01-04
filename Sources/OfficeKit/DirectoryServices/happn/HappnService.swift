@@ -10,10 +10,15 @@ import Foundation
 import GenericJSON
 import NIO
 import SemiSingleton
-import Vapor
+import ServiceKit
 
 
 
+/** A happn service.
+
+Dependencies:
+- Event-loop
+- Semi-singleton store */
 public final class HappnService : UserDirectoryService {
 	
 	public static var providerId = "internal_happn"
@@ -24,13 +29,9 @@ public final class HappnService : UserDirectoryService {
 	public let config: HappnServiceConfig
 	public let globalConfig: GlobalConfig
 	
-	/* Required services */
-	public let semiSingletonStore: SemiSingletonStore
-	
-	public init(config c: ConfigType, globalConfig gc: GlobalConfig, application: Application) {
+	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
 		config = c
 		globalConfig = gc
-		semiSingletonStore = application.make()
 	}
 	
 	public func shortDescription(fromUser user: HappnUser) -> String {
@@ -173,9 +174,10 @@ public final class HappnService : UserDirectoryService {
 		return res
 	}
 	
-	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<HappnUser?> {
+	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<HappnUser?> {
 		#warning("TODO: properties to fetch")
-		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
+		let eventLoop = try services.eventLoop()
+		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		return happnConnector.connect(scope: GetHappnUserOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
@@ -193,14 +195,15 @@ public final class HappnService : UserDirectoryService {
 		}
 	}
 	
-	public func existingUser(fromUserId uId: String?, propertiesToFetch: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<HappnUser?> {
+	public func existingUser(fromUserId uId: String?, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<HappnUser?> {
 		guard let uId = uId else {
 			/* Yes. It’s ugly. But the only admin user with a nil login is 244. */
-			return try existingUser(fromPersistentId: HappnConnector.nullLoginUserId, propertiesToFetch: propertiesToFetch, on: eventLoop)
+			return try existingUser(fromPersistentId: HappnConnector.nullLoginUserId, propertiesToFetch: propertiesToFetch, using: services)
 		}
 		
 		#warning("TODO: properties to fetch")
-		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
+		let eventLoop = try services.eventLoop()
+		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
@@ -219,8 +222,9 @@ public final class HappnService : UserDirectoryService {
 		}
 	}
 	
-	public func listAllUsers(on eventLoop: EventLoop) throws -> EventLoopFuture<[HappnUser]> {
-		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
+	public func listAllUsers(using services: Services) throws -> EventLoopFuture<[HappnUser]> {
+		let eventLoop = try services.eventLoop()
+		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
@@ -230,8 +234,9 @@ public final class HappnService : UserDirectoryService {
 	}
 	
 	public let supportsUserCreation = true
-	public func createUser(_ user: HappnUser, on eventLoop: EventLoop) throws -> EventLoopFuture<HappnUser> {
-		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
+	public func createUser(_ user: HappnUser, using services: Services) throws -> EventLoopFuture<HappnUser> {
+		let eventLoop = try services.eventLoop()
+		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		return happnConnector.connect(scope: CreateHappnUserOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
@@ -241,13 +246,14 @@ public final class HappnService : UserDirectoryService {
 	}
 	
 	public let supportsUserUpdate = true
-	public func updateUser(_ user: HappnUser, propertiesToUpdate: Set<DirectoryUserProperty>, on eventLoop: EventLoop) throws -> EventLoopFuture<HappnUser> {
+	public func updateUser(_ user: HappnUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<HappnUser> {
 		throw NotImplementedError()
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: HappnUser, on eventLoop: EventLoop) throws -> EventLoopFuture<Void> {
-		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
+	public func deleteUser(_ user: HappnUser, using services: Services) throws -> EventLoopFuture<Void> {
+		let eventLoop = try services.eventLoop()
+		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		return happnConnector.connect(scope: DeleteHappnUserOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
@@ -257,7 +263,8 @@ public final class HappnService : UserDirectoryService {
 	}
 	
 	public let supportsPasswordChange = true
-	public func changePasswordAction(for user: HappnUser, on eventLoop: EventLoop) throws -> ResetPasswordAction {
+	public func changePasswordAction(for user: HappnUser, using services: Services) throws -> ResetPasswordAction {
+		let semiSingletonStore = try services.semiSingletonStore()
 		let happnConnector: HappnConnector = semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
 		return semiSingletonStore.semiSingleton(forKey: user, additionalInitInfo: happnConnector) as ResetHappnPasswordAction
 	}

@@ -7,16 +7,17 @@
 
 import Foundation
 
-import Vapor
+import NIO
+import ServiceKit
 
 
 
 public typealias MultiServicesPasswordReset = MultiServicesItem<AnyDSPasswordResetPair?>
 extension MultiServicesPasswordReset {
 	
-	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, on eventLoop: EventLoop) throws -> EventLoopFuture<MultiServicesPasswordReset> {
-		return try MultiServicesUser.fetch(from: dsuIdPair, in: services, on: eventLoop)
-		.map{ user in user.mapItems{ try $0.flatMap{ try $0.service.supportsPasswordChange ? AnyDSPasswordResetPair(dsuPair: $0, on: eventLoop) : nil } } }
+	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) throws -> EventLoopFuture<MultiServicesPasswordReset> {
+		return try MultiServicesUser.fetch(from: dsuIdPair, in: services, using: depServices)
+		.map{ user in user.mapItems{ try $0.flatMap{ try $0.service.supportsPasswordChange ? AnyDSPasswordResetPair(dsuPair: $0, using: depServices) : nil } } }
 	}
 	
 	public var isExecuting: Bool {
