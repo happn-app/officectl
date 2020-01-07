@@ -17,6 +17,9 @@ public class Services {
 		
 	}
 	
+	public init() {
+	}
+	
 	public func make<T>(_ serviceType: T.Type = T.self) throws -> T {
 		guard let factory = factories[ObjectIdentifier(serviceType)] as! (() -> T)? else {
 			throw Error.noFactory(for: serviceType)

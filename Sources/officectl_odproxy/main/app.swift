@@ -31,10 +31,10 @@ func app(_ env: Environment) throws -> Application {
 	}
 	
 	guard !env.arguments.contains(where: { Set(arrayLiteral: "--config-file", "--verbose").contains($0) }) else {
-		throw InvalidArgumentError(message: "The --config-file or --verbose options can only be specified once.")
+		throw InvalidArgumentError(message: "The --config-file or --verbose options can only be specified once. The config-file option requires an argument.")
 	}
 	
-	let app = Application(environment: env)
+	let app = Application(env)
 	try configureServices(app, forcedConfigPath: forcedConfigPath, verbose: verbose)
 	
 	try boot(app)

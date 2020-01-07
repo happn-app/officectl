@@ -13,14 +13,12 @@ import Vapor
 
 
 func routes(_ app: Application) throws {
-	let openDirectoryService: OpenDirectoryService = app.make()
-	
-	let userSearchController = UserSearchController(openDirectoryService: openDirectoryService)
+	let userSearchController = UserSearchController()
 	app.post("existing-user-from", "persistent-id", use: userSearchController.fromPersistentId)
 	app.post("existing-user-from", "user-id",       use: userSearchController.fromUserId)
 	app.get("list-all-users",                       use: userSearchController.listAllUsers)
 	
-	let userController = UserController(openDirectoryService: openDirectoryService)
+	let userController = UserController()
 	app.post("create-user",     use: userController.createUser)
 	app.post("update-user",     use: userController.updateUser)
 	app.post("delete-user",     use: userController.deleteUser)

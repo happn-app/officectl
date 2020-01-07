@@ -14,20 +14,15 @@ import Vapor
 
 final class UserController {
 	
-	let openDirectoryService: OpenDirectoryService
-	
-	init(openDirectoryService ods: OpenDirectoryService) {
-		openDirectoryService = ods
-	}
-	
 	func createUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<DirectoryUserWrapper>> {
 		struct Request : Decodable {
 			var user: DirectoryUserWrapper
 		}
 		let input = try req.content.decode(Request.self)
 		
-		let user = try openDirectoryService.logicalUser(fromWrappedUser: input.user)
-		return try openDirectoryService.createUser(user, on: req.eventLoop).flatMapThrowing{ try ApiResponse.data(self.openDirectoryService.wrappedUser(fromUser: $0)) }
+		let odService = req.application.openDirectoryService
+		let user = try odService.logicalUser(fromWrappedUser: input.user)
+		return try odService.createUser(user, using: req.services).flatMapThrowing{ try ApiResponse.data(odService.wrappedUser(fromUser: $0)) }
 	}
 	
 	func updateUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<DirectoryUserWrapper>> {
@@ -38,8 +33,9 @@ final class UserController {
 		let input = try req.content.decode(Request.self)
 		let properties = Set(input.propertiesToUpdate.map{ DirectoryUserProperty(stringLiteral: $0 )})
 		
-		let user = try openDirectoryService.logicalUser(fromWrappedUser: input.user)
-		return try openDirectoryService.updateUser(user, propertiesToUpdate: properties, on: req.eventLoop).flatMapThrowing{ try ApiResponse.data(self.openDirectoryService.wrappedUser(fromUser: $0)) }
+		let odService = req.application.openDirectoryService
+		let user = try odService.logicalUser(fromWrappedUser: input.user)
+		return try odService.updateUser(user, propertiesToUpdate: properties, using: req.services).flatMapThrowing{ try ApiResponse.data(odService.wrappedUser(fromUser: $0)) }
 	}
 	
 	func deleteUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<String>> {
@@ -48,8 +44,9 @@ final class UserController {
 		}
 		let input = try req.content.decode(Request.self)
 		
-		let user = try openDirectoryService.logicalUser(fromWrappedUser: input.user)
-		return try openDirectoryService.deleteUser(user, on: req.eventLoop).map{ _ in ApiResponse.data("ok") }
+		let odService = req.application.openDirectoryService
+		let user = try odService.logicalUser(fromWrappedUser: input.user)
+		return try odService.deleteUser(user, using: req.services).map{ _ in ApiResponse.data("ok") }
 	}
 	
 	func changePassword(_ req: Request) throws -> EventLoopFuture<ApiResponse<String>> {
@@ -60,10 +57,11 @@ final class UserController {
 		}
 		let input = try req.content.decode(Request.self)
 		
-		let user = try openDirectoryService.logicalUser(fromWrappedUser: DirectoryUserWrapper(userId: input.userId))
+		let odService = req.application.openDirectoryService
+		let user = try odService.logicalUser(fromWrappedUser: DirectoryUserWrapper(userId: input.userId))
 		
 		let ret = req.eventLoop.makePromise(of: ApiResponse<String>.self)
-		let resetPasswordAction = try openDirectoryService.changePasswordAction(for: user, on: req.eventLoop) as! ResetOpenDirectoryPasswordAction
+		let resetPasswordAction = try odService.changePasswordAction(for: user, using: req.services)
 		resetPasswordAction.start(parameters: input.newPassword, weakeningMode: .alwaysInstantly, handler: { result in
 			switch result {
 			case .success:            ret.succeed(ApiResponse.data("ok"))
