@@ -101,6 +101,8 @@ extension Application {
 					return existing
 				} else {
 					let new = Services()
+					new.register{ self.eventLoopGroup.next() }
+					new.register{ self.semiSingletonStore }
 					storage[ServicesKey.self] = new
 					return new
 				}
@@ -118,7 +120,9 @@ extension Application {
 extension Request {
 	
 	var services: Services {
-		application.services//.for(request: self)
+		let ret = Services(duplicating: application.services)
+		ret.register{ self.eventLoop }
+		return ret
 	}
 	
 }
