@@ -25,14 +25,15 @@ private struct ServiceSyncPlan {
 
 
 func sync(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
-	let eventLoop = app.make(EventLoop.self)
+	#warning("Do we use the same event loop at all time through the function?")
+	let eventLoop = app.eventLoopGroup.next()
 	
-	guard let syncConfig = app.make(OfficectlConfig.self).syncConfig else {
+	guard let syncConfig = app.officectlConfig.syncConfig else {
 		throw InvalidArgumentError(message: "Won’t sync without a sync config.")
 	}
 	
-	let authServiceId = app.make(OfficectlConfig.self).officeKitConfig.authServiceConfig.serviceId
-	let officeKitServiceProvider = app.make(OfficeKitServiceProvider.self)
+	let authServiceId = app.officeKitConfig.authServiceConfig.serviceId
+	let officeKitServiceProvider = app.officeKitServiceProvider
 	
 	let fromId = f.getString(name: "from")!
 	let toIds = Set(f.getString(name: "to")!.split(separator: ",").map(String.init)).subtracting([fromId])
@@ -41,12 +42,12 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext, app
 		return eventLoop.future()
 	}
 	
-	try app.make(AuditLogger.self).log(action: "Computing sync from service \(fromId) to \(toIds.joined(separator: ",")).", source: .cli)
+	try app.auditLogger.log(action: "Computing sync from service \(fromId) to \(toIds.joined(separator: ",")).", source: .cli)
 	
 	let fromDirectory = try officeKitServiceProvider.getUserDirectoryService(id: fromId)
 	let toDirectories = try toIds.map{ try officeKitServiceProvider.getUserDirectoryService(id: String($0)) }
 	
-	return try MultiServicesUser.fetchAll(in: Set([fromDirectory] + toDirectories), on: eventLoop).flatMapThrowing{
+	return try MultiServicesUser.fetchAll(in: Set([fromDirectory] + toDirectories), using: app.services).flatMapThrowing{
 		let (users, fetchErrorsByService) = $0
 		guard fetchErrorsByService.count == 0 else {
 			throw ErrorCollection(Array(fetchErrorsByService.values))
@@ -88,7 +89,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext, app
 	}
 	.flatMapThrowing{ plans in
 		/* Now let’s do the actual sync! */
-		try app.make(AuditLogger.self).log(action: "Applying sync from service \(fromId) to \(toIds.joined(separator: ",")).", source: .cli)
+		try app.auditLogger.log(action: "Applying sync from service \(fromId) to \(toIds.joined(separator: ",")).", source: .cli)
 		
 		typealias UserSyncResult = (serviceId: String, userStr: String, creationResult: Result<String?, Error>)
 		let futures = plans.flatMap{ plan in
@@ -97,14 +98,14 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext, app
 				let userStr = plan.service.shortDescription(fromUser: user)
 				do {
 					/* Create the user */
-					return try plan.service.createUser(user, on: eventLoop)
+					return try plan.service.createUser(user, using: app.services)
 					.flatMapThrowing{ user in
 						/* If the service we’re creating the user in is the auth
 						 * service, we also set a password on the user. */
 						guard serviceId == authServiceId else {return eventLoop.future(nil)}
 						
 						let newPass = generateRandomPassword()
-						let changePassAction = try plan.service.changePasswordAction(for: user, on: eventLoop)
+						let changePassAction = try plan.service.changePasswordAction(for: user, using: app.services)
 						return changePassAction.start(parameters: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)
 							.map{ newPass }
 					}

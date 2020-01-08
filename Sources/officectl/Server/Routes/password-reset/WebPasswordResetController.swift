@@ -17,35 +17,35 @@ import OfficeKit
 final class WebPasswordResetController {
 	
 	func showUserSelection(_ req: Request) -> EventLoopFuture<View> {
-		return req.leaf.render("NewPasswordResetPage")
+		return req.view.render("NewPasswordResetPage.leaf")
 	}
 	
 	func showResetPage(_ req: Request) throws -> EventLoopFuture<View> {
 		let email = try Email.getAsParameter(named: "email", from: req)
 		return try multiServicesPasswordReset(for: email, request: req)
-			.flatMap{ resets in self.renderMultiServicesPasswordReset(resets, for: email, viewRenderer: req.leaf) }
+			.flatMap{ resets in self.renderMultiServicesPasswordReset(resets, for: email, viewRenderer: req.view) }
 	}
 	
 	func resetPassword(_ req: Request) throws -> EventLoopFuture<View> {
 		let email = try Email.getAsParameter(named: "email", from: req)
 		let resetPasswordData = try req.content.decode(ResetPasswordData.self)
 		
-		let officeKitServiceProvider = req.make(OfficeKitServiceProvider.self)
+		let officeKitServiceProvider = req.application.officeKitServiceProvider
 		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService()
 		
 		let user = try authService.logicalUser(fromEmail: email, servicesProvider: officeKitServiceProvider)
-		return try authService.authenticate(userId: user.userId, challenge: resetPasswordData.oldPass, on: req.eventLoop)
+		return try authService.authenticate(userId: user.userId, challenge: resetPasswordData.oldPass, using: req.services)
 		.flatMapThrowing{ authSuccess -> Void in
 			guard authSuccess else {throw InvalidArgumentError(message: "Cannot login with these credentials.")}
 		}
 		.flatMapThrowing{
-			try req.make(AuditLogger.self).log(action: "Resetting password for user email:\(email).", source: .web)
+			try req.application.auditLogger.log(action: "Resetting password for user email:\(email).", source: .web)
 			return try self.multiServicesPasswordReset(for: email, request: req)
 		}
 		.flatMap{ $0 }
 		.flatMapThrowing{ (multiPasswordReset: MultiServicesPasswordReset) in
 			_ = try multiPasswordReset.start(newPass: resetPasswordData.newPass, weakeningMode: .always(successDelay: 180, errorDelay: 180), eventLoop: req.eventLoop)
-			return self.renderMultiServicesPasswordReset(multiPasswordReset, for: email, viewRenderer: req.leaf)
+			return self.renderMultiServicesPasswordReset(multiPasswordReset, for: email, viewRenderer: req.view)
 		}
 		.flatMap{ $0 }
 	}
@@ -58,12 +58,12 @@ final class WebPasswordResetController {
 	}
 	
 	private func multiServicesPasswordReset(for email: Email, request: Request) throws -> EventLoopFuture<MultiServicesPasswordReset> {
-		let sProvider = request.make(OfficeKitServiceProvider.self)
+		let sProvider = request.application.officeKitServiceProvider
 		let emailService: EmailService = try sProvider.getUserDirectoryService(id: nil)
 		let services = try sProvider.getAllUserDirectoryServices().filter{ $0.supportsPasswordChange }
 		
 		let emailUser = try emailService.logicalUser(fromUserId: email)
-		return try MultiServicesPasswordReset.fetch(from: AnyDSUIdPair(service: emailService.erase(), user: emailUser.erase().userId), in: services, on: request.eventLoop)
+		return try MultiServicesPasswordReset.fetch(from: AnyDSUIdPair(service: emailService.erase(), user: emailUser.erase().userId), in: services, using: request.services)
 	}
 	
 	private func renderMultiServicesPasswordReset(_ multiPasswordReset: MultiServicesPasswordReset, for email: Email, viewRenderer: ViewRenderer) -> EventLoopFuture<View> {
@@ -93,7 +93,7 @@ final class WebPasswordResetController {
 				)
 			}
 		)
-		return viewRenderer.render("PasswordResetStatusPage", context)
+		return viewRenderer.render("PasswordResetStatusPage.leaf", context)
 	}
 	
 }

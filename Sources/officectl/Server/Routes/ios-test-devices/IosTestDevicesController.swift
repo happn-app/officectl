@@ -35,7 +35,7 @@ final class IosTestDevicesController {
 			var devices: [Device]
 		}
 		
-		let officectlConfig = req.make(OfficectlConfig.self)
+		let officectlConfig = req.application.officectlConfig
 		let token = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		return getAllDevices(token: token, eventLoop: req.eventLoop).map{ devices in
@@ -54,7 +54,7 @@ final class IosTestDevicesController {
 			}
 		}
 		.flatMap{ devices in
-			req.leaf.render("IosTestDevicesList", DevicesContext(devices: devices))
+			req.view.render("IosTestDevicesList.leaf", DevicesContext(devices: devices))
 		}
 	}
 	

@@ -13,7 +13,7 @@ import Vapor
 
 func app() throws -> Application {
 	let env = try Environment.detect(arguments: [CommandLine.arguments[0], "guaka"]) /* Guaka will parse the CL arguments */
-	let app = Application(environment: env)
+	let app = Application(env)
 	try configure(app)
 	
 	try boot(app)

@@ -14,5 +14,5 @@ import Vapor
 
 /** Called after the application has initialized. */
 public func boot(_ app: Application) throws {
-	OfficeKitConfig.logger = app.make(Logger.self)
+	OfficeKitConfig.logger = app.logger
 }

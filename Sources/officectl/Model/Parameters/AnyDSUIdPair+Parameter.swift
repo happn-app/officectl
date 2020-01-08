@@ -16,7 +16,7 @@ extension AnyDSUIdPair {
 	
 	public static func getAsParameter(named parameterName: String, from request: Request) throws -> AnyDSUIdPair {
 		let str = try nil2throw(request.parameters.get(parameterName))
-		return try AnyDSUIdPair(string: str, servicesProvider: request.make())
+		return try AnyDSUIdPair(string: str, servicesProvider: request.application.officeKitServiceProvider)
 	}
 	
 }

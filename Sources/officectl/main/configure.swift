@@ -25,44 +25,25 @@ func configure(_ app: Application) throws {
 	configureRetryingOperation(cliParseResults.officectlConfig)
 	configureURLRequestOperation(cliParseResults.officectlConfig)
 	/* Register the services/configs we got from CLI, if any */
-	app.register(instance: cliParseResults.officectlConfig)
+	app.officectlConfig = cliParseResults.officectlConfig
 	if let p = cliParseResults.officectlConfig.staticDataDirURL?.path {
-		app.register(DirectoryConfiguration.self, { _ in DirectoryConfiguration(workingDirectory: p.hasSuffix("/") ? p : p + "/") })
+		app.directory = DirectoryConfiguration(workingDirectory: p.hasSuffix("/") ? p : p + "/")
 	}
 	
-	/* Register providers */
-//	app.register(FluentSQLiteProvider.self, { _ in return FluentSQLiteProvider() })
-	app.register(LeafConfig.self, { app in return LeafConfig(rootDirectory: app.make(DirectoryConfiguration.self).viewsDirectory) })
-	app.register(LeafProvider.self, { _ in return LeafProvider() })
-	
-	/* Register Services */
-	/* Note: I don’t really know the difference between registering an instance
-	 *       and registering a singleton. I _think_ registering a singleton will
-	 *       defer the initialization of the singleton until it is used, whilst
-	 *       you have to init the instance directly to be able to register one. */
-	app.register(instance: SemiSingletonStore(forceClassInKeys: true))
-	app.register(instance: try AuditLogger(path: cliParseResults.officectlConfig.auditLogsURL?.path))
-	app.register(singleton: OfficeKitServiceProvider.self, { app in OfficeKitServiceProvider(config: cliParseResults.officectlConfig.officeKitConfig, application: app) })
+	/* Don’t know how to do that anymore, but should be the default anyway. */
+//	app.register(LeafConfig.self, { app in return LeafConfig(rootDirectory: app.make(DirectoryConfiguration.self).viewsDirectory) })
+	/* Tell the views we want to use Leaf as a renderer. */
+	app.views.use(.leaf)
 	
 	/* Register routes */
 	try setup_routes(app)
 	
 	/* Register middlewares */
-	app.register(MiddlewareConfiguration.self, { app in
-		var middlewares = MiddlewareConfiguration()
-		middlewares.use(AsyncErrorMiddleware(processErrorHandler: handleOfficectlError)) /* Catches errors and converts them to HTTP response */
-		middlewares.use(app.make(FileMiddleware.self)) /* Serves files from the “Public” directory */
-		return middlewares
-	})
+	app.middleware.use(AsyncErrorMiddleware(processErrorHandler: handleOfficectlError)) /* Catches errors and converts them to HTTP response */
+	app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory)) /* Serves files from the “Public” directory */
 	
 	/* Set preferred services (not available in Vapor 4 anymore?) */
 //	config.prefer(LeafRenderer.self, for: ViewRenderer.self)
-	
-	/* Register Request services (whatever that means…) */
-	#warning("TODO: Understand these. Are they made the correct way? Why are they even needed?")
-	app.register(request: AuditLogger.self, { request in request.application.make() })
-	app.register(request: OfficectlConfig.self, { request in request.application.make() })
-	app.register(request: OfficeKitServiceProvider.self, { request in request.application.make() })
 	
 	/* Set OfficeKit options */
 	WeakeningMode.defaultMode = .onSuccess(delay: 13*60) /* 13 minutes */
@@ -70,11 +51,7 @@ func configure(_ app: Application) throws {
 	/* Register the Guaka command wrapper. Guaka does the argument parsing
 	 * because I wasn’t able to do what I wanted with Vapor’s :(
 	 * Note I did not retry with Vapor 4. Maybe it has a way to do what I want. */
-	app.register(CommandConfiguration.self, { app in
-		var commandConfig = CommandConfiguration()
-		commandConfig.use(cliParseResults.wrapperCommand, as: "guaka", isDefault: true)
-		return commandConfig
-	})
+	app.commands.use(cliParseResults.wrapperCommand, as: "guaka", isDefault: true)
 }
 
 
@@ -94,7 +71,7 @@ private func handleOfficectlError(request: Request, chainingTo next: Responder, 
 		response.headers.replaceOrAdd(name: .contentType, value: "application/json; charset=utf-8")
 		return request.eventLoop.makeSucceededFuture(response)
 	} else {
-		return request.leaf.render("ErrorPage", context).flatMap{ view in
+		return request.view.render("ErrorPage.leaf", context).flatMap{ view in
 			return view.encodeResponse(status: status ?? .internalServerError, for: request)
 		}
 	}

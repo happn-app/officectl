@@ -15,7 +15,7 @@ import OfficeKit
 
 
 func usersCreate(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
-	let eventLoop = app.make(EventLoop.self)
+	let eventLoop = app.eventLoopGroup.next()
 	
 	let yes = f.getBool(name: "yes")!
 	let emailStr = f.getString(name: "email")!
@@ -28,7 +28,7 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 		throw InvalidArgumentError(message: "Invalid email \(emailStr)")
 	}
 	
-	let sProvider = app.make(OfficeKitServiceProvider.self)
+	let sProvider = app.officeKitServiceProvider
 	let services = try Array(sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsUserCreation })
 	guard !services.isEmpty else {
 		context.console.warning("Nothing to do.")
@@ -78,7 +78,7 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 		}
 	}
 	
-	try app.make(AuditLogger.self).log(action: "Creating user with email “\(email.stringValue)”, first name “\(firstname)”, last name “\(lastname)” on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
+	try app.auditLogger.log(action: "Creating user with email “\(email.stringValue)”, first name “\(firstname)”, last name “\(lastname)” on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
 	
 	struct SkippedUser : Error {}
 	let futures = users.enumerated().map{ serviceIdxAndUser -> EventLoopFuture<AnyDirectoryUser> in
@@ -89,8 +89,8 @@ func usersCreate(flags f: Flags, arguments args: [String], context: CommandConte
 		}
 		
 		return eventLoop.future()
-		.flatMapThrowing{ _    in try service.createUser(user, on: eventLoop) }.flatMap{ $0 }
-		.flatMapThrowing{ user in try service.changePasswordAction(for: user, on: eventLoop).start(parameters: password, weakeningMode: .alwaysInstantly, eventLoop: eventLoop).map{ user } }.flatMap{ $0 }
+		.flatMapThrowing{ _    in try service.createUser(user, using: app.services) }.flatMap{ $0 }
+		.flatMapThrowing{ user in try service.changePasswordAction(for: user, using: app.services).start(parameters: password, weakeningMode: .alwaysInstantly, eventLoop: eventLoop).map{ user } }.flatMap{ $0 }
 	}
 	
 	return EventLoopFuture.waitAll(futures, eventLoop: eventLoop)

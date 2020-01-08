@@ -22,7 +22,7 @@ class LogoutController {
 	implement proper token revocation. */
 	func logout(_ req: Request) throws -> ApiResponse<String> {
 		guard let bearer = req.headers.bearerAuthorization else {throw Abort(.unauthorized)}
-		_ = try JWT<ApiAuth.Token>(from: Data(bearer.token.utf8), verifiedBy: .hs256(key: req.make(OfficectlConfig.self).jwtSecret))
+		_ = try JWTSigner.hs256(key: req.application.officectlConfig.jwtSecret).verify(bearer.token, as: ApiAuth.Token.self)
 		
 		return ApiResponse.data("ok")
 	}

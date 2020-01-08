@@ -22,18 +22,18 @@ import GenericJSON
 class WebCertificateRenewController {
 	
 	func showLogin(_ req: Request) throws -> EventLoopFuture<View> {
-		return req.leaf.render("CertificateRenewLogin")
+		return req.view.render("CertificateRenewLogin.leaf")
 	}
 	
 	func renewCertificate(_ req: Request) throws -> EventLoopFuture<Response> {
 		let renewCertificateData = try req.content.decode(RenewCertificateData.self)
 		let renewedCommonName = renewCertificateData.email.username
 		
-		let officeKitServiceProvider = req.make(OfficeKitServiceProvider.self)
+		let officeKitServiceProvider = req.application.officeKitServiceProvider
 		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService()
 		let user = try authService.logicalUser(fromEmail: renewCertificateData.email, servicesProvider: officeKitServiceProvider)
 		
-		let officectlConfig = req.make(OfficectlConfig.self)
+		let officectlConfig = req.application.officectlConfig
 		let baseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
 		let rootCAName = try nil2throw(officectlConfig.tmpVaultRootCAName)
 		let issuerName = try nil2throw(officectlConfig.tmpVaultIssuerName)
@@ -46,7 +46,7 @@ class WebCertificateRenewController {
 			handler(.success(request), nil)
 		}
 		
-		return try authService.authenticate(userId: user.userId, challenge: renewCertificateData.password, on: req.eventLoop)
+		return try authService.authenticate(userId: user.userId, challenge: renewCertificateData.password, using: req.services)
 		.flatMapThrowing{ authSuccess -> Void in
 			guard authSuccess else {throw InvalidArgumentError(message: "Cannot login with these credentials.")}
 		}
@@ -76,7 +76,7 @@ class WebCertificateRenewController {
 		}
 		.flatMapThrowing{ certificateIdsToRevoke -> EventLoopFuture<Void> in
 			/* Revoke the certificates to revoke */
-			try req.make(AuditLogger.self).log(action: "Revoking \(certificateIdsToRevoke.count) certificate(s): \(certificateIdsToRevoke.joined(separator: " ")).", source: .web)
+			try req.application.auditLogger.log(action: "Revoking \(certificateIdsToRevoke.count) certificate(s): \(certificateIdsToRevoke.joined(separator: " ")).", source: .web)
 			let futures = certificateIdsToRevoke.map{ id -> EventLoopFuture<Void> in
 				var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("revoke"))
 				urlRequest.httpMethod = "POST"
@@ -90,7 +90,7 @@ class WebCertificateRenewController {
 		.flatMap{ $0 }
 		.flatMapThrowing{ _ -> EventLoopFuture<NewCertificate> in
 			/* Create the new certificate */
-			try req.make(AuditLogger.self).log(action: "Creating certificate w/ CN \(renewedCommonName).", source: .web)
+			try req.application.auditLogger.log(action: "Creating certificate w/ CN \(renewedCommonName).", source: .web)
 			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("issue").appendingPathComponent("client"))
 			urlRequest.httpMethod = "POST"
 			let json = JSON(dictionaryLiteral: ("common_name", JSON(stringLiteral: renewedCommonName)), ("ttl", JSON(stringLiteral: ttl)))

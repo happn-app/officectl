@@ -15,12 +15,12 @@ import OfficeKit
 
 
 func serverServe(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
-	let eventLoop = app.make(EventLoop.self)
-	let config = app.make(OfficectlConfig.self)
+	let eventLoop = app.eventLoopGroup.next()
+	let config = app.officectlConfig
 	
 	var input = CommandInput(arguments: ["fake vapor", "--port", String(config.serverPort), "--hostname", config.serverHost])
 	let signature = try ServeCommand.Signature(from: &input)
 	
-	try app.make(ServeCommand.self).run(using: context, signature: signature)
+	try app.server.command.run(using: context, signature: signature)
 	return eventLoop.makeSucceededFuture(())
 }

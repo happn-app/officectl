@@ -11,18 +11,19 @@ import Guaka
 import Vapor
 
 import OfficeKit
+import ServiceKit
 
 
 
 func getToken(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
-	let eventLoop = app.make(EventLoop.self)
-	let officeKitConfig = app.make(OfficectlConfig.self).officeKitConfig
+	let eventLoop = app.eventLoopGroup.next()
+	let officeKitConfig = app.officeKitConfig
 	
 	let scopes = f.getString(name: "scopes")
 	let serviceId = f.getString(name: "service-id")
 	let serviceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
 	
-	try app.make(AuditLogger.self).log(action: "Getting token for service \(serviceId ?? "<inferred service>") with scope \(scopes ?? "<no scope defined>").", source: .cli)
+	try app.auditLogger.log(action: "Getting token for service \(serviceId ?? "<inferred service>") with scope \(scopes ?? "<no scope defined>").", source: .cli)
 	
 	let token: EventLoopFuture<String>
 	if let googleConfig: GoogleServiceConfig = serviceConfig.unbox() {
@@ -40,7 +41,7 @@ func getToken(flags f: Flags, arguments args: [String], context: CommandContext,
 	}
 }
 
-private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String?, using services: Services) throws -> EventLoopFuture<String> {
+private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String?, on eventLoop: EventLoop) throws -> EventLoopFuture<String> {
 	guard let scopesStr = scopesStr else {
 		throw InvalidArgumentError(message: "The --scopes option is required to get a Google token.")
 	}
@@ -52,7 +53,7 @@ private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String
 	}
 }
 
-private func getGitHubToken(gitHubConfig: GitHubServiceConfig, scopesStr: String?, using services: Services) throws -> EventLoopFuture<String> {
+private func getGitHubToken(gitHubConfig: GitHubServiceConfig, scopesStr: String?, on eventLoop: EventLoop) throws -> EventLoopFuture<String> {
 	guard scopesStr == nil else {
 		throw InvalidArgumentError(message: "Scopes are not supported to retrieve a GitHub token.")
 	}

@@ -15,8 +15,8 @@ import OfficeKit
 
 
 func backupGitHub(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
-	let eventLoop = app.make(EventLoop.self)
-	let officeKitConfig = app.make(OfficectlConfig.self).officeKitConfig
+	let eventLoop = app.eventLoopGroup.next()
+	let officeKitConfig = app.officeKitConfig
 	
 	let serviceId = f.getString(name: "service-id")
 	let gitHubConfig: GitHubServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
@@ -24,7 +24,7 @@ func backupGitHub(flags f: Flags, arguments args: [String], context: CommandCont
 	let orgName = try nil2throw(f.getString(name: "orgname"), "orgname")
 	let destinationFolderURL = try URL(fileURLWithPath: nil2throw(f.getString(name: "downloads-destination-folder"), "downloads-destination-folder"), isDirectory: true)
 	
-	try app.make(AuditLogger.self).log(action: "Backing up GitHub w/ service \(serviceId ?? "<inferred service>"), organization name \(orgName) to \(destinationFolderURL).", source: .cli)
+	try app.auditLogger.log(action: "Backing up GitHub w/ service \(serviceId ?? "<inferred service>"), organization name \(orgName) to \(destinationFolderURL).", source: .cli)
 	
 	let gitHubConnector = try GitHubJWTConnector(key: gitHubConfig.connectorSettings)
 	let f = gitHubConnector.connect(scope: (), eventLoop: eventLoop)

@@ -55,7 +55,7 @@ struct ApiAuth : Codable {
 		}
 		
 		func representsSameUserAs(dsuIdPair: AnyDSUIdPair, request: Request) throws -> Bool {
-			let sProvider = request.make(OfficeKitServiceProvider.self)
+			let sProvider = request.application.officeKitServiceProvider
 			let authService = try sProvider.getDirectoryAuthenticatorService()
 			return try sub == dsuIdPair.dsuPair().hop(to: authService).taggedId
 		}

@@ -63,8 +63,8 @@ struct GoogleUserAndDest {
 }
 
 func backupMails(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
-	let eventLoop = app.make(EventLoop.self)
-	let officeKitConfig = app.make(OfficectlConfig.self).officeKitConfig
+	let eventLoop = app.eventLoopGroup.next()
+	let officeKitConfig = app.officeKitConfig
 	
 	let serviceId = f.getString(name: "service-id")
 	let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
@@ -80,7 +80,7 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 	let archiveDestinationFolderStr = (f.getBool(name: "archive")! ? try nil2throw(f.getString(name: "archives-destination-folder")) : nil)
 	let archiveDestinationFolder = archiveDestinationFolderStr.flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
 	
-	try app.make(AuditLogger.self).log(action: "Backing up mails w/ service \(serviceId ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(linkify ? "w/": "w/o") linkification, \(archiveDestinationFolder != nil ? "w/": "w/o") archiving.", source: .cli)
+	try app.auditLogger.log(action: "Backing up mails w/ service \(serviceId ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(linkify ? "w/": "w/o") linkification, \(archiveDestinationFolder != nil ? "w/": "w/o") archiving.", source: .cli)
 	
 	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)

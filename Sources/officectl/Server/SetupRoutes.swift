@@ -15,7 +15,7 @@ import Vapor
 func setup_routes(_ app: Application) throws {
 	app.get("api", "services", use: { req in
 		ApiResponse.data(
-			req.make(OfficectlConfig.self).officeKitConfig.serviceConfigs
+			req.application.officeKitConfig.serviceConfigs
 			.map{ kv -> ApiService in
 				let (_, config) = kv
 				return ApiService(providerId: config.providerId, serviceId: config.serviceId, serviceFullName: config.serviceName, isHelperService: config.isHelperService)

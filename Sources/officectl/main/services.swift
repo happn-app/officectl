@@ -16,13 +16,17 @@ import Vapor
 
 extension Application {
 	
-	var globalConfig: GlobalConfig {
-		get {storage[GlobalConfigKey.self] ?? .init()}
-		set {storage[GlobalConfigKey.self] = newValue}
+	var officectlConfig: OfficectlConfig {
+		get {storage[OfficectlConfigKey.self]!}
+		set {storage[OfficectlConfigKey.self] = newValue}
 	}
 	
-	private struct GlobalConfigKey: StorageKey {
-		typealias Value = GlobalConfig
+	var officeKitConfig: OfficeKitConfig {
+		self.officectlConfig.officeKitConfig
+	}
+	
+	private struct OfficectlConfigKey: StorageKey {
+		typealias Value = OfficectlConfig
 	}
 	
 }
@@ -56,34 +60,25 @@ extension Application {
 
 extension Application {
 	
-	var openDirectoryService: OpenDirectoryService {
+	var officeKitServiceProvider: OfficeKitServiceProvider {
 		/* I’m not sure accessing storage outside of the queue is thread-safe… */
-		if let existing = storage[OpenDirectoryServiceKey.self] {
+		if let existing = storage[OfficeKitServiceProviderKey.self] {
 			return existing
 		} else {
 			return Application.depRegisteringQueue.sync{
-				if let existing = storage[OpenDirectoryServiceKey.self] {
+				if let existing = storage[OfficeKitServiceProviderKey.self] {
 					return existing
 				} else {
-					let new = OpenDirectoryService(config: openDirectoryServiceConfig, globalConfig: globalConfig)
-					storage[OpenDirectoryServiceKey.self] = new
+					let new = OfficeKitServiceProvider(config: self.officeKitConfig)
+					storage[OfficeKitServiceProviderKey.self] = new
 					return new
 				}
 			}
 		}
 	}
 	
-	var openDirectoryServiceConfig: OpenDirectoryServiceConfig {
-		get {storage[OpenDirectoryServiceConfigKey.self]!}
-		set {storage[OpenDirectoryServiceConfigKey.self] = newValue}
-	}
-	
-	private struct OpenDirectoryServiceKey: StorageKey {
-		typealias Value = OpenDirectoryService
-	}
-	
-	private struct OpenDirectoryServiceConfigKey: StorageKey {
-		typealias Value = OpenDirectoryServiceConfig
+	private struct OfficeKitServiceProviderKey: StorageKey {
+		typealias Value = OfficeKitServiceProvider
 	}
 	
 }
@@ -123,6 +118,33 @@ extension Request {
 		let ret = Services(duplicating: application.services)
 		ret.register{ self.eventLoop }
 		return ret
+	}
+	
+}
+
+
+extension Application {
+	
+	var auditLogger: AuditLogger {
+		/* I’m not sure accessing storage outside of the queue is thread-safe… */
+		if let existing = storage[AuditLoggerKey.self] {
+			return existing
+		} else {
+			return Application.depRegisteringQueue.sync{
+				if let existing = storage[AuditLoggerKey.self] {
+					return existing
+				} else {
+					/* TODO: Let’s not crash if cannot create audit logger 😅 */
+					let new = try! AuditLogger(path: officectlConfig.auditLogsURL?.path)
+					storage[AuditLoggerKey.self] = new
+					return new
+				}
+			}
+		}
+	}
+	
+	private struct AuditLoggerKey: StorageKey {
+		typealias Value = AuditLogger
 	}
 	
 }

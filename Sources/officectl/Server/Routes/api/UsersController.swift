@@ -19,23 +19,23 @@ class UsersController {
 	
 	func getAllUsers(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiUsersSearchResult>> {
 		/* General auth check */
-		let officectlConfig = req.make(OfficectlConfig.self)
+		let officectlConfig = req.application.officectlConfig
 		guard let bearer = req.headers.bearerAuthorization else {throw Abort(.unauthorized)}
-		let token = try JWT<ApiAuth.Token>(from: Data(bearer.token.utf8), verifiedBy: .hs256(key: officectlConfig.jwtSecret))
+		let token: ApiAuth.Token = try JWTSigner.hs256(key: officectlConfig.jwtSecret).verify(bearer.token)
 		
 		/* Only admins are allowed to list the users. */
-		guard token.payload.adm else {
+		guard token.adm else {
 			throw Abort(.forbidden)
 		}
 		
 //		let logger = req.make(Logger.self)
-		let sProvider = req.make(OfficeKitServiceProvider.self)
+		let sProvider = req.application.officeKitServiceProvider
 		
 		let serviceIdsStr: String? = req.query["service_ids"]
 		let serviceIds = serviceIdsStr?.split(separator: ",").map(String.init)
 		let services = try Set(serviceIds.flatMap{ try $0.map{ try sProvider.getUserDirectoryService(id: $0) } } ?? Array(sProvider.getAllUserDirectoryServices()))
 		
-		return try MultiServicesUser.fetchAll(in: services, on: req.eventLoop).flatMapThrowing{
+		return try MultiServicesUser.fetchAll(in: services, using: req.services).flatMapThrowing{
 			let (users, fetchErrorsByService) = $0
 			let fetchApiErrorsByService = fetchErrorsByService.mapValues{ ApiError(error: $0, environment: req.application.environment) }
 			let orderedServices = try officectlConfig.officeKitConfig.orderedServiceConfigs.map{ try sProvider.getUserDirectoryService(id: $0.serviceId) }
@@ -47,26 +47,26 @@ class UsersController {
 	
 	func getMe(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiUserSearchResult>> {
 		/* General auth check */
-		let officectlConfig = req.make(OfficectlConfig.self)
+		let officectlConfig = req.application.officectlConfig
 		guard let bearer = req.headers.bearerAuthorization else {throw Abort(.unauthorized)}
-		let token = try JWT<ApiAuth.Token>(from: Data(bearer.token.utf8), verifiedBy: .hs256(key: officectlConfig.jwtSecret))
+		let token: ApiAuth.Token = try JWTSigner.hs256(key: officectlConfig.jwtSecret).verify(bearer.token)
 		
-		let myUserId = try AnyDSUIdPair(taggedId: token.payload.sub, servicesProvider: req.make())
+		let myUserId = try AnyDSUIdPair(taggedId: token.sub, servicesProvider: req.application.officeKitServiceProvider)
 		return try getUserNoAuthCheck(userId: myUserId, request: req)
 	}
 	
 	func getUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiUserSearchResult>> {
 		/* General auth check */
-		let officectlConfig = req.make(OfficectlConfig.self)
+		let officectlConfig = req.application.officectlConfig
 		guard let bearer = req.headers.bearerAuthorization else {throw Abort(.unauthorized)}
-		let token = try JWT<ApiAuth.Token>(from: Data(bearer.token.utf8), verifiedBy: .hs256(key: officectlConfig.jwtSecret))
+		let token: ApiAuth.Token = try JWTSigner.hs256(key: officectlConfig.jwtSecret).verify(bearer.token)
 		
 		/* Parameter retrieval */
 		let userId = try AnyDSUIdPair.getAsParameter(named: "dsuid-pair", from: req)
 		
 		/* Only admins are allowed to see any user. Other users can only see
 		 * themselves. */
-		guard try token.payload.adm || token.payload.representsSameUserAs(dsuIdPair: userId, request: req) else {
+		guard try token.adm || token.representsSameUserAs(dsuIdPair: userId, request: req) else {
 			throw Abort(.forbidden)
 		}
 		
@@ -74,9 +74,9 @@ class UsersController {
 	}
 	
 	private func getUserNoAuthCheck(userId: AnyDSUIdPair, request: Request) throws -> EventLoopFuture<ApiResponse<ApiUserSearchResult>> {
-		let sProvider = request.make(OfficeKitServiceProvider.self)
-		let officeKitConfig = request.make(OfficectlConfig.self).officeKitConfig
-		return try MultiServicesUser.fetch(from: userId, in: sProvider.getAllUserDirectoryServices(), on: request.eventLoop)
+		let officeKitConfig = request.application.officeKitConfig
+		let sProvider = request.application.officeKitServiceProvider
+		return try MultiServicesUser.fetch(from: userId, in: sProvider.getAllUserDirectoryServices(), using: request.services)
 		.flatMapThrowing{ multiUser in
 			let orderedServices = try officeKitConfig.orderedServiceConfigs.map{ try sProvider.getUserDirectoryService(id: $0.serviceId) }
 			return try ApiResponse.data(
