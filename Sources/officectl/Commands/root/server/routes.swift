@@ -18,6 +18,6 @@ func serverRoutes(flags f: Flags, arguments args: [String], context: CommandCont
 	let eventLoop = app.eventLoopGroup.next()
 	
 	var context = context
-//	try RoutesCommand(routes: app.routes).run(using: &context)
+	try app.commands.commands["routes"]?.run(using: &context)
 	return eventLoop.makeSucceededFuture(())
 }
