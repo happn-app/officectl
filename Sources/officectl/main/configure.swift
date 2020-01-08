@@ -51,6 +51,7 @@ func configure(_ app: Application) throws {
 	/* Register the Guaka command wrapper. Guaka does the argument parsing
 	 * because I wasn’t able to do what I wanted with Vapor’s :(
 	 * Note I did not retry with Vapor 4. Maybe it has a way to do what I want. */
+	app.commands.defaultCommand = cliParseResults.wrapperCommand
 	app.commands.use(cliParseResults.wrapperCommand, as: "guaka", isDefault: true)
 }
 
