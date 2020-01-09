@@ -54,7 +54,7 @@ final class IosTestDevicesController {
 			}
 		}
 		.flatMap{ devices in
-			req.view.render("IosTestDevicesList.leaf", DevicesContext(devices: devices))
+			req.view.render("IosTestDevicesList", DevicesContext(devices: devices))
 		}
 	}
 	

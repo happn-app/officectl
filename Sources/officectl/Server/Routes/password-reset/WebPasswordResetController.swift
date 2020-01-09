@@ -17,7 +17,7 @@ import OfficeKit
 final class WebPasswordResetController {
 	
 	func showUserSelection(_ req: Request) -> EventLoopFuture<View> {
-		return req.view.render("NewPasswordResetPage.leaf")
+		return req.view.render("NewPasswordResetPage")
 	}
 	
 	func showResetPage(_ req: Request) throws -> EventLoopFuture<View> {
@@ -93,7 +93,7 @@ final class WebPasswordResetController {
 				)
 			}
 		)
-		return viewRenderer.render("PasswordResetStatusPage.leaf", context)
+		return viewRenderer.render("PasswordResetStatusPage", context)
 	}
 	
 }

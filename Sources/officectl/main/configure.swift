@@ -72,7 +72,7 @@ private func handleOfficectlError(request: Request, chainingTo next: Responder, 
 		response.headers.replaceOrAdd(name: .contentType, value: "application/json; charset=utf-8")
 		return request.eventLoop.makeSucceededFuture(response)
 	} else {
-		return request.view.render("ErrorPage.leaf", context).flatMap{ view in
+		return request.view.render("ErrorPage", context).flatMap{ view in
 			return view.encodeResponse(status: status ?? .internalServerError, for: request)
 		}
 	}

@@ -22,7 +22,7 @@ import GenericJSON
 class WebCertificateRenewController {
 	
 	func showLogin(_ req: Request) throws -> EventLoopFuture<View> {
-		return req.view.render("CertificateRenewLogin.leaf")
+		return req.view.render("CertificateRenewLogin")
 	}
 	
 	func renewCertificate(_ req: Request) throws -> EventLoopFuture<Response> {
