@@ -8,7 +8,6 @@
 import XCTest
 @testable import OfficeKit
 
-import Async
 import NIO
 
 
@@ -33,20 +32,20 @@ class FutureTests : XCTestCase {
 	}
 	
 	private func futureSucceeding(in delay: DispatchTimeInterval, id: Int, eventLoop: EventLoop) -> EventLoopFuture<Int> {
-		let promise = eventLoop.newPromise(Int.self)
+		let promise = eventLoop.makePromise(of: Int.self)
 		
 		queue.asyncAfter(deadline: .now() + delay, execute: {
-			promise.succeed(result: id)
+			promise.succeed(id)
 		})
 		
 		return promise.futureResult
 	}
 	
 	private func futureFailing(in delay: DispatchTimeInterval, eventLoop: EventLoop) -> EventLoopFuture<Int> {
-		let promise = eventLoop.newPromise(Int.self)
+		let promise = eventLoop.makePromise(of: Int.self)
 		
 		queue.asyncAfter(deadline: .now() + delay, execute: {
-			promise.fail(error: InternalError())
+			promise.fail(InternalError())
 		})
 		
 		return promise.futureResult
