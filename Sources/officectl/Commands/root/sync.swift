@@ -25,8 +25,7 @@ private struct ServiceSyncPlan {
 
 
 func sync(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
-	#warning("Do we use the same event loop at all time through the function?")
-	let eventLoop = app.eventLoopGroup.next()
+	let eventLoop = try app.services.make(EventLoop.self)
 	
 	guard let syncConfig = app.officectlConfig.syncConfig else {
 		throw InvalidArgumentError(message: "Won’t sync without a sync config.")

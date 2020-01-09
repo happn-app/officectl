@@ -15,8 +15,8 @@ import OfficeKit
 
 
 func backupGitHub(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
-	let eventLoop = app.eventLoopGroup.next()
 	let officeKitConfig = app.officeKitConfig
+	let eventLoop = try app.services.make(EventLoop.self)
 	
 	let serviceId = f.getString(name: "service-id")
 	let gitHubConfig: GitHubServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)

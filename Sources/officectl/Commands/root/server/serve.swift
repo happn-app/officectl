@@ -15,8 +15,8 @@ import OfficeKit
 
 
 func serverServe(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
-	let eventLoop = app.eventLoopGroup.next()
 	let config = app.officectlConfig
+	let eventLoop = try app.services.make(EventLoop.self)
 	
 	var input = CommandInput(arguments: ["fake vapor", "--port", String(config.serverPort), "--hostname", config.serverHost])
 	let signature = try ServeCommand.Signature(from: &input)

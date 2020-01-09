@@ -15,7 +15,7 @@ import OfficeKit
 
 
 func usersCreate(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
-	let eventLoop = app.eventLoopGroup.next()
+	let eventLoop = try app.services.make(EventLoop.self)
 	
 	let yes = f.getBool(name: "yes")!
 	let emailStr = f.getString(name: "email")!

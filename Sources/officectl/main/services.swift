@@ -96,7 +96,8 @@ extension Application {
 					return existing
 				} else {
 					let new = Services()
-					new.register{ self.eventLoopGroup.next() }
+					let eventLoop = self.eventLoopGroup.next()
+					new.register{ eventLoop } /* We always want to return the same event loop */
 					new.register{ self.semiSingletonStore }
 					storage[ServicesKey.self] = new
 					return new

@@ -16,7 +16,7 @@ import ServiceKit
 
 
 func listUsers(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
-	let eventLoop = app.eventLoopGroup.next()
+	let eventLoop = try app.services.make(EventLoop.self)
 	
 	let serviceId = f.getString(name: "service-id")
 	let serviceProvider = app.officeKitServiceProvider

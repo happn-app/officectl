@@ -15,7 +15,7 @@ import OfficeKit
 
 
 func usersChangePassword(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
-	let eventLoop = app.eventLoopGroup.next()
+	let eventLoop = try app.services.make(EventLoop.self)
 	
 	let userIdStr = f.getString(name: "user-id")!
 	let serviceIds = f.getString(name: "service-ids")?.split(separator: ",").map(String.init)
