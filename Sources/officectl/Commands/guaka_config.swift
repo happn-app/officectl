@@ -107,6 +107,17 @@ func parse_cli(_ app: Application) -> GuakaCommandParseResult {
 		Flag(longName: "archives-destination-folder",  type: String.self, description: "The path in which the archives will be put. Defaults to pwd. Required iif archive is set.", required: false)
 	]
 	
+	let backupDriveFlags = [
+		Flag(longName: "service-id",                   type: String.self, description: "The id of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.", required: false),
+		
+		Flag(longName: "disabled-email-suffix",        type: String.self, description: "When downloading the drive, if the username of the email has the given suffix, the resulting destination will be the same email without the suffix in the username. The drives to backup given will be searched with and without the suffix.", required: false),
+		
+		Flag(longName: "archive",                      value: false,      description: "Whether to archive the backup (create a tar bz2 file and remove the directory)."),
+		Flag(longName: "erase-downloaded-files",       value: false,      description: "Whether to remove the files from the drive after downloading them. If a file is shared it will be also removed! A log file will contain all the shared files that have been removed, with the list of people w/ access to the files."),
+		Flag(longName: "no-skip-if-archive-exists",    value: false,      description: "Ignored when not archiving. If the archive for an email already exists, do NOT skip the backup for this email, overwrite the existing archive."),
+		Flag(longName: "archives-destination-folder",  type: String.self, description: "The path in which the archives will be put. Defaults to pwd. Required iif archive is set.", required: false)
+	]
+	
 	let backupGitHubFlags = [
 		Flag(longName: "orgname",    type: String.self, description: "The organisation name from which to backup the repositories from.", required: true),
 		Flag(longName: "service-id", type: String.self, description: "The id of the GitHub service to use to do the backup. Required if there are more than one GitHub service in officectl conf, otherwise the only GitHub service is used.", required: false)
@@ -126,8 +137,19 @@ func parse_cli(_ app: Application) -> GuakaCommandParseResult {
 	to backup are specified. If both versions exist in the directory, an error will be thrown and the
 	backup command will fail.
 	"""
-	let _ = Command(usage: "mails",  shortMessage: "Backup the given mails (or all if none specified)", longMessage: backupMailsLongHelp, flags: backupMailsFlags,  parent: backupCommand, run: createSetWrapperCommandHandler(backupMails))
-	let _ = Command(usage: "github",                                                                                                      flags: backupGitHubFlags, parent: backupCommand, run: createSetWrapperCommandHandler(backupGitHub))
+	let backupDriveLongHelp = """
+	Backup the drive of the given emails (or all mails in the given service if none are specified) to a
+	directory.
+	
+	The “data” files are copied as-is, the “cloud” files are converted to xlsx, pptx and docx. A document
+	will be generated to summarize the sync, and list potential data losses (conversion is impossible, etc.)
+	
+	The “disabled-email-suffix” option exists too, just like for the backup mails action. See the doc of
+	the action for more info.
+	"""
+	let _ = Command(usage: "mails",  shortMessage: "Backup the given mails (or all if none specified)",               longMessage: backupMailsLongHelp, flags: backupMailsFlags,  parent: backupCommand, run: createSetWrapperCommandHandler(backupMails))
+	let _ = Command(usage: "drive",  shortMessage: "Backup the drive for the given mails (or all if none specified)", longMessage: backupDriveLongHelp, flags: backupDriveFlags,  parent: backupCommand, run: createSetWrapperCommandHandler(backupDrive))
+	let _ = Command(usage: "github",                                                                                                                    flags: backupGitHubFlags, parent: backupCommand, run: createSetWrapperCommandHandler(backupGitHub))
 	
 	
 	/* *************************

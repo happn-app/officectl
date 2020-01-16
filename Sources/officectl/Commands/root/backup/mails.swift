@@ -15,53 +15,6 @@ import OfficeKit
 
 
 
-struct EmailSrcAndDst : Hashable, CustomDebugStringConvertible {
-	
-	var source: String
-	var destination: String
-	
-	init(emailStr: String, disabledUserSuffix: String?, logger: Logger?) {
-		guard let email = Email(string: emailStr) else {
-			logger?.warning("Got a filter for backuping emails which is not an email (\(emailStr)). Not considered for disabled suffix check.")
-			destination = emailStr
-			source = emailStr
-			return
-		}
-		guard let disabledUserSuffix = disabledUserSuffix else {
-			destination = emailStr
-			source = emailStr
-			return
-		}
-		
-		let hasSuffix = email.username.hasSuffix(disabledUserSuffix)
-		/* We rebuild the email without checking for validity so we do not recreate an Email object in the two lines below. */
-		source      = hasSuffix ? email.stringValue : (email.username + disabledUserSuffix + "@" + email.domain)
-		destination = hasSuffix ? (email.username.dropLast(disabledUserSuffix.count) + "@" + email.domain) : email.stringValue
-	}
-	
-	var debugDescription: String {
-		guard source != destination else {return source}
-		return "(" + source + "," + destination + ")"
-	}
-	
-}
-
-struct GoogleUserAndDest {
-	
-	var user: GoogleUser
-	var downloadDestination: URL
-	var archiveDestination: URL?
-	
-	init(googleUser: GoogleUser, disabledUserSuffix: String?, downloadsURL: URL, archiveURL: URL?) {
-		let emailSrcAndDst = EmailSrcAndDst(emailStr: googleUser.primaryEmail.stringValue, disabledUserSuffix: disabledUserSuffix, logger: nil)
-		
-		user = googleUser
-		downloadDestination = downloadsURL.appendingPathComponent(emailSrcAndDst.destination)
-		archiveDestination = archiveURL.flatMap{ $0.appendingPathComponent(emailSrcAndDst.destination).appendingPathExtension("tar.bz2") }
-	}
-	
-}
-
 func backupMails(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
 	let officeKitConfig = app.officeKitConfig
 	let eventLoop = try app.services.make(EventLoop.self)
@@ -84,38 +37,16 @@ func backupMails(flags f: Flags, arguments args: [String], context: CommandConte
 	
 	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
-	.flatMap{ _ -> EventLoopFuture<[GoogleUser]> in /* Fetch users */
-		let searchFutures = googleConfig.primaryDomains.map{ domain in
-			return EventLoopFuture<[GoogleUser]>.future(from: SearchGoogleUsersOperation(searchedDomain: domain, googleConnector: googleConnector), on: eventLoop)
-		}
-		return EventLoopFuture.reduce([], searchFutures, on: eventLoop, +)
+	.flatMap{ _ -> EventLoopFuture<[GoogleUserAndDest]> in
+		GoogleUserAndDest.fetchListToBackup(
+			googleConfig: googleConfig, googleConnector: googleConnector,
+			usersFilter: usersFilter, disabledUserSuffix: disabledUserSuffix,
+			downloadsDestinationFolder: downloadsDestinationFolder, archiveDestinationFolder: archiveDestinationFolder,
+			skipIfArchiveFound: skipIfArchiveFound,
+			console: context.console, eventLoop: eventLoop
+		)
 	}
-	.flatMap{ allUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
-		let allUsersFilter = usersFilter?.flatMap{ Set(arrayLiteral: $0.source, $0.destination) }
-		let filteredUsers = allUsers
-			.filter{ allUsersFilter?.contains($0.primaryEmail.stringValue) ?? true }
-			.map{ GoogleUserAndDest(googleUser: $0, disabledUserSuffix: disabledUserSuffix, downloadsURL: downloadsDestinationFolder, archiveURL: archiveDestinationFolder) }
-			.filter{ !skipIfArchiveFound || !($0.archiveDestination.flatMap{ FileManager.default.fileExists(atPath: $0.path) } ?? false) } /* Not optimal but we don’t care. */
-		
-		/* Let’s check if two users have the same download or archive destination.
-		 * We fail if this happens. The whole process is most likely sub-optimal
-		 * in this implementation but we don’t care, really. */
-		let downloadsDestinationsSet = Set(filteredUsers.map{ $0.downloadDestination })
-		guard filteredUsers.count == downloadsDestinationsSet.count else {
-			return eventLoop.makeFailedFuture(InvalidArgumentError(message: "Got two users whose destination for the downloads is the same."))
-		}
-		let archiveDestinations = filteredUsers.map{ $0.archiveDestination }
-		let nNilArchiveDestinations = archiveDestinations.reduce(0, { $1 == nil ? $0 + 1 : $0 })
-		let archiveDestinationsSet = Set(archiveDestinations.compactMap{ $0 })
-		guard filteredUsers.count - nNilArchiveDestinations == archiveDestinationsSet.count else {
-			return eventLoop.makeFailedFuture(InvalidArgumentError(message: "Got two users whose destination for the archives is the same."))
-		}
-		
-		guard filteredUsers.count > 0 else {
-			context.console.info("No users to backup.")
-			return eventLoop.future([])
-		}
-		
+	.flatMap{ filteredUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
 		let options = BackupMailOptions(flags: f, console: context.console, mainConnector: googleConnector, users: filteredUsers)
 		
 		return EventLoopFuture<[URL]>.future(from: FetchAllMailsOperation(options: options), on: eventLoop, resultRetriever: {

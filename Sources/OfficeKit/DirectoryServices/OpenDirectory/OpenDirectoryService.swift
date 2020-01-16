@@ -14,7 +14,6 @@ public typealias OpenDirectoryService = DummyService
 import Foundation
 import OpenDirectory
 
-import AsyncKit
 import GenericJSON
 import NIO
 import SemiSingleton
