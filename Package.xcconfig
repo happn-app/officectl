@@ -1,2 +1,4 @@
 // We use the Homebrew OpenLDAP if possible (system one is deprecated by Apple)
 OTHER_SWIFT_FLAGS = $(inherited) -Xcc "-I/usr/local/opt/openldap/include" -Xlinker "-L/usr/local/opt/openldap/lib" -Xcc "-I$(HOME)/usr/homebrew/opt/openldap/include" -Xlinker "-L$(HOME)/usr/homebrew/opt/openldap/lib"
+// See the build_for_macos.sh script for info about the ncurses option
+OTHER_LDFLAGS = $(inherited) -lncurses

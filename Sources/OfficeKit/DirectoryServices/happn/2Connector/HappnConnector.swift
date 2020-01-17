@@ -268,7 +268,7 @@ public final class HappnConnector : Connector, Authenticator {
 				}
 				finalHMAC = hmac
 			#else
-				finalHMAC = Data(HMAC<SHA256>.authenticationCode(content, key: key))
+				finalHMAC = Data(HMAC<SHA256>.authenticationCode(for: content, using: SymmetricKey(data: key)))
 			#endif
 			request.setValue(finalHMAC.reduce("", { $0 + String(format: "%02x", $1) }), forHTTPHeaderField: "Signature")
 		}

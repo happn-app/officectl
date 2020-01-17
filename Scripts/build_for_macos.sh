@@ -24,6 +24,10 @@ done
 
 cd "$(dirname "$0")/.."
 
+# The -lncurses option is a workaround for a Swift bug(?) where importing
+# Darwin.ncurses successfully finds the headers, but apparently does not link
+# the program with ncurses (linking fails w/ undefined symbols)
 PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/local/opt/openssl/lib/pkgconfig:${HOME}/usr/homebrew/opt/openssl/lib/pkgconfig" \
 	swift build $SANDBOX_FLAGS -c release \
-	"${SWIFT_BUILD_OPENLDAP_OPTIONS[@]}"
+	"${SWIFT_BUILD_OPENLDAP_OPTIONS[@]}" \
+	"-Xlinker" "-lncurses"

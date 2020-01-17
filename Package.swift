@@ -8,6 +8,12 @@ var platformDependentTargets = [PackageDescription.Target]()
 platformDependentTargets.append(.target(name: "officectl_odproxy", dependencies: ["OfficeKit", "Vapor", "Yaml", "JWTKit", "LegibleError", "GenericJSON"]))
 #endif
 
+var platformDependentOfficeKitDependencies = [Target.Dependency]()
+#if !canImport(Security)
+/* See the Crypto.swift for this */
+platformDependentOfficeKitDependencies.append("JWTKit")
+#endif
+
 
 let package = Package(
 	name: "officectl",
@@ -48,7 +54,7 @@ let package = Package(
 			"RetryingOperation", "URLRequestOperation", "SemiSingleton", "EmailValidator",
 			/* External dependencies */
 			"NIO", "OpenCrypto"/*, "ConsoleKit"*/, "GenericJSON", "Yaml"
-		]),
+		] + platformDependentOfficeKitDependencies),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
 		
 		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "OpenCrypto", "Guaka", "Yaml", "JWTKit", "LegibleError"])

@@ -5,12 +5,22 @@
  * Created by François Lamboley on 26/06/2018.
  */
 
+/* A note about this file: JWTKit did not exist (at least not on this form)
+ * previously. So we created Crypto.swift to handle signing using
+ * Security.framework on macOS-like platforms, and Vapor’s crypto framework
+ * (basically a wrapper around OpenSSL) on Linux.
+ * As time and releases went by on macOS and Vapor sides, things changed. Now
+ * the “correct” way to sign a JWT token is by using JWTKit, whether you’re on
+ * macOS on Linux. I still kept this file to avoir changing the code everywhere,
+ * but it should be easy to do. */
+
 import Foundation
 #if canImport(Security)
 	import Security
 #else
+	import JWTKit
+//	import OpenCrypto
 	public typealias SecKey = Data
-	import OpenCrypto
 #endif
 
 
@@ -59,9 +69,7 @@ struct Crypto {
 		static func createRS256JWT(payload: [String: Any?], privateKey pemData: Data) throws -> String {
 			let jwtRequestNoSignatureString = try jwtRS256RequestNoSignature(payload: payload)
 			let jwtRequestNoSignatureData = Data(jwtRequestNoSignatureString.utf8)
-			guard let jwtRequestSignature = try? RSA.SHA256.sign(jwtRequestNoSignatureData, key: RSAKey.private(pem: pemData)) else {
-				throw NSError(domain: "com.happn.officectl.crypto", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."])
-			}
+			let jwtRequestSignature = try Data(JWTSigner.rs256(key: RSAKey.private(pem: pemData)).algorithm.sign(jwtRequestNoSignatureData))
 			return jwtRequestNoSignatureString + "." + jwtRequestSignature.base64EncodedString()
 		}
 	#endif
