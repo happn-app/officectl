@@ -10,7 +10,11 @@
  *       option so that it is indeed enough). On Linux I’ll have to create a
  *       CNCurses module!
  *       https://dev.iachieved.it/iachievedit/ncurses-with-swift-on-linux/ */
-import Darwin.ncurses
+#if canImport(Darwin)
+	import Darwin.ncurses
+#else
+	import CNCurses
+#endif
 import Foundation
 
 import GenericJSON

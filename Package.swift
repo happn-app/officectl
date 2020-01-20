@@ -4,11 +4,18 @@ import PackageDescription
 
 
 var platformDependentTargets = [PackageDescription.Target]()
+var platformDependentOfficeKitDependencies = [Target.Dependency]()
+var platformDependentOfficectlDependencies = [Target.Dependency]()
+
 #if canImport(DirectoryService) && canImport(OpenDirectory)
 platformDependentTargets.append(.target(name: "officectl_odproxy", dependencies: ["OfficeKit", "Vapor", "Yaml", "JWTKit", "LegibleError", "GenericJSON"]))
 #endif
 
-var platformDependentOfficeKitDependencies = [Target.Dependency]()
+#if !canImport(Darwin)
+platformDependentTargets.append(.systemLibrary(name: "CNCurses", pkgConfig: "ncurses", providers: [.apt(["libncurses-dev"]), .brew(["ncurses"])]))
+platformDependentOfficectlDependencies.append("CNCurses")
+#endif
+
 #if !canImport(Security)
 /* See the Crypto.swift for this */
 platformDependentOfficeKitDependencies.append("JWTKit")
@@ -57,7 +64,9 @@ let package = Package(
 		] + platformDependentOfficeKitDependencies),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
 		
-		.target(name: "officectl", dependencies: ["OfficeKit", "Vapor", "Leaf", "OpenCrypto", "Guaka", "Yaml", "JWTKit", "LegibleError"])
+		.target(name: "officectl", dependencies: [
+			"OfficeKit", "Vapor", "Leaf", "OpenCrypto", "Guaka", "Yaml", "JWTKit", "LegibleError"
+		] + platformDependentOfficectlDependencies)
 		
 	] + platformDependentTargets
 )
