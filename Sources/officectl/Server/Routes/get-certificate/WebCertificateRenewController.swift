@@ -224,6 +224,7 @@ class WebCertificateRenewController {
 				throw InternalError(message: "cannot convert CN field to ASN1 string")
 			}
 			commonName = String(cString: ASN1_STRING_data(commonNameASN1))
+//			commonName = String(cString: ASN1_STRING_get0_data(commonNameASN1))
 			pem = p
 		}
 		
