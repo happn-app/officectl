@@ -5,10 +5,7 @@
  * Created by François Lamboley on 09/01/2020.
  */
 
-/* TODO: Use ncurses to draw the current download status of the drive. On macOS
- *       simply uncommenting the line below should be enough (I added a linker
- *       option so that it is indeed enough). On Linux I’ll have to create a
- *       CNCurses module!
+/* TODO: Use ncurses to draw the current download status of the drive.
  *       https://dev.iachieved.it/iachievedit/ncurses-with-swift-on-linux/ */
 #if canImport(Darwin)
 	import Darwin.ncurses
@@ -49,7 +46,6 @@ class DownloadDrivesStatus : ActivityIndicatorType {
 	var loadingBarWidth: Int = 27
 	
 	func initStatuses(users: [GoogleUser]) {
-		let maxx = getmaxx(stdscr)
 		syncQueue.sync{
 			var res = [GoogleUser: DownloadDriveStatus](minimumCapacity: users.count)
 			for u in users {
