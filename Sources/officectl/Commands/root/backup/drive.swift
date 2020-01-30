@@ -103,7 +103,9 @@ class DownloadDrivesStatus : ActivityIndicatorType {
 			maxIgnoredBytesWidth = max(maxIgnoredBytesWidth, bytesToHumanReadableString(s.nBytesIgnored).count)
 		}
 		
-		for (user, status) in statuses {
+		for user in statuses.keys.sorted(by: { $0.primaryEmail.stringValue < $1.primaryEmail.stringValue }) {
+			let status = statuses[user]!
+			
 			var line = [ConsoleTextFragment]()
 			let useremail = user.primaryEmail.stringValue
 			
@@ -285,8 +287,6 @@ class DownloadDriveOperation : RetryingOperation {
 		_ = connector.connect(scope: scope, eventLoop: eventLoop)
 		.flatMap{ _ -> EventLoopFuture<[GoogleDriveDoc]> in self.fetchDriveDocs(connector: connector, currentListOfFiles: [], nextPageToken: nil) }
 		.flatMapThrowing{ res -> Void in
-//			print(res.files?.filter{ $0.ownedByMe })
-			print(res.filter{ $0.ownedByMe }.map{ $0.name ?? "" }.joined(separator: "\n"))
 			self.baseOperationEnded()
 			return ()
 		}
