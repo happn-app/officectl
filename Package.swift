@@ -29,6 +29,16 @@ platformDependentOfficeKitDependencies.append("JWTKit")
  * simply does not do what OpenLDAP does).
  * Note the project compiles if the system OpenLDAP is used, but you’ll get a
  * lot of useless warnings. */
+let openLDAPTarget: Target
+#if os(macOS) /* Probably iOS, watchOS and tvOS too, but I’m not sure and we do not really care… */
+/* On macOS we use a custom-made auto-generated pkg-config file for OpenLDAP
+ * (because the upstream did not do a pkg-config file). */
+openLDAPTarget = .systemLibrary(name: "COpenLDAP", pkgConfig: "openldap", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])])
+#else
+/* On Linux we use the standard OpenLDAP package. The standard OpenLDAP package
+ * does not have a pkg-config file! */
+openLDAPTarget = .systemLibrary(name: "COpenLDAP", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])])
+#endif
 
 
 let package = Package(
@@ -59,7 +69,7 @@ let package = Package(
 		.package(url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0")
 	],
 	targets: [
-		.systemLibrary(name: "COpenLDAP", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])]),
+		openLDAPTarget,
 		.systemLibrary(name: "COpenSSL", pkgConfig: "openssl", providers: [.apt(["openssl", "libssl-dev"]), .brew(["openssl@1.1"])]),
 		
 		.target(name: "GenericStorage", dependencies: []),

@@ -1,0 +1,10 @@
+prefix=/Users/frizlab/usr/homebrew/Cellar/openldap/2.4.48_1
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: OpenLDAP-libldap
+Description: OpenLDAP ldap library
+Version: 2.4.48
+Libs: -L${libdir} -lldap
+Cflags: -I${includedir}
