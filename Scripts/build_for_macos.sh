@@ -10,18 +10,5 @@ SANDBOX_FLAGS=
 #fi
 
 
-# Let’s find Homebrew’s OpenLDAP
-SWIFT_BUILD_OPENLDAP_OPTIONS=()
-for b in "/usr/local/opt/openldap" "${HOME}/usr/homebrew/opt/openldap"; do
-	lib_dir="$b/lib"
-	include_dir="$b/include"
-	if [ -d "$lib_dir" -a -d "$include_dir" ]; then
-		SWIFT_BUILD_OPENLDAP_OPTIONS=("-Xcc" "-I$include_dir" "-Xlinker" "-L$lib_dir")
-		break
-	fi
-done
-
-
 cd "$(dirname "$0")/.."
-
-swift build $SANDBOX_FLAGS -c release "${SWIFT_BUILD_OPENLDAP_OPTIONS[@]}"
+PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(pwd)/Configs/pkgconfig" swift build $SANDBOX_FLAGS -c release

@@ -28,7 +28,16 @@ platformDependentOfficeKitDependencies.append("JWTKit")
  * (the system one is deprecated, but there are no alternatives; OpenDirectory
  * simply does not do what OpenLDAP does).
  * Note the project compiles if the system OpenLDAP is used, but you’ll get a
- * lot of useless warnings. */
+ * lot of useless warnings.
+ *
+ * On macOS, one should export the following variable (from within the root of
+ * the project):
+ *    PKG_CONFIG_PATH="$PKG_CONFIG_PATH:`brew --prefix openssl@1.1`/lib/pkgconfig:$(pwd)/Configs/pkgconfig"
+ *
+ * To have the project opened with Xcode from the Package.swift file (and not
+ * use an xcodeproj file), launch Xcode from the Terminal w/:
+ *    PKG_CONFIG_PATH="$PKG_CONFIG_PATH:`brew --prefix openssl@1.1`/lib/pkgconfig:$(pwd)/Configs/pkgconfig" xed .
+ * … or simply `xed .` if your `PKG_CONFIG_PATH` is already correctly set. */
 let openLDAPTarget: Target
 #if os(macOS) /* Probably iOS, watchOS and tvOS too, but I’m not sure and we do not really care… */
 /* On macOS we use a custom-made auto-generated pkg-config file for OpenLDAP
