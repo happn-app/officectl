@@ -23,9 +23,9 @@ import Vapor
 
 
 
-let driveApiBaseURL = URL(string: "https://www.googleapis.com/drive/v3/")!
+private let driveApiBaseURL = URL(string: "https://www.googleapis.com/drive/v3/")!
 
-class DownloadDrivesStatus : ActivityIndicatorType {
+private class DownloadDrivesStatus : ActivityIndicatorType {
 	
 	struct DownloadDriveStatus {
 		
@@ -45,6 +45,8 @@ class DownloadDrivesStatus : ActivityIndicatorType {
 	
 	var loadingBarWidth: Int = 27
 	
+	let syncQueue = DispatchQueue(label: "com.happn.officectl.downloaddrivestatusactivitysync")
+	
 	func initStatuses(users: [GoogleUser]) {
 		syncQueue.sync{
 			var res = [GoogleUser: DownloadDriveStatus](minimumCapacity: users.count)
@@ -55,17 +57,14 @@ class DownloadDrivesStatus : ActivityIndicatorType {
 		}
 	}
 	
+	/** - Important: Call the subscript on syncQueue, or you might get races. */
 	subscript(_ user: GoogleUser) -> DownloadDriveStatus {
 		get {
-			return syncQueue.sync{
-				statuses?[user] ?? DownloadDriveStatus(foundAllFiles: false, nFilesToProcess: 0, nBytesToProcess: 0, nFilesIgnored: 0, nBytesIgnored: 0, nFilesProcessed: 0, nBytesProcessed: 0, nFailures: 0)
-			}
+			statuses?[user] ?? DownloadDriveStatus(foundAllFiles: false, nFilesToProcess: 0, nBytesToProcess: 0, nFilesIgnored: 0, nBytesIgnored: 0, nFilesProcessed: 0, nBytesProcessed: 0, nFailures: 0)
 		}
 		set {
-			syncQueue.sync{
-				if statuses == nil {statuses = [GoogleUser: DownloadDriveStatus]()}
-				statuses![user] = newValue
-			}
+			if statuses == nil {statuses = [GoogleUser: DownloadDriveStatus]()}
+			statuses![user] = newValue
 		}
 	}
 	
@@ -138,7 +137,7 @@ class DownloadDrivesStatus : ActivityIndicatorType {
 			/* Showing the number of downloaded files */
 			line.append(ConsoleTextFragment(string: "] Downloaded ", style: .plain))
 			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxTreatedFilesWidth - numberWidth(status.nFilesProcessed)), style: .plain))
-			line.append(ConsoleTextFragment(string: String(status.nFilesProcessed), style: .success))
+			line.append(ConsoleTextFragment(string: String(status.nFilesProcessed), style: .plain))
 			line.append(ConsoleTextFragment(string: "/", style: .plain))
 			line.append(ConsoleTextFragment(string: String(status.nFilesToProcess), style: status.foundAllFiles ? .success : .info))
 			if !status.foundAllFiles {
@@ -151,7 +150,7 @@ class DownloadDrivesStatus : ActivityIndicatorType {
 			line.append(ConsoleTextFragment(string: "), ", style: .plain))
 			/* Showing the number of downloaded bytes */
 			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxTreatedBytesWidth - bytesToHumanReadableString(status.nBytesProcessed).count), style: .plain))
-			line.append(ConsoleTextFragment(string: bytesToHumanReadableString(status.nBytesProcessed), style: .success))
+			line.append(ConsoleTextFragment(string: bytesToHumanReadableString(status.nBytesProcessed), style: .plain))
 			line.append(ConsoleTextFragment(string: "/", style: .plain))
 			line.append(ConsoleTextFragment(string: bytesToHumanReadableString(status.nBytesToProcess), style: status.foundAllFiles ? .success : .info))
 			if !status.foundAllFiles {
@@ -168,8 +167,6 @@ class DownloadDrivesStatus : ActivityIndicatorType {
 			console.output(ConsoleText(fragments: line))
 		}
 	}
-	
-	private let syncQueue = DispatchQueue(label: "com.happn.officectl.downloaddrivestatusactivitysync")
 	
 	private var maxAccountWidth: Int?
 	private var statuses: [GoogleUser: DownloadDriveStatus]?
@@ -220,6 +217,8 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 	let consoleActivity = downloadDriveStatus.newActivity(for: context.console)
 	consoleActivity.start()
 	
+	let downloadFilesQueue = OperationQueue(name_OperationQueue: "Files Download Queue")
+	
 	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
 	.flatMap{ _ -> EventLoopFuture<[GoogleUserAndDest]> in
@@ -231,10 +230,10 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 			console: context.console, eventLoop: eventLoop
 		)
 	}
-	.flatMap{ filteredUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
+	.flatMapThrowing{ filteredUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
 		downloadDriveStatus.initStatuses(users: filteredUsers.map{ $0.user })
 		
-		let operations = filteredUsers.map{ DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0) }
+		let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, downloadFilesQueue: downloadFilesQueue) }
 		return EventLoopFuture<GoogleUserAndDest>.executeAll(operations, on: eventLoop, resultRetriever: { (o: DownloadDriveOperation) -> GoogleUserAndDest in
 			try throwIfError(o.error)
 			return o.userAndDest
@@ -250,6 +249,7 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 			return filteredUsers
 		}
 	}
+	.flatMap{ $0 }
 	.transform(to: ())
 	.always{ r in
 		switch r {
@@ -264,28 +264,33 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 
 /* ****************************************** */
 
-class DownloadDriveOperation : RetryingOperation {
+private class DownloadDriveOperation : RetryingOperation {
 	
-	let mainConnector: GoogleJWTConnector
+	let connector: GoogleJWTConnector
 	let eventLoop: EventLoop
 	let status: DownloadDrivesStatus
+	let logFile: LogFile
 	
 	let userAndDest: GoogleUserAndDest
 	
+	let downloadFilesQueue: OperationQueue
+	
 	var error: Error? = OperationIsNotFinishedError()
 	
-	init(googleConnector gc: GoogleJWTConnector, eventLoop el: EventLoop, status s: DownloadDrivesStatus, userAndDest uad: GoogleUserAndDest) {
+	init(googleConnector gc: GoogleJWTConnector, eventLoop el: EventLoop, status s: DownloadDrivesStatus, userAndDest uad: GoogleUserAndDest, downloadFilesQueue dfq: OperationQueue) throws {
 		status = s
 		eventLoop = el
 		userAndDest = uad
-		mainConnector = gc
+		downloadFilesQueue = dfq
+		connector = GoogleJWTConnector(from: gc, userBehalf: userAndDest.user.primaryEmail.stringValue)
+		logFile = try LogFile(url: userAndDest.downloadDestination.appendingPathComponent(" logs.txt", isDirectory: false))
 	}
 	
 	override func startBaseOperation(isRetry: Bool) {
 		let scope = Set(arrayLiteral: "https://www.googleapis.com/auth/drive.readonly")
-		let connector = GoogleJWTConnector(from: mainConnector, userBehalf: userAndDest.user.primaryEmail.stringValue)
 		_ = connector.connect(scope: scope, eventLoop: eventLoop)
-		.flatMap{ _ -> EventLoopFuture<[GoogleDriveDoc]> in self.fetchDriveDocs(connector: connector, currentListOfFiles: [], nextPageToken: nil) }
+		.flatMap{ _ in self.fetchAndDownloadDriveDocs(connector: self.connector, currentListOfFiles: [], nextPageToken: nil) }
+		.flatMap{ futures in EventLoopFuture.whenAllComplete(futures, on: self.eventLoop) }
 		.flatMapThrowing{ res -> Void in
 			self.baseOperationEnded()
 			return ()
@@ -296,7 +301,7 @@ class DownloadDriveOperation : RetryingOperation {
 		return true
 	}
 	
-	private func fetchDriveDocs(connector: GoogleJWTConnector, currentListOfFiles: [GoogleDriveDoc], nextPageToken: String?) -> EventLoopFuture<[GoogleDriveDoc]> {
+	private func fetchAndDownloadDriveDocs(connector: GoogleJWTConnector, currentListOfFiles: [EventLoopFuture<GoogleDriveDoc>], nextPageToken: String?) -> EventLoopFuture<[EventLoopFuture<GoogleDriveDoc>]> {
 		var urlComponents = URLComponents(url: URL(string: "files?fields=files/*,incompleteSearch,kind,nextPageToken", relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
 		urlComponents.queryItems = [URLQueryItem(name: "fields", value: "nextPageToken,files/*,kind,incompleteSearch")]
 		if let t = nextPageToken {urlComponents.queryItems!.append(URLQueryItem(name: "pageToken", value: t))}
@@ -312,34 +317,129 @@ class DownloadDriveOperation : RetryingOperation {
 				var nBytesFound = 0
 				var nBytesIgnored = 0
 				var nFilesIgnored = 0
-				for f in files {
+				for file in files {
 					/* We keep the files I own, or whose quota is either invalid
 					 * (cannot be converted to an Int) or is > 0 */
-					let bytes = f.size.flatMap{ Int($0) } ?? 0
-					let quota = f.quotaBytesUsed.flatMap({ Int($0) })
-					guard f.ownedByMe || quota == nil || quota! > 0 else {
+					let bytes = file.size.flatMap{ Int($0) } ?? 0
+					let quota = file.quotaBytesUsed.flatMap({ Int($0) })
+					guard file.ownedByMe || quota == nil || quota! > 0 else {
 						nFilesIgnored += 1
 						nBytesIgnored += bytes
 						continue
 					}
 					
 					nBytesFound += bytes
+					
+					let op = DownloadFileFromDriveOperation(googleConnector: connector, eventLoop: self.eventLoop, status: self.status, userAndDest: self.userAndDest, doc: file)
+					let f = EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.eventLoop, queue: self.downloadFilesQueue)
 					newFullListOfFiles.append(f)
 				}
-				self.status[self.userAndDest.user].nBytesToProcess += nBytesFound
-				self.status[self.userAndDest.user].nFilesToProcess = newFullListOfFiles.count
-				self.status[self.userAndDest.user].nBytesIgnored += nBytesIgnored
-				self.status[self.userAndDest.user].nFilesIgnored += nFilesIgnored
+				self.status.syncQueue.sync{
+					self.status[self.userAndDest.user].nBytesToProcess += nBytesFound
+					self.status[self.userAndDest.user].nFilesToProcess = newFullListOfFiles.count
+					self.status[self.userAndDest.user].nBytesIgnored += nBytesIgnored
+					self.status[self.userAndDest.user].nFilesIgnored += nFilesIgnored
+				}
 			}
-			self.status[self.userAndDest.user].foundAllFiles = newFilesList.nextPageToken == nil
-			if let t = newFilesList.nextPageToken {return self.fetchDriveDocs(connector: connector, currentListOfFiles: newFullListOfFiles, nextPageToken: t)}
+			self.status.syncQueue.sync{
+				self.status[self.userAndDest.user].foundAllFiles = newFilesList.nextPageToken == nil
+			}
+			if let t = newFilesList.nextPageToken {return self.fetchAndDownloadDriveDocs(connector: connector, currentListOfFiles: newFullListOfFiles, nextPageToken: t)}
 			else                                  {return self.eventLoop.makeSucceededFuture(newFullListOfFiles)}
 		}
 	}
 	
 }
 
-struct GoogleDriveFilesList : Codable {
+
+/* ****************************************** */
+
+private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
+	
+	typealias ResultType = GoogleDriveDoc
+	
+	let connector: GoogleJWTConnector
+	let eventLoop: EventLoop
+	let status: DownloadDrivesStatus
+	
+	let userAndDest: GoogleUserAndDest
+	let doc: GoogleDriveDoc
+	
+	var result = Result<GoogleDriveDoc, Error>.failure(OperationIsNotFinishedError())
+	
+	init(googleConnector gc: GoogleJWTConnector, eventLoop el: EventLoop, status s: DownloadDrivesStatus, userAndDest uad: GoogleUserAndDest, doc d: GoogleDriveDoc) {
+		doc = d
+		status = s
+		connector = gc
+		eventLoop = el
+		userAndDest = uad
+	}
+	
+	override func startBaseOperation(isRetry: Bool) {
+		self.status.syncQueue.sync{
+			status[userAndDest.user].nFailures += 1
+		}
+		
+//		self.status.syncQueue.sync{
+//			status[userAndDest.user].nFilesProcessed += 1
+//			status[userAndDest.user].nBytesProcessed += doc.size.flatMap{ Int($0) } ?? 0
+//		}
+		
+		baseOperationEnded()
+	}
+	
+	override var isAsynchronous: Bool {
+		return true
+	}
+	
+}
+
+
+/* ****************************************** */
+
+private class LogFile {
+	
+	init(url: URL) throws {
+		let folder = url.deletingLastPathComponent()
+		try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true, attributes: nil)
+		
+		/* Not sure this is needed… */
+		guard FileManager.default.fileExists(atPath: url.path) || FileManager.default.createFile(atPath: url.path, contents: nil, attributes: nil) else {
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot create log file"])
+		}
+		
+		guard let s = OutputStream(url: url, append: true) else {
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot create log file"])
+		}
+		s.open()
+		
+		stream = s
+	}
+	
+	deinit {
+		stream.close()
+	}
+	
+	func writeData(_ data: Data) throws {
+		try syncQueue.sync{
+			try data.withUnsafeBytes{ bytes in
+				let n = bytes.count
+				guard stream.write(bytes.bindMemory(to: UInt8.self).baseAddress!, maxLength: n) == n else {
+					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to write to log file"])
+				}
+			}
+		}
+	}
+	
+	private let syncQueue = DispatchQueue(label: "com.happn.officectl.logfilewritequeue")
+	private let stream: OutputStream
+	
+}
+
+
+/* ****************************************** */
+
+private struct GoogleDriveFilesList : Codable {
 	
 	var files: [GoogleDriveDoc]?
 	
@@ -350,7 +450,7 @@ struct GoogleDriveFilesList : Codable {
 	
 }
 
-struct GoogleDriveDoc : Codable {
+private struct GoogleDriveDoc : Codable {
 	
 	struct GoogleDriveDocUser : Codable {
 		
