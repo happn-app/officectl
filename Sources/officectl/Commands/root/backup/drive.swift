@@ -313,15 +313,16 @@ class DownloadDriveOperation : RetryingOperation {
 				var nBytesIgnored = 0
 				var nFilesIgnored = 0
 				for f in files {
-					/* We keep the files whose quota is either invalid (cannot be
-					 * converted to an Int) or is > 0 */
+					/* We keep the files I own, or whose quota is either invalid
+					 * (cannot be converted to an Int) or is > 0 */
 					let bytes = f.size.flatMap{ Int($0) } ?? 0
 					let quota = f.quotaBytesUsed.flatMap({ Int($0) })
-					guard quota == nil || quota! > 0 else {
+					guard f.ownedByMe || quota == nil || quota! > 0 else {
 						nFilesIgnored += 1
 						nBytesIgnored += bytes
 						continue
 					}
+					
 					nBytesFound += bytes
 					newFullListOfFiles.append(f)
 				}
