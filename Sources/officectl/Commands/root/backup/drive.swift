@@ -258,9 +258,10 @@ private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
 		var urlComponents = URLComponents(url: driveApiBaseURL.appendingPathComponent("files", isDirectory: true).appendingPathComponent(doc.id), resolvingAgainstBaseURL: true)!
 		urlComponents.queryItems = [URLQueryItem(name: "alt", value: "media")]
 		
-		_ = eventLoop
-		.makeSucceededFuture(urlComponents.url!)
-		.flatMap{ url in self.connector.authenticate(request: URLRequest(url: url), eventLoop: self.eventLoop) }
+		var urlRequest = URLRequest(url: urlComponents.url!)
+		urlRequest.timeoutInterval = 24*3600
+		
+		_ = connector.authenticate(request: urlRequest, eventLoop: self.eventLoop)
 		.flatMap{ urlRequestAuthResult -> EventLoopFuture<Void> in
 			let fileDownloadDestinationURL = self.allFilesDestinationBaseURL.appendingPathComponent(self.doc.id, isDirectory: false)
 			var downloadConfig = URLRequestOperation.Config(request: urlRequestAuthResult.result, session: nil)
