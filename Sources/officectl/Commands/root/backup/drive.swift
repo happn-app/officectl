@@ -161,9 +161,8 @@ private class DownloadDriveOperation : RetryingOperation {
 		_ = connector.connect(scope: scope, eventLoop: eventLoop)
 		.flatMap{ _ in self.fetchAndDownloadDriveDocs(connector: self.connector, currentListOfFiles: [], nextPageToken: nil) }
 		.flatMap{ futures in EventLoopFuture.whenAllComplete(futures, on: self.eventLoop) }
-		.flatMapThrowing{ res -> Void in
+		.always{ r in
 			self.baseOperationEnded()
-			return ()
 		}
 	}
 	
@@ -180,7 +179,7 @@ private class DownloadDriveOperation : RetryingOperation {
 		decoder.dateDecodingStrategy = .customISO8601
 		decoder.keyDecodingStrategy = .useDefaultKeys
 		let op = rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder))
-		return EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: self.eventLoop)
+		return EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: eventLoop)
 		.flatMap{ newFilesList in
 			var newFullListOfFiles = currentListOfFiles
 			if let files = newFilesList.files {
