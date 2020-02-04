@@ -188,11 +188,11 @@ private class DownloadDriveOperation : RetryingOperation {
 				var nBytesIgnored = 0
 				var nFilesIgnored = 0
 				for file in files {
-					/* We keep the files I own, or whose quota is either invalid
-					 * (cannot be converted to an Int) or is > 0 */
+					/* We keep the files (not folders) I own, or whose quota is
+					 * either invalid (cannot be converted to an Int) or is > 0 */
 					let bytes = file.size.flatMap{ Int($0) } ?? 0
 					let quota = file.quotaBytesUsed.flatMap({ Int($0) })
-					guard file.ownedByMe || quota == nil || quota! > 0 else {
+					guard file.mimeType != "application/vnd.google-apps.folder" && (file.ownedByMe || quota == nil || quota! > 0) else {
 						nFilesIgnored += 1
 						nBytesIgnored += bytes
 						continue
