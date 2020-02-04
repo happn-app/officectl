@@ -106,6 +106,7 @@ private func rateLimitGoogleDriveAPIOperation<T : Operation>(_ operation: T, que
 	calendar.timeZone = TimeZone(abbreviation: "PST")!
 	
 	let rateLimitOperation = RateLimiterOperation(id: "google_drive_limits", limits: [
+		RateLimiterOperation.Limit(maxCount: 10,            time: .duration(1)), /* Not officially in the list of quota, but the word of the street is this exists… */
 		RateLimiterOperation.Limit(maxCount: 1_000,         time: .duration(100)),
 		RateLimiterOperation.Limit(maxCount: 1_000_000_000, time: .resetAtDateComponents(dateComponents, calendar: calendar))
 	])
@@ -250,6 +251,7 @@ private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
 	
 	override func startBaseOperation(isRetry: Bool) {
 		if let n = doc.name          { _ = try? logFile.logCSVLine([doc.id, "name", n]) }
+		if let t = doc.mimeType      { _ = try? logFile.logCSVLine([doc.id, "mime-type", t]) }
 		if let o = doc.owners        { _ = try? logFile.logCSVLine([doc.id, "owners", o.map{ $0.emailAddress?.stringValue ?? "<unknown address>" }.joined(separator: ", ")]) }
 		if let p = doc.parents       { _ = try? logFile.logCSVLine([doc.id, "parents", p.joined(separator: ", ")]) }
 		if let p = doc.permissionIds { _ = try? logFile.logCSVLine([doc.id, "permission_ids", p.joined(separator: ", ")]) }
