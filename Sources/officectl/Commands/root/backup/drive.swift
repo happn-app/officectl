@@ -32,6 +32,8 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 	let officeKitConfig = app.officeKitConfig
 	let eventLoop = try app.services.make(EventLoop.self)
 	
+	let disableConsole = f.getBool(name: "no-interactive-console")!
+	
 	let serviceId = f.getString(name: "service-id")
 	let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
 	_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
@@ -41,7 +43,7 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 	let disabledUserSuffix = f.getString(name: "disabled-email-suffix")
 	let usersFilter = (args.isEmpty ? nil : args)?.map{ EmailSrcAndDst(emailStr: $0, disabledUserSuffix: disabledUserSuffix, logger: app.logger) }
 	
-	let eraseDownloadedFiles = f.getBool(name: "erase-downloaded-files")
+	let eraseDownloadedFiles = f.getBool(name: "erase-downloaded-files")!
 	let skipIfArchiveFound = !f.getBool(name: "no-skip-if-archive-exists")!
 	let archiveDestinationFolderStr = (f.getBool(name: "archive")! ? try nil2throw(f.getString(name: "archives-destination-folder")) : nil)
 	let archiveDestinationFolder = archiveDestinationFolderStr.flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
@@ -50,7 +52,7 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 	
 	let downloadDriveStatus = DownloadDrivesStatus()
 	let consoleActivity = downloadDriveStatus.newActivity(for: context.console)
-	consoleActivity.start()
+	if !disableConsole {consoleActivity.start()}
 	
 	let downloadFilesQueue = OperationQueue(name_OperationQueue: "Files Download Queue")
 	
@@ -88,6 +90,7 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 	.flatMap{ $0 }
 	.transform(to: ())
 	.always{ r in
+		guard !disableConsole else {return}
 		switch r {
 		case .success: consoleActivity.succeed()
 		case .failure: consoleActivity.fail()
