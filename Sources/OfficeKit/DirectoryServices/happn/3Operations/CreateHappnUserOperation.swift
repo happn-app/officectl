@@ -27,10 +27,6 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 	public private(set) var result = Result<HappnUser, Error>.failure(OperationIsNotFinishedError())
 	
 	public init(user u: HappnUser, connector c: HappnConnector) {
-		var u = u
-		u.firstName = .set("LDAP")
-		u.lastName = .set("Test")
-		
 		user = u
 		connector = c
 	}
