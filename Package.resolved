@@ -96,8 +96,8 @@
         "repositoryURL": "https://github.com/vapor/leaf-kit.git",
         "state": {
           "branch": null,
-          "revision": "0094f150ae8e96f85096f0d41229d7464fe99841",
-          "version": "1.0.0-beta.2"
+          "revision": "58819c3a46a633bd804e901f995e17b30a9f823e",
+          "version": "1.0.0-beta.2.1"
         }
       },
       {
