@@ -195,7 +195,7 @@ func parse_cli(_ app: Application) -> GuakaCommandParseResult {
 	   ************************** */
 	
 	let _ = Command(usage: "curtest", flags: [], parent: devtestCommand, run: createSetWrapperCommandHandler(curTest))
-	let _ = Command(usage: "consoleperm", flags: [], parent: devtestCommand, run: createSetWrapperCommandHandler(consolePerm))
+	let _ = Command(usage: "consoleperm email group", flags: [], parent: devtestCommand, run: createSetWrapperCommandHandler(consolePerm))
 	
 	
 	
