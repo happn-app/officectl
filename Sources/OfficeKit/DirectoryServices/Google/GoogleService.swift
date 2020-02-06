@@ -13,6 +13,12 @@ import OpenCrypto
 import SemiSingleton
 import ServiceKit
 
+#if canImport(CommonCrypto)
+	import CommonCrypto
+#else
+	import OpenCrypto
+#endif
+
 
 
 /** A Googl Apps service.
@@ -146,6 +152,23 @@ public final class GoogleService : UserDirectoryService {
 		}
 		if let pass = hints[.password].flatMap({ $0 }) {
 			#warning("TODO")
+			#if canImport(CommonCrypto)
+				let passData = Data(pass.utf8)
+				var sha1 = Data(count: Int(CC_SHA1_DIGEST_LENGTH))
+				passData.withUnsafeBytes{ (passwordDataBytes: UnsafeRawBufferPointer) in
+					let passwordDataBytes = passwordDataBytes.bindMemory(to: UInt8.self).baseAddress!
+					sha1.withUnsafeMutableBytes{ (sha1Bytes: UnsafeMutableRawBufferPointer) in
+						let sha1Bytes = sha1Bytes.bindMemory(to: UInt8.self).baseAddress!
+						/* The call below should returns sha1Bytes (says the man). */
+						_ = CC_SHA1(passwordDataBytes, CC_LONG(passData.count), sha1Bytes)
+					}
+				}
+				user.password = .set(sha1.reduce("", { $0 + String(format: "%02x", $1) }))
+				user.hashFunction = .set(.sha1)
+				user.changePasswordAtNextLogin = .set(false)
+			#else
+				throw NotImplementedError()
+			#endif
 //			if let passHash = try? SHA1.hash(Data(pass.utf8)) {
 //				password = .set(passHash.reduce("", { $0 + String(format: "%02x", $1) }))
 //				hashFunction = .set(.sha1)
