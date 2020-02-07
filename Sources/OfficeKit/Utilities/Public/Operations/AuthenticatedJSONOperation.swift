@@ -15,7 +15,7 @@ import URLRequestOperation
 
 
 
-public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOperation, HasResult {
+public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOperationWithRetryRecoveryHandler, HasResult {
 	
 	public typealias ResultType = ObjectType
 	
@@ -39,18 +39,18 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 		}
 	}
 	
-	public convenience init(request: URLRequest, authenticator a: Authenticator?, decoder: JSONDecoder = AuthenticatedJSONOperation<ObjectType>.defaultDecoder) {
-		self.init(config: URLRequestOperation.Config(request: request, session: nil, maximumNumberOfRetries: 1, acceptableStatusCodes: nil, acceptableContentTypes: ["application/json"]), authenticator: a, decoder: decoder)
+	public convenience init(request: URLRequest, authenticator a: Authenticator?, decoder: JSONDecoder = AuthenticatedJSONOperation<ObjectType>.defaultDecoder, retryInfoRecoveryHandler h: ComputeRetryInfoRecoverHandlerType? = nil) {
+		self.init(config: URLRequestOperation.Config(request: request, session: nil, maximumNumberOfRetries: 1, acceptableStatusCodes: nil, acceptableContentTypes: ["application/json"]), authenticator: a, decoder: decoder, retryInfoRecoveryHandler: h)
 	}
 	
-	public convenience init(url: URL, authenticator a: Authenticator?, decoder: JSONDecoder = AuthenticatedJSONOperation<ObjectType>.defaultDecoder) {
-		self.init(request: URLRequest(url: url), authenticator: a, decoder: decoder)
+	public convenience init(url: URL, authenticator a: Authenticator?, decoder: JSONDecoder = AuthenticatedJSONOperation<ObjectType>.defaultDecoder, retryInfoRecoveryHandler h: ComputeRetryInfoRecoverHandlerType? = nil) {
+		self.init(request: URLRequest(url: url), authenticator: a, decoder: decoder, retryInfoRecoveryHandler: h)
 	}
 	
-	public init(config c: URLRequestOperation.Config, authenticator a: Authenticator?, decoder d: JSONDecoder = AuthenticatedJSONOperation<ObjectType>.defaultDecoder) {
+	public init(config c: URLRequestOperation.Config, authenticator a: Authenticator?, decoder d: JSONDecoder = AuthenticatedJSONOperation<ObjectType>.defaultDecoder, retryInfoRecoveryHandler h: ComputeRetryInfoRecoverHandlerType? = nil) {
 		decoder = d
 		authenticator = a
-		super.init(config: c)
+		super.init(config: c, retryInfoRecoveryHandler: h)
 	}
 	
 	public override func processURLRequestForRunning(_ originalRequest: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>) -> Void) {
@@ -78,8 +78,17 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 			}
 			completionHandler(.doNotRetry, currentURLRequest, nil)
 		} catch {
-			OfficeKitConfig.logger?.info("Cannot decode JSON; error \(error), data \(fetchedData.reduce("", { $0 + String(format: "%02x", $1) }))")
-			completionHandler(.doNotRetry, currentURLRequest, error)
+			let completionHandler2 = { (retryMode: URLRequestOperation.RetryMode, request: URLRequest, error: Error?) -> Void in
+				if case .doNotRetry = retryMode, let error = error {
+					OfficeKitConfig.logger?.info("Cannot decode JSON; error \(error), data \(fetchedData.reduce("", { $0 + String(format: "%02x", $1) }))")
+				}
+				completionHandler(retryMode, request, error)
+			}
+			if let h = retryInfoRecoveryHandler {
+				h(self, error, completionHandler2)
+			} else {
+				completionHandler2(.doNotRetry, currentURLRequest, error)
+			}
 		}
 	}
 	

@@ -100,6 +100,18 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 	return f
 }
 
+private func retryRecoveryHandler(_ operation: URLRequestOperationWithRetryRecoveryHandler, sourceError error: Error, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {
+	let jsonDecoder = JSONDecoder()
+	guard
+		let data = operation.fetchedData,
+		let json = try? jsonDecoder.decode(JSON.self, from: data),
+		let _ = json["error"]?["errors"]?.arrayValue?.first(where: { $0["domain"]?.stringValue == "usageLimits" && $0["reason"]?.stringValue == "userRateLimitExceeded" })
+	else {
+		return completionHandler(.doNotRetry, operation.currentURLRequest, error)
+	}
+	completionHandler(.retry(withDelay: 100, enableReachability: false, enableOtherRequestsObserver: false), operation.currentURLRequest, nil)
+}
+
 private func rateLimitGoogleDriveAPIOperation<T : Operation>(_ operation: T, queue: OperationQueue = OfficeKit.defaultOperationQueueForFutureSupport) -> T {
 	let dateComponents = DateComponents(hour: nil, minute: nil, second: 0, nanosecond: 0)
 	var calendar = Calendar(identifier: .gregorian)
@@ -172,14 +184,14 @@ private class DownloadDriveOperation : RetryingOperation {
 	}
 	
 	private func fetchAndDownloadDriveDocs(connector: GoogleJWTConnector, currentListOfFiles: [EventLoopFuture<GoogleDriveDoc>], nextPageToken: String?) -> EventLoopFuture<[EventLoopFuture<GoogleDriveDoc>]> {
-		var urlComponents = URLComponents(url: URL(string: "files?fields=files/*,incompleteSearch,kind,nextPageToken", relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
+		var urlComponents = URLComponents(url: URL(string: "files", relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
 		urlComponents.queryItems = [URLQueryItem(name: "fields", value: "nextPageToken,files/*,kind,incompleteSearch")]
 		if let t = nextPageToken {urlComponents.queryItems!.append(URLQueryItem(name: "pageToken", value: t))}
 		
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .customISO8601
 		decoder.keyDecodingStrategy = .useDefaultKeys
-		let op = rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder))
+		let op = rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: retryRecoveryHandler(_:sourceError:completionHandler:)))
 		return EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: eventLoop)
 		.flatMap{ newFilesList in
 			var newFullListOfFiles = currentListOfFiles
@@ -253,7 +265,7 @@ private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
 		if let n = doc.name          { _ = try? logFile.logCSVLine([doc.id, "name", n]) }
 		if let t = doc.mimeType      { _ = try? logFile.logCSVLine([doc.id, "mime-type", t]) }
 		if let o = doc.owners        { _ = try? logFile.logCSVLine([doc.id, "owners", o.map{ $0.emailAddress?.stringValue ?? "<unknown address>" }.joined(separator: ", ")]) }
-		if let p = doc.parents       { _ = try? logFile.logCSVLine([doc.id, "parents", p.joined(separator: ", ")]) }
+		if let p = doc.parents       { _ = try? logFile.logCSVLine([doc.id, "parent_ids", p.joined(separator: ", ")]) }
 		if let p = doc.permissionIds { _ = try? logFile.logCSVLine([doc.id, "permission_ids", p.joined(separator: ", ")]) }
 		
 		var urlComponents = URLComponents(url: driveApiBaseURL.appendingPathComponent("files", isDirectory: true).appendingPathComponent(doc.id), resolvingAgainstBaseURL: true)!
@@ -269,13 +281,17 @@ private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
 			downloadConfig.destinationURL = fileDownloadDestinationURL
 			downloadConfig.downloadBehavior = .overwriteDestination
 			
-			let op = rateLimitGoogleDriveAPIOperation(URLRequestOperation(config: downloadConfig))
+			let op = rateLimitGoogleDriveAPIOperation(URLRequestOperationWithRetryRecoveryHandler(config: downloadConfig, retryInfoRecoveryHandler: retryRecoveryHandler(_:sourceError:completionHandler:)))
 			return EventLoopFuture<Void>.future(from: op, on: self.eventLoop, resultRetriever: { o in
 				if let e = o.finalError {throw e}
 				else                    {return ()}
 			})
 		}
+		.flatMap{ _ in
+			self.getPaths(currentPath: self.doc.name ?? self.doc.id, parentIds: self.doc.parents)
+		}
 		.always{ result in
+			_ = try? self.logFile.logCSVLine([self.doc.id, "parents", result.successValue?.joined(separator: ",") ?? "<unknown>"])
 			switch result {
 			case .success:        self.succeedDownload()
 			case .failure(let e): self.failDownload(error: e)
@@ -285,6 +301,38 @@ private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
 	
 	override var isAsynchronous: Bool {
 		return true
+	}
+	
+	private static let objectsCacheQueue = DispatchQueue(label: "com.happn.officectl.downloaddriveobjectscachequeue")
+	private static var objectsCache = [String: EventLoopFuture<GoogleDriveDoc>]()
+	
+	private func getPaths(currentPath: String, parentIds: [String]?) -> EventLoopFuture<[String]> {
+		guard let parentIds = parentIds, !parentIds.isEmpty else {return eventLoop.future([currentPath])}
+		
+		let futures = DownloadFileFromDriveOperation.objectsCacheQueue.sync{
+			return parentIds.map{ parentId -> EventLoopFuture<[String]> in
+				let futureObject: EventLoopFuture<GoogleDriveDoc>
+				/* Do we already have the object future in the cache? */
+				if let f = DownloadFileFromDriveOperation.objectsCache[parentId] {
+					futureObject = f
+				} else {
+					var urlComponents = URLComponents(url: URL(string: "files/" + parentId, relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
+					urlComponents.queryItems = [URLQueryItem(name: "fields", value: "id,name,parents,ownedByMe")]
+					
+					let decoder = JSONDecoder()
+					decoder.dateDecodingStrategy = .customISO8601
+					decoder.keyDecodingStrategy = .useDefaultKeys
+					let op = rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveDoc>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: retryRecoveryHandler(_:sourceError:completionHandler:)))
+					futureObject = EventLoopFuture<GoogleDriveDoc>.future(from: op, on: eventLoop)
+				}
+				
+				return futureObject.flatMap{ doc in
+					let newPath = (doc.name ?? doc.id) + "/" + currentPath
+					return self.getPaths(currentPath: newPath, parentIds: doc.parents)
+				}
+			}
+		}
+		return EventLoopFuture<[String]>.whenAllSucceed(futures, on: eventLoop).map{ $0.flatMap{ $0 } }
 	}
 	
 	private func succeedDownload() {
