@@ -618,7 +618,7 @@ private class DownloadDrivesStatus : ActivityIndicatorType {
 				let progressOK = status.nFilesToProcess == 0 ? 1.0 : Float(status.nFilesProcessed) / Float(status.nFilesToProcess)
 				let progressError = status.nFilesToProcess == 0 ? 0.0 : Float(status.nFailures) / Float(status.nFilesToProcess)
 				let leftOK = min(Int((Float(loadingBarWidth) * progressOK).rounded()), loadingBarWidth)
-				let leftError = min(Int((Float(loadingBarWidth) * progressError).rounded()), loadingBarWidth)
+				let leftError = min(Int((Float(loadingBarWidth) * progressError).rounded()), loadingBarWidth - leftOK)
 				let left = min(leftOK + leftError, loadingBarWidth)
 				line.append(ConsoleTextFragment(string: String(repeating: "=", count: leftOK),                 style: .plain))
 				line.append(ConsoleTextFragment(string: String(repeating: "=", count: leftError),              style: .error))
