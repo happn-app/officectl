@@ -195,8 +195,8 @@
         "repositoryURL": "https://github.com/apple/swift-metrics.git",
         "state": {
           "branch": null,
-          "revision": "3fefedaaef285830cc98ae80231140122076a7e0",
-          "version": "1.2.0"
+          "revision": "09b72f68ed9b01b614c12855fc7e22876b97a97e",
+          "version": "1.2.1"
         }
       },
       {
@@ -204,8 +204,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "4409b57d4c0c40d41ac2b320fccf02e4d451e3db",
-          "version": "2.13.0"
+          "revision": "df9390006bce7da1b6273f804d3acbbfdfcc6154",
+          "version": "2.13.1"
         }
       },
       {
@@ -249,8 +249,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "67165212d2f18b1f9a5df4eb27638e1f88ecbccf",
-          "version": "4.0.0-beta.3.10"
+          "revision": "a9e417a0040a32368c49a0af14266e02d963779b",
+          "version": "4.0.0-beta.3.12"
         }
       },
       {
