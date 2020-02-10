@@ -621,8 +621,8 @@ private class DownloadDrivesStatus : ActivityIndicatorType {
 				let leftError = min(Int((Float(loadingBarWidth) * progressError).rounded()), loadingBarWidth - leftOK)
 				let left = min(leftOK + leftError, loadingBarWidth)
 				line.append(ConsoleTextFragment(string: String(repeating: "=", count: leftOK),                 style: .plain))
-				line.append(ConsoleTextFragment(string: String(repeating: "=", count: leftError),              style: .error))
 				line.append(ConsoleTextFragment(string: String(repeating: " ", count: loadingBarWidth - left), style: .plain))
+				line.append(ConsoleTextFragment(string: String(repeating: "=", count: leftError),              style: .error))
 			} else {
 				/* Indeterminate progress bar as we don’t know the progress. */
 				let bulletPosition: Int
