@@ -26,7 +26,8 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 	public var currentScope: ScopeType? {
 		guard let auth = auth else {return nil}
 		/* We let a 21 secs leeway in which we consider we’re not connected to
-		 * mitigate time difference between the server and our local time. */
+		 * mitigate the potential time difference between the server and our local
+		 * time. */
 		guard auth.expirationDate.timeIntervalSinceNow > 21 else {return nil}
 		return auth.scope
 	}

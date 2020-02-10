@@ -25,6 +25,7 @@ import Vapor
 
 
 private let csvSep = ","
+private let driveROScope = Set(arrayLiteral: "https://www.googleapis.com/auth/drive.readonly")
 private let driveApiBaseURL = URL(string: "https://www.googleapis.com/drive/v3/")!
 
 
@@ -128,6 +129,32 @@ private func rateLimitGoogleDriveAPIOperation<T : Operation>(_ operation: T, que
 	return operation
 }
 
+private class DownloadBinaryForDoc : URLRequestOperationWithRetryRecoveryHandler {
+	
+	override func computeRetryInfo(sourceError error: Error?, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {
+		if statusCode == 403 {
+			/* If we have a 403, we check the content of the file for the error
+			 * reported by google. Whatever the error, we will delete the file
+			 * after checking and reporting the error. */
+			defer {downloadedFileURL.flatMap{ _ = try? FileManager.default.removeItem(at: $0) }}
+			
+			if let data = downloadedFileURL.flatMap({ try? Data(contentsOf: $0) }) {
+				let jsonDecoder = JSONDecoder()
+				guard
+					let json = try? jsonDecoder.decode(JSON.self, from: data),
+					let _ = json["error"]?["errors"]?.arrayValue?.first(where: { $0["domain"]?.stringValue == "usageLimits" && $0["reason"]?.stringValue == "userRateLimitExceeded" })
+				else {
+					return completionHandler(.doNotRetry, currentURLRequest, InvalidArgumentError(message: "Got 403 w/ message from server: \(data.reduce("", { $0 + String(format: "%02x", $1) }))"))
+				}
+				return completionHandler(.retry(withDelay: 100, enableReachability: false, enableOtherRequestsObserver: false), currentURLRequest, nil)
+			}
+			return completionHandler(.doNotRetry, currentURLRequest, InvalidArgumentError(message: "403 from server"))
+		}
+		super.computeRetryInfo(sourceError: error, completionHandler: completionHandler)
+	}
+	
+}
+
 
 /* ****************************************** */
 
@@ -170,8 +197,7 @@ private class DownloadDriveOperation : RetryingOperation {
 	}
 	
 	override func startBaseOperation(isRetry: Bool) {
-		let scope = Set(arrayLiteral: "https://www.googleapis.com/auth/drive.readonly")
-		_ = connector.connect(scope: scope, eventLoop: eventLoop)
+		_ = connector.connect(scope: driveROScope, eventLoop: eventLoop)
 		.flatMap{ _ in self.fetchAndDownloadDriveDocs(connector: self.connector, currentListOfFiles: [], nextPageToken: nil) }
 		.flatMap{ futures in EventLoopFuture.whenAllComplete(futures, on: self.eventLoop) }
 		.always{ r in
@@ -192,7 +218,8 @@ private class DownloadDriveOperation : RetryingOperation {
 		decoder.dateDecodingStrategy = .customISO8601
 		decoder.keyDecodingStrategy = .useDefaultKeys
 		let op = rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: retryRecoveryHandler(_:sourceError:completionHandler:)))
-		return EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: eventLoop)
+		return connector.connect(scope: driveROScope, eventLoop: eventLoop)
+		.flatMap{ _ in EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: self.eventLoop) }
 		.flatMap{ newFilesList in
 			var newFullListOfFiles = currentListOfFiles
 			if let files = newFilesList.files {
@@ -274,14 +301,16 @@ private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
 		var urlRequest = URLRequest(url: urlComponents.url!)
 		urlRequest.timeoutInterval = 24*3600
 		
-		_ = connector.authenticate(request: urlRequest, eventLoop: self.eventLoop)
+		_ = connector.connect(scope: driveROScope, eventLoop: eventLoop)
+		.flatMap{ _ in self.connector.authenticate(request: urlRequest, eventLoop: self.eventLoop) }
 		.flatMap{ urlRequestAuthResult -> EventLoopFuture<Void> in
 			let fileDownloadDestinationURL = self.allFilesDestinationBaseURL.appendingPathComponent(self.doc.id, isDirectory: false)
 			var downloadConfig = URLRequestOperation.Config(request: urlRequestAuthResult.result, session: nil)
 			downloadConfig.destinationURL = fileDownloadDestinationURL
 			downloadConfig.downloadBehavior = .overwriteDestination
+			downloadConfig.acceptableStatusCodes = IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403))
 			
-			let op = rateLimitGoogleDriveAPIOperation(URLRequestOperationWithRetryRecoveryHandler(config: downloadConfig, retryInfoRecoveryHandler: retryRecoveryHandler(_:sourceError:completionHandler:)))
+			let op = rateLimitGoogleDriveAPIOperation(DownloadBinaryForDoc(config: downloadConfig))
 			return EventLoopFuture<Void>.future(from: op, on: self.eventLoop, resultRetriever: { o in
 				if let e = o.finalError {throw e}
 				else                    {return ()}
@@ -323,7 +352,8 @@ private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
 					decoder.dateDecodingStrategy = .customISO8601
 					decoder.keyDecodingStrategy = .useDefaultKeys
 					let op = rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveDoc>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: retryRecoveryHandler(_:sourceError:completionHandler:)))
-					futureObject = EventLoopFuture<GoogleDriveDoc>.future(from: op, on: eventLoop)
+					futureObject = connector.connect(scope: driveROScope, eventLoop: eventLoop)
+						.flatMap{ _ in EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.eventLoop) }
 				}
 				
 				return futureObject.flatMap{ doc in
