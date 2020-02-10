@@ -166,6 +166,7 @@ private class DownloadDriveOperation : RetryingOperation {
 	let logFile: LogFile
 	
 	let userAndDest: GoogleUserAndDest
+	let driveDestinationBaseURL: URL
 	let allFilesDestinationBaseURL: URL
 	
 	let downloadFilesQueue: OperationQueue
@@ -181,19 +182,11 @@ private class DownloadDriveOperation : RetryingOperation {
 		
 		logFile = try LogFile(url: userAndDest.downloadDestination.appendingPathComponent(" logs.csv", isDirectory: false), csvHeader: ["File ID", "Key", "Value"])
 		
-		/* Getting or creating the AllFiles destination folder if needed. */
-		var isDir: ObjCBool = false
+		/* Getting or creating the destination folders if needed. */
+		driveDestinationBaseURL = userAndDest.downloadDestination.appendingPathComponent("Drive", isDirectory: true)
 		allFilesDestinationBaseURL = userAndDest.downloadDestination.appendingPathComponent("AllFiles", isDirectory: true)
-		if !FileManager.default.fileExists(atPath: allFilesDestinationBaseURL.path, isDirectory: &isDir) {
-			/* The folder does not exist, let’s create it. */
-			try FileManager.default.createDirectory(at: allFilesDestinationBaseURL, withIntermediateDirectories: true, attributes: nil)
-		} else {
-			/* There is a file or folder at the destination; let’s make sure it is
-			 * a folder.*/
-			guard isDir.boolValue else {
-				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot create the destination folder"])
-			}
-		}
+		try FileManager.default.createDirectory(at: driveDestinationBaseURL, withIntermediateDirectories: true, attributes: nil)
+		try FileManager.default.createDirectory(at: allFilesDestinationBaseURL, withIntermediateDirectories: true, attributes: nil)
 	}
 	
 	override func startBaseOperation(isRetry: Bool) {
@@ -239,7 +232,7 @@ private class DownloadDriveOperation : RetryingOperation {
 					
 					nBytesFound += bytes
 					
-					let op = DownloadFileFromDriveOperation(googleConnector: connector, eventLoop: self.eventLoop, status: self.status, logFile: self.logFile, userAndDest: self.userAndDest, allFilesDestinationBaseURL: self.allFilesDestinationBaseURL, doc: file)
+					let op = DownloadFileFromDriveOperation(googleConnector: connector, eventLoop: self.eventLoop, status: self.status, logFile: self.logFile, user: self.userAndDest.user, allFilesDestinationBaseURL: self.allFilesDestinationBaseURL, driveDestinationBaseURL: self.driveDestinationBaseURL, doc: file)
 					let f = EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.eventLoop, queue: self.downloadFilesQueue)
 					newFullListOfFiles.append(f)
 				}
@@ -272,19 +265,21 @@ private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
 	let status: DownloadDrivesStatus
 	let logFile: LogFile
 	
-	let userAndDest: GoogleUserAndDest
+	let user: GoogleUser
+	let driveDestinationBaseURL: URL
 	let allFilesDestinationBaseURL: URL
 	let doc: GoogleDriveDoc
 	
 	var result = Result<GoogleDriveDoc, Error>.failure(OperationIsNotFinishedError())
 	
-	init(googleConnector gc: GoogleJWTConnector, eventLoop el: EventLoop, status s: DownloadDrivesStatus, logFile lf: LogFile, userAndDest uad: GoogleUserAndDest, allFilesDestinationBaseURL afdbu: URL, doc d: GoogleDriveDoc) {
+	init(googleConnector gc: GoogleJWTConnector, eventLoop el: EventLoop, status s: DownloadDrivesStatus, logFile lf: LogFile, user u: GoogleUser, allFilesDestinationBaseURL afdbu: URL, driveDestinationBaseURL ddbu: URL, doc d: GoogleDriveDoc) {
 		doc = d
+		user = u
 		status = s
 		logFile = lf
 		connector = gc
 		eventLoop = el
-		userAndDest = uad
+		driveDestinationBaseURL = ddbu
 		allFilesDestinationBaseURL = afdbu
 	}
 	
@@ -295,6 +290,8 @@ private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
 		if let p = doc.parents       { _ = try? logFile.logCSVLine([doc.id, "parent_ids", p.joined(separator: ", ")]) }
 		if let p = doc.permissionIds { _ = try? logFile.logCSVLine([doc.id, "permission_ids", p.joined(separator: ", ")]) }
 		
+		let fileDownloadDestinationURL = self.allFilesDestinationBaseURL.appendingPathComponent(self.doc.id, isDirectory: false)
+		
 		var urlComponents = URLComponents(url: driveApiBaseURL.appendingPathComponent("files", isDirectory: true).appendingPathComponent(doc.id), resolvingAgainstBaseURL: true)!
 		urlComponents.queryItems = [URLQueryItem(name: "alt", value: "media")]
 		
@@ -304,7 +301,6 @@ private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
 		_ = connector.connect(scope: driveROScope, eventLoop: eventLoop)
 		.flatMap{ _ in self.connector.authenticate(request: urlRequest, eventLoop: self.eventLoop) }
 		.flatMap{ urlRequestAuthResult -> EventLoopFuture<Void> in
-			let fileDownloadDestinationURL = self.allFilesDestinationBaseURL.appendingPathComponent(self.doc.id, isDirectory: false)
 			var downloadConfig = URLRequestOperation.Config(request: urlRequestAuthResult.result, session: nil)
 			downloadConfig.destinationURL = fileDownloadDestinationURL
 			downloadConfig.downloadBehavior = .overwriteDestination
@@ -319,8 +315,18 @@ private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
 		.flatMap{ _ in
 			self.getPaths(currentPath: self.doc.name ?? self.doc.id, parentIds: self.doc.parents)
 		}
+		.flatMapThrowing{ paths in
+			let fm = FileManager.default
+			for p in paths {
+				_ = try? self.logFile.logCSVLine([self.doc.id, "parent", p])
+				
+				let destinationURL = URL(fileURLWithPath: p, isDirectory: true, relativeTo: self.driveDestinationBaseURL)
+				let destinationURLFolder = destinationURL.deletingLastPathComponent()
+				try fm.createDirectory(at: destinationURLFolder, withIntermediateDirectories: true, attributes: nil)
+				try fm.linkItem(at: fileDownloadDestinationURL, to: destinationURL)
+			}
+		}
 		.always{ result in
-			_ = try? self.logFile.logCSVLine([self.doc.id, "parents", result.successValue?.joined(separator: ",") ?? "<unknown>"])
 			switch result {
 			case .success:        self.succeedDownload()
 			case .failure(let e): self.failDownload(error: e)
@@ -367,15 +373,15 @@ private class DownloadFileFromDriveOperation : RetryingOperation, HasResult {
 	
 	private func succeedDownload() {
 		status.syncQueue.sync{
-			status[userAndDest.user].nFilesProcessed += 1
-			status[userAndDest.user].nBytesProcessed += doc.size.flatMap{ Int($0) } ?? 0
+			status[user].nFilesProcessed += 1
+			status[user].nBytesProcessed += doc.size.flatMap{ Int($0) } ?? 0
 		}
 		baseOperationEnded()
 	}
 	
 	private func failDownload(error: Error) {
 		_ = try? logFile.logCSVLine([doc.id, "download_error", error.legibleLocalizedDescription])
-		status.syncQueue.sync{ status[userAndDest.user].nFailures += 1 }
+		status.syncQueue.sync{ status[user].nFailures += 1 }
 		result = .failure(error)
 		baseOperationEnded()
 	}
