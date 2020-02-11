@@ -21,37 +21,25 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 	
 	typealias ResultType = GoogleDriveDoc
 	
-	let connector: GoogleJWTConnector
-	let eventLoop: EventLoop
-	let status: DownloadDrivesStatusActivity
-	let logFile: LogFile
+	let state: DownloadDriveState
 	
-	let user: GoogleUser
-	let driveDestinationBaseURL: URL
-	let allFilesDestinationBaseURL: URL
 	let doc: GoogleDriveDoc
 	
 	private(set) var result = Result<GoogleDriveDoc, Error>.failure(OperationIsNotFinishedError())
 	
-	init(googleConnector gc: GoogleJWTConnector, eventLoop el: EventLoop, status s: DownloadDrivesStatusActivity, logFile lf: LogFile, user u: GoogleUser, allFilesDestinationBaseURL afdbu: URL, driveDestinationBaseURL ddbu: URL, doc d: GoogleDriveDoc) {
+	init(state s: DownloadDriveState, doc d: GoogleDriveDoc) {
 		doc = d
-		user = u
-		status = s
-		logFile = lf
-		connector = gc
-		eventLoop = el
-		driveDestinationBaseURL = ddbu
-		allFilesDestinationBaseURL = afdbu
+		state = s
 	}
 	
 	override func startBaseOperation(isRetry: Bool) {
-		if let n = doc.name          { _ = try? logFile.logCSVLine([doc.id, "name", n]) }
-		if let t = doc.mimeType      { _ = try? logFile.logCSVLine([doc.id, "mime-type", t]) }
-		if let o = doc.owners        { _ = try? logFile.logCSVLine([doc.id, "owners", o.map{ $0.emailAddress?.stringValue ?? "<unknown address>" }.joined(separator: ", ")]) }
-		if let p = doc.parents       { _ = try? logFile.logCSVLine([doc.id, "parent_ids", p.joined(separator: ", ")]) }
-		if let p = doc.permissionIds { _ = try? logFile.logCSVLine([doc.id, "permission_ids", p.joined(separator: ", ")]) }
+		if let n = doc.name          { _ = try? state.logFile.logCSVLine([doc.id, "name", n]) }
+		if let t = doc.mimeType      { _ = try? state.logFile.logCSVLine([doc.id, "mime-type", t]) }
+		if let o = doc.owners        { _ = try? state.logFile.logCSVLine([doc.id, "owners", o.map{ $0.emailAddress?.stringValue ?? "<unknown address>" }.joined(separator: ", ")]) }
+		if let p = doc.parents       { _ = try? state.logFile.logCSVLine([doc.id, "parent_ids", p.joined(separator: ", ")]) }
+		if let p = doc.permissionIds { _ = try? state.logFile.logCSVLine([doc.id, "permission_ids", p.joined(separator: ", ")]) }
 		
-		let fileDownloadDestinationURL = self.allFilesDestinationBaseURL.appendingPathComponent(self.doc.id, isDirectory: false)
+		let fileDownloadDestinationURL = self.state.allFilesDestinationBaseURL.appendingPathComponent(self.doc.id, isDirectory: false)
 		
 		var urlComponents = URLComponents(url: driveApiBaseURL.appendingPathComponent("files", isDirectory: true).appendingPathComponent(doc.id), resolvingAgainstBaseURL: true)!
 		urlComponents.queryItems = [URLQueryItem(name: "alt", value: "media")]
@@ -59,8 +47,8 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 		var urlRequest = URLRequest(url: urlComponents.url!)
 		urlRequest.timeoutInterval = 24*3600
 		
-		_ = connector.connect(scope: driveROScope, eventLoop: eventLoop)
-			.flatMap{ _ in self.connector.authenticate(request: urlRequest, eventLoop: self.eventLoop) }
+		_ = state.connector.connect(scope: driveROScope, eventLoop: state.eventLoop)
+			.flatMap{ _ in self.state.connector.authenticate(request: urlRequest, eventLoop: self.state.eventLoop) }
 			.flatMap{ urlRequestAuthResult -> EventLoopFuture<Void> in
 				var downloadConfig = URLRequestOperation.Config(request: urlRequestAuthResult.result, session: nil)
 				downloadConfig.destinationURL = fileDownloadDestinationURL
@@ -68,7 +56,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				downloadConfig.acceptableStatusCodes = IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403))
 				
 				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DownloadBinaryForDoc(config: downloadConfig), queue: DownloadDriveFileOperation.downloadBinaryQueue)
-				return EventLoopFuture<Void>.future(from: op, on: self.eventLoop, queue: DownloadDriveFileOperation.downloadBinaryQueue, resultRetriever: { o in
+				return EventLoopFuture<Void>.future(from: op, on: self.state.eventLoop, queue: DownloadDriveFileOperation.downloadBinaryQueue, resultRetriever: { o in
 					if let e = o.finalError {throw e}
 					else                    {return ()}
 				})
@@ -79,9 +67,9 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 		.flatMapThrowing{ paths in
 			let fm = FileManager.default
 			for p in paths {
-				_ = try? self.logFile.logCSVLine([self.doc.id, "parent", p])
+				_ = try? self.state.logFile.logCSVLine([self.doc.id, "parent", p])
 				
-				let destinationURL = URL(fileURLWithPath: p, isDirectory: true, relativeTo: self.driveDestinationBaseURL)
+				let destinationURL = URL(fileURLWithPath: p, isDirectory: true, relativeTo: self.state.driveDestinationBaseURL)
 				let destinationURLFolder = destinationURL.deletingLastPathComponent()
 				try fm.createDirectory(at: destinationURLFolder, withIntermediateDirectories: true, attributes: nil)
 				try fm.linkItem(at: fileDownloadDestinationURL, to: destinationURL)
@@ -130,7 +118,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 	private static var knownPaths = Set<String>()
 	
 	private func getPaths(currentPath: String, parentIds: [String]?) -> EventLoopFuture<[String]> {
-		guard let parentIds = parentIds, !parentIds.isEmpty else {return eventLoop.future([currentPath])}
+		guard let parentIds = parentIds, !parentIds.isEmpty else {return state.eventLoop.future([currentPath])}
 		
 		let futures = DownloadDriveFileOperation.objectsCacheQueue.sync{
 			return parentIds.map{ parentId -> EventLoopFuture<[String]> in
@@ -145,9 +133,9 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 					let decoder = JSONDecoder()
 					decoder.dateDecodingStrategy = .customISO8601
 					decoder.keyDecodingStrategy = .useDefaultKeys
-					let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveDoc>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
-					futureObject = connector.connect(scope: driveROScope, eventLoop: eventLoop)
-						.flatMap{ _ in EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.eventLoop) }
+					let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveDoc>(url: urlComponents.url!, authenticator: state.connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
+					futureObject = state.connector.connect(scope: driveROScope, eventLoop: state.eventLoop)
+						.flatMap{ _ in EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.state.eventLoop) }
 				}
 				
 				return futureObject.flatMap{ doc in
@@ -156,20 +144,20 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				}
 			}
 		}
-		return EventLoopFuture<[String]>.whenAllSucceed(futures, on: eventLoop).map{ $0.flatMap{ $0 } }
+		return EventLoopFuture<[String]>.whenAllSucceed(futures, on: state.eventLoop).map{ $0.flatMap{ $0 } }
 	}
 	
 	private func succeedDownload() {
-		status.syncQueue.sync{
-			status[user].nFilesProcessed += 1
-			status[user].nBytesProcessed += doc.size.flatMap{ Int($0) } ?? 0
+		state.status.syncQueue.sync{
+			state.status[state.userAndDest.user].nFilesProcessed += 1
+			state.status[state.userAndDest.user].nBytesProcessed += doc.size.flatMap{ Int($0) } ?? 0
 		}
 		baseOperationEnded()
 	}
 	
 	private func failDownload(error: Error) {
-		_ = try? logFile.logCSVLine([doc.id, "download_error", error.legibleLocalizedDescription])
-		status.syncQueue.sync{ status[user].nFailures += 1 }
+		_ = try? state.logFile.logCSVLine([doc.id, "download_error", error.legibleLocalizedDescription])
+		state.status.syncQueue.sync{ state.status[state.userAndDest.user].nFailures += 1 }
 		result = .failure(error)
 		baseOperationEnded()
 	}

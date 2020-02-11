@@ -15,39 +15,34 @@ import RetryingOperation
 
 class DownloadDriveOperation : RetryingOperation {
 	
-	let connector: GoogleJWTConnector
-	let eventLoop: EventLoop
-	let status: DownloadDrivesStatusActivity
-	let logFile: LogFile
-	
-	let userAndDest: GoogleUserAndDest
-	let driveDestinationBaseURL: URL
-	let allFilesDestinationBaseURL: URL
+	let state: DownloadDriveState
 	
 	let downloadFilesQueue: OperationQueue
 	
-	var error: Error? = OperationIsNotFinishedError()
+	private(set) var error: Error? = OperationIsNotFinishedError()
 	
-	init(googleConnector gc: GoogleJWTConnector, eventLoop el: EventLoop, status s: DownloadDrivesStatusActivity, userAndDest uad: GoogleUserAndDest, downloadFilesQueue dfq: OperationQueue) throws {
-		status = s
-		eventLoop = el
-		userAndDest = uad
+	init(googleConnector: GoogleJWTConnector, eventLoop: EventLoop, status: DownloadDrivesStatusActivity, userAndDest: GoogleUserAndDest, downloadFilesQueue dfq: OperationQueue) throws {
 		downloadFilesQueue = dfq
-		connector = GoogleJWTConnector(from: gc, userBehalf: userAndDest.user.primaryEmail.stringValue)
 		
-		logFile = try LogFile(url: userAndDest.downloadDestination.appendingPathComponent(" logs.csv", isDirectory: false), csvHeader: ["File ID", "Key", "Value"])
+		state = DownloadDriveState(
+			connector: GoogleJWTConnector(from: googleConnector, userBehalf: userAndDest.user.primaryEmail.stringValue),
+			eventLoop: eventLoop,
+			status: status,
+			logFile: try LogFile(url: userAndDest.downloadDestination.appendingPathComponent(" logs.csv", isDirectory: false), csvHeader: ["File ID", "Key", "Value"]),
+			userAndDest: userAndDest,
+			driveDestinationBaseURL: userAndDest.downloadDestination.appendingPathComponent("Drive", isDirectory: true),
+			allFilesDestinationBaseURL: userAndDest.downloadDestination.appendingPathComponent("AllFiles", isDirectory: true)
+		)
 		
 		/* Getting or creating the destination folders if needed. */
-		driveDestinationBaseURL = userAndDest.downloadDestination.appendingPathComponent("Drive", isDirectory: true)
-		allFilesDestinationBaseURL = userAndDest.downloadDestination.appendingPathComponent("AllFiles", isDirectory: true)
-		try FileManager.default.createDirectory(at: driveDestinationBaseURL, withIntermediateDirectories: true, attributes: nil)
-		try FileManager.default.createDirectory(at: allFilesDestinationBaseURL, withIntermediateDirectories: true, attributes: nil)
+		try FileManager.default.createDirectory(at: state.driveDestinationBaseURL, withIntermediateDirectories: true, attributes: nil)
+		try FileManager.default.createDirectory(at: state.allFilesDestinationBaseURL, withIntermediateDirectories: true, attributes: nil)
 	}
 	
 	override func startBaseOperation(isRetry: Bool) {
-		_ = connector.connect(scope: driveROScope, eventLoop: eventLoop)
-			.flatMap{ _ in self.fetchAndDownloadDriveDocs(connector: self.connector, currentListOfFiles: [], nextPageToken: nil) }
-			.flatMap{ futures in EventLoopFuture.whenAllComplete(futures, on: self.eventLoop) }
+		_ = state.connector.connect(scope: driveROScope, eventLoop: state.eventLoop)
+			.flatMap{ _ in self.fetchAndDownloadDriveDocs(currentListOfFiles: [], nextPageToken: nil) }
+			.flatMap{ futures in EventLoopFuture.whenAllComplete(futures, on: self.state.eventLoop) }
 			.always{ r in
 				self.baseOperationEnded()
 		}
@@ -57,7 +52,7 @@ class DownloadDriveOperation : RetryingOperation {
 		return true
 	}
 	
-	private func fetchAndDownloadDriveDocs(connector: GoogleJWTConnector, currentListOfFiles: [EventLoopFuture<GoogleDriveDoc>], nextPageToken: String?) -> EventLoopFuture<[EventLoopFuture<GoogleDriveDoc>]> {
+	private func fetchAndDownloadDriveDocs(currentListOfFiles: [EventLoopFuture<GoogleDriveDoc>], nextPageToken: String?) -> EventLoopFuture<[EventLoopFuture<GoogleDriveDoc>]> {
 		var urlComponents = URLComponents(url: URL(string: "files", relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
 		urlComponents.queryItems = [URLQueryItem(name: "fields", value: "nextPageToken,files/*,kind,incompleteSearch")]
 		if let t = nextPageToken {urlComponents.queryItems!.append(URLQueryItem(name: "pageToken", value: t))}
@@ -65,9 +60,9 @@ class DownloadDriveOperation : RetryingOperation {
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .customISO8601
 		decoder.keyDecodingStrategy = .useDefaultKeys
-		let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
-		return connector.connect(scope: driveROScope, eventLoop: eventLoop)
-			.flatMap{ _ in EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: self.eventLoop) }
+		let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: state.connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
+		return state.connector.connect(scope: driveROScope, eventLoop: state.eventLoop)
+			.flatMap{ _ in EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: self.state.eventLoop) }
 			.flatMap{ newFilesList in
 				var newFullListOfFiles = currentListOfFiles
 				if let files = newFilesList.files {
@@ -87,22 +82,22 @@ class DownloadDriveOperation : RetryingOperation {
 						
 						nBytesFound += bytes
 						
-						let op = DownloadDriveFileOperation(googleConnector: connector, eventLoop: self.eventLoop, status: self.status, logFile: self.logFile, user: self.userAndDest.user, allFilesDestinationBaseURL: self.allFilesDestinationBaseURL, driveDestinationBaseURL: self.driveDestinationBaseURL, doc: file)
-						let f = EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.eventLoop, queue: self.downloadFilesQueue)
+						let op = DownloadDriveFileOperation(state: self.state, doc: file)
+						let f = EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.state.eventLoop, queue: self.downloadFilesQueue)
 						newFullListOfFiles.append(f)
 					}
-					self.status.syncQueue.sync{
-						self.status[self.userAndDest.user].nBytesToProcess += nBytesFound
-						self.status[self.userAndDest.user].nFilesToProcess = newFullListOfFiles.count
-						self.status[self.userAndDest.user].nBytesIgnored += nBytesIgnored
-						self.status[self.userAndDest.user].nFilesIgnored += nFilesIgnored
+					self.state.status.syncQueue.sync{
+						self.state.status[self.state.userAndDest.user].nBytesToProcess += nBytesFound
+						self.state.status[self.state.userAndDest.user].nFilesToProcess = newFullListOfFiles.count
+						self.state.status[self.state.userAndDest.user].nBytesIgnored += nBytesIgnored
+						self.state.status[self.state.userAndDest.user].nFilesIgnored += nFilesIgnored
 					}
 				}
-				self.status.syncQueue.sync{
-					self.status[self.userAndDest.user].foundAllFiles = newFilesList.nextPageToken == nil
+				self.state.status.syncQueue.sync{
+					self.state.status[self.state.userAndDest.user].foundAllFiles = newFilesList.nextPageToken == nil
 				}
-				if let t = newFilesList.nextPageToken {return self.fetchAndDownloadDriveDocs(connector: connector, currentListOfFiles: newFullListOfFiles, nextPageToken: t)}
-				else                                  {return self.eventLoop.makeSucceededFuture(newFullListOfFiles)}
+				if let t = newFilesList.nextPageToken {return self.fetchAndDownloadDriveDocs(currentListOfFiles: newFullListOfFiles, nextPageToken: t)}
+				else                                  {return self.state.eventLoop.makeSucceededFuture(newFullListOfFiles)}
 		}
 	}
 	

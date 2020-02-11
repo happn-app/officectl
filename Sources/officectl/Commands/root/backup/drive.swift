@@ -74,7 +74,7 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 		let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, downloadFilesQueue: downloadFilesQueue) }
 		return EventLoopFuture<GoogleUserAndDest>.executeAll(operations, on: eventLoop, resultRetriever: { (o: DownloadDriveOperation) -> GoogleUserAndDest in
 			try throwIfError(o.error)
-			return o.userAndDest
+			return o.state.userAndDest
 		})
 		.flatMapThrowing{ downloadResults in
 			assert(downloadResults.count == filteredUsers.count)
