@@ -62,7 +62,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				})
 		}
 		.flatMap{ _ in
-			self.getPaths(currentPath: self.doc.name ?? self.doc.id, parentIds: self.doc.parents)
+			self.state.getPaths(currentPath: self.doc.name ?? self.doc.id, parentIds: self.doc.parents)
 		}
 		.flatMapThrowing{ paths in
 			let fm = FileManager.default
@@ -111,40 +111,6 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 			super.computeRetryInfo(sourceError: error, completionHandler: completionHandler)
 		}
 		
-	}
-	
-	private static let objectsCacheQueue = DispatchQueue(label: "com.happn.officectl.downloaddriveobjectscachequeue")
-	private static var objectsCache = [String: EventLoopFuture<GoogleDriveDoc>]()
-	private static var knownPaths = Set<String>()
-	
-	private func getPaths(currentPath: String, parentIds: [String]?) -> EventLoopFuture<[String]> {
-		guard let parentIds = parentIds, !parentIds.isEmpty else {return state.eventLoop.future([currentPath])}
-		
-		let futures = DownloadDriveFileOperation.objectsCacheQueue.sync{
-			return parentIds.map{ parentId -> EventLoopFuture<[String]> in
-				let futureObject: EventLoopFuture<GoogleDriveDoc>
-				/* Do we already have the object future in the cache? */
-				if let f = DownloadDriveFileOperation.objectsCache[parentId] {
-					futureObject = f
-				} else {
-					var urlComponents = URLComponents(url: URL(string: "files/" + parentId, relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
-					urlComponents.queryItems = [URLQueryItem(name: "fields", value: "id,name,parents,ownedByMe")]
-					
-					let decoder = JSONDecoder()
-					decoder.dateDecodingStrategy = .customISO8601
-					decoder.keyDecodingStrategy = .useDefaultKeys
-					let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveDoc>(url: urlComponents.url!, authenticator: state.connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
-					futureObject = state.connector.connect(scope: driveROScope, eventLoop: state.eventLoop)
-						.flatMap{ _ in EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.state.eventLoop) }
-				}
-				
-				return futureObject.flatMap{ doc in
-					let newPath = (doc.name ?? doc.id) + "/" + currentPath
-					return self.getPaths(currentPath: newPath, parentIds: doc.parents)
-				}
-			}
-		}
-		return EventLoopFuture<[String]>.whenAllSucceed(futures, on: state.eventLoop).map{ $0.flatMap{ $0 } }
 	}
 	
 	private func succeedDownload() {

@@ -33,4 +33,39 @@ class DownloadDriveState {
 		allFilesDestinationBaseURL = afdbu
 	}
 	
+	func getPaths(currentPath: String, parentIds: [String]?) -> EventLoopFuture<[String]> {
+		guard let parentIds = parentIds, !parentIds.isEmpty else {return eventLoop.future([currentPath])}
+		
+		let futures = objectsCacheQueue.sync{
+			return parentIds.map{ parentId -> EventLoopFuture<[String]> in
+				let futureObject: EventLoopFuture<GoogleDriveDoc>
+				/* Do we already have the object future in the cache? */
+				if let f = objectsCache[parentId] {
+					futureObject = f
+				} else {
+					var urlComponents = URLComponents(url: URL(string: "files/" + parentId, relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
+					urlComponents.queryItems = [URLQueryItem(name: "fields", value: "id,name,parents,ownedByMe")]
+					
+					let decoder = JSONDecoder()
+					decoder.dateDecodingStrategy = .customISO8601
+					decoder.keyDecodingStrategy = .useDefaultKeys
+					let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveDoc>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
+					futureObject = connector.connect(scope: driveROScope, eventLoop: eventLoop)
+						.flatMap{ _ in EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.eventLoop) }
+				}
+				
+				return futureObject.flatMap{ doc in
+					let newPath = (doc.name ?? doc.id) + "/" + currentPath
+					return self.getPaths(currentPath: newPath, parentIds: doc.parents)
+				}
+			}
+		}
+		return EventLoopFuture<[String]>.whenAllSucceed(futures, on: eventLoop).map{ $0.flatMap{ $0 } }
+	}
+//	_ = try? logFile.logCSVLine([newLink.fileId, "linking_warning", "Expected destination \(baseLink.destination.path) was already taken; renamed to \(newLink.destination.path)"])
+	
+	private let objectsCacheQueue = DispatchQueue(label: "com.happn.officectl.downloaddriveobjectscachequeue")
+	private var objectsCache = [String: EventLoopFuture<GoogleDriveDoc>]()
+	private var knownPaths = Set<String>()
+	
 }
