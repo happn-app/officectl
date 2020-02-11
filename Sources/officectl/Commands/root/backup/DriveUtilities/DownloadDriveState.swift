@@ -36,11 +36,11 @@ class DownloadDriveState {
 	func getPaths(currentPath: String, parentIds: [String]?) -> EventLoopFuture<[String]> {
 		guard let parentIds = parentIds, !parentIds.isEmpty else {return eventLoop.future([currentPath])}
 		
-		let futures = objectsCacheQueue.sync{
+		let futures = pathsCacheQueue.sync{
 			return parentIds.map{ parentId -> EventLoopFuture<[String]> in
 				let futureObject: EventLoopFuture<GoogleDriveDoc>
 				/* Do we already have the object future in the cache? */
-				if let f = objectsCache[parentId] {
+				if let f = pathsCache[parentId] {
 					futureObject = f
 				} else {
 					var urlComponents = URLComponents(url: URL(string: "files/" + parentId, relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
@@ -64,8 +64,8 @@ class DownloadDriveState {
 	}
 //	_ = try? logFile.logCSVLine([newLink.fileId, "linking_warning", "Expected destination \(baseLink.destination.path) was already taken; renamed to \(newLink.destination.path)"])
 	
-	private let objectsCacheQueue = DispatchQueue(label: "com.happn.officectl.downloaddriveobjectscachequeue")
-	private var objectsCache = [String: EventLoopFuture<GoogleDriveDoc>]()
+	private let pathsCacheQueue = DispatchQueue(label: "com.happn.officectl.downloaddrivepathscachequeue")
+	private var pathsCache = [String: EventLoopFuture<GoogleDriveDoc>]()
 	private var knownPaths = Set<String>()
 	
 }

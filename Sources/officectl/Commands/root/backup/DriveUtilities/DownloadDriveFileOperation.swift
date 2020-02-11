@@ -33,11 +33,20 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 	}
 	
 	override func startBaseOperation(isRetry: Bool) {
-		if let n = doc.name          { _ = try? state.logFile.logCSVLine([doc.id, "name", n]) }
-		if let t = doc.mimeType      { _ = try? state.logFile.logCSVLine([doc.id, "mime-type", t]) }
-		if let o = doc.owners        { _ = try? state.logFile.logCSVLine([doc.id, "owners", o.map{ $0.emailAddress?.stringValue ?? "<unknown address>" }.joined(separator: ", ")]) }
-		if let p = doc.parents       { _ = try? state.logFile.logCSVLine([doc.id, "parent_ids", p.joined(separator: ", ")]) }
-		if let p = doc.permissionIds { _ = try? state.logFile.logCSVLine([doc.id, "permission_ids", p.joined(separator: ", ")]) }
+		if let n = doc.name     { _ = try? state.logFile.logCSVLine([doc.id, "name", n]) }
+		if let t = doc.mimeType { _ = try? state.logFile.logCSVLine([doc.id, "mime-type", t]) }
+		if let o = doc.owners   { _ = try? state.logFile.logCSVLine([doc.id, "owners", o.map{ $0.emailAddress?.stringValue ?? "<unknown address>" }.joined(separator: ", ")]) }
+		if let p = doc.parents  { _ = try? state.logFile.logCSVLine([doc.id, "parent_ids", p.joined(separator: ", ")]) }
+		if let perms = doc.permissions {
+			let encoder = JSONEncoder()
+			for pjson in perms {
+				guard let pstr = (try? encoder.encode(pjson)).flatMap({ String(data: $0, encoding: .utf8) }) else {
+					_ = try? state.logFile.logCSVLine([doc.id, "permission_string_interpolated_because_json_encoding_failed", "\(pjson)"])
+					continue
+				}
+				_ = try? state.logFile.logCSVLine([doc.id, "permission", pstr])
+			}
+		}
 		
 		let fileDownloadDestinationURL = self.state.allFilesDestinationBaseURL.appendingPathComponent(self.doc.id, isDirectory: false)
 		

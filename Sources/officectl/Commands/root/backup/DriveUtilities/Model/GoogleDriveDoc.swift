@@ -7,6 +7,7 @@
 
 import Foundation
 
+import GenericJSON
 import OfficeKit
 
 
@@ -62,7 +63,7 @@ struct GoogleDriveDoc : Codable {
 	var copyRequiresWriterPermission: Bool?
 	var viewersCanCopyContent: Bool?
 	var writersCanShare: Bool?
-	var permissionIds: [String]?
+	var permissions: [JSON]?
 	
 	var iconLink: URL?
 	var webViewLink: URL?
