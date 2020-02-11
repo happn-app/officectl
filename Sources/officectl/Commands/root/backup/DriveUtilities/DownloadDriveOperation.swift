@@ -54,7 +54,7 @@ class DownloadDriveOperation : RetryingOperation {
 	
 	private func fetchAndDownloadDriveDocs(currentListOfFiles: [EventLoopFuture<GoogleDriveDoc>], nextPageToken: String?) -> EventLoopFuture<[EventLoopFuture<GoogleDriveDoc>]> {
 		var urlComponents = URLComponents(url: URL(string: "files", relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
-		urlComponents.queryItems = [URLQueryItem(name: "fields", value: "nextPageToken,files/*,kind,incompleteSearch")]
+		urlComponents.queryItems = [URLQueryItem(name: "fields", value: "nextPageToken,files/*,files/permissions/*,files/permissions/permissionDetails/*,kind,incompleteSearch")]
 		if let t = nextPageToken {urlComponents.queryItems!.append(URLQueryItem(name: "pageToken", value: t))}
 		
 		let decoder = JSONDecoder()
