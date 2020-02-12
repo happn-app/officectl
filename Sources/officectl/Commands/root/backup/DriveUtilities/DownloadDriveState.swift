@@ -33,15 +33,16 @@ class DownloadDriveState {
 		allFilesDestinationBaseURL = afdbu
 	}
 	
-	func getPaths(currentPath: String, parentIds: [String]?) -> EventLoopFuture<[String]> {
-		guard let parentIds = parentIds, !parentIds.isEmpty else {return eventLoop.future([currentPath])}
+	func getPaths(objectId: String, objectName: String, parentIds: [String]?) -> EventLoopFuture<[String]> {
+		guard let parentIds = parentIds, !parentIds.isEmpty else {
+			return eventLoop.future([deduplicatePath(originalPath: objectName, for: objectId)])
+		}
 		
-		let futures = pathsCacheQueue.sync{
-			return parentIds.map{ parentId -> EventLoopFuture<[String]> in
-				let futureObject: EventLoopFuture<GoogleDriveDoc>
+		let futures = parentIds.map{ parentId -> EventLoopFuture<[String]> in
+			let futureObject = pathsCacheQueue.sync{ () -> EventLoopFuture<[String]> in
 				/* Do we already have the object future in the cache? */
-				if let f = pathsCache[parentId] {
-					futureObject = f
+				if let futureObject = pathsCache[parentId] {
+					return futureObject
 				} else {
 					var urlComponents = URLComponents(url: URL(string: "files/" + parentId, relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
 					urlComponents.queryItems = [URLQueryItem(name: "fields", value: "id,name,parents,ownedByMe")]
@@ -50,22 +51,41 @@ class DownloadDriveState {
 					decoder.dateDecodingStrategy = .customISO8601
 					decoder.keyDecodingStrategy = .useDefaultKeys
 					let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveDoc>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
-					futureObject = connector.connect(scope: driveROScope, eventLoop: eventLoop)
+					let futureObject = connector.connect(scope: driveROScope, eventLoop: eventLoop)
 						.flatMap{ _ in EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.eventLoop) }
-				}
-				
-				return futureObject.flatMap{ doc in
-					let newPath = (doc.name ?? doc.id) + "/" + currentPath
-					return self.getPaths(currentPath: newPath, parentIds: doc.parents)
+						.flatMap{ doc in self.getPaths(objectId: doc.id, objectName: (doc.name ?? doc.id), parentIds: doc.parents) }
+					
+					pathsCache[parentId] = futureObject
+					return futureObject
 				}
 			}
+			
+			return futureObject
+				.map{ paths in return paths.map{ self.deduplicatePath(originalPath: ($0 as NSString).appendingPathComponent(objectName), for: objectId) } }
 		}
 		return EventLoopFuture<[String]>.whenAllSucceed(futures, on: eventLoop).map{ $0.flatMap{ $0 } }
 	}
-//	_ = try? logFile.logCSVLine([newLink.fileId, "linking_warning", "Expected destination \(baseLink.destination.path) was already taken; renamed to \(newLink.destination.path)"])
 	
 	private let pathsCacheQueue = DispatchQueue(label: "com.happn.officectl.downloaddrivepathscachequeue")
-	private var pathsCache = [String: EventLoopFuture<GoogleDriveDoc>]()
+	private var pathsCache = [String: EventLoopFuture<[String]>]()
 	private var knownPaths = Set<String>()
+	
+	private func deduplicatePath(originalPath: String, for objectId: String) -> String {
+		pathsCacheQueue.sync{
+			var i = 2
+			var newPath = originalPath
+			let pathExt = (originalPath as NSString).pathExtension
+			let pathBase = (originalPath as NSString).deletingPathExtension
+			while !knownPaths.insert(newPath).inserted {
+				let newPathBase = pathBase + " " + String(i)
+				newPath = (newPathBase as NSString).appendingPathExtension(pathExt) ?? newPathBase + "." + pathExt
+				i += 1
+			}
+			if i > 2 {
+				_ = try? logFile.logCSVLine([objectId, "duplicate_path_warning", "Path “\(originalPath)” already exist; renamed to “\(newPath)”"])
+			}
+			return newPath
+		}
+	}
 	
 }

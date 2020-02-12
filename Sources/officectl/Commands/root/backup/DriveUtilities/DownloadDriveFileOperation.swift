@@ -71,7 +71,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				})
 		}
 		.flatMap{ _ in
-			self.state.getPaths(currentPath: self.doc.name ?? self.doc.id, parentIds: self.doc.parents)
+			self.state.getPaths(objectId: self.doc.id, objectName: self.doc.name ?? self.doc.id, parentIds: self.doc.parents)
 		}
 		.flatMapThrowing{ paths in
 			let fm = FileManager.default
