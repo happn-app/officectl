@@ -76,7 +76,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 		.flatMapThrowing{ paths in
 			let fm = FileManager.default
 			for p in paths {
-				_ = try? self.state.logFile.logCSVLine([self.doc.id, "parent", p])
+				_ = try? self.state.logFile.logCSVLine([self.doc.id, "path", p])
 				
 				let destinationURL = URL(fileURLWithPath: p, isDirectory: true, relativeTo: self.state.driveDestinationBaseURL)
 				let destinationURLFolder = destinationURL.deletingLastPathComponent()
