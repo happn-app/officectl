@@ -57,35 +57,35 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 		urlRequest.timeoutInterval = 24*3600
 		
 		_ = state.connector.connect(scope: driveROScope, eventLoop: state.eventLoop)
-			.flatMap{ _ in self.state.connector.authenticate(request: urlRequest, eventLoop: self.state.eventLoop) }
-			.flatMap{ urlRequestAuthResult -> EventLoopFuture<Void> in
-				var isDir = ObjCBool(true)
-				guard !FileManager.default.fileExists(atPath: fileDownloadDestinationURL.path, isDirectory: &isDir) else {
-					/* If the file exists and is not a directory we assume it has
-					 * already been downloaded from the drive. We do not check
-					 * whether it is out of date or not; we’re not a sync service,
-					 * all we want mostly is being able to continue downloading if
-					 * the process stopped for whatever reason.
-					 * We still re-link the file even if it was already downloaded
-					 * because we cannot be certain it has been linked without a db
-					 * or an xattr on the files, which are neither solutions I want
-					 * to implement. */
-					guard !isDir.boolValue else {
-						return self.state.eventLoop.makeFailedFuture(InvalidArgumentError(message: "A folder exists where a file would be downloaded."))
-					}
-					return self.state.eventLoop.future()
+		.flatMap{ _ in self.state.connector.authenticate(request: urlRequest, eventLoop: self.state.eventLoop) }
+		.flatMap{ urlRequestAuthResult -> EventLoopFuture<Void> in
+			var isDir = ObjCBool(true)
+			guard !FileManager.default.fileExists(atPath: fileDownloadDestinationURL.path, isDirectory: &isDir) else {
+				/* If the file exists and is not a directory we assume it has
+				 * already been downloaded from the drive. We do not check
+				 * whether it is out of date or not; we’re not a sync service,
+				 * all we want mostly is being able to continue downloading if
+				 * the process stopped for whatever reason.
+				 * We still re-link the file even if it was already downloaded
+				 * because we cannot be certain it has been linked without a db
+				 * or an xattr on the files, which are neither solutions I want
+				 * to implement. */
+				guard !isDir.boolValue else {
+					return self.state.eventLoop.makeFailedFuture(InvalidArgumentError(message: "A folder exists where a file would be downloaded."))
 				}
-				
-				var downloadConfig = URLRequestOperation.Config(request: urlRequestAuthResult.result, session: nil)
-				downloadConfig.destinationURL = fileDownloadDestinationURL
-				downloadConfig.downloadBehavior = .failIfDestinationExists
-				downloadConfig.acceptableStatusCodes = IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403))
-				
-				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DownloadBinaryForDoc(config: downloadConfig), queue: DownloadDriveFileOperation.downloadBinaryQueue)
-				return EventLoopFuture<Void>.future(from: op, on: self.state.eventLoop, queue: DownloadDriveFileOperation.downloadBinaryQueue, resultRetriever: { o in
-					if let e = o.finalError {throw e}
-					else                    {return ()}
-				})
+				return self.state.eventLoop.future()
+			}
+			
+			var downloadConfig = URLRequestOperation.Config(request: urlRequestAuthResult.result, session: nil)
+			downloadConfig.destinationURL = fileDownloadDestinationURL
+			downloadConfig.downloadBehavior = .failIfDestinationExists
+			downloadConfig.acceptableStatusCodes = IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403))
+			
+			let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DownloadBinaryForDoc(config: downloadConfig), queue: DownloadDriveFileOperation.downloadBinaryQueue)
+			return EventLoopFuture<Void>.future(from: op, on: self.state.eventLoop, queue: DownloadDriveFileOperation.downloadBinaryQueue, resultRetriever: { o in
+				if let e = o.finalError {throw e}
+				else                    {return ()}
+			})
 		}
 		.flatMap{ _ in
 			self.state.getPaths(objectId: self.doc.id, objectName: self.doc.name ?? self.doc.id, parentIds: self.doc.parents)
