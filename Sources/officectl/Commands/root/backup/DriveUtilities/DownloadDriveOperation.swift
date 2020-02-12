@@ -72,9 +72,11 @@ class DownloadDriveOperation : RetryingOperation {
 					for file in files {
 						/* We keep the files (not folders) I own, or whose quota is
 						 * either invalid (cannot be converted to an Int) or is > 0 */
+						let mimeType = file.mimeType ?? ""
 						let bytes = file.size.flatMap{ Int($0) } ?? 0
 						let quota = file.quotaBytesUsed.flatMap({ Int($0) })
-						guard file.mimeType != "application/vnd.google-apps.folder" && (file.ownedByMe || quota == nil || quota! > 0) else {
+						let isFobiddenMimeType = mimeType.starts(with: "application/vnd.google-apps.")
+						guard !isFobiddenMimeType && (file.ownedByMe || quota == nil || quota! > 0) else {
 							nFilesIgnored += 1
 							nBytesIgnored += bytes
 							continue
