@@ -80,6 +80,10 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				
 				let destinationURL = URL(fileURLWithPath: p, isDirectory: true, relativeTo: self.state.driveDestinationBaseURL)
 				let destinationURLFolder = destinationURL.deletingLastPathComponent()
+				
+				/* Remove previous file if applicable. */
+				_ = try? fm.removeItem(at: destinationURL)
+				
 				try fm.createDirectory(at: destinationURLFolder, withIntermediateDirectories: true, attributes: nil)
 				try fm.linkItem(at: fileDownloadDestinationURL, to: destinationURL)
 			}
