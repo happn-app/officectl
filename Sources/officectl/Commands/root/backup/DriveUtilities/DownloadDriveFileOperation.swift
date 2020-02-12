@@ -50,7 +50,8 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 		
 		let fileDownloadDestinationURL = self.state.allFilesDestinationBaseURL.appendingPathComponent(self.doc.id, isDirectory: false)
 		
-		var urlComponents = URLComponents(url: driveApiBaseURL.appendingPathComponent("files", isDirectory: true).appendingPathComponent(doc.id), resolvingAgainstBaseURL: true)!
+		let fileObjectURL = driveApiBaseURL.appendingPathComponent("files", isDirectory: true).appendingPathComponent(doc.id)
+		var urlComponents = URLComponents(url: fileObjectURL, resolvingAgainstBaseURL: true)!
 		urlComponents.queryItems = [URLQueryItem(name: "alt", value: "media")]
 		
 		var urlRequest = URLRequest(url: urlComponents.url!)
@@ -105,6 +106,27 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				try fm.linkItem(at: fileDownloadDestinationURL, to: destinationURL)
 			}
 		}
+		.flatMap{ _ -> EventLoopFuture<Void> in
+			/* Try and delete the downloaded file if needed */
+			guard self.state.eraseDownloadedFiles else {
+				return self.state.eventLoop.future()
+			}
+			
+			var request = URLRequest(url: fileObjectURL)
+			request.httpMethod = "DELETE"
+			
+			return self.state.connector.connect(scope: driveFileScope, eventLoop: self.state.eventLoop)
+			.flatMap{ _ in self.state.connector.authenticate(request: request, eventLoop: self.state.eventLoop) }
+			.flatMap{ authenticatedRequest in
+				let requestOperationConfig = URLRequestOperation.Config(request: authenticatedRequest.result, session: nil, acceptableStatusCodes: IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403)))
+				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DeleteFileURLRequestOperation(config: requestOperationConfig))
+				
+				return EventLoopFuture<Void>.future(from: op, on: self.state.eventLoop, queue: DownloadDriveFileOperation.downloadBinaryQueue, resultRetriever: { o in
+					if let e = o.finalError {throw InvalidArgumentError(message: "Cannot delete file; error: \(e)")}
+					else                    {return ()}
+				})
+			}
+		}
 		.always{ result in
 			switch result {
 			case .success:        self.succeedDownload()
@@ -117,7 +139,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 		return true
 	}
 	
-	private class DownloadBinaryForDoc : URLRequestOperationWithRetryRecoveryHandler {
+	private class DownloadBinaryForDoc : URLRequestOperation {
 		
 		override func computeRetryInfo(sourceError error: Error?, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {
 			if statusCode == 403 {
@@ -137,6 +159,17 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 					return completionHandler(.retry(withDelay: 100, enableReachability: false, enableOtherRequestsObserver: false), currentURLRequest, nil)
 				}
 				return completionHandler(.doNotRetry, currentURLRequest, InvalidArgumentError(message: "403 from server"))
+			}
+			super.computeRetryInfo(sourceError: error, completionHandler: completionHandler)
+		}
+		
+	}
+	
+	private class DeleteFileURLRequestOperation : URLRequestOperationWithRetryRecoveryHandler {
+		
+		override func computeRetryInfo(sourceError error: Error?, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {
+			if statusCode == 403 {
+				return DriveUtils.retryRecoveryHandler(self, sourceError: InvalidArgumentError(message: "Got 403 when deleting file"), completionHandler: completionHandler)
 			}
 			super.computeRetryInfo(sourceError: error, completionHandler: completionHandler)
 		}

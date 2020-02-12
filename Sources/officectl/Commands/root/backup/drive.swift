@@ -25,6 +25,7 @@ import Vapor
 
 
 /* Should be namespaced, or private. */
+let driveFileScope = Set(arrayLiteral: "https://www.googleapis.com/auth/drive")
 let driveROScope = Set(arrayLiteral: "https://www.googleapis.com/auth/drive.readonly")
 let driveApiBaseURL = URL(string: "https://www.googleapis.com/drive/v3/")!
 
@@ -51,9 +52,13 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 	
 	try app.auditLogger.log(action: "Backing up mails w/ service \(serviceId ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(archiveDestinationFolder != nil ? "w/": "w/o") archiving.", source: .cli)
 	
+	let previousOfficeKitLogger = OfficeKitConfig.logger
 	let downloadDriveStatus = DownloadDrivesStatusActivity()
 	let consoleActivity = downloadDriveStatus.newActivity(for: context.console)
-	if !disableConsole {consoleActivity.start()}
+	if !disableConsole {
+		OfficeKitConfig.logger = nil
+		consoleActivity.start()
+	}
 	
 	let downloadFilesQueue = OperationQueue(name_OperationQueue: "Files Download Queue")
 	
@@ -71,7 +76,7 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 	.flatMapThrowing{ filteredUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
 		downloadDriveStatus.initStatuses(users: filteredUsers.map{ $0.user })
 		
-		let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, downloadFilesQueue: downloadFilesQueue) }
+		let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, eraseDownloadedFiles: eraseDownloadedFiles, downloadFilesQueue: downloadFilesQueue) }
 		return EventLoopFuture<GoogleUserAndDest>.executeAll(operations, on: eventLoop, resultRetriever: { (o: DownloadDriveOperation) -> GoogleUserAndDest in
 			try throwIfError(o.error)
 			return o.state.userAndDest
@@ -96,6 +101,7 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 		case .success: consoleActivity.succeed()
 		case .failure: consoleActivity.fail()
 		}
+		OfficeKitConfig.logger = previousOfficeKitLogger
 	}
 	
 	return f
