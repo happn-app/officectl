@@ -112,7 +112,8 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 				/* Indeterminate progress bar as we don’t know the progress. */
 				let bulletPosition: Int
 				switch state {
-				case .active(tick: let t):
+				case .active(tick: let actualT):
+					let t = UInt((Float(actualT)/2).rounded(.down)) /* Slow down the back-and forth motion */
 					let period = loadingBarWidth - 1
 					let offset  = Int(t % UInt(period))
 					let reverse = Int(t % UInt(period*2)) >= period
@@ -130,7 +131,7 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxTreatedFilesWidth - numberWidth(status.nFilesProcessed)), style: .plain))
 			line.append(ConsoleTextFragment(string: String(status.nFilesProcessed), style: .plain))
 			line.append(ConsoleTextFragment(string: "/", style: .plain))
-			line.append(ConsoleTextFragment(string: String(status.nFilesToProcess), style: status.foundAllFiles ? .success : .info))
+			line.append(ConsoleTextFragment(string: String(status.nFilesToProcess), style: status.foundAllFiles ? .plain : .info))
 			if !status.foundAllFiles {
 				line.append(ConsoleTextFragment(string: "+", style: .info))
 			}
@@ -143,7 +144,7 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxTreatedBytesWidth - bytesToHumanReadableString(status.nBytesProcessed).count), style: .plain))
 			line.append(ConsoleTextFragment(string: bytesToHumanReadableString(status.nBytesProcessed), style: .plain))
 			line.append(ConsoleTextFragment(string: "/", style: .plain))
-			line.append(ConsoleTextFragment(string: bytesToHumanReadableString(status.nBytesToProcess), style: status.foundAllFiles ? .success : .info))
+			line.append(ConsoleTextFragment(string: bytesToHumanReadableString(status.nBytesToProcess), style: status.foundAllFiles ? .plain : .info))
 			if !status.foundAllFiles {
 				line.append(ConsoleTextFragment(string: "+", style: .info))
 			}
