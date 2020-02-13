@@ -25,7 +25,7 @@ import Vapor
 
 
 /* Should be namespaced, or private. */
-let driveFileScope = Set(arrayLiteral: "https://www.googleapis.com/auth/drive")
+let driveScope = Set(arrayLiteral: "https://www.googleapis.com/auth/drive")
 let driveROScope = Set(arrayLiteral: "https://www.googleapis.com/auth/drive.readonly")
 let driveApiBaseURL = URL(string: "https://www.googleapis.com/drive/v3/")!
 

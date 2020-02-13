@@ -115,7 +115,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 			var request = URLRequest(url: fileObjectURL)
 			request.httpMethod = "DELETE"
 			
-			return self.state.connector.connect(scope: driveFileScope, eventLoop: self.state.eventLoop)
+			return self.state.connector.connect(scope: driveScope, eventLoop: self.state.eventLoop)
 			.flatMap{ _ in self.state.connector.authenticate(request: request, eventLoop: self.state.eventLoop) }
 			.flatMap{ authenticatedRequest in
 				let requestOperationConfig = URLRequestOperation.Config(request: authenticatedRequest.result, session: nil, acceptableStatusCodes: IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403)))
