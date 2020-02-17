@@ -20,19 +20,17 @@ class DownloadDriveState {
 	let logFile: LogFile
 	
 	let eraseDownloadedFiles: Bool
-	let archiveDestinationFolder: URL?
 	
 	let userAndDest: GoogleUserAndDest
 	let driveDestinationBaseURL: URL
 	let allFilesDestinationBaseURL: URL
 	
-	init(connector c: GoogleJWTConnector, eventLoop el: EventLoop, status s: DownloadDrivesStatusActivity, logFile lf: LogFile, eraseDownloadedFiles edf: Bool, archiveDestinationFolder adf: URL?, userAndDest uad: GoogleUserAndDest, driveDestinationBaseURL ddbu: URL, allFilesDestinationBaseURL afdbu: URL) {
+	init(connector c: GoogleJWTConnector, eventLoop el: EventLoop, status s: DownloadDrivesStatusActivity, logFile lf: LogFile, eraseDownloadedFiles edf: Bool, userAndDest uad: GoogleUserAndDest, driveDestinationBaseURL ddbu: URL, allFilesDestinationBaseURL afdbu: URL) {
 		connector = c
 		eventLoop = el
 		status = s
 		logFile = lf
 		eraseDownloadedFiles = edf
-		archiveDestinationFolder = adf
 		userAndDest = uad
 		driveDestinationBaseURL = ddbu
 		allFilesDestinationBaseURL = afdbu

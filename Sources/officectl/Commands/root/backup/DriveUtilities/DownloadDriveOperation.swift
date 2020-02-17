@@ -21,7 +21,7 @@ class DownloadDriveOperation : RetryingOperation {
 	
 	private(set) var error: Error? = OperationIsNotFinishedError()
 	
-	init(googleConnector: GoogleJWTConnector, eventLoop: EventLoop, status: DownloadDrivesStatusActivity, userAndDest: GoogleUserAndDest, eraseDownloadedFiles: Bool, archiveDestinationFolder: URL?, downloadFilesQueue dfq: OperationQueue) throws {
+	init(googleConnector: GoogleJWTConnector, eventLoop: EventLoop, status: DownloadDrivesStatusActivity, userAndDest: GoogleUserAndDest, eraseDownloadedFiles: Bool, downloadFilesQueue dfq: OperationQueue) throws {
 		downloadFilesQueue = dfq
 		
 		let dateFormatter = ISO8601DateFormatter()
@@ -35,7 +35,6 @@ class DownloadDriveOperation : RetryingOperation {
 			status: status,
 			logFile: try LogFile(url: userAndDest.downloadDestination.appendingPathComponent(" logs - \(dateStr).csv", isDirectory: false), csvHeader: ["File ID", "Key", "Value"]),
 			eraseDownloadedFiles: eraseDownloadedFiles,
-			archiveDestinationFolder: archiveDestinationFolder,
 			userAndDest: userAndDest,
 			driveDestinationBaseURL: userAndDest.downloadDestination.appendingPathComponent("Drive", isDirectory: true),
 			allFilesDestinationBaseURL: userAndDest.downloadDestination.appendingPathComponent("AllFiles", isDirectory: true)
@@ -50,13 +49,44 @@ class DownloadDriveOperation : RetryingOperation {
 		_ = state.connector.connect(scope: driveROScope, eventLoop: state.eventLoop)
 		.flatMap{ _ in self.fetchAndDownloadDriveDocs(currentListOfFiles: [], nextPageToken: nil) }
 		.flatMap{ futures in EventLoopFuture.whenAllComplete(futures, on: self.state.eventLoop) }
-		.always{ r in
-			switch r {
-			case .failure(let e): self.error = e
-			case .success(let results):
-				if results.first(where: { $0.failureValue != nil }) != nil {self.error = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "At least one file was not successfully downloaded from drive \(self.state.userAndDest.user.userId.stringValue); see the log file for more info."])}
-				else                                                       {self.error = nil}
+		.flatMapThrowing{ r -> Void in
+			if r.first(where: { $0.failureValue != nil }) != nil {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "At least one file was not successfully downloaded from drive \(self.state.userAndDest.user.userId.stringValue); see the log file for more info."])
 			}
+			return ()
+		}
+		.flatMap{ _ -> EventLoopFuture<Void> in
+			/* Archive backup if applicable. */
+			guard let archiveURL = self.state.userAndDest.archiveDestination else {
+				return self.state.eventLoop.future()
+			}
+			
+			self.state.status.syncQueue.sync{
+				self.state.status[self.state.userAndDest.user].archiving = true
+			}
+			
+			/* Will create the enclosing folder if not already there (a bit of
+			 * trivia: the the call don’t fail if the directory already exist). */
+			_ = try? FileManager.default.createDirectory(at: archiveURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+			let op = TarOperation(
+				sources: [self.state.userAndDest.downloadDestination.lastPathComponent],
+				relativeTo: self.state.userAndDest.downloadDestination.deletingLastPathComponent(),
+				destination: archiveURL,
+				compress: true,
+				deleteSourcesOnSuccess: true
+			)
+			return EventLoopFuture<Void>.future(from: op, on: self.state.eventLoop, resultRetriever: { op in
+				if let e = op.tarError ?? op.sourceDeletionErrors.randomElement()?.value {
+					throw e
+				}
+				return ()
+			})
+		}
+		.always{ r in
+			self.state.status.syncQueue.sync{
+				self.state.status[self.state.userAndDest.user].finished = true
+			}
+			self.error = r.failureValue
 			self.baseOperationEnded()
 		}
 	}

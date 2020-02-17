@@ -29,6 +29,7 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 		var nFailures: Int = 0 /* Should always lower than or equal to the number of files processed. */
 		
 		var archiving: Bool = false
+		var finished: Bool = false
 		
 	}
 	
@@ -100,16 +101,16 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 			line.append(ConsoleTextFragment(string: "   - ", style: .plain))
 			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxAccountWidth - useremail.count) + useremail, style: .info))
 			line.append(ConsoleTextFragment(string: " [", style: .plain))
-			if status.foundAllFiles {
+			if status.foundAllFiles && (!status.archiving || status.finished) {
 				/* Progress bar w/ actual progress shown. */
 				let progressOK = status.nFilesToProcess == 0 ? 1.0 : Float(status.nFilesProcessed) / Float(status.nFilesToProcess)
 				let progressError = status.nFilesToProcess == 0 ? 0.0 : Float(status.nFailures) / Float(status.nFilesToProcess)
 				let leftOK = min(Int((Float(loadingBarWidth) * progressOK).rounded()), loadingBarWidth)
 				let leftError = min(Int((Float(loadingBarWidth) * progressError).rounded()), loadingBarWidth - leftOK)
 				let left = min(leftOK + leftError, loadingBarWidth)
-				line.append(ConsoleTextFragment(string: String(repeating: "=", count: leftOK),                 style: .plain))
+				line.append(ConsoleTextFragment(string: String(repeating: status.finished ? "~" : "=", count: leftOK),                 style: .plain))
 				line.append(ConsoleTextFragment(string: String(repeating: " ", count: loadingBarWidth - left), style: .plain))
-				line.append(ConsoleTextFragment(string: String(repeating: "=", count: leftError),              style: .error))
+				line.append(ConsoleTextFragment(string: String(repeating: status.finished ? "~" : "=", count: leftError),              style: .error))
 			} else {
 				/* Indeterminate progress bar as we don’t know the progress. */
 				let bulletPosition: Int
@@ -124,9 +125,9 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 				default:
 					bulletPosition = 0
 				}
-				line.append(ConsoleTextFragment(string: String(repeating: " ", count: bulletPosition), style: .plain))
-				line.append(ConsoleTextFragment(string: "•", style: .plain))
-				line.append(ConsoleTextFragment(string: String(repeating: " ", count: loadingBarWidth - bulletPosition - 1), style: .plain))
+				line.append(ConsoleTextFragment(string: String(repeating: status.archiving ? "~" : " ", count: bulletPosition), style: .plain))
+				line.append(ConsoleTextFragment(string: status.archiving ? "=" : "•", style: .plain))
+				line.append(ConsoleTextFragment(string: String(repeating: status.archiving ? "~" : " ", count: loadingBarWidth - bulletPosition - 1), style: .plain))
 			}
 			/* Showing the number of downloaded files */
 			line.append(ConsoleTextFragment(string: "] Downloaded ", style: .plain))

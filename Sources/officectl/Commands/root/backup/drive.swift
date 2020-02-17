@@ -76,7 +76,7 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 	.flatMapThrowing{ filteredUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
 		downloadDriveStatus.initStatuses(users: filteredUsers.map{ $0.user })
 		
-		let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, eraseDownloadedFiles: eraseDownloadedFiles, archiveDestinationFolder: archiveDestinationFolder, downloadFilesQueue: downloadFilesQueue) }
+		let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, eraseDownloadedFiles: eraseDownloadedFiles, downloadFilesQueue: downloadFilesQueue) }
 		return EventLoopFuture<GoogleUserAndDest>.executeAll(operations, on: eventLoop, resultRetriever: { (o: DownloadDriveOperation) -> GoogleUserAndDest in
 			try throwIfError(o.error)
 			return o.state.userAndDest
