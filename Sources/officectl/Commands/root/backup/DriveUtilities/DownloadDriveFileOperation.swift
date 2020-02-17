@@ -121,7 +121,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				var request = URLRequest(url: fileObjectURL)
 				request.httpMethod = "DELETE"
 				
-				let requestOperationConfig = URLRequestOperation.Config(request: request, session: nil, acceptableStatusCodes: IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403)))
+				let requestOperationConfig = URLRequestOperation.Config(request: request, session: nil, maximumNumberOfRetries: 7, allowRetryingNonIdempotentRequests: true, acceptableStatusCodes: IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403)))
 				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DeleteFileURLRequestOperation(config: requestOperationConfig, authenticator: self.state.connector.authenticate))
 				
 				return EventLoopFuture<Void>.future(from: op, on: self.state.eventLoop, queue: DownloadDriveFileOperation.downloadBinaryQueue, resultRetriever: { o in
@@ -218,6 +218,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 			state.status[state.userAndDest.user].nFilesProcessed += 1
 			state.status[state.userAndDest.user].nBytesProcessed += doc.size.flatMap{ Int($0) } ?? 0
 		}
+		result = .success(doc)
 		baseOperationEnded()
 	}
 	
