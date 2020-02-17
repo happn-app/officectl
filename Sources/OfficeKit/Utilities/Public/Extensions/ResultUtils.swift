@@ -38,7 +38,7 @@ extension Result {
 
 extension Result where Failure == Error {
 	
-	var asyncOperationResult: AsyncOperationResult<Success> {
+	public var asyncOperationResult: AsyncOperationResult<Success> {
 		switch self {
 		case .success(let success): return .success(success)
 		case .failure(let failure): return .error(failure)
@@ -49,7 +49,7 @@ extension Result where Failure == Error {
 
 extension AsyncOperationResult {
 	
-	var result: Result<T, Error> {
+	public var result: Result<T, Error> {
 		switch self {
 		case .success(let success): return .success(success)
 		case .error(let error):     return .failure(error)

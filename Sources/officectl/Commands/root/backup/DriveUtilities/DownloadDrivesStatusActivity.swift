@@ -16,17 +16,19 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 	
 	struct DownloadDriveStatus {
 		
-		var foundAllFiles: Bool
-		var nFilesToProcess: Int
-		var nBytesToProcess: Int
+		var foundAllFiles: Bool = false
+		var nFilesToProcess: Int = 0
+		var nBytesToProcess: Int = 0
 		
-		var nFilesIgnored: Int /* Files that are not taking any quota in the drive. */
-		var nBytesIgnored: Int /* Files that are not taking any quota in the drive. */
+		var nFilesIgnored: Int = 0 /* Files that are not taking any quota in the drive. */
+		var nBytesIgnored: Int = 0 /* Files that are not taking any quota in the drive. */
 		
-		var nFilesProcessed: Int
-		var nBytesProcessed: Int
+		var nFilesProcessed: Int = 0
+		var nBytesProcessed: Int = 0
 		
-		var nFailures: Int /* Should always lower than or equal to the number of files processed. */
+		var nFailures: Int = 0 /* Should always lower than or equal to the number of files processed. */
+		
+		var archiving: Bool = false
 		
 	}
 	
@@ -38,7 +40,7 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 		syncQueue.sync{
 			var res = [GoogleUser: DownloadDriveStatus](minimumCapacity: users.count)
 			for u in users {
-				res[u] = DownloadDriveStatus(foundAllFiles: false, nFilesToProcess: 0, nBytesToProcess: 0, nFilesIgnored: 0, nBytesIgnored: 0, nFilesProcessed: 0, nBytesProcessed: 0, nFailures: 0)
+				res[u] = DownloadDriveStatus()
 			}
 			statuses = res
 		}
@@ -47,7 +49,7 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 	/** - Important: Call the subscript on syncQueue, or you might get races. */
 	subscript(_ user: GoogleUser) -> DownloadDriveStatus {
 		get {
-			statuses?[user] ?? DownloadDriveStatus(foundAllFiles: false, nFilesToProcess: 0, nBytesToProcess: 0, nFilesIgnored: 0, nBytesIgnored: 0, nFilesProcessed: 0, nBytesProcessed: 0, nFailures: 0)
+			statuses?[user] ?? DownloadDriveStatus()
 		}
 		set {
 			if statuses == nil {statuses = [GoogleUser: DownloadDriveStatus]()}

@@ -20,17 +20,19 @@ class DownloadDriveState {
 	let logFile: LogFile
 	
 	let eraseDownloadedFiles: Bool
+	let archiveDestinationFolder: URL?
 	
 	let userAndDest: GoogleUserAndDest
 	let driveDestinationBaseURL: URL
 	let allFilesDestinationBaseURL: URL
 	
-	init(connector c: GoogleJWTConnector, eventLoop el: EventLoop, status s: DownloadDrivesStatusActivity, logFile lf: LogFile, eraseDownloadedFiles edf: Bool, userAndDest uad: GoogleUserAndDest, driveDestinationBaseURL ddbu: URL, allFilesDestinationBaseURL afdbu: URL) {
+	init(connector c: GoogleJWTConnector, eventLoop el: EventLoop, status s: DownloadDrivesStatusActivity, logFile lf: LogFile, eraseDownloadedFiles edf: Bool, archiveDestinationFolder adf: URL?, userAndDest uad: GoogleUserAndDest, driveDestinationBaseURL ddbu: URL, allFilesDestinationBaseURL afdbu: URL) {
 		connector = c
 		eventLoop = el
 		status = s
 		logFile = lf
 		eraseDownloadedFiles = edf
+		archiveDestinationFolder = adf
 		userAndDest = uad
 		driveDestinationBaseURL = ddbu
 		allFilesDestinationBaseURL = afdbu
@@ -55,8 +57,8 @@ class DownloadDriveState {
 					decoder.keyDecodingStrategy = .useDefaultKeys
 					let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveDoc>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
 					let futureObject = connector.connect(scope: driveROScope, eventLoop: eventLoop)
-						.flatMap{ _ in EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.eventLoop) }
-						.flatMap{ doc in self.getPaths(objectId: doc.id, objectName: (doc.name ?? doc.id), parentIds: doc.parents) }
+					.flatMap{ _ in EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.eventLoop) }
+					.flatMap{ doc in self.getPaths(objectId: doc.id, objectName: (doc.name ?? doc.id), parentIds: doc.parents) }
 					
 					pathsCache[parentId] = futureObject
 					return futureObject
@@ -64,7 +66,7 @@ class DownloadDriveState {
 			}
 			
 			return futureObject
-				.map{ paths in return paths.map{ self.deduplicatePath(originalPath: ($0 as NSString).appendingPathComponent(objectName), for: objectId) } }
+			.map{ paths in return paths.map{ self.deduplicatePath(originalPath: ($0 as NSString).appendingPathComponent(objectName), for: objectId) } }
 		}
 		return EventLoopFuture<[String]>.whenAllSucceed(futures, on: eventLoop).map{ $0.flatMap{ $0 } }
 	}

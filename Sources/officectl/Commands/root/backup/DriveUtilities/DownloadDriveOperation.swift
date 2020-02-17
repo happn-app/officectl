@@ -21,15 +21,21 @@ class DownloadDriveOperation : RetryingOperation {
 	
 	private(set) var error: Error? = OperationIsNotFinishedError()
 	
-	init(googleConnector: GoogleJWTConnector, eventLoop: EventLoop, status: DownloadDrivesStatusActivity, userAndDest: GoogleUserAndDest, eraseDownloadedFiles: Bool, downloadFilesQueue dfq: OperationQueue) throws {
+	init(googleConnector: GoogleJWTConnector, eventLoop: EventLoop, status: DownloadDrivesStatusActivity, userAndDest: GoogleUserAndDest, eraseDownloadedFiles: Bool, archiveDestinationFolder: URL?, downloadFilesQueue dfq: OperationQueue) throws {
 		downloadFilesQueue = dfq
+		
+		let dateFormatter = ISO8601DateFormatter()
+		dateFormatter.formatOptions = [.withFullDate, .withFullTime]
+		dateFormatter.formatOptions = dateFormatter.formatOptions.subtracting([.withColonSeparatorInTime, .withColonSeparatorInTimeZone, .withDashSeparatorInDate])
+		let dateStr = dateFormatter.string(from: Date())
 		
 		state = DownloadDriveState(
 			connector: GoogleJWTConnector(from: googleConnector, userBehalf: userAndDest.user.primaryEmail.stringValue),
 			eventLoop: eventLoop,
 			status: status,
-			logFile: try LogFile(url: userAndDest.downloadDestination.appendingPathComponent(" logs.csv", isDirectory: false), csvHeader: ["File ID", "Key", "Value"]),
+			logFile: try LogFile(url: userAndDest.downloadDestination.appendingPathComponent(" logs - \(dateStr).csv", isDirectory: false), csvHeader: ["File ID", "Key", "Value"]),
 			eraseDownloadedFiles: eraseDownloadedFiles,
+			archiveDestinationFolder: archiveDestinationFolder,
 			userAndDest: userAndDest,
 			driveDestinationBaseURL: userAndDest.downloadDestination.appendingPathComponent("Drive", isDirectory: true),
 			allFilesDestinationBaseURL: userAndDest.downloadDestination.appendingPathComponent("AllFiles", isDirectory: true)
@@ -45,6 +51,12 @@ class DownloadDriveOperation : RetryingOperation {
 		.flatMap{ _ in self.fetchAndDownloadDriveDocs(currentListOfFiles: [], nextPageToken: nil) }
 		.flatMap{ futures in EventLoopFuture.whenAllComplete(futures, on: self.state.eventLoop) }
 		.always{ r in
+			switch r {
+			case .failure(let e): self.error = e
+			case .success(let results):
+				if results.first(where: { $0.failureValue != nil }) != nil {self.error = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "At least one file was not successfully downloaded from drive \(self.state.userAndDest.user.userId.stringValue); see the log file for more info."])}
+				else                                                       {self.error = nil}
+			}
 			self.baseOperationEnded()
 		}
 	}
