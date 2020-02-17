@@ -77,6 +77,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 			urlRequest.timeoutInterval = 24*3600
 			
 			var downloadConfig = URLRequestOperation.Config(request: urlRequest, session: nil)
+			downloadConfig.maximumNumberOfRetries = 7
 			downloadConfig.destinationURL = fileDownloadDestinationURL
 			downloadConfig.downloadBehavior = .failIfDestinationExists
 			downloadConfig.acceptableStatusCodes = IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403))
