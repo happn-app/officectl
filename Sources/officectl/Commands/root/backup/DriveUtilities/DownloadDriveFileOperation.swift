@@ -19,6 +19,7 @@ import URLRequestOperation
 class DownloadDriveFileOperation : RetryingOperation, HasResult {
 	
 	static let downloadBinaryQueue = OperationQueue(name_OperationQueue: "Download Binary Queue")
+	static let maximumNumberOfRetries = 7
 	
 	typealias ResultType = GoogleDriveDoc
 	
@@ -77,7 +78,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 			urlRequest.timeoutInterval = 24*3600
 			
 			var downloadConfig = URLRequestOperation.Config(request: urlRequest, session: nil)
-			downloadConfig.maximumNumberOfRetries = 7
+			downloadConfig.maximumNumberOfRetries = DownloadDriveFileOperation.maximumNumberOfRetries
 			downloadConfig.destinationURL = fileDownloadDestinationURL
 			downloadConfig.downloadBehavior = .failIfDestinationExists
 			downloadConfig.acceptableStatusCodes = IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403))
@@ -121,7 +122,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				var request = URLRequest(url: fileObjectURL)
 				request.httpMethod = "DELETE"
 				
-				let requestOperationConfig = URLRequestOperation.Config(request: request, session: nil, maximumNumberOfRetries: 7, allowRetryingNonIdempotentRequests: true, acceptableStatusCodes: IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403)))
+				let requestOperationConfig = URLRequestOperation.Config(request: request, session: nil, maximumNumberOfRetries: DownloadDriveFileOperation.maximumNumberOfRetries, allowRetryingNonIdempotentRequests: true, acceptableStatusCodes: IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403)))
 				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DeleteFileURLRequestOperation(config: requestOperationConfig, authenticator: self.state.connector.authenticate))
 				
 				return EventLoopFuture<Void>.future(from: op, on: self.state.eventLoop, queue: DownloadDriveFileOperation.downloadBinaryQueue, resultRetriever: { o in
