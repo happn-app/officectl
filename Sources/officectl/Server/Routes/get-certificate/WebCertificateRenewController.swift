@@ -39,6 +39,8 @@ class WebCertificateRenewController {
 		let issuerName = try nil2throw(officectlConfig.tmpVaultIssuerName)
 		let token = try nil2throw(officectlConfig.tmpVaultToken)
 		let ttl = try nil2throw(officectlConfig.tmpVaultTTL)
+		let expirationLeeway = try nil2throw(officectlConfig.tmpVaultExpirationLeeway)
+		let expectedExpiration = Date(timeIntervalSinceNow: -expirationLeeway)
 		
 		func authenticate(_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void {
 			var request = request
@@ -59,20 +61,31 @@ class WebCertificateRenewController {
 			return EventLoopFuture<VaultResponse<CertificateSerialsList>>.future(from: op, on: req.eventLoop).map{ $0.data }
 		}
 		.flatMap{ $0 }
-		.flatMap{ certificatesList -> EventLoopFuture<[String]> in
+		.flatMap{ certificatesList -> EventLoopFuture<[(id: String, certif: Certificate)]> in
 			/* Get the list of certificates to revoke */
-			let futures = certificatesList.keys.map{ id -> EventLoopFuture<String?> in
+			let futures = certificatesList.keys.map{ id -> EventLoopFuture<(id: String, certif: Certificate)?> in
 				let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent(id))
 				let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
 				return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, on: req.eventLoop).map{ certificateResponse in
 					guard certificateResponse.data.certificate.commonName == renewedCommonName else {return nil}
-					return id
+					return (id: id, certif: certificateResponse.data.certificate)
 				}
 			}
-			return EventLoopFuture.reduce([String](), futures, on: req.eventLoop, { full, new in
+			return EventLoopFuture.reduce([(id: String, certif: Certificate)](), futures, on: req.eventLoop, { full, new in
 				guard let new = new else {return full}
 				return full + [new]
 			})
+		}
+		.flatMapThrowing{ certificatesToRevoke -> [String] in
+			/* We check if all of the certificates to revoke will expire in less
+			 * than n seconds (where n is defined in the conf). */
+			try certificatesToRevoke.forEach{ idAndCertif in
+				let certif = idAndCertif.certif
+				guard certif.expirationDate > expectedExpiration else {
+					throw InvalidArgumentError(message: "You’ve got at least one certificate still valid, please use it or see an ops!")
+				}
+			}
+			return certificatesToRevoke.map{ $0.id }
 		}
 		.flatMapThrowing{ certificateIdsToRevoke -> EventLoopFuture<Void> in
 			/* Revoke the certificates to revoke */

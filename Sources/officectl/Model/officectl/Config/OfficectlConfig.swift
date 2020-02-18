@@ -31,6 +31,7 @@ struct OfficectlConfig {
 	var tmpVaultIssuerName: String?
 	var tmpVaultToken: String?
 	var tmpVaultTTL: String?
+	var tmpVaultExpirationLeeway: TimeInterval?
 	
 	var tmpSimpleMDMToken: String?
 	
@@ -57,6 +58,7 @@ struct OfficectlConfig {
 		tmpVaultIssuerName = configYaml["vault_tmp"]["issuer_name"].string
 		tmpVaultToken = configYaml["vault_tmp"]["token"].string
 		tmpVaultTTL = configYaml["vault_tmp"]["ttl"].string
+		tmpVaultExpirationLeeway = configYaml["vault_tmp"]["max_expiration_delay_before_allowing_reissuance"].int.flatMap{ TimeInterval($0) }
 		
 		tmpSimpleMDMToken = configYaml["simplemdm_tmp"]["access_key"].string
 		
