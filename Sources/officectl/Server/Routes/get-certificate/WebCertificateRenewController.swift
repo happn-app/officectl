@@ -193,6 +193,7 @@ class WebCertificateRenewController {
 		
 		/* Computed from the pem. */
 		let commonName: String
+		let expirationDate: Date
 		
 		init(pem p: String) throws {
 			let bio = BIO_new(BIO_s_mem())
@@ -215,16 +216,26 @@ class WebCertificateRenewController {
 			guard commonNameLoc >= 0 else {
 				throw InternalError(message: "cannot get index of CN field")
 			}
-			
 			guard let commonNameEntry = X509_NAME_get_entry(X509_get_subject_name(x509), commonNameLoc) else {
 				throw InternalError(message: "cannot get CN field")
 			}
-			
 			guard let commonNameASN1 = X509_NAME_ENTRY_get_data(commonNameEntry) else {
 				throw InternalError(message: "cannot convert CN field to ASN1 string")
 			}
 			commonName = String(cString: ASN1_STRING_data(commonNameASN1))
 //			commonName = String(cString: ASN1_STRING_get0_data(commonNameASN1))
+			
+			guard let notAfterASN1Ptr = X509_get0_notAfter(x509) else {
+				throw InternalError(message: "cannot get notAfter date")
+			}
+			var notAfterTM = tm()
+			guard ASN1_TIME_to_tm(notAfterASN1Ptr, &notAfterTM) == 1 else {
+				throw InternalError(message: "cannot convert notAfter ASN1 date to tm")
+			}
+			/* ASN1_TIME_to_tm returns a GMT time so we use timegm */
+			let time = timegm(&notAfterTM)
+			expirationDate = Date(timeIntervalSince1970: Double(time))
+			
 			pem = p
 		}
 		
