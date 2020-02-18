@@ -54,7 +54,26 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 		let fileObjectURL = driveApiBaseURL.appendingPathComponent("files", isDirectory: true).appendingPathComponent(doc.id)
 		
 		_ = state.connector.connect(scope: driveROScope, eventLoop: state.eventLoop)
-		.flatMap{ urlRequestAuthResult -> EventLoopFuture<Void> in
+		.flatMap{ _ in
+			self.state.getPaths(objectId: self.doc.id, objectName: self.doc.name ?? self.doc.id, parentIds: self.doc.parents)
+		}
+		.flatMap{ paths -> EventLoopFuture<[String]> in
+			/* First let’s make sure the paths match the given filters */
+			if let filters = self.state.filters {
+				var match = false
+				for filter in filters where !match {
+					if filter.starts(with: "^") {
+						match = match || (paths.contains{ $0.lowercased().starts(with: filter.dropFirst()) })
+					} else {
+						match = match || (paths.contains{ $0.lowercased().contains(filter) })
+					}
+				}
+				
+				guard match else {
+					return self.state.eventLoop.makeFailedFuture(FileSkippedError())
+				}
+			}
+			
 			var isDir = ObjCBool(true)
 			guard !FileManager.default.fileExists(atPath: fileDownloadDestinationURL.path, isDirectory: &isDir) else {
 				/* If the file exists and is not a directory we assume it has
@@ -69,7 +88,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				guard !isDir.boolValue else {
 					return self.state.eventLoop.makeFailedFuture(InvalidArgumentError(message: "A folder exists where a file would be downloaded (at \(fileDownloadDestinationURL.path)."))
 				}
-				return self.state.eventLoop.future()
+				return self.state.eventLoop.future(paths)
 			}
 			
 			var urlComponents = URLComponents(url: fileObjectURL, resolvingAgainstBaseURL: true)!
@@ -86,11 +105,8 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 			let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DownloadBinaryForDoc(config: downloadConfig, authenticator: self.state.connector.authenticate), queue: DownloadDriveFileOperation.downloadBinaryQueue)
 			return EventLoopFuture<Void>.future(from: op, on: self.state.eventLoop, queue: DownloadDriveFileOperation.downloadBinaryQueue, resultRetriever: { o in
 				if let e = o.finalError {throw e}
-				else                    {return ()}
+				else                    {return paths}
 			})
-		}
-		.flatMap{ _ in
-			self.state.getPaths(objectId: self.doc.id, objectName: self.doc.name ?? self.doc.id, parentIds: self.doc.parents)
 		}
 		.flatMapThrowing{ paths in
 			let fm = FileManager.default
@@ -133,8 +149,9 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 		}
 		.always{ result in
 			switch result {
-			case .success:        self.succeedDownload()
-			case .failure(let e): self.failDownload(error: e)
+			case .success:                                    self.succeedDownload()
+			case .failure(let e) where e is FileSkippedError: self.succeedSkippedDownload()
+			case .failure(let e):                             self.failDownload(error: e)
 			}
 		}
 	}
@@ -142,6 +159,8 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 	override var isAsynchronous: Bool {
 		return true
 	}
+	
+	private struct FileSkippedError : Error {}
 	
 	private class DownloadBinaryForDoc : URLRequestOperation {
 		
@@ -218,6 +237,17 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 		state.status.syncQueue.sync{
 			state.status[state.userAndDest.user].nFilesProcessed += 1
 			state.status[state.userAndDest.user].nBytesProcessed += doc.size.flatMap{ Int($0) } ?? 0
+		}
+		result = .success(doc)
+		baseOperationEnded()
+	}
+	
+	private func succeedSkippedDownload() {
+		state.status.syncQueue.sync{
+			state.status[state.userAndDest.user].nFilesIgnored += 1
+			state.status[state.userAndDest.user].nFilesToProcess -= 1
+			state.status[state.userAndDest.user].nBytesIgnored -= doc.size.flatMap{ Int($0) } ?? 0
+			state.status[state.userAndDest.user].nBytesToProcess -= doc.size.flatMap{ Int($0) } ?? 0
 		}
 		result = .success(doc)
 		baseOperationEnded()

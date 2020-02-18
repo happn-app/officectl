@@ -21,7 +21,7 @@ class DownloadDriveOperation : RetryingOperation {
 	
 	private(set) var error: Error? = OperationIsNotFinishedError()
 	
-	init(googleConnector: GoogleJWTConnector, eventLoop: EventLoop, status: DownloadDrivesStatusActivity, userAndDest: GoogleUserAndDest, eraseDownloadedFiles: Bool, downloadFilesQueue dfq: OperationQueue) throws {
+	init(googleConnector: GoogleJWTConnector, eventLoop: EventLoop, status: DownloadDrivesStatusActivity, userAndDest: GoogleUserAndDest, filters: [String]?, eraseDownloadedFiles: Bool, downloadFilesQueue dfq: OperationQueue) throws {
 		downloadFilesQueue = dfq
 		
 		let dateFormatter = ISO8601DateFormatter()
@@ -34,6 +34,7 @@ class DownloadDriveOperation : RetryingOperation {
 			eventLoop: eventLoop,
 			status: status,
 			logFile: try LogFile(url: userAndDest.downloadDestination.appendingPathComponent(" logs - \(dateStr).csv", isDirectory: false), csvHeader: ["File ID", "Key", "Value"]),
+			filters: filters,
 			eraseDownloadedFiles: eraseDownloadedFiles,
 			userAndDest: userAndDest,
 			driveDestinationBaseURL: userAndDest.downloadDestination.appendingPathComponent("Drive", isDirectory: true),

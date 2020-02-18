@@ -46,6 +46,8 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 	let usersFilter = (args.isEmpty ? nil : args)?.map{ EmailSrcAndDst(emailStr: $0, disabledUserSuffix: disabledUserSuffix, logger: app.logger) }
 	
 	let eraseDownloadedFiles = f.getBool(name: "erase-downloaded-files")!
+	let filters = f.getString(name: "path-filters")?.split(separator: ",").map{ $0.lowercased() }
+	
 	let skipIfArchiveFound = !f.getBool(name: "no-skip-if-archive-exists")!
 	let archiveDestinationFolderStr = (f.getBool(name: "archive")! ? try nil2throw(f.getString(name: "archives-destination-folder")) : nil)
 	let archiveDestinationFolder = archiveDestinationFolderStr.flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
@@ -76,7 +78,7 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 	.flatMapThrowing{ filteredUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
 		downloadDriveStatus.initStatuses(users: filteredUsers.map{ $0.user })
 		
-		let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, eraseDownloadedFiles: eraseDownloadedFiles, downloadFilesQueue: downloadFilesQueue) }
+		let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, filters: filters, eraseDownloadedFiles: eraseDownloadedFiles, downloadFilesQueue: downloadFilesQueue) }
 		return EventLoopFuture<GoogleUserAndDest>.executeAll(operations, on: eventLoop, resultRetriever: { (o: DownloadDriveOperation) -> GoogleUserAndDest in
 			try throwIfError(o.error)
 			return o.state.userAndDest
