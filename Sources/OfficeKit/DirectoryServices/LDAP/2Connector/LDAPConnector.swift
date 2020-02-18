@@ -50,15 +50,15 @@ public final class LDAPConnector : Connector {
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "LDAPConnector")
 	
-	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion) throws {
-		try self.init(ldapURL: u, protocolVersion: protocolVersion, authMode: .none)
+	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool) throws {
+		try self.init(ldapURL: u, protocolVersion: protocolVersion, startTLS: startTLS, authMode: .none)
 	}
 	
-	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, username: String, password: String) throws {
-		try self.init(ldapURL: u, protocolVersion: protocolVersion, authMode: .userPass(username: username, password: password))
+	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool, username: String, password: String) throws {
+		try self.init(ldapURL: u, protocolVersion: protocolVersion, startTLS: startTLS, authMode: .userPass(username: username, password: password))
 	}
 	
-	init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, authMode a: AuthMode) throws {
+	init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool, authMode a: AuthMode) throws {
 		ldapURL = u
 		authMode = a
 		
@@ -83,6 +83,13 @@ public final class LDAPConnector : Connector {
 		let error2 = ldap_set_option(ldapPtr, LDAP_OPT_PROTOCOL_VERSION, &v)
 		guard error2 == LDAP_OPT_SUCCESS else {
 			throw NSError(domain: "com.happn.officectl.openldap", code: Int(error2), userInfo: [NSLocalizedDescriptionKey: "Cannot set LDAP version to \(protocolVersion): \(String(cString: ldap_err2string(error2)))"])
+		}
+		
+		if startTLS {
+			let error3 = ldap_start_tls_s(self.ldapPtr, nil, nil)
+			guard error3 == LDAP_SUCCESS else {
+				throw NSError(domain: "com.happn.officectl.openldap", code: Int(error3), userInfo: [NSLocalizedDescriptionKey: "Cannot StartTLS on connection: \(String(cString: ldap_err2string(error3)))"])
+			}
 		}
 	}
 	

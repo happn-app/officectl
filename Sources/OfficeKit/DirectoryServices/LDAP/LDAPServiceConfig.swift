@@ -52,6 +52,7 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 		let domain = [id]
 		
 		let url = try keyedConfig.url(forKey: "url", currentKeyPath: domain)
+		let startTLS = try keyedConfig.optionalBool(forKey: "start_tls", currentKeyPath: domain) ?? false
 		let adminUsername = try keyedConfig.optionalString(forKey: "admin_username", currentKeyPath: domain)
 		let adminPassword = try keyedConfig.optionalString(forKey: "admin_password", currentKeyPath: domain)
 		
@@ -62,8 +63,8 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 		
 		let connectorSettings: LDAPConnector.Settings
 		switch (adminUsername, adminPassword) {
-		case (.none, .none):             connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3)
-		case let (username?, password?): connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3, username: username, password: password)
+		case (.none, .none):             connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3, startTLS: startTLS)
+		case let (username?, password?): connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3, startTLS: startTLS, username: username, password: password)
 		case (.some, .none), (.none, .some):
 			throw InvalidArgumentError(message: "Invalid config in yaml: neither both or none of admin_username & admin_password defined in an LDAP config")
 		}
