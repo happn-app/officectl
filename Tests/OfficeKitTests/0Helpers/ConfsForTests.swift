@@ -20,6 +20,7 @@ let ldapConfForTests = LDAPServiceConfig(
 	connectorSettings: LDAPConnector.Settings(
 		ldapURL: URL(string: "ldap://localhost:8389")!,
 		protocolVersion: .v3,
+		startTLS: false,
 		username: "cn=admin," + ldapBaseDNForTests.stringValue,
 		password: "toto"
 	),
