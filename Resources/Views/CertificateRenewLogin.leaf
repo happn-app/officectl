@@ -38,11 +38,19 @@
 		<p>
 			Login with your <b>LDAP</b> password in the form above to download a certificate to connect to the “office,”
 			“services,” “poda,” “podb,” “podc,” “pod0” and “pod2” VPNs, as well as identifying you on certain happn websites.<br/>
-			⚠️ If you already have a certificate, it will be revoked when you download a new one.
 		</p>
+		<p style="margin-bottom: 0px;">
+			⚠️ Important notes:
+		</p>
+		<ul style="margin-top: 5px;">
+			<li>You can only download a new certificate if your current one expires soon. If you need a new certificate because your current one has been compromised, you must see the ops team.</li>
+			<li>Your previous certificate will be revoked when you download a new one.</li>
+		</ul>
 		<h2>Using Your Certificate (VPN Config)</h2>
 		<p>
-			The easiest way is to use mkvisz to create the Viscosity configurations to connect to the VPN. To do this, follow the instructions below.<br/>
+			The easiest way is to use mkvisz to create the Viscosity configurations to connect to the VPN. To do this, follow the instructions below.
+		</p>
+		<p>
 			⚠️ If you are renewing your certificate, remember to remove the previous VPN configurations from Viscosity before importing the new one.
 		</p>
 		<h3>1/ Install mkvisz</h3>
