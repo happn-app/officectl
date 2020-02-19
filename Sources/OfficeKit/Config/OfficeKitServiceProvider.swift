@@ -65,7 +65,7 @@ public class OfficeKitServiceProvider {
 	
 	public func getAllUserDirectoryServices() throws -> Set<AnyUserDirectoryService> {
 		return try queue.sync{
-			for config in officeKitConfig.serviceConfigs.values where OfficeKitConfig.registeredServices[config.providerId] is UserDirectoryService.Type {
+			for config in officeKitConfig.serviceConfigs.values where OfficeKitConfig.registeredServices[config.providerId] is UserDirectoryServiceInit.Type {
 				_ = try userDirectoryService(with: config)
 			}
 			return Set(userDirectoryServicesCache.values.filter{ !$0.config.isHelperService })
@@ -104,7 +104,7 @@ public class OfficeKitServiceProvider {
 	
 	public func getAllGroupOfUsersDirectoryServices() throws -> Set<AnyGroupOfUsersDirectoryService> {
 		return try queue.sync{
-			for config in officeKitConfig.serviceConfigs.values where OfficeKitConfig.registeredServices[config.providerId] is GroupOfUsersDirectoryService.Type {
+			for config in officeKitConfig.serviceConfigs.values where OfficeKitConfig.registeredServices[config.providerId] is GroupOfUsersDirectoryServiceInit.Type {
 				_ = try groupOfUsersDirectoryService(with: config)
 			}
 			return Set(groupOfUsersDirectoryServicesCache.values.filter{ !$0.config.isHelperService })
