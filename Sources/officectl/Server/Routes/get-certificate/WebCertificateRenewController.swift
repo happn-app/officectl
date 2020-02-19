@@ -235,8 +235,7 @@ class WebCertificateRenewController {
 			guard let commonNameASN1 = X509_NAME_ENTRY_get_data(commonNameEntry) else {
 				throw InternalError(message: "cannot convert CN field to ASN1 string")
 			}
-			commonName = String(cString: ASN1_STRING_data(commonNameASN1))
-//			commonName = String(cString: ASN1_STRING_get0_data(commonNameASN1))
+			commonName = String(cString: ASN1_STRING_get0_data(commonNameASN1))
 			
 			guard let notAfterASN1Ptr = X509_get0_notAfter(x509) else {
 				throw InternalError(message: "cannot get notAfter date")

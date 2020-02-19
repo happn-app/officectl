@@ -167,15 +167,14 @@ public final class GoogleService : UserDirectoryService {
 				user.hashFunction = .set(.sha1)
 				user.changePasswordAtNextLogin = .set(false)
 			#else
-				throw NotImplementedError()
+//				if let passHash = try? SHA1.hash(Data(pass.utf8)) {
+//					password = .set(passHash.reduce("", { $0 + String(format: "%02x", $1) }))
+//					hashFunction = .set(.sha1)
+//					changePasswordAtNextLogin = .set(false)
+//				} else {
+					OfficeKitConfig.logger?.warning("Cannot encrypt password. Won’t put it in Google User.")
+//				}
 			#endif
-//			if let passHash = try? SHA1.hash(Data(pass.utf8)) {
-//				password = .set(passHash.reduce("", { $0 + String(format: "%02x", $1) }))
-//				hashFunction = .set(.sha1)
-//				changePasswordAtNextLogin = .set(false)
-//			} else {
-				OfficeKitConfig.logger?.warning("Cannot encrypt password. Won’t put it in Google User.")
-//			}
 		}
 		return res
 	}
