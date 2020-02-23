@@ -8,14 +8,9 @@
 import Foundation
 
 import NIO
+import OpenCrypto
 import SemiSingleton
 import ServiceKit
-
-#if canImport(CommonCrypto)
-	import CommonCrypto
-#else
-	import OpenCrypto
-#endif
 
 
 
@@ -35,31 +30,14 @@ public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, Reset
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
-		let newPasswordHash: Data
-		let passwordData = Data(newPassword.utf8)
-		#if canImport(CommonCrypto)
-			var sha1 = Data(count: Int(CC_SHA1_DIGEST_LENGTH))
-			passwordData.withUnsafeBytes{ (passwordDataBytes: UnsafeRawBufferPointer) in
-				let passwordDataBytes = passwordDataBytes.bindMemory(to: UInt8.self).baseAddress!
-				sha1.withUnsafeMutableBytes{ (sha1Bytes: UnsafeMutableRawBufferPointer) in
-					let sha1Bytes = sha1Bytes.bindMemory(to: UInt8.self).baseAddress!
-					/* The call below should returns sha1Bytes (says the man). */
-					_ = CC_SHA1(passwordDataBytes, CC_LONG(passwordData.count), sha1Bytes)
-				}
-			}
-			newPasswordHash = sha1
-		#else
-			throw NotImplementedError()
-//			newPasswordHash = try SHA1.hash(passwordData)
-		#endif
-		
 		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
 		
 		let f = deps.connector.connect(scope: ModifyGoogleUserOperation.scopes, eventLoop: eventLoop)
 		.map{ _ -> EventLoopFuture<Void> in
 			var googleUser = self.subject.cloneForPatching()
 			
-			googleUser.password = .set(newPasswordHash.reduce("", { $0 + String(format: "%02x", $1) }))
+			let passwordSHA1 = Insecure.SHA1.hash(data: Data(newPassword.utf8)).reduce("", { $0 + String(format: "%02x", $1) })
+			googleUser.password = .set(passwordSHA1)
 			googleUser.hashFunction = .set(.sha1)
 			googleUser.changePasswordAtNextLogin = .set(false)
 			

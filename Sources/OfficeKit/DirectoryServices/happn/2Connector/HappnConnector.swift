@@ -10,13 +10,8 @@ import Foundation
 	import FoundationNetworking
 #endif
 
+import OpenCrypto
 import URLRequestOperation
-
-#if canImport(CommonCrypto)
-	import CommonCrypto
-#else
-	import OpenCrypto
-#endif
 
 
 
@@ -253,24 +248,8 @@ public final class HappnConnector : Connector, Authenticator {
 			/* content is (the part in brackets is only there if the value of the
 			 * field is not empty): "url_path[?url_query];http_body;http_method" */
 			
-			let finalHMAC: Data
-			#if canImport(CommonCrypto)
-				var hmac = Data(count: Int(CC_SHA256_DIGEST_LENGTH))
-				key.withUnsafeBytes{ (keyBytes: UnsafeRawBufferPointer) in
-					let keyBytes = keyBytes.bindMemory(to: Int8.self).baseAddress!
-					content.withUnsafeBytes{ (dataBytes: UnsafeRawBufferPointer) in
-						let dataBytes = dataBytes.bindMemory(to: Int8.self).baseAddress!
-						hmac.withUnsafeMutableBytes{ (hmacBytes: UnsafeMutableRawBufferPointer) in
-							let hmacBytes = hmacBytes.bindMemory(to: Int8.self).baseAddress!
-							CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA256), keyBytes, key.count, dataBytes, content.count, hmacBytes)
-						}
-					}
-				}
-				finalHMAC = hmac
-			#else
-				finalHMAC = Data(HMAC<SHA256>.authenticationCode(for: content, using: SymmetricKey(data: key)))
-			#endif
-			request.setValue(finalHMAC.reduce("", { $0 + String(format: "%02x", $1) }), forHTTPHeaderField: "Signature")
+			let hmac = Data(HMAC<SHA256>.authenticationCode(for: content, using: SymmetricKey(data: key)))
+			request.setValue(hmac.reduce("", { $0 + String(format: "%02x", $1) }), forHTTPHeaderField: "Signature")
 		}
 		
 		handler(.success(request), nil)
