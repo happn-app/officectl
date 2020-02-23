@@ -240,6 +240,18 @@ class WebCertificateRenewController {
 			guard let notAfterASN1Ptr = X509_get0_notAfter(x509) else {
 				throw InternalError(message: "cannot get notAfter date")
 			}
+			#if true
+			var partialDiffDays: Int32 = 0
+			var partialDiffSeconds: Int32 = 0
+			ASN1_TIME_diff(&partialDiffDays, &partialDiffSeconds, nil /* Now */, notAfterASN1Ptr)
+			
+			let nSecondsInADay = 24 * 60 * 60
+			let diffSeconds = Int(partialDiffSeconds) + Int(partialDiffDays)*nSecondsInADay
+			expirationDate = Date(timeIntervalSinceNow: TimeInterval(diffSeconds))
+			
+			#else
+			/* This variant is only available around libssl 1.1.1, which is not
+			 * available out of the box on Debian Stretch. */
 			var notAfterTM = tm()
 			guard ASN1_TIME_to_tm(notAfterASN1Ptr, &notAfterTM) == 1 else {
 				throw InternalError(message: "cannot convert notAfter ASN1 date to tm")
@@ -247,6 +259,7 @@ class WebCertificateRenewController {
 			/* ASN1_TIME_to_tm returns a GMT time so we use timegm */
 			let time = timegm(&notAfterTM)
 			expirationDate = Date(timeIntervalSince1970: Double(time))
+			#endif
 			
 			pem = p
 		}
