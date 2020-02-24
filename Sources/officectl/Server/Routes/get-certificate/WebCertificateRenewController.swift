@@ -42,9 +42,13 @@ class WebCertificateRenewController {
 		let expirationLeeway = try nil2throw(officectlConfig.tmpVaultExpirationLeeway)
 		let expectedExpiration = Date(timeIntervalSinceNow: -expirationLeeway)
 		
+		func authenticateSync(_ request: inout URLRequest) -> Void {
+			request.addValue(token, forHTTPHeaderField: "X-Vault-Token")
+		}
+		
 		func authenticate(_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void {
 			var request = request
-			request.addValue(token, forHTTPHeaderField: "X-Vault-Token")
+			authenticateSync(&request)
 			handler(.success(request), nil)
 		}
 		
@@ -52,18 +56,36 @@ class WebCertificateRenewController {
 		.flatMapThrowing{ authSuccess -> Void in
 			guard authSuccess else {throw InvalidArgumentError(message: "Cannot login with these credentials.")}
 		}
-		.flatMapThrowing{ _ -> EventLoopFuture<CertificateSerialsList> in
+		.flatMap{ _ -> EventLoopFuture<CRL> in
+			/* Let’s get the CRL */
+			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("crl"))
+			authenticateSync(&urlRequest)
+			let op = URLRequestOperation(request: urlRequest)
+			return EventLoopFuture<CRL>.future(from: op, on: req.eventLoop, resultRetriever: { op in
+				guard let data = op.fetchedData else {
+					throw op.finalError ?? NSError(domain: "com.happn.officeclt", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown error fetching the CRL"])
+				}
+				return try CRL(der: data)
+			})
+		}
+		.flatMapThrowing{ crl -> EventLoopFuture<(CertificateSerialsList, CRL)> in
 			/* Now the user is authenticated, let’s fetch the list of current
 			 * certificates in the vault */
 			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("certs"))
 			urlRequest.httpMethod = "LIST"
 			let op = AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>(request: urlRequest, authenticator: authenticate)
-			return EventLoopFuture<VaultResponse<CertificateSerialsList>>.future(from: op, on: req.eventLoop).map{ $0.data }
+			return EventLoopFuture<VaultResponse<CertificateSerialsList>>.future(from: op, on: req.eventLoop).map{ ($0.data, crl) }
 		}
 		.flatMap{ $0 }
-		.flatMap{ certificatesList -> EventLoopFuture<[(id: String, certif: Certificate)]> in
+		.flatMap{ (certificatesList, crl) -> EventLoopFuture<[(id: String, certif: Certificate)]> in
 			/* Get the list of certificates to revoke */
-			let futures = certificatesList.keys.map{ id -> EventLoopFuture<(id: String, certif: Certificate)?> in
+			let futures = certificatesList.keys.compactMap{ id -> EventLoopFuture<(id: String, certif: Certificate)?>? in
+				/* If the certificate is already revoked, we don’t have to do
+				 * anything w/ it. */
+				guard !crl.revokedCertificateIds.contains(normalizeCertificateId(id)) else {
+					return nil
+				}
+				
 				let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent(id))
 				let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
 				return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, on: req.eventLoop).map{ certificateResponse in
@@ -213,9 +235,9 @@ class WebCertificateRenewController {
 			defer {BIO_free(bio)}
 			
 			let nullTerminatedData = Data(p.utf8) + Data([0])
-			_ = nullTerminatedData.withUnsafeBytes{ (key: UnsafeRawBufferPointer) -> Int32 in
-				let key = key.bindMemory(to: Int8.self).baseAddress!
-				return BIO_puts(bio, key)
+			_ = nullTerminatedData.withUnsafeBytes{ (pemBytes: UnsafeRawBufferPointer) -> Int32 in
+				let pemBytes = pemBytes.bindMemory(to: Int8.self).baseAddress!
+				return BIO_puts(bio, pemBytes)
 			}
 			
 			guard let x509 = PEM_read_bio_X509(bio, nil, nil, nil) else {
@@ -271,4 +293,75 @@ class WebCertificateRenewController {
 		
 	}
 	
+	/* Thanks http://fm4dd.com/openssl/crldisplay.shtm */
+	private struct CRL {
+		
+		let der: Data
+		
+		/* Computed from the pem. */
+		let revokedCertificateIds: Set<String>
+		
+		init(der d: Data) throws {
+			let bio = BIO_new(BIO_s_mem())
+			defer {BIO_free(bio)}
+			
+			_ = d.withUnsafeBytes{ (derBytes: UnsafeRawBufferPointer) -> Int32 in
+				BIO_write(bio, derBytes.baseAddress!, Int32(derBytes.count))
+			}
+			
+			/* We probably could have done this to read the CRL in the PEM format. */
+//			PEM_read_bio_X509_CRL(bio, nil, nil, nil)
+			guard let crl = d2i_X509_CRL_bio(bio, nil) else {
+				throw InternalError(message: "cannot read CRL")
+			}
+			defer {X509_CRL_free(crl)}
+			
+			guard let revokedList = X509_CRL_get_REVOKED(crl) else {
+				throw InternalError(message: "cannot get revoked certificates from CRL")
+			}
+			
+			var revokedIds = Set<String>()
+			let nRevoked = sk_X509_REVOKED_num(revokedList)
+			for i in 0..<nRevoked {
+				guard let revoked = sk_X509_REVOKED_value(revokedList, i) else {
+					/* Getting the value should never fail, so we bail completely if
+					 * we have an error for a revoked certificate. */
+					throw InternalError(message: "cannot get revoked certificate at index \(i) in CRL")
+				}
+				guard let serialNumber = X509_REVOKED_get0_serialNumber(revoked) else {
+					throw InternalError(message: "cannot get serial number of revoked certificate at index \(i) in CRL")
+				}
+				guard let serialNumberBN = ASN1_INTEGER_to_BN(serialNumber, nil) else {
+					throw InternalError(message: "cannot get serial number as big num of certificate at index \(i) in CRL")
+				}
+				guard let serialNumberHexCStr = BN_bn2hex(serialNumberBN) else {
+					throw InternalError(message: "cannot get serial number as hex str of certificate at index \(i) in CRL")
+				}
+				/* Doc says to deallocate the serialNumberHexStr using OPENSSL_free
+				 * but this function is not available in Swift (it is a #define, not
+				 * an actual function). */
+				defer {CRYPTO_free(serialNumberHexCStr, #file, #line)}
+				
+				let serialNumberNormalizedHexStr = normalizeCertificateId(String(cString: serialNumberHexCStr))
+				revokedIds.insert(String(serialNumberNormalizedHexStr))
+			}
+			revokedCertificateIds = revokedIds
+			
+			der = d
+		}
+		
+	}
+	
+}
+
+
+private func normalizeCertificateId(_ id: String) -> String {
+	let characterSet = CharacterSet(charactersIn: "0123456789abcdef")
+	var preresult = id.lowercased().drop{ $0 == "0" }
+	preresult.removeAll{
+		let scalars = $0.unicodeScalars
+		guard let scalar = scalars.onlyElement else {return true}
+		return !characterSet.contains(scalar)
+	}
+	return String(preresult)
 }
