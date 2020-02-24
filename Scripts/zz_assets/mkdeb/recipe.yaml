@@ -14,10 +14,10 @@ source:
 
 control:
   depends:
-  - libldap-2.4-2
-  - libssl1.0.2
-  - swiftlang-libs (=5.1.1-RELEASE-1~mkdeb1)
-  - zlib1g
+    - libldap-2.4-2
+    - libssl1.0.2
+    - swiftlang-libs (=5.1.4-RELEASE-1~mkdeb1)
+    - zlib1g
   description: |
     Not much to say here…
   section: admin
@@ -25,25 +25,25 @@ control:
 install:
   recipe:
     /etc/officectl:
-    - pattern: default_config.yaml
-      rename: officectl.yaml
-      conffile: true
+      - pattern: default_config.yaml
+        rename: officectl.yaml
+        conffile: true
     /lib/systemd/system:
-    - pattern: systemd
-      rename: officectl.service
+      - pattern: systemd
+        rename: officectl.service
     /etc/init.d:
-    - pattern: initd
-      rename: officectl
-      conffile: true
+      - pattern: initd
+        rename: officectl
+        conffile: true
   upstream:
     /usr/bin:
-    - pattern: officectl
+      - pattern: officectl
     /usr/share/officectl:
-    - pattern: "*/*"
+      - pattern: "*/*"
 
 dirs:
-- /var/lib/officectl/
-- /var/log/officectl/
-- /var/run/officectl/
+  - /var/lib/officectl/
+  - /var/log/officectl/
+  - /var/run/officectl/
 
 # vim: ts=2 sw=2 et
