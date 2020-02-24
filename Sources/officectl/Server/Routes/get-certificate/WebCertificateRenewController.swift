@@ -81,7 +81,7 @@ class WebCertificateRenewController {
 			 * than n seconds (where n is defined in the conf). */
 			try certificatesToRevoke.forEach{ idAndCertif in
 				let certif = idAndCertif.certif
-				guard certif.expirationDate > expectedExpiration else {
+				guard certif.expirationDate < expectedExpiration else {
 					throw InvalidArgumentError(message: "You’ve got at least one certificate still valid, please use it or see an ops!")
 				}
 			}
