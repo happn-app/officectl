@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/vapor/async-kit.git",
         "state": {
           "branch": null,
-          "revision": "42edd5d6b52afc0678f85d4a67aa79e0be79fba5",
-          "version": "1.0.0-beta.2.6"
+          "revision": "094dad1142e4e272a328ab44edd39730f246fb3e",
+          "version": "1.0.0-rc.1"
         }
       },
       {
@@ -33,8 +33,8 @@
         "repositoryURL": "https://github.com/vapor/console-kit.git",
         "state": {
           "branch": null,
-          "revision": "a10418160fd4d2af183b0a754a93373734d6ba80",
-          "version": "4.0.0-beta.2.3"
+          "revision": "de99d83c9f3c298371002729cc0601e4b5d9e0c9",
+          "version": "4.0.0-rc.1"
         }
       },
       {
@@ -78,8 +78,8 @@
         "repositoryURL": "https://github.com/vapor/jwt-kit.git",
         "state": {
           "branch": null,
-          "revision": "57c49ff798f506270bdeb1c86d1d68795ab1402d",
-          "version": "4.0.0-beta.3.2"
+          "revision": "d7a3a04dbb74971b363412ba869ad79f510518b3",
+          "version": "4.0.0-rc.1"
         }
       },
       {
@@ -87,8 +87,8 @@
         "repositoryURL": "https://github.com/vapor/leaf.git",
         "state": {
           "branch": null,
-          "revision": "537a44ce95489429635129cd1533a6ad0ba9fc64",
-          "version": "4.0.0-beta.3"
+          "revision": "45791d341951a678162f4af8a5f6f8ece9ef585e",
+          "version": "4.0.0-rc.1"
         }
       },
       {
@@ -96,8 +96,8 @@
         "repositoryURL": "https://github.com/vapor/leaf-kit.git",
         "state": {
           "branch": null,
-          "revision": "14014a1bbf5ab7eb32c938bf23589c7e2d6de239",
-          "version": "1.0.0-beta.2.2"
+          "revision": "81253abf17654633e0b485d4c4d48f88e30960e3",
+          "version": "1.0.0-rc.1.1"
         }
       },
       {
@@ -107,15 +107,6 @@
           "branch": null,
           "revision": "c615c01e461e8a3495ba4ea75f5d671c76820105",
           "version": "1.0.1"
-        }
-      },
-      {
-        "package": "multipart-kit",
-        "repositoryURL": "https://github.com/vapor/multipart-kit.git",
-        "state": {
-          "branch": null,
-          "revision": "b41a49b5756ac3fbf8f2b07228a7e75f9b60731a",
-          "version": "4.0.0-beta.2"
         }
       },
       {
@@ -141,8 +132,8 @@
         "repositoryURL": "https://github.com/vapor/routing-kit.git",
         "state": {
           "branch": null,
-          "revision": "6a8a1636ad26494b03f3c72d74a420fc3a44949c",
-          "version": "4.0.0-beta.3"
+          "revision": "dbc3eafdbe243e9a46eeb6fd7d99266bee52f89f",
+          "version": "4.0.0-rc.1"
         }
       },
       {
@@ -165,7 +156,7 @@
       },
       {
         "package": "swift-backtrace",
-        "repositoryURL": "https://github.com/ianpartridge/swift-backtrace.git",
+        "repositoryURL": "https://github.com/swift-server/swift-backtrace.git",
         "state": {
           "branch": null,
           "revision": "eaf2cef011c0c23d1701aa60b364def8015dc3c7",
@@ -249,8 +240,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "c911da17e52788fcd3e0b8494c11e99c7afdfb78",
-          "version": "4.0.0-beta.4"
+          "revision": "46c3db00c5eef7dd908855d5cf2b9cb48f4e882c",
+          "version": "4.0.0-rc.1.3"
         }
       },
       {
@@ -258,8 +249,8 @@
         "repositoryURL": "https://github.com/vapor/websocket-kit.git",
         "state": {
           "branch": null,
-          "revision": "670e757f21cc8f1f76a04baac72f72ea1590e18d",
-          "version": "2.0.0-beta.2.5"
+          "revision": "aac462481bcd3039d5db9a0fbe7f4e47eefe2295",
+          "version": "2.0.0-rc.1"
         }
       },
       {
