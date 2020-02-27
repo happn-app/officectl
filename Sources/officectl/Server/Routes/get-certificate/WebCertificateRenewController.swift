@@ -10,12 +10,12 @@ import Foundation
 	import FoundationNetworking
 #endif
 
+import GenericJSON
 import OfficeKit
 import URLRequestOperation
 import Vapor
 
 import COpenSSL
-import GenericJSON
 
 
 
