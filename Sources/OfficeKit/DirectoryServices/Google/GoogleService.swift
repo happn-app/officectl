@@ -7,9 +7,9 @@
 
 import Foundation
 
+import Crypto
 import GenericJSON
 import NIO
-import OpenCrypto
 import SemiSingleton
 import ServiceKit
 

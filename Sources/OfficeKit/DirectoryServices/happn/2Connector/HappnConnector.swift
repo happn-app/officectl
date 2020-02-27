@@ -10,7 +10,7 @@ import Foundation
 	import FoundationNetworking
 #endif
 
-import OpenCrypto
+import Crypto
 import URLRequestOperation
 
 

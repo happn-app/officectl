@@ -7,7 +7,7 @@
 
 import Foundation
 
-import OpenCrypto
+import Crypto
 import RetryingOperation
 
 

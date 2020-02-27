@@ -9,7 +9,7 @@ var platformDependentOfficeKitDependencies = [Target.Dependency]()
 var platformDependentOfficectlDependencies = [Target.Dependency]()
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)
-platformDependentTargets.append(.target(name: "officectl_odproxy", dependencies: ["OfficeKit", "Vapor", "Yaml", "JWTKit", "LegibleError", "GenericJSON"]))
+platformDependentTargets.append(.target(name: "officectl_odproxy", dependencies: ["OfficeKit", "Crypto", "Vapor", "Yaml", "JWTKit", "LegibleError", "GenericJSON"]))
 platformDependentProducts.append(.executable(name: "officectl_odproxy", targets: ["officectl_odproxy"]))
 #endif
 
@@ -65,10 +65,10 @@ let package = Package(
 		.package(url: "https://github.com/happn-tech/SemiSingleton.git", from: "2.0.0"),
 		.package(url: "https://github.com/apple/swift-nio.git", from: "2.6.0"),
 		.package(url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
+		.package(url: "https://github.com/apple/swift-crypto.git", from: "1.0.0"),
 		.package(url: "https://github.com/klaas/Guaka.git", .upToNextMinor(from: "0.3.0")),
 		.package(url: "https://github.com/vapor/leaf.git", from: "4.0.0-beta"),
 		.package(url: "https://github.com/vapor/vapor.git", from: "4.0.0-beta"),
-		.package(url: "https://github.com/vapor/open-crypto.git", from: "4.0.0-beta"),
 //		.package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
 		.package(url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
 		.package(url: "https://github.com/vapor/jwt-kit.git", from: "4.0.0-beta"),
@@ -93,7 +93,7 @@ let package = Package(
 				/* happn dependencies */
 				"RetryingOperation", "URLRequestOperation", "SemiSingleton", "EmailValidator",
 				/* External dependencies */
-				"NIO", "Logging", "OpenCrypto", "GenericJSON", "Yaml"
+				"NIO", "Logging", "Crypto", "GenericJSON", "Yaml"
 			] + platformDependentOfficeKitDependencies
 		),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
@@ -101,7 +101,7 @@ let package = Package(
 		.target(
 			name: "officectl",
 			dependencies:
-				["OfficeKit", "COpenSSL", "Vapor", "Leaf", "OpenCrypto", "ConsoleKit", "Guaka", "Yaml", "JWTKit", "LegibleError"] +
+				["OfficeKit", "Crypto", "COpenSSL", "Vapor", "Leaf", "ConsoleKit", "Guaka", "Yaml", "JWTKit", "LegibleError"] +
 				platformDependentOfficectlDependencies,
 			linkerSettings: [.linkedLibrary("ncurses", .when(platforms: [.macOS]))]
 		)

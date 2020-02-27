@@ -7,8 +7,8 @@
 
 import Foundation
 
+import Crypto
 import NIO
-import OpenCrypto
 import SemiSingleton
 import ServiceKit
 
