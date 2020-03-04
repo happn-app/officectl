@@ -66,7 +66,7 @@ private func handleOfficectlError(request: Request, chainingTo next: Responder, 
 		"errorDescription": is404 ? "This page was not found. Please go away!" : "\(error)"
 	]
 	
-	if request.url.path.components(separatedBy: "/").first == "api" {
+	if request.url.path.drop(while: { $0 == "/" }).hasPrefix("api/") {
 		let response = Response(status: status ?? .internalServerError, headers: (error as? Abort)?.headers ?? [:])
 		response.body = try .init(data: JSONEncoder().encode(error.asApiResponse(environment: request.application.environment)))
 		response.headers.replaceOrAdd(name: .contentType, value: "application/json; charset=utf-8")
