@@ -19,7 +19,8 @@ import OfficeKit
 
 func configure(_ app: Application) throws {
 	/* Let’s parse the CL arguments with Guaka (I did not find a way to do what I
-	 * wanted CLI-wise with Vapor) :( */
+	 * wanted CLI-wise with Vapor) :(
+	 * NOTE: I did not try again w/ Vapor 4… */
 	let cliParseResults = parse_cli(app)
 	configureSemiSingleton(cliParseResults.officectlConfig)
 	configureRetryingOperation(cliParseResults.officectlConfig)
@@ -35,18 +36,15 @@ func configure(_ app: Application) throws {
 	/* Tell the views we want to use Leaf as a renderer. */
 	app.views.use(.leaf)
 	
-	/* Register routes */
-	try setup_routes(app)
-	
 	/* Register middlewares */
 	app.middleware.use(AsyncErrorMiddleware(processErrorHandler: handleOfficectlError)) /* Catches errors and converts them to HTTP response */
 	app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory)) /* Serves files from the “Public” directory */
 	
-	/* Set preferred services (not available in Vapor 4 anymore?) */
-//	config.prefer(LeafRenderer.self, for: ViewRenderer.self)
-	
 	/* Set OfficeKit options */
 	WeakeningMode.defaultMode = .onSuccess(delay: 13*60) /* 13 minutes */
+	
+	/* Register the routes */
+	try setup_routes(app)
 	
 	/* Register the Guaka command wrapper. Guaka does the argument parsing
 	 * because I wasn’t able to do what I wanted with Vapor’s :(

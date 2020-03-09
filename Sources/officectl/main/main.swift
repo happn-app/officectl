@@ -18,9 +18,10 @@ do {
 	defer {application.shutdown()}
 	
 	try application.run()
-}
-catch {
+	
+} catch {
 	print("Error creating or running the App.", to: &stderrStream)
 	print("   error \(error.legibleLocalizedDescription)", to: &stderrStream)
 	exit(Int32((error as NSError).code))
+	
 }
