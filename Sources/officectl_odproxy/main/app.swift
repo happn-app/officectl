@@ -34,9 +34,10 @@ func app(_ env: Environment) throws -> Application {
 		throw InvalidArgumentError(message: "The --config-file or --verbose options can only be specified once. The config-file option requires an argument.")
 	}
 	
-	let app = Application(env)
-	try configureServices(app, forcedConfigPath: forcedConfigPath, verbose: verbose)
+	try LoggingSystem.bootstrap(from: &env)
 	
-	try boot(app)
+	let app = Application(env)
+	try configure(app, forcedConfigPath: forcedConfigPath, verbose: verbose)
+	
 	return app
 }

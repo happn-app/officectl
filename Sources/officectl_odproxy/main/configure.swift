@@ -14,7 +14,7 @@ import Yaml
 
 
 
-func configureServices(_ app: Application, forcedConfigPath: String?, verbose: Bool) throws {
+func configure(_ app: Application, forcedConfigPath: String?, verbose: Bool) throws {
 	configureURLRequestOperation(verbose)
 	configureRetryingOperation(verbose)
 	configureSemiSingleton(verbose)
