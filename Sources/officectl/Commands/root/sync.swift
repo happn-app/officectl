@@ -85,7 +85,7 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext, app
 			}
 			if !plan.usersToDelete.isEmpty {
 				printedSomething = true
-				textPlan += ConsoleText.newLine + "   - Users deletion (currently not implemented):" + ConsoleText.newLine
+				textPlan += ConsoleText.newLine + "   - Users deletion:" + ConsoleText.newLine
 				plan.usersToDelete.forEach{ textPlan += "      \(plan.service.shortDescription(fromUser: $0))".consoleText() + ConsoleText.newLine }
 			}
 			if !printedSomething {
@@ -102,53 +102,105 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext, app
 		/* Now let’s do the actual sync! */
 		try app.auditLogger.log(action: "Applying sync from service \(fromId) to \(toIds.joined(separator: ",")).", source: .cli)
 		
-		typealias UserSyncResult = (serviceId: String, userStr: String, creationResult: Result<String?, Error>)
 		let futures = plans.flatMap{ plan in
 			plan.usersToCreate.map{ user -> EventLoopFuture<UserSyncResult> in
 				let serviceId = plan.service.config.serviceId
 				let userStr = plan.service.shortDescription(fromUser: user)
-				do {
-					/* Create the user */
-					return try plan.service.createUser(user, using: app.services)
-					.flatMapThrowing{ user in
-						/* If the service we’re creating the user in is the auth
-						 * service, we also set a password on the user. */
-						guard serviceId == authServiceId else {return eventLoop.future(nil)}
-						
-						let newPass = generateRandomPassword()
-						let changePassAction = try plan.service.changePasswordAction(for: user, using: app.services)
-						return changePassAction.start(parameters: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)
-							.map{ newPass }
-					}
-					.flatMap{ $0 }
-					.map{ pass in Result<String?, Error>.success(pass) }.flatMapErrorThrowing{ error in Result<String?, Error>.failure(error) }
-					.map{ (serviceId, userStr, $0) }
-				} catch {
-					return eventLoop.future((serviceId, userStr, .failure(error)))
+				/* Create the user */
+				return eventLoop.future()
+				.flatMapThrowing{ _ in try plan.service.createUser(user, using: app.services) }
+				.flatMap{ $0 }
+				.flatMapThrowing{ user in
+					/* If the service we’re creating the user in is the auth
+					 * service, we also set a password on the user. */
+					guard serviceId == authServiceId else {return eventLoop.future(nil)}
+					
+					let newPass = generateRandomPassword()
+					let changePassAction = try plan.service.changePasswordAction(for: user, using: app.services)
+					return changePassAction.start(parameters: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)
+						.map{ newPass }
 				}
+				.flatMap{ $0 }
+				.map{ pass in Result<String?, Error>.success(pass) }.flatMapErrorThrowing{ error in Result<String?, Error>.failure(error) }
+				.map{ UserSyncResult.create(serviceId: serviceId, userStr: userStr, password: $0.successValue ?? nil, error: $0.failureValue) }
+			}
+			+
+			plan.usersToDelete.map{ user -> EventLoopFuture<UserSyncResult> in
+				let serviceId = plan.service.config.serviceId
+				let userStr = plan.service.shortDescription(fromUser: user)
+				/* Delete the user */
+				return eventLoop.future()
+				.flatMapThrowing{ _ in try plan.service.deleteUser(user, using: app.services) }
+				.flatMap{ $0 }
+				.map{ pass in Result<Void, Error>.success(()) }.flatMapErrorThrowing{ error in Result<Void, Error>.failure(error) }
+				.map{ UserSyncResult.delete(serviceId: serviceId, userStr: userStr, error: $0.failureValue) }
 			}
 		}
 		
-		return EventLoopFuture.waitAll(futures, eventLoop: eventLoop)
-		.map{ results in
+		return EventLoopFuture.whenAllComplete(futures, on: eventLoop)
+		.map{ resultsAll in
+			let results = resultsAll.compactMap{ $0.successValue }
+			let internalErrorFailures = resultsAll.compactMap{ $0.failureValue }
+			
 			context.console.info()
 			context.console.info("********* SYNC RESULTS *********")
-			for result in results.sorted(by: { ($0.successValue?.serviceId ?? "") < ($1.successValue?.serviceId ?? "") }) {
+			for internalError in internalErrorFailures {
+				context.console.error("Internal Error: Got error \(internalError) for a future that should not fail!", newLine: true)
+			}
+			for result in results.sorted() {
 				switch result {
-				case .success(let success):
-					let userCreationResult = success.creationResult
-					switch userCreationResult {
-					case .success(nil):       context.console.info("\(success.serviceId): created user \(success.userStr)", newLine: true)
-					case .success(let pass?): context.console.info("\(success.serviceId): created user \(success.userStr) w/ pass \(pass)", newLine: true)
-					case .failure(let error): context.console.error("\(success.serviceId): failed to create user \(success.userStr): \(error)", newLine: true)
-					}
-					
-				case .failure(let error):
-					context.console.error("Got error \(error) for a future that should not fail!", newLine: true)
+				case .create(serviceId: let serviceId, userStr: let userStr, password: nil, error: nil):       context.console.info("\(serviceId): created user \(userStr)", newLine: true)
+				case .create(serviceId: let serviceId, userStr: let userStr, password: let pass?, error: nil): context.console.info("\(serviceId): created user \(userStr) w/ pass \(pass)", newLine: true)
+				case .create(serviceId: let serviceId, userStr: let userStr, password: _, error: let error?):  context.console.error("\(serviceId): failed to create user \(userStr): \(error)", newLine: true)
+				case .delete(serviceId: let serviceId, userStr: let userStr, error: nil):                      context.console.info("\(serviceId): deleted user \(userStr)", newLine: true)
+				case .delete(serviceId: let serviceId, userStr: let userStr, error: let error?):               context.console.error("\(serviceId): failed to delete user \(userStr): \(error)", newLine: true)
 				}
 			}
 			context.console.info()
 		}
 	}
 	.flatMap{ $0 }
+}
+
+
+private enum UserSyncResult : Comparable {
+	
+	case create(serviceId: String, userStr: String, password: String?, error: Error?)
+	case delete(serviceId: String, userStr: String, error: Error?)
+	
+	static func <(lhs: UserSyncResult, rhs: UserSyncResult) -> Bool {
+		switch (lhs, rhs) {
+		case (.create(serviceId: let lhsServiceId, userStr: let lhsUserStr, password: _, error: _),
+				.create(serviceId: let rhsServiceId, userStr: let rhsUserStr, password: _, error: _)):
+			if lhsServiceId == rhsServiceId {return lhsUserStr < rhsUserStr}
+			return lhsServiceId < rhsServiceId
+			
+		case (.delete(serviceId: let lhsServiceId, userStr: let lhsUserStr, error: _),
+				.delete(serviceId: let rhsServiceId, userStr: let rhsUserStr, error: _)):
+			if lhsServiceId == rhsServiceId {return lhsUserStr < rhsUserStr}
+			return lhsServiceId < rhsServiceId
+			
+		case (.create, .delete):
+			return false
+			
+		case (.delete, .create):
+			return true
+		}
+	}
+	
+	static func ==(lhs: UserSyncResult, rhs: UserSyncResult) -> Bool {
+		switch (lhs, rhs) {
+		case (.create(serviceId: let lhsServiceId, userStr: let lhsUserStr, password: _, error: _),
+				.create(serviceId: let rhsServiceId, userStr: let rhsUserStr, password: _, error: _)):
+			return lhsServiceId == rhsServiceId && lhsUserStr == rhsUserStr
+			
+		case (.delete(serviceId: let lhsServiceId, userStr: let lhsUserStr, error: _),
+				.delete(serviceId: let rhsServiceId, userStr: let rhsUserStr, error: _)):
+			return lhsServiceId == rhsServiceId && lhsUserStr == rhsUserStr
+			
+		case (.create, .delete), (.delete, .create):
+			return false
+		}
+	}
+	
 }
