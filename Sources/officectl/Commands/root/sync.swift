@@ -53,9 +53,21 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext, app
 		}
 		
 		return try toDirectories.map{ toDirectory in
-			let directoryBlacklist = syncConfig.blacklistsByServiceId[toDirectory.config.serviceId] ?? []
-			let usersToCreate = try users.filter{ $0[toDirectory]   == .some(nil) }.compactMap{ try $0[fromDirectory]!?.hop(to: toDirectory).user }.filter{ !directoryBlacklist.contains(toDirectory.string(fromUserId: $0.userId)) }
-			let usersToDelete =     users.filter{ $0[fromDirectory] == .some(nil) }.compactMap{     $0[toDirectory]!?.user                        }.filter{ !directoryBlacklist.contains(toDirectory.string(fromUserId: $0.userId)) }
+			let toDirectoryBlacklist   = syncConfig.blacklistsByServiceId[toDirectory.config.serviceId]   ?? []
+			let fromDirectoryBlacklist = syncConfig.blacklistsByServiceId[fromDirectory.config.serviceId] ?? []
+			
+			let usersToCreate = try users
+				.filter{ $0[toDirectory] == .some(nil) }                                                      /* Multi-users w/o a value in the destination directory */
+				.compactMap{ $0[fromDirectory]! }                                                             /* W/ a value in the source directory */
+				.filter{ !fromDirectoryBlacklist.contains(fromDirectory.string(fromUserId: $0.user.userId)) } /* Not blacklisted from source */
+				.map{ try $0.hop(to: toDirectory).user }                                                      /* Converted to destination directory */
+				.filter{ !toDirectoryBlacklist.contains(toDirectory.string(fromUserId: $0.userId)) }          /* Not blacklisted in destination either */
+			
+			let usersToDelete = users
+				.filter{ $0[fromDirectory] == .some(nil) }                                           /* Multi-users w/o a value in the source directory */
+				.compactMap{ $0[toDirectory]!?.user }                                                /* W/ a value in the destination directory */
+				.filter{ !toDirectoryBlacklist.contains(toDirectory.string(fromUserId: $0.userId)) } /* Not blacklisted in destination */
+			
 			return ServiceSyncPlan(service: toDirectory, usersToCreate: usersToCreate, usersToDelete: usersToDelete)
 		}
 	}
