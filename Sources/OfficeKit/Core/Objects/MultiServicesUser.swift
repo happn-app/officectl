@@ -18,7 +18,6 @@ extension MultiServicesUser {
 	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) throws -> EventLoopFuture<MultiServicesUser> {
 		#warning("TODO: Properties to fetch")
 		let eventLoop = try depServices.eventLoop()
-		let servicesById = try services.group(by: { $0.config.serviceId })
 		
 		var allFetchedUsers = [AnyUserDirectoryService: AnyDSUPair?]()
 		var allFetchedErrors = [AnyUserDirectoryService: [Error]]()
