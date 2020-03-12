@@ -73,21 +73,25 @@ public final class HappnService : UserDirectoryService {
 	}
 	
 	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> HappnUser {
-		if userWrapper.sourceServiceId == config.serviceId {
-			if let underlyingUser = userWrapper.underlyingUser {return try logicalUser(fromJSON: underlyingUser)}
-			else {
-				/* The generic user id from our service, but there is no underlying
-				 * user… Let’s create a HappnUser from the user id. */
-				return HappnUser(login: userWrapper.userId.id)
-			}
+		if userWrapper.sourceServiceId == config.serviceId, let underlyingUser = userWrapper.underlyingUser {
+			return try logicalUser(fromJSON: underlyingUser)
 		}
 		
 		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
 		
-		guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
-			throw InvalidArgumentError(message: "Cannot get an email from the user to create a HappnUser")
+		let inferredUserId: String?
+		if userWrapper.sourceServiceId == config.serviceId {
+			/* The underlying user (though absent) is from our service; the
+			 * original id can be decoded as a valid id for our service. */
+			inferredUserId = userWrapper.userId.id
+		} else {
+			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
+				throw InvalidArgumentError(message: "Cannot get an email from the user to create a HappnUser")
+			}
+			inferredUserId = email.stringValue
 		}
-		var res = HappnUser(login: email.stringValue)
+		
+		var res = HappnUser(login: inferredUserId)
 		if userWrapper.firstName != .unsupported {res.firstName = userWrapper.firstName}
 		if userWrapper.lastName  != .unsupported {res.lastName  = userWrapper.lastName}
 		if userWrapper.nickname  != .unsupported {res.nickname  = userWrapper.nickname}

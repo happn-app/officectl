@@ -86,24 +86,28 @@ public final class GoogleService : UserDirectoryService {
 	}
 	
 	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> GoogleUser {
-		if userWrapper.sourceServiceId == config.serviceId {
-			if let underlyingUser = userWrapper.underlyingUser {return try logicalUser(fromJSON: underlyingUser)}
-			else {
-				/* The generic user id from our service, but there is no underlying
-				 * user… Let’s create a GoogleUser from the user id. */
-				guard let email = Email(string: userWrapper.userId.id) else {
-					throw InvalidArgumentError(message: "Got an invalid id for a GoogleService user.")
-				}
-				return GoogleUser(email: email)
-			}
+		if userWrapper.sourceServiceId == config.serviceId, let underlyingUser = userWrapper.underlyingUser {
+			return try logicalUser(fromJSON: underlyingUser)
 		}
 		
 		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
 		
-		guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
-			throw InvalidArgumentError(message: "Cannot get an email from the user to create a GoogleUser")
+		let inferredUserId: Email
+		if userWrapper.sourceServiceId == config.serviceId {
+			/* The underlying user (though absent) is from our service; the
+			 * original id can be decoded as a valid id for our service. */
+			guard let email = Email(string: userWrapper.userId.id) else {
+				throw InvalidArgumentError(message: "Got an invalid id for a GoogleService user.")
+			}
+			inferredUserId = email
+		} else {
+			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
+				throw InvalidArgumentError(message: "Cannot get an email from the user to create a GoogleUser")
+			}
+			inferredUserId = email
 		}
-		var res = GoogleUser(email: email)
+		
+		var res = GoogleUser(email: inferredUserId)
 		if let otherEmails = userWrapper.otherEmails.value {res.aliases = .set(otherEmails)}
 		if let firstName = userWrapper.firstName.value.flatMap({ $0 }), let lastName = userWrapper.lastName.value.flatMap({ $0 }) {
 			res.name = .set(GoogleUser.Name(givenName: firstName, familyName: lastName, fullName: firstName + " " + lastName))

@@ -124,27 +124,35 @@ public final class OpenDirectoryService : UserDirectoryService {
 	}
 	
 	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> ODRecordOKWrapper {
-		if userWrapper.sourceServiceId == config.serviceId {
-			if let underlyingUser = userWrapper.underlyingUser {return try logicalUser(fromJSON: underlyingUser)}
-			else {
-				guard let dn = try? LDAPDistinguishedName(string: userWrapper.userId.id) else {
-					throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
-				}
-				return ODRecordOKWrapper(id: dn, identifyingEmail: nil, otherEmails: [])
-			}
+		if userWrapper.sourceServiceId == config.serviceId, let underlyingUser = userWrapper.underlyingUser {
+			return try logicalUser(fromJSON: underlyingUser)
 		}
 		
 		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
 		
-		guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
-			throw InvalidArgumentError(message: "Cannot get an email from the user to create an ODRecordOKWrapper")
+		let inferredUserId: LDAPDistinguishedName
+		if userWrapper.sourceServiceId == config.serviceId {
+			/* The underlying user (though absent) is from our service; the
+			 * original id can be decoded as a valid id for our service. */
+			guard let dn = try? LDAPDistinguishedName(string: userWrapper.userId.id) else {
+				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
+			}
+			inferredUserId = dn
+		} else {
+			/* The given user comes from another service. Let’s try and infer an id
+			 * from this user, using its email. */
+			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
+				throw InvalidArgumentError(message: "Cannot get an email from the user to create an ODRecordOKWrapper")
+			}
+			guard let dn = config.baseDNs.dn(fromEmail: email) else {
+				throw InvalidArgumentError(message: "Cannot get dn from \(email).")
+			}
+			inferredUserId = dn
 		}
-		guard let dn = config.baseDNs.dn(fromEmail: email) else {
-			throw InvalidArgumentError(message: "Cannot get dn from \(email).")
-		}
+		
 		let lastName = userWrapper.lastName.value?.flatMap{ $0 }
 		let firstName = userWrapper.firstName.value?.flatMap{ $0 }
-		return ODRecordOKWrapper(id: dn, identifyingEmail: email, otherEmails: Array(userWrapper.emails.dropFirst()), firstName: firstName, lastName: lastName)
+		return ODRecordOKWrapper(id: inferredUserId, identifyingEmail: userWrapper.identifyingEmail.value?.flatMap{ $0 }, otherEmails: userWrapper.otherEmails.value ?? [], firstName: firstName, lastName: lastName)
 	}
 	
 	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout ODRecordOKWrapper, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {

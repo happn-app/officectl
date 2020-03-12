@@ -110,28 +110,34 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 	}
 	
 	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> LDAPInetOrgPersonWithObject {
-		if userWrapper.sourceServiceId == config.serviceId {
-			if let underlyingUser = userWrapper.underlyingUser {return try logicalUser(fromJSON: underlyingUser)}
-			else {
-				guard let dn = try? LDAPDistinguishedName(string: userWrapper.userId.id) else {
-					throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
-				}
-				return LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: [], cn: []))
-			}
+		if userWrapper.sourceServiceId == config.serviceId, let underlyingUser = userWrapper.underlyingUser {
+			return try logicalUser(fromJSON: underlyingUser)
 		}
 		
 		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
 		
-		guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
-			throw InvalidArgumentError(message: "Cannot get an email from the user to create an LDAPInetOrgPersonWithObject")
+		let inferredUserId: LDAPDistinguishedName
+		if userWrapper.sourceServiceId == config.serviceId {
+			/* The underlying user (though absent) is from our service; the
+			 * original id can be decoded as a valid id for our service. */
+			guard let dn = try? LDAPDistinguishedName(string: userWrapper.userId.id) else {
+				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
+			}
+			inferredUserId = dn
+		} else {
+			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
+				throw InvalidArgumentError(message: "Cannot get an email from the user to create an LDAPInetOrgPersonWithObject")
+			}
+			guard let dn = config.baseDNs.dn(fromEmail: email) else {
+				throw InvalidArgumentError(message: "Cannot get dn from \(email).")
+			}
+			inferredUserId = dn
 		}
-		guard let dn = config.baseDNs.dn(fromEmail: email) else {
-			throw InvalidArgumentError(message: "Cannot get dn from \(email).")
-		}
+		
 		let lastName = userWrapper.lastName.value?.flatMap{ $0 }
 		let firstName = userWrapper.firstName.value?.flatMap{ $0 }
 		let fullname = fullNameFrom(firstName: firstName, lastName: lastName)
-		let ret = LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: dn, sn: lastName.flatMap{ [$0] } ?? [], cn: fullname.flatMap{ [$0] } ?? []))
+		let ret = LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: inferredUserId, sn: lastName.flatMap{ [$0] } ?? [], cn: fullname.flatMap{ [$0] } ?? []))
 		ret.inetOrgPerson.givenName = firstName.flatMap{ [$0] } ?? []
 		ret.inetOrgPerson.mail = userWrapper.emails
 		return ret

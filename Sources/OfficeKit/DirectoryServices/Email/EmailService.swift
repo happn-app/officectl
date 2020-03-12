@@ -66,22 +66,28 @@ public final class EmailService : UserDirectoryService {
 	}
 	
 	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> EmailUser {
-		if userWrapper.sourceServiceId == config.serviceId {
-			if let underlyingUser = userWrapper.underlyingUser {return try logicalUser(fromJSON: underlyingUser)}
-			else {
-				guard let email = Email(string: userWrapper.userId.id) else {
-					throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid email.")
-				}
-				return EmailUser(userId: email)
-			}
+		if userWrapper.sourceServiceId == config.serviceId, let underlyingUser = userWrapper.underlyingUser {
+			return try logicalUser(fromJSON: underlyingUser)
 		}
 		
 		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
 		
-		guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
-			throw InvalidArgumentError(message: "Cannot get an email from the wrapped user to create an EmailUser")
+		let inferredUserId: Email
+		if userWrapper.sourceServiceId == config.serviceId {
+			/* The underlying user (though absent) is from our service; the
+			 * original id can be decoded as a valid id for our service. */
+			guard let email = Email(string: userWrapper.userId.id) else {
+				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid email.")
+			}
+			inferredUserId = email
+		} else {
+			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
+				throw InvalidArgumentError(message: "Cannot get an email from the wrapped user to create an EmailUser")
+			}
+			inferredUserId = email
 		}
-		return EmailUser(userId: email)
+		
+		return EmailUser(userId: inferredUserId)
 	}
 	
 	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout EmailUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {

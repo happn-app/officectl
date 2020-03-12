@@ -77,19 +77,35 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	}
 	
 	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> DirectoryUserWrapper {
-		if userWrapper.sourceServiceId == config.serviceId {
-			if let underlyingUser = userWrapper.underlyingUser {return try logicalUser(fromJSON: underlyingUser)}
-			else                                               {return DirectoryUserWrapper(userId: TaggedId(string: userWrapper.userId.id))}
+		if userWrapper.sourceServiceId == config.serviceId, let underlyingUser = userWrapper.underlyingUser {
+			return try logicalUser(fromJSON: underlyingUser)
 		}
 		
 		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
 		
-		for s in config.wrappedUserToUserIdConversionStrategies {
-			if let id = try? s.convertUserToId(userWrapper, globalConfig: globalConfig) {
-				return DirectoryUserWrapper(userId: TaggedId(string: id))
+		let inferredUserId: TaggedId
+		if userWrapper.sourceServiceId == config.serviceId {
+			/* The underlying user (though absent) is from our service; the
+			 * original id can be decoded as a valid id for our service. */
+			inferredUserId = TaggedId(string: userWrapper.userId.id)
+		} else {
+			var idStr: String?
+			for s in config.wrappedUserToUserIdConversionStrategies where idStr == nil {
+				idStr = try? s.convertUserToId(userWrapper, globalConfig: globalConfig)
 			}
+			guard let foundIdStr = idStr else {
+				throw InvalidArgumentError(message: "No conversion strategy matches user \(userWrapper)")
+			}
+			inferredUserId = TaggedId(string: foundIdStr)
 		}
-		throw InvalidArgumentError(message: "No conversion strategy matches user \(userWrapper)")
+		
+		var ret = DirectoryUserWrapper(userId: inferredUserId)
+		ret.identifyingEmail = userWrapper.identifyingEmail
+		ret.otherEmails = userWrapper.otherEmails
+		ret.firstName = userWrapper.firstName
+		ret.lastName = userWrapper.lastName
+		ret.nickname = userWrapper.nickname
+		return ret
 	}
 	
 	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout DirectoryUserWrapper, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
