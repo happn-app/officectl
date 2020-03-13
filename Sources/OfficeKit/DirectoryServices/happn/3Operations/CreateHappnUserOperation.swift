@@ -45,6 +45,10 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 				throw InvalidArgumentError(message: "Cannot create an admin user without the password of the admin creating the account (non user/pass connectors are not supported)")
 			}
 			
+			guard self.user.password.value != nil else {
+				throw InvalidArgumentError(message: "A user must be created w/ a password (or we get a weird error when creating the account, and the account is unusable though it appear to exist)")
+			}
+			
 			var urlComponents = URLComponents(url: URL(string: "api/users/", relativeTo: self.connector.baseURL)!, resolvingAgainstBaseURL: true)!
 			urlComponents.queryItems = [
 				URLQueryItem(name: "fields", value: "id,first_name,last_name,acl,login,nickname")

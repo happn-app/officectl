@@ -242,6 +242,15 @@ public final class HappnService : UserDirectoryService {
 		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
+		var user = user
+		if user.password.value == nil {
+			/* Creating a user without a password is not possible. Let’s generate a
+			 * password! A long and complex one. */
+			OfficeKitConfig.logger?.warning("Auto-generating a random password for happn user creation: creating a happn user w/o a password is not supported.")
+			let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789=+_-$!@#%^&*(){}[]'\\\";:/?.>,<§"
+			user.password = .set(String((0..<64).map{ _ in chars.randomElement()! }))
+		}
+		
 		return happnConnector.connect(scope: CreateHappnUserOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let op = CreateHappnUserOperation(user: user, connector: happnConnector)
