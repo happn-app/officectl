@@ -14,6 +14,9 @@ import OfficeKit
 
 
 
+private struct NoSyncActions : Error {}
+
+
 private struct ServiceSyncPlan {
 	
 	var service: AnyUserDirectoryService
@@ -73,6 +76,11 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext, app
 	}
 	.flatMapThrowing{ (plans: [ServiceSyncPlan]) -> [ServiceSyncPlan] in
 		/* Let’s verify the user is ok with the plan */
+		guard !plans.reduce([], { $0 + $1.usersToCreate + $1.usersToDelete }).isEmpty else {
+			context.console.info("Everything is in sync.")
+			throw NoSyncActions()
+		}
+		
 		var textPlan = "********* SYNC PLAN *********" + ConsoleText.newLine
 		for plan in plans.sorted(by: { $0.service.config.serviceName < $1.service.config.serviceName }) {
 			textPlan += ConsoleText.newLine + ConsoleText.newLine + "*** For service \(plan.service.config.serviceName) (id=\(plan.service.config.serviceId))".consoleText() + ConsoleText.newLine
@@ -160,6 +168,12 @@ func sync(flags f: Flags, arguments args: [String], context: CommandContext, app
 		}
 	}
 	.flatMap{ $0 }
+	.flatMapErrorThrowing{ error in
+		guard error is NoSyncActions else {
+			throw error
+		}
+		return ()
+	}
 }
 
 
