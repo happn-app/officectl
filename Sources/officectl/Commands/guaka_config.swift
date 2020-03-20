@@ -115,7 +115,10 @@ func parse_cli(_ app: Application) -> GuakaCommandParseResult {
 		Flag(longName: "disabled-email-suffix",        type: String.self, description: "When downloading the drive, if the username of the email has the given suffix, the resulting destination will be the same email without the suffix in the username. The drives to backup given will be searched with and without the suffix.", required: false),
 		
 		Flag(longName: "erase-downloaded-files",       value: false,      description: "Whether to remove the files from the drive after downloading them. If a file is shared it will be also removed! A log file will contain all the shared files that have been removed, with the list of people w/ access to the files."),
+		
 		Flag(longName: "path-filters",                 type: String.self, description: "Only download files matching the given comma-separated filters. The filters are applied on the full paths of the files. If any path matches (case-insensitive match), the file will be downloaded. The filter is NOT a regex; only a basic case-insensitive string match will be done, however if the filter starts with a ^ the filter will have to match the beginning of the path. It is thus impossible to specify a filter either starting with ^ or containing a comma.", required: false),
+		Flag(longName: "skip-other-owner",             value: false,      description: "Do not download files not owned by the user, even if they take quota for the user."),
+		Flag(longName: "no-skip-zero-quota-files",     value: false,      description: "Also download files not taking any quota for the user."),
 		
 		Flag(longName: "archive",                      value: false,      description: "Whether to archive the backup (create a tar bz2 file and remove the directory)."),
 		Flag(longName: "no-skip-if-archive-exists",    value: false,      description: "Ignored when not archiving. If the archive for an email already exists, do NOT skip the backup for this email, overwrite the existing archive."),

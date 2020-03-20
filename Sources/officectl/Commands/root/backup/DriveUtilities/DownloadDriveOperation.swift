@@ -21,7 +21,7 @@ class DownloadDriveOperation : RetryingOperation {
 	
 	private(set) var error: Error? = OperationIsNotFinishedError()
 	
-	init(googleConnector: GoogleJWTConnector, eventLoop: EventLoop, status: DownloadDrivesStatusActivity, userAndDest: GoogleUserAndDest, filters: [String]?, eraseDownloadedFiles: Bool, downloadFilesQueue dfq: OperationQueue) throws {
+	init(googleConnector: GoogleJWTConnector, eventLoop: EventLoop, status: DownloadDrivesStatusActivity, userAndDest: GoogleUserAndDest, filters: [String]?, skipOtherOwner: Bool, skipZeroQuotaFiles: Bool, eraseDownloadedFiles: Bool, downloadFilesQueue dfq: OperationQueue) throws {
 		downloadFilesQueue = dfq
 		
 		let dateFormatter = ISO8601DateFormatter()
@@ -35,6 +35,8 @@ class DownloadDriveOperation : RetryingOperation {
 			status: status,
 			logFile: try LogFile(url: userAndDest.downloadDestination.appendingPathComponent(" logs - \(dateStr).csv", isDirectory: false), csvHeader: ["File ID", "Key", "Value"]),
 			filters: filters,
+			skipOtherOwner: skipOtherOwner,
+			skipZeroQuotaFiles: skipZeroQuotaFiles,
 			eraseDownloadedFiles: eraseDownloadedFiles,
 			userAndDest: userAndDest,
 			driveDestinationBaseURL: userAndDest.downloadDestination.appendingPathComponent("Drive", isDirectory: true),
@@ -119,8 +121,10 @@ class DownloadDriveOperation : RetryingOperation {
 					let mimeType = file.mimeType ?? ""
 					let bytes = file.size.flatMap{ Int($0) } ?? 0
 					let quota = file.quotaBytesUsed.flatMap({ Int($0) })
+					let isSkippedBecauseOfOwner = self.state.skipOtherOwner && !file.ownedByMe
 					let isFobiddenMimeType = mimeType.starts(with: "application/vnd.google-apps.")
-					guard !isFobiddenMimeType && (file.ownedByMe || quota == nil || quota! > 0) else {
+					let isSkippedBecauseOfQuota = self.state.skipZeroQuotaFiles && quota != nil && quota! <= 0 /* If quota is nil we don’t skip; we consider we just do not have the quota but it might be non-zero */
+					guard !isFobiddenMimeType && !isSkippedBecauseOfOwner && !isSkippedBecauseOfQuota else {
 						nFilesIgnored += 1
 						nBytesIgnored += bytes
 						continue
