@@ -39,7 +39,7 @@ platformDependentOfficeKitDependencies.append("JWTKit")
  *    PKG_CONFIG_PATH="$PKG_CONFIG_PATH:`brew --prefix openssl@1.1`/lib/pkgconfig:$(pwd)/Configs/pkgconfig" xed .
  * … or simply `xed .` if your `PKG_CONFIG_PATH` is already correctly set. */
 let openLDAPTarget: Target
-#if os(macOS) /* Probably iOS, watchOS and tvOS too, but I’m not sure and we do not really care… */
+#if os(macOS) /* Probably iOS, watchOS and tvOS too, but I’m not sure and we do not really care for now… */
 /* On macOS we use a custom-made auto-generated pkg-config file for OpenLDAP
  * (because the upstream did not do a pkg-config file). */
 openLDAPTarget = .systemLibrary(name: "COpenLDAP", pkgConfig: "openldap", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])])
