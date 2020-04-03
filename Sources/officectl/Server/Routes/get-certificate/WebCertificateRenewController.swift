@@ -177,7 +177,11 @@ class WebCertificateRenewController {
 			return EventLoopFuture<URL>.future(from: tarOp, on: req.eventLoop, queue: defaultOperationQueueForFutureSupport, resultRetriever: { _ in if let error = failure {throw error}; return tarURL })
 		}
 		.map{ url in
-			return req.fileio.streamFile(at: url.path)
+			let certificateFileName = "certificates_happn_\(renewedCommonName)"
+			let res = req.fileio.streamFile(at: url.path)
+			res.headers.contentType = .binary
+			res.headers.contentDisposition = .init(.attachment, name: certificateFileName, filename: certificateFileName + ".tar.bz2")
+			return res
 		}
 	}
 	
