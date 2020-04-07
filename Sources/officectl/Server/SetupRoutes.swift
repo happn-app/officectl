@@ -52,6 +52,12 @@ func setup_routes(_ app: Application) throws {
 	app.get("get-certificate", use: webCertificateRenewController.showLogin)
 	app.post("get-certificate", use: webCertificateRenewController.renewCertificate)
 	
+	/* ******** Temporary get licenses page ******** */
+	
+	let getLicensesController = GetLicensesController()
+	app.get("get-licenses", use: getLicensesController.showLogin)
+	app.post("get-licenses", use: getLicensesController.getLicenses)
+	
 	/* ******** Temporary test iOS devices list ******** */
 	
 	let iOSTestDevicesController = IosTestDevicesController()
