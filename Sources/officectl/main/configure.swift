@@ -55,7 +55,7 @@ func configure(_ app: Application) throws {
 
 
 private func handleOfficectlError(request: Request, chainingTo next: Responder, error: Error) throws -> EventLoopFuture<Response> {
-	#warning("TODO: Log the error")
+	request.logger.error("Error processing request: \(error.legibleLocalizedDescription)")
 	
 	let status = (error as? Abort)?.status
 	let is404 = status?.code == 404
