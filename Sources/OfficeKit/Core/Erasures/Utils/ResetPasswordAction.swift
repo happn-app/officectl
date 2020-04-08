@@ -25,10 +25,19 @@ public protocol ResetPasswordAction/* : AnyAction where ParametersType == String
 	var latestParameters: String? {get}
 	var result: Result<Void, Error>? {get}
 	
-	func start(parameters: String, weakeningMode: WeakeningMode, eventLoop: EventLoop) -> EventLoopFuture<Void>
-	func start(parameters: String, weakeningMode: WeakeningMode, handler: ((_ result: Result<Void, Error>) -> Void)?)
+	func start(parameters: String, weakeningMode: WeakeningMode, shouldJoinRunningAction: (_ currentParameters: String) -> Bool, eventLoop: EventLoop) -> EventLoopFuture<Void>
+	func start(parameters: String, weakeningMode: WeakeningMode, shouldJoinRunningAction: (_ currentParameters: String) -> Bool, handler: ((_ result: Result<Void, Error>) -> Void)?)
 	
 	func weaken() throws
 	func clearLatestParameters() throws
+	
+}
+
+
+public extension ResetPasswordAction {
+	
+	func start(parameters newPass: String, weakeningMode: WeakeningMode, eventLoop: EventLoop) -> EventLoopFuture<Void> {
+		return start(parameters: newPass, weakeningMode: weakeningMode, shouldJoinRunningAction: { currentResetPassword in newPass == currentResetPassword }, eventLoop: eventLoop)
+	}
 	
 }

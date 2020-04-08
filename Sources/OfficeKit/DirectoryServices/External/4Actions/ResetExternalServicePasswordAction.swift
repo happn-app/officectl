@@ -15,7 +15,7 @@ import SemiSingleton
 
 
 
-public class ResetExternalServicePasswordAction : Action<TaggedId, String, Void>, ResetPasswordAction, SemiSingleton {
+public final class ResetExternalServicePasswordAction : Action<TaggedId, String, Void>, ResetPasswordAction, SemiSingleton {
 	
 	public typealias SemiSingletonKey = TaggedId
 	public typealias SemiSingletonAdditionalInitInfo = (URL, ExternalServiceAuthenticator, JSONEncoder, JSONDecoder)

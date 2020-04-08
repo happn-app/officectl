@@ -16,7 +16,7 @@ import ServiceKit
 
 
 
-public class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedName, String, Void>, ResetPasswordAction, SemiSingleton {
+public final class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedName, String, Void>, ResetPasswordAction, SemiSingleton {
 	
 	public static func additionalInfo(from services: Services) throws -> OpenDirectoryConnector {
 		return try services.semiSingleton(forKey: services.make())

@@ -33,9 +33,9 @@ not have all the conveniences the Operations do (dependencies, queues, etc.). An
 Action is not in itself a SemiSingleton, however it is more or less expected
 that subclasses are. In particular, an Action has an option to keep a strong
 reference to itself, and automatically clear it at a given point in time. */
-public class Action<SubjectType, ParametersType, ResultType> : AnyAction {
+open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	
-	public var isExecuting: Bool {
+	public final var isExecuting: Bool {
 		return stateSyncQueue.sync{ currentState.isRunning }
 	}
 	
@@ -48,14 +48,14 @@ public class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	possible to have a non executing weak action.
 	
 	A weak action does not have a result. */
-	public var isWeak: Bool {
+	public final var isWeak: Bool {
 		return stateSyncQueue.sync{ currentState.isWeak }
 	}
 	
-	public let subject: SubjectType
-	public var latestParameters: ParametersType?
+	public final let subject: SubjectType
+	public final var latestParameters: ParametersType?
 	
-	public var result: Result<ResultType, Error>? {
+	public final var result: Result<ResultType, Error>? {
 		return stateSyncQueue.sync{
 			switch currentState {
 			case .running, .idleWeak:                                             return nil
@@ -77,34 +77,54 @@ public class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	/**
 	Start the action.
 	
-	If you try to start a running operation, the handler will be called with an
-	error.
+	If you try to start a running action, the shouldJoinRunningAction will be
+	called with the parameters w/ which the action is currently running. You can
+	decide whether to join the action and get your handler called when the
+	operation is over, but the parameters won’t change.
+	You can for instance join the action to relaunch it w/ your parameters in the
+	end handler.
+	If you decide _not_ to join the action, your end handler will be called w/ an
+	`OperationAlreadyInProgressError` error.
 	
-	Never assume the handler will be called asynchronously.
+	Never assume the end handler will be called asynchronously.
 	
-	When the handler is called, the state of the action will either be idleWeak
-	or idleStrong (you decide with the weakeningMode parameter).
+	When the end handler is called, the state of the action will either be
+	idleWeak or idleStrong (you decide with the weakeningMode parameter).
 	
 	- important: If you weaken the action instantly (`nil` delay, which is the
 	default), the only way to retrieve the result of the action is through the
 	handler given as argument of this method. A weak action always have a `nil`
 	result. */
-	public final func start(parameters: ParametersType, weakeningMode: WeakeningMode = WeakeningMode.defaultMode, handler: ((_ result: Result<ResultType, Error>) -> Void)?) {
-		/* Set ourselves running if not already running, fail start otherwise. */
-		let wasAlreadyRunning = stateSyncQueue.sync{ () -> Bool in
-			guard !currentState.isRunning else {return true}
+	public final func start(parameters: ParametersType, weakeningMode: WeakeningMode = WeakeningMode.defaultMode, shouldJoinRunningAction: (_ currentParameters: ParametersType) -> Bool = { _ in false }, handler: ((_ result: Result<ResultType, Error>) -> Void)?) {
+		/* Pre-checks before running the action */
+		let (wasRunning, shouldFailLaunch) = stateSyncQueue.sync{ () -> (Bool, Bool) in
+			guard !currentState.isRunning else {
+				/* If we’re running, let’s check whether the client wants to join
+				 * the currently running action and be called when we’re done. */
+				if shouldJoinRunningAction(self.latestParameters!) {
+					if let h = handler {endHandlers.append(h)}
+					else               {OfficeKitConfig.logger?.warning("Asked to join a running action of type \(type(of: self)) for subject \(self.subject) but no handler given…")}
+					return (true, false)
+				} else {
+					return (true, true)
+				}
+			}
+			
+			assert(endHandlers.isEmpty)
+			if let h = handler {endHandlers.append(h)}
+			
 			currentState = .running(selfReference: self)
 			latestParameters = parameters
-			return false
+			return (false, false)
 		}
-		guard !wasAlreadyRunning else {
-			handler?(.failure(OperationAlreadyInProgressError()))
+		guard !wasRunning else {
+			if shouldFailLaunch {handler?(.failure(OperationAlreadyInProgressError()))}
 			return
 		}
 		
 		/* Handler when the action is over. */
 		let privateHandler = { (result: Result<ResultType, Error>) -> Void in
-			self.stateSyncQueue.sync{
+			let savedEndHandlers = self.stateSyncQueue.sync{ () -> Array<(_ result: Result<ResultType, Error>) -> Void> in
 				let weaken: Bool
 				let weakeningDelay: TimeInterval?
 				switch (weakeningMode, result) {
@@ -129,9 +149,14 @@ public class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 				} else {
 					self.currentState = .idleStrong(result: result, weakeningTimer: nil, selfReference: self)
 				}
+				
+				let savedEndHandlers = self.endHandlers
+				self.endHandlers = []
+				
+				return savedEndHandlers
 			}
 			
-			handler?(result)
+			savedEndHandlers.forEach{ $0(result) }
 		}
 		do {
 			/* Start the action */
@@ -179,7 +204,7 @@ public class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	
 	Call the handler when the action is done. You can call the handler
 	synchronously or asynchronously. */
-	public /* protected */ func unsafeStart(parameters: ParametersType, handler: @escaping (_ result: Result<ResultType, Error>) -> Void) throws {
+	open /* protected */ func unsafeStart(parameters: ParametersType, handler: @escaping (_ result: Result<ResultType, Error>) -> Void) throws {
 	}
 	
 	/* ***************
@@ -226,5 +251,7 @@ public class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 		willSet {currentState.timer?.cancel()}
 		didSet  {currentState.timer?.resume()}
 	}
+	/* **Must** be changed on the stateSyncQueue */
+	private var endHandlers = Array<(_ result: Result<ResultType, Error>) -> Void>()
 	
 }

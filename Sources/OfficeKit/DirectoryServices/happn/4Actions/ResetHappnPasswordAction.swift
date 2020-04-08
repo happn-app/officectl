@@ -13,7 +13,7 @@ import ServiceKit
 
 
 
-public class ResetHappnPasswordAction : Action<HappnUser, String, Void>, ResetPasswordAction, SemiSingleton {
+public final class ResetHappnPasswordAction : Action<HappnUser, String, Void>, ResetPasswordAction, SemiSingleton {
 	
 	public static func additionalInfo(from services: Services) throws -> HappnConnector {
 		return try (services.semiSingleton(forKey: services.make()))

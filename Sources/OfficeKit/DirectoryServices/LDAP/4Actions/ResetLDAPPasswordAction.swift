@@ -12,7 +12,7 @@ import ServiceKit
 
 
 
-public class ResetLDAPPasswordAction : Action<LDAPDistinguishedName, String, Void>, ResetPasswordAction, SemiSingleton {
+public final class ResetLDAPPasswordAction : Action<LDAPDistinguishedName, String, Void>, ResetPasswordAction, SemiSingleton {
 	
 	public static func additionalInfo(using services: Services) throws -> LDAPConnector {
 		return try services.semiSingleton(forKey: services.make())

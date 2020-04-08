@@ -18,7 +18,7 @@ public protocol AnyAction {
 	var latestParameters: ParametersType? {get}
 	var result: Result<ResultType, Error>? {get}
 	
-	func start(parameters: ParametersType, weakeningMode: WeakeningMode, handler: ((_ result: Result<ResultType, Error>) -> Void)?)
+	func start(parameters: ParametersType, weakeningMode: WeakeningMode, shouldJoinRunningAction: (_ currentParameters: ParametersType) -> Bool, handler: ((_ result: Result<ResultType, Error>) -> Void)?)
 	
 	func weaken() throws
 	func clearLatestParameters() throws

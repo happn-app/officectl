@@ -14,7 +14,7 @@ import ServiceKit
 
 
 
-public class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, ResetPasswordAction, SemiSingleton {
+public final class ResetGooglePasswordAction : Action<GoogleUser, String, Void>, ResetPasswordAction, SemiSingleton {
 	
 	public static func additionalInfo(from services: Services) throws -> GoogleJWTConnector {
 		return try (services.semiSingleton(forKey: services.make()))
