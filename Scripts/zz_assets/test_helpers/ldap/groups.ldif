@@ -1,0 +1,5 @@
+dn: ou=people,dc=happn,dc=test
+objectClass: top
+objectClass: organizationalUnit
+ou: people
+description: The people group
