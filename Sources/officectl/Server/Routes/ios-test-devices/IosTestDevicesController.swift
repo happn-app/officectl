@@ -40,7 +40,7 @@ final class IosTestDevicesController {
 		let token = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		let getDevicesAction: GetMDMDevicesAction = semiSingletonStore.semiSingleton(forKey: token)
-		return getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, eventLoop: req.eventLoop)
+		return getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: req.eventLoop)
 		.map{ devices in
 			devices.filter{ $0.relationships.deviceGroup.id == 61452 }.sorted(by: { $0.attributes.deviceName < $1.attributes.deviceName }).map{
 				DevicesContext.Device(

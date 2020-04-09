@@ -13,10 +13,16 @@ import NIO
 
 extension Action {
 	
-	public func start(parameters: ParametersType, weakeningMode: WeakeningMode = WeakeningMode.defaultMode, shouldJoinRunningAction: (_ currentParameters: ParametersType) -> Bool = { _ in false }, eventLoop: EventLoop) -> EventLoopFuture<ResultType> {
+	public func start(
+		parameters: ParametersType,
+		weakeningMode: WeakeningMode = WeakeningMode.defaultMode,
+		shouldJoinRunningAction: (_ currentParameters: ParametersType) -> Bool = { _ in false },
+		shouldRetrievePreviousRun: (_ previousParameters: ParametersType?, _ runWasSuccessful: Bool) -> Bool = { _, _ in false },
+		eventLoop: EventLoop
+	) -> EventLoopFuture<ResultType> {
 		let promise = eventLoop.makePromise(of: ResultType.self)
 		
-		start(parameters: parameters, weakeningMode: weakeningMode, shouldJoinRunningAction: shouldJoinRunningAction, handler: { result in
+		start(parameters: parameters, weakeningMode: weakeningMode, shouldJoinRunningAction: shouldJoinRunningAction, shouldRetrievePreviousRun: shouldRetrievePreviousRun, handler: { result in
 			switch result {
 			case .success(let r): promise.succeed(r)
 			case .failure(let e): promise.fail(e)

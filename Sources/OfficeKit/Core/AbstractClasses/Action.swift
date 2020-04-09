@@ -95,18 +95,32 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	default), the only way to retrieve the result of the action is through the
 	handler given as argument of this method. A weak action always have a `nil`
 	result. */
-	public final func start(parameters: ParametersType, weakeningMode: WeakeningMode = WeakeningMode.defaultMode, shouldJoinRunningAction: (_ currentParameters: ParametersType) -> Bool = { _ in false }, handler: ((_ result: Result<ResultType, Error>) -> Void)?) {
+	public final func start(
+		parameters: ParametersType,
+		weakeningMode: WeakeningMode = WeakeningMode.defaultMode,
+		shouldJoinRunningAction: (_ currentParameters: ParametersType) -> Bool = { _ in false },
+		shouldRetrievePreviousRun: (_ previousParameters: ParametersType?, _ runWasSuccessful: Bool) -> Bool = { _, _ in false },
+		handler: ((_ result: Result<ResultType, Error>) -> Void)?
+	) {
 		/* Pre-checks before running the action */
-		let (wasRunning, shouldFailLaunch) = stateSyncQueue.sync{ () -> (Bool, Bool) in
+		let (shouldLaunch, handlerCallArgument) = stateSyncQueue.sync{ () -> (Bool, Result<ResultType, Error>?) in
 			guard !currentState.isRunning else {
 				/* If we’re running, let’s check whether the client wants to join
 				 * the currently running action and be called when we’re done. */
 				if shouldJoinRunningAction(self.latestParameters!) {
 					if let h = handler {endHandlers.append(h)}
 					else               {OfficeKitConfig.logger?.warning("Asked to join a running action of type \(type(of: self)) for subject \(self.subject) but no handler given…")}
-					return (true, false)
+					return (false, nil)
 				} else {
-					return (true, true)
+					return (false, .failure(OperationAlreadyInProgressError()))
+				}
+			}
+			
+			if case .idleStrong(let r, _, _) = currentState {
+				/* If we’re not running but have a result from a previous run, let’s
+				 * see if the client wants to retrieve the result directly. */
+				guard !shouldRetrievePreviousRun(latestParameters, r.isSuccessful) else {
+					return (false, r)
 				}
 			}
 			
@@ -115,12 +129,10 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 			
 			currentState = .running(selfReference: self)
 			latestParameters = parameters
-			return (false, false)
+			return (true, nil)
 		}
-		guard !wasRunning else {
-			if shouldFailLaunch {handler?(.failure(OperationAlreadyInProgressError()))}
-			return
-		}
+		if let r = handlerCallArgument {handler?(r)}
+		guard shouldLaunch else {return}
 		
 		/* Handler when the action is over. */
 		let privateHandler = { (result: Result<ResultType, Error>) -> Void in
