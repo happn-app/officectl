@@ -72,19 +72,33 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	/**
 	Start the action.
 	
-	If you try to start a running action, the shouldJoinRunningAction will be
-	called with the parameters w/ which the action is currently running. You can
-	decide whether to join the action and get your handler called when the
-	operation is over, but the parameters won’t change.
-	You can for instance join the action to relaunch it w/ your parameters in the
-	end handler.
-	If you decide _not_ to join the action, your end handler will be called w/ an
-	`OperationAlreadyInProgressError` error.
+	If you try to start a running action, the `shouldJoinRunningAction` handler
+	will be called with the parameters w/ which the action is currently running.
+	You can decide whether to join the action and get your handler called when
+	the action is over, but the parameters won’t change.
+	You can for instance join the action to relaunch it w/ your parameters in
+	your end handler.
+	If you decide _not_ to join the action (the default), your end handler will
+	be called w/ an `OperationAlreadyInProgressError` error.
+	
+	If you try to start an action that has a result (the action is finished &
+	strong), the `shouldRetrievePreviousRun` handler will be called, with the
+	previous known parameters w/ which the action was run (might be `nil` because
+	the client can clear the latest parameters to free up some memory), and a
+	boolean set to whether the run was successful (`result.isSuccessful`).
+	If you decide _not_ to retrieve the previous results, the action will be run
+	again normally. Otherwise your end handler will be called w/ the current
+	result of the action.
+	This is the preferred method to run the action depending on the previous
+	result. Not doing that and instead checking the `result` value before
+	starting the action for instance, won’t be thread-safe and someone might
+	start the action before you. Or the action might get a result before you can
+	start it!
 	
 	Never assume the end handler will be called asynchronously.
 	
 	When the end handler is called, the state of the action will either be
-	idleWeak or idleStrong (you decide with the weakeningMode parameter).
+	`idleWeak` or `idleStrong` (you decide with the `weakeningMode` parameter).
 	
 	- important: If you weaken the action instantly (`nil` delay, which is the
 	default), the only way to retrieve the result of the action is through the
