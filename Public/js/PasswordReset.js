@@ -1,5 +1,3 @@
-/* Copied in CertificateRenewal basically. */
-
 function show_input_errors() {
 	var submit_button = document.getElementById("form_submit")
 	if (typeof submit_button === "undefined" || submit_button === null) {return}

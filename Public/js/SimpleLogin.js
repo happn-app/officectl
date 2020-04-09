@@ -1,5 +1,3 @@
-/* Copied from PasswordReset basically. */
-
 function show_input_errors() {
 	var submit_button = document.getElementById("login_form_submit")
 	if (typeof submit_button === "undefined" || submit_button === null) {return}
