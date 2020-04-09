@@ -56,12 +56,7 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	public final var latestParameters: ParametersType?
 	
 	public final var result: Result<ResultType, Error>? {
-		return stateSyncQueue.sync{
-			switch currentState {
-			case .running, .idleWeak:                                             return nil
-			case .idleStrong(result: let r, weakeningTimer: _, selfReference: _): return r
-			}
-		}
+		return stateSyncQueue.sync{ currentState.result }
 	}
 	
 	public init(subject s: SubjectType) {
@@ -116,7 +111,7 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 				}
 			}
 			
-			if case .idleStrong(let r, _, _) = currentState {
+			if let r = currentState.result {
 				/* If we’re not running but have a result from a previous run, let’s
 				 * see if the client wants to retrieve the result directly. */
 				guard !shouldRetrievePreviousRun(latestParameters, r.isSuccessful) else {
@@ -246,6 +241,13 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 			switch self {
 			case .idleWeak:             return true
 			case .running, .idleStrong: return false
+			}
+		}
+		
+		var result: Result<ResultType, Error>? {
+			switch self {
+			case .idleWeak, .running:                                             return nil
+			case .idleStrong(result: let r, weakeningTimer: _, selfReference: _): return r
 			}
 		}
 		
