@@ -14,7 +14,6 @@ struct DevicesContext : Encodable {
 	var devices: [Device]
 }
 #endcomment
-
 #extend("lib/Master"):
 
 
@@ -22,6 +21,9 @@ struct DevicesContext : Encodable {
 #export("title", "happn – List of iOS Test Devices")
 
 #export("additional_head_tags"):
+	#comment:
+	Copied in GetLicensesResult. See comment in the file.
+	#endcomment
 	<style>
 		table, th, td {
 			border: 1px solid black;

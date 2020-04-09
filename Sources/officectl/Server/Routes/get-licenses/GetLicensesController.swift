@@ -71,9 +71,15 @@ class GetLicensesController {
 			}
 			.flatMap{ $0 }
 		}
-		.flatMapThrowing{ licenses -> View in
-			print(licenses)
-			throw NotImplementedError()
+		.flatMap{ licenses -> EventLoopFuture<View> in
+			struct LicencesContext : Encodable {
+				var email: String
+				var columnNames: [String]
+				var licenses: [[String: String]]
+			}
+			
+			let context = LicencesContext(email: emailStr, columnNames: Array(licenses.reduce(Set<String>(), { $0.union($1.keys) })).sorted(), licenses: licenses)
+			return req.view.render("GetLicensesResult", context)
 		}
 	}
 	

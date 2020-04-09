@@ -35,6 +35,9 @@ func configure(_ app: Application) throws {
 //	app.register(LeafConfig.self, { app in return LeafConfig(rootDirectory: app.make(DirectoryConfiguration.self).viewsDirectory) })
 	/* Tell the views we want to use Leaf as a renderer. */
 	app.views.use(.leaf)
+	app.leaf.tags[IsEmptyLeafTag.name] = IsEmptyLeafTag()
+	app.leaf.tags[SnailCaseToHumanLeafTag.name] = SnailCaseToHumanLeafTag()
+	app.leaf.tags[DictionaryGetValueForDynKeyLeafTag.name] = DictionaryGetValueForDynKeyLeafTag()
 	
 	/* Register middlewares */
 	app.middleware.use(AsyncErrorMiddleware(processErrorHandler: handleOfficectlError)) /* Catches errors and converts them to HTTP response */
