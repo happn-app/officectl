@@ -18,9 +18,6 @@ func serverServe(flags f: Flags, arguments args: [String], context: CommandConte
 	let config = app.officectlConfig
 	let eventLoop = try app.services.make(EventLoop.self)
 	
-	var input = CommandInput(arguments: ["fake vapor", "--port", String(config.serverPort), "--hostname", config.serverHost])
-	let signature = try ServeCommand.Signature(from: &input)
-	
-	try app.server.command.run(using: context, signature: signature)
-	return eventLoop.makeSucceededFuture(())
+	try app.server.start(hostname: config.serverHost, port: config.serverPort)
+	return app.server.onShutdown.hop(to: eventLoop)
 }
