@@ -9,7 +9,14 @@ var platformDependentOfficeKitDependencies = [Target.Dependency]()
 var platformDependentOfficectlDependencies = [Target.Dependency]()
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)
-platformDependentTargets.append(.target(name: "officectl_odproxy", dependencies: ["OfficeKit", "Crypto", "Vapor", "Yaml", "JWTKit", "LegibleError", "GenericJSON"]))
+platformDependentTargets.append(.target(name: "officectl_odproxy", dependencies: [
+	"OfficeKit",
+	.product(name: "Crypto", package: "swift-crypto"),
+	.product(name: "Vapor", package: "vapor"),
+	"Yaml",
+	.product(name: "JWTKit", package: "jwt-kit"),
+	"LegibleError", "GenericJSON"
+]))
 platformDependentProducts.append(.executable(name: "officectl_odproxy", targets: ["officectl_odproxy"]))
 #endif
 
@@ -20,7 +27,9 @@ platformDependentOfficectlDependencies.append("CNCurses")
 
 #if !canImport(Security)
 /* See the Crypto.swift for this */
-platformDependentOfficeKitDependencies.append("JWTKit")
+platformDependentOfficeKitDependencies.append(
+	.product(name: "JWTKit", package: "jwt-kit")
+)
 #endif
 
 
@@ -60,22 +69,22 @@ let package = Package(
 		.executable(name: "officectl", targets: ["officectl"])
 	] + platformDependentProducts,
 	dependencies: [
-		.package(url: "https://github.com/happn-tech/URLRequestOperation.git", from: "1.1.7"),
-		.package(url: "https://github.com/happn-tech/RetryingOperation.git", from: "1.1.4"),
-		.package(url: "https://github.com/happn-tech/SemiSingleton.git", from: "2.0.0"),
-		.package(url: "https://github.com/apple/swift-nio.git", from: "2.6.0"),
-		.package(url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
-		.package(url: "https://github.com/apple/swift-crypto.git", from: "1.0.0"),
-		.package(url: "https://github.com/klaas/Guaka.git", .upToNextMinor(from: "0.3.0")),
-		.package(url: "https://github.com/vapor/leaf.git", from: "4.0.0-rc"),
-		.package(url: "https://github.com/vapor/vapor.git", from: "4.0.0-rc"),
-//		.package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
-		.package(url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
-		.package(url: "https://github.com/vapor/jwt-kit.git", from: "4.0.0-rc"),
-		.package(url: "https://github.com/vapor/console-kit.git", from: "4.0.0-rc"),
-		.package(url: "https://github.com/happn-tech/EmailValidator.git", .branch("master")),
-		.package(url: "https://github.com/zoul/generic-json-swift.git", from: "1.2.0"),
-		.package(url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0")
+		.package(                     url: "https://github.com/happn-tech/URLRequestOperation.git", from: "1.1.7"),
+		.package(                     url: "https://github.com/happn-tech/RetryingOperation.git", from: "1.1.4"),
+		.package(                     url: "https://github.com/happn-tech/SemiSingleton.git", from: "2.0.0"),
+		.package(                     url: "https://github.com/apple/swift-nio.git", from: "2.6.0"),
+		.package(                     url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
+		.package(                     url: "https://github.com/apple/swift-crypto.git", from: "1.0.0"),
+		.package(                     url: "https://github.com/klaas/Guaka.git", .upToNextMinor(from: "0.3.0")),
+		.package(                     url: "https://github.com/vapor/leaf.git", from: "4.0.0-rc"),
+		.package(                     url: "https://github.com/vapor/vapor.git", from: "4.0.0-rc"),
+//		.package(                     url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
+		.package(name: "Yaml",        url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
+		.package(                     url: "https://github.com/vapor/jwt-kit.git", from: "4.0.0-rc"),
+		.package(                     url: "https://github.com/vapor/console-kit.git", from: "4.0.0-rc"),
+		.package(                     url: "https://github.com/happn-tech/EmailValidator.git", .branch("master")),
+		.package(name: "GenericJSON", url: "https://github.com/zoul/generic-json-swift.git", from: "1.2.0"),
+		.package(                     url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0")
 	],
 	targets: [
 		openLDAPTarget,
@@ -93,7 +102,10 @@ let package = Package(
 				/* happn dependencies */
 				"RetryingOperation", "URLRequestOperation", "SemiSingleton", "EmailValidator",
 				/* External dependencies */
-				"NIO", "Logging", "Crypto", "GenericJSON", "Yaml"
+				.product(name: "NIO", package: "swift-nio"),
+				.product(name: "Logging", package: "swift-log"),
+				.product(name: "Crypto", package: "swift-crypto"),
+				"GenericJSON", "Yaml"
 			] + platformDependentOfficeKitDependencies
 		),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
@@ -101,8 +113,16 @@ let package = Package(
 		.target(
 			name: "officectl",
 			dependencies:
-				["OfficeKit", "Crypto", "COpenSSL", "Vapor", "Leaf", "ConsoleKit", "Guaka", "Yaml", "JWTKit", "LegibleError"] +
-				platformDependentOfficectlDependencies,
+				["OfficeKit",
+				 .product(name: "Crypto", package: "swift-crypto"),
+				 "COpenSSL",
+				 .product(name: "Vapor", package: "vapor"),
+				 .product(name: "Leaf", package: "leaf"),
+				 .product(name: "ConsoleKit", package: "console-kit"),
+				 "Guaka", "Yaml",
+				 .product(name: "JWTKit", package: "jwt-kit"),
+				 "LegibleError"
+			] + platformDependentOfficectlDependencies,
 			linkerSettings: [.linkedLibrary("ncurses", .when(platforms: [.macOS]))]
 		)
 		
