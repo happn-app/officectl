@@ -42,9 +42,9 @@ func configure(_ app: Application, forcedConfigPath: String?, verbose: Bool) thr
 		let serverHostname = try serverConfigYaml.optionalString(forKey: "hostname", currentKeyPath: ["Server Config"])
 		let serverPort = try serverConfigYaml.optionalInt(forKey: "port", currentKeyPath: ["Server Config"])
 		switch (serverHostname, serverPort) {
-		case (let hostname?, let port?): app.server.configuration.hostname = hostname; app.server.configuration.port = port
-		case (let hostname?, nil):       app.server.configuration.hostname = hostname
-		case (nil,           let port?): app.server.configuration.port = port
+		case (let hostname?, let port?): app.http.server.configuration.hostname = hostname; app.http.server.configuration.port = port
+		case (let hostname?, nil):       app.http.server.configuration.hostname = hostname
+		case (nil,           let port?): app.http.server.configuration.port = port
 		case (nil,           nil):       (/*nop*/)
 		}
 	}

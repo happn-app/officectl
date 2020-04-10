@@ -40,4 +40,8 @@ public extension ResetPasswordAction {
 		return start(parameters: newPass, weakeningMode: weakeningMode, shouldJoinRunningAction: { currentResetPassword in newPass == currentResetPassword }, shouldRetrievePreviousRun: { _, _ in false }, eventLoop: eventLoop)
 	}
 	
+	func start(parameters newPass: String, weakeningMode: WeakeningMode, handler: ((_ result: Result<Void, Error>) -> Void)?) {
+		return start(parameters: newPass, weakeningMode: weakeningMode, shouldJoinRunningAction: { currentResetPassword in newPass == currentResetPassword }, shouldRetrievePreviousRun: { _, _ in false }, handler: handler)
+	}
+	
 }
