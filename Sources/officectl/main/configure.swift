@@ -39,42 +39,15 @@ func configure(_ app: Application) throws {
 	app.leaf.tags[SnailCaseToHumanLeafTag.name] = SnailCaseToHumanLeafTag()
 	app.leaf.tags[DictionaryGetValueForDynKeyLeafTag.name] = DictionaryGetValueForDynKeyLeafTag()
 	
-	/* Register middlewares */
-	app.middleware.use(AsyncErrorMiddleware(processErrorHandler: handleOfficectlError)) /* Catches errors and converts them to HTTP response */
-	app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory)) /* Serves files from the “Public” directory */
-	
 	/* Set OfficeKit options */
 	WeakeningMode.defaultMode = .onSuccess(delay: 13*60) /* 13 minutes */
 	
-	/* Register the routes */
-	try setup_routes(app)
+	/* Register the routes and middlewares */
+	try setup_routes_and_middlewares(app)
 	
 	/* Register the Guaka command wrapper. Guaka does the argument parsing
 	 * because I wasn’t able to do what I wanted with Vapor’s :(
 	 * Note I did not retry with Vapor 4. Maybe it has a way to do what I want. */
 	app.commands.defaultCommand = cliParseResults.wrapperCommand
 	app.commands.use(cliParseResults.wrapperCommand, as: "guaka", isDefault: true)
-}
-
-
-private func handleOfficectlError(request: Request, chainingTo next: Responder, error: Error) throws -> EventLoopFuture<Response> {
-	request.logger.error("Error processing request: \(error.legibleLocalizedDescription)")
-	
-	let status = (error as? Abort)?.status
-	let is404 = status?.code == 404
-	let context = [
-		"errorTitle": is404 ? "Page Not Found" : "Unknown Error",
-		"errorDescription": is404 ? "This page was not found. Please go away!" : "\(error)"
-	]
-	
-	if request.url.path.drop(while: { $0 == "/" }).hasPrefix("api/") {
-		let response = Response(status: status ?? .internalServerError, headers: (error as? Abort)?.headers ?? [:])
-		response.body = try .init(data: JSONEncoder().encode(error.asApiResponse(environment: request.application.environment)))
-		response.headers.replaceOrAdd(name: .contentType, value: "application/json; charset=utf-8")
-		return request.eventLoop.makeSucceededFuture(response)
-	} else {
-		return request.view.render("ErrorPage", context).flatMap{ view in
-			return view.encodeResponse(status: status ?? .internalServerError, for: request)
-		}
-	}
 }
