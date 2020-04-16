@@ -83,6 +83,12 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	webRoutesBuilder.get("**", use: { _ -> View in throw Abort(.notFound) }) /* See first comment of this function for explanation of this. */
 	webRoutesBuilder.get(use: { _ -> View in throw Abort(.notFound) }) /* Get "/". Should be caught by ** but it is not: https://github.com/vapor/vapor/issues/2288 */
 	
+	/* ******** Login page ******** */
+	
+	let webLoginController = WebLoginController()
+	webRoutesBuilder.get("login", use: webLoginController.showLoginPage)
+	webRoutesBuilder.post("login", use: webLoginController.doLogin)
+	
 	/* ******** Temporary password reset page ******** */
 	
 	let webPasswordResetController = WebPasswordResetController()

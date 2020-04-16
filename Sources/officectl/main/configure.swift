@@ -39,6 +39,9 @@ func configure(_ app: Application) throws {
 	app.leaf.tags[SnailCaseToHumanLeafTag.name] = SnailCaseToHumanLeafTag()
 	app.leaf.tags[DictionaryGetValueForDynKeyLeafTag.name] = DictionaryGetValueForDynKeyLeafTag()
 	
+	/* We use the memory store for the sessions for now (rebooting officectl will drop the sessions…). This is the default but we make it explicit. */
+	app.sessions.use(.memory)
+	
 	/* Set OfficeKit options */
 	WeakeningMode.defaultMode = .onSuccess(delay: 13*60) /* 13 minutes */
 	
