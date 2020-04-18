@@ -27,6 +27,9 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	 * connection reset by peer. This should not happen though; all routes should
 	 * be caught, either by the api or the web group, and we could in theory put
 	 * the api error middleware in the api group.
+	 * Note after the fact, discovery of unhandled routes: When POST-ing for
+	 * instance on an unknown route, as the catch-all in on the GET only, we
+	 * effectively get a fully unknown route!
 	 * Whenever (if) we remove the web group one day, we should be able to fully
 	 * get rid of all the groups (though we might as well keep the api one to
 	 * avoid having to prefix all routes w/ api, or to prepare for a /api/v2
