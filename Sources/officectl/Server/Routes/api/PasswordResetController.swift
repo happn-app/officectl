@@ -17,30 +17,19 @@ import Vapor
 class PasswordResetController {
 	
 	func getReset(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiPasswordReset>> {
-		/* General auth check */
-		let officectlConfig = req.application.officectlConfig
-		guard let bearer = req.headers.bearerAuthorization else {throw Abort(.unauthorized)}
-		let token: ApiAuth.Token = try JWTSigner.hs256(key: officectlConfig.jwtSecret).verify(bearer.token)
-		
-		/* Parameter retrieval */
-		let dsuIdPair = try AnyDSUIdPair.getAsParameter(named: "dsuid-pair", from: req)
-		
-		/* Only admins are allowed to see all password resets. Other users can
-		 * only see their own password resets. */
-		guard try token.adm || token.representsSameUserAs(dsuIdPair: dsuIdPair, request: req) else {
-			throw Abort(.forbidden)
+		let loggedInUser = try req.auth.require(LoggedInUser.self)
+		let fetchedUserId = try AnyDSUIdPair.getAsParameter(named: "dsuid-pair", from: req)
+		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIdPair: fetchedUserId, request: req) else {
+			throw Abort(.forbidden, reason: "Non-admin users can only see their own password resets.")
 		}
 		
 		let sProvider = req.application.officeKitServiceProvider
-		return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), using: req.services)
-		.map{ passwordResets in ApiResponse.data(ApiPasswordReset(requestedUserId: dsuIdPair.taggedId, multiPasswordResets: passwordResets, environment: req.application.environment)) }
+		return try MultiServicesPasswordReset.fetch(from: fetchedUserId, in: sProvider.getAllUserDirectoryServices(), using: req.services)
+		.map{ passwordResets in ApiResponse.data(ApiPasswordReset(requestedUserId: fetchedUserId.taggedId, multiPasswordResets: passwordResets, environment: req.application.environment)) }
 	}
 	
 	func createReset(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiPasswordReset>> {
-		/* General auth check */
-		let officectlConfig = req.application.officectlConfig
-		guard let bearer = req.headers.bearerAuthorization else {throw Abort(.unauthorized)}
-		let token: ApiAuth.Token = try JWTSigner.hs256(key: officectlConfig.jwtSecret).verify(bearer.token)
+		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		
 		/* Parameter retrieval */
 		let dsuIdPair = try AnyDSUIdPair.getAsParameter(named: "dsuid-pair", from: req)
@@ -48,8 +37,8 @@ class PasswordResetController {
 		
 		/* Only admins are allowed to create a password reset for someone else
 		 * than themselves. */
-		guard try token.adm || token.representsSameUserAs(dsuIdPair: dsuIdPair, request: req) else {
-			throw Abort(.forbidden)
+		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIdPair: dsuIdPair, request: req) else {
+			throw Abort(.forbidden, reason: "Non-admin users can only reset their own password.")
 		}
 		
 		let sProvider = req.application.officeKitServiceProvider
@@ -63,12 +52,12 @@ class PasswordResetController {
 		} else {
 			/* Only admins are allowed to change the pass of someone without
 			 * specifying the old password. */
-			guard token.adm else {throw Abort(.forbidden)}
+			guard loggedInUser.isAdmin else {throw Abort(.forbidden, reason: "Old password is required for non-admin users")}
 			authFuture = req.eventLoop.future(true)
 		}
 		
 		return authFuture
-		.flatMapThrowing{ verifiedOldPass in guard verifiedOldPass else {throw Abort(.forbidden)} }
+		.flatMapThrowing{ verifiedOldPass in guard verifiedOldPass else {throw Abort(.forbidden, reason: "Invalid old password")} }
 		.flatMapThrowing{ _ in
 			/* The password of the user is verified. Let’s fetch the resets! */
 			return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), using: req.services)
@@ -76,7 +65,7 @@ class PasswordResetController {
 		.flatMap{ $0 }
 		.flatMapThrowing{ resets in
 			/* Then launch them. */
-			try req.application.auditLogger.log(action: "Launching password reset for user \(dsuIdPair.taggedId.stringValue).", source: .api(token: token))
+			try req.application.auditLogger.log(action: "Launching password reset for user \(dsuIdPair.taggedId.stringValue).", source: .api(user: loggedInUser))
 			_ = try resets.start(newPass: passChangeData.newPassword, weakeningMode: .always(successDelay: 180, errorDelay: 180), eventLoop: req.eventLoop)
 			
 			/* Return the resets response. */

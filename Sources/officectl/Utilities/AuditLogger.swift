@@ -19,7 +19,7 @@ class AuditLogger {
 	enum ActionSource {
 		
 		case cli
-		case api(token: ApiAuth.Token)
+		case api(user: LoggedInUser)
 		case web
 		
 	}
@@ -62,12 +62,12 @@ class AuditLogger {
 		switch source {
 		case .cli: loggedDict["source"] = "cli"
 		case .web: loggedDict["source"] = "web"
-		case .api(token: let token):
+		case .api(user: let loggedInUser):
 			loggedDict["source"] = "api"
-			loggedDict["api_user"] = JSON.string(token.sub.stringValue)
-			loggedDict["api_user_is_admin"] = JSON.bool(token.adm)
+			loggedDict["api_user"] = JSON.string(loggedInUser.userId.taggedId.stringValue)
+			loggedDict["api_user_is_admin"] = JSON.bool(loggedInUser.isAdmin)
 		}
-		var loggedData = try jsonEncoder.encode(JSON.object(loggedDict)) + Data("\n".utf8)
+		let loggedData = try jsonEncoder.encode(JSON.object(loggedDict)) + Data("\n".utf8)
 		
 		/* Note: We open the file for each new log… for our load this will work
 		 *       well enough; we may have to change that if we had more traffic. */

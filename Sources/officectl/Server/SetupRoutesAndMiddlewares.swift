@@ -38,11 +38,17 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	app.middleware = Middlewares() /* Drop all default middlewares */
 	app.middleware.use(ErrorMiddleware.default(environment: app.environment)) /* Catches errors and converts them to HTTP response (suitable for API) */
 	
+	let bearerAuth = UserBearerAuthenticator()
+	let loginGuard = LoggedInUser.guardMiddleware()
+	let adminLoginGuard = LoggedInUser.guardAdminMiddleware()
+
 	/* **************************** */
 	/* ******** API Routes ******** */
 	/* **************************** */
 	
 	let apiRoutesBuilder = app.grouped("api")
+	let authedApiRoutesBuilder = apiRoutesBuilder.grouped(bearerAuth, loginGuard)
+	let authedAdminApiRoutesBuilder = authedApiRoutesBuilder.grouped(adminLoginGuard)
 	apiRoutesBuilder.get("**", use: { _ -> String in throw Abort(.notFound) }) /* See first comment of this function for explanation of this. */
 	
 	apiRoutesBuilder.get("services", use: { req in
@@ -56,20 +62,20 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 		)
 	})
 	
-	apiRoutesBuilder.post("auth", "login",  use: LoginController().login)
+	apiRoutesBuilder.grouped(UserCredsAuthenticator()).post("auth", "login",  use: LoginController().login)
 	apiRoutesBuilder.post("auth", "logout", use: LogoutController().logout)
 	
 	let usersController = UsersController()
-	apiRoutesBuilder.get("users", use: usersController.getAllUsers)
-	apiRoutesBuilder.get("users", "me", use: usersController.getMe)
-	apiRoutesBuilder.get("users", ":dsuid-pair", use: usersController.getUser)
+	authedAdminApiRoutesBuilder.get("users", use: usersController.getAllUsers)
+	authedApiRoutesBuilder.get("users", "me", use: usersController.getMe)
+	authedApiRoutesBuilder.get("users", ":dsuid-pair", use: usersController.getUser)
 	
 	/* Intentionnally not giving access to listing of all resets: We do not keep
 	 * a table of the lists of password resets, and it would not be trivial to do
 	 * so we just don’t do it. */
 	let passwordResetController = PasswordResetController()
-	apiRoutesBuilder.get("password-resets", ":dsuid-pair", use: passwordResetController.getReset)
-	apiRoutesBuilder.put("password-resets", ":dsuid-pair", use: passwordResetController.createReset)
+	authedApiRoutesBuilder.get("password-resets", ":dsuid-pair", use: passwordResetController.getReset)
+	authedApiRoutesBuilder.put("password-resets", ":dsuid-pair", use: passwordResetController.createReset)
 	
 	
 	
