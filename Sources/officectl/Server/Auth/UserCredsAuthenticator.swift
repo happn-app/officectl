@@ -14,6 +14,8 @@ import Vapor
 
 struct UserCredsAuthenticator : CredentialsAuthenticator {
 	
+	typealias Credentials = LoginData
+	
 	struct LoginData : Content {
 		
 		var username: String
@@ -21,14 +23,30 @@ struct UserCredsAuthenticator : CredentialsAuthenticator {
 		
 	}
 	
-	typealias Credentials = LoginData
+	enum UsernameType {
+		
+		case taggedId
+		case email
+		
+	}
+	
+	var usernameType: UsernameType
+	
+	init(usernameType ut: UsernameType = .taggedId) {
+		usernameType = ut
+	}
 	
 	func authenticate(credentials loginData: LoginData, for request: Request) -> EventLoopFuture<Void> {
 		return request.eventLoop.future()
 		.flatMapThrowing{
-			let authService = try request.application.officeKitServiceProvider.getDirectoryAuthenticatorService()
+			let sProvider = request.application.officeKitServiceProvider
+			let authService = try sProvider.getDirectoryAuthenticatorService()
 			
-			let userId = try AnyDSUIdPair(string: loginData.username, servicesProvider: request.application.officeKitServiceProvider)
+			let userId: AnyDSUIdPair
+			switch self.usernameType {
+			case .email:    userId = try AnyDSUIdPair(service: authService, userId: authService.logicalUser(fromEmail: nil2throw(Email(string: loginData.username), "Invalid email"), servicesProvider: sProvider).userId)
+			case .taggedId: userId = try AnyDSUIdPair(string: loginData.username, servicesProvider: sProvider)
+			}
 			guard userId.service.config.serviceId == authService.config.serviceId else {
 				throw Abort(.forbidden, reason: "Tried to login with an id which is not from the auth service (expected \(authService.config.serviceId)).")
 			}

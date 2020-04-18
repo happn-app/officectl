@@ -22,7 +22,7 @@ public struct DSUPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 	public let taggedId: TaggedId
 	
 	public var dsuIdPair: DSUIdPair<DirectoryServiceType> {
-		return DSUIdPair(service: service, user: user.userId)
+		return DSUIdPair(service: service, userId: user.userId)
 	}
 	
 	public init(service s: DirectoryServiceType, user u: DirectoryServiceType.UserType) {
@@ -99,7 +99,7 @@ public struct DSUIdPair<DirectoryServiceType : UserDirectoryService> : Hashable 
 	public let serviceId: String
 	public let taggedId: TaggedId
 	
-	public init(service s: DirectoryServiceType, user u: DirectoryServiceType.UserType.IdType) {
+	public init(service s: DirectoryServiceType, userId u: DirectoryServiceType.UserType.IdType) {
 		service = s
 		userId = u
 		

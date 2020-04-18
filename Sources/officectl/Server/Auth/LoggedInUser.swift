@@ -12,7 +12,9 @@ import Vapor
 
 
 
-struct LoggedInUser : Authenticatable {
+struct LoggedInUser : Authenticatable, SessionAuthenticatable {
+	
+	typealias SessionID = TaggedId
 	
 	static func guardAdminMiddleware() -> Middleware {
 		return IsAdminAuthMiddleware()
@@ -20,6 +22,10 @@ struct LoggedInUser : Authenticatable {
 	
 	var userId: AnyDSUIdPair
 	var isAdmin: Bool
+	
+	var sessionID: TaggedId {
+		return userId.taggedId
+	}
 	
 	func representsSameUserAs(dsuIdPair: AnyDSUIdPair, request: Request) throws -> Bool {
 		let sProvider = request.application.officeKitServiceProvider

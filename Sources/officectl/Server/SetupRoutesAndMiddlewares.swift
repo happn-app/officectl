@@ -39,9 +39,13 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	app.middleware.use(ErrorMiddleware.default(environment: app.environment)) /* Catches errors and converts them to HTTP response (suitable for API) */
 	
 	let bearerAuth = UserBearerAuthenticator()
+	let sessionAuth = UserSessionAuthenticator()
 	let loginGuard = LoggedInUser.guardMiddleware()
 	let adminLoginGuard = LoggedInUser.guardAdminMiddleware()
-
+	
+	let fileMiddleware = FileMiddleware(publicDirectory: app.directory.publicDirectory) /* Serves files from the “Public” directory */
+	let asyncErrorMiddleware = AsyncErrorMiddleware(processErrorHandler: handleWebError) /* Catches errors and converts them to HTTP response (suitable for web) */
+	
 	/* **************************** */
 	/* ******** API Routes ******** */
 	/* **************************** */
@@ -62,7 +66,8 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 		)
 	})
 	
-	apiRoutesBuilder.grouped(UserCredsAuthenticator()).post("auth", "login",  use: LoginController().login)
+	apiRoutesBuilder.grouped(UserCredsAuthenticator(usernameType: .taggedId))
+		.post("auth", "login",  use: LoginController().login)
 	apiRoutesBuilder.post("auth", "logout", use: LogoutController().logout)
 	
 	let usersController = UsersController()
@@ -83,17 +88,20 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	/* ******** Web Routes ******** */
 	/* **************************** */
 	
-	let fileMiddleware = FileMiddleware(publicDirectory: app.directory.publicDirectory) /* Serves files from the “Public” directory */
-	let asyncErrorMiddleware = AsyncErrorMiddleware(processErrorHandler: handleWebError) /* Catches errors and converts them to HTTP response (suitable for web) */
 	let webRoutesBuilder = app.grouped(asyncErrorMiddleware, fileMiddleware, app.sessions.middleware)
+	let authedWebRoutesBuilderNoGuard = webRoutesBuilder.grouped(sessionAuth)
+	let authedWebRoutesBuilder = authedWebRoutesBuilderNoGuard.grouped(loginGuard)
 	webRoutesBuilder.get("**", use: { _ -> View in throw Abort(.notFound) }) /* See first comment of this function for explanation of this. */
 	webRoutesBuilder.get(use: { _ -> View in throw Abort(.notFound) }) /* Get "/". Should be caught by ** but it is not: https://github.com/vapor/vapor/issues/2288 */
 	
 	/* ******** Login page ******** */
 	
 	let webLoginController = WebLoginController()
-	webRoutesBuilder.get("login", use: webLoginController.showLoginPage)
-	webRoutesBuilder.post("login", use: webLoginController.doLogin)
+	authedWebRoutesBuilderNoGuard.get("login", use: webLoginController.showLoginPage)
+	authedWebRoutesBuilderNoGuard.grouped(UserCredsAuthenticator(usernameType: .email))
+		.post("login", use: webLoginController.doLogin)
+	/* ↑ We use the session authenticator in order to save the login session on
+	 * successful authentication, and not to use the user creds auth if unneeded. */
 	
 	/* ******** Temporary password reset page ******** */
 	
