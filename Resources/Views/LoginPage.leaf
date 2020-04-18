@@ -1,6 +1,7 @@
 #comment: The context structure
 struct LoginContext : Encodable {
 	var username: String?
+	var nextURLPath: String?
 }
 #endcomment
 #extend("lib/Master"):
@@ -34,6 +35,9 @@ struct LoginContext : Encodable {
 	<input type="password" name="password" id="login_form_input_pass" onKeyUp="show_input_errors()"/>
 	<br/>
 	<input disabled="disabled" type="submit" value="Submit" id="login_form_submit">
+	#if(nextURLPath):
+		<input type="hidden" name="nextURLPath" value="#(nextURLPath)">
+	#endif
 </form>
 <p id="error" style="color: red;"/>
 	#else:
