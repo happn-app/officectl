@@ -43,6 +43,7 @@ func configure(_ app: Application) throws {
 	app.sessions.use(.memory)
 	
 	/* Set OfficeKit options */
+	OfficeKitConfig.logger = app.logger
 	WeakeningMode.defaultMode = .onSuccess(delay: 13*60) /* 13 minutes */
 	
 	/* Register the routes and middlewares */
