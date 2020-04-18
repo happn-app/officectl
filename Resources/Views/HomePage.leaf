@@ -1,0 +1,22 @@
+#extend("lib/Master"):
+
+
+
+#export("title", "officectl")
+
+#export("additional_head_tags", "")
+
+#export("body"):
+	<h1>officectl – Tools for the Office</h1>
+	<h2>Choose a tool below</h2>
+	<ul>
+		<li><a href="/password-reset">Change Your Password</a></li>
+		<li><a href="/get-certificate">Manage Your happn Certificate</a></li>
+		<li><a href="/get-licenses">Get the Licenses Linked to Your Computer</a></li>
+		<li><a href="/ios-test-devices">See the List of the iOS Test Devices</a></li>
+	</ul>
+#endexport
+
+
+
+#endextend

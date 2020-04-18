@@ -95,7 +95,10 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	let authedWebRoutesBuilderNoGuard = webRoutesBuilder.grouped(sessionAuth)
 	let authedWebRoutesBuilder = authedWebRoutesBuilderNoGuard.grouped(loginGuard)
 	webRoutesBuilder.get("**", use: { _ -> View in throw Abort(.notFound) }) /* See first comment of this function for explanation of this. */
-	webRoutesBuilder.get(use: { _ -> View in throw Abort(.notFound) }) /* Get "/". Should be caught by ** but it is not: https://github.com/vapor/vapor/issues/2288 */
+	
+	/* ******** Home page ******** */
+	
+	authedWebRoutesBuilderNoGuard.get(use: WebHomeController().showHome)
 	
 	/* ******** Login page ******** */
 	
