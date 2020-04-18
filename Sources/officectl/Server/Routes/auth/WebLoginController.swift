@@ -15,6 +15,11 @@ import Vapor
 
 class WebLoginController {
 	
+	func authCheck(_ req: Request) throws -> String {
+		/* If we get through here, we are logged in as per the route setup */
+		return "OK"
+	}
+	
 	func showLoginPage(_ req: Request) throws -> EventLoopFuture<View> {
 		struct LoginContext : Encodable {
 			var username: String?

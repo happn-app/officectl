@@ -103,6 +103,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	/* ******** Login page ******** */
 	
 	let webLoginController = WebLoginController()
+	authedWebRoutesBuilder.get("auth-check", use: webLoginController.authCheck)
 	authedWebRoutesBuilderNoGuard.get("login", use: webLoginController.showLoginPage)
 	authedWebRoutesBuilderNoGuard.grouped(UserCredsAuthenticator(usernameType: .email))
 		.post("login", use: webLoginController.doLogin)
