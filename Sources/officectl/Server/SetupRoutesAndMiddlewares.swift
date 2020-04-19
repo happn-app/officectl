@@ -110,6 +110,11 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	/* ↑ We use the session authenticator in order to save the login session on
 	 * successful authentication, and not to use the user creds auth if unneeded. */
 	
+	/* Both endpoints below are used by nginx to check auth for Xcode Server. See
+	 * comment on the `xcodeGuardMiddleware` function for explanations. */
+	authedWebRoutesBuilderNoGuard.grouped(LoggedInUser.xcodeGuardMiddleware(leeway: -1)).get("xcode-auth-check", use: webLoginController.authCheck)
+	authedWebRoutesBuilderNoGuard.grouped(LoggedInUser.xcodeGuardMiddleware(leeway:  7)).get("xcode-auth-check-lax", use: webLoginController.authCheck)
+	
 	/* ******** Temporary password reset page ******** */
 	
 	let webPasswordResetController = WebPasswordResetController()
