@@ -5,8 +5,6 @@
 #export("title", "happn – Get an Identity Certificate")
 
 #export("additional_head_tags"):
-	<script type="text/javascript" src="/js/lib/Utils.js"></script>
-	<script type="text/javascript" src="/js/SimpleLogin.js"></script>
 	<style>
 		.codeblock {
 			background-color: \#e0e0e0; padding: 9px;
@@ -21,9 +19,10 @@
 
 #export("body"):
 	<h1>Get an Identity Certificate</h1>
-	#extend("lib/SimpleLogin"):
-		#export("action_path", "/get-certificate/")
-	#endextend
+	<!-- TODO -->
+	<form>
+		<input type="submit" value="Get a new certificate">
+	</form>
 	<hr/>
 	<div style="width: 725px; margin-left: auto; margin-right: auto;">
 		<h1>Usage and Other Info</h1>

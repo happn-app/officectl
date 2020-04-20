@@ -45,6 +45,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	let sessionAuth = UserSessionAuthenticator()
 	let loginGuard = LoggedInUser.guardMiddleware()
 	let adminLoginGuard = LoggedInUser.guardAdminMiddleware()
+	let loginGuardRedirect = LoggedInUser.redirectMiddlewareWithNextParam(baseURL: URL(string: "/login")!, nextParamName: "next")
 	
 	let fileMiddleware = FileMiddleware(publicDirectory: app.directory.publicDirectory) /* Serves files from the “Public” directory */
 	let asyncErrorMiddleware = AsyncErrorMiddleware(processErrorHandler: handleWebError) /* Catches errors and converts them to HTTP response (suitable for web) */
@@ -55,7 +56,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	
 	let apiRoutesBuilder = app.grouped("api")
 	let authedApiRoutesBuilder = apiRoutesBuilder.grouped(bearerAuth, loginGuard)
-	let authedAdminApiRoutesBuilder = authedApiRoutesBuilder.grouped(adminLoginGuard)
+	let authedApiRoutesBuilderAdmin = authedApiRoutesBuilder.grouped(adminLoginGuard)
 	apiRoutesBuilder.get("**", use: { _ -> String in throw Abort(.notFound) }) /* See first comment of this function for explanation of this. */
 	
 	apiRoutesBuilder.get("services", use: { req in
@@ -74,7 +75,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	apiRoutesBuilder.post("auth", "logout", use: LogoutController().logout)
 	
 	let usersController = UsersController()
-	authedAdminApiRoutesBuilder.get("users", use: usersController.getAllUsers)
+	authedApiRoutesBuilderAdmin.get("users", use: usersController.getAllUsers)
 	authedApiRoutesBuilder.get("users", "me", use: usersController.getMe)
 	authedApiRoutesBuilder.get("users", ":dsuid-pair", use: usersController.getUser)
 	
@@ -92,52 +93,54 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	/* **************************** */
 	
 	let webRoutesBuilder = app.grouped(asyncErrorMiddleware, fileMiddleware, app.sessions.middleware)
-	let authedWebRoutesBuilderNoGuard = webRoutesBuilder.grouped(sessionAuth)
-	let authedWebRoutesBuilder = authedWebRoutesBuilderNoGuard.grouped(loginGuard)
+	let authedWebRoutesBuilder = webRoutesBuilder.grouped(sessionAuth)
+	let authedWebRoutesBuilderGuard = authedWebRoutesBuilder.grouped(loginGuard)
+	let authedWebRoutesBuilderRedir = authedWebRoutesBuilder.grouped(loginGuardRedirect)
 	webRoutesBuilder.get("**", use: { _ -> View in throw Abort(.notFound) }) /* See first comment of this function for explanation of this. */
 	
-	/* ******** Home page ******** */
-	
-	authedWebRoutesBuilderNoGuard.get(use: WebHomeController().showHome)
-	
-	/* ******** Login page ******** */
+	/* ******** Login page & Auth check ******** */
 	
 	let webLoginController = WebLoginController()
-	authedWebRoutesBuilder.get("auth-check", use: webLoginController.authCheck)
-	authedWebRoutesBuilderNoGuard.get("login", use: webLoginController.showLoginPage)
-	authedWebRoutesBuilderNoGuard.grouped(UserCredsAuthenticator(usernameType: .email))
+	authedWebRoutesBuilder.get("login", use: webLoginController.showLoginPage)
+	authedWebRoutesBuilder.grouped(UserCredsAuthenticator(usernameType: .email))
 		.post("login", use: webLoginController.doLogin)
 	/* ↑ We use the session authenticator in order to save the login session on
 	 * successful authentication, and not to use the user creds auth if unneeded. */
 	
+	authedWebRoutesBuilderGuard.get("auth-check", use: webLoginController.authCheck)
+	
 	/* Both endpoints below are used by nginx to check auth for Xcode Server. See
 	 * comment on the `xcodeGuardMiddleware` function for explanations. */
-	authedWebRoutesBuilderNoGuard.grouped(LoggedInUser.xcodeGuardMiddleware(leeway: -1)).get("xcode-auth-check", use: webLoginController.authCheck)
-	authedWebRoutesBuilderNoGuard.grouped(LoggedInUser.xcodeGuardMiddleware(leeway:  7)).get("xcode-auth-check-lax", use: webLoginController.authCheck)
+	authedWebRoutesBuilder.grouped(LoggedInUser.xcodeGuardMiddleware(leeway: -1)).get("xcode-auth-check", use: webLoginController.authCheck)
+	authedWebRoutesBuilder.grouped(LoggedInUser.xcodeGuardMiddleware(leeway:  7)).get("xcode-auth-check-lax", use: webLoginController.authCheck)
+	
+	/* ******** Home page ******** */
+	
+	authedWebRoutesBuilderRedir.get(use: WebHomeController().showHome)
 	
 	/* ******** Temporary password reset page ******** */
 	
 	let webPasswordResetController = WebPasswordResetController()
-	webRoutesBuilder.get("password-reset", use: webPasswordResetController.showUserSelection)
-	webRoutesBuilder.get("password-reset",  ":email", use: webPasswordResetController.showResetPage)
-	webRoutesBuilder.post("password-reset", ":email", use: webPasswordResetController.resetPassword)
+	authedWebRoutesBuilderRedir.get("password-reset", use: webPasswordResetController.showUserSelection)
+	authedWebRoutesBuilderRedir.get("password-reset",  ":email", use: webPasswordResetController.showResetPage)
+	authedWebRoutesBuilderGuard.post("password-reset", ":email", use: webPasswordResetController.resetPassword)
 	
 	/* ******** Temporary certificate renew page ******** */
 	
 	let webCertificateRenewController = WebCertificateRenewController()
-	webRoutesBuilder.get("get-certificate", use: webCertificateRenewController.showLogin)
-	webRoutesBuilder.post("get-certificate", use: webCertificateRenewController.renewCertificate)
+	authedWebRoutesBuilderRedir.get("get-certificate", use: webCertificateRenewController.showLogin)
+	authedWebRoutesBuilderGuard.post("get-certificate", use: webCertificateRenewController.renewCertificate)
 	
 	/* ******** Temporary get licenses page ******** */
 	
 	let getLicensesController = GetLicensesController()
-	webRoutesBuilder.get("get-licenses", use: getLicensesController.showLogin)
-	webRoutesBuilder.post("get-licenses", use: getLicensesController.getLicenses)
+	authedWebRoutesBuilderRedir.get("get-licenses", use: getLicensesController.showLogin)
+	authedWebRoutesBuilderGuard.post("get-licenses", use: getLicensesController.getLicenses)
 	
 	/* ******** Temporary test iOS devices list ******** */
 	
 	let iOSTestDevicesController = IosTestDevicesController()
-	webRoutesBuilder.get("ios-test-devices", use: iOSTestDevicesController.showTestDevicesList)
+	authedWebRoutesBuilderRedir.get("ios-test-devices", use: iOSTestDevicesController.showTestDevicesList)
 }
 
 

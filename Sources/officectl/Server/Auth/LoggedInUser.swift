@@ -16,6 +16,7 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 	
 	typealias SessionID = TaggedId
 	
+	/** A simple guard auth middleware for admin users */
 	static func guardAdminMiddleware() -> Middleware {
 		struct IsAdminAuthMiddleware : Middleware {
 			func respond(to req: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {

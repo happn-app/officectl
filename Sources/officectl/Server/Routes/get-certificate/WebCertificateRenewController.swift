@@ -22,7 +22,7 @@ import COpenSSL
 class WebCertificateRenewController {
 	
 	func showLogin(_ req: Request) throws -> EventLoopFuture<View> {
-		return req.view.render("CertificateRenewLogin")
+		return req.view.render("CertificateRenewHome")
 	}
 	
 	func renewCertificate(_ req: Request) throws -> EventLoopFuture<Response> {
