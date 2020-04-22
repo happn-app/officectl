@@ -96,8 +96,8 @@
         "repositoryURL": "https://github.com/vapor/leaf-kit.git",
         "state": {
           "branch": null,
-          "revision": "b6c8edd71a5387c4b48ecafe5be4cadd4f896193",
-          "version": "1.0.0-rc.1.4"
+          "revision": "6e579ba3b9497a8e85d3a7a506fe0c943799037c",
+          "version": "1.0.0-rc.1.6"
         }
       },
       {
@@ -132,8 +132,8 @@
         "repositoryURL": "https://github.com/vapor/routing-kit.git",
         "state": {
           "branch": null,
-          "revision": "ee590c42d0b74fb6644c5ec128a2edc86c2858ff",
-          "version": "4.0.1"
+          "revision": "e7f2d5bd36dc65a9edb303541cb678515a7fece3",
+          "version": "4.1.0"
         }
       },
       {
@@ -240,8 +240,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "948f363fdeb8739200f4341810c26e88704e63f3",
-          "version": "4.3.0"
+          "revision": "7f6c8277b8cbe4381d00ddcef3b898c820780324",
+          "version": "4.4.0"
         }
       },
       {
