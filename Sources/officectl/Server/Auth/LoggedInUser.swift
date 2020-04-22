@@ -50,9 +50,9 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 					}
 					/* We do! Has there been an auth’d connexion less than leeway ago
 					 * on the same IP than the current request? */
-					let lock = req.application.locks.lock(for: StorageLock.self)
+					let lock = req.application.locks.lock(for: XcodeGuardMiddlewareConnectionsLock.self)
 					let hadAuth = lock.withLock{ () -> Bool in
-						let storage = req.application.xcodeGuardMiddlewareConnectionsStorage
+						let storage = req.application.officectlStorage.xcodeGuardMiddlewareConnections
 						guard let latestDate = storage[currentIP] else {
 							return false
 						}
@@ -70,9 +70,9 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 				}
 				/* Let’s register the successfully auth’d request if possible */
 				if let ip = req.remoteAddress?.ipAddress {
-					let lock = req.application.locks.lock(for: StorageLock.self)
+					let lock = req.application.locks.lock(for: XcodeGuardMiddlewareConnectionsLock.self)
 					lock.withLockVoid{
-						req.application.xcodeGuardMiddlewareConnectionsStorage[ip] = Date()
+						req.application.officectlStorage.xcodeGuardMiddlewareConnections[ip] = Date()
 					}
 				}
 				return next.respond(to: req)
@@ -97,13 +97,4 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 }
 
 
-private struct XcodeGuardMiddlewareConnectionsStorageKey : StorageKey {
-	typealias Value = [String: Date]
-}
-private extension Application {
-	/** **MUST** be accessed from within the StorageLock. */
-	var xcodeGuardMiddlewareConnectionsStorage: [String: Date] {
-		get {self.storage[XcodeGuardMiddlewareConnectionsStorageKey.self] ?? [:]}
-		set {self.storage[XcodeGuardMiddlewareConnectionsStorageKey.self] = newValue}
-	}
-}
+private struct XcodeGuardMiddlewareConnectionsLock : LockKey {}

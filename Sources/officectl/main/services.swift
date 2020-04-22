@@ -14,6 +14,11 @@ import Vapor
 
 
 
+/* *** IMPORTANT: When adding a new property that set something in the storage,
+ * do remember to access it in app.swift! */
+
+
+
 extension Application {
 	
 	var officectlConfig: OfficectlConfig {
@@ -35,14 +40,12 @@ extension Application {
 extension Application {
 		
 	var semiSingletonStore: SemiSingletonStore {
-		return locks.lock(for: StorageLock.self).withLock{
-			if let existing = storage[SemiSingletonStoreKey.self] {
-				return existing
-			} else {
-				let new = SemiSingletonStore(forceClassInKeys: true)
-				storage[SemiSingletonStoreKey.self] = new
-				return new
-			}
+		if let existing = storage[SemiSingletonStoreKey.self] {
+			return existing
+		} else {
+			let new = SemiSingletonStore(forceClassInKeys: true)
+			storage[SemiSingletonStoreKey.self] = new
+			return new
 		}
 	}
 	
@@ -55,15 +58,15 @@ extension Application {
 
 extension Application {
 	
+	/* Note: Once this is accessed, officectlConfig won’t clear the cached
+	 *       services provider. */
 	var officeKitServiceProvider: OfficeKitServiceProvider {
-		return locks.lock(for: StorageLock.self).withLock{
-			if let existing = storage[OfficeKitServiceProviderKey.self] {
-				return existing
-			} else {
-				let new = OfficeKitServiceProvider(config: self.officeKitConfig)
-				storage[OfficeKitServiceProviderKey.self] = new
-				return new
-			}
+		if let existing = storage[OfficeKitServiceProviderKey.self] {
+			return existing
+		} else {
+			let new = OfficeKitServiceProvider(config: self.officeKitConfig)
+			storage[OfficeKitServiceProviderKey.self] = new
+			return new
 		}
 	}
 	
@@ -77,17 +80,15 @@ extension Application {
 extension Application {
 	
 	var services: Services {
-		return locks.lock(for: StorageLock.self).withLock{
-			if let existing = storage[ServicesKey.self] {
-				return existing
-			} else {
-				let new = Services()
-				let eventLoop = self.eventLoopGroup.next()
-				new.register{ eventLoop } /* We always want to return the same event loop */
-				new.register{ self.semiSingletonStore }
-				storage[ServicesKey.self] = new
-				return new
-			}
+		if let existing = storage[ServicesKey.self] {
+			return existing
+		} else {
+			let new = Services()
+			let eventLoop = self.eventLoopGroup.next()
+			new.register{ eventLoop } /* We always want to return the same event loop */
+			new.register{ self.semiSingletonStore }
+			storage[ServicesKey.self] = new
+			return new
 		}
 	}
 	
@@ -112,15 +113,13 @@ extension Request {
 extension Application {
 	
 	var auditLogger: AuditLogger {
-		return locks.lock(for: StorageLock.self).withLock{
-			if let existing = storage[AuditLoggerKey.self] {
-				return existing
-			} else {
-				/* TODO: Let’s not crash if cannot create audit logger 😅 */
-				let new = try! AuditLogger(path: officectlConfig.auditLogsURL?.path)
-				storage[AuditLoggerKey.self] = new
-				return new
-			}
+		if let existing = storage[AuditLoggerKey.self] {
+			return existing
+		} else {
+			/* TODO: Let’s not crash if cannot create audit logger 😅 */
+			let new = try! AuditLogger(path: officectlConfig.auditLogsURL?.path)
+			storage[AuditLoggerKey.self] = new
+			return new
 		}
 	}
 	
@@ -131,8 +130,20 @@ extension Application {
 }
 
 
-/** Use this lock to access or modify the storage in the app. IMHO Vapor should
-not allow users to modify the storage outside of a lock; see https://discordapp.com/channels/431917998102675485/519613337638797315/702530003396591756
-about this. */
-struct StorageLock : LockKey {
+extension Application {
+	
+	var officectlStorage: OfficectlStorage {
+		if let existing = storage[OfficectlStorageKey.self] {
+			return existing
+		} else {
+			let new = OfficectlStorage()
+			storage[OfficectlStorageKey.self] = new
+			return new
+		}
+	}
+	
+	private struct OfficectlStorageKey: StorageKey {
+		typealias Value = OfficectlStorage
+	}
+	
 }
