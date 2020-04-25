@@ -21,23 +21,9 @@
 
 #export("body"):
 	<h1>Get an Identity Certificate</h1>
-	#comment:
-	Until embedded extend in an export are supported, we copy-paste the form below (and the p element) 😔
 	#extend("lib/SimpleLogin"):
 		#export("action_path", "/get-certificate/")
 	#endextend
-	#endcomment
-<form onsubmit="return login_form_action(this, &quot;/get-certificate/&quot;)" id="form">
-	<label>Your email or id:</label>
-	<input type="text" id="login_form_input_user_id" onKeyUp="show_input_errors()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-	<input type="text" name="email" id="login_form_input_user_id_clean" hidden="hidden"/>
-	<br/>
-	<label>Password:</label>
-	<input type="password" name="password" id="login_form_input_pass" onKeyUp="show_input_errors()"/>
-	<br/>
-	<input disabled="disabled" type="submit" value="Submit" id="login_form_submit">
-</form>
-<p id="error" style="color: red;"/>
 	<hr/>
 	<div style="width: 725px; margin-left: auto; margin-right: auto;">
 		<h1>Usage and Other Info</h1>

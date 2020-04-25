@@ -18,12 +18,6 @@ struct LoginContext : Encodable {
 
 #export("body"):
 	#if(!username):
-		#comment:
-		Until embedded extend in an export are supported, we copy-paste the form below (and the p element) 😔
-		#extend("lib/SimpleLogin"):
-			#export("action_path", "/get-licenses/")
-		#endextend
-		#endcomment
 		<div id="container">
 			<div id="login">
 				<span id="title">Please Login</span>
