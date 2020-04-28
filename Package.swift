@@ -77,11 +77,11 @@ let package = Package(
 		.package(                     url: "https://github.com/apple/swift-crypto.git", from: "1.0.0"),
 		.package(                     url: "https://github.com/klaas/Guaka.git", .upToNextMinor(from: "0.3.0")),
 		.package(                     url: "https://github.com/vapor/leaf.git", from: "4.0.0-rc"),
-		.package(                     url: "https://github.com/vapor/vapor.git", from: "4.0.0-rc"),
+		.package(                     url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
 //		.package(                     url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
 		.package(name: "Yaml",        url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
 		.package(                     url: "https://github.com/vapor/jwt-kit.git", from: "4.0.0-rc"),
-		.package(                     url: "https://github.com/vapor/console-kit.git", from: "4.0.0-rc"),
+		.package(                     url: "https://github.com/vapor/console-kit.git", from: "4.0.0"),
 		.package(                     url: "https://github.com/happn-tech/EmailValidator.git", .branch("master")),
 		.package(name: "GenericJSON", url: "https://github.com/zoul/generic-json-swift.git", from: "1.2.0"),
 		.package(                     url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0")
