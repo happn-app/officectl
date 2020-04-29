@@ -36,7 +36,7 @@ class UsersController {
 	
 	func getMe(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiUserSearchResult>> {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
-		return try getUserNoAuthCheck(userId: loggedInUser.userId, request: req)
+		return try getUserNoAuthCheck(userId: loggedInUser.user.dsuIdPair, request: req)
 	}
 	
 	func getUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiUserSearchResult>> {

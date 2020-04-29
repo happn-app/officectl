@@ -42,28 +42,28 @@ struct UserCredsAuthenticator : CredentialsAuthenticator {
 			let sProvider = request.application.officeKitServiceProvider
 			let authService = try sProvider.getDirectoryAuthenticatorService()
 			
-			let userId: AnyDSUIdPair
+			let user: AnyDSUPair
 			switch self.usernameType {
-			case .email:    userId = try AnyDSUIdPair(service: authService, userId: authService.logicalUser(fromEmail: nil2throw(Email(string: loginData.username), "Invalid email"), servicesProvider: sProvider).userId)
-			case .taggedId: userId = try AnyDSUIdPair(string: loginData.username, servicesProvider: sProvider)
+			case .email:    user = try AnyDSUPair(service: authService, user: authService.logicalUser(fromEmail: nil2throw(Email(string: loginData.username), "Invalid email"), servicesProvider: sProvider))
+			case .taggedId: user = try AnyDSUIdPair(string: loginData.username, servicesProvider: sProvider).dsuPair()
 			}
-			guard userId.service.config.serviceId == authService.config.serviceId else {
+			guard user.service.config.serviceId == authService.config.serviceId else {
 				throw Abort(.forbidden, reason: "Tried to login with an id which is not from the auth service (expected \(authService.config.serviceId)).")
 			}
 			
-			return try authService.authenticate(userId: userId.userId, challenge: loginData.password, using: request.services)
+			return try authService.authenticate(userId: user.user.userId, challenge: loginData.password, using: request.services)
 			.flatMapThrowing{ authSuccess -> Void in
 				guard authSuccess else {throw Abort(.forbidden, reason: "Invalid credentials. Please check your username and password.")}
 				return ()
 			}
 			.flatMapThrowing{ _ -> EventLoopFuture<Bool> in
-				return try authService.validateAdminStatus(userId: userId.userId, using: request.services)
+				return try authService.validateAdminStatus(userId: user.user.userId, using: request.services)
 			}
 			.flatMap{ $0 }
 			.flatMapThrowing{ isAdmin in
 				/* The password of the user is verified and we have its admin
 				 * status. Let’s log it in. */
-				request.auth.login(LoggedInUser(userId: userId, isAdmin: isAdmin))
+				request.auth.login(LoggedInUser(user: user, isAdmin: isAdmin))
 				return ()
 			}
 		}

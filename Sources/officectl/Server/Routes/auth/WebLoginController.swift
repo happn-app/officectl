@@ -27,10 +27,10 @@ class WebLoginController {
 		}
 		
 		let context = LoginContext(
-			username: req.auth.get(LoggedInUser.self)?.userId.taggedId.id,
+			username: req.auth.get(LoggedInUser.self)?.user.taggedId.id,
 			nextURLPath: req.headers["Officectl-Login-Next-Page"].last ?? req.query["next"]
 		)
-		return req.view.render("LoginPage", context)
+		return req.view.render("Login", context)
 	}
 	
 	func doLogin(_ req: Request) throws -> Response {

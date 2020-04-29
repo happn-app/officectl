@@ -16,8 +16,15 @@ import OfficeKit
 
 final class WebPasswordResetController {
 	
-	func showUserSelection(_ req: Request) -> EventLoopFuture<View> {
-		return req.view.render("NewPasswordResetPage")
+	func showHome(_ req: Request) throws -> EventLoopFuture<View> {
+		struct PasswordResetContext : Encodable {
+			var isAdmin: Bool
+			var userEmail: String?
+		}
+		let loggedInUser = try req.auth.require(LoggedInUser.self)
+		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
+		let email = try loggedInUser.user.hop(to: emailService).user.userId
+		return req.view.render("PasswordResetHome", PasswordResetContext(isAdmin: loggedInUser.isAdmin, userEmail: email.stringValue))
 	}
 	
 	func showResetPage(_ req: Request) throws -> EventLoopFuture<View> {
@@ -93,7 +100,7 @@ final class WebPasswordResetController {
 				)
 			}
 		)
-		return viewRenderer.render("PasswordResetStatusPage", context)
+		return viewRenderer.render("PasswordResetStatus", context)
 	}
 	
 }

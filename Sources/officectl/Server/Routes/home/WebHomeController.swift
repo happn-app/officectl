@@ -15,7 +15,7 @@ import Vapor
 struct WebHomeController {
 	
 	func showHome(_ req: Request) throws -> EventLoopFuture<View> {
-		return req.view.render("HomePage")
+		return req.view.render("Home")
 	}
 	
 }

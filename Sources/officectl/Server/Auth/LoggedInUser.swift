@@ -82,17 +82,17 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 		return XcodeGuardAuthMiddleware(leeway: leeway)
 	}
 	
-	var userId: AnyDSUIdPair
+	var user: AnyDSUPair
 	var isAdmin: Bool
 	
 	var sessionID: TaggedId {
-		return userId.taggedId
+		return user.taggedId
 	}
 	
 	func representsSameUserAs(dsuIdPair: AnyDSUIdPair, request: Request) throws -> Bool {
 		let sProvider = request.application.officeKitServiceProvider
 		let authService = try sProvider.getDirectoryAuthenticatorService()
-		return try userId.taggedId == dsuIdPair.dsuPair().hop(to: authService).taggedId
+		return try user.taggedId == dsuIdPair.dsuPair().hop(to: authService).taggedId
 	}
 	
 }

@@ -121,7 +121,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	/* ******** Temporary password reset page ******** */
 	
 	let webPasswordResetController = WebPasswordResetController()
-	authedWebRoutesBuilderRedir.get("password-reset", use: webPasswordResetController.showUserSelection)
+	authedWebRoutesBuilderRedir.get("password-reset", use: webPasswordResetController.showHome)
 	authedWebRoutesBuilderRedir.get("password-reset",  ":email", use: webPasswordResetController.showResetPage)
 	authedWebRoutesBuilderGuard.post("password-reset", ":email", use: webPasswordResetController.resetPassword)
 	
@@ -154,7 +154,7 @@ private func handleWebError(request: Request, chainingTo next: Responder, error:
 		"errorDescription": is404 ? "This page was not found. Please go away!" : "\(error)"
 	]
 	
-	return request.view.render("ErrorPage", context).flatMap{ view in
+	return request.view.render("Error", context).flatMap{ view in
 		return view.encodeResponse(status: status ?? .internalServerError, for: request)
 	}
 }
