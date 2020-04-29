@@ -1,0 +1,118 @@
+/* ---------- GENERAL ---------- */
+
+@media (prefers-color-scheme: dark) {
+	body {
+		background: #1C1D1E;
+		color: #A5A5AA;
+	}
+	
+	.image {
+		background: #2B2C2E;
+	}
+	
+	form input[type="text"], input[type="password"] {
+		background: #353535;
+		color: #EBEBF0;
+	}
+	
+	#login form input[type="submit"] {
+		color: #EBEBF0;
+	}
+}
+
+@media (prefers-color-scheme: light) {
+	body {
+		background: white;
+		color: #414146;
+	}
+	
+	.image {
+		background: #EBEBF0;
+	}
+	
+	form input[type="text"], input[type="password"] {
+		background: #F5F5F7;
+		color: #414146;
+	}
+	
+	#login form input[type="submit"] {
+		color: white;
+	}
+}
+
+* {
+	box-sizing: border-box;
+	border: none;
+}
+
+*:before, *:after {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+}
+
+#container {
+	width: 100%;
+	position: relative;
+}
+
+#login {
+	margin: 24px;
+	width: 300px;
+	position: absolute;
+	left: 50%;
+	margin-left: -150px;
+}
+
+#title {
+	display: block;
+	text-align: center;
+	font-size: 28px;
+	height: 28px;
+	margin-bottom: 24px;
+	font-family: "Helvetica";
+}
+
+input {
+	font-size: 16px;
+	line-height: 16px;
+	padding: 0;
+	-webkit-appearance: none;
+}
+
+#login form span {
+	border-radius: 8px 0px 0px 8px;
+	display: block;
+	float: left;
+	height: 50px;
+	text-align: center;
+	width: 50px;
+}
+
+#login form input {
+	height: 50px;
+}
+
+#login form input[type="text"], input[type="password"] {
+	font-weight: lighter;
+	border-radius: 0px 8px 8px 0px;
+	margin-bottom: 16px;
+	padding: 0 16px;
+	width: 250px;
+}
+
+#login form input[type="submit"] {
+	border-radius: 25px;
+	background-color: #0087B4;
+	background: linear-gradient(135deg, rgba(0,135,180,1) 35%, rgba(0,200,220,1) 100%);
+	font-weight: bold;
+	text-transform: uppercase;
+	width: 300px;
+}
+
+#login form input[type="submit"]:hover {
+	background-color: #0096C3;
+	background: linear-gradient(135deg, rgba(0,150,195,1) 35%, rgba(0,215,235,1) 100%);
+}
