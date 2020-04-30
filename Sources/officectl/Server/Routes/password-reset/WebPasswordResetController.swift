@@ -19,7 +19,7 @@ final class WebPasswordResetController {
 	func showHome(_ req: Request) throws -> EventLoopFuture<View> {
 		struct PasswordResetContext : Encodable {
 			var isAdmin: Bool
-			var userEmail: String?
+			var userEmail: String
 		}
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
