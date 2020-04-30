@@ -9,6 +9,7 @@
 #export("body"):
 	<h1>Error: #(errorTitle)</h1>
 	<p>#(errorDescription)</p>
+	<p><a href="/">Return to Home</a></p>
 #endexport
 
 
