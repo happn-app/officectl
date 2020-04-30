@@ -9,10 +9,7 @@ function show_input_errors() {
 	/* Validate the user id */
 	if (get_full_user_email(show_validation_error) == null) {return}
 	
-	/* Get the passwords fields values */
-	var old_password = get_input_value("form_input_old_pass", show_validation_error)
-	if (old_password == null) {return}
-	
+	/* Get the passwords fields values (old password is not always present; we don’t check it) */
 	var new_password = get_input_value("form_input_new_pass", show_validation_error)
 	if (new_password == null) {return}
 	
@@ -35,9 +32,6 @@ function get_full_user_email(show_error_function) {
 function form_action(form) {
 	var email = get_full_user_email(show_validation_error)
 	if (email == null) {return false}
-	
-	var old_password = get_input_value("form_input_old_pass", show_validation_error)
-	if (old_password == null) {return false}
 	
 	var new_password = get_input_value("form_input_new_pass", show_validation_error)
 	if (new_password == null) {return false}

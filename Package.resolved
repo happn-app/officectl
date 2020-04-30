@@ -93,11 +93,11 @@
       },
       {
         "package": "leaf-kit",
-        "repositoryURL": "https://github.com/vapor/leaf-kit.git",
+        "repositoryURL": "https://github.com/tdotclare/leaf-kit.git",
         "state": {
-          "branch": null,
-          "revision": "6e579ba3b9497a8e85d3a7a506fe0c943799037c",
-          "version": "1.0.0-rc.1.6"
+          "branch": "Robustify",
+          "revision": "ec428616ef59a6da36d5e8713becce402f2107ca",
+          "version": null
         }
       },
       {

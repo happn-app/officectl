@@ -29,21 +29,45 @@ final class WebPasswordResetController {
 	
 	func showResetPage(_ req: Request) throws -> EventLoopFuture<View> {
 		let email = try Email.getAsParameter(named: "email", from: req)
+		
+		let loggedInUser = try req.auth.require(LoggedInUser.self)
+		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
+		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIdPair: AnyDSUIdPair(service: emailService.erase(), userId: email.erase()), request: req) else {
+			throw Abort(.forbidden, reason: "Non-admin users can only see their own password reset status.")
+		}
+		
 		return try multiServicesPasswordReset(for: email, request: req)
 			.flatMap{ resets in self.renderMultiServicesPasswordReset(resets, for: email, viewRenderer: req.view) }
 	}
 	
 	func resetPassword(_ req: Request) throws -> EventLoopFuture<View> {
+		let loggedInUser = try req.auth.require(LoggedInUser.self)
+		
 		let email = try Email.getAsParameter(named: "email", from: req)
 		let resetPasswordData = try req.content.decode(ResetPasswordData.self)
 		
 		let officeKitServiceProvider = req.application.officeKitServiceProvider
-		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService()
+		let emailService: EmailService = try officeKitServiceProvider.getService(id: nil)
 		
-		let user = try authService.logicalUser(fromEmail: email, servicesProvider: officeKitServiceProvider)
-		return try authService.authenticate(userId: user.userId, challenge: resetPasswordData.oldPass, using: req.services)
+		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIdPair: AnyDSUIdPair(service: emailService.erase(), userId: email.erase()), request: req) else {
+			throw Abort(.forbidden, reason: "Non-admin users can only reset their own password.")
+		}
+		
+		let authFuture: EventLoopFuture<Bool>
+		if let oldPass = resetPasswordData.oldPass {
+			let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService()
+			let authServiceUser = try authService.logicalUser(fromEmail: email, servicesProvider: officeKitServiceProvider)
+			authFuture = try authService.authenticate(userId: authServiceUser.userId, challenge: oldPass, using: req.services)
+		} else {
+			/* Only admins are allowed to change the pass of someone without
+			 * specifying the old password. */
+			guard loggedInUser.isAdmin else {throw Abort(.forbidden, reason: "Old password is required for non-admin users")}
+			authFuture = req.eventLoop.future(true)
+		}
+		
+		return authFuture
 		.flatMapThrowing{ authSuccess -> Void in
-			guard authSuccess else {throw InvalidArgumentError(message: "Cannot login with these credentials.")}
+			guard authSuccess else {throw Abort(.forbidden, reason: "Invalid old password.")}
 		}
 		.flatMapThrowing{
 			try req.application.auditLogger.log(action: "Resetting password for user email:\(email).", source: .web)
@@ -59,7 +83,7 @@ final class WebPasswordResetController {
 	
 	private struct ResetPasswordData : Decodable {
 		
-		var oldPass: String
+		var oldPass: String?
 		var newPass: String
 		
 	}
