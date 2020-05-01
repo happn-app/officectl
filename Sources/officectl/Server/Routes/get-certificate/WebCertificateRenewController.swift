@@ -22,15 +22,28 @@ import COpenSSL
 class WebCertificateRenewController {
 	
 	func showLogin(_ req: Request) throws -> EventLoopFuture<View> {
-		return req.view.render("CertificateRenewHome")
+		struct CertifRenewContext : Encodable {
+			var isAdmin: Bool
+			var userEmail: String
+		}
+		let loggedInUser = try req.auth.require(LoggedInUser.self)
+		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
+		let email = try loggedInUser.user.hop(to: emailService).user.userId
+		return req.view.render("CertificateRenewHome", CertifRenewContext(isAdmin: loggedInUser.isAdmin, userEmail: email.stringValue))
 	}
 	
 	func renewCertificate(_ req: Request) throws -> EventLoopFuture<Response> {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		
+		let certRenewData = try req.content.decode(CertRenewData.self)
+		let renewedCommonName = certRenewData.userEmail.username
+		
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
-		let email = try loggedInUser.user.hop(to: emailService).user.userId
-		let renewedCommonName = email.username
+		let loggedInEmail = try loggedInUser.user.hop(to: emailService).user.userId
+		
+		guard loggedInUser.isAdmin || loggedInEmail == certRenewData.userEmail else {
+			throw Abort(.forbidden, reason: "Non-admin users can only get a certificate for themselves.")
+		}
 		
 		let officectlConfig = req.application.officectlConfig
 		let baseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
@@ -95,11 +108,15 @@ class WebCertificateRenewController {
 		}
 		.flatMapThrowing{ certificatesToRevoke -> [String] in
 			/* We check if all of the certificates to revoke will expire in less
-			 * than n seconds (where n is defined in the conf). */
-			try certificatesToRevoke.forEach{ idAndCertif in
-				let certif = idAndCertif.certif
-				guard certif.expirationDate < expectedExpiration else {
-					throw InvalidArgumentError(message: "You’ve got at least one certificate still valid, please use it or see an ops!")
+			 * than n seconds (where n is defined in the conf). If the user is
+			 * admin we don’t do this check (admin can renew any certif they want
+			 * whenever they want). */
+			if !loggedInUser.isAdmin {
+				try certificatesToRevoke.forEach{ idAndCertif in
+					let certif = idAndCertif.certif
+					guard certif.expirationDate < expectedExpiration else {
+						throw InvalidArgumentError(message: "You’ve got at least one certificate still valid, please use it or see an ops!")
+					}
 				}
 			}
 			return certificatesToRevoke.map{ $0.id }
@@ -178,6 +195,12 @@ class WebCertificateRenewController {
 			res.headers.contentDisposition = .init(.attachment, name: certificateFileName, filename: certificateFileName + ".tar.bz2")
 			return res
 		}
+	}
+	
+	private struct CertRenewData : Decodable {
+		
+		var userEmail: Email
+		
 	}
 	
 	private struct VaultResponse<ObjectType : Decodable> : Decodable {

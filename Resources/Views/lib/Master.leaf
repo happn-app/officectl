@@ -1,6 +1,7 @@
 <html>
 	<head>
 		<title>#import("title")</title>
+		<style>input[type=submit] {margin-left: -1px; margin-top: 7px;}</style>
 		#import("additional_head_tags")
 	</head>
 	<body>#import("body")</body>
