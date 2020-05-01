@@ -18,37 +18,18 @@ import Vapor
 
 class GetLicensesController {
 	
-	func showLogin(_ req: Request) throws -> EventLoopFuture<View> {
-		return req.view.render("GetLicensesLogin")
-	}
-	
 	func getLicenses(_ req: Request) throws -> EventLoopFuture<View> {
-		struct GetLicensesData : Decodable {
-			
-			var email: Email
-			var password: String
-			
-		}
+		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		
-		let getLicensesData = try req.content.decode(GetLicensesData.self)
-		let officeKitServiceProvider = req.application.officeKitServiceProvider
-		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService()
-		let user = try authService.logicalUser(fromEmail: getLicensesData.email, servicesProvider: officeKitServiceProvider)
+		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
+		let emailStr = try loggedInUser.user.hop(to: emailService).user.userId.stringValue
 		
 		let officectlConfig = req.application.officectlConfig
 		let semiSingletonStore = req.application.semiSingletonStore
 		let token = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
-		let emailStr = getLicensesData.email.stringValue
-		
-		return try authService.authenticate(userId: user.userId, challenge: getLicensesData.password, using: req.services)
-		.flatMapThrowing{ authSuccess -> Void in
-			guard authSuccess else {throw "Cannot login with these credentials."}
-		}
-		.flatMap{ _ -> EventLoopFuture<[(SimpleMDMDevice, [String: String])]> in
-			let getDevicesAction: GetMDMDevicesWithAttributesAction = semiSingletonStore.semiSingleton(forKey: token)
-			return getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: req.eventLoop)
-		}
+		let getDevicesAction: GetMDMDevicesWithAttributesAction = semiSingletonStore.semiSingleton(forKey: token)
+		return getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: req.eventLoop)
 		.flatMapThrowing{ devicesAndAttributes -> [[String: String]] in
 			return devicesAndAttributes.compactMap{ deviceAndAttributes -> [[String: String]]? in
 				guard deviceAndAttributes.1["user_email"] == emailStr else {return nil}

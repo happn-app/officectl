@@ -134,8 +134,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	/* ******** Temporary get licenses page ******** */
 	
 	let getLicensesController = GetLicensesController()
-	authedWebRoutesBuilderRedir.get("get-licenses", use: getLicensesController.showLogin)
-	authedWebRoutesBuilderGuard.post("get-licenses", use: getLicensesController.getLicenses)
+	authedWebRoutesBuilderRedir.get("get-licenses", use: getLicensesController.getLicenses)
 	
 	/* ******** Temporary test iOS devices list ******** */
 	
