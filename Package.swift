@@ -39,18 +39,27 @@ platformDependentOfficeKitDependencies.append(
  * Note the project compiles if the system OpenLDAP is used, but you’ll get a
  * lot of useless warnings.
  *
- * On macOS, one should export the following variable (from within the root of
- * the project):
- *    PKG_CONFIG_PATH="$PKG_CONFIG_PATH:`brew --prefix openssl@1.1`/lib/pkgconfig:$(pwd)/Configs/pkgconfig"
- *
  * To have the project opened with Xcode from the Package.swift file (and not
  * use an xcodeproj file), launch Xcode from the Terminal w/:
- *    PKG_CONFIG_PATH="$PKG_CONFIG_PATH:`brew --prefix openssl@1.1`/lib/pkgconfig:$(pwd)/Configs/pkgconfig" xed .
- * … or simply `xed .` if your `PKG_CONFIG_PATH` is already correctly set. */
+ *    PKG_CONFIG_PATH="$PKG_CONFIG_PATH:`brew --prefix openssl@1.1`/lib/pkgconfig" xed .
+ * … or simply `xed .` if your `PKG_CONFIG_PATH` is already correctly set.
+ *
+ * This is required, because contrary to the CLI’s SPM which is aware of brew,
+ * it seems Xcode’s isn’t. */
 let openLDAPTarget: Target
 #if os(macOS) /* Probably iOS, watchOS and tvOS too, but I’m not sure and we do not really care for now… */
 /* On macOS we use a custom-made auto-generated pkg-config file for OpenLDAP
- * (because the upstream did not do a pkg-config file). */
+ * because the upstream did not do a pkg-config file.
+ * (On macOS, the brew OpenLDAP install is keg-only, which means the headers and
+ *  lib folders cannot be guessed, and a pkg-config has to be provided.)
+ * I tried auto-generating the pkgconfig folder with the .pc files for OpenLDAP
+ * directly from the Package.swift file (yes, ugly), but it does not work.
+ * So instead we’ll recommend people to use the `configure.sh` script.
+ *
+ * Note: We cannot provide LDFLAGS and CFLAGS because AFAICT SPM completely
+ * ignores those variables. Only the PKG_CONFIG_PATH var seems to be read.
+ * Also, the linker and cflags parameters available on a standard target are not
+ * available on a system library target. */
 openLDAPTarget = .systemLibrary(name: "COpenLDAP", pkgConfig: "openldap", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])])
 #else
 /* On Linux we use the standard OpenLDAP package. The standard OpenLDAP package

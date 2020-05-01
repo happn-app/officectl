@@ -1,10 +1,10 @@
-prefix=/Users/frizlab/usr/homebrew/Cellar/openldap/2.4.49
+prefix=__PREFIX__
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
 Name: OpenLDAP-liblber
 Description: OpenLDAP lber library
-Version: 2.4.48
+Version: __VERSION__
 Libs: -L${libdir} -llber
 Cflags: -I${includedir}

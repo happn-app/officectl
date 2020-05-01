@@ -1,9 +1,9 @@
-prefix=/Users/frizlab/usr/homebrew/Cellar/openldap/2.4.49
+prefix=__PREFIX__
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
 Name: OpenLDAP
 Description: Open source suite of directory software
-Version: 2.4.48
+Version: __VERSION__
 Requires: libldap liblber

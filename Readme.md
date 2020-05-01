@@ -147,9 +147,10 @@ Returns: The string "ok".
 
 **For macOS**
 ```bash
-Scripts/build_for_macos.sh
+swift build [-c release]
 ```
-Builds the repo directly.
+Builds the repo directly. If you want to avoid a ton of LDAP-related warnings, you can run
+`./Scripts/configure.sh` once. See the `Package.swift` file for more info.
 
 **For Linux**
 ```bash
