@@ -22,8 +22,7 @@
 
 #export("body"):
 	<h1>Get an Identity Certificate</h1>
-	<!-- TODO -->
-	<form>
+	<form method="post">
 		<input type="submit" value="Download a New Certificate (Will Revoke Your Current Certificate If You Have One)">
 	</form>
 	<hr/>

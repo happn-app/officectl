@@ -26,12 +26,11 @@ class WebCertificateRenewController {
 	}
 	
 	func renewCertificate(_ req: Request) throws -> EventLoopFuture<Response> {
-		let renewCertificateData = try req.content.decode(RenewCertificateData.self)
-		let renewedCommonName = renewCertificateData.email.username
+		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		
-		let officeKitServiceProvider = req.application.officeKitServiceProvider
-		let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService()
-		let user = try authService.logicalUser(fromEmail: renewCertificateData.email, servicesProvider: officeKitServiceProvider)
+		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
+		let email = try loggedInUser.user.hop(to: emailService).user.userId
+		let renewedCommonName = email.username
 		
 		let officectlConfig = req.application.officectlConfig
 		let baseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
@@ -52,10 +51,7 @@ class WebCertificateRenewController {
 			handler(.success(request), nil)
 		}
 		
-		return try authService.authenticate(userId: user.userId, challenge: renewCertificateData.password, using: req.services)
-		.flatMapThrowing{ authSuccess -> Void in
-			guard authSuccess else {throw InvalidArgumentError(message: "Cannot login with these credentials.")}
-		}
+		return req.eventLoop.future()
 		.flatMap{ _ -> EventLoopFuture<CRL> in
 			/* Let’s get the CRL */
 			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("crl"))
@@ -69,8 +65,7 @@ class WebCertificateRenewController {
 			})
 		}
 		.flatMapThrowing{ crl -> EventLoopFuture<(CertificateSerialsList, CRL)> in
-			/* Now the user is authenticated, let’s fetch the list of current
-			 * certificates in the vault */
+			/* Let’s fetch the list of current certificates in the vault */
 			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("certs"))
 			urlRequest.httpMethod = "LIST"
 			let op = AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>(request: urlRequest, authenticator: authenticate)
@@ -183,13 +178,6 @@ class WebCertificateRenewController {
 			res.headers.contentDisposition = .init(.attachment, name: certificateFileName, filename: certificateFileName + ".tar.bz2")
 			return res
 		}
-	}
-	
-	private struct RenewCertificateData : Decodable {
-		
-		var email: Email
-		var password: String
-		
 	}
 	
 	private struct VaultResponse<ObjectType : Decodable> : Decodable {
