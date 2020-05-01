@@ -35,6 +35,8 @@ struct LicencesContext : Encodable {
 	#else:
 		<p>No licenses found for you!</p>
 	#endif
+	
+	#extend("lib/ReturnHome")
 #endexport
 
 

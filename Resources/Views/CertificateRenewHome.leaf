@@ -14,6 +14,9 @@
 		.comment {
 			color: \#858585;
 		}
+		\#return_home {
+			text-align: center;
+		}
 	</style>
 #endexport
 
@@ -21,15 +24,16 @@
 	<h1>Get an Identity Certificate</h1>
 	<!-- TODO -->
 	<form>
-		<input type="submit" value="Get a new certificate">
+		<input type="submit" value="Download a New Certificate (Will Revoke Your Current Certificate If You Have One)">
 	</form>
 	<hr/>
 	<div style="width: 725px; margin-left: auto; margin-right: auto;">
 		<h1>Usage and Other Info</h1>
 		<h2>Downloading Your Certificate</h2>
 		<p>
-			Login with your <b>LDAP</b> password in the form above to download a certificate to connect to the “office,”
-			“services,” “poda,” “podb,” “podc,” “pod0” and “pod2” VPNs, as well as identifying you on certain happn websites.<br/>
+			Click the button above to download a certificate to connect to the “office,”
+			“services,” “poda,” “podb,” “podc,” “pod0” and “pod2” VPNs, as well as identifying
+			you on certain happn websites.<br/>
 		</p>
 		<p style="margin-bottom: 0px;">
 			⚠️ Important notes:
@@ -107,6 +111,8 @@
 			Then import the p12 in Firefox.
 		</p>
 	</div>
+	
+	#extend("lib/ReturnHome")
 #endexport
 
 
