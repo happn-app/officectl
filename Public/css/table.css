@@ -1,0 +1,22 @@
+table, th, td {
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+
+th, td {
+	padding: 7px;
+}
+
+th {
+	padding: 9px;
+	background-color: #e0e0e0;
+}
+
+tr:nth-child(odd) {
+	background-color: #f3f3f3;
+}
+
+.monospace {
+	font-size: 110%;
+	font-family: monospace;
+}
