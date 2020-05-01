@@ -22,7 +22,7 @@ struct DevicesContext : Encodable {
 
 #export("additional_head_tags"):
 	#comment:
-	Copied in GetLicensesResult. See comment in the file.
+	Copied in GetLicenses. See comment in the file.
 	#endcomment
 	<style>
 		table, th, td {

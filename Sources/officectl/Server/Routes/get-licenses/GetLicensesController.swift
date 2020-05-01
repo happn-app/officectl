@@ -60,7 +60,7 @@ class GetLicensesController {
 			}
 			
 			let context = LicencesContext(email: emailStr, columnNames: Array(licenses.reduce(Set<String>(), { $0.union($1.keys) })).sorted(), licenses: licenses)
-			return req.view.render("GetLicensesResult", context)
+			return req.view.render("GetLicenses", context)
 		}
 	}
 	

@@ -14,7 +14,7 @@ struct LicencesContext : Encodable {
 #export("additional_head_tags"):
 	#comment:
 	TODO (when possible): Factorize this css, either by putting it in a css file
-	(possible rn), or by using an extend in the export (currently not possible).
+	(possible rn), or by using an extend in the export.
 	The CSS comes from the list of devices
 	#endcomment
 	<style>
