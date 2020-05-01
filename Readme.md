@@ -156,13 +156,12 @@ Builds the repo directly. If you want to avoid a ton of LDAP-related warnings, y
 ```bash
 Scripts/build_for_linux_on_macos.sh [treeish]
 ```
-You’ll need to have Docker running.
-I did not find a way to have ssh re-use the SSH auth sock of macOS, so I mounted the ssh private
-key in the container (it is expected to be located at `$HOME/.ssh/id_rsa`). If a password is needed
-to unlock the private key, the Docker uses the `ask_pass.sh` script (you must create it first in the
-`Scripts` folder). The script should output the password of the private key.
+You’ll need to have Docker running. You’ll need Docker for Mac version 2.2.0.0 or more so that
+mounting the special path `/run/host-services/ssh-auth.sock` works (for ssh auth).
 
 The resulting built product will be in the `linux_build` folder.
+
+You can use the `create_linux_deb.sh` script to create the debs for Linux.
 
 ## Project Structure
 
