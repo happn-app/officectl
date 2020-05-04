@@ -14,7 +14,8 @@ import OfficeKit
 
 
 
-func usersChangePassword(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
+func usersChangePassword(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+	let app = context.application
 	let eventLoop = try app.services.make(EventLoop.self)
 	
 	let userIdStr = f.getString(name: "user-id")!

@@ -16,7 +16,8 @@ import URLRequestOperation
 
 
 
-func curTest(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
+func curTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+	let app = context.application
 	let sProvider = app.officeKitServiceProvider
 	let eventLoop = try app.services.make(EventLoop.self)
 	

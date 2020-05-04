@@ -17,29 +17,25 @@ import OfficeKit
 
 
 
-func configure(_ app: Application) throws {
-	/* Let’s parse the CL arguments with Guaka (I did not find a way to do what I
-	 * wanted CLI-wise with Vapor) :(
-	 * NOTE: I did not try again w/ Vapor 4… */
-	let cliParseResults = parse_cli(app)
+func configure(_ app: Application, cliParseResults: GuakaCommandParseResult) throws {
 	configureSemiSingleton(cliParseResults.officectlConfig)
 	configureRetryingOperation(cliParseResults.officectlConfig)
 	configureURLRequestOperation(cliParseResults.officectlConfig)
+	
 	/* Register the services/configs we got from CLI, if any */
 	app.officectlConfig = cliParseResults.officectlConfig
 	if let p = cliParseResults.officectlConfig.staticDataDirURL?.path {
 		app.directory = DirectoryConfiguration(workingDirectory: p.hasSuffix("/") ? p : p + "/")
 	}
 	
-	/* Don’t know how to do that anymore, but should be the default anyway. */
-//	app.register(LeafConfig.self, { app in return LeafConfig(rootDirectory: app.make(DirectoryConfiguration.self).viewsDirectory) })
-	/* Tell the views we want to use Leaf as a renderer. */
+	/* Tell the views we want to use Leaf as a renderer and add some tags. */
 	app.views.use(.leaf)
 	app.leaf.tags[IsEmptyLeafTag.name] = IsEmptyLeafTag()
 	app.leaf.tags[SnailCaseToHumanLeafTag.name] = SnailCaseToHumanLeafTag()
 	app.leaf.tags[DictionaryGetValueForDynKeyLeafTag.name] = DictionaryGetValueForDynKeyLeafTag()
 	
-	/* We use the memory store for the sessions for now (rebooting officectl will drop the sessions…). This is the default but we make it explicit. */
+	/* We use the memory store for the sessions for now (rebooting officectl will
+	 * drop the sessions…). This is the default but we make it explicit. */
 	app.sessions.use(.memory)
 	
 	/* Set OfficeKit options */
@@ -48,10 +44,4 @@ func configure(_ app: Application) throws {
 	
 	/* Register the routes and middlewares */
 	try setup_routes_and_middlewares(app)
-	
-	/* Register the Guaka command wrapper. Guaka does the argument parsing
-	 * because I wasn’t able to do what I wanted with Vapor’s :(
-	 * Note I did not retry with Vapor 4. Maybe it has a way to do what I want. */
-	app.commands.defaultCommand = cliParseResults.wrapperCommand
-	app.commands.use(cliParseResults.wrapperCommand, as: "guaka", isDefault: true)
 }

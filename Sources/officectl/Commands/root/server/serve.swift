@@ -14,13 +14,18 @@ import OfficeKit
 
 
 
-func serverServe(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
+func serverServe(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+	let app = context.application
 	let config = app.officectlConfig
 	let eventLoop = try app.services.make(EventLoop.self)
+	
+	guard let serveCommand = app.commands.commands["serve"] else {
+		throw "Cannot find the serve command"
+	}
 	
 	var context = context
 	context.input = CommandInput(arguments: ["fake vapor", "--port", String(config.serverPort), "--hostname", config.serverHost])
 	
-	try app.commands.commands["serve"]?.run(using: &context)
+	try serveCommand.run(using: &context)
 	return eventLoop.makeSucceededFuture(())
 }

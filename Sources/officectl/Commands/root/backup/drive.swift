@@ -30,7 +30,8 @@ let driveROScope = Set(arrayLiteral: "https://www.googleapis.com/auth/drive.read
 let driveApiBaseURL = URL(string: "https://www.googleapis.com/drive/v3/")!
 
 
-func backupDrive(flags f: Flags, arguments args: [String], context: CommandContext, app: Application) throws -> EventLoopFuture<Void> {
+func backupDrive(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
+	let app = context.application
 	let officeKitConfig = app.officeKitConfig
 	let eventLoop = try app.services.make(EventLoop.self)
 	

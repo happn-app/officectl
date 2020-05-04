@@ -13,13 +13,19 @@ import Vapor
 
 
 func app() throws -> Application {
-	/* TODO: Log level… We will probably have to parse the CLI here instead of in
-	 *       the configure. */
-	LoggingSystem.bootstrap(console: Terminal(), level: .info)
+	/* Let’s parse the CL arguments with Guaka (I did not find a way to do what I
+	 * wanted CLI-wise with Vapor) :( */
+	let cliParseResults = parse_cli()
 	
-	let env = try Environment.detect(arguments: [CommandLine.arguments[0], "guaka"]) /* Guaka will parse the CL arguments */
+	var env = Environment(officectlConfig: cliParseResults.officectlConfig)
+	try LoggingSystem.bootstrap(from: &env)
+	
 	let app = Application(env)
-	try configure(app)
+	try configure(app, cliParseResults: cliParseResults)
+	
+	/* Because Guaka parses the CLI, it also launches the app. */
+	app.commands.defaultCommand = cliParseResults.wrapperCommand
+	app.commands.use(cliParseResults.wrapperCommand, as: "guaka", isDefault: true)
 	
 	do {
 		/* This whole block should be removed once storage is thread-safe (see https://github.com/vapor/vapor/issues/2330).
@@ -33,6 +39,23 @@ func app() throws -> Application {
 		_ = app.officectlStorage
 	}
 	
-	OfficeKitConfig.logger = app.logger
 	return app
+}
+
+
+private extension Environment {
+	
+	init(officectlConfig: OfficectlConfig) {
+		/* Default (`env` is `nil` in the config) is `.development`. */
+		switch officectlConfig.env {
+		case "dev", "development", nil: self = .development
+		case "prod", "production": self = .production
+		case "test", "testing": self = .testing
+		case let str?: self.init(name: str)
+		}
+		
+		/* Arguments are parsed w/ Guaka! Not Vapor. */
+		self.arguments = ["fake vapor"]
+	}
+	
 }

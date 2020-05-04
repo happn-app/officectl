@@ -8,7 +8,6 @@
 import Foundation
 
 import Guaka
-import Vapor
 import Yaml
 
 import OfficeKit
@@ -23,6 +22,8 @@ struct OfficectlConfig {
 	
 	var jwtSecret: Data
 	
+	/** `env` is passed down to Vapor and shoud generally be ignored from there. */
+	var env: String?
 	var verbose: Bool
 	var auditLogsURL: URL?
 	
@@ -50,6 +51,7 @@ struct OfficectlConfig {
 		}
 		jwtSecret = Data(jSecret.utf8)
 		
+		env = configYaml["env"].stringValue
 		verbose = f.getBool(name: "verbose") ?? configYaml["verbose"].bool ?? false
 		auditLogsURL = configYaml["audit_logs_path"].string.flatMap{ URL(fileURLWithPath: $0, isDirectory: false, relativeTo: configURL) }
 		
