@@ -21,7 +21,8 @@ func app() throws -> Application {
 	try LoggingSystem.bootstrap(from: &env)
 	
 	let app = Application(env)
-	try configure(app, cliParseResults: cliParseResults)
+	do    {try configure(app, cliParseResults: cliParseResults)}
+	catch {app.shutdown(); throw error}
 	
 	/* Because Guaka parses the CLI, it also launches the app. */
 	app.commands.defaultCommand = cliParseResults.wrapperCommand

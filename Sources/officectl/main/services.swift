@@ -38,7 +38,7 @@ extension Application {
 
 
 extension Application {
-		
+	
 	var semiSingletonStore: SemiSingletonStore {
 		if let existing = storage[SemiSingletonStoreKey.self] {
 			return existing

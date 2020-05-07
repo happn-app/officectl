@@ -37,7 +37,8 @@ func app(_ env: Environment) throws -> Application {
 	try LoggingSystem.bootstrap(from: &env)
 	
 	let app = Application(env)
-	try configure(app, forcedConfigPath: forcedConfigPath, verbose: verbose)
+	do    {try configure(app, forcedConfigPath: forcedConfigPath, verbose: verbose)}
+	catch {app.shutdown(); throw error}
 	
 	return app
 }
