@@ -65,15 +65,6 @@
         }
       },
       {
-        "package": "Guaka",
-        "repositoryURL": "https://github.com/klaas/Guaka.git",
-        "state": {
-          "branch": null,
-          "revision": "4f91d22fbf6367fb2ca78b9eda855cafd23ac54c",
-          "version": "0.3.11"
-        }
-      },
-      {
         "package": "jwt-kit",
         "repositoryURL": "https://github.com/vapor/jwt-kit.git",
         "state": {
@@ -146,12 +137,12 @@
         }
       },
       {
-        "package": "StringScanner",
-        "repositoryURL": "https://github.com/getGuaka/StringScanner.git",
+        "package": "swift-argument-parser",
+        "repositoryURL": "https://github.com/apple/swift-argument-parser.git",
         "state": {
           "branch": null,
-          "revision": "de1685ad202cb586d626ed52d6de904dd34189f3",
-          "version": "0.4.1"
+          "revision": "3d79b2b5a2e5af52c14e462044702ea7728f5770",
+          "version": "0.1.0"
         }
       },
       {
