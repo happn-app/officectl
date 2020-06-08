@@ -1,5 +1,5 @@
 # Don’t forget to change Swift version in recipe too when changing here.
-FROM happn/swift-builder:5.2.3-RELEASE_operationqueue-patch
+FROM happn/swift-builder:5.2.4-RELEASE_operationqueue-patch
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   libldap2-dev \
