@@ -21,9 +21,6 @@ class LogoutController {
 	we could in theory simply save this claim in the db if we ever want to
 	implement proper token revocation. */
 	func logout(_ req: Request) throws -> ApiResponse<String> {
-		guard let bearer = req.headers.bearerAuthorization else {throw Abort(.unauthorized)}
-		_ = try JWTSigner.hs256(key: req.application.officectlConfig.jwtSecret).verify(bearer.token, as: ApiAuth.Token.self)
-		
 		return ApiResponse.data("ok")
 	}
 	
