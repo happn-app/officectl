@@ -19,7 +19,7 @@ struct UserBearerAuthenticator : BearerAuthenticator {
 		return request.eventLoop.future()
 		.flatMapThrowing{
 			let sProvider = request.application.officeKitServiceProvider
-			let jwtSecret = request.application.officectlConfig.jwtSecret
+			let jwtSecret = try nil2throw(request.application.officectlConfig.serverConfig?.jwtSecret)
 			let token: ApiAuth.Token = try JWTSigner.hs256(key: jwtSecret).verify(bearer.token)
 			try request.auth.login(LoggedInUser(user: AnyDSUIdPair(taggedId: token.sub, servicesProvider: sProvider).dsuPair(), isAdmin: token.adm))
 			/* Note: We do **not** verify the user exists or is admin. We could. But we assume the JWT expiring very fast we won’t have a problem. */

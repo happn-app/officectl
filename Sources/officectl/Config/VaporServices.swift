@@ -1,6 +1,6 @@
 /*
  * services.swift
- * officectl_odproxy
+ * officectl
  *
  * Created by François Lamboley on 06/01/2020.
  */

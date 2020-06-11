@@ -7,7 +7,6 @@
 
 import Foundation
 
-import Guaka
 import Yaml
 
 import OfficeKit
@@ -16,16 +15,14 @@ import OfficeKit
 
 struct OfficectlConfig {
 	
-	var staticDataDirURL: URL?
-	var serverHost: String
-	var serverPort: Int
-	
-	var jwtSecret: Data
-	
 	/** `env` is passed down to Vapor and shoud generally be ignored from there. */
 	var env: String?
 	var verbose: Bool
 	var auditLogsURL: URL?
+	
+	var staticDataDirURL: URL?
+	
+	var serverConfig: ServerConfig?
 	
 	var tmpVaultBaseURL: URL?
 	var tmpVaultRootCAName: String?
@@ -39,21 +36,16 @@ struct OfficectlConfig {
 	var officeKitConfig: OfficeKitConfig
 	var syncConfig: SyncConfig?
 	
-	init(flags f: Flags) throws {
-		let (configURL, configYaml) = try OfficectlConfig.readYamlConfig(forcedConfigFilePath: f.getString(name: "config-file"))
-		
-		staticDataDirURL = (f.getString(name: "static-data-dir") ?? configYaml["server"]["static_data_dir"].string).flatMap{ URL(fileURLWithPath: $0, isDirectory: true, relativeTo: configURL) }
-		serverHost = f.getString(name: "hostname") ?? configYaml["server"]["hostname"].string ?? "localhost"
-		serverPort = f.getInt(name: "port") ?? configYaml["server"]["port"].int ?? 8080
-		
-		guard let jSecret = f.getString(name: "jwt-secret") ?? configYaml["server"]["jwt_secret"].string else {
-			throw MissingFieldError("JWT Secret")
-		}
-		jwtSecret = Data(jSecret.utf8)
+	init(globalOptions go: GlobalOptions, serverOptions so: ServerOptions?) throws {
+		let (configURL, configYaml) = try OfficectlConfig.readYamlConfig(forcedConfigFilePath: go.configFile)
 		
 		env = configYaml["env"].stringValue
-		verbose = f.getBool(name: "verbose") ?? configYaml["verbose"].bool ?? false
+		verbose = go.verbose ?? configYaml["verbose"].bool ?? false
 		auditLogsURL = configYaml["audit_logs_path"].string.flatMap{ URL(fileURLWithPath: $0, isDirectory: false, relativeTo: configURL) }
+		
+		staticDataDirURL = (go.staticDataDir ?? configYaml["static_data_dir"].string).flatMap{ URL(fileURLWithPath: $0, isDirectory: true, relativeTo: configURL) }
+		
+		serverConfig = try so.flatMap{ try ServerConfig(serverOptions: $0, genericConfig: configYaml.optionalNonNullStorage(forKey: "server"), pathsRelativeTo: configURL) }
 		
 		tmpVaultBaseURL = configYaml["vault_tmp"]["base_url"].string.flatMap{ URL(string: $0) }
 		tmpVaultRootCAName = configYaml["vault_tmp"]["root_ca_name"].string

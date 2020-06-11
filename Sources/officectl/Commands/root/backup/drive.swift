@@ -15,7 +15,6 @@
 import Foundation
 
 import GenericJSON
-import Guaka
 import NIO
 import OfficeKit
 import RetryingOperation
@@ -30,6 +29,7 @@ let driveROScope = Set(arrayLiteral: "https://www.googleapis.com/auth/drive.read
 let driveApiBaseURL = URL(string: "https://www.googleapis.com/drive/v3/")!
 
 
+/*
 func backupDrive(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
 	let app = context.application
 	let officeKitConfig = app.officeKitConfig
@@ -112,3 +112,4 @@ func backupDrive(flags f: Flags, arguments args: [String], context: CommandConte
 	
 	return f
 }
+*/

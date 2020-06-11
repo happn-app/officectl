@@ -19,7 +19,7 @@ class LoginController {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		
 		let token = ApiAuth.Token(dsuIdPair: loggedInUser.user.dsuIdPair, admin: loggedInUser.isAdmin, validityDuration: 30*60) /* 30 minutes */
-		let tokenString = try JWTSigner.hs256(key: req.application.officectlConfig.jwtSecret).sign(token)
+		let tokenString = try JWTSigner.hs256(key: nil2throw(req.application.officectlConfig.serverConfig?.jwtSecret)).sign(token)
 		return .data(ApiAuth(token: tokenString, expirationDate: token.exp, isAdmin: token.adm))
 	}
 	
