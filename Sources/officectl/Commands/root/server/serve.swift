@@ -50,7 +50,7 @@ struct ServerServeCommand : ParsableCommand {
 	
 	func run() throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: serverOptions)
-		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
+		try Application.runSync(officectlConfig: config, configureHandler: setup_routes_and_middlewares, vaporRun)
 	}
 	
 	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {

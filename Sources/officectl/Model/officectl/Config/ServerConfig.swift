@@ -25,10 +25,10 @@ struct ServerConfig {
 		serverHost = (try? serverOptions.hostname ?? conf?.string(forKey: "hostname", currentKeyPath: domain)) ?? "localhost"
 		serverPort = (try? serverOptions.port ?? conf?.int(forKey: "port", currentKeyPath: domain)) ?? 8080
 		
-		guard let s = try? conf?.data(forKey: "jwt_secret", currentKeyPath: domain) else {
+		guard let s = try? conf?.string(forKey: "jwt_secret", currentKeyPath: domain) else {
 			throw MissingFieldError("No JWT secret in server config")
 		}
-		jwtSecret = s
+		jwtSecret = Data(s.utf8)
 	}
 	
 }
