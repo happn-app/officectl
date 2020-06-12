@@ -19,18 +19,11 @@ struct ServerConfig {
 	
 	var jwtSecret: Data
 	
-	init(serverOptions: ServerOptions, genericConfig conf: GenericStorage?, pathsRelativeTo baseURL: URL?) throws {
+	init(serverOptions: ServerServeCommand.Options, genericConfig conf: GenericStorage?, pathsRelativeTo baseURL: URL?) throws {
 		let domain = ["Server Config"]
 		
-		guard let h = try? serverOptions.hostname ?? conf?.string(forKey: "hostname", currentKeyPath: domain) else {
-			throw MissingFieldError("No hostname in server config")
-		}
-		serverHost = h
-		
-		guard let p = try? serverOptions.port ?? conf?.int(forKey: "port", currentKeyPath: domain) else {
-			throw MissingFieldError("No port in server config")
-		}
-		serverPort = p
+		serverHost = (try? serverOptions.hostname ?? conf?.string(forKey: "hostname", currentKeyPath: domain)) ?? "localhost"
+		serverPort = (try? serverOptions.port ?? conf?.int(forKey: "port", currentKeyPath: domain)) ?? 8080
 		
 		guard let s = try? conf?.data(forKey: "jwt_secret", currentKeyPath: domain) else {
 			throw MissingFieldError("No JWT secret in server config")

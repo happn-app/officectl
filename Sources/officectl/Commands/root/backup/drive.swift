@@ -14,6 +14,7 @@
 #endif
 import Foundation
 
+import ArgumentParser
 import GenericJSON
 import NIO
 import OfficeKit
@@ -29,87 +30,136 @@ let driveROScope = Set(arrayLiteral: "https://www.googleapis.com/auth/drive.read
 let driveApiBaseURL = URL(string: "https://www.googleapis.com/drive/v3/")!
 
 
-/*
-func backupDrive(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	let app = context.application
-	let officeKitConfig = app.officeKitConfig
-	let eventLoop = try app.services.make(EventLoop.self)
+struct BackupDriveCommand : ParsableCommand {
 	
-	let disableConsole = f.getBool(name: "no-interactive-console")!
+	static var configuration = CommandConfiguration(
+		commandName: "drive",
+		abstract: "Backup the drive of the given emails (or all mails in the given service if none are specified) to a directory.",
+		discussion: """
+			The “data” files are copied as-is, the “cloud” files are converted to xlsx, pptx and docx. A document
+			will be generated to summarize the sync, and list potential data losses (conversion is impossible, etc.)
+			
+			The “disabled-email-suffix” option exists too, just like for the backup mails action. See the doc of
+			the action for more info.
+			"""
+	)
 	
-	let serviceId = f.getString(name: "service-id")
-	let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
-	_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
+	@OptionGroup()
+	var globalOptions: OfficectlRootCommand.Options
 	
-	let downloadsDestinationFolder = URL(fileURLWithPath: f.getString(name: "downloads-destination-folder")!, isDirectory: true)
+	@OptionGroup()
+	var backupOptions: BackupCommand.Options
 	
-	let disabledUserSuffix = f.getString(name: "disabled-email-suffix")
-	let usersFilter = (args.isEmpty ? nil : args)?.map{ EmailSrcAndDst(emailStr: $0, disabledUserSuffix: disabledUserSuffix, logger: app.logger) }
+	@ArgumentParser.Option(help: "The id of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.")
+	var serviceId: String?
 	
-	let eraseDownloadedFiles = f.getBool(name: "erase-downloaded-files")!
+	@ArgumentParser.Option(help: "When downloading the drive, if the username of the email has the given suffix, the resulting destination will be the same email without the suffix in the username. The drives to backup given will be searched with and without the suffix.")
+	var disabledEmailSuffix: String?
 	
-	let filters = f.getString(name: "path-filters")?.split(separator: ",").map{ $0.lowercased() }
-	let skipZeroQuotaFiles = !f.getBool(name: "no-skip-zero-quota-files")!
-	let skipOtherOwner = f.getBool(name: "skip-other-owner")!
+	@ArgumentParser.Flag(inversion: .prefixedNo, help: "Whether to remove the files from the drive after downloading them. If a file is shared it will be also removed! A log file will contain all the shared files that have been removed, with the list of people w/ access to the files.")
+	var eraseDownloadedFiles: Bool
 	
-	let skipIfArchiveFound = !f.getBool(name: "no-skip-if-archive-exists")!
-	let archiveDestinationFolderStr = (f.getBool(name: "archive")! ? try nil2throw(f.getString(name: "archives-destination-folder")) : nil)
-	let archiveDestinationFolder = archiveDestinationFolderStr.flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
+	@ArgumentParser.Option(help: "Only download files matching the given filters. The filters are applied on the full paths of the files. If any path matches (case-insensitive match), the file will be downloaded. The filter is NOT a regex; only a basic case-insensitive string match will be done, however if the filter starts with a ^ the filter will have to match the beginning of the path. It is thus impossible to specify a filter starting with “^”.")
+	var pathFilters: [String]
 	
-	try app.auditLogger.log(action: "Backing up mails w/ service \(serviceId ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(archiveDestinationFolder != nil ? "w/": "w/o") archiving.", source: .cli)
+	@ArgumentParser.Flag(inversion: .prefixedNo, help: "Do not download files not owned by the user, even if they take quota for the user.")
+	var skipOtherOwner: Bool
 	
-	let previousOfficeKitLogger = OfficeKitConfig.logger
-	let downloadDriveStatus = DownloadDrivesStatusActivity()
-	let consoleActivity = downloadDriveStatus.newActivity(for: context.console)
-	if !disableConsole {
-		OfficeKitConfig.logger = nil
-		consoleActivity.start()
+	@ArgumentParser.Flag(default: true, inversion: .prefixedNo, help: "Skip files not taking any quota for the user.")
+	var skipZeroQuotaFiles: Bool
+	
+	@ArgumentParser.Flag(inversion: .prefixedNo, help: "Whether to archive the backup (create a tar bz2 file and remove the directory).")
+	var archive: Bool
+	
+	@ArgumentParser.Flag(default: true, inversion: .prefixedNo, help: "Ignored when not archiving. If the archive for an email already exists, skip the backup for this email. Otherwise, the existing archive will be overwritten.")
+	var skipIfArchiveExists: Bool
+	
+	@ArgumentParser.Option(help: "The path in which the archives will be put. Defaults to pwd. Required iif archive is set.")
+	var archivesDestinationFolder: String?
+	
+	@ArgumentParser.Argument()
+	var arguments: [String]
+	
+	func run() throws {
+		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
+		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}
 	
-	let downloadFilesQueue = OperationQueue(name_OperationQueue: "Files Download Queue")
-	
-	let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-	let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
-	.flatMap{ _ -> EventLoopFuture<[GoogleUserAndDest]> in
-		GoogleUserAndDest.fetchListToBackup(
-			googleConfig: googleConfig, googleConnector: googleConnector,
-			usersFilter: usersFilter, disabledUserSuffix: disabledUserSuffix,
-			downloadsDestinationFolder: downloadsDestinationFolder, archiveDestinationFolder: archiveDestinationFolder,
-			skipIfArchiveFound: skipIfArchiveFound,
-			console: context.console, eventLoop: eventLoop
-		)
-	}
-	.flatMapThrowing{ filteredUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
-		downloadDriveStatus.initStatuses(users: filteredUsers.map{ $0.user })
+	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+		let app = context.application
+		let officeKitConfig = app.officeKitConfig
+		let eventLoop = try app.services.make(EventLoop.self)
 		
-		let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, filters: filters, skipOtherOwner: skipOtherOwner, skipZeroQuotaFiles: skipZeroQuotaFiles, eraseDownloadedFiles: eraseDownloadedFiles, downloadFilesQueue: downloadFilesQueue) }
-		return EventLoopFuture<GoogleUserAndDest>.executeAll(operations, on: eventLoop, resultRetriever: { (o: DownloadDriveOperation) -> GoogleUserAndDest in
-			try throwIfError(o.error)
-			return o.state.userAndDest
-		})
-		.flatMapThrowing{ downloadResults in
-			assert(downloadResults.count == filteredUsers.count)
-			let errors = downloadResults.enumerated().compactMap{ result in result.element.failureValue.flatMap{ (filteredUsers[result.offset], $0) } }
-			guard errors.isEmpty else {
-				/* Currently we stop everything if we got at least one error. */
-				/* TODO: Properly report the error (say this user got an error, not
-				 *       just here are the errors!) */
-				throw ErrorCollection(errors.map{ $0.1 })
+		let disableConsole = !globalOptions.interactiveConsole
+		
+		let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
+		_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
+		
+		let downloadsDestinationFolder = URL(fileURLWithPath: backupOptions.downloadsDestinationFolder, isDirectory: true)
+		
+		let usersFilter = (arguments.isEmpty ? nil : arguments)?.map{ EmailSrcAndDst(emailStr: $0, disabledUserSuffix: disabledEmailSuffix, logger: app.logger) }
+		
+		let filters = pathFilters.map{ $0.lowercased() }
+		
+		let archivesDestinationFolder = self.archivesDestinationFolder
+		let archivesDestinationFolderStr = (archive ? try nil2throw(archivesDestinationFolder) : nil)
+		let archivesDestinationFolderURL = archivesDestinationFolderStr.flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
+		
+		try app.auditLogger.log(action: "Backing up mails w/ service \(serviceId ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(archivesDestinationFolderURL != nil ? "w/": "w/o") archiving.", source: .cli)
+		
+		let previousOfficeKitLogger = OfficeKitConfig.logger
+		let downloadDriveStatus = DownloadDrivesStatusActivity()
+		let consoleActivity = downloadDriveStatus.newActivity(for: context.console)
+		if !disableConsole {
+			OfficeKitConfig.logger = nil
+			consoleActivity.start()
+		}
+		
+		let downloadFilesQueue = OperationQueue(name_OperationQueue: "Files Download Queue")
+		
+		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
+		let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
+		.flatMap{ _ -> EventLoopFuture<[GoogleUserAndDest]> in
+			GoogleUserAndDest.fetchListToBackup(
+				googleConfig: googleConfig, googleConnector: googleConnector,
+				usersFilter: usersFilter, disabledUserSuffix: self.disabledEmailSuffix,
+				downloadsDestinationFolder: downloadsDestinationFolder, archiveDestinationFolder: archivesDestinationFolderURL,
+				skipIfArchiveFound: self.skipIfArchiveExists,
+				console: context.console, eventLoop: eventLoop
+			)
+		}
+		.flatMapThrowing{ filteredUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
+			downloadDriveStatus.initStatuses(users: filteredUsers.map{ $0.user })
+			
+			let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, filters: filters, skipOtherOwner: self.skipOtherOwner, skipZeroQuotaFiles: self.skipZeroQuotaFiles, eraseDownloadedFiles: self.eraseDownloadedFiles, downloadFilesQueue: downloadFilesQueue) }
+			return EventLoopFuture<GoogleUserAndDest>.executeAll(operations, on: eventLoop, resultRetriever: { (o: DownloadDriveOperation) -> GoogleUserAndDest in
+				try throwIfError(o.error)
+				return o.state.userAndDest
+			})
+			.flatMapThrowing{ downloadResults in
+				assert(downloadResults.count == filteredUsers.count)
+				let errors = downloadResults.enumerated().compactMap{ result in result.element.failureValue.flatMap{ (filteredUsers[result.offset], $0) } }
+				guard errors.isEmpty else {
+					/* Currently we stop everything if we got at least one error. */
+					/* TODO: Properly report the error (say this user got an error, not
+					 *       just here are the errors!) */
+					throw ErrorCollection(errors.map{ $0.1 })
+				}
+				return filteredUsers
 			}
-			return filteredUsers
 		}
-	}
-	.flatMap{ $0 }
-	.transform(to: ())
-	.always{ r in
-		guard !disableConsole else {return}
-		switch r {
-		case .success: consoleActivity.succeed()
-		case .failure: consoleActivity.fail()
+		.flatMap{ $0 }
+		.transform(to: ())
+		.always{ r in
+			guard !disableConsole else {return}
+			switch r {
+			case .success: consoleActivity.succeed()
+			case .failure: consoleActivity.fail()
+			}
+			OfficeKitConfig.logger = previousOfficeKitLogger
 		}
-		OfficeKitConfig.logger = previousOfficeKitLogger
+		
+		return f
 	}
 	
-	return f
 }
-*/

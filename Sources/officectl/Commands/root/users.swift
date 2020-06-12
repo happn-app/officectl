@@ -8,9 +8,6 @@
 import Foundation
 
 import ArgumentParser
-import Vapor
-
-import OfficeKit
 
 
 
@@ -20,10 +17,13 @@ struct UserCommand : ParsableCommand {
 		commandName: "user",
 		abstract: "Interact with the users",
 		subcommands: [
+			UserCreateCommand.self,
+			UserListCommand.self,
+			UserChangePasswordCommand.self
 		]
 	)
 	
 	@OptionGroup()
-	var globalOptions: GlobalOptions
+	var globalOptions: OfficectlRootCommand.Options
 	
 }

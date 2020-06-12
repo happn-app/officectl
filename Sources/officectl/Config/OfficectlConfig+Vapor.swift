@@ -38,9 +38,6 @@ extension OfficectlConfig {
 		/* Set OfficeKit options */
 		OfficeKitConfig.logger = app.logger
 		WeakeningMode.defaultMode = .onSuccess(delay: 13*60) /* 13 minutes */
-		
-		/* Register the routes and middlewares */
-		try setup_routes_and_middlewares(app)
 	}
 	
 }

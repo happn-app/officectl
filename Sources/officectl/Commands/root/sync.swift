@@ -28,7 +28,7 @@ struct SyncCommand : ParsableCommand {
 	var to: [String]
 	
 	@OptionGroup()
-	var globalOptions: GlobalOptions
+	var globalOptions: OfficectlRootCommand.Options
 	
 	func run() throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)

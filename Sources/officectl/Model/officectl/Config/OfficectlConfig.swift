@@ -36,7 +36,7 @@ struct OfficectlConfig {
 	var officeKitConfig: OfficeKitConfig
 	var syncConfig: SyncConfig?
 	
-	init(globalOptions go: GlobalOptions, serverOptions so: ServerOptions?) throws {
+	init(globalOptions go: OfficectlRootCommand.Options, serverOptions so: ServerServeCommand.Options?) throws {
 		let (configURL, configYaml) = try OfficectlConfig.readYamlConfig(forcedConfigFilePath: go.configFile)
 		
 		env = configYaml["env"].stringValue
