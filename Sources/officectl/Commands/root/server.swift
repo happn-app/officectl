@@ -1,5 +1,5 @@
 /*
- * backup.swift
+ * server.swift
  * officectl
  *
  * Created by François Lamboley on 6/26/18.
@@ -7,13 +7,22 @@
 
 import Foundation
 
-import Guaka
-import Vapor
-
-import OfficeKit
+import ArgumentParser
 
 
 
-func server(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please choose a server command"])
+struct ServerCommand : ParsableCommand {
+	
+	static var configuration = CommandConfiguration(
+		commandName: "server",
+		abstract: "Server-related commands.",
+		subcommands: [
+			ServerServeCommand.self,
+			ServerRoutesCommand.self
+		]
+	)
+	
+	@OptionGroup()
+	var globalOptions: OfficectlRootCommand.Options
+	
 }

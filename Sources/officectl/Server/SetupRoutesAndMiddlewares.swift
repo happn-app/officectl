@@ -72,7 +72,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	
 	apiRoutesBuilder.grouped(UserCredsAuthenticator(usernameType: .taggedId))
 		.post("auth", "login",  use: LoginController().login)
-	apiRoutesBuilder.post("auth", "logout", use: LogoutController().logout)
+	authedApiRoutesBuilder.post("auth", "logout", use: LogoutController().logout)
 	
 	let usersController = UsersController()
 	authedApiRoutesBuilderAdmin.get("users", use: usersController.getAllUsers)

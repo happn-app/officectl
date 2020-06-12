@@ -7,13 +7,33 @@
 
 import Foundation
 
-import Guaka
-import Vapor
-
-import OfficeKit
+import ArgumentParser
 
 
 
-func backup(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please choose what to backup"])
+struct BackupCommand : ParsableCommand {
+	
+	struct Options : ParsableArguments {
+		
+		@Option(help: "The enclosing folder destination for the backup.")
+		var downloadsDestinationFolder: String
+		
+	}
+	
+	static var configuration = CommandConfiguration(
+		commandName: "backup",
+		abstract: "Backup informations from servies (drive, mails, etc.)",
+		subcommands: [
+			BackupGitHubCommand.self,
+			BackupDriveCommand.self,
+			BackupMailsCommand.self
+		]
+	)
+	
+	@OptionGroup()
+	var globalOptions: OfficectlRootCommand.Options
+	
+	@OptionGroup()
+	var backupOptions: Options
+	
 }

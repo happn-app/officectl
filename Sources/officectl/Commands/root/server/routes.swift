@@ -7,22 +7,39 @@
 
 import Foundation
 
-import Guaka
+import ArgumentParser
 import Vapor
 
 import OfficeKit
 
 
 
-func serverRoutes(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	let app = context.application
-	let eventLoop = try app.services.make(EventLoop.self)
+struct ServerRoutesCommand : ParsableCommand {
 	
-	guard let routesCommand = app.commands.commands["routes"] else {
-		throw "Cannot find the routes command"
+	static var configuration = CommandConfiguration(
+		commandName: "routes",
+		abstract: "Show the routes supported by the server."
+	)
+	
+	@OptionGroup()
+	var globalOptions: OfficectlRootCommand.Options
+	
+	func run() throws {
+		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
+		try Application.runSync(officectlConfig: config, configureHandler: setup_routes_and_middlewares, vaporRun)
 	}
 	
-	var context = context
-	try routesCommand.run(using: &context)
-	return eventLoop.makeSucceededFuture(())
+	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+		let app = context.application
+		let eventLoop = try app.services.make(EventLoop.self)
+		
+		guard let routesCommand = app.commands.commands["routes"] else {
+			throw "Cannot find the routes command"
+		}
+		
+		var context = context
+		try routesCommand.run(using: &context)
+		return eventLoop.makeSucceededFuture(())
+	}
+	
 }

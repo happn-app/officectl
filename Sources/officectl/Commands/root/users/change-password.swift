@@ -7,49 +7,73 @@
 
 import Foundation
 
-import Guaka
+import ArgumentParser
 import Vapor
 
 import OfficeKit
 
 
 
-func usersChangePassword(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	let app = context.application
-	let eventLoop = try app.services.make(EventLoop.self)
+struct UserChangePasswordCommand : ParsableCommand {
 	
-	let userIdStr = f.getString(name: "user-id")!
-	let serviceIds = f.getString(name: "service-ids")?.split(separator: ",").map(String.init)
+	static var configuration = CommandConfiguration(
+		commandName: "change-password",
+		abstract: "Change the password of a user."
+	)
 	
-	let sProvider = app.officeKitServiceProvider
-	let services = try sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsUserCreation }
-	guard !services.isEmpty else {
-		context.console.warning("Nothing to do.")
-		return eventLoop.future()
+	@OptionGroup()
+	var globalOptions: OfficectlRootCommand.Options
+	
+	@ArgumentParser.Option(help: "The tagged user id of the user whose password needs to be reset.")
+	var userId: String
+	
+	@ArgumentParser.Option(help: "The service ids on which to reset the password. If unset, the password will be reset on all the services configured.")
+	var serviceIds: String?
+	
+	func run() throws {
+		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
+		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}
 	
-	/* Let’s ask for the new password */
-	let newPass             = context.console.ask("New password: ", isSecure: true)
-	let newPassConfirmation = context.console.ask("New password (again): ", isSecure: true)
-	guard newPass == newPassConfirmation else {throw InvalidArgumentError(message: "Try again")}
-	
-	let dsuIdPair = try AnyDSUIdPair(string: userIdStr, servicesProvider: sProvider)
-	return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), using: app.services)
-	.flatMapThrowing{ passwordResets in
-		try app.auditLogger.log(action: "Changing password of \(dsuIdPair.taggedId) on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
-		return try passwordResets.start(newPass: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)
-		.map{ results in
-			context.console.info()
-			context.console.info("********* PASSWORD CHANGES RESULTS *********")
-			for (service, result) in results {
-				let serviceId = service.config.serviceId
-				let serviceName = service.config.serviceName
-				switch result {
-				case .success:            context.console.info("✅ \(serviceId) (\(serviceName))")
-				case .failure(let error): context.console.info("🛑 \(serviceId) (\(serviceName): \(error)")
+	/* We don’t technically require Vapor, but it’s convenient. */
+	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+		let app = context.application
+		let eventLoop = try app.services.make(EventLoop.self)
+		
+		let userIdStr = userId
+		let serviceIds = self.serviceIds?.split(separator: ",").map(String.init)
+		
+		let sProvider = app.officeKitServiceProvider
+		let services = try sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsUserCreation }
+		guard !services.isEmpty else {
+			context.console.warning("Nothing to do.")
+			return eventLoop.future()
+		}
+		
+		/* Let’s ask for the new password */
+		let newPass             = context.console.ask("New password: ", isSecure: true)
+		let newPassConfirmation = context.console.ask("New password (again): ", isSecure: true)
+		guard newPass == newPassConfirmation else {throw InvalidArgumentError(message: "Try again")}
+		
+		let dsuIdPair = try AnyDSUIdPair(string: userIdStr, servicesProvider: sProvider)
+		return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), using: app.services)
+		.flatMapThrowing{ passwordResets in
+			try app.auditLogger.log(action: "Changing password of \(dsuIdPair.taggedId) on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
+			return try passwordResets.start(newPass: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)
+			.map{ results in
+				context.console.info()
+				context.console.info("********* PASSWORD CHANGES RESULTS *********")
+				for (service, result) in results {
+					let serviceId = service.config.serviceId
+					let serviceName = service.config.serviceName
+					switch result {
+					case .success:            context.console.info("✅ \(serviceId) (\(serviceName))")
+					case .failure(let error): context.console.info("🛑 \(serviceId) (\(serviceName): \(error)")
+					}
 				}
 			}
 		}
+		.flatMap{ $0 }
 	}
-	.flatMap{ $0 }
+	
 }

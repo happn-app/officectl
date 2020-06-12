@@ -7,13 +7,23 @@
 
 import Foundation
 
-import Guaka
-import Vapor
-
-import OfficeKit
+import ArgumentParser
 
 
 
-func users(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "subcommand is required"])
+struct UserCommand : ParsableCommand {
+	
+	static var configuration = CommandConfiguration(
+		commandName: "user",
+		abstract: "Interact with the users",
+		subcommands: [
+			UserCreateCommand.self,
+			UserListCommand.self,
+			UserChangePasswordCommand.self
+		]
+	)
+	
+	@OptionGroup()
+	var globalOptions: OfficectlRootCommand.Options
+	
 }

@@ -7,13 +7,23 @@
 
 import Foundation
 
-import Guaka
-import Vapor
-
-import OfficeKit
+import ArgumentParser
 
 
 
-func devTest(flags f: Flags, arguments args: [String], context: CommandContext) throws -> EventLoopFuture<Void> {
-	throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Please choose what to test"])
+struct DevtestCommand : ParsableCommand {
+	
+	static var configuration = CommandConfiguration(
+		commandName: "devtest",
+		abstract: "Developer tests commands",
+		shouldDisplay: false,
+		subcommands: [
+			CurrentDevTestCommand.self,
+			ConsolepermCommand.self
+		]
+	)
+	
+	@OptionGroup()
+	var globalOptions: OfficectlRootCommand.Options
+	
 }

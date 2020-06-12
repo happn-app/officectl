@@ -84,7 +84,7 @@ let package = Package(
 		.package(                     url: "https://github.com/apple/swift-nio.git", from: "2.6.0"),
 		.package(                     url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
 		.package(                     url: "https://github.com/apple/swift-crypto.git", from: "1.0.0"),
-		.package(                     url: "https://github.com/klaas/Guaka.git", .upToNextMinor(from: "0.3.0")),
+		.package(                     url: "https://github.com/apple/swift-argument-parser.git", from: "0.1.0"),
 		.package(                     url: "https://github.com/vapor/leaf.git", from: "4.0.0-rc"),
 		.package(                     url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
 //		.package(                     url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
@@ -128,7 +128,8 @@ let package = Package(
 				 .product(name: "Vapor", package: "vapor"),
 				 .product(name: "Leaf", package: "leaf"),
 				 .product(name: "ConsoleKit", package: "console-kit"),
-				 "Guaka", "Yaml",
+				 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+				 "Yaml",
 				 .product(name: "JWTKit", package: "jwt-kit"),
 				 "LegibleError"
 			] + platformDependentOfficectlDependencies,
