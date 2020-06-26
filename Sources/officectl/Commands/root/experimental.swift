@@ -19,7 +19,8 @@ struct ExperimentalCommand : ParsableCommand {
 		shouldDisplay: false,
 		subcommands: [
 			CurrentDevTestCommand.self,
-			ConsolepermCommand.self
+			ConsolepermCommand.self,
+			FindInDrivesCommand.self
 		]
 	)
 	

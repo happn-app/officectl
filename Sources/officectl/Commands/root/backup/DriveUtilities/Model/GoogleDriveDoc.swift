@@ -40,7 +40,7 @@ struct GoogleDriveDoc : Codable {
 	
 	var isAppAuthorized: Bool?
 	
-	var ownedByMe: Bool
+	var ownedByMe: Bool?
 	var owners: [GoogleDriveDocUser]?
 	
 	var modifiedByMe: Bool?

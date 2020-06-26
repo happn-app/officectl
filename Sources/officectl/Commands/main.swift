@@ -58,7 +58,9 @@ struct OfficectlRootCommand : ParsableCommand {
 			SyncCommand.self,
 			
 			ServerCommand.self,
-			UserCommand.self
+			UserCommand.self,
+			
+			ExperimentalCommand.self
 		]
 	)
 	

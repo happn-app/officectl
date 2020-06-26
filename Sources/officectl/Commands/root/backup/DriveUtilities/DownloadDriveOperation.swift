@@ -121,7 +121,7 @@ class DownloadDriveOperation : RetryingOperation {
 					let mimeType = file.mimeType ?? ""
 					let bytes = file.size.flatMap{ Int($0) } ?? 0
 					let quota = file.quotaBytesUsed.flatMap({ Int($0) })
-					let isSkippedBecauseOfOwner = self.state.skipOtherOwner && !file.ownedByMe
+					let isSkippedBecauseOfOwner = self.state.skipOtherOwner && !(file.ownedByMe ?? true)
 					let isFobiddenMimeType = mimeType.starts(with: "application/vnd.google-apps.")
 					let isSkippedBecauseOfQuota = self.state.skipZeroQuotaFiles && quota != nil && quota! <= 0 /* If quota is nil we don’t skip; we consider we just do not have the quota but it might be non-zero */
 					guard !isFobiddenMimeType && !isSkippedBecauseOfOwner && !isSkippedBecauseOfQuota else {
