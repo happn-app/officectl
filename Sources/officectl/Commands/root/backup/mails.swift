@@ -103,81 +103,81 @@ struct BackupMailsCommand : ParsableCommand {
 		
 		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 		let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
-		.flatMap{ _ -> EventLoopFuture<[GoogleUserAndDest]> in
-			GoogleUserAndDest.fetchListToBackup(
-				googleConfig: googleConfig, googleConnector: googleConnector,
-				usersFilter: usersFilter, disabledUserSuffix: self.backupMailOptions.disabledEmailSuffix,
-				downloadsDestinationFolder: downloadsDestinationFolder, archiveDestinationFolder: archivesDestinationFolderURL,
-				skipIfArchiveFound: self.backupMailOptions.skipIfArchiveExists,
-				console: context.console, eventLoop: eventLoop
-			)
-		}
-		.flatMap{ filteredUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
-			let options = BackupMailContext(options: self.backupMailOptions, console: context.console, mainConnector: googleConnector, users: filteredUsers)
-			
-			return EventLoopFuture<[URL]>.future(from: FetchAllMailsOperation(options: options), on: eventLoop, resultRetriever: {
-				try throwIfError($0.fetchError)
-				return $0.context.users
-			})
-		}
-		.flatMap{ usersAndDests -> EventLoopFuture<[GoogleUserAndDest]> in /* Linkify the backed-up emails */
-			guard self.backupMailOptions.linkify && usersAndDests.count > 0 else {return eventLoop.future(usersAndDests)}
-			
-			context.console.info("Optimizing backups size")
-			let q = OperationQueue()
-			q.maxConcurrentOperationCount = 2 /* No need to spam the hard-drive… */
-			let operations = usersAndDests.filter{ self.backupMailOptions.linkify && $0.archiveDestination != nil }.map{ $0.downloadDestination }.compactMap{ url -> LinkifyOperation? in
-				do    {return try LinkifyOperation(folderURL: url, stopOnErrors: false)}
-				catch {context.console.warning("cannot linkify backup at URL \(url.absoluteString)"); return nil}
+			.flatMap{ _ -> EventLoopFuture<[GoogleUserAndDest]> in
+				GoogleUserAndDest.fetchListToBackup(
+					googleConfig: googleConfig, googleConnector: googleConnector,
+					usersFilter: usersFilter, disabledUserSuffix: self.backupMailOptions.disabledEmailSuffix,
+					downloadsDestinationFolder: downloadsDestinationFolder, archiveDestinationFolder: archivesDestinationFolderURL,
+					skipIfArchiveFound: self.backupMailOptions.skipIfArchiveExists,
+					console: context.console, eventLoop: eventLoop
+				)
 			}
-			let futureFromOperations = EventLoopFuture<[Result<Void, Error>]>.executeAll(operations, on: eventLoop, resultRetriever: { op -> Void in
-				if op.errors.count > 0 {
-					context.console.warning("got errors when linkifying backup at URL \(op.folderURL.absoluteString):")
-					for (url, error) in op.errors {
-						context.console.warning("   \(url.absoluteString): \(error)")
+			.flatMap{ filteredUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
+				let options = BackupMailContext(options: self.backupMailOptions, console: context.console, mainConnector: googleConnector, users: filteredUsers)
+				
+				return EventLoopFuture<[URL]>.future(from: FetchAllMailsOperation(options: options), on: eventLoop, resultRetriever: {
+					try throwIfError($0.fetchError)
+					return $0.context.users
+				})
+			}
+			.flatMap{ usersAndDests -> EventLoopFuture<[GoogleUserAndDest]> in /* Linkify the backed-up emails */
+				guard self.backupMailOptions.linkify && usersAndDests.count > 0 else {return eventLoop.future(usersAndDests)}
+				
+				context.console.info("Optimizing backups size")
+				let q = OperationQueue()
+				q.maxConcurrentOperationCount = 2 /* No need to spam the hard-drive… */
+				let operations = usersAndDests.filter{ self.backupMailOptions.linkify && $0.archiveDestination != nil }.map{ $0.downloadDestination }.compactMap{ url -> LinkifyOperation? in
+					do    {return try LinkifyOperation(folderURL: url, stopOnErrors: false)}
+					catch {context.console.warning("cannot linkify backup at URL \(url.absoluteString)"); return nil}
+				}
+				let futureFromOperations = EventLoopFuture<[Result<Void, Error>]>.executeAll(operations, on: eventLoop, resultRetriever: { op -> Void in
+					if op.errors.count > 0 {
+						context.console.warning("got errors when linkifying backup at URL \(op.folderURL.absoluteString):")
+						for (url, error) in op.errors {
+							context.console.warning("   \(url.absoluteString): \(error)")
+						}
+					}
+					return ()
+				})
+				return futureFromOperations.transform(to: usersAndDests)
+			}
+			.flatMap{ usersAndDests -> EventLoopFuture<Void> in /* Compressing the backed-up emails */
+				guard archivesDestinationFolder != nil && usersAndDests.count > 0 else {return eventLoop.future()}
+				
+				context.console.info("Compressing backups")
+				let q = OperationQueue()
+				q.maxConcurrentOperationCount = 4 /* Seems fair on today’s hardware… */
+				let operations = usersAndDests.compactMap{ userAndDest -> TarOperation? in
+					return userAndDest.archiveDestination.flatMap{ archiveDestination in
+						/* Will create the enclosing folder if not already there (a bit of
+						  * trivia: the the call don’t fail if the directory already exist). */
+						_ = try? FileManager.default.createDirectory(at: archiveDestination.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+						return TarOperation(
+							sources: [userAndDest.downloadDestination.lastPathComponent],
+							relativeTo: userAndDest.downloadDestination.deletingLastPathComponent(),
+							destination: archiveDestination,
+							compress: true,
+							deleteSourcesOnSuccess: true
+						)
 					}
 				}
-				return ()
-			})
-			return futureFromOperations.transform(to: usersAndDests)
-		}
-		.flatMap{ usersAndDests -> EventLoopFuture<Void> in /* Compressing the backed-up emails */
-			guard archivesDestinationFolder != nil && usersAndDests.count > 0 else {return eventLoop.future()}
-			
-			context.console.info("Compressing backups")
-			let q = OperationQueue()
-			q.maxConcurrentOperationCount = 4 /* Seems fair on today’s hardware… */
-			let operations = usersAndDests.compactMap{ userAndDest -> TarOperation? in
-				return userAndDest.archiveDestination.flatMap{ archiveDestination in
-					/* Will create the enclosing folder if not already there (a bit of
-					 * trivia: the the call don’t fail if the directory already exist). */
-					_ = try? FileManager.default.createDirectory(at: archiveDestination.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-					return TarOperation(
-						sources: [userAndDest.downloadDestination.lastPathComponent],
-						relativeTo: userAndDest.downloadDestination.deletingLastPathComponent(),
-						destination: archiveDestination,
-						compress: true,
-						deleteSourcesOnSuccess: true
-					)
-				}
+				let futureFromOperations = EventLoopFuture<[Result<Void, Error>]>.executeAll(operations, on: eventLoop, resultRetriever: { op -> Void in
+					if let tarError = op.tarError {
+						context.console.warning("could not compress \(op.sources.first!): \(tarError)")
+					}
+					/* We have at most one deletion error because there is only one source.*/
+					if let deletionError = op.sourceDeletionErrors.randomElement() {
+						context.console.warning("could not delete \(deletionError.key): \(deletionError.value)")
+					}
+					return ()
+				})
+				return futureFromOperations.transform(to: ())
 			}
-			let futureFromOperations = EventLoopFuture<[Result<Void, Error>]>.executeAll(operations, on: eventLoop, resultRetriever: { op -> Void in
-				if let tarError = op.tarError {
-					context.console.warning("could not compress \(op.sources.first!): \(tarError)")
-				}
-				/* We have at most one deletion error because there is only one source.*/
-				if let deletionError = op.sourceDeletionErrors.randomElement() {
-					context.console.warning("could not delete \(deletionError.key): \(deletionError.value)")
-				}
-				return ()
-			})
-			return futureFromOperations.transform(to: ())
-		}
 		return f
 	}
 	
 	/* ****************************************** */
-
+	
 	struct BackupMailContext {
 		
 		let offlineimapConfigFileURL: URL
@@ -201,7 +201,7 @@ struct BackupMailsCommand : ParsableCommand {
 		}
 		
 	}
-
+	
 	class FetchAllMailsOperation : RetryingOperation {
 		
 		let context: BackupMailContext
@@ -243,18 +243,18 @@ struct BackupMailsCommand : ParsableCommand {
 			let scope = Set(arrayLiteral: "https://mail.google.com/")
 			let connector = GoogleJWTConnector(from: context.mainConnector, userBehalf: userAndDest.user.primaryEmail.stringValue)
 			return connector.connect(scope: scope, eventLoop: eventLoop)
-			.flatMap{
-				let promise: EventLoopPromise<(GoogleUserAndDest, String, Date)> = eventLoop.makePromise()
-				
-				if let token = connector.token, let expirationDate = connector.expirationDate {promise.succeed((userAndDest, token, expirationDate))}
-				else                                                                          {promise.fail(NSError(domain: "com.happn.officectl", code: 42, userInfo: [NSLocalizedDescriptionKey: "Internal error"]))}
-				
-				return promise.futureResult
-			}
+				.flatMap{
+					let promise: EventLoopPromise<(GoogleUserAndDest, String, Date)> = eventLoop.makePromise()
+					
+					if let token = connector.token, let expirationDate = connector.expirationDate {promise.succeed((userAndDest, token, expirationDate))}
+					else                                                                          {promise.fail(NSError(domain: "com.happn.officectl", code: 42, userInfo: [NSLocalizedDescriptionKey: "Internal error"]))}
+					
+					return promise.futureResult
+				}
 		}
 		
 	}
-
+	
 	class OfflineimapRunOperation : RetryingOperation {
 		
 		struct ConfigExpiredError : Error {}
@@ -357,8 +357,8 @@ struct BackupMailsCommand : ParsableCommand {
 			process.executableURL = URL(fileURLWithPath: "/usr/local/bin/offlineimap")
 			process.arguments = ["-c", configurationFileURL.path]
 			#if !os(Linux)
-				process.standardInput = FileHandle.nullDevice /* Forces failure of getting user pass from input when auth token expires. */
-				process.standardOutput = processOutput
+			process.standardInput = FileHandle.nullDevice /* Forces failure of getting user pass from input when auth token expires. */
+			process.standardOutput = processOutput
 			#endif
 			
 			return process
