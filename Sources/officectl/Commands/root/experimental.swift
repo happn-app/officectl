@@ -1,5 +1,5 @@
 /*
- * devtest.swift
+ * experimental.swift
  * officectl
  *
  * Created by François Lamboley on 6/26/18.
@@ -11,11 +11,11 @@ import ArgumentParser
 
 
 
-struct DevtestCommand : ParsableCommand {
+struct ExperimentalCommand : ParsableCommand {
 	
 	static var configuration = CommandConfiguration(
-		commandName: "devtest",
-		abstract: "Developer tests commands",
+		commandName: "experimental",
+		abstract: "Experimental commands",
 		shouldDisplay: false,
 		subcommands: [
 			CurrentDevTestCommand.self,

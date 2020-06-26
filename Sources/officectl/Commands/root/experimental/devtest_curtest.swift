@@ -20,7 +20,7 @@ struct CurrentDevTestCommand : ParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "curtest",
-		abstract: "The current developer test… Should probably not be used!",
+		abstract: "The current developer test… Should probably not be used; anything could happen!",
 		shouldDisplay: false
 	)
 	
