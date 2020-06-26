@@ -2,17 +2,14 @@
 #ifndef __SWIFT_COPENSSL__
 # define __SWIFT_COPENSSL__
 
-# include <openssl/conf.h>
-# include <openssl/evp.h>
-# include <openssl/err.h>
+/* This symbol poses an issue with an incompatible declaration with the same
+ * name in another module.
+ * This hack is unacceptable though… */
+# define ASN1_ENCODING_st HPN_ASN1_ENCODING_st
+
 # include <openssl/bio.h>
-# include <openssl/ssl.h>
-# include <openssl/sha.h>
-# include <openssl/md5.h>
-# include <openssl/hmac.h>
-# include <openssl/rand.h>
-# include <openssl/rsa.h>
-# include <openssl/pkcs12.h>
-# include <openssl/x509v3.h>
+# include <openssl/pem.h>
+
+# undef ASN1_ENCODING_st
 
 #endif /* __SWIFT_COPENSSL__ */
