@@ -14,7 +14,7 @@ import ArgumentParser
 struct UserCommand : ParsableCommand {
 	
 	static var configuration = CommandConfiguration(
-		commandName: "user",
+		commandName: "users",
 		abstract: "Interact with the users",
 		subcommands: [
 			UserCreateCommand.self,
