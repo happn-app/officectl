@@ -1,5 +1,5 @@
 /*
- * root.swift
+ * main.swift
  * officectl
  *
  * Created by François Lamboley on 6/26/18.
