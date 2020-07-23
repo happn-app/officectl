@@ -39,7 +39,7 @@ struct OfficectlConfig {
 	init(globalOptions go: OfficectlRootCommand.Options, serverOptions so: ServerServeCommand.Options?) throws {
 		let (configURL, configYaml) = try OfficectlConfig.readYamlConfig(forcedConfigFilePath: go.configFile)
 		
-		env = configYaml["env"].stringValue
+		env = configYaml["env"].stringValue ?? go.env
 		verbose = go.verbose ?? configYaml["verbose"].bool ?? false
 		auditLogsURL = configYaml["audit_logs_path"].string.flatMap{ URL(fileURLWithPath: $0, isDirectory: false, relativeTo: configURL) }
 		
