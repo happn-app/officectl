@@ -58,7 +58,7 @@ struct FindInDrivesCommand : ParsableCommand {
 				)
 			}
 			.flatMap{ usersAndDest -> EventLoopFuture<[String]> in
-				let futureResults = usersAndDest.map{ futureSearchResults(for: $0, searchedString: filename, mainConnector: googleConnector, eventLoop: eventLoop) }
+				let futureResults = usersAndDest.map{ self.futureSearchResults(for: $0, searchedString: self.filename, mainConnector: googleConnector, eventLoop: eventLoop) }
 				return EventLoopFuture.reduce(into: [String](), futureResults, on: eventLoop, { (currentResult, newResult) in
 					if let u = newResult {currentResult.append(u)}
 				})
