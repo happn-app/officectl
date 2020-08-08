@@ -52,7 +52,7 @@ class WebCertificateRenewController {
 		let token = try nil2throw(officectlConfig.tmpVaultToken)
 		let ttl = try nil2throw(officectlConfig.tmpVaultTTL)
 		let expirationLeeway = try nil2throw(officectlConfig.tmpVaultExpirationLeeway)
-		let expectedExpiration = Date(timeIntervalSinceNow: -expirationLeeway)
+		let expectedExpiration = Date() + expirationLeeway
 		
 		func authenticateSync(_ request: inout URLRequest) -> Void {
 			request.addValue(token, forHTTPHeaderField: "X-Vault-Token")
@@ -114,7 +114,7 @@ class WebCertificateRenewController {
 			if !loggedInUser.isAdmin {
 				try certificatesToRevoke.forEach{ idAndCertif in
 					let certif = idAndCertif.certif
-					guard certif.expirationDate >= expectedExpiration else {
+					guard certif.expirationDate <= expectedExpiration else {
 						throw InvalidArgumentError(message: "You’ve got at least one certificate still valid, please use it or see an ops!")
 					}
 				}
