@@ -129,8 +129,22 @@ class WebCertificateRenewController {
 				urlRequest.httpMethod = "POST"
 				let json = JSON(dictionaryLiteral: ("serial_number", JSON(stringLiteral: id)))
 				urlRequest.httpBody = try! JSONEncoder().encode(json)
-				let op = AuthenticatedJSONOperation<VaultResponse<RevocationResult>>(request: urlRequest, authenticator: authenticate)
-				return EventLoopFuture<VaultResponse<RevocationResult>>.future(from: op, on: req.eventLoop).map{ _ in return () }
+				let op = AuthenticatedJSONOperation<VaultResponse<RevocationResult?>>(request: urlRequest, authenticator: authenticate, retryInfoRecoveryHandler: { op, err, completionHandler in
+					if
+						let op = op as? AuthenticatedJSONOperation<VaultResponse<RevocationResult?>>,
+						op.fetchedData?.count == 0,
+						(op.urlResponse as? HTTPURLResponse)?.statusCode == 204
+					{
+						/* Vault returns an empty reply if revoking an expired
+						 * certificate, so we erase the error in case we get an empty
+						 * reply from the Vault API. */
+						print("hello!")
+						op.fetchedObject = VaultResponse<RevocationResult?>(data: nil)
+						return completionHandler(.doNotRetry, op.currentURLRequest, nil)
+					}
+					return completionHandler(.doNotRetry, op.currentURLRequest, err)
+				})
+				return EventLoopFuture<VaultResponse<RevocationResult?>>.future(from: op, on: req.eventLoop).map{ _ in return () }
 			}
 			return EventLoopFuture.reduce((), futures, on: req.eventLoop, { _, _ in () })
 		}
