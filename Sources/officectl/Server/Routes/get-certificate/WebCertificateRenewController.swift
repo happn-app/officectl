@@ -138,7 +138,6 @@ class WebCertificateRenewController {
 						/* Vault returns an empty reply if revoking an expired
 						 * certificate, so we erase the error in case we get an empty
 						 * reply from the Vault API. */
-						print("hello!")
 						op.fetchedObject = VaultResponse<RevocationResult?>(data: nil)
 						return completionHandler(.doNotRetry, op.currentURLRequest, nil)
 					}
