@@ -37,15 +37,7 @@ platformDependentOfficeKitDependencies.append(
  * (the system one is deprecated, but there are no alternatives; OpenDirectory
  * simply does not do what OpenLDAP does).
  * Note the project compiles if the system OpenLDAP is used, but you’ll get a
- * lot of useless warnings.
- *
- * To have the project opened with Xcode from the Package.swift file (and not
- * use an xcodeproj file), launch Xcode from the Terminal w/:
- *    PKG_CONFIG_PATH="$PKG_CONFIG_PATH:`brew --prefix openssl@1.1`/lib/pkgconfig" xed .
- * … or simply `xed .` if your `PKG_CONFIG_PATH` is already correctly set.
- *
- * This is required, because contrary to the CLI’s SPM which is aware of brew,
- * it seems Xcode’s isn’t. */
+ * lot of useless warnings. */
 let openLDAPTarget: Target
 #if os(macOS) /* Probably iOS, watchOS and tvOS too, but I’m not sure and we do not really care for now… */
 /* On macOS we use a custom-made auto-generated pkg-config file for OpenLDAP
@@ -93,12 +85,11 @@ let package = Package(
 		.package(                     url: "https://github.com/vapor/console-kit.git", from: "4.0.0"),
 		.package(                     url: "https://github.com/happn-tech/EmailValidator.git", .branch("master")),
 		.package(name: "GenericJSON", url: "https://github.com/zoul/generic-json-swift.git", from: "1.2.0"),
-		.package(                     url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0")
+		.package(                     url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0"),
+		.package(                     url: "https://github.com/filom/ASN1Decoder.git", from: "1.3.3")
 	],
 	targets: [
 		openLDAPTarget,
-		.systemLibrary(name: "COpenSSL", pkgConfig: "openssl", providers: [.apt(["openssl", "libssl-dev"]), .brew(["openssl@1.1"])]),
-		
 		.target(name: "GenericStorage", dependencies: []),
 		
 		.target(name: "ServiceKit", dependencies: []),
@@ -124,13 +115,13 @@ let package = Package(
 			dependencies:
 				["OfficeKit",
 				 .product(name: "Crypto", package: "swift-crypto"),
-				 "COpenSSL",
 				 .product(name: "Vapor", package: "vapor"),
 				 .product(name: "Leaf", package: "leaf"),
 				 .product(name: "ConsoleKit", package: "console-kit"),
 				 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-				 "Yaml",
 				 .product(name: "JWTKit", package: "jwt-kit"),
+				 "ASN1Decoder",
+				 "Yaml",
 				 "LegibleError"
 			] + platformDependentOfficectlDependencies,
 			linkerSettings: [.linkedLibrary("ncurses", .when(platforms: [.macOS]))]

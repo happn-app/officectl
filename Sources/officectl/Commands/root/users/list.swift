@@ -23,7 +23,7 @@ struct UserListCommand : ParsableCommand {
 	)
 	
 	@ArgumentParser.Flag(help: "For the directory services that supports it, do we filter out the suspended users?")
-	var includeSuspendedUsers: Bool
+	var includeSuspendedUsers = false
 	
 	@ArgumentParser.Option(help: "The service id from which to retrieve the users.")
 	var serviceId: String?

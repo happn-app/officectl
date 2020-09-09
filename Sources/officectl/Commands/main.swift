@@ -42,8 +42,8 @@ struct OfficectlRootCommand : ParsableCommand {
 		@Option(name: .long, help: "The path to an officectl config file. Defaults to ~/.config/officectl/officectl.yaml, then /etc/officectl/officectl.yaml and finally /usr/local/etc/officectl/officectl.yaml.")
 		var configFile: String?
 		
-		@Flag(name: .long, default: true, inversion: .prefixedEnableDisable, help: "Enable or disable interactive console (ncurses or Vapor’s activity console) for commands that have it.")
-		var interactiveConsole: Bool
+		@Flag(name: .long, inversion: .prefixedEnableDisable, help: "Enable or disable interactive console (ncurses or Vapor’s activity console) for commands that have it.")
+		var interactiveConsole = true
 		
 		@Option(name: .long, help: "The path to the static data dir (containing the static resources for officectl).")
 		var staticDataDir: String?

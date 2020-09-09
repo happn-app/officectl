@@ -10,12 +10,11 @@ import Foundation
 	import FoundationNetworking
 #endif
 
+import ASN1Decoder
 import GenericJSON
 import OfficeKit
 import URLRequestOperation
 import Vapor
-
-import COpenSSL
 
 
 
@@ -72,7 +71,7 @@ class WebCertificateRenewController {
 			let op = URLRequestOperation(request: urlRequest)
 			return EventLoopFuture<CRL>.future(from: op, on: req.eventLoop, resultRetriever: { op in
 				guard let data = op.fetchedData else {
-					throw op.finalError ?? NSError(domain: "com.happn.officeclt", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown error fetching the CRL"])
+					throw op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown error fetching the CRL"])
 				}
 				return try CRL(der: data)
 			})
@@ -85,9 +84,9 @@ class WebCertificateRenewController {
 			return EventLoopFuture<VaultResponse<CertificateSerialsList>>.future(from: op, on: req.eventLoop).map{ ($0.data, crl) }
 		}
 		.flatMap{ $0 }
-		.flatMap{ (certificatesList, crl) -> EventLoopFuture<[(id: String, certif: Certificate)]> in
+		.flatMap{ (certificatesList, crl) -> EventLoopFuture<[(id: String, certif: X509Certificate)]> in
 			/* Get the list of certificates to revoke */
-			let futures = certificatesList.keys.compactMap{ id -> EventLoopFuture<(id: String, certif: Certificate)?>? in
+			let futures = certificatesList.keys.compactMap{ id -> EventLoopFuture<(id: String, certif: X509Certificate)?>? in
 				/* If the certificate is already revoked, we don’t have to do
 				 * anything w/ it. */
 				guard !crl.revokedCertificateIds.contains(normalizeCertificateId(id)) else {
@@ -96,12 +95,20 @@ class WebCertificateRenewController {
 				
 				let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent(id))
 				let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
-				return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, on: req.eventLoop).map{ certificateResponse in
-					guard certificateResponse.data.certificate.commonName == renewedCommonName else {return nil}
+				return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, on: req.eventLoop).flatMapThrowing{ certificateResponse in
+					guard let subjectDNStr = certificateResponse.data.certificate.subjectDistinguishedName else {
+						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN for\n\(certificateResponse.data.pem)"])
+					}
+					let subjectDN = try LDAPDistinguishedName(string: subjectDNStr)
+					guard let dnValue = subjectDN.values.onlyElement, dnValue.key == "CN" else {
+						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN certificate DN \(subjectDN)"])
+					}
+					let subjectCN = dnValue.value
+					guard subjectCN == renewedCommonName else {return nil}
 					return (id: id, certif: certificateResponse.data.certificate)
 				}
 			}
-			return EventLoopFuture.reduce([(id: String, certif: Certificate)](), futures, on: req.eventLoop, { full, new in
+			return EventLoopFuture.reduce([(id: String, certif: X509Certificate)](), futures, on: req.eventLoop, { full, new in
 				guard let new = new else {return full}
 				return full + [new]
 			})
@@ -114,7 +121,7 @@ class WebCertificateRenewController {
 			if !loggedInUser.isAdmin {
 				try certificatesToRevoke.forEach{ idAndCertif in
 					let certif = idAndCertif.certif
-					guard certif.expirationDate <= expectedExpiration else {
+					guard !certif.checkValidity(expectedExpiration) else {
 						throw InvalidArgumentError(message: "You’ve got at least one certificate still valid, please use it or see an ops!")
 					}
 				}
@@ -165,7 +172,7 @@ class WebCertificateRenewController {
 			let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
 			return EventLoopFuture<VaultResponse<NewCertificate>>.future(from: op, on: req.eventLoop).map{ certificateResponse in
 				var newCertificate = newCertificate
-				newCertificate.caChain.append(certificateResponse.data.certificate.pem)
+				newCertificate.caChain.append(certificateResponse.data.pem)
 				return newCertificate
 			}
 		}
@@ -245,83 +252,24 @@ class WebCertificateRenewController {
 	
 	private struct CertificateContainer : Decodable {
 		
-		var certificate: Certificate
-		
-	}
-	
-	/* Thanks https://wiki.openssl.org/index.php/Hostname_validation */
-	private struct Certificate : Decodable {
-		
-		let pem: String
-		
-		/* Computed from the pem. */
-		let commonName: String
-		let expirationDate: Date
-		
-		init(pem p: String) throws {
-			let bio = BIO_new(BIO_s_mem())
-			defer {BIO_free(bio)}
-			
-			let nullTerminatedData = Data(p.utf8) + Data([0])
-			_ = nullTerminatedData.withUnsafeBytes{ (pemBytes: UnsafeRawBufferPointer) -> Int32 in
-				let pemBytes = pemBytes.bindMemory(to: Int8.self).baseAddress!
-				return BIO_puts(bio, pemBytes)
-			}
-			
-			guard let x509 = PEM_read_bio_X509(bio, nil, nil, nil) else {
-				throw InternalError(message: "cannot read certificate")
-			}
-			defer {X509_free(x509)}
-			
-			/* Find the position of the CN field in the Subject field of the
-			 * certificate */
-			let commonNameLoc = X509_NAME_get_index_by_NID(X509_get_subject_name(x509), NID_commonName, -1)
-			guard commonNameLoc >= 0 else {
-				throw InternalError(message: "cannot get index of CN field")
-			}
-			guard let commonNameEntry = X509_NAME_get_entry(X509_get_subject_name(x509), commonNameLoc) else {
-				throw InternalError(message: "cannot get CN field")
-			}
-			guard let commonNameASN1 = X509_NAME_ENTRY_get_data(commonNameEntry) else {
-				throw InternalError(message: "cannot convert CN field to ASN1 string")
-			}
-			commonName = String(cString: ASN1_STRING_get0_data(commonNameASN1))
-			
-			guard let notAfterASN1Ptr = X509_get0_notAfter(x509) else {
-				throw InternalError(message: "cannot get notAfter date")
-			}
-			#if true
-			var partialDiffDays: Int32 = 0
-			var partialDiffSeconds: Int32 = 0
-			ASN1_TIME_diff(&partialDiffDays, &partialDiffSeconds, nil /* Now */, notAfterASN1Ptr)
-			
-			let nSecondsInADay = 24 * 60 * 60
-			let diffSeconds = Int(partialDiffSeconds) + Int(partialDiffDays)*nSecondsInADay
-			expirationDate = Date(timeIntervalSinceNow: TimeInterval(diffSeconds))
-			
-			#else
-			/* This variant is only available around libssl 1.1.1, which is not
-			 * available out of the box on Debian Stretch. */
-			var notAfterTM = tm()
-			guard ASN1_TIME_to_tm(notAfterASN1Ptr, &notAfterTM) == 1 else {
-				throw InternalError(message: "cannot convert notAfter ASN1 date to tm")
-			}
-			/* ASN1_TIME_to_tm returns a GMT time so we use timegm */
-			let time = timegm(&notAfterTM)
-			expirationDate = Date(timeIntervalSince1970: Double(time))
-			#endif
-			
-			pem = p
-		}
+		var pem: String
+		var certificate: X509Certificate
 		
 		init(from decoder: Decoder) throws {
-			let container = try decoder.singleValueContainer()
-			try self.init(pem: container.decode(String.self))
+			let container = try decoder.container(keyedBy: CodingKeys.self)
+			let pemStr = try container.decode(String.self, forKey: .certificate)
+			certificate = try X509Certificate(pem: Data(pemStr.utf8))
+			pem = pemStr
+		}
+		
+		private enum CodingKeys : String, CodingKey {
+			case certificate
 		}
 		
 	}
 	
-	/* Thanks http://fm4dd.com/openssl/crldisplay.shtm */
+	/* http://javadoc.iaik.tugraz.at/iaik_jce/current/iaik/x509/X509CRL.html
+	 * https://tools.ietf.org/html/rfc5280 § 5.1 */
 	private struct CRL {
 		
 		let der: Data
@@ -330,52 +278,94 @@ class WebCertificateRenewController {
 		let revokedCertificateIds: Set<String>
 		
 		init(der d: Data) throws {
-			let bio = BIO_new(BIO_s_mem())
-			defer {BIO_free(bio)}
-			
-			_ = d.withUnsafeBytes{ (derBytes: UnsafeRawBufferPointer) -> Int32 in
-				BIO_write(bio, derBytes.baseAddress!, Int32(derBytes.count))
+			let crlASN1Objects = try ASN1DERDecoder.decode(data: d)
+			guard let crlASN1 = crlASN1Objects.onlyElement else {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: got \(crlASN1Objects.count) objects, expected exactly 1."])
+			}
+			guard crlASN1.identifier?.tagNumber() == .sequence else {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: expected SEQUENCE but got \(crlASN1)."])
 			}
 			
-			/* We probably could have done this to read the CRL in the PEM format. */
-//			PEM_read_bio_X509_CRL(bio, nil, nil, nil)
-			guard let crl = d2i_X509_CRL_bio(bio, nil) else {
-				throw InternalError(message: "cannot read CRL")
-			}
-			defer {X509_CRL_free(crl)}
-			
-			guard let revokedList = X509_CRL_get_REVOKED(crl) else {
-				throw InternalError(message: "cannot get revoked certificates from CRL")
+			/* We do not concern ourselves w/ the second and third objects of the
+			 * sequence. They are resp. the signature algorithm used to sign the
+			 * CRL and the signature.
+			 * Yes, we do not verify the signature of the CRL. It’s bad but
+			 * verification would be too complex to implement rn. */
+			guard let tbsCertList = crlASN1.sub(0), tbsCertList.identifier?.tagNumber() == .sequence else {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: expected SEQUENCE as first object of sequence got something else. CRL is \(crlASN1)"])
 			}
 			
+			var delta = 0
+			
+			/* We only implement CRL v2 */
+			guard let version = tbsCertList.sub(0 - delta), version.identifier?.tagNumber() == .integer, version.value as? Data == Data([1]) else {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: expected INTEGER == 1 as first object of TBSCertList sequence, got something else. TBSCertList is \(tbsCertList)"])
+			}
+			
+			/* We ignore values of the field 1, 2, 3 and 4, resp. signature,
+			 * issuer, this update time and next update time.
+			 * We will simply check the types of the fields (which will also allow
+			 * skipping absent optional values). */
+			guard let signature = tbsCertList.sub(1 - delta), signature.identifier?.tagNumber() == .sequence else {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: expected SEQUENCE as second object of sequence, got something else. CRL is \(crlASN1)"])
+			}
+			guard let issuer = tbsCertList.sub(2 - delta), issuer.identifier?.tagNumber() == .sequence else {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: expected SEQUENCE as third object of sequence, got something else. CRL is \(crlASN1)"])
+			}
+			guard let thisUpdate = tbsCertList.sub(3 - delta), thisUpdate.identifier?.tagNumber() == .utcTime || thisUpdate.identifier?.tagNumber() == .generalizedTime else {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: expected UTC Time or GeneralizedTime as fourth object of sequence, got something else. CRL is \(crlASN1)"])
+			}
+			if let nextUpdate = tbsCertList.sub(4 - delta), nextUpdate.identifier?.tagNumber() == .utcTime || nextUpdate.identifier?.tagNumber() == .generalizedTime {
+				/* We do nothing for now (or maybe ever tbh) */
+			} else {
+				delta += 1
+			}
+			
+			/* The revoked certificates list is optional */
 			var revokedIds = Set<String>()
-			let nRevoked = sk_X509_REVOKED_num(revokedList)
-			for i in 0..<nRevoked {
-				guard let revoked = sk_X509_REVOKED_value(revokedList, i) else {
-					/* Getting the value should never fail, so we bail completely if
-					 * we have an error for a revoked certificate. */
-					throw InternalError(message: "cannot get revoked certificate at index \(i) in CRL")
+			if let revokedCertificates = tbsCertList.sub(5 - delta), revokedCertificates.identifier?.tagNumber() == .sequence {
+				let now = Date()
+				for i in 0..<revokedCertificates.subCount() {
+					guard let revokedCertificate = revokedCertificates.sub(i), revokedCertificate.identifier?.tagNumber() == .sequence else {
+						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: expected a SQUENCE inside the revoked certificates sequence, got something else. CRL is \(crlASN1)"])
+					}
+					guard revokedCertificate.subCount() == 2 || revokedCertificate.subCount() == 3 else {
+						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: unexpected count of elements in a revoked certificate sequence. CRL is \(crlASN1)"])
+					}
+					guard
+						let certificateSerialNumberASN1 = revokedCertificate.sub(0),
+						certificateSerialNumberASN1.identifier?.tagNumber() == .integer,
+						let certificateSerialNumber = (certificateSerialNumberASN1.value as? Data).flatMap({ normalizeCertificateId($0.map{ String(format: "%02x", $0) }.joined(separator: "-")) })
+					else {
+						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: unexpected first element type in a revoked certificate sequence. CRL is \(crlASN1)"])
+					}
+					/* Note: The element could also be of time generalizedTime, but
+					 * our CRL does not generate these type of times, so we don’t
+					 * care. Let’s hope it never does! */
+					guard
+						let certificateRevocationDateASN1 = revokedCertificate.sub(1),
+						(certificateRevocationDateASN1.identifier?.tagNumber() == .utcTime || certificateRevocationDateASN1.identifier?.tagNumber() == .generalizedTime),
+						let certificateRevocationDate = certificateRevocationDateASN1.value as? Date
+					else {
+						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: unexpected second element type in a revoked certificate sequence. CRL is \(crlASN1)"])
+					}
+					
+					/* We ignore the extensions (if any) */
+					
+					if now < certificateRevocationDate {
+						OfficeKitConfig.logger?.warning("Found certif \(certificateSerialNumber) in CRL which is not _yet_ revoked! Still considering as revoked.")
+					}
+					
+					revokedIds.insert(certificateSerialNumber)
 				}
-				guard let serialNumber = X509_REVOKED_get0_serialNumber(revoked) else {
-					throw InternalError(message: "cannot get serial number of revoked certificate at index \(i) in CRL")
-				}
-				guard let serialNumberBN = ASN1_INTEGER_to_BN(serialNumber, nil) else {
-					throw InternalError(message: "cannot get serial number as big num of certificate at index \(i) in CRL")
-				}
-				guard let serialNumberHexCStr = BN_bn2hex(serialNumberBN) else {
-					throw InternalError(message: "cannot get serial number as hex str of certificate at index \(i) in CRL")
-				}
-				/* Doc says to deallocate the serialNumberHexStr using OPENSSL_free
-				 * but this function is not available in Swift (it is a #define, not
-				 * an actual function). */
-				defer {CRYPTO_free(serialNumberHexCStr, #file, #line)}
-				
-				let serialNumberNormalizedHexStr = normalizeCertificateId(String(cString: serialNumberHexCStr))
-				revokedIds.insert(String(serialNumberNormalizedHexStr))
+			} else {
+				delta += 1
 			}
-			revokedCertificateIds = revokedIds
+			
+			/* We ignore extensions */
 			
 			der = d
+			revokedCertificateIds = revokedIds
 		}
 		
 	}

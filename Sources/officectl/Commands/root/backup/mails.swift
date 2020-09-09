@@ -37,11 +37,11 @@ struct BackupMailsCommand : ParsableCommand {
 		@ArgumentParser.Flag(inversion: .prefixedNo, help: "Whether to archive the backup (create a tar bz2 file and remove the directory).")
 		var archive: Bool
 		
-		@ArgumentParser.Flag(default: true, inversion: .prefixedNo, help: "Before archiving, whether to “linkify” the backups (ignored when not archiving). Linkifying consists in scanning the backup for duplicate files and de-duplicating the files by replacing the duplicates with a hard link.")
-		var linkify: Bool
+		@ArgumentParser.Flag(inversion: .prefixedNo, help: "Before archiving, whether to “linkify” the backups (ignored when not archiving). Linkifying consists in scanning the backup for duplicate files and de-duplicating the files by replacing the duplicates with a hard link.")
+		var linkify = false
 		
-		@ArgumentParser.Flag(default: true, inversion: .prefixedNo, help: "Ignored when not archiving. If the archive for an email already exists, skip the backup for this email. Otherwise, the existing archive will be overwritten.")
-		var skipIfArchiveExists: Bool
+		@ArgumentParser.Flag(inversion: .prefixedNo, help: "Ignored when not archiving. If the archive for an email already exists, skip the backup for this email. Otherwise, the existing archive will be overwritten.")
+		var skipIfArchiveExists = true
 		
 		@ArgumentParser.Option(help: "The path in which the archives will be put. Defaults to pwd. Required iif archive is set.")
 		var archivesDestinationFolder: String?

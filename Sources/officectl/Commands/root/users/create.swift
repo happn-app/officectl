@@ -25,7 +25,7 @@ struct UserCreateCommand : ParsableCommand {
 	var globalOptions: OfficectlRootCommand.Options
 	
 	@ArgumentParser.Flag(help: "If set, this the users will be created without confirmation.")
-	var yes: Bool
+	var yes = false
 	
 	@ArgumentParser.Option(help: "The email of the new user (we require the full email to infer the domain for the new user).")
 	var email: Email

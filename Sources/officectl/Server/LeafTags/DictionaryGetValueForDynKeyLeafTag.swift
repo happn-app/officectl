@@ -19,7 +19,7 @@ struct DictionaryGetValueForDynKeyLeafTag : LeafTag {
 		guard ctx.parameters.count == 2, let dic = ctx.parameters[0].dictionary, let key = ctx.parameters[1].string else {
 			throw "usage: dictionaryGetValueForDynKey(dictionary, key)"
 		}
-		return dic[key] ?? .null
+		return dic[key] ?? .trueNil
 	}
 	
 }

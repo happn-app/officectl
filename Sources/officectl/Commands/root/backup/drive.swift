@@ -65,14 +65,14 @@ struct BackupDriveCommand : ParsableCommand {
 	@ArgumentParser.Flag(inversion: .prefixedNo, help: "Do not download files not owned by the user, even if they take quota for the user.")
 	var skipOtherOwner: Bool
 	
-	@ArgumentParser.Flag(default: true, inversion: .prefixedNo, help: "Skip files not taking any quota for the user.")
-	var skipZeroQuotaFiles: Bool
+	@ArgumentParser.Flag(inversion: .prefixedNo, help: "Skip files not taking any quota for the user.")
+	var skipZeroQuotaFiles = true
 	
 	@ArgumentParser.Flag(inversion: .prefixedNo, help: "Whether to archive the backup (create a tar bz2 file and remove the directory).")
 	var archive: Bool
 	
-	@ArgumentParser.Flag(default: true, inversion: .prefixedNo, help: "Ignored when not archiving. If the archive for an email already exists, skip the backup for this email. Otherwise, the existing archive will be overwritten.")
-	var skipIfArchiveExists: Bool
+	@ArgumentParser.Flag(inversion: .prefixedNo, help: "Ignored when not archiving. If the archive for an email already exists, skip the backup for this email. Otherwise, the existing archive will be overwritten.")
+	var skipIfArchiveExists = true
 	
 	@ArgumentParser.Option(help: "The path in which the archives will be put. Defaults to pwd. Required iif archive is set.")
 	var archivesDestinationFolder: String?
