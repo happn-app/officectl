@@ -86,6 +86,7 @@ extension Application {
 			let new = Services()
 			let eventLoop = self.eventLoopGroup.next()
 			new.register{ eventLoop } /* We always want to return the same event loop */
+			new.register{ self.logger }
 			new.register{ self.semiSingletonStore }
 			storage[ServicesKey.self] = new
 			return new
@@ -104,6 +105,7 @@ extension Request {
 	var services: Services {
 		let ret = Services(duplicating: application.services)
 		ret.register{ self.eventLoop }
+		ret.register{ self.logger }
 		return ret
 	}
 	
