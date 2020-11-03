@@ -8,6 +8,9 @@
 import Foundation
 
 import OfficeKit
+import RetryingOperation
+import SemiSingleton
+import URLRequestOperation
 import Vapor
 
 
@@ -15,9 +18,12 @@ import Vapor
 extension OfficectlConfig {
 	
 	func configureVaporApp(_ app: Application) throws {
-		configureSemiSingleton(self)
-		configureRetryingOperation(self)
-		configureURLRequestOperation(self)
+		SemiSingletonConfig.oslog = nil
+		SemiSingletonConfig.logger = app.logger
+		RetryingOperationConfig.oslog = nil
+		RetryingOperationConfig.logger = app.logger
+		URLRequestOperationConfig.oslog = nil
+		URLRequestOperationConfig.logger = app.logger
 		
 		/* Register the services/configs we got from CLI, if any */
 		app.officectlConfig = self

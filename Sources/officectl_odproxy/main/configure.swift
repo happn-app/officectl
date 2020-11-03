@@ -8,17 +8,22 @@
 import Foundation
 
 import OfficeKit
+import RetryingOperation
 import SemiSingleton
+import URLRequestOperation
 import Vapor
 import Yaml
 
 
 
 func configure(_ app: Application, forcedConfigPath: String?, verbose: Bool) throws {
-	configureURLRequestOperation(verbose)
-	configureRetryingOperation(verbose)
-	configureSemiSingleton(verbose)
-	
+	SemiSingletonConfig.oslog = nil
+	SemiSingletonConfig.logger = app.logger
+	RetryingOperationConfig.oslog = nil
+	RetryingOperationConfig.logger = app.logger
+	URLRequestOperationConfig.oslog = nil
+	URLRequestOperationConfig.logger = app.logger
+
 	let (url, conf) = try readYamlConfig(forcedConfigFilePath: forcedConfigPath)
 	let serverConfigYaml = try conf.storage(forKey: "server", currentKeyPath: ["Global config"])
 	
