@@ -33,7 +33,7 @@ public final class ResetGooglePasswordAction : Action<GoogleUser, String, Void>,
 		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
 		
 		let f = deps.connector.connect(scope: ModifyGoogleUserOperation.scopes, eventLoop: eventLoop)
-		.map{ _ -> EventLoopFuture<Void> in
+		.flatMap{ _ -> EventLoopFuture<Void> in
 			var googleUser = self.subject.cloneForPatching()
 			
 			let passwordSHA1 = Insecure.SHA1.hash(data: Data(newPassword.utf8)).reduce("", { $0 + String(format: "%02x", $1) })
