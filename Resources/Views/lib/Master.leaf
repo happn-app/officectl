@@ -1,8 +1,11 @@
+#(# TODO: Check for probably HTML injections that are possible (HTML is not escaped for almost all vars). #)
 <html>
 	<head>
-		<title>#import("title")</title>
+		<title>#evaluate(title)</title>
 		<style>input[type=submit] {margin-left: -1px; margin-top: 7px;}</style>
-		#import("additional_head_tags")
+		#evaluate(additional_head_tags)
 	</head>
-	<body>#import("body")</body>
+	<body>
+		#evaluate(body)
+	</body>
 </html>

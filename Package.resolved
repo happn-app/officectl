@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/filom/ASN1Decoder.git",
         "state": {
           "branch": null,
-          "revision": "5e9b8f76433c53ce3ad6510bdf7172b1f7c03e80",
-          "version": "1.6.0"
+          "revision": "5d5e1693a8537267379242021055ead5c0bed41d",
+          "version": "1.7.0"
         }
       },
       {
@@ -78,17 +78,17 @@
         "repositoryURL": "https://github.com/vapor/leaf.git",
         "state": {
           "branch": null,
-          "revision": "6fc9ec82f5098ab93933e19ceb4ef030f52d646c",
-          "version": "4.0.0-rc.1.4"
+          "revision": "a8348b682ec14a863cc470a2da8f0ebc262c6088",
+          "version": "4.0.0-tau.1"
         }
       },
       {
         "package": "leaf-kit",
-        "repositoryURL": "https://github.com/vapor/leaf-kit.git",
+        "repositoryURL": "https://github.com/vapor/leaf-kit",
         "state": {
           "branch": null,
-          "revision": "a3623bd217d1c0327839afbc0bdc2351f7d06c1a",
-          "version": "1.0.0-rc.1.17"
+          "revision": "8b965e6e2eadfe5914ea133669368aceb2b89ccb",
+          "version": "1.0.0-tau.1.1"
         }
       },
       {
@@ -105,8 +105,8 @@
         "repositoryURL": "https://github.com/happn-tech/RecursiveSyncDispatch.git",
         "state": {
           "branch": null,
-          "revision": "b038867545cde7d635b9f76e06d378149fd8a6c8",
-          "version": "1.0.0"
+          "revision": "04936f64e00d898006fc97b5ec938d8ce1fa14ea",
+          "version": "1.0.1"
         }
       },
       {

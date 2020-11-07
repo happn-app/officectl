@@ -7,6 +7,7 @@
 
 import Foundation
 
+import LeafKit
 import OfficeKit
 import RetryingOperation
 import SemiSingleton
@@ -31,11 +32,9 @@ extension OfficectlConfig {
 			app.directory = DirectoryConfiguration(workingDirectory: p.hasSuffix("/") ? p : p + "/")
 		}
 		
-		/* Tell the views we want to use Leaf as a renderer and add some tags. */
+		/* Add some tags to LeafKit and tell the views we want to use Leaf as a renderer. */
+		LeafConfiguration.entities.use(SnailCaseToHumanLeafMethod(), asMethod: SnailCaseToHumanLeafMethod.name)
 		app.views.use(.leaf)
-		app.leaf.tags[IsEmptyLeafTag.name] = IsEmptyLeafTag()
-		app.leaf.tags[SnailCaseToHumanLeafTag.name] = SnailCaseToHumanLeafTag()
-		app.leaf.tags[DictionaryGetValueForDynKeyLeafTag.name] = DictionaryGetValueForDynKeyLeafTag()
 		
 		/* We use the memory store for the sessions for now (rebooting officectl
 		 * will drop the sessions…). This is the default but we make it explicit. */

@@ -22,8 +22,8 @@ class WebLoginController {
 	
 	func showLoginPage(_ req: Request) throws -> EventLoopFuture<View> {
 		struct LoginContext : Encodable {
-			var username: String?
-			var nextURLPath: String?
+			@NullEncodable var username: String?
+			@NullEncodable var nextURLPath: String?
 		}
 		
 		let context = LoginContext(

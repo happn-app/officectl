@@ -1,22 +1,17 @@
-#comment: The context structure
+#(#
+The context structure
 struct LoginContext : Encodable {
 	var username: String?
 	var nextURLPath: String?
 }
-#endcomment
-#extend("lib/Master"):
-
-
-
-#export("title", "Login")
-
-#export("additional_head_tags"):
+#)
+#define(title):Login#enddefine
+#define(additional_head_tags):
 	<script type="text/javascript" src="/js/lib/Utils.js"></script>
 	<script type="text/javascript" src="/js/Login.js"></script>
 	<link rel="stylesheet" href="/css/login.css" media="screen" type="text/css"/>
-#endexport
-
-#export("body"):
+#enddefine
+#define(body):
 	#if(!username):
 		<div id="container">
 			<div id="login">
@@ -36,15 +31,12 @@ struct LoginContext : Encodable {
 				</form>
 			</div>
 		</div>
-<p id="error" style="color: red;"/>
+		<p id="error" style="color: red;"/>
 	#else:
 		<h1>Welcome #(username)</h1>
 		<form action="/logout" method="post">
 			<input type="submit" value="Logout">
 		</form>
 	#endif
-#endexport
-
-
-
-#endextend
+#enddefine
+#inline("lib/Master")

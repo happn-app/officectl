@@ -18,5 +18,6 @@ docker run -d --net officectl --name "$LDAP_NAME" --volume "$LDAP_INIT_PATH":/et
 
 echo
 echo "Done. LDAP should be accessible with:"
+echo "   ldapvi -h localhost:8389 -D cn=admin,dc=happn,dc=test -w toto -b dc=happn,dc=test"
 echo "   ldapsearch -p 8389 -h localhost -D cn=admin,dc=happn,dc=test -w toto -b dc=happn,dc=test"
 echo "You should be able access the LDAP from within a docker container using the “--net officectl” option, with hostname “${LDAP_NAME}” on port 389."

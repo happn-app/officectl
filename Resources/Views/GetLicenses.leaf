@@ -1,33 +1,27 @@
-#comment:
+#(#
 struct LicencesContext : Encodable {
 	var email: String
 	var columnNames: [String]
 	var licenses: [[String: String]]
 }
-#endcomment
-#extend("lib/Master"):
-
-
-
-#export("title", "happn – List of Licenses for #(email)")
-
-#export("additional_head_tags"):
+#)
+#define(title):happn – List of Licenses for #(email)#enddefine
+#define(additional_head_tags):
 	<link rel="stylesheet" href="/css/table.css" type="text/css"/>
-#endexport
-
-#export("body"):
+#enddefine
+#define(body):
 	<h1>List of Licenses Assigned to #(email)</h1>
-	#if(!isEmpty(licenses)):
+	#if(licenses.count() != 0):
 	<table>
 		<tr>
 			#for(columnName in columnNames):
-				<th>#(snailCaseToHuman(columnName))</th>
+				<th>#(columnName.snailCaseToHuman())</th>
 			#endfor
 		</tr>
 		#for(license in licenses):
 			<tr>
 				#for(columnName in columnNames):
-					<td>#(dictionaryGetValueForDynKey(license, columnName))</td>
+					<td>#(license[columnName])</td>
 				#endfor
 			</tr>
 		#endfor
@@ -36,9 +30,6 @@ struct LicencesContext : Encodable {
 		<p>No licenses found for you!</p>
 	#endif
 	
-	#extend("lib/ReturnHome")
-#endexport
-
-
-
-#endextend
+	#inline("lib/ReturnHome")
+#enddefine
+#inline("lib/Master")
