@@ -44,7 +44,7 @@ struct UserChangePasswordCommand : ParsableCommand {
 		let serviceIds = self.serviceIds?.split(separator: ",").map(String.init)
 		
 		let sProvider = app.officeKitServiceProvider
-		let services = try sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsUserCreation }
+		let services = try sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsPasswordChange }
 		guard !services.isEmpty else {
 			context.console.warning("Nothing to do.")
 			return eventLoop.future()
@@ -56,7 +56,7 @@ struct UserChangePasswordCommand : ParsableCommand {
 		guard newPass == newPassConfirmation else {throw InvalidArgumentError(message: "Try again")}
 		
 		let dsuIdPair = try AnyDSUIdPair(string: userIdStr, servicesProvider: sProvider)
-		return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), using: app.services)
+		return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: services, using: app.services)
 		.flatMapThrowing{ passwordResets in
 			try app.auditLogger.log(action: "Changing password of \(dsuIdPair.taggedId) on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
 			return try passwordResets.start(newPass: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)
