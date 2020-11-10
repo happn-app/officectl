@@ -33,15 +33,17 @@ public protocol Connector {
 	
 	associatedtype ScopeType
 	
-	/** A connector should only do one “connection” operation at a time. The
-	handler operation queue given here will be used by default to serialize
-	“unsafe” operations in a queue so they’re executed safely in order. The
-	current scope should never be modified outside this queue. */
+	/**
+	A connector should only do one “connection” operation at a time. The handler
+	operation queue given here will be used by default to serialize “unsafe”
+	operations in a queue so they’re executed safely in order. The current scope
+	should never be modified outside this queue. */
 	var connectorOperationQueue: SyncOperationQueue {get}
 	
-	/** `nil` if not connected, otherwise, any non-nil value. Thread-safety of
-	the property is up to the implementer. The value of this property should not
-	be modified outside the connector operation queue. */
+	/**
+	`nil` if not connected, otherwise, any non-nil value. Thread-safety of the
+	property is up to the implementer. The value of this property should not be
+	modified outside the connector operation queue. */
 	var currentScope: ScopeType? {get}
 	func currentScopeContainsAll(of scope: ScopeType) -> Bool
 	func currentScopeContainsAny(of scope: ScopeType) -> Bool
@@ -54,7 +56,8 @@ public protocol Connector {
 //		func handleOpenURL(_ url: URL) -> Bool
 //	#endif
 	
-	/** The actual connection method. Should not be used by clients, use the
+	/**
+	The actual connection method. Should not be used by clients, use the
 	`(dis)connect…` methods instead.
 	
 	This method does not care whether the connector is connected, nor if there is
@@ -71,13 +74,15 @@ public protocol Connector {
 
 public extension Connector {
 	
-	/** Uses the `currentScope` to determine if the connector is connected. As
+	/**
+	Uses the `currentScope` to determine if the connector is connected. As
 	thread-safe as the `currentScope` property… */
 	var isConnected: Bool {
 		return currentScope != nil
 	}
 	
-	/** Connects the given scope.
+	/**
+	Connects the given scope.
 	
 	If the connector was already connected with the given scopes, the method is
 	no-op, unless forceReconnect is set to `true`. If some of the scopes were not
@@ -105,7 +110,8 @@ public extension Connector {
 		}
 	}
 	
-	/** Disonnect the given scope.
+	/**
+	Disonnect the given scope.
 	
 	If the given scope is `nil` (default), fully disconnect the connector.
 	
