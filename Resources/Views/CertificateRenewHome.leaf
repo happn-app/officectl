@@ -1,12 +1,16 @@
-#(#
-The context structure
+#comment: The context structure
 struct PasswordResetContext : Encodable {
 	var isAdmin: Bool
 	var userEmail: String
 }
-#)
-#define(title):happn – Get an Identity Certificate#enddefine
-#define(additional_head_tags):
+#endcomment
+#extend("lib/Master"):
+
+
+
+#export("title", "happn – Get an Identity Certificate")
+
+#export("additional_head_tags"):
 	<script type="text/javascript" src="/js/lib/Utils.js"></script>
 	<script type="text/javascript" src="/js/CertificateRenew.js"></script>
 	<style>
@@ -22,8 +26,9 @@ struct PasswordResetContext : Encodable {
 			text-align: center;
 		}
 	</style>
-#enddefine
-#define(body):
+#endexport
+
+#export("body"):
 	<h1>Get an Identity Certificate</h1>
 	<form onsubmit="return form_action(this)" id="form">
 		<label>#if(!isAdmin):Your email or id: #(userEmail)#else:Email or id whose certificate to renew:#endif</label>
@@ -123,6 +128,9 @@ struct PasswordResetContext : Encodable {
 		</p>
 	</div>
 	
-	#inline("lib/ReturnHome")
-#enddefine
-#inline("lib/Master")
+	#extend("lib/ReturnHome")
+#endexport
+
+
+
+#endextend

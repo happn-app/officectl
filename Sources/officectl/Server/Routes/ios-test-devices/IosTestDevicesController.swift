@@ -23,14 +23,14 @@ final class IosTestDevicesController {
 		struct DevicesContext : Encodable {
 			struct Device : Encodable {
 				var name: String
-				@NullEncodable var dateLastSeen: String?
-				@NullEncodable var osVersion: String?
-				@NullEncodable var modelName: String?
-				@NullEncodable var udid: String?
-				@NullEncodable var phoneNumber: String?
-				@NullEncodable var serialNumber: String?
-				@NullEncodable var wifiMAC: String?
-				@NullEncodable var bluetoothMAC: String?
+				var dateLastSeen: String?
+				var osVersion: String?
+				var modelName: String?
+				var udid: String?
+				var phoneNumber: String?
+				var serialNumber: String?
+				var wifiMAC: String?
+				var bluetoothMAC: String?
 			}
 			var devices: [Device]
 		}

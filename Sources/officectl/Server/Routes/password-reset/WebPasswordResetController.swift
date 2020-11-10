@@ -103,7 +103,7 @@ final class WebPasswordResetController {
 				var serviceName: String
 				var isExecuting: Bool
 				var hasRun: Bool
-				@NullEncodable var errorStr: String?
+				var errorStr: String?
 			}
 			
 			var userEmail: String

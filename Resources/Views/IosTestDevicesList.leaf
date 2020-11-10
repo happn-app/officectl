@@ -1,4 +1,4 @@
-#(#
+#comment:
 struct DevicesContext : Encodable {
 	struct Device : Encodable {
 		var name: String
@@ -13,12 +13,18 @@ struct DevicesContext : Encodable {
 	}
 	var devices: [Device]
 }
-#)
-#define(title):happn – List of iOS Test Devices#enddefine
-#define(additional_head_tags):
+#endcomment
+#extend("lib/Master"):
+
+
+
+#export("title", "happn – List of iOS Test Devices")
+
+#export("additional_head_tags"):
 	<link rel="stylesheet" href="/css/table.css" type="text/css"/>
-#enddefine
-#define(body):
+#endexport
+
+#export("body"):
 	<h1>List of iOS Test Devices</h1>
 	<table>
 		<tr>
@@ -45,6 +51,9 @@ struct DevicesContext : Encodable {
 		#endfor
 	</table>
 	
-	#inline("lib/ReturnHome")
-#enddefine
-#inline("lib/Master")
+	#extend("lib/ReturnHome")
+#endexport
+
+
+
+#endextend
