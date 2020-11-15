@@ -13,6 +13,21 @@ import OpenDirectory
 
 
 
+/* dscl notes:
+ *    - Reading the staff-acquisition group on a computer which is not bound to od1.happn.private:
+ *         dscl -u diradmin -p od1.happn.private -read /LDAPv3/127.0.0.1/Groups/staff-acquisition
+ *      Note: Works either with the diradmin or the happn user.
+ *    - Reading the staff-acquisition group on a computer which is bound to od1.happn.private (previous line also works, but this one does not require the password):
+ *         dscl /LDAPv3/od1.happn.private -read /Groups/staff-acquisition
+ *    - Reading the spotlight user locally:
+ *         dscl . -read /Users/spotlight
+ *
+ * The two first example raise the question: why do we need two passwords in
+ * this connector in proxy mode but dscl only requires one?
+ * I think it is because it will depend on the operation being done. Reading
+ * does not require a password apparently, but the admin pass is required to
+ * modify certain fields (I think). */
+
 /* This helps: https://github.com/aosm/OpenDirectory/blob/master/Tests/TestApp.m */
 public final class OpenDirectoryConnector : Connector {
 	
