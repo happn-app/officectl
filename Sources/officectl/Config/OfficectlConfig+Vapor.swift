@@ -18,12 +18,14 @@ import Vapor
 extension OfficectlConfig {
 	
 	func configureVaporApp(_ app: Application) throws {
-		SemiSingletonConfig.oslog = nil
 		SemiSingletonConfig.logger = app.logger
-		RetryingOperationConfig.oslog = nil
 		RetryingOperationConfig.logger = app.logger
-		URLRequestOperationConfig.oslog = nil
 		URLRequestOperationConfig.logger = app.logger
+		#if canImport(os)
+		SemiSingletonConfig.oslog = nil
+		RetryingOperationConfig.oslog = nil
+		URLRequestOperationConfig.oslog = nil
+		#endif
 		
 		/* Register the services/configs we got from CLI, if any */
 		app.officectlConfig = self
