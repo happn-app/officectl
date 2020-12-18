@@ -27,4 +27,4 @@ echo "*** Building officectl with treeish ${treeish:-<none, just merging current
 echo
 
 BUILD_FOLDER_PATH="$(pwd)/linux_build"
-docker run --rm -v "/run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock" -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" -v "$BUILD_FOLDER_PATH":"/mnt/output" "$OFFICECTL_BUILDER_IMAGE_NAME" "git@github.com:happn-app/officectl.git=$treeish"
+docker run --rm -v "$BUILD_FOLDER_PATH":"/mnt/output" "$OFFICECTL_BUILDER_IMAGE_NAME" "https://github.com/happn-app/officectl.git=$treeish"
