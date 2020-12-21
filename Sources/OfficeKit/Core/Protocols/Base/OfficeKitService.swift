@@ -38,7 +38,13 @@ import Foundation
  *      have one argument to pass to our methods, even if new dependencies are
  *      needed,
  *    - the derived service approach forces the services to be stateless (though
- *      this is not necessarily a bad thing in all honesty). */
+ *      this is not necessarily a bad thing in all honesty).
+ *
+ * Further thinking: We could represent the dependencies needed by a service via
+ * an associatedtype. Instead of passing the generic Services argument, we’d
+ * pass this type.
+ * If Swift simplifies type erasure someday, we might do this; for now erasing
+ * is too complex. */
 
 public protocol OfficeKitService : class, Hashable, OfficeKitServiceInit {
 	

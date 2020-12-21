@@ -55,9 +55,9 @@ public class AnyDirectoryAuthenticatorService : AnyUserDirectoryService, Directo
 	 * A better solution would be for AnyDirectoryAuthenticatorService not to
 	 * inherit from AnyDirectoryService and implement all the methods from
 	 * DirectoryService too, keeping an AnyDirectoryService internally if needed.
-	 * I’m not doing that for now because I don’t have codegen for now and it’d
-	 * be a pain to copy and modify two erasures each time there’s a modification
-	 * in the DirectoryService… */
+	 * I’m not doing that for now because I don’t have a codegen setup (yet?) and
+	 * it’d be a pain to copy and modify two erasures each time there’s a
+	 * modification in the DirectoryService… */
 	
 	override init<T : UserDirectoryService>(uds object: T) {
 		fatalError()
