@@ -199,7 +199,7 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 			case .idleStrong:
 				/* Setting the state cancels the weakening timer if any. */
 				currentState = .idleWeak
-
+				
 			case .running:
 				throw OperationIsNotFinishedError()
 			}
@@ -215,7 +215,7 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	}
 	
 	/* **********************
-      MARK: - For Subclasses
+	   MARK: - For Subclasses
 	   ********************** */
 	
 	/**
@@ -229,7 +229,7 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	}
 	
 	/* ***************
-      MARK: - Private
+	   MARK: - Private
 	   *************** */
 	
 	private enum State {
