@@ -38,7 +38,7 @@ public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 	}
 	
 	/* ***************
-      MARK: - Private
+	   MARK: - Private
 	   *************** */
 	
 	private var users = [GoogleUser]()

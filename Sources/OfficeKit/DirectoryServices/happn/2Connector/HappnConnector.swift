@@ -112,7 +112,7 @@ public final class HappnConnector : Connector, Authenticator {
 	}
 	
 	/* ***************
-      MARK: - Private
+	   MARK: - Private
 	   *************** */
 	
 	private var auth: Auth?

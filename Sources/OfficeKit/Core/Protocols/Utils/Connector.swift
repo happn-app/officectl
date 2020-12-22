@@ -208,7 +208,7 @@ class AnyConnector<ScopeType> : Connector {
 	}
 	
 	/* *************************
-      MARK: - Connector Erasure
+	   MARK: - Connector Erasure
 	   ************************* */
 	
 	private let connectionOperationQueueHandler: () -> SyncOperationQueue

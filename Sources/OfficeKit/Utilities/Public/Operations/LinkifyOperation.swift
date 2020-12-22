@@ -95,7 +95,7 @@ public class LinkifyOperation : RetryingOperation {
 	}
 	
 	/* ***************
-      MARK: - Private
+	   MARK: - Private
 	   *************** */
 	
 	private class ErrorsContainer {

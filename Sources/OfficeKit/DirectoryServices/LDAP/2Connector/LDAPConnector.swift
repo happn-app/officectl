@@ -146,7 +146,7 @@ public final class LDAPConnector : Connector {
 	}
 	
 	/* ***************
-      MARK: - Private
+	   MARK: - Private
 	   *************** */
 	
 	private static let initSemaphore = DispatchSemaphore(value: 1)

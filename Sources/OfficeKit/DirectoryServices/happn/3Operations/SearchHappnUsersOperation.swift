@@ -37,7 +37,7 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 	}
 	
 	/* ***************
-      MARK: - Private
+	   MARK: - Private
 	   *************** */
 	
 	private var users = [HappnUser]()
