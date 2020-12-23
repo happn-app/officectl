@@ -15,7 +15,7 @@ import Vapor
 
 
 /* *** IMPORTANT: When adding a new property that set something in the storage,
- * do remember to access it in app.swift! */
+ * do remember to access it in Application+officectl.swift! */
 
 
 
