@@ -83,7 +83,7 @@ let package = Package(
 		.package(name: "Yaml",        url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
 		.package(                     url: "https://github.com/vapor/jwt-kit.git", from: "4.2.0"),
 		.package(                     url: "https://github.com/vapor/console-kit.git", from: "4.0.0"),
-		.package(                     url: "https://github.com/happn-tech/EmailValidator.git", .branch("master")),
+		.package(                     url: "https://github.com/happn-tech/EmailValidator.git", from: "0.1.0"),
 		.package(name: "GenericJSON", url: "https://github.com/zoul/generic-json-swift.git", from: "1.2.0"),
 		.package(                     url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0"),
 		.package(                     url: "https://github.com/filom/ASN1Decoder.git", from: "1.3.3")
