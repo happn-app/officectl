@@ -51,7 +51,7 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 			
 		case .add(_):
 			/* Retrieve connection information */
-			let authURL = URL(string: "https://api.github.com/installations/\(installationId)/access_tokens")!
+			let authURL = URL(string: "https://api.github.com/app/installations/\(installationId)/access_tokens")!
 			let jwtRequestContent: [String: Any] = [
 				"iss": appId,
 				"iat": Int(Date(timeIntervalSinceNow: -90).timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 90).timeIntervalSince1970)
@@ -63,7 +63,7 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 			
 			/* Create the URLRequest for the JWT request */
 			var request = URLRequest(url: authURL)
-			request.addValue("application/vnd.github.machine-man-preview+json", forHTTPHeaderField: "Accept")
+			request.addValue("application/vnd.github.v3+json", forHTTPHeaderField: "Accept")
 			request.addValue("Bearer \(jwtRequest)", forHTTPHeaderField: "Authorization")
 			request.httpMethod = "POST"
 			

@@ -41,10 +41,10 @@ struct CurrentDevTestCommand : ParsableCommand {
 		let services = try sProvider.getAllServices()
 		print(services)
 		
-		let googleConfig: GoogleServiceConfig = try app.officeKitConfig.getServiceConfig(id: nil)
-		let connector = GoogleJWTConnector(from: try GoogleJWTConnector(key: googleConfig.connectorSettings), userBehalf: "francois.lamboley@happn.fr")
+		let githubDataConfig: GitHubServiceConfig = try app.officeKitConfig.getServiceConfig(id: "github_data")
+		let connector = try GitHubJWTConnector(key: githubDataConfig.connectorSettings)
 		return connector
-			.connect(scope: ["https://mail.google.com/"], eventLoop: eventLoop)
+			.connect(scope: (), eventLoop: eventLoop)
 			.map{ print(connector.token!) }
 		
 		/* List all GitHub project’s hooks */
