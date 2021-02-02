@@ -141,8 +141,8 @@ struct BackupDriveCommand : ParsableCommand {
 				let errors = downloadResults.enumerated().compactMap{ result in result.element.failureValue.flatMap{ (filteredUsers[result.offset], $0) } }
 				guard errors.isEmpty else {
 					/* Currently we stop everything if we got at least one error. */
-					/* TODO: Properly report the error (say this user got an error, not
-					 *       just here are the errors!) */
+					/* TODO: Properly report the error (say this user got an error,
+					 * not just here are the errors!) */
 					throw ErrorCollection(errors.map{ $0.1 })
 				}
 				return filteredUsers
