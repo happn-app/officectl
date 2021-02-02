@@ -36,16 +36,17 @@ struct CurrentDevTestCommand : ParsableCommand {
 	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
 		let app = context.application
 		let sProvider = app.officeKitServiceProvider
-		let eventLoop = try app.services.make(EventLoop.self)
 		
-		let services = try sProvider.getAllServices()
-		print(services)
-		
-		let githubDataConfig: GitHubServiceConfig = try app.officeKitConfig.getServiceConfig(id: "github_data")
-		let connector = try GitHubJWTConnector(key: githubDataConfig.connectorSettings)
-		return connector
-			.connect(scope: (), eventLoop: eventLoop)
-			.map{ print(connector.token!) }
+		let consoleService: HappnService = try sProvider.getService(id: nil)
+		return try consoleService.existingUser(fromUserId: "anna.bansard@happn.fr", propertiesToFetch: [], using: app.services)
+			.flatMapThrowing{
+				guard let user = $0 else {throw "Cannot get user"}
+				return user
+			}
+			.flatMapThrowing{ user in
+				try consoleService.deleteUser(user, using: app.services)
+			}
+			.flatMap{ $0 }
 		
 		/* List all GitHub project’s hooks */
 //		let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)
