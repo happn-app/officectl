@@ -1,25 +1,69 @@
-FROM debian:stretch-slim
+# ================================
+# Build image
+# ================================
+FROM swift:5.3-focal as build
 
-        LABEL maintainer="sami.nacer@happn.fr"
+# Install OS updates and required packages
+RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+    && apt-get -q update \
+    && apt-get -q dist-upgrade -y \
+    && apt-get install -y libldap2-dev libncurses-dev libssl-dev pkg-config zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-#Ajout des libs
+# Set up a build area
+WORKDIR /build
 
-        RUN apt-get -qy update && apt-get -qy install libldap-2.4-2 && \
-            apt-get -qy install libssl1.0.2 && apt-get -qy install zlib1g && apt-get -qy install libncurses-dev
+# First just resolve dependencies.
+# This creates a cached layer that can be reused as long as your
+# Package.swift/Package.resolved files do not change.
+COPY ./Package.* ./
+RUN swift package resolve
 
-#Ajout de swiftlang-lib
+# Copy entire repo into container
+COPY . .
 
-        COPY /linux_build/products/swift_debs/swiftlang-libs_5.2.4-RELEASE-1~mkdeb1_amd64.deb  /tmp/linux_build/products/swift_debs/swiftlang-libs_5.2.4-RELEASE-1~mkdeb1_amd64.deb
+# Build everything, with optimizations and test discovery
+RUN swift build --enable-test-discovery -c release
 
-        RUN apt-get -qy install libatomic1 && apt-get -qy install libbsd0 && apt-get -qy install libcurl3 && apt-get -qy install libicu57 && apt-get -qy install libxml2 \
-        dpkg  /tmp/linux_build/products/swift_debs/swiftlang-libs_5.2.4-RELEASE-1~mkdeb1_amd64.deb
+# Switch to the staging area
+WORKDIR /staging
 
-#Ajout d'officectl en Binaire
+# Copy main executable to staging area
+RUN cp "$(swift build --package-path /build -c release --show-bin-path)/officectl" ./
 
-	COPY /linux_build/products/release/officectl /usr/local/bin/officectl
+# Copy any resouces from the public directory and views directory if the directories exist
+# Ensure that by default, neither the directory nor any of its contents are writable.
+RUN [ -d /build/Public ]    && { mv /build/Public    ./Public    && chmod -R a-w ./Public;    } || true
+RUN [ -d /build/Resources ] && { mv /build/Resources ./Resources && chmod -R a-w ./Resources; } || true
 
-	ADD /Public /usr/local/share/officectl/Public
 
-	ADD /Resources /usr/local/share/officectl/Resources
+# ================================
+# Run image
+# ================================
+FROM swift:5.3-focal-slim
 
-	CMD  /usr/local/bin/officectl
+# Make sure all system packages are up to date and install required libs
+RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+    && apt-get -q update \
+    && apt-get -q dist-upgrade -y \
+    && apt-get install -y libldap-2.4-2 libncurses libssl1.0.2 zlib1g \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a vapor user and group with /app as its home directory
+RUN useradd --user-group --create-home --system --skel /dev/null --home-dir /app vapor
+
+# Switch to the new home directory
+WORKDIR /app
+
+# Copy built executable and any staged resources from builder
+COPY --from=build --chown=vapor:vapor /staging /app
+
+# Ensure all further commands run as the vapor user
+USER vapor:vapor
+
+# Let Docker bind to port 8080
+EXPOSE 8080
+
+# Start the Vapor service when the image is run, default to listening on 8080 in production environment
+ENTRYPOINT ["./officectl"]
+CMD ["server", "serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "8080"]
