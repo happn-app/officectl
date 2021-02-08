@@ -49,6 +49,11 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
     && apt-get install -y libldap-2.4-2 libncurses6 libncursesw6 libssl1.1 zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
+# TODO: Find how to do this properly!
+ADD https://ca.1e42.net/happn_Root_CA.crt           /usr/local/share/ca-certificates/happn_Root_CA.crt
+ADD https://ca.1e42.net/happn_Intermediate_CA_2.crt /usr/local/share/ca-certificates/happn_Intermediate_CA_2.crt
+RUN /usr/sbin/update-ca-certificates
+
 # Create a vapor user and group with /app as its home directory
 RUN useradd --user-group --create-home --system --skel /dev/null --home-dir /app vapor
 
