@@ -46,7 +46,7 @@ FROM swift:5.3-focal-slim
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
     && apt-get -q update \
     && apt-get -q dist-upgrade -y \
-    && apt-get install -y libldap-2.4-2 libncurses libssl1.0.2 zlib1g \
+    && apt-get install -y libldap-2.4-2 libncurses6 libncursesw6 libssl1.1 zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a vapor user and group with /app as its home directory
