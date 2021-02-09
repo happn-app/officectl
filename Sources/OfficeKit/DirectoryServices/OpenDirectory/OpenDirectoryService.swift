@@ -49,6 +49,9 @@ public final class OpenDirectoryService : UserDirectoryService {
 	public init(config c: ConfigType, globalConfig gc: GlobalConfig) {
 		config = c
 		globalConfig = gc
+		
+		serialQueueForUserCreationOperation = OperationQueue(name_OperationQueue: "Operation Queue for OD User Creations")
+		serialQueueForUserCreationOperation.maxConcurrentOperationCount = 1
 	}
 	
 	public func shortDescription(fromUser user: ODRecordOKWrapper) -> String {
@@ -296,6 +299,8 @@ public final class OpenDirectoryService : UserDirectoryService {
 	/* ***************
 	   MARK: - Private
 	   *************** */
+	
+	private let serialQueueForUserCreationOperation: OperationQueue
 	
 	private func existingRecord(fromSearchRequest request: OpenDirectorySearchRequest, using services: Services) throws -> EventLoopFuture<ODRecordOKWrapper?> {
 		var request = request
