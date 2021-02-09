@@ -120,7 +120,7 @@ public final class CreateOpenDirectoryRecordOperation : RetryingOperation, HasRe
 				}
 				
 				var attrs = recordAttributes
-				attrs[kODAttributeTypeUniqueID] = [String(maxUID)]
+				attrs[kODAttributeTypeUniqueID] = [String(maxUID + 1)]
 				let createdNode = try node.createRecord(withRecordType: recordType, name: recordName, attributes: attrs)
 				_ = try? createdNode.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName]) /* We prefetch the record name for ease of future use */
 				result = .success(createdNode)
