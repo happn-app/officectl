@@ -137,10 +137,10 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		let lastName = userWrapper.lastName.value?.flatMap{ $0 }
 		let firstName = userWrapper.firstName.value?.flatMap{ $0 }
 		let fullname = fullNameFrom(firstName: firstName, lastName: lastName)
-		let ret = LDAPInetOrgPersonWithObject(inetOrgPerson: LDAPInetOrgPerson(dn: inferredUserId, sn: lastName.flatMap{ [$0] } ?? [], cn: fullname.flatMap{ [$0] } ?? []))
-		ret.inetOrgPerson.givenName = firstName.flatMap{ [$0] } ?? []
-		ret.inetOrgPerson.mail = userWrapper.emails
-		return ret
+		let inetOrgPerson = LDAPInetOrgPerson(dn: inferredUserId, sn: lastName.flatMap{ [$0] } ?? [], cn: fullname.flatMap{ [$0] } ?? [])
+		inetOrgPerson.givenName = firstName.flatMap{ [$0] } ?? []
+		inetOrgPerson.mail = userWrapper.emails
+		return LDAPInetOrgPersonWithObject(inetOrgPerson: inetOrgPerson)
 	}
 	
 	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout LDAPInetOrgPersonWithObject, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
