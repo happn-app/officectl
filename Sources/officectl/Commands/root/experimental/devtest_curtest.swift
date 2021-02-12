@@ -35,37 +35,37 @@ struct CurrentDevTestCommand : ParsableCommand {
 	/* We don’t technically require Vapor, but it’s convenient. */
 	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
 		let app = context.application
-		let eventLoop: EventLoop = try app.services.make()
-//		let sProvider = app.officeKitServiceProvider
-		
-		/* Search for LDAP users without an mail */
-		let ldapConfig: LDAPServiceConfig = try app.officeKitConfig.getServiceConfig(id: nil)
-		let ldapConnector = try LDAPConnector(key: ldapConfig.connectorSettings)
-		return ldapConnector.connect(scope: (), eventLoop: eventLoop)
-			.flatMap{
-				let query = LDAPSearchQuery.not(.present(attribute: LDAPAttributeDescription.mail))
-				let request = LDAPSearchRequest(scope: .children, base: ldapConfig.baseDNs.peopleBaseDNPerDomain!.values.randomElement()!, searchQuery: query, attributesToFetch: nil)
-				let searchOperation = SearchLDAPOperation(ldapConnector: ldapConnector, request: request)
-				return EventLoopFuture<(results: [LDAPObject], references: [[String]])>.future(from: searchOperation, on: eventLoop)
-			}
-			.map{ (searchResults: (results: [LDAPObject], references: [[String]])) in
-				for r in searchResults.results {
-					print(r)
-				}
-				return ()
-			}
+		let sProvider = app.officeKitServiceProvider
+//		let eventLoop: EventLoop = try app.services.make()
 		
 		/* Delete happn console user */
-//		let consoleService: HappnService = try sProvider.getService(id: nil)
-//		return try consoleService.existingUser(fromUserId: "anna.bansard@happn.fr", propertiesToFetch: [], using: app.services)
-//			.flatMapThrowing{
-//				guard let user = $0 else {throw "Cannot get user"}
-//				return user
+		let consoleService: HappnService = try sProvider.getService(id: nil)
+		return try consoleService.existingUser(fromUserId: "happn.agent16@tana.admvalue.com", propertiesToFetch: [], using: app.services)
+			.flatMapThrowing{
+				guard let user = $0 else {throw "Cannot get user"}
+				return user
+			}
+			.flatMapThrowing{ user in
+				try consoleService.deleteUser(user, using: app.services)
+			}
+			.flatMap{ $0 }
+		
+		/* Search for LDAP users without an mail */
+//		let ldapConfig: LDAPServiceConfig = try app.officeKitConfig.getServiceConfig(id: nil)
+//		let ldapConnector = try LDAPConnector(key: ldapConfig.connectorSettings)
+//		return ldapConnector.connect(scope: (), eventLoop: eventLoop)
+//			.flatMap{
+//				let query = LDAPSearchQuery.not(.present(attribute: LDAPAttributeDescription.mail))
+//				let request = LDAPSearchRequest(scope: .children, base: ldapConfig.baseDNs.peopleBaseDNPerDomain!.values.randomElement()!, searchQuery: query, attributesToFetch: nil)
+//				let searchOperation = SearchLDAPOperation(ldapConnector: ldapConnector, request: request)
+//				return EventLoopFuture<(results: [LDAPObject], references: [[String]])>.future(from: searchOperation, on: eventLoop)
 //			}
-//			.flatMapThrowing{ user in
-//				try consoleService.deleteUser(user, using: app.services)
+//			.map{ (searchResults: (results: [LDAPObject], references: [[String]])) in
+//				for r in searchResults.results {
+//					print(r)
+//				}
+//				return ()
 //			}
-//			.flatMap{ $0 }
 		
 		/* List all GitHub project’s hooks */
 //		let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)
