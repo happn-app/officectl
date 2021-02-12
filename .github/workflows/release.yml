@@ -1,0 +1,49 @@
+name: Build and Push to GCR
+
+on:
+  push:
+    tags: ['**']
+    branches-ignore: ['**']
+
+env:
+  PROJECT_ID: ${{ secrets.GCR_PROJECT }}
+  REGISTRY: ${{ secrets.GCR_HOSTNAME }}
+  IMAGE: officectl
+
+jobs:
+  setup-build-push:
+    name: Setup, Build and Push
+    runs-on: [ubuntu-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # Setup gcloud CLI
+      - uses: google-github-actions/setup-gcloud@v0.2.0
+        with:
+          version: '326.0.0'
+          service_account_email: ${{ secrets.GCP_GITHUB_SA_EMAIL }}
+          service_account_key: ${{ secrets.GCP_GITHUB_SA_CREDENTIALS }}
+          project_id: ${{ secrets.GCP_PROJECT }}
+
+      # Configure Docker to use the gcloud command-line tool as a credential
+      # helper for authentication
+      - run: gcloud --quiet auth configure-docker
+      
+      - name: Get tag name
+        id: get_tag
+        run: echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
+      
+      # Build the Docker image
+      - name: Build
+        run: |-
+          docker build \
+            --tag "$REGISTRY/$PROJECT_ID/$IMAGE:${{ steps.get_tag.outputs.TAG }}" \
+            --build-arg GITHUB_SHA="$GITHUB_SHA" \
+            --build-arg GITHUB_REF="$GITHUB_REF" \
+            .
+      
+      # Push the Docker image to Google Container Registry
+      - name: Push
+        run: docker push "$REGISTRY/$PROJECT_ID/$IMAGE:${{ steps.get_tag.outputs.TAG }}"
