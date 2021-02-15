@@ -32,7 +32,7 @@ public final class ResetHappnPasswordAction : Action<HappnUser, String, Void>, R
 		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
 		
 		let f = deps.connector.connect(scope: ModifyHappnUserOperation.scopes, eventLoop: eventLoop)
-		.map{ _ -> EventLoopFuture<Void> in
+		.flatMap{ _ -> EventLoopFuture<Void> in
 			var happnUser = self.subject.cloneForPatching()
 			
 			happnUser.password = .set(newPassword)
