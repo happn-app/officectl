@@ -48,7 +48,7 @@ struct PasswordResetContext : Encodable {
 		<h2>Downloading Your Certificate</h2>
 		<p>
 			Click the button above to download a certificate to connect to the “office,”
-			“services,” “poda,” “podb,” “podc,” “pod0” and “pod2” VPNs, as well as identifying
+			“poda,” “podb,” “podc,” “pod0” and “pod2” VPNs, as well as identifying
 			you on certain happn websites.<br/>
 		</p>
 		<p style="margin-bottom: 0px;">
@@ -91,7 +91,7 @@ struct PasswordResetContext : Encodable {
 			<div class="codeblock">
 				<code>
 					cd <i style="color: red;">path/to/extracted/folder</i><br/>
-					<span class="comment">\# Create an mkvisz config (“the_pod_you_want” can be either: “poda”, “podb”, “podc”, “pod0”, “pod2”, “services” or “office”)</span><br/>
+					<span class="comment">\# Create an mkvisz config (“the_pod_you_want” can be either: “poda”, “podb”, “podc”, “pod0”, “pod2” or “office”)</span><br/>
 					mkvisz -C ca.pem -c <i style="color: red;">firstname.lastname</i>.pem -k <i style="color: red;">firstname.lastname</i>.key -p <i style="color: red;">the_pod_you_want</i></br>
 					<span class="comment">\# Repeat as needed to generate the config for all the pods you need</span><br/>
 				</code>
