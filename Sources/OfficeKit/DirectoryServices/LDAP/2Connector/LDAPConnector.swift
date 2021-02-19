@@ -132,6 +132,7 @@ public final class LDAPConnector : Connector {
 					var cred = berval(bv_len: ber_len_t(strlen(cStringPass)), bv_val: ber_strdup(cStringPass))
 					defer {ber_memfree(cred.bv_val)}
 					
+					/* TODO: https://twitter.com/CodaFi_/status/1362671988171370496 */
 					let r = ldap_sasl_bind_s(self.ldapPtr, username, nil, &cred, nil, nil, nil)
 					guard r == LDAP_SUCCESS else {
 						handler(NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))]))
