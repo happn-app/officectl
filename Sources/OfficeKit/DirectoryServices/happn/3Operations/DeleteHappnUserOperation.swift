@@ -20,7 +20,7 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = Void
 	
-	public static let scopes = Set(arrayLiteral: "admin_read", "all_user_delete")
+	public static let scopes = Set(arrayLiteral: "admin_create"/* 😱🤷‍♂️ */, "admin_delete", "all_user_delete")
 	
 	public let connector: HappnConnector
 	
@@ -52,12 +52,20 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 			}
 			
 			var urlRequest = URLRequest(url: URL(string: "api/administrators/", relativeTo: self.connector.baseURL)!)
-			urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-			urlRequest.httpBody = try JSONEncoder().encode(JSON.object([
-				"_action": "revoke",
-				"user_id": .string(userId),
-				"password": .string(adminPass)
-			]))
+			urlRequest.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+			do {
+				/* Let’s build the request content */
+				var urlComponents = URLComponents()
+				urlComponents.queryItems = [
+					URLQueryItem(name: "_action", value: "revoke"),
+					URLQueryItem(name: "user_id", value: userId),
+					URLQueryItem(name: "password", value: adminPass)
+				]
+				guard let qstr = urlComponents.percentEncodedQuery else {
+					throw NSError(domain: "com.happn.officectl.happn", code: 1, userInfo: [NSLocalizedDescriptionKey: "cannot build url component to delete admin"])
+				}
+				urlRequest.httpBody = Data(qstr.utf8)
+			}
 			urlRequest.httpMethod = "POST"
 			
 			/* We declare a decoded type HappnApiResult<Int8>. We chose Int8,
