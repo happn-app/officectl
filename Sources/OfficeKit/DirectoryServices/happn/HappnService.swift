@@ -213,7 +213,7 @@ public final class HappnService : UserDirectoryService {
 		.flatMap{ _ in
 			let ids = Set(Email(string: uId)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.stringValue } ?? [uId])
 			let futures = ids.map{ id -> EventLoopFuture<[HappnUser]> in
-				let op = SearchHappnUsersOperation(query: id, happnConnector: happnConnector)
+				let op = SearchHappnUsersOperation(email: id, happnConnector: happnConnector)
 				return EventLoopFuture<[HappnUser]>.future(from: op, on: eventLoop)
 			}
 			return EventLoopFuture.reduce([HappnUser](), futures, on: eventLoop, +)
@@ -232,7 +232,7 @@ public final class HappnService : UserDirectoryService {
 		
 		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
-			let searchOp = SearchHappnUsersOperation(query: nil, happnConnector: happnConnector)
+			let searchOp = SearchHappnUsersOperation(email: nil, happnConnector: happnConnector)
 			return EventLoopFuture<[HappnUser]>.future(from: searchOp, on: eventLoop)
 		}
 	}

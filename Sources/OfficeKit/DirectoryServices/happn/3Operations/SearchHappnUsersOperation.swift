@@ -7,6 +7,7 @@
 
 import Foundation
 
+import GenericJSON
 import RetryingOperation
 
 
@@ -18,13 +19,13 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 	public static let scopes = Set(arrayLiteral: "admin_read", "admin_search_user")
 	
 	public let connector: HappnConnector
-	public let request: String?
+	public let email: String?
 	
 	public private(set) var result = Result<[HappnUser], Error>.failure(OperationIsNotFinishedError())
 	
-	public init(query: String? = nil, happnConnector: HappnConnector) {
+	public init(email e: String? = nil, happnConnector: HappnConnector) {
 		connector = happnConnector
-		request = query
+		email = e
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
@@ -43,36 +44,47 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 	private var users = [HappnUser]()
 	
 	private func fetchNextPage(currentOffset: Int) {
-		let limit = 500
-		var urlComponents = URLComponents(url: URL(string: "api/search-clients", relativeTo: connector.baseURL)!, resolvingAgainstBaseURL: true)!
-		urlComponents.queryItems = [
-			URLQueryItem(name: "offset",   value: String(currentOffset)),
-			URLQueryItem(name: "limit",    value: String(limit)),
-			URLQueryItem(name: "fields",   value: "id,first_name,last_name,acl,login,nickname"),
-			URLQueryItem(name: "is_admin", value: "1")
-		]
-		if let r = request {urlComponents.queryItems!.append(URLQueryItem(name: "term", value: r))}
-		
-		let decoder = JSONDecoder()
-		decoder.keyDecodingStrategy = .useDefaultKeys
-		let op = AuthenticatedJSONOperation<HappnApiResult<[HappnUser]>>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
-		op.completionBlock = {
-			guard let o = op.result.successValue else {
-				self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the users"]))
-				self.baseOperationEnded()
-				return
-			}
-			guard o.success else {
-				self.result = .failure(NSError(domain: "com.happn.officectl.happn", code: o.error_code, userInfo: [NSLocalizedDescriptionKey: o.error ?? "Unknown error while fetching the users"]))
-				return self.baseOperationEnded()
-			}
+		do {
+			let limit = 500
+			var urlComponents = URLComponents(url: URL(string: "api/v1/users-search", relativeTo: connector.baseURL)!, resolvingAgainstBaseURL: true)!
+			urlComponents.queryItems = [
+				URLQueryItem(name: "fields", value: "id,first_name,last_name,acl,login,nickname,type"),
+			]
+			var requestBody = JSON.object([
+				"offset": .number(Float(currentOffset)),
+				"limit": .number(Float(limit)),
+				"is_admin": true
+			])
+			if let e = email {requestBody = requestBody.merging(with: JSON.object(["full_text_search_with_all_terms": .string(e)]))}
+			var urlRequest = URLRequest(url: urlComponents.url!)
+			urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+			urlRequest.httpBody = try JSONEncoder().encode(requestBody)
+			urlRequest.httpMethod = "POST"
 			
-			let users = o.data ?? []
-			self.users.append(contentsOf: users)
-			if users.count >= limit/2 {self.fetchNextPage(currentOffset: currentOffset + limit)}
-			else                      {self.result = .success(self.users); self.baseOperationEnded()}
+			let decoder = JSONDecoder()
+			decoder.keyDecodingStrategy = .useDefaultKeys
+			let op = AuthenticatedJSONOperation<HappnApiResult<[HappnUser]>>(request: urlRequest, authenticator: connector.authenticate, decoder: decoder)
+			op.completionBlock = {
+				guard let o = op.result.successValue else {
+					self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the users"]))
+					self.baseOperationEnded()
+					return
+				}
+				guard o.success else {
+					self.result = .failure(NSError(domain: "com.happn.officectl.happn", code: o.error_code, userInfo: [NSLocalizedDescriptionKey: o.error ?? "Unknown error while fetching the users"]))
+					return self.baseOperationEnded()
+				}
+				
+				let users = o.data ?? []
+				self.users.append(contentsOf: users)
+				if users.count >= limit/2 {self.fetchNextPage(currentOffset: currentOffset + limit)}
+				else                      {self.result = .success(self.users); self.baseOperationEnded()}
+			}
+			op.start()
+		} catch {
+			result = .failure(error)
+			baseOperationEnded()
 		}
-		op.start()
 	}
 	
 }
