@@ -327,7 +327,7 @@ class WebCertificateRenewController {
 				let now = Date()
 				for i in 0..<revokedCertificates.subCount() {
 					guard let revokedCertificate = revokedCertificates.sub(i), revokedCertificate.identifier?.tagNumber() == .sequence else {
-						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: expected a SQUENCE inside the revoked certificates sequence, got something else. CRL is \(crlASN1)"])
+						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: expected a SEQUENCE inside the revoked certificates sequence, got something else. CRL is \(crlASN1)"])
 					}
 					guard revokedCertificate.subCount() == 2 || revokedCertificate.subCount() == 3 else {
 						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: unexpected count of elements in a revoked certificate sequence. CRL is \(crlASN1)"])
