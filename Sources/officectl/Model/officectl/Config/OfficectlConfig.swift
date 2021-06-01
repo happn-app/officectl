@@ -27,6 +27,7 @@ struct OfficectlConfig {
 	var tmpVaultBaseURL: URL?
 	var tmpVaultRootCAName: String?
 	var tmpVaultIssuerName: String?
+	var tmpVaultAdditionalIssuers: [String]?
 	var tmpVaultToken: String?
 	var tmpVaultTTL: String?
 	var tmpVaultExpirationLeeway: TimeInterval?
@@ -50,6 +51,7 @@ struct OfficectlConfig {
 		tmpVaultBaseURL = configYaml["vault_tmp"]["base_url"].string.flatMap{ URL(string: $0) }
 		tmpVaultRootCAName = configYaml["vault_tmp"]["root_ca_name"].string
 		tmpVaultIssuerName = configYaml["vault_tmp"]["issuer_name"].string
+		tmpVaultAdditionalIssuers = configYaml["vault_tmp"]["additional_issuers"].array?.compactMap{ $0.string }
 		tmpVaultToken = configYaml["vault_tmp"]["token"].string
 		tmpVaultTTL = configYaml["vault_tmp"]["ttl"].string
 		tmpVaultExpirationLeeway = configYaml["vault_tmp"]["max_expiration_delay_before_allowing_reissuance"].int.flatMap{ TimeInterval($0) }

@@ -48,6 +48,7 @@ class WebCertificateRenewController {
 		let baseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
 		let rootCAName = try nil2throw(officectlConfig.tmpVaultRootCAName)
 		let issuerName = try nil2throw(officectlConfig.tmpVaultIssuerName)
+		let additionalIssuers = officectlConfig.tmpVaultAdditionalIssuers ?? []
 		let token = try nil2throw(officectlConfig.tmpVaultToken)
 		let ttl = try nil2throw(officectlConfig.tmpVaultTTL)
 		let expirationLeeway = try nil2throw(officectlConfig.tmpVaultExpirationLeeway)
@@ -63,57 +64,72 @@ class WebCertificateRenewController {
 			handler(.success(request), nil)
 		}
 		
-		return req.eventLoop.future()
-		.flatMap{ _ -> EventLoopFuture<CRL> in
-			/* Let’s get the CRL */
-			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("crl"))
-			authenticateSync(&urlRequest)
-			let op = URLRequestOperation(request: urlRequest)
-			return EventLoopFuture<CRL>.future(from: op, on: req.eventLoop, resultRetriever: { op in
-				guard let data = op.fetchedData else {
-					throw op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown error fetching the CRL"])
-				}
-				return try CRL(der: data)
-			})
-		}
-		.flatMapThrowing{ crl -> EventLoopFuture<(CertificateSerialsList, CRL)> in
-			/* Let’s fetch the list of current certificates in the vault */
-			var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("certs"))
-			urlRequest.httpMethod = "LIST"
-			let op = AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>(request: urlRequest, authenticator: authenticate)
-			return EventLoopFuture<VaultResponse<CertificateSerialsList>>.future(from: op, on: req.eventLoop).map{ ($0.data, crl) }
-		}
-		.flatMap{ $0 }
-		.flatMap{ (certificatesList, crl) -> EventLoopFuture<[(id: String, certif: X509Certificate)]> in
-			/* Get the list of certificates to revoke */
-			let futures = certificatesList.keys.compactMap{ id -> EventLoopFuture<(id: String, certif: X509Certificate)?>? in
-				/* If the certificate is already revoked, we don’t have to do
-				 * anything w/ it. */
-				guard !crl.revokedCertificateIds.contains(normalizeCertificateId(id)) else {
-					return nil
-				}
-				
-				let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent(id))
-				let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
-				return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, on: req.eventLoop).flatMapThrowing{ certificateResponse in
-					guard let subjectDNStr = certificateResponse.data.certificate.subjectDistinguishedName else {
-						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN for\n\(certificateResponse.data.pem)"])
+		let getCertificatesFutures = ([issuerName] + additionalIssuers).map{ issuerName in
+			req.eventLoop.future()
+			.flatMap{ _ -> EventLoopFuture<CRL> in
+				/* Let’s get the CRL */
+				var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("crl"))
+				authenticateSync(&urlRequest)
+				let op = URLRequestOperation(request: urlRequest)
+				return EventLoopFuture<CRL>.future(from: op, on: req.eventLoop, resultRetriever: { op in
+					guard let data = op.fetchedData else {
+						throw op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown error fetching the CRL"])
 					}
-					let subjectDN = try LDAPDistinguishedName(string: subjectDNStr)
-					guard let dnValue = subjectDN.values.onlyElement, dnValue.key == "CN" else {
-						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN certificate DN \(subjectDN)"])
-					}
-					let subjectCN = dnValue.value
-					guard subjectCN == renewedCommonName else {return nil}
-					return (id: id, certif: certificateResponse.data.certificate)
-				}
+					return try CRL(der: data)
+				})
 			}
-			return EventLoopFuture.reduce([(id: String, certif: X509Certificate)](), futures, on: req.eventLoop, { full, new in
-				guard let new = new else {return full}
-				return full + [new]
-			})
+			.flatMapThrowing{ crl -> EventLoopFuture<(CertificateSerialsList, CRL)> in
+				/* Let’s fetch the list of current certificates in the vault */
+				var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("certs"))
+				urlRequest.httpMethod = "LIST"
+				let op = AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>(request: urlRequest, authenticator: authenticate, retryInfoRecoveryHandler: { operation, error, handler in
+					if (operation.urlResponse as? HTTPURLResponse)?.statusCode == 404,
+						let data = operation.fetchedData,
+						let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any?],
+						(jsonObject["errors"] as? [Any?])?.isEmpty ?? false
+					{
+						/* When there are no certificates in the PKI, vault returns a
+						 * fucking 404! */
+						(operation as! AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>).fetchedObject = .init(data: .init(keys: []))
+						return handler(.doNotRetry, operation.currentURLRequest, nil)
+					}
+					handler(.doNotRetry, operation.currentURLRequest, error)
+				})
+				return EventLoopFuture<VaultResponse<CertificateSerialsList>>.future(from: op, on: req.eventLoop).map{ ($0.data, crl) }
+			}
+			.flatMap{ $0 }
+			.flatMap{ (certificatesList, crl) -> EventLoopFuture<[(id: String, issuerName: String, certif: X509Certificate)]> in
+				/* Get the list of certificates to revoke */
+				let futures = certificatesList.keys.compactMap{ id -> EventLoopFuture<(id: String, issuerName: String, certif: X509Certificate)?>? in
+					/* If the certificate is already revoked, we don’t have to do
+					 * anything w/ it. */
+					guard !crl.revokedCertificateIds.contains(normalizeCertificateId(id)) else {
+						return nil
+					}
+					
+					let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent(id))
+					let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
+					return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, on: req.eventLoop).flatMapThrowing{ certificateResponse in
+						guard let subjectDNStr = certificateResponse.data.certificate.subjectDistinguishedName else {
+							throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN for\n\(certificateResponse.data.pem)"])
+						}
+						let subjectDN = try LDAPDistinguishedName(string: subjectDNStr)
+						guard let dnValue = subjectDN.values.onlyElement, dnValue.key == "CN" else {
+							throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN certificate DN \(subjectDN)"])
+						}
+						let subjectCN = dnValue.value
+						guard subjectCN == renewedCommonName else {return nil}
+						return (id: id, issuerName: issuerName, certif: certificateResponse.data.certificate)
+					}
+				}
+				return EventLoopFuture.reduce([(id: String, issuerName: String, certif: X509Certificate)](), futures, on: req.eventLoop, { full, new in
+					guard let new = new else {return full}
+					return full + [new]
+				})
+			}
 		}
-		.flatMapThrowing{ certificatesToRevoke -> [String] in
+		return EventLoopFuture<[(id: String, issuerName: String, certif: X509Certificate)]>.reduce([], getCertificatesFutures, on: req.eventLoop, +)
+		.flatMapThrowing{ certificatesToRevoke -> [(id: String, issuerName: String)] in
 			/* We check if all of the certificates to revoke will expire in less
 			 * than n seconds (where n is defined in the conf). If the user is
 			 * admin we don’t do this check (admin can renew any certif they want
@@ -126,12 +142,13 @@ class WebCertificateRenewController {
 					}
 				}
 			}
-			return certificatesToRevoke.map{ $0.id }
+			return certificatesToRevoke.map{ (id: $0.id, issuerName: $0.issuerName) }
 		}
-		.flatMapThrowing{ certificateIdsToRevoke -> EventLoopFuture<Void> in
+		.flatMapThrowing{ certificateIdsWithIssuersToRevoke -> EventLoopFuture<Void> in
 			/* Revoke the certificates to revoke */
-			try req.application.auditLogger.log(action: "Revoking \(certificateIdsToRevoke.count) certificate(s): \(certificateIdsToRevoke.joined(separator: " ")).", source: .web)
-			let futures = certificateIdsToRevoke.map{ id -> EventLoopFuture<Void> in
+			try req.application.auditLogger.log(action: "Revoking \(certificateIdsWithIssuersToRevoke.count) certificate(s): \(certificateIdsWithIssuersToRevoke.map{ $0.issuerName + ":" + $0.id }.joined(separator: " ")).", source: .web)
+			let futures = certificateIdsWithIssuersToRevoke.map{ idAndIssuer -> EventLoopFuture<Void> in
+				let (id, issuerName) = idAndIssuer
 				var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("revoke"))
 				urlRequest.httpMethod = "POST"
 				let json = JSON(dictionaryLiteral: ("serial_number", JSON(stringLiteral: id)))
@@ -167,14 +184,18 @@ class WebCertificateRenewController {
 		}
 		.flatMap{ $0 }
 		.flatMapThrowing{ newCertificate -> EventLoopFuture<NewCertificate> in
-			/* We add the root CA in the CA chain Vault returns… */
-			let urlRequest = URLRequest(url: baseURL.appendingPathComponent(rootCAName).appendingPathComponent("cert").appendingPathComponent("ca"))
-			let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
-			return EventLoopFuture<VaultResponse<NewCertificate>>.future(from: op, on: req.eventLoop).map{ certificateResponse in
-				var newCertificate = newCertificate
-				newCertificate.caChain.append(certificateResponse.data.pem)
-				return newCertificate
+			/* We recreate the CA chain because we can have more than one, and
+			 * because vault does not add the root CA anyway… */
+			var newCertificate = newCertificate
+			newCertificate.caChain.removeAll()
+			let futures = ([rootCAName, issuerName] + additionalIssuers).map{ issuerName -> EventLoopFuture<CertificateContainer> in
+				let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent("ca"))
+				let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
+				return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, on: req.eventLoop).map{ $0.data }
 			}
+			return EventLoopFuture<NewCertificate>.reduce(into: newCertificate, futures, on: req.eventLoop, { certif, currentChainCertificate in
+				certif.caChain.append(currentChainCertificate.pem)
+			})
 		}
 		.flatMap{ $0 }
 		.flatMap{ newCertificate -> EventLoopFuture<URL> in
@@ -191,7 +212,7 @@ class WebCertificateRenewController {
 					try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true, attributes: nil)
 					let keyData = Data(newCertificate.privateKey.utf8)
 					let certifData = Data(newCertificate.certificate.utf8)
-					let caData = Data(newCertificate.caChain.joined(separator: "\n").utf8)
+					let caData = Data(Set(newCertificate.caChain).joined(separator: "\n").utf8)
 					
 					try caData.write(to: caURL)
 					try keyData.write(to: keyURL)
