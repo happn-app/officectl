@@ -350,13 +350,20 @@ class WebCertificateRenewController {
 				delta += 1
 			}
 			
-			/* The revoked certificates list is optional */
 			var revokedIds = Set<String>()
+			/* The revoked certificates list is optional */
 			if let revokedCertificates = tbsCertList.sub(5 - delta), revokedCertificates.identifier?.tagNumber() == .sequence {
 				let now = Date()
 				for i in 0..<revokedCertificates.subCount() {
-					guard let revokedCertificate = revokedCertificates.sub(i), revokedCertificate.identifier?.tagNumber() == .sequence else {
-						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: expected a SEQUENCE inside the revoked certificates sequence, got something else. CRL is \(crlASN1)"])
+					guard let revokedCertificate = revokedCertificates.sub(i) else {
+						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: cannot get certificate at index \(i) inside the revoked certificates sequence. CRL is \(crlASN1)"])
+					}
+					guard revokedCertificate.identifier?.tagNumber() == .sequence else {
+						if revokedCertificate.identifier?.tagNumber() != .endOfContent {
+							throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: expected SEQUENCE or END_OF_CONTENT for certificate at index \(i) inside the revoked certificates sequence, got something else. CRL is \(crlASN1)"])
+						} else {
+							continue
+						}
 					}
 					guard revokedCertificate.subCount() == 2 || revokedCertificate.subCount() == 3 else {
 						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: unexpected count of elements in a revoked certificate sequence. CRL is \(crlASN1)"])
