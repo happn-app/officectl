@@ -38,6 +38,15 @@
         }
       },
       {
+        "package": "clt-logger",
+        "repositoryURL": "https://github.com/xcode-actions/clt-logger.git",
+        "state": {
+          "branch": null,
+          "revision": "64e68f64634cad4aa721e9f7b47c9d747e9f0851",
+          "version": "0.3.4"
+        }
+      },
+      {
         "package": "console-kit",
         "repositoryURL": "https://github.com/vapor/console-kit.git",
         "state": {
@@ -233,6 +242,15 @@
           "branch": null,
           "revision": "657537c2cf1845f8d5201ecc4e48f21f21841128",
           "version": "1.10.0"
+        }
+      },
+      {
+        "package": "swift-system",
+        "repositoryURL": "https://github.com/apple/swift-system.git",
+        "state": {
+          "branch": null,
+          "revision": "2bc160bfe34d843ae5ff47168080add24dfd7eac",
+          "version": "0.0.2"
         }
       },
       {

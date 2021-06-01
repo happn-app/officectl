@@ -86,7 +86,8 @@ let package = Package(
 		.package(                     url: "https://github.com/happn-tech/EmailValidator.git", from: "0.1.0"),
 		.package(name: "GenericJSON", url: "https://github.com/zoul/generic-json-swift.git", from: "1.2.0"),
 		.package(                     url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0"),
-		.package(                     url: "https://github.com/filom/ASN1Decoder.git", from: "1.3.3")
+		.package(                     url: "https://github.com/filom/ASN1Decoder.git", from: "1.3.3"),
+		.package(                     url: "https://github.com/xcode-actions/clt-logger.git", from: "0.3.4")
 	],
 	targets: [
 		openLDAPTarget,
@@ -114,6 +115,7 @@ let package = Package(
 			name: "officectl",
 			dependencies:
 				["OfficeKit",
+				 .product(name: "CLTLogger", package: "clt-logger"),
 				 .product(name: "Crypto", package: "swift-crypto"),
 				 .product(name: "Vapor", package: "vapor"),
 				 .product(name: "Leaf", package: "leaf"),

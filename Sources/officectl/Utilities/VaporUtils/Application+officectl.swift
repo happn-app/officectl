@@ -7,6 +7,7 @@
 
 import Foundation
 
+import CLTLogger
 import NIO
 import Vapor
 
@@ -16,7 +17,13 @@ extension Application {
 	
 	static func runSync(officectlConfig: OfficectlConfig, configureHandler: (_ app: Application) throws -> Void, _ runHandler: @escaping (_ commandContext: CommandContext) throws -> EventLoopFuture<Void>) throws {
 		var env = Environment(officectlConfig: officectlConfig)
-		try LoggingSystem.bootstrap(from: &env)
+		try LoggingSystem.bootstrap(from: &env, { level in
+			return { label in
+				var ret = CLTLogger()
+				ret.logLevel = level
+				return ret
+			}
+		})
 		
 		let app = Application(env)
 		do    {try officectlConfig.configureVaporApp(app); try configureHandler(app)}
