@@ -80,7 +80,7 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 		} catch {
 			let completionHandler2 = { (retryMode: URLRequestOperation.RetryMode, request: URLRequest, error: Error?) -> Void in
 				if case .doNotRetry = retryMode, let error = error {
-					OfficeKitConfig.logger?.info("Cannot decode JSON; error \(error), data \(fetchedData.reduce("", { $0 + String(format: "%02x", $1) }))")
+					OfficeKitConfig.logger?.info("Network error or invalid JSON. Error \(error), data \(fetchedData.reduce("", { $0 + String(format: "%02x", $1) }))")
 				}
 				completionHandler(retryMode, request, error)
 			}
