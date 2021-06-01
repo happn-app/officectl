@@ -46,9 +46,10 @@ class WebCertificateRenewController {
 		
 		let officectlConfig = req.application.officectlConfig
 		let baseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
-		let rootCAName = try nil2throw(officectlConfig.tmpVaultRootCAName)
 		let issuerName = try nil2throw(officectlConfig.tmpVaultIssuerName)
-		let additionalIssuers = officectlConfig.tmpVaultAdditionalIssuers ?? []
+		let additionalActiveIssuers = officectlConfig.tmpVaultAdditionalActiveIssuers ?? []
+		let additionalPassiveIssuers = officectlConfig.tmpVaultAdditionalPassiveIssuers ?? []
+		let additionalCertificates = officectlConfig.tmpVaultAdditionalCertificates ?? []
 		let token = try nil2throw(officectlConfig.tmpVaultToken)
 		let ttl = try nil2throw(officectlConfig.tmpVaultTTL)
 		let expirationLeeway = try nil2throw(officectlConfig.tmpVaultExpirationLeeway)
@@ -64,7 +65,7 @@ class WebCertificateRenewController {
 			handler(.success(request), nil)
 		}
 		
-		let getCertificatesFutures = ([issuerName] + additionalIssuers).map{ issuerName in
+		let getCertificatesFutures = ([issuerName] + additionalActiveIssuers).map{ issuerName in
 			req.eventLoop.future()
 			.flatMap{ _ -> EventLoopFuture<CRL> in
 				/* Let’s get the CRL */
@@ -188,12 +189,19 @@ class WebCertificateRenewController {
 			 * because vault does not add the root CA anyway… */
 			var newCertificate = newCertificate
 			newCertificate.caChain.removeAll()
-			let futures = ([rootCAName, issuerName] + additionalIssuers).map{ issuerName -> EventLoopFuture<CertificateContainer> in
+			/* Let’s retrieve CAs */
+			let futures1 = ([issuerName] + additionalActiveIssuers + additionalPassiveIssuers).map{ issuerName -> EventLoopFuture<CertificateContainer> in
 				let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent("ca"))
 				let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
 				return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, on: req.eventLoop).map{ $0.data }
 			}
-			return EventLoopFuture<NewCertificate>.reduce(into: newCertificate, futures, on: req.eventLoop, { certif, currentChainCertificate in
+			/* Let’s retrieve additional certificates */
+			let futures2 = additionalCertificates.map{ additionalCertificate -> EventLoopFuture<CertificateContainer> in
+				let urlRequest = URLRequest(url: baseURL.appendingPathComponent(additionalCertificate.issuer).appendingPathComponent("cert").appendingPathComponent(additionalCertificate.id))
+				let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
+				return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, on: req.eventLoop).map{ $0.data }
+			}
+			return EventLoopFuture<NewCertificate>.reduce(into: newCertificate, futures1 + futures2, on: req.eventLoop, { certif, currentChainCertificate in
 				certif.caChain.append(currentChainCertificate.pem)
 			})
 		}

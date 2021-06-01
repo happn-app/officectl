@@ -24,10 +24,29 @@ struct OfficectlConfig {
 	
 	var serverConfig: ServerConfig?
 	
+	struct TmpVaultAdditionalCertificate {
+		let issuer: String
+		let id: String
+		init(string: String) throws {
+			let components = string.split(separator: "/", omittingEmptySubsequences: false)
+			guard components.count >= 2 else {
+				throw InvalidArgumentError(message: "additional certificate should have format issuer/cert-id")
+			}
+			id = String(components.last!)
+			issuer = components[components.startIndex..<components.index(before: components.endIndex)].joined(separator: "/")
+		}
+	}
+	
 	var tmpVaultBaseURL: URL?
-	var tmpVaultRootCAName: String?
 	var tmpVaultIssuerName: String?
-	var tmpVaultAdditionalIssuers: [String]?
+	/* Certificates will be revoked on the issuer name and the active issuers too */
+	var tmpVaultAdditionalActiveIssuers: [String]?
+	/* CA of the issuer name, the active issuers and the passive issuers will be
+	 * included in the CA chain */
+	var tmpVaultAdditionalPassiveIssuers: [String]?
+	/* These additional certificates will be added in the CA chain. Format should
+	 * be issuer/certificate_id */
+	var tmpVaultAdditionalCertificates: [TmpVaultAdditionalCertificate]?
 	var tmpVaultToken: String?
 	var tmpVaultTTL: String?
 	var tmpVaultExpirationLeeway: TimeInterval?
@@ -48,15 +67,17 @@ struct OfficectlConfig {
 		
 		serverConfig = try so.flatMap{ try ServerConfig(serverOptions: $0, genericConfig: configYaml.optionalNonNullStorage(forKey: "server"), pathsRelativeTo: configURL) }
 		
-		tmpVaultBaseURL = configYaml["vault_tmp"]["base_url"].string.flatMap{ URL(string: $0) }
-		tmpVaultRootCAName = configYaml["vault_tmp"]["root_ca_name"].string
-		tmpVaultIssuerName = configYaml["vault_tmp"]["issuer_name"].string
-		tmpVaultAdditionalIssuers = configYaml["vault_tmp"]["additional_issuers"].array?.compactMap{ $0.string }
-		tmpVaultToken = configYaml["vault_tmp"]["token"].string
-		tmpVaultTTL = configYaml["vault_tmp"]["ttl"].string
-		tmpVaultExpirationLeeway = configYaml["vault_tmp"]["max_expiration_delay_before_allowing_reissuance"].int.flatMap{ TimeInterval($0) }
+		let vaultConf = configYaml.storage(forKey: "vault_tmp")
+		tmpVaultBaseURL = try vaultConf?.url(forKey: "base_url")
+		tmpVaultToken = try vaultConf?.string(forKey: "token")
+		tmpVaultTTL = try vaultConf?.string(forKey: "ttl")
+		tmpVaultIssuerName = try vaultConf?.string(forKey: "issuer_name")
+		tmpVaultAdditionalActiveIssuers = try vaultConf?.optionalArrayOfStrings(forKey: "additional_active_issuers")
+		tmpVaultAdditionalPassiveIssuers = try vaultConf?.optionalArrayOfStrings(forKey: "additional_passive_issuers")
+		tmpVaultAdditionalCertificates = try vaultConf?.optionalArrayOfStrings(forKey: "additional_certificate_ids")?.map{ try TmpVaultAdditionalCertificate(string: $0) }
+		tmpVaultExpirationLeeway = try (vaultConf?.double(forKey: "max_expiration_delay_before_allowing_reissuance")).flatMap{ TimeInterval($0) }
 		
-		tmpSimpleMDMToken = configYaml["simplemdm_tmp"]["access_key"].string
+		tmpSimpleMDMToken = try configYaml.storage(forKey: "simplemdm_tmp")?.string(forKey: "access_key")
 		
 		officeKitConfig = try OfficeKitConfig(genericConfig: configYaml, pathsRelativeTo: configURL)
 		syncConfig = try configYaml.optionalNonNullStorage(forKey: "sync").map{ try SyncConfig(genericConfig: $0, pathsRelativeTo: configURL) }
