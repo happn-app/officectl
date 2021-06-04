@@ -20,6 +20,7 @@ private protocol GroupOfUsersDirectoryServiceBox {
 	func shortDescription(fromGroup group: AnyDirectoryGroup) -> String
 	
 	func listUsers(inGroup group: AnyDirectoryGroup, using services: Services) throws -> EventLoopFuture<[AnyDirectoryUser]>
+	func listGroups(withUser user: AnyDirectoryUser, using services: Services) throws -> EventLoopFuture<[AnyDirectoryGroup]>
 	
 	var supportsEmbeddedGroupsOfUsers: Bool {get}
 	func listGroups(inGroup group: AnyDirectoryGroup, using services: Services) throws -> EventLoopFuture<[AnyDirectoryGroup]>
@@ -46,6 +47,13 @@ private struct ConcreteGroupOfUsersDirectoryServiceBox<Base : GroupOfUsersDirect
 			throw InvalidArgumentError(message: "Got invalid group (\(group)) from which to list users in.")
 		}
 		return try originalDirectory.listUsers(inGroup: g, using: services).map{ $0.map{ AnyDirectoryUser($0) } }
+	}
+	
+	func listGroups(withUser user: AnyDirectoryUser, using services: Services) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
+		guard let u: Base.UserType = user.unbox() else {
+			throw InvalidArgumentError(message: "Got invalid user (\(user)) for which to list groups that contains it.")
+		}
+		return try originalDirectory.listGroups(withUser: u, using: services).map{ $0.map{ AnyDirectoryGroup($0) } }
 	}
 	
 	var supportsEmbeddedGroupsOfUsers: Bool {
@@ -84,6 +92,10 @@ public class AnyGroupOfUsersDirectoryService : AnyUserDirectoryService, GroupOfU
 	
 	public func listUsers(inGroup group: AnyDirectoryGroup, using services: Services) throws -> EventLoopFuture<[AnyDirectoryUser]> {
 		return try box.listUsers(inGroup: group, using: services)
+	}
+	
+	public func listGroups(withUser user: AnyDirectoryUser, using services: Services) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
+		return try box.listGroups(withUser: user, using: services)
 	}
 	
 	public var supportsEmbeddedGroupsOfUsers: Bool {
