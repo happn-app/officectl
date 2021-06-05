@@ -5,6 +5,7 @@ import PackageDescription
 
 var platformDependentTargets = [PackageDescription.Target]()
 var platformDependentProducts = [PackageDescription.Product]()
+var platformDependentOfficeKitDependencies = [Target.Dependency]()
 var platformDependentOfficectlDependencies = [Target.Dependency]()
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)
@@ -25,6 +26,12 @@ platformDependentTargets.append(.systemLibrary(name: "CNCurses", pkgConfig: "ncu
 platformDependentOfficectlDependencies.append("CNCurses")
 #endif
 
+#if !canImport(Security)
+/* See the Crypto.swift for this */
+platformDependentOfficeKitDependencies.append(
+	.product(name: "JWTKit", package: "jwt-kit")
+)
+#endif
 
 /* We try and use OpenLDAP from Homebrew instead of the system one if possible
  * (the system one is deprecated, but there are no alternatives; OpenDirectory
@@ -74,7 +81,7 @@ let package = Package(
 		.package(                     url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
 //		.package(                     url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
 		.package(name: "Yaml",        url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
-		.package(                     url: "https://github.com/vapor/jwt-kit.git", from: "4.2.0"),
+		.package(                     url: "https://github.com/vapor/jwt-kit.git", from: "4.2.2"),
 		.package(                     url: "https://github.com/vapor/console-kit.git", from: "4.0.0"),
 		.package(                     url: "https://github.com/happn-tech/EmailValidator.git", from: "0.1.0"),
 		.package(name: "GenericJSON", url: "https://github.com/zoul/generic-json-swift.git", from: "1.2.0"),
@@ -104,7 +111,7 @@ let package = Package(
 				"COpenLDAP",
 				"GenericStorage",
 				"ServiceKit"
-			]
+			] + platformDependentOfficeKitDependencies
 		),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
 		
