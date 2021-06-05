@@ -1,5 +1,5 @@
 /*
- * main.swift
+ * officectl.swift
  * officectl
  *
  * Created by François Lamboley on 6/26/18.
@@ -11,6 +11,7 @@ import ArgumentParser
 
 
 
+@main
 struct OfficectlRootCommand : ParsableCommand {
 	
 	struct Options : ParsableArguments {
@@ -69,6 +70,3 @@ struct OfficectlRootCommand : ParsableCommand {
 	var globalOptions: Options
 	
 }
-
-
-OfficectlRootCommand.main()

@@ -1,21 +1,21 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.4
 import PackageDescription
 
 
 
 var platformDependentTargets = [PackageDescription.Target]()
 var platformDependentProducts = [PackageDescription.Product]()
-var platformDependentOfficeKitDependencies = [Target.Dependency]()
 var platformDependentOfficectlDependencies = [Target.Dependency]()
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)
-platformDependentTargets.append(.target(name: "officectl_odproxy", dependencies: [
-	"OfficeKit",
-	.product(name: "Crypto", package: "swift-crypto"),
-	.product(name: "Vapor", package: "vapor"),
-	"Yaml",
-	.product(name: "JWTKit", package: "jwt-kit"),
-	"LegibleError", "GenericJSON"
+platformDependentTargets.append(.executableTarget(name: "officectl_odproxy", dependencies: [
+	.product(name: "Crypto",       package: "swift-crypto"),
+	.product(name: "GenericJSON",  package: "GenericJSON"),
+	.product(name: "JWTKit",       package: "jwt-kit"),
+	.product(name: "LegibleError", package: "LegibleError"),
+	.product(name: "Vapor",        package: "vapor"),
+	.product(name: "Yaml",         package: "Yaml"),
+	"OfficeKit"
 ]))
 platformDependentProducts.append(.executable(name: "officectl_odproxy", targets: ["officectl_odproxy"]))
 #endif
@@ -23,13 +23,6 @@ platformDependentProducts.append(.executable(name: "officectl_odproxy", targets:
 #if !canImport(Darwin)
 platformDependentTargets.append(.systemLibrary(name: "CNCurses", pkgConfig: "ncurses", providers: [.apt(["libncurses-dev"]), .brew(["ncurses"])]))
 platformDependentOfficectlDependencies.append("CNCurses")
-#endif
-
-#if !canImport(Security)
-/* See the Crypto.swift for this */
-platformDependentOfficeKitDependencies.append(
-	.product(name: "JWTKit", package: "jwt-kit")
-)
 #endif
 
 
@@ -98,33 +91,37 @@ let package = Package(
 		.target(
 			name: "OfficeKit",
 			dependencies: [
-				/* Dependencies in the project */
-				"COpenLDAP", "GenericStorage", "ServiceKit",
-				/* happn dependencies */
-				"RetryingOperation", "URLRequestOperation", "SemiSingleton", "EmailValidator",
-				/* External dependencies */
-				.product(name: "NIO", package: "swift-nio"),
-				.product(name: "Logging", package: "swift-log"),
-				.product(name: "Crypto", package: "swift-crypto"),
-				"GenericJSON", "Yaml"
-			] + platformDependentOfficeKitDependencies
+				.product(name: "Crypto",              package: "swift-crypto"),
+				.product(name: "EmailValidator",      package: "EmailValidator"),
+				.product(name: "GenericJSON",         package: "GenericJSON"),
+				.product(name: "JWTKit",              package: "jwt-kit"),
+				.product(name: "Logging",             package: "swift-log"),
+				.product(name: "NIO",                 package: "swift-nio"),
+				.product(name: "RetryingOperation",   package: "RetryingOperation"),
+				.product(name: "SemiSingleton",       package: "SemiSingleton"),
+				.product(name: "URLRequestOperation", package: "URLRequestOperation"),
+				.product(name: "Yaml",                package: "Yaml"),
+				"COpenLDAP",
+				"GenericStorage",
+				"ServiceKit"
+			]
 		),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
 		
-		.target(
+		.executableTarget(
 			name: "officectl",
-			dependencies:
-				["OfficeKit",
-				 .product(name: "CLTLogger", package: "clt-logger"),
-				 .product(name: "Crypto", package: "swift-crypto"),
-				 .product(name: "Vapor", package: "vapor"),
-				 .product(name: "Leaf", package: "leaf"),
-				 .product(name: "ConsoleKit", package: "console-kit"),
-				 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-				 .product(name: "JWTKit", package: "jwt-kit"),
-				 "ASN1Decoder",
-				 "Yaml",
-				 "LegibleError"
+			dependencies: [
+				.product(name: "ArgumentParser", package: "swift-argument-parser"),
+				.product(name: "ASN1Decoder",    package: "ASN1Decoder"),
+				.product(name: "CLTLogger",      package: "clt-logger"),
+				.product(name: "ConsoleKit",     package: "console-kit"),
+				.product(name: "Crypto",         package: "swift-crypto"),
+				.product(name: "JWTKit",         package: "jwt-kit"),
+				.product(name: "Leaf",           package: "leaf"),
+				.product(name: "LegibleError",   package: "LegibleError"),
+				.product(name: "Vapor",          package: "vapor"),
+				.product(name: "Yaml",           package: "Yaml"),
+				"OfficeKit"
 			] + platformDependentOfficectlDependencies,
 			linkerSettings: [.linkedLibrary("ncurses", .when(platforms: [.macOS]))]
 		)
