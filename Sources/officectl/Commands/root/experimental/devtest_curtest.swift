@@ -35,23 +35,36 @@ struct CurrentDevTestCommand : ParsableCommand {
 	/* We don’t technically require Vapor, but it’s convenient. */
 	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
 		let app = context.application
+		let officeKitConfig = app.officeKitConfig
 		let officectlConfig = app.officectlConfig
 		let sProvider = app.officeKitServiceProvider
 		let semiSingletonStore = app.semiSingletonStore
 		let eventLoop: EventLoop = try app.services.make()
 		let simpleMDMToken = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
-		/* Delete happn console user */
+		/* List all happn console users. Currently shows nil user ids, because the
+		 * new search endpoint apparently does not return the login field… */
 		let consoleService: HappnService = try sProvider.getService(id: nil)
-		return try consoleService.existingUser(fromUserId: "happn.agent16@tana.admvalue.com", propertiesToFetch: [], using: app.services)
+		return try consoleService.listAllUsers(using: app.services)
 			.flatMapThrowing{
-				guard let user = $0 else {throw "Cannot get user"}
-				return user
-			}
-			.flatMapThrowing{ user in
-				try consoleService.deleteUser(user, using: app.services)
+				for user in $0 {
+					print(user.userId)
+				}
+				return eventLoop.makeSucceededVoidFuture()
 			}
 			.flatMap{ $0 }
+		
+		/* Delete happn console user */
+//		let consoleService: HappnService = try sProvider.getService(id: nil)
+//		return try consoleService.existingUser(fromUserId: "happn.agent16@tana.admvalue.com", propertiesToFetch: [], using: app.services)
+//			.flatMapThrowing{
+//				guard let user = $0 else {throw "Cannot get user"}
+//				return user
+//			}
+//			.flatMapThrowing{ user in
+//				try consoleService.deleteUser(user, using: app.services)
+//			}
+//			.flatMap{ $0 }
 		
 		/* Search for LDAP users without an mail */
 //		let ldapConfig: LDAPServiceConfig = try app.officeKitConfig.getServiceConfig(id: nil)
@@ -71,13 +84,14 @@ struct CurrentDevTestCommand : ParsableCommand {
 //			}
 		
 		/* List all GitHub project’s hooks */
-//		let c = try GitHubJWTConnector(key: officeKitConfig.gitHubConfigOrThrow().connectorSettings)
-//		let f = c.connect(scope: (), eventLoop: context.container.eventLoop)
-//		.then{ _ -> EventLoopFuture<[GitHubRepository]> in
+//		let gitHubConfig: GitHubServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
+//		let c = try GitHubJWTConnector(key: gitHubConfig.connectorSettings)
+//		let f = c.connect(scope: (), eventLoop: eventLoop)
+//		.flatMap{ _ -> EventLoopFuture<[GitHubRepository]> in
 //			let op = GitHubRepositorySearchOperation(searchedOrganisation: "happn-app", gitHubConnector: c)
-//			return EventLoopFuture<[GitHubRepository]>.future(from: op, eventLoop: context.container.eventLoop, resultRetriever: { try $0.result.get() })
+//			return EventLoopFuture<[GitHubRepository]>.future(from: op, on: eventLoop)
 //		}
-//		.then{ repositories -> EventLoopFuture<[FutureResult<[Hook]>]> in
+//		.flatMap{ repositories -> EventLoopFuture<[Result<[Hook], Error>]> in
 //			let ops = repositories.map{ rep -> AuthenticatedJSONOperation<[Hook]> in
 //				var config = URLRequestOperation.Config(request: URLRequest(url: URL(string: "https://api.github.com/repos/" + rep.fullName + "/hooks")!), session: nil)
 //				config.acceptableStatusCodes = nil
@@ -87,10 +101,10 @@ struct CurrentDevTestCommand : ParsableCommand {
 //					handler(.success(request), nil)
 //				})
 //			}
-//			return EventLoopFuture<[FutureResult<[Hook]>]>.executeAll(ops, eventLoop: context.container.eventLoop)
+//			return EventLoopFuture<[Result<[Hook], Error>]>.executeAll(ops, on: eventLoop)
 //		}
 //		.map{ hooks in
-//			let hooks = Set(hooks.flatMap{ $0.result ?? [] }.filter{ $0.config.url.absoluteString.contains("email") })
+//			let hooks = Set(hooks.flatMap{ $0.successValue ?? [] }.filter{ $0.config.url.absoluteString.contains("email") })
 //			let hooksStr = Data(hooks.reduce("", { $0 + $1.url.absoluteString + "\n" }).utf8)
 //			_ = try? hooksStr.write(to: URL(fileURLWithPath: "/Users/frizlab/Desktop/toto.txt"))
 //		}
