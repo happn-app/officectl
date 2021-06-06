@@ -20,7 +20,8 @@ struct ExperimentalCommand : ParsableCommand {
 		subcommands: [
 			CurrentDevTestCommand.self,
 			ConsolepermCommand.self,
-			FindInDrivesCommand.self
+			FindInDrivesCommand.self,
+			ListLicensesCommand.self
 		]
 	)
 	
