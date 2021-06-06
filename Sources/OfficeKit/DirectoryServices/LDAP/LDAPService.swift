@@ -296,7 +296,14 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 	
 	public let supportsUserDeletion = true
 	public func deleteUser(_ user: LDAPInetOrgPersonWithObject, using services: Services) throws -> EventLoopFuture<Void> {
-		throw NotImplementedError()
+		let eventLoop = try services.eventLoop()
+		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
+		
+		let op = DeleteLDAPObjectsOperation(users: [user.inetOrgPerson], connector: ldapConnector)
+		return ldapConnector.connect(scope: (), eventLoop: eventLoop)
+		.flatMap{ _ in
+			EventLoopFuture<Void>.future(from: op, on: eventLoop, resultRetriever: { if let e = $0.errors[0] {throw e} })
+		}
 	}
 	
 	public let supportsPasswordChange = true
