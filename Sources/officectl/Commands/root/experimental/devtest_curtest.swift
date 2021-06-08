@@ -42,18 +42,6 @@ struct CurrentDevTestCommand : ParsableCommand {
 		let eventLoop: EventLoop = try app.services.make()
 		let simpleMDMToken = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
-		/* List all happn console users. Currently shows nil user ids, because the
-		 * new search endpoint apparently does not return the login field… */
-		let consoleService: HappnService = try sProvider.getService(id: nil)
-		return try consoleService.listAllUsers(using: app.services)
-			.flatMapThrowing{
-				for user in $0 {
-					print(user.userId)
-				}
-				return eventLoop.makeSucceededVoidFuture()
-			}
-			.flatMap{ $0 }
-		
 		/* Delete happn console user */
 //		let consoleService: HappnService = try sProvider.getService(id: nil)
 //		return try consoleService.existingUser(fromUserId: "happn.agent16@tana.admvalue.com", propertiesToFetch: [], using: app.services)
@@ -67,21 +55,21 @@ struct CurrentDevTestCommand : ParsableCommand {
 //			.flatMap{ $0 }
 		
 		/* Search for LDAP users without an mail */
-//		let ldapConfig: LDAPServiceConfig = try app.officeKitConfig.getServiceConfig(id: nil)
-//		let ldapConnector = try LDAPConnector(key: ldapConfig.connectorSettings)
-//		return ldapConnector.connect(scope: (), eventLoop: eventLoop)
-//			.flatMap{
-//				let query = LDAPSearchQuery.not(.present(attribute: LDAPAttributeDescription.mail))
-//				let request = LDAPSearchRequest(scope: .children, base: ldapConfig.baseDNs.peopleBaseDNPerDomain!.values.randomElement()!, searchQuery: query, attributesToFetch: nil)
-//				let searchOperation = SearchLDAPOperation(ldapConnector: ldapConnector, request: request)
-//				return EventLoopFuture<(results: [LDAPObject], references: [[String]])>.future(from: searchOperation, on: eventLoop)
-//			}
-//			.map{ (searchResults: (results: [LDAPObject], references: [[String]])) in
-//				for r in searchResults.results {
-//					print(r)
-//				}
-//				return ()
-//			}
+		let ldapConfig: LDAPServiceConfig = try app.officeKitConfig.getServiceConfig(id: nil)
+		let ldapConnector = try LDAPConnector(key: ldapConfig.connectorSettings)
+		return ldapConnector.connect(scope: (), eventLoop: eventLoop)
+			.flatMap{
+				let query = LDAPSearchQuery.not(.present(attribute: LDAPAttributeDescription.mail))
+				let request = LDAPSearchRequest(scope: .children, base: ldapConfig.baseDNs.peopleBaseDNPerDomain!.values.randomElement()!, searchQuery: query, attributesToFetch: nil)
+				let searchOperation = SearchLDAPOperation(ldapConnector: ldapConnector, request: request)
+				return EventLoopFuture<(results: [LDAPObject], references: [[String]])>.future(from: searchOperation, on: eventLoop)
+			}
+			.map{ (searchResults: (results: [LDAPObject], references: [[String]])) in
+				for r in searchResults.results {
+					print(r)
+				}
+				return ()
+			}
 		
 		/* List all GitHub project’s hooks */
 //		let gitHubConfig: GitHubServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
