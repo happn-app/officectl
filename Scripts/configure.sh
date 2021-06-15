@@ -4,7 +4,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")"/zz_assets
 
-# TODO: Make this path configurable via command line options
+# TODO: Make these path configurable via command line options or other
+BREW="$(which brew)"; readonly BREW
 readonly DEST="/usr/local/lib/pkgconfig"
 
 readonly TMPL="./pkgconfig_template"
@@ -14,8 +15,8 @@ readonly XATTR_NAME="com.happn.spm-workaround"
 # Note:
 #    - If the template has some files that are removed at some point, these will
 #      never be cleaned from the destination.
-PREFIX="`brew --prefix openldap`"
-VERSION="`brew info openldap --json | jq -r '.[0].installed[-1].version'`"
+PREFIX="`"$BREW" --prefix openldap`"
+VERSION="`"$BREW" info openldap --json | jq -r '.[0].installed[-1].version'`"
 # First let’s check we’ll be able to install the files we want. We check the
 # files do not exist, or if they do, they have the com.happn.spm-workaround
 # xattr (with any value for now we don’t care, we assume they will be from us).
