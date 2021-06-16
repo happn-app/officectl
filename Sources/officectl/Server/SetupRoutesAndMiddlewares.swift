@@ -140,6 +140,11 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	
 	let iOSTestDevicesController = IosTestDevicesController()
 	authedWebRoutesBuilderRedir.get("ios-test-devices", use: iOSTestDevicesController.showTestDevicesList)
+	
+	/* ******** Temporary list of all users ******** */
+	
+	let listUsersController = ListUsersController()
+	authedWebRoutesBuilderRedir.get("list-users", use: listUsersController.showUsersList)
 }
 
 
