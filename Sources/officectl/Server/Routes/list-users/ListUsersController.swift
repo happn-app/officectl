@@ -29,7 +29,7 @@ final class ListUsersController {
 			.map{ users in
 				var i = 1
 				var res = ""
-				for user in users {
+				for user in users.filter({ $0.hasSuffix("@happn.fr") }) {
 					res += user + ","
 					if i == 69 {res += "\n\n"; i = 0}
 					i += 1
