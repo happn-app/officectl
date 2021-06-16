@@ -50,15 +50,15 @@ public final class LDAPConnector : Connector {
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "LDAPConnector")
 	
-	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool) throws {
-		try self.init(ldapURL: u, protocolVersion: protocolVersion, startTLS: startTLS, authMode: .none)
+	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool, caCertFile: URL?) throws {
+		try self.init(ldapURL: u, protocolVersion: protocolVersion, startTLS: startTLS, caCertFile: caCertFile, authMode: .none)
 	}
 	
-	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool, username: String, password: String) throws {
-		try self.init(ldapURL: u, protocolVersion: protocolVersion, startTLS: startTLS, authMode: .userPass(username: username, password: password))
+	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool, caCertFile: URL?, username: String, password: String) throws {
+		try self.init(ldapURL: u, protocolVersion: protocolVersion, startTLS: startTLS, caCertFile: caCertFile, authMode: .userPass(username: username, password: password))
 	}
 	
-	init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool, authMode a: AuthMode) throws {
+	init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool, caCertFile: URL?, authMode a: AuthMode) throws {
 		ldapURL = u
 		authMode = a
 		
@@ -82,13 +82,23 @@ public final class LDAPConnector : Connector {
 		var v = protocolVersion.ldapVal
 		let error2 = ldap_set_option(ldapPtr, LDAP_OPT_PROTOCOL_VERSION, &v)
 		guard error2 == LDAP_OPT_SUCCESS else {
-			throw NSError(domain: "com.happn.officectl.openldap", code: Int(error2), userInfo: [NSLocalizedDescriptionKey: "Cannot set LDAP version to \(protocolVersion): \(String(cString: ldap_err2string(error2)))"])
+			throw NSError(domain: "com.happn.officectl.openldap", code: Int(error2), userInfo: [NSLocalizedDescriptionKey: "Cannot set LDAP version to \(protocolVersion)"])
+		}
+		
+		if let caCertFile = caCertFile {
+			guard caCertFile.isFileURL else {
+				throw NSError(domain: "com.happn.officectl.openldap", code: Int(error), userInfo: [NSLocalizedDescriptionKey: "CA cert file must be a file URL"])
+			}
+			let error = ldap_set_option(ldapPtr, LDAP_OPT_X_TLS_CACERTFILE, caCertFile.path)
+			guard error == LDAP_OPT_SUCCESS else {
+				throw NSError(domain: "com.happn.officectl.openldap", code: Int(error), userInfo: [NSLocalizedDescriptionKey: "Cannot set TLS CA cert file to \(caCertFile) (some LDAP clients do not support this option)"])
+			}
 		}
 		
 		if startTLS {
-			let error3 = ldap_start_tls_s(self.ldapPtr, nil, nil)
-			guard error3 == LDAP_SUCCESS else {
-				throw NSError(domain: "com.happn.officectl.openldap", code: Int(error3), userInfo: [NSLocalizedDescriptionKey: "Cannot StartTLS on connection: \(String(cString: ldap_err2string(error3)))"])
+			let error = ldap_start_tls_s(self.ldapPtr, nil, nil)
+			guard error == LDAP_SUCCESS else {
+				throw NSError(domain: "com.happn.officectl.openldap", code: Int(error), userInfo: [NSLocalizedDescriptionKey: "Cannot StartTLS on connection: \(String(cString: ldap_err2string(error)))"])
 			}
 		}
 	}

@@ -18,20 +18,23 @@ extension LDAPConnector : SemiSingletonWithFallibleInit {
 		public var ldapURL: URL
 		public var protocolVersion: LDAPProtocolVersion
 		public var startTLS: Bool
+		public var caCertFile: URL?
 		public var authMode: AuthMode
 		
-		public init(ldapURL u: URL, protocolVersion v: LDAPProtocolVersion, startTLS tls: Bool) {
+		public init(ldapURL u: URL, protocolVersion v: LDAPProtocolVersion, startTLS tls: Bool, caCertFile ccf: URL?) {
 			ldapURL = u
 			authMode = .none
 			protocolVersion = v
 			startTLS = tls
+			caCertFile = ccf
 		}
 		
-		public init(ldapURL u: URL, protocolVersion v: LDAPProtocolVersion, startTLS tls: Bool, username: String, password: String) {
+		public init(ldapURL u: URL, protocolVersion v: LDAPProtocolVersion, startTLS tls: Bool, caCertFile ccf: URL?, username: String, password: String) {
 			ldapURL = u
 			protocolVersion = v
 			startTLS = tls
 			authMode = .userPass(username: username, password: password)
+			caCertFile = ccf
 		}
 		
 	}
@@ -44,7 +47,7 @@ extension LDAPConnector : SemiSingletonWithFallibleInit {
 	}
 	
 	public convenience init(key s: Settings) throws {
-		try self.init(ldapURL: s.ldapURL, protocolVersion: s.protocolVersion, startTLS: s.startTLS, authMode: s.authMode)
+		try self.init(ldapURL: s.ldapURL, protocolVersion: s.protocolVersion, startTLS: s.startTLS, caCertFile: s.caCertFile, authMode: s.authMode)
 	}
 	
 }

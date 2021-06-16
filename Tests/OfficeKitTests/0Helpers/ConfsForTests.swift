@@ -21,6 +21,7 @@ let ldapConfForTests = LDAPServiceConfig(
 		ldapURL: URL(string: "ldap://localhost:8389")!,
 		protocolVersion: .v3,
 		startTLS: false,
+		caCertFile: nil,
 		username: "cn=admin," + ldapBaseDNForTests.stringValue,
 		password: "toto"
 	),
