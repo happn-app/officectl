@@ -18,6 +18,7 @@ struct UserCommand : ParsableCommand {
 		abstract: "Interact with the users",
 		subcommands: [
 			UserCreateCommand.self,
+			UserDeleteCommand.self,
 			UserListCommand.self,
 			UserChangePasswordCommand.self
 		]
