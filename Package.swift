@@ -27,13 +27,6 @@ platformDependentTargets.append(.systemLibrary(name: "CNCurses", pkgConfig: "ncu
 platformDependentOfficectlDependencies.append("CNCurses")
 #endif
 
-#if !canImport(Security)
-/* See the Crypto.swift for this */
-platformDependentOfficeKitDependencies.append(
-	.product(name: "JWTKit", package: "jwt-kit")
-)
-#endif
-
 /* We try and use OpenLDAP from Homebrew instead of the system one if possible
  * (the system one is deprecated, but there are no alternatives; OpenDirectory
  * simply does not do what OpenLDAP does).
