@@ -56,6 +56,24 @@
         }
       },
       {
+        "package": "COpenLDAP",
+        "repositoryURL": "https://github.com/xcode-actions/COpenLDAP.git",
+        "state": {
+          "branch": null,
+          "revision": "de03652d04927ee4649e0b4d5c2be72be339327d",
+          "version": "2.5.5"
+        }
+      },
+      {
+        "package": "COpenSSL",
+        "repositoryURL": "https://github.com/xcode-actions/COpenSSL.git",
+        "state": {
+          "branch": null,
+          "revision": "468c0c03b9d22467784e957017f4677361221b43",
+          "version": "1.1.111"
+        }
+      },
+      {
         "package": "EmailValidator",
         "repositoryURL": "https://github.com/happn-tech/EmailValidator.git",
         "state": {

@@ -5,8 +5,9 @@ import PackageDescription
 
 var platformDependentTargets = [PackageDescription.Target]()
 var platformDependentProducts = [PackageDescription.Product]()
-var platformDependentOfficeKitDependencies = [Target.Dependency]()
-var platformDependentOfficectlDependencies = [Target.Dependency]()
+var platformDependentDependencies = [PackageDescription.Package.Dependency]()
+var platformDependentOfficeKitDependencies = [PackageDescription.Target.Dependency]()
+var platformDependentOfficectlDependencies = [PackageDescription.Target.Dependency]()
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)
 platformDependentTargets.append(.executableTarget(name: "officectl_odproxy", dependencies: [
@@ -38,25 +39,27 @@ platformDependentOfficeKitDependencies.append(
  * simply does not do what OpenLDAP does).
  * Note the project compiles if the system OpenLDAP is used, but you’ll get a
  * lot of useless warnings. */
-let openLDAPTarget: Target
-#if os(macOS) /* Probably iOS, watchOS and tvOS too, but I’m not sure and we do not really care for now… */
-/* On macOS we use a custom-made auto-generated pkg-config file for OpenLDAP
- * because the upstream did not do a pkg-config file.
- * (On macOS, the brew OpenLDAP install is keg-only, which means the headers and
- *  lib folders cannot be guessed, and a pkg-config has to be provided.)
- * I tried auto-generating the pkgconfig folder with the .pc files for OpenLDAP
- * directly from the Package.swift file (yes, ugly), but it does not work.
- * So instead we’ll recommend people to use the `configure.sh` script.
- *
- * Note: We cannot provide LDFLAGS and CFLAGS because AFAICT SPM completely
- * ignores those variables. Only the PKG_CONFIG_PATH var seems to be read.
- * Also, the linker and cflags parameters available on a standard target are not
- * available on a system library target. */
-openLDAPTarget = .systemLibrary(name: "COpenLDAP", pkgConfig: "openldap", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])])
+#if !os(Linux)
+/* On macOS we use a custom-made xcframework to avoid the deprecation warnings
+ * macOS has added on OpenLDAP (they say to use OpenDirectory, but I did not
+ * find a way to do LDAP requests using OpenDirectory and I’m pretty sure it’s
+ * because it’s not possible). */
+platformDependentDependencies.append(contentsOf: [
+	.package(url: "https://github.com/xcode-actions/COpenSSL.git",  from: "1.1.111"),
+	.package(url: "https://github.com/xcode-actions/COpenLDAP.git", from: "2.5.5")
+])
+platformDependentOfficeKitDependencies.append(contentsOf: [
+	.product(name: "COpenSSL-dynamic",  package: "COpenSSL"),
+	.product(name: "COpenLDAP-dynamic", package: "COpenLDAP")
+])
 #else
-/* On Linux we use the standard OpenLDAP package. The standard OpenLDAP package
- * does not have a pkg-config file! */
-openLDAPTarget = .systemLibrary(name: "COpenLDAP", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])])
+/* On Linux we use the standard OpenLDAP package.
+ * Note: The standard OpenLDAP package does not have a pkg-config file, so no
+ *       pkgconfig argument here, */
+platformDependentTargets.append(.systemLibrary(name: "COpenLDAP", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])]))
+platformDependentOfficeKitDependencies.append(
+	.target(name: "COpenLDAP")
+)
 #endif
 
 
@@ -88,9 +91,8 @@ let package = Package(
 		.package(                     url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0"),
 		.package(                     url: "https://github.com/filom/ASN1Decoder.git", from: "1.3.3"),
 		.package(                     url: "https://github.com/xcode-actions/clt-logger.git", from: "0.3.4")
-	],
+	] + platformDependentDependencies,
 	targets: [
-		openLDAPTarget,
 		.target(name: "GenericStorage", dependencies: []),
 		
 		.target(name: "ServiceKit", dependencies: []),
@@ -108,7 +110,6 @@ let package = Package(
 				.product(name: "SemiSingleton",       package: "SemiSingleton"),
 				.product(name: "URLRequestOperation", package: "URLRequestOperation"),
 				.product(name: "Yaml",                package: "Yaml"),
-				"COpenLDAP",
 				"GenericStorage",
 				"ServiceKit"
 			] + platformDependentOfficeKitDependencies
