@@ -19,8 +19,9 @@ struct OfficectlConfig {
 	var env: String?
 	var verbose: Bool
 	var auditLogsURL: URL?
-	
 	var staticDataDirURL: URL?
+	
+	var caCertFileURL: URL?
 	
 	var serverConfig: ServerConfig?
 	
@@ -62,8 +63,9 @@ struct OfficectlConfig {
 		env = configYaml["env"].stringValue ?? go.env
 		verbose = go.verbose ?? configYaml["verbose"].bool ?? false
 		auditLogsURL = configYaml["audit_logs_path"].string.flatMap{ URL(fileURLWithPath: $0, isDirectory: false, relativeTo: configURL) }
-		
 		staticDataDirURL = (go.staticDataDir ?? configYaml["static_data_dir"].string).flatMap{ URL(fileURLWithPath: $0, isDirectory: true, relativeTo: configURL) }
+		
+		caCertFileURL = configYaml["ca_cert_file"].string.flatMap{ URL(fileURLWithPath: $0, isDirectory: false, relativeTo: configURL) }
 		
 		serverConfig = try so.flatMap{ try ServerConfig(serverOptions: $0, genericConfig: configYaml.optionalNonNullStorage(forKey: "server"), pathsRelativeTo: configURL) }
 		
