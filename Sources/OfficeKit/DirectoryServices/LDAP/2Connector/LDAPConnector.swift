@@ -20,6 +20,19 @@ public final class LDAPConnector : Connector {
 		return nsError.code == LDAP_INVALID_CREDENTIALS && nsError.domain == "com.happn.officectl.openldap"
 	}
 	
+	/** Sets the CA for all LDAP connections. I’d have like this to be able to be
+	set on a connector basis instead of being global, but the option is global in
+	the OpenLDAP lib. */
+	public static func setCA(_ caURL: URL) throws {
+		guard caURL.isFileURL else {
+			throw NSError(domain: "com.happn.officectl.ldapconnector", code: 42, userInfo: [NSLocalizedDescriptionKey: "CA cert file must be a file URL"])
+		}
+		let error = ldap_set_option(nil, LDAP_OPT_X_TLS_CACERTFILE, caURL.path)
+		guard error == LDAP_OPT_SUCCESS else {
+			throw NSError(domain: "com.happn.officectl.openldap", code: Int(error), userInfo: [NSLocalizedDescriptionKey: "Cannot set TLS CA cert file to \(caURL) (some LDAP clients do not support this option)"])
+		}
+	}
+	
 	public enum LDAPProtocolVersion : Hashable {
 		
 		case v1, v2, v3
@@ -85,17 +98,6 @@ public final class LDAPConnector : Connector {
 			throw NSError(domain: "com.happn.officectl.openldap", code: Int(error2), userInfo: [NSLocalizedDescriptionKey: "Cannot set LDAP version to \(protocolVersion)"])
 		}
 		
-//		if let caCertFile = caCertFile {
-//			guard caCertFile.isFileURL else {
-//				throw NSError(domain: "com.happn.officectl.openldap", code: Int(error), userInfo: [NSLocalizedDescriptionKey: "CA cert file must be a file URL"])
-//			}
-//			ldap_get_option(nil, LDAP_OPT_X_TLS_CACERTFILE, originalCACertFilePtr)
-//			let error = ldap_set_option(nil, LDAP_OPT_X_TLS_CACERTFILE, caCertFile.path)
-//			guard error == LDAP_OPT_SUCCESS else {
-//				throw NSError(domain: "com.happn.officectl.openldap", code: Int(error), userInfo: [NSLocalizedDescriptionKey: "Cannot set TLS CA cert file to \(caCertFile) (some LDAP clients do not support this option)"])
-//			}
-//		}
-//
 		if startTLS {
 			let error = ldap_start_tls_s(self.ldapPtr, nil, nil)
 			guard error == LDAP_SUCCESS else {

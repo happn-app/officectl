@@ -9,6 +9,7 @@ import Foundation
 
 import CLTLogger
 import NIO
+import OfficeKit
 import Vapor
 
 
@@ -24,6 +25,11 @@ extension Application {
 				return ret
 			}
 		})
+		
+		/* TODO: Not sure this is the best place for this. Maybe it is. */
+		if let caCertFile = officectlConfig.caCertFileURL {
+			try LDAPConnector.setCA(caCertFile)
+		}
 		
 		let app = Application(env)
 		do    {try officectlConfig.configureVaporApp(app); try configureHandler(app)}
