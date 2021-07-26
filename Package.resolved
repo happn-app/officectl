@@ -83,7 +83,7 @@
         }
       },
       {
-        "package": "generic-json-swift",
+        "package": "GenericJSON",
         "repositoryURL": "https://github.com/zoul/generic-json-swift.git",
         "state": {
           "branch": null,
@@ -299,7 +299,7 @@
         }
       },
       {
-        "package": "YamlSwift",
+        "package": "Yaml",
         "repositoryURL": "https://github.com/behrang/YamlSwift.git",
         "state": {
           "branch": null,
