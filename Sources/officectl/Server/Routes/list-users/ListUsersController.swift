@@ -28,7 +28,7 @@ final class ListUsersController {
 			.map{ $0.map{ service.shortDescription(fromUser: $0) } }
 			.map{ users in
 				var i = 1
-				var res = ""
+				var res = "⚠️ IMPORTANT : Mettre les mails en Bcc ! (Copie cachée)\n\n"
 				for user in users.filter({ $0.hasSuffix("@happn.fr") }) {
 					res += user + ","
 					if i == 69 {res += "\n\n"; i = 0}
