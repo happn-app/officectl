@@ -8,6 +8,7 @@
 import Foundation
 
 import ArgumentParser
+import GenericJSON
 import Vapor
 
 import OfficeKit
@@ -63,6 +64,31 @@ struct CurrentDevTestCommand : ParsableCommand {
 //				try consoleService.deleteUser(user, using: app.services)
 //			}
 //			.flatMap{ $0 }
+		
+		/* List all admins and their permissions */
+//		let consoleService: HappnService = try sProvider.getService(id: nil)
+//		let hConnector: HappnConnector = app.semiSingletonStore.semiSingleton(forKey: consoleService.config.connectorSettings)
+//		return hConnector.connect(scope: Set(arrayLiteral: "acl_update", "acl_read"), eventLoop: eventLoop)
+//			.flatMapThrowing{ _ in
+//				try consoleService.listAllUsers(using: app.services)
+//			}
+//			.flatMap{ $0 }
+//			.flatMap{ users in
+//				let uidAndFutures = users
+//					.compactMap{ $0.id.value }
+//					.map{ uid -> (String, EventLoopFuture<JSON>) in
+//						let url = consoleService.config.connectorSettings.baseURL.appendingPathComponent("api").appendingPathComponent("user-acls").appendingPathComponent(uid)
+//						let op = AuthenticatedJSONOperation<JSON>(url: url, authenticator: hConnector.authenticate)
+//						return (uid, EventLoopFuture<JSON>.future(from: op, on: eventLoop))
+//					}
+//				return EventLoopFuture.waitAll(uidAndFutures, eventLoop: eventLoop)
+//			}
+//			.map{ (requestsAndUserInfo: [(String, Result<JSON, Error>)]) in
+//				for (uid, res) in requestsAndUserInfo {
+//					print("\(uid) - \(res.successValue?["data"]?["login"] ?? "no email"): \(res.successValue?["data"]?["acl"]?.arrayValue?.compactMap{ $0["id"] } ?? [.string("error")])")
+//				}
+//				return ()
+//			}
 		
 		/* Search for LDAP users without an mail */
 //		let ldapConfig: LDAPServiceConfig = try app.officeKitConfig.getServiceConfig(id: nil)
