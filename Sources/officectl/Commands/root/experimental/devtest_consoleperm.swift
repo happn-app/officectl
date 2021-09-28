@@ -26,13 +26,13 @@ struct ConsolepermCommand : ParsableCommand {
 		abstract: "Set happn console permission for a user depending on a group."
 	)
 	
-	@OptionGroup()
+	@OptionGroup
 	var globalOptions: OfficectlRootCommand.Options
 	
-	@ArgumentParser.Argument()
+	@ArgumentParser.Argument
 	var usermail: String
 	
-	@ArgumentParser.Argument()
+	@ArgumentParser.Argument
 	var group: String
 	
 	func run() throws {
@@ -71,10 +71,10 @@ struct ConsolepermCommand : ParsableCommand {
 				return try nil2throw(user.id.value, "no userid… (should not happen!)")
 			}
 			.flatMap{ userId -> EventLoopFuture<String> in
-				return hConnector.connect(scope: Set(arrayLiteral: "acl_update", "acl_read"), eventLoop: eventLoop).map{ _ in userId }
+				return hConnector.connect(scope: Set(arrayLiteral: "acl_create", "acl_update", "acl_read"), eventLoop: eventLoop).map{ _ in userId }
 			}
 			.flatMap{ userId -> EventLoopFuture<(result: URLRequest, userInfo: Any?)> in
-				let url = hService.config.connectorSettings.baseURL.appendingPathComponent("api").appendingPathComponent("user-acls")
+				let url = hService.config.connectorSettings.baseURL.appendingPathComponent("api").appendingPathComponent("user-acls").appendingPathComponent(userId)
 				
 				var urlRequest = URLRequest(url: url)
 				urlRequest.httpMethod = "POST"
@@ -82,7 +82,6 @@ struct ConsolepermCommand : ParsableCommand {
 				
 				var urlComponents = URLComponents(string: "https://example.com")!
 				urlComponents.queryItems = [
-					URLQueryItem(name: "user_id", value: userId),
 					URLQueryItem(name: "permissions", value: permissions)
 				]
 				urlRequest.httpBody = Data(urlComponents.percentEncodedQuery!.utf8)
