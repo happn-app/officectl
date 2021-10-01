@@ -22,6 +22,13 @@ struct UserListCommand : ParsableCommand {
 		abstract: "List all the users in a given directory."
 	)
 	
+	enum Format : String, Decodable, ExpressibleByArgument {
+		
+		case email = "email"
+		case onePerLine = "one-per-line"
+		
+	}
+	
 	@ArgumentParser.Flag(help: "For the directory services that supports it, do we filter out the suspended users?")
 	var includeSuspendedUsers = false
 	
@@ -30,6 +37,9 @@ struct UserListCommand : ParsableCommand {
 	
 	@OptionGroup
 	var globalOptions: OfficectlRootCommand.Options
+	
+	@ArgumentParser.Option
+	var format: Format = .email
 	
 	func run() throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
@@ -58,17 +68,24 @@ struct UserListCommand : ParsableCommand {
 		}
 		
 		return usersFuture
-		.flatMap{ users -> EventLoopFuture<Void> in
-			#warning("TODO: Use context.console to log stuff, not print.")
-			var i = 1
-			for user in users {
-				print(user + ",", terminator: "")
-				if i == 69 {print(); print(); i = 0}
-				i += 1
+			.flatMap{ users -> EventLoopFuture<Void> in
+				switch format {
+					case .email:
+						var i = 1
+						for user in users {
+							print(user + ",", terminator: "")
+							if i == 69 {print(); print(); i = 0}
+							i += 1
+						}
+						print()
+						
+					case .onePerLine:
+						for user in users {
+							print(user)
+						}
+				}
+				return eventLoop.makeSucceededFuture(())
 			}
-			print()
-			return eventLoop.makeSucceededFuture(())
-		}
 	}
 	
 	private func getUsersList(googleService: GoogleService, includeSuspendedUsers: Bool, using services: Services) throws -> EventLoopFuture<[String]> {
