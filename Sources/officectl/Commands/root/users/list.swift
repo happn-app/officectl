@@ -28,7 +28,7 @@ struct UserListCommand : ParsableCommand {
 	@ArgumentParser.Option(help: "The service id from which to retrieve the users.")
 	var serviceId: String?
 	
-	@OptionGroup()
+	@OptionGroup
 	var globalOptions: OfficectlRootCommand.Options
 	
 	func run() throws {
@@ -51,6 +51,8 @@ struct UserListCommand : ParsableCommand {
 			usersFuture = try getUsersList(googleService: googleService, includeSuspendedUsers: includeSuspendedUsers, using: app.services)
 		} else if let odService: OpenDirectoryService = service.unbox() {
 			usersFuture = try getUsersList(openDirectoryService: odService, includeSuspendedUsers: includeSuspendedUsers, using: app.services)
+		} else if let hService: HappnService = service.unbox() {
+			usersFuture = try getUsersList(happnService: hService, includeSuspendedUsers: includeSuspendedUsers, using: app.services)
 		} else {
 			throw InvalidArgumentError(message: "Unsupported service to list users from.")
 		}
@@ -77,6 +79,11 @@ struct UserListCommand : ParsableCommand {
 	private func getUsersList(openDirectoryService: OpenDirectoryService, includeSuspendedUsers: Bool, using services: Services) throws -> EventLoopFuture<[String]> {
 		return try openDirectoryService.listAllUsers(using: services)
 			.map{ $0.map{ openDirectoryService.shortDescription(fromUser: $0) } }
+	}
+	
+	private func getUsersList(happnService: HappnService, includeSuspendedUsers: Bool, using services: Services) throws -> EventLoopFuture<[String]> {
+		return try happnService.listAllUsers(using: services)
+			.map{ $0.map{ happnService.shortDescription(fromUser: $0) } }
 	}
 	
 }
