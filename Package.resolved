@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/swift-server/async-http-client.git",
         "state": {
           "branch": null,
-          "revision": "cbf533073d9a5edfb16c266d14151f69137ba7c9",
-          "version": "1.8.2"
+          "revision": "d5bd8d6526fa861adf18be7217bc180e6c13ac0d",
+          "version": "1.6.2"
         }
       },
       {
@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/vapor/async-kit.git",
         "state": {
           "branch": null,
-          "revision": "e2f741640364c1d271405da637029ea6a33f754e",
-          "version": "1.11.1"
+          "revision": "f6f92e6d3704bd72ffb4d00e302c98476fe65854",
+          "version": "1.9.0"
         }
       },
       {
@@ -96,8 +96,8 @@
         "repositoryURL": "https://github.com/vapor/jwt-kit.git",
         "state": {
           "branch": null,
-          "revision": "1822bb0abf0a31a4b5078ec19061c548835253b5",
-          "version": "4.3.0"
+          "revision": "ca2edf69a613f3d89354114f56cfd9921d2727d5",
+          "version": "4.2.6"
         }
       },
       {
@@ -105,8 +105,8 @@
         "repositoryURL": "https://github.com/vapor/leaf.git",
         "state": {
           "branch": null,
-          "revision": "41741b782ac49959af2f7612661154326ac24d00",
-          "version": "4.1.5"
+          "revision": "c0359c49d616135a0735a0a5d4fb0f59c8f6618f",
+          "version": "4.1.3"
         }
       },
       {
@@ -114,8 +114,8 @@
         "repositoryURL": "https://github.com/vapor/leaf-kit.git",
         "state": {
           "branch": null,
-          "revision": "983fcbe89e7153c4d5870bdc76bf57a56817225f",
-          "version": "1.4.0"
+          "revision": "79e2652191dad03d67546493385813d569f1b9fd",
+          "version": "1.3.1"
         }
       },
       {
@@ -123,8 +123,8 @@
         "repositoryURL": "https://github.com/mxcl/LegibleError.git",
         "state": {
           "branch": null,
-          "revision": "bc596702d7ff618c3f90ba480eeb48b3e83a2fbe",
-          "version": "1.0.6"
+          "revision": "3aeb15455edc0cd6ea0e8d562079db4ab9a25afc",
+          "version": "1.0.5"
         }
       },
       {
@@ -132,8 +132,8 @@
         "repositoryURL": "https://github.com/vapor/multipart-kit.git",
         "state": {
           "branch": null,
-          "revision": "2dd9368a3c9580792b77c7ef364f3735909d9996",
-          "version": "4.5.1"
+          "revision": "82f255699b1de9ba1f34dfc6b99e99aba5a1f8eb",
+          "version": "4.5.0"
         }
       },
       {
@@ -222,8 +222,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "51c3fc2e4a0fcdf4a25089b288dd65b73df1b0ef",
-          "version": "2.37.0"
+          "revision": "6aa9347d9bc5bbfe6a84983aec955c17ffea96ef",
+          "version": "2.33.0"
         }
       },
       {
@@ -240,8 +240,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-http2.git",
         "state": {
           "branch": null,
-          "revision": "6e94a7be32891d1b303a3fcfde8b5bf64d162e74",
-          "version": "1.19.1"
+          "revision": "326f7f9a8c8c8402e3691adac04911cac9f9d87f",
+          "version": "1.18.4"
         }
       },
       {
@@ -249,8 +249,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
         "state": {
           "branch": null,
-          "revision": "52a486ff6de9bc3e26bf634c5413c41c5fa89ca5",
-          "version": "2.17.2"
+          "revision": "5e68c1ded15619bb281b273fa8c2d8fd7f7b2b7d",
+          "version": "2.16.1"
         }
       },
       {
@@ -258,8 +258,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-transport-services.git",
         "state": {
           "branch": null,
-          "revision": "8ab824b140d0ebcd87e9149266ddc353e3705a3e",
-          "version": "1.11.4"
+          "revision": "e7f5278a26442dc46783ba7e063643d524e414a0",
+          "version": "1.11.3"
         }
       },
       {
@@ -267,8 +267,8 @@
         "repositoryURL": "https://github.com/apple/swift-system.git",
         "state": {
           "branch": null,
-          "revision": "836bc4557b74fe6d2660218d56e3ce96aff76574",
-          "version": "1.1.1"
+          "revision": "ce8b4910730114fa1eb46967a031a04f7594f42d",
+          "version": "1.0.0"
         }
       },
       {
@@ -285,8 +285,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "18e9419cae5049e43ca1e8002ca3cf0449f2c8ed",
-          "version": "4.55.0"
+          "revision": "27119271502bf266be293be5325f0fb72435e8fd",
+          "version": "4.49.2"
         }
       },
       {
@@ -294,8 +294,8 @@
         "repositoryURL": "https://github.com/vapor/websocket-kit.git",
         "state": {
           "branch": null,
-          "revision": "ff8fbce837ef01a93d49c6fb49a72be0f150dac7",
-          "version": "2.3.0"
+          "revision": "b1c4df8f6c848c2e977726903bbe6578eed723ad",
+          "version": "2.2.0"
         }
       },
       {
