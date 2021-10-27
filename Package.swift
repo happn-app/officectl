@@ -1,4 +1,4 @@
-// swift-tools-version:5.4
+// swift-tools-version:5.5
 import PackageDescription
 
 
@@ -59,7 +59,7 @@ platformDependentOfficeKitDependencies.append(
 let package = Package(
 	name: "officectl",
 	platforms: [
-		.macOS(.v10_15)
+		.macOS(.v12)
 	],
 	products: [
 		.library(name: "OfficeKit", targets: ["OfficeKit"]),
@@ -74,7 +74,7 @@ let package = Package(
 		.package(                     url: "https://github.com/apple/swift-crypto.git", from: "1.0.0"),
 		.package(                     url: "https://github.com/apple/swift-argument-parser.git", from: "0.1.0"),
 		.package(                     url: "https://github.com/vapor/leaf.git", from: "4.0.0"),
-		.package(                     url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
+		.package(                     url: "https://github.com/vapor/vapor.git", from: "4.50.0"),
 //		.package(                     url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
 		.package(name: "Yaml",        url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
 		.package(                     url: "https://github.com/vapor/jwt-kit.git", from: "4.2.2"),
