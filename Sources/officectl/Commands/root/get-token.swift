@@ -28,6 +28,9 @@ struct GetTokenCommand : ParsableCommand {
 	@ArgumentParser.Option(help: "The id of the service from which to retrieve the token.")
 	var serviceId: String?
 	
+	@ArgumentParser.Option(help: "The user as whom to login as.")
+	var userBehalf: String?
+	
 	@OptionGroup()
 	var globalOptions: OfficectlRootCommand.Options
 	
@@ -47,10 +50,10 @@ struct GetTokenCommand : ParsableCommand {
 		
 		let token: EventLoopFuture<String>
 		if let googleConfig: GoogleServiceConfig = serviceConfig.unbox() {
-			token = try getGoogleToken(googleConfig: googleConfig, scopesStr: scopes, on: eventLoop)
+			token = try getGoogleToken(googleConfig: googleConfig, scopesStr: scopes, userBehalf: userBehalf, on: eventLoop)
 			
 		} else if let gitHubConfig: GitHubServiceConfig = serviceConfig.unbox() {
-			token = try getGitHubToken(gitHubConfig: gitHubConfig, scopesStr: scopes, on: eventLoop)
+			token = try getGitHubToken(gitHubConfig: gitHubConfig, scopesStr: scopes, userBehalf: userBehalf, on: eventLoop)
 			
 		} else {
 			throw InvalidArgumentError(message: "Unsupported service to get a token from.")
@@ -61,21 +64,26 @@ struct GetTokenCommand : ParsableCommand {
 		}
 	}
 	
-	private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String?, on eventLoop: EventLoop) throws -> EventLoopFuture<String> {
+	private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String?, userBehalf: String?, on eventLoop: EventLoop) throws -> EventLoopFuture<String> {
 		guard let scopesStr = scopesStr else {
 			throw InvalidArgumentError(message: "The --scopes option is required to get a Google token.")
 		}
 		
-		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
+		var settings = googleConfig.connectorSettings
+		settings.userBehalf = userBehalf
+		let googleConnector = try GoogleJWTConnector(key: settings)
 		return googleConnector.connect(scope: Set(scopesStr.components(separatedBy: ",")), eventLoop: eventLoop)
 			.map{ _ -> String in
 				return googleConnector.token!
 		}
 	}
 	
-	private func getGitHubToken(gitHubConfig: GitHubServiceConfig, scopesStr: String?, on eventLoop: EventLoop) throws -> EventLoopFuture<String> {
+	private func getGitHubToken(gitHubConfig: GitHubServiceConfig, scopesStr: String?, userBehalf: String?, on eventLoop: EventLoop) throws -> EventLoopFuture<String> {
 		guard scopesStr == nil else {
 			throw InvalidArgumentError(message: "Scopes are not supported to retrieve a GitHub token.")
+		}
+		guard userBehalf == nil else {
+			throw InvalidArgumentError(message: "Behalf is not supported to retrieve a GitHub token.")
 		}
 		
 		let gitHubConnector = try GitHubJWTConnector(key: gitHubConfig.connectorSettings)
