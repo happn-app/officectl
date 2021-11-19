@@ -52,7 +52,7 @@ struct ApiAuth : Codable {
 		}
 		
 		func verify(using signer: JWTSigner) throws {
-			guard iss == "officectl" else {throw Abort(.unauthorized)}
+			guard iss == "officectl" else {throw JWTError.claimVerificationFailure(name: "iss", reason: "unexpected value")}
 			try exp.verifyNotExpired()
 		}
 		
