@@ -40,7 +40,7 @@ struct ApiAuth : Codable {
 		var sub: TaggedId
 		
 		/** The expiration time of the token. */
-		var exp: Date
+		var exp: ExpirationClaim
 		
 		/** Is the user admin? */
 		var adm: Bool
@@ -48,12 +48,12 @@ struct ApiAuth : Codable {
 		init(dsuIdPair: AnyDSUIdPair, admin: Bool, validityDuration: TimeInterval) {
 			adm = admin
 			sub = dsuIdPair.taggedId
-			exp = Date(timeIntervalSinceNow: validityDuration)
+			exp = .init(value: Date(timeIntervalSinceNow: validityDuration))
 		}
 		
 		func verify(using signer: JWTSigner) throws {
 			guard iss == "officectl" else {throw Abort(.unauthorized)}
-			guard exp.timeIntervalSinceNow > 0 else {throw Abort(.unauthorized)}
+			try exp.verifyNotExpired()
 		}
 		
 		func representsSameUserAs(dsuIdPair: AnyDSUIdPair, request: Request) throws -> Bool {
