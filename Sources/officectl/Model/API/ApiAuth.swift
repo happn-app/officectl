@@ -28,10 +28,12 @@ struct ApiAuth : Codable {
 	
 	struct Token : JWTPayload {
 		
-		/** The audience of the token. Should always be “officectl”. */
-		var aud = "officectl"
+		/** The issuer of the token. Should always be “officectl”. */
+		var iss = "officectl"
 		
 		var jti = UUID().uuidString
+		
+		var aud = URL(string: "https://office.happn.io")!
 		
 		/** The tagged id of the authenticated person. Should always be tagged
 		with the auth service. */
@@ -50,7 +52,7 @@ struct ApiAuth : Codable {
 		}
 		
 		func verify(using signer: JWTSigner) throws {
-			guard aud == "officectl" else {throw Abort(.unauthorized)}
+			guard iss == "officectl" else {throw Abort(.unauthorized)}
 			guard exp.timeIntervalSinceNow > 0 else {throw Abort(.unauthorized)}
 		}
 		
