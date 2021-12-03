@@ -18,7 +18,7 @@ import Vapor
 
 class GetLicensesController {
 	
-	func getLicenses(_ req: Request) throws -> EventLoopFuture<View> {
+	func getLicenses(_ req: Request) async throws -> View {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
@@ -29,7 +29,7 @@ class GetLicensesController {
 		let token = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		let getDevicesAction: GetMDMDevicesWithAttributesAction = semiSingletonStore.semiSingleton(forKey: token)
-		return getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: req.eventLoop)
+		return try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: req.eventLoop)
 		.flatMapThrowing{ devicesAndAttributes -> [[String: String]] in
 			return devicesAndAttributes.compactMap{ deviceAndAttributes -> [[String: String]]? in
 				guard deviceAndAttributes.1["user_email"] == emailStr else {return nil}
@@ -62,6 +62,7 @@ class GetLicensesController {
 			let context = LicencesContext(email: emailStr, columnNames: Array(licenses.reduce(Set<String>(), { $0.union($1.keys) })).sorted(), licenses: licenses)
 			return req.view.render("GetLicenses", context)
 		}
+		.get()
 	}
 	
 }

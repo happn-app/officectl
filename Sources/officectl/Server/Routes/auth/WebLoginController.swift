@@ -20,7 +20,7 @@ class WebLoginController {
 		return "OK"
 	}
 	
-	func showLoginPage(_ req: Request) throws -> EventLoopFuture<View> {
+	func showLoginPage(_ req: Request) async throws -> View {
 		struct LoginContext : Encodable {
 			var username: String?
 			var nextURLPath: String?
@@ -30,7 +30,7 @@ class WebLoginController {
 			username: req.auth.get(LoggedInUser.self)?.user.taggedId.id,
 			nextURLPath: req.headers["Officectl-Login-Next-Page"].last ?? req.query["next"]
 		)
-		return req.view.render("Login", context)
+		return try await req.view.render("Login", context)
 	}
 	
 	func doLogin(_ req: Request) throws -> Response {

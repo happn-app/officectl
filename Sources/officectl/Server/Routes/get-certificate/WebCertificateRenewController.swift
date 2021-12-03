@@ -20,7 +20,7 @@ import Vapor
 
 class WebCertificateRenewController {
 	
-	func showLogin(_ req: Request) throws -> EventLoopFuture<View> {
+	func showLogin(_ req: Request) async throws -> View {
 		struct CertifRenewContext : Encodable {
 			var isAdmin: Bool
 			var userEmail: String
@@ -28,10 +28,10 @@ class WebCertificateRenewController {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
 		let email = try loggedInUser.user.hop(to: emailService).user.userId
-		return req.view.render("CertificateRenewHome", CertifRenewContext(isAdmin: loggedInUser.isAdmin, userEmail: email.stringValue))
+		return try await req.view.render("CertificateRenewHome", CertifRenewContext(isAdmin: loggedInUser.isAdmin, userEmail: email.stringValue))
 	}
 	
-	func renewCertificate(_ req: Request) throws -> EventLoopFuture<Response> {
+	func renewCertificate(_ req: Request) async throws -> Response {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		
 		let certRenewData = try req.content.decode(CertRenewData.self)
@@ -129,7 +129,7 @@ class WebCertificateRenewController {
 				})
 			}
 		}
-		return EventLoopFuture<[(id: String, issuerName: String, certif: X509Certificate)]>.reduce([], getCertificatesFutures, on: req.eventLoop, +)
+		return try await EventLoopFuture<[(id: String, issuerName: String, certif: X509Certificate)]>.reduce([], getCertificatesFutures, on: req.eventLoop, +)
 		.flatMapThrowing{ certificatesToRevoke -> [(id: String, issuerName: String)] in
 			/* We check if all of the certificates to revoke will expire in less
 			 * than n seconds (where n is defined in the conf). If the user is
@@ -244,6 +244,7 @@ class WebCertificateRenewController {
 			res.headers.contentDisposition = .init(.attachment, name: certificateFileName, filename: certificateFileName + ".tar.bz2")
 			return res
 		}
+		.get()
 	}
 	
 	private struct CertRenewData : Decodable {

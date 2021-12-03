@@ -19,7 +19,7 @@ import OfficeKit
 
 final class IosTestDevicesController {
 	
-	func showTestDevicesList(_ req: Request) throws -> EventLoopFuture<View> {
+	func showTestDevicesList(_ req: Request) async throws -> View {
 		struct DevicesContext : Encodable {
 			struct Device : Encodable {
 				var name: String
@@ -40,7 +40,7 @@ final class IosTestDevicesController {
 		let token = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		let getDevicesAction: GetMDMDevicesAction = semiSingletonStore.semiSingleton(forKey: token)
-		return getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: req.eventLoop)
+		return try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: req.eventLoop)
 		.map{ devices in
 			devices.filter{ $0.relationships.deviceGroup.id == 61452 }.sorted(by: { $0.attributes.deviceName < $1.attributes.deviceName }).map{
 				DevicesContext.Device(
@@ -59,6 +59,7 @@ final class IosTestDevicesController {
 		.flatMap{ devices in
 			req.view.render("IosTestDevicesList", DevicesContext(devices: devices))
 		}
+		.get()
 	}
 	
 }

@@ -19,12 +19,12 @@ import OfficeKit
 
 final class ListUsersController {
 	
-	func showUsersList(_ req: Request) throws -> EventLoopFuture<String> {
+	func showUsersList(_ req: Request) async throws -> String {
 		let app = req.application
 		let serviceProvider = app.officeKitServiceProvider
 		let service: GoogleService = try serviceProvider.getUserDirectoryService(id: nil)
 		
-		return try service.listAllUsers(using: app.services)
+		return try await service.listAllUsers(using: app.services)
 			.map{ $0.map{ service.shortDescription(fromUser: $0) } }
 			.map{ users in
 				var i = 1
@@ -36,6 +36,7 @@ final class ListUsersController {
 				}
 				return res
 			}
+			.get()
 	}
 	
 }
