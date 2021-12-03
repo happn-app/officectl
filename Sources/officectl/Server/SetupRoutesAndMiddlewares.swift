@@ -148,7 +148,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 }
 
 
-private func handleWebError(request: Request, chainingTo next: Responder, error: Error) throws -> EventLoopFuture<Response> {
+private func handleWebError(request: Request, chainingTo next: Responder, error: Error) async throws -> Response {
 	request.logger.error("Error processing request: \(error.legibleLocalizedDescription)")
 	
 	let status = (error as? Abort)?.status
@@ -158,7 +158,6 @@ private func handleWebError(request: Request, chainingTo next: Responder, error:
 		"errorDescription": is404 ? "This page was not found. Please go away!" : "\(error)"
 	]
 	
-	return request.view.render("Error", context).flatMap{ view in
-		return view.encodeResponse(status: status ?? .internalServerError, for: request)
-	}
+	return try await request.view.render("Error", context)
+		.encodeResponse(status: status ?? .internalServerError, for: request)
 }
