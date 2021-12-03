@@ -13,23 +13,23 @@ import Vapor
 
 extension Authenticatable {
 	
-	/** The same as the redirect middleware from Vapor, but w/ support for a
-	“next param” to pass to the redirected path (e.g. ?next=original_url).
-	
-	This middleware does not support passing the full original request, only the
-	original URL.
-	
-	`baseURL` should probably be an absolute URL without a host or scheme, but
-	can also be relative, or even contain a hostname. It can also contain a query
-	string and a fragment. The “next” parameter, if any, will be added to the
-	alreay present query of the base path. */
+	/**
+	 The same as the redirect middleware from Vapor, but w/ support for a “next param” to pass to the redirected path (e.g. `?next=original_url`).
+	 
+	 This middleware does not support passing the full original request, only the original URL.
+	 
+	 `baseURL` should probably be an absolute URL without a host or scheme, but can also be relative, or even contain a hostname.
+	 It can also contain a query string and a fragment.
+	 The “next” parameter, if any, will be added to the alreay present query of the base path.
+	 
+	 - Note: The redirect middleware from vapor has evolved rendering this basically useless, but I’m currently migrating to async, not anything else. */
 	public static func redirectMiddlewareWithNextParam(baseURL: URL, nextParamName: String?) -> Middleware {
 		return RedirectMiddlewareWithNextParam<Self>(Self.self, baseURL: baseURL, nextParamName: nextParamName)
 	}
 }
 
 
-private struct RedirectMiddlewareWithNextParam<A : Authenticatable> : Middleware {
+private struct RedirectMiddlewareWithNextParam<A : Authenticatable> : AsyncMiddleware {
 	
 	let baseURLComponents: URLComponents
 	let nextParamName: String?
@@ -43,20 +43,19 @@ private struct RedirectMiddlewareWithNextParam<A : Authenticatable> : Middleware
 		nextParamName = npn
 	}
 	
-	func respond(to req: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
+	func respond(to req: Request, chainingTo next: AsyncResponder) async throws -> Response {
 		if req.auth.has(A.self) {
-			return next.respond(to: req)
+			return try await next.respond(to: req)
 		}
 		var newComponents = baseURLComponents
 		if let p = nextParamName, let u = req.url.string.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed) {
 			newComponents.queryItems = (newComponents.queryItems ?? []) + [URLQueryItem(name: p, value: u)]
 		}
 		guard let redirectURL = newComponents.url else {
-			return req.eventLoop.makeFailedFuture(Abort(.internalServerError, reason: "Cannot convert URLComponent to URL…"))
+			throw Abort(.internalServerError, reason: "Cannot convert URLComponent to URL…")
 		}
 		
-		let redirect = req.redirect(to: redirectURL.absoluteString)
-		return req.eventLoop.makeSucceededFuture(redirect)
+		return req.redirect(to: redirectURL.absoluteString)
 	}
 	
 }
