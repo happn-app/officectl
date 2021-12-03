@@ -40,14 +40,14 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 	downloading the manifest for installing an IPA, or when downloading the IPA
 	(these requests are done by another process). AFAICT the process that
 	downloads the IPA sends no other identifying information than the IP. */
-	static func xcodeGuardMiddleware(leeway: TimeInterval) -> Middleware {
-		struct XcodeGuardAuthMiddleware : Middleware {
+	static func xcodeGuardMiddleware(leeway: TimeInterval) -> AsyncMiddleware {
+		struct XcodeGuardAuthMiddleware : AsyncMiddleware {
 			var leeway: TimeInterval
-			func respond(to req: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
+			func respond(to req: Request, chainingTo next: AsyncResponder) async throws -> Response {
 				guard req.auth.has(LoggedInUser.self) else {
 					/* Let’s see if we have a leeway and the IP of our current req. */
 					guard leeway > 0, let currentIP = req.remoteAddress?.ipAddress else {
-						return req.eventLoop.makeFailedFuture(Abort(.unauthorized))
+						throw Abort(.unauthorized)
 					}
 					/* We do! Has there been an auth’d connexion less than leeway ago
 					 * on the same IP than the current request? */
@@ -63,11 +63,11 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 						return true
 					}
 					guard hadAuth else {
-						return req.eventLoop.makeFailedFuture(Abort(.unauthorized))
+						throw Abort(.unauthorized)
 					}
 					/* We do **not** register the successful auth (because the
 					 * request was not actually auth’d…) */
-					return next.respond(to: req)
+					return try await next.respond(to: req)
 				}
 				/* Let’s register the successfully auth’d request if possible */
 				if let ip = req.remoteAddress?.ipAddress {
@@ -76,7 +76,7 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 						req.application.officectlStorage.xcodeGuardMiddlewareConnections[ip] = Date()
 					}
 				}
-				return next.respond(to: req)
+				return try await next.respond(to: req)
 			}
 		}
 		return XcodeGuardAuthMiddleware(leeway: leeway)
