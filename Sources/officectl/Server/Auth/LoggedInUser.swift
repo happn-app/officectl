@@ -17,13 +17,13 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 	typealias SessionID = TaggedId
 	
 	/** A simple guard auth middleware for admin users */
-	static func guardAdminMiddleware() -> Middleware {
-		struct IsAdminAuthMiddleware : Middleware {
-			func respond(to req: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
+	static func guardAdminMiddleware() -> AsyncMiddleware {
+		struct IsAdminAuthMiddleware : AsyncMiddleware {
+			func respond(to req: Request, chainingTo next: AsyncResponder) async throws -> Response {
 				guard let u = req.auth.get(LoggedInUser.self), u.isAdmin else {
-					return req.eventLoop.makeFailedFuture(Abort(.forbidden, reason: "This endpoint is reserved to admins"))
+					throw Abort(.forbidden, reason: "This endpoint is reserved to admins")
 				}
-				return next.respond(to: req)
+				return try await next.respond(to: req)
 			}
 		}
 		return IsAdminAuthMiddleware()
