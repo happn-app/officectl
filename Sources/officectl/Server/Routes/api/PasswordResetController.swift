@@ -16,7 +16,7 @@ import Vapor
 
 class PasswordResetController {
 	
-	func getReset(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiPasswordReset>> {
+	func getReset(_ req: Request) async throws -> ApiResponse<ApiPasswordReset> {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let fetchedUserId = try AnyDSUIdPair.getAsParameter(named: "dsuid-pair", from: req)
 		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIdPair: fetchedUserId, request: req) else {
@@ -24,11 +24,12 @@ class PasswordResetController {
 		}
 		
 		let sProvider = req.application.officeKitServiceProvider
-		return try MultiServicesPasswordReset.fetch(from: fetchedUserId, in: sProvider.getAllUserDirectoryServices(), using: req.services)
+		return try await MultiServicesPasswordReset.fetch(from: fetchedUserId, in: sProvider.getAllUserDirectoryServices(), using: req.services)
 		.map{ passwordResets in ApiResponse.data(ApiPasswordReset(requestedUserId: fetchedUserId.taggedId, multiPasswordResets: passwordResets, environment: req.application.environment)) }
+		.get()
 	}
 	
-	func createReset(_ req: Request) throws -> EventLoopFuture<ApiResponse<ApiPasswordReset>> {
+	func createReset(_ req: Request) async throws -> ApiResponse<ApiPasswordReset> {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		
 		/* Parameter retrieval */
@@ -56,7 +57,7 @@ class PasswordResetController {
 			authFuture = req.eventLoop.future(true)
 		}
 		
-		return authFuture
+		return try await authFuture
 		.flatMapThrowing{ verifiedOldPass in guard verifiedOldPass else {throw Abort(.forbidden, reason: "Invalid old password")} }
 		.flatMapThrowing{ _ in
 			/* The password of the user is verified. Let’s fetch the resets! */
@@ -71,6 +72,7 @@ class PasswordResetController {
 			/* Return the resets response. */
 			return ApiResponse.data(ApiPasswordReset(requestedUserId: dsuIdPair.taggedId, multiPasswordResets: resets, environment: req.application.environment))
 		}
+		.get()
 	}
 	
 	private struct PassChangeData : Decodable {
