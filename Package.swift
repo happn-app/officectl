@@ -67,6 +67,7 @@ let package = Package(
 	] + platformDependentProducts,
 	dependencies: [
 		.package(                     url: "https://github.com/Frizlab/OperationAwaiting.git", from: "0.7.0"),
+		.package(                     url: "https://github.com/Frizlab/swift-email.git", from: "0.2.2"),
 		.package(                     url: "https://github.com/happn-tech/URLRequestOperation.git", from: "1.1.7"),
 		.package(                     url: "https://github.com/happn-tech/RetryingOperation.git", from: "1.1.4"),
 		.package(                     url: "https://github.com/happn-tech/SemiSingleton.git", from: "2.0.0"),
@@ -80,7 +81,6 @@ let package = Package(
 		.package(name: "Yaml",        url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
 		.package(                     url: "https://github.com/vapor/jwt-kit.git", from: "4.2.2"),
 		.package(                     url: "https://github.com/vapor/console-kit.git", from: "4.0.0"),
-		.package(                     url: "https://github.com/happn-tech/EmailValidator.git", from: "0.1.0"),
 		.package(name: "GenericJSON", url: "https://github.com/zoul/generic-json-swift.git", from: "1.2.0"),
 		.package(                     url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0"),
 		.package(                     url: "https://github.com/filom/ASN1Decoder.git", from: "1.3.3"),
@@ -95,7 +95,7 @@ let package = Package(
 			name: "OfficeKit",
 			dependencies: [
 				.product(name: "Crypto",              package: "swift-crypto"),
-				.product(name: "EmailValidator",      package: "EmailValidator"),
+				.product(name: "Email",               package: "swift-email"),
 				.product(name: "GenericJSON",         package: "GenericJSON"),
 				.product(name: "JWTKit",              package: "jwt-kit"),
 				.product(name: "Logging",             package: "swift-log"),

@@ -39,7 +39,7 @@ public final class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 		do {
 			let dataToSend = try JSONEncoder().encode(user)
 			
-			let userId = user.persistentId.value ?? user.userId.stringValue
+			let userId = user.persistentId.value ?? user.userId.rawValue
 			let baseURL = URL(string: "https://www.googleapis.com/admin/directory/v1/users/")!
 			guard let url = URL(string: userId, relativeTo: baseURL), let urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true) else {
 				throw InternalError(message: "Cannot build URL to modify Google user \(user)")

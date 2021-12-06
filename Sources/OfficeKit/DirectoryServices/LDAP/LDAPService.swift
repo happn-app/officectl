@@ -7,6 +7,7 @@
 
 import Foundation
 
+import Email
 import GenericJSON
 import NIO
 import SemiSingleton
@@ -168,7 +169,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 					newLDAPObject.attributes[LDAPInetOrgPerson.propNameMail] = nil
 					continue
 				}
-				guard let email = Email(string: emailStr) else {
+				guard let email = Email(rawValue: emailStr) else {
 					OfficeKitConfig.logger?.warning("Invalid value for an identifying email; not applying this hint nor otherEmails: \(value ?? "<null>")")
 					continue
 				}
@@ -176,14 +177,14 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 				 * comma. Maybe one day we’ll do the generic thing… */
 				let otherEmails: [Email]
 				let otherEmailsStrArray = hints[.otherEmails]??.split(separator: ",")
-				if let emails = try? otherEmailsStrArray?.map({ try nil2throw(Email(string: String($0))) }) {
+				if let emails = try? otherEmailsStrArray?.map({ try nil2throw(Email(rawValue: String($0))) }) {
 					otherEmails = emails
 					res.insert(.otherEmails)
 				} else {
 					otherEmails = []
 				}
 				res.insert(.identifyingEmail)
-				newLDAPObject.attributes[LDAPInetOrgPerson.propNameMail] = [Data(email.stringValue.utf8)] + otherEmails.map{ Data($0.stringValue.utf8) }
+				newLDAPObject.attributes[LDAPInetOrgPerson.propNameMail] = [Data(email.rawValue.utf8)] + otherEmails.map{ Data($0.rawValue.utf8) }
 				
 			case .otherEmails:
 				if value != nil && hints[.identifyingEmail].flatMap({ $0 }) == nil {
@@ -379,7 +380,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 			throw Error.internalError
 		}
 		let emails = try emailDataArray.map{ emailData -> Email in
-			guard let emailStr = String(data: emailData, encoding: .utf8), let email = Email(string: emailStr) else {
+			guard let emailStr = String(data: emailData, encoding: .utf8), let email = Email(rawValue: emailStr) else {
 				throw Error.invalidEmailInLDAP
 			}
 			return email

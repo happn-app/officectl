@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Email
+
 
 
 public struct LDAPBaseDNs : Hashable {
@@ -42,8 +44,8 @@ public struct LDAPBaseDNs : Hashable {
 	
 	public func dn(fromEmail email: Email) -> LDAPDistinguishedName? {
 		guard let peopleBaseDNPerDomain = peopleBaseDNPerDomain else {return nil}
-		guard let baseDN = peopleBaseDNPerDomain[email.domain] else {return nil}
-		return LDAPDistinguishedName(uid: email.username, baseDN: baseDN)
+		guard let baseDN = peopleBaseDNPerDomain[email.domainPart] else {return nil}
+		return LDAPDistinguishedName(uid: email.localPart, baseDN: baseDN)
 	}
 	
 }

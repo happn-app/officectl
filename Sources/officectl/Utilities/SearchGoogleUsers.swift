@@ -7,6 +7,7 @@
 
 import Foundation
 
+import Email
 import OfficeKit
 import Vapor
 
@@ -18,7 +19,7 @@ struct EmailSrcAndDst : Hashable, CustomDebugStringConvertible {
 	var destination: String
 	
 	init(emailStr: String, disabledUserSuffix: String?, logger: Logger?) {
-		guard let email = Email(string: emailStr) else {
+		guard let email = Email(rawValue: emailStr) else {
 			logger?.warning("Got a filter for backuping emails which is not an email (\(emailStr)). Not considered for disabled suffix check.")
 			destination = emailStr
 			source = emailStr
@@ -30,10 +31,10 @@ struct EmailSrcAndDst : Hashable, CustomDebugStringConvertible {
 			return
 		}
 		
-		let hasSuffix = email.username.hasSuffix(disabledUserSuffix)
+		let hasSuffix = email.localPart.hasSuffix(disabledUserSuffix)
 		/* We rebuild the email without checking for validity so we do not recreate an Email object in the two lines below. */
-		source      = hasSuffix ? email.stringValue : (email.username + disabledUserSuffix + "@" + email.domain)
-		destination = hasSuffix ? (email.username.dropLast(disabledUserSuffix.count) + "@" + email.domain) : email.stringValue
+		source      = hasSuffix ? email.rawValue : (email.localPart + disabledUserSuffix + "@" + email.domainPart)
+		destination = hasSuffix ? (email.localPart.dropLast(disabledUserSuffix.count) + "@" + email.domainPart) : email.rawValue
 	}
 	
 	var debugDescription: String {
@@ -61,7 +62,7 @@ struct GoogleUserAndDest {
 		/* Find mails to backup */
 		let allUsersFilter = usersFilter?.flatMap{ Set(arrayLiteral: $0.source, $0.destination) }
 		let filteredUsers = allUsers
-			.filter{ allUsersFilter?.contains($0.primaryEmail.stringValue) ?? true }
+			.filter{ allUsersFilter?.contains($0.primaryEmail.rawValue) ?? true }
 			.map{ GoogleUserAndDest(googleUser: $0, disabledUserSuffix: disabledUserSuffix, downloadsURL: downloadsDestinationFolder, archiveURL: archiveDestinationFolder) }
 			.filter{ !skipIfArchiveFound || !($0.archiveDestination.flatMap{ FileManager.default.fileExists(atPath: $0.path) } ?? false) } /* Not optimal but we don’t care. */
 		
@@ -92,7 +93,7 @@ struct GoogleUserAndDest {
 	var archiveDestination: URL?
 	
 	init(googleUser: GoogleUser, disabledUserSuffix: String?, downloadsURL: URL, archiveURL: URL?) {
-		let emailSrcAndDst = EmailSrcAndDst(emailStr: googleUser.primaryEmail.stringValue, disabledUserSuffix: disabledUserSuffix, logger: nil)
+		let emailSrcAndDst = EmailSrcAndDst(emailStr: googleUser.primaryEmail.rawValue, disabledUserSuffix: disabledUserSuffix, logger: nil)
 		
 		user = googleUser
 		downloadDestination = downloadsURL.appendingPathComponent(emailSrcAndDst.destination)

@@ -8,6 +8,7 @@
 import Foundation
 
 import ArgumentParser
+import Email
 import Vapor
 
 import OfficeKit
@@ -74,7 +75,7 @@ struct FindInDrivesCommand : ParsableCommand {
 	}
 	
 	private func searchResults(for userAndDest: GoogleUserAndDest, searchedString: String, mainConnector: GoogleJWTConnector, eventLoop: EventLoop) async throws -> String? {
-		let connector = GoogleJWTConnector(from: mainConnector, userBehalf: userAndDest.user.primaryEmail.stringValue)
+		let connector = GoogleJWTConnector(from: mainConnector, userBehalf: userAndDest.user.primaryEmail.rawValue)
 		try await connector.connect(scope: driveROScope)
 		
 		var urlComponents = URLComponents(url: driveApiBaseURL.appendingPathComponent("files", isDirectory: false), resolvingAgainstBaseURL: false)!
@@ -86,7 +87,7 @@ struct FindInDrivesCommand : ParsableCommand {
 		decoder.keyDecodingStrategy = .useDefaultKeys
 		let op = AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
 		let filesList = try await EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: eventLoop).get()
-		return (filesList.files?.map{ $0.id } ?? []).isEmpty ? nil : userAndDest.user.primaryEmail.stringValue
+		return (filesList.files?.map{ $0.id } ?? []).isEmpty ? nil : userAndDest.user.primaryEmail.rawValue
 	}
 	
 }

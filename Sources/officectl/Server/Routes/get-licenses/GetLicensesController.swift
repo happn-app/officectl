@@ -22,7 +22,7 @@ class GetLicensesController {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
-		let emailStr = try loggedInUser.user.hop(to: emailService).user.userId.stringValue
+		let emailStr = try loggedInUser.user.hop(to: emailService).user.userId.rawValue
 		
 		let officectlConfig = req.application.officectlConfig
 		let semiSingletonStore = req.application.semiSingletonStore

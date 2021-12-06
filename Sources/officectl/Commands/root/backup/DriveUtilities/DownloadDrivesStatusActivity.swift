@@ -73,7 +73,7 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 		 *       there is a very long username (or a very small console), the
 		 *       output will probably be weird… */
 		
-		let maxAccountWidth = self.maxAccountWidth ?? statuses.keys.map{ $0.primaryEmail.stringValue.count }.max() ?? 0
+		let maxAccountWidth = self.maxAccountWidth ?? statuses.keys.map{ $0.primaryEmail.rawValue.count }.max() ?? 0
 		
 		var maxFoundFilesWidth = 0
 		var maxTreatedFilesWidth = 0
@@ -92,11 +92,11 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 			maxIgnoredBytesWidth = max(maxIgnoredBytesWidth, bytesToHumanReadableString(s.nBytesIgnored).count)
 		}
 		
-		for user in statuses.keys.sorted(by: { $0.primaryEmail.stringValue < $1.primaryEmail.stringValue }) {
+		for user in statuses.keys.sorted(by: { $0.primaryEmail.rawValue < $1.primaryEmail.rawValue }) {
 			let status = statuses[user]!
 			
 			var line = [ConsoleTextFragment]()
-			let useremail = user.primaryEmail.stringValue
+			let useremail = user.primaryEmail.rawValue
 			
 			line.append(ConsoleTextFragment(string: "   - ", style: .plain))
 			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxAccountWidth - useremail.count) + useremail, style: .info))

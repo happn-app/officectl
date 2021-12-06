@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Email
+
 
 
 public struct GitHubUser : DirectoryUser {

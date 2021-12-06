@@ -30,7 +30,7 @@ class DownloadDriveOperation : RetryingOperation {
 		let dateStr = dateFormatter.string(from: Date())
 		
 		state = DownloadDriveState(
-			connector: GoogleJWTConnector(from: googleConnector, userBehalf: userAndDest.user.primaryEmail.stringValue),
+			connector: GoogleJWTConnector(from: googleConnector, userBehalf: userAndDest.user.primaryEmail.rawValue),
 			eventLoop: eventLoop,
 			status: status,
 			logFile: try LogFile(url: userAndDest.downloadDestination.appendingPathComponent(" logs - \(dateStr).csv", isDirectory: false), csvHeader: ["File ID", "Key", "Value"]),
@@ -55,7 +55,7 @@ class DownloadDriveOperation : RetryingOperation {
 				let futures = try await fetchAndDownloadDriveDocs(currentListOfFiles: [], nextPageToken: nil).get()
 				let r = try await EventLoopFuture.whenAllComplete(futures, on: state.eventLoop).get()
 				guard r.first(where: { $0.failureValue != nil }) == nil else {
-					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "At least one file was not successfully downloaded from drive \(self.state.userAndDest.user.userId.stringValue); see the log file for more info."])
+					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "At least one file was not successfully downloaded from drive \(self.state.userAndDest.user.userId.rawValue); see the log file for more info."])
 				}
 				
 				/* Archive backup if applicable. */

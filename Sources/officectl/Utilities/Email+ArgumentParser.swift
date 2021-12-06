@@ -8,6 +8,7 @@
 import Foundation
 
 import ArgumentParser
+import Email
 import OfficeKit
 
 
@@ -15,7 +16,7 @@ import OfficeKit
 extension Email : ExpressibleByArgument {
 	
 	public init?(argument: String) {
-		self.init(string: argument)
+		self.init(rawValue: argument)
 	}
 	
 }

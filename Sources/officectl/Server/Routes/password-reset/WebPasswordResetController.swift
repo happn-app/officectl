@@ -7,6 +7,7 @@
 
 import Foundation
 
+import Email
 import SemiSingleton
 import Vapor
 
@@ -24,7 +25,7 @@ final class WebPasswordResetController {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
 		let email = try loggedInUser.user.hop(to: emailService).user.userId
-		return try await req.view.render("PasswordResetHome", PasswordResetContext(isAdmin: loggedInUser.isAdmin, userEmail: email.stringValue))
+		return try await req.view.render("PasswordResetHome", PasswordResetContext(isAdmin: loggedInUser.isAdmin, userEmail: email.rawValue))
 	}
 	
 	func showResetPage(_ req: Request) async throws -> View {
@@ -106,7 +107,7 @@ final class WebPasswordResetController {
 		}
 		
 		let context = ResetPasswordStatusContext(
-			userEmail: email.stringValue,
+			userEmail: email.rawValue,
 			isExecuting: multiPasswordReset.isExecuting,
 			servicesResetStatus: multiPasswordReset.errorsAndItemsByService.sorted(by: { $0.key.config.serviceName.localizedCompare($1.key.config.serviceName) != .orderedDescending }).map{
 				ResetPasswordStatusContext.ServicePasswordResetStatus(

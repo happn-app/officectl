@@ -12,8 +12,9 @@ public typealias ODRecordOKWrapper = DummyServiceUser
 #else
 
 import Foundation
-
 import OpenDirectory
+
+import Email
 
 
 
@@ -23,8 +24,8 @@ public struct ODRecordOKWrapper : DirectoryUser {
 	public typealias PersistentIdType = UUID
 	
 	public init(record r: ODRecord) throws {
-		/* Is this making IO? Who knows… But it shouldn’t be; doc says if
-		 * attributes is nil the method returns what’s in the cache. */
+		/* Is this making IO?
+		 * Who knows… But it shouldn’t be; doc says if attributes is nil the method returns what’s in the cache. */
 		let attributes = try r.recordDetails(forAttributes: nil)
 		try self.init(recordAttributes: attributes)
 		record = r
@@ -36,7 +37,7 @@ public struct ODRecordOKWrapper : DirectoryUser {
 		}
 		userId = try LDAPDistinguishedName(string: idStr)
 		
-		let emails = (attributes[kODAttributeTypeEMailAddress] as? [String])?.compactMap{ Email(string: $0) }
+		let emails = (attributes[kODAttributeTypeEMailAddress] as? [String])?.compactMap{ Email(rawValue: $0) }
 		
 		persistentId = (attributes[kODAttributeTypeGUID] as? [String])?.onlyElement.flatMap{ UUID(uuidString: $0) }.flatMap{ .set($0) } ?? .unset
 		identifyingEmail = emails.flatMap{ .set($0.first) } ?? .unset

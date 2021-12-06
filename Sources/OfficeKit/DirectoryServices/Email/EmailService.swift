@@ -7,6 +7,7 @@
 
 import Foundation
 
+import Email
 import GenericJSON
 import NIO
 import ServiceKit
@@ -29,37 +30,37 @@ public final class EmailService : UserDirectoryService {
 	}
 	
 	public func shortDescription(fromUser user: EmailUser) -> String {
-		return user.userId.stringValue
+		return user.userId.rawValue
 	}
 	
 	public func string(fromUserId userId: Email) -> String {
-		return userId.stringValue
+		return userId.rawValue
 	}
 	
 	public func userId(fromString string: String) throws -> Email {
-		guard let email = Email(string: string) else {
+		guard let email = Email(rawValue: string) else {
 			throw InvalidArgumentError(message: "Malformed email \(string)")
 		}
 		return email
 	}
 	
 	public func string(fromPersistentUserId pId: Email) -> String {
-		return pId.stringValue
+		return pId.rawValue
 	}
 	
 	public func persistentUserId(fromString string: String) throws -> Email {
-		guard let email = Email(string: string) else {
+		guard let email = Email(rawValue: string) else {
 			throw InvalidArgumentError(message: "Malformed email \(string)")
 		}
 		return email
 	}
 	
 	public func json(fromUser user: EmailUser) throws -> JSON {
-		return .string(user.userId.stringValue)
+		return .string(user.userId.rawValue)
 	}
 	
 	public func logicalUser(fromJSON json: JSON) throws -> EmailUser {
-		guard let emailStr = json.stringValue, let email = Email(string: emailStr) else {
+		guard let emailStr = json.stringValue, let email = Email(rawValue: emailStr) else {
 			throw InvalidArgumentError(message: "Invalid json representing an EmailUser")
 		}
 		return EmailUser(userId: email)
@@ -76,7 +77,7 @@ public final class EmailService : UserDirectoryService {
 		if userWrapper.sourceServiceId == config.serviceId {
 			/* The underlying user (though absent) is from our service; the
 			 * original id can be decoded as a valid id for our service. */
-			guard let email = Email(string: userWrapper.userId.id) else {
+			guard let email = Email(rawValue: userWrapper.userId.id) else {
 				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid email.")
 			}
 			inferredUserId = email
@@ -94,7 +95,7 @@ public final class EmailService : UserDirectoryService {
 		guard allowUserIdChange else {return []}
 		
 		let newEmailHintStr = hints[.identifyingEmail].flatMap({ $0 }) ?? hints[.userId].flatMap({ $0 }) ?? hints[.persistentId].flatMap({ $0 })
-		guard let newEmailStr = newEmailHintStr, let newEmail = Email(string: newEmailStr) else {return []}
+		guard let newEmailStr = newEmailHintStr, let newEmail = Email(rawValue: newEmailStr) else {return []}
 		
 		user.userId = newEmail
 		return [.userId, .persistentId, .identifyingEmail]

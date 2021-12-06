@@ -7,6 +7,7 @@
 
 import Foundation
 
+import Email
 import GenericJSON
 import NIO
 import SemiSingleton
@@ -88,7 +89,7 @@ public final class HappnService : UserDirectoryService {
 			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create a HappnUser")
 			}
-			inferredUserId = email.stringValue
+			inferredUserId = email.rawValue
 		}
 		
 		var res = HappnUser(login: inferredUserId)
@@ -120,11 +121,11 @@ public final class HappnService : UserDirectoryService {
 					}
 					continue
 				}
-				guard let email = value.flatMap({ Email(string: $0) }) else {
+				guard let email = value.flatMap({ Email(rawValue: $0) }) else {
 					OfficeKitConfig.logger?.warning("Invalid value for an identifying email of a happn user.")
 					continue
 				}
-				user.login = email.stringValue
+				user.login = email.rawValue
 				res.insert(.identifyingEmail)
 				res.insert(.userId)
 				
@@ -205,7 +206,7 @@ public final class HappnService : UserDirectoryService {
 		
 		try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes)
 		
-		let ids = Set(Email(string: uId)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.stringValue } ?? [uId])
+		let ids = Set(Email(rawValue: uId)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.rawValue } ?? [uId])
 		let users = try await withThrowingTaskGroup(of: [HappnUser].self, returning: [HappnUser].self, body: { group in
 			for id in ids {
 				group.addTask{

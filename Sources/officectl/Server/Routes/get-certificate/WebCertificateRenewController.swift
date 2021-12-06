@@ -11,6 +11,7 @@ import Foundation
 #endif
 
 import ASN1Decoder
+import Email
 import GenericJSON
 import OfficeKit
 import URLRequestOperation
@@ -28,14 +29,14 @@ class WebCertificateRenewController {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
 		let email = try loggedInUser.user.hop(to: emailService).user.userId
-		return try await req.view.render("CertificateRenewHome", CertifRenewContext(isAdmin: loggedInUser.isAdmin, userEmail: email.stringValue))
+		return try await req.view.render("CertificateRenewHome", CertifRenewContext(isAdmin: loggedInUser.isAdmin, userEmail: email.rawValue))
 	}
 	
 	func renewCertificate(_ req: Request) async throws -> Response {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		
 		let certRenewData = try req.content.decode(CertRenewData.self)
-		let renewedCommonName = certRenewData.userEmail.username
+		let renewedCommonName = certRenewData.userEmail.localPart
 		
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
 		let loggedInEmail = try loggedInUser.user.hop(to: emailService).user.userId

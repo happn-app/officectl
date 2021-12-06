@@ -7,6 +7,7 @@
 
 import Foundation
 
+import Email
 import OfficeKit
 import Vapor
 
@@ -42,7 +43,7 @@ struct UserCredsAuthenticator : AsyncCredentialsAuthenticator {
 		
 		let user: AnyDSUPair
 		switch self.usernameType {
-			case .email:    user = try AnyDSUPair(service: authService, user: authService.logicalUser(fromEmail: nil2throw(Email(string: loginData.username), "Invalid email"), servicesProvider: sProvider))
+			case .email:    user = try AnyDSUPair(service: authService, user: authService.logicalUser(fromEmail: nil2throw(Email(rawValue: loginData.username), "Invalid email"), servicesProvider: sProvider))
 			case .taggedId: user = try AnyDSUIdPair(string: loginData.username, servicesProvider: sProvider).dsuPair()
 		}
 		guard user.service.config.serviceId == authService.config.serviceId else {

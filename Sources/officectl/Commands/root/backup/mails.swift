@@ -8,6 +8,7 @@
 import Foundation
 
 import ArgumentParser
+import Email
 import RetryingOperation
 import Vapor
 
@@ -247,7 +248,7 @@ struct BackupMailsCommand : ParsableCommand {
 		
 		private func futureAccessToken(for userAndDest: GoogleUserAndDest) async throws -> (GoogleUserAndDest, String, Date) {
 			let scope = Set(arrayLiteral: "https://mail.google.com/")
-			let connector = GoogleJWTConnector(from: context.mainConnector, userBehalf: userAndDest.user.primaryEmail.stringValue)
+			let connector = GoogleJWTConnector(from: context.mainConnector, userBehalf: userAndDest.user.primaryEmail.rawValue)
 			
 			try await connector.connect(scope: scope)
 			
@@ -471,7 +472,7 @@ struct BackupMailsCommand : ParsableCommand {
 					[Repository RemoteRepoID_\(user.id.value!)]
 					type = Gmail
 					readonly = True
-					remoteuser = \(user.primaryEmail.stringValue)
+					remoteuser = \(user.primaryEmail.rawValue)
 					oauth2_access_token = \(token)
 					sslcacertfile = /usr/local/etc/openssl/cert.pem
 					ssl_version = tls1_2

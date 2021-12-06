@@ -74,15 +74,6 @@
         }
       },
       {
-        "package": "EmailValidator",
-        "repositoryURL": "https://github.com/happn-tech/EmailValidator.git",
-        "state": {
-          "branch": null,
-          "revision": "9c469b899cd06c3f91d8f94fc8c16a7bec299c3e",
-          "version": "0.1.0"
-        }
-      },
-      {
         "package": "GenericJSON",
         "repositoryURL": "https://github.com/zoul/generic-json-swift.git",
         "state": {
@@ -215,6 +206,15 @@
           "branch": null,
           "revision": "3bea268b223651c4ab7b7b9ad62ef9b2d4143eb6",
           "version": "1.1.6"
+        }
+      },
+      {
+        "package": "swift-email",
+        "repositoryURL": "https://github.com/Frizlab/swift-email.git",
+        "state": {
+          "branch": null,
+          "revision": "f73b72d8e2b15034e31381490c49d281b3b5acde",
+          "version": "0.2.2"
         }
       },
       {

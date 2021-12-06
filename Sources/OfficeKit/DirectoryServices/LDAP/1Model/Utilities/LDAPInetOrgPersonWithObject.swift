@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Email
+
 
 
 /* inetOrgPerson and object are immutable in order to make sure that both are

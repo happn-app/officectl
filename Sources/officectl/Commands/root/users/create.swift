@@ -8,6 +8,7 @@
 import Foundation
 
 import ArgumentParser
+import Email
 import Vapor
 
 import OfficeKit
@@ -79,7 +80,7 @@ struct UserCreateCommand : ParsableCommand {
 		if !yes {
 			let confirmationPrompt: ConsoleText = (
 				ConsoleText(stringLiteral: "Will try and create user with these info:") + ConsoleText.newLine +
-				ConsoleText(stringLiteral: "   - email:      \(email.stringValue)") + ConsoleText.newLine +
+				ConsoleText(stringLiteral: "   - email:      \(email.rawValue)") + ConsoleText.newLine +
 				ConsoleText(stringLiteral: "   - first name: \(firstname)") + ConsoleText.newLine +
 				ConsoleText(stringLiteral: "   - last name:  \(lastname)") + ConsoleText.newLine +
 				ConsoleText(stringLiteral: "   - password:   \(password)") + ConsoleText.newLine +
@@ -104,7 +105,7 @@ struct UserCreateCommand : ParsableCommand {
 			}
 		}
 		
-		try app.auditLogger.log(action: "Creating user with email “\(email.stringValue)”, first name “\(firstname)”, last name “\(lastname)” on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
+		try app.auditLogger.log(action: "Creating user with email “\(email.rawValue)”, first name “\(firstname)”, last name “\(lastname)” on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
 		
 		let results = await withTaskGroup(
 			of: (AnyUserDirectoryService, Result<AnyDirectoryUser, Error>).self,

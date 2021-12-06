@@ -10,6 +10,7 @@
 import Foundation
 import OpenDirectory
 
+import Email
 import RetryingOperation
 
 
@@ -46,7 +47,7 @@ public final class CreateOpenDirectoryRecordOperation : RetryingOperation, HasRe
 			kODAttributeTypeFirstName: [firstName],
 			kODAttributeTypeLastName: [lastName],
 			kODAttributeTypeFullName: [fullName ?? firstName + " " + lastName],
-			kODAttributeTypeEMailAddress: emails.map{ $0.stringValue },
+			kODAttributeTypeEMailAddress: emails.map{ $0.rawValue },
 			kODAttributeTypePrimaryGroupID: [groupId]
 		]
 		if let shell = shell           {attributes[kODAttributeTypeUserShell]        = [shell]}

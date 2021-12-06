@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Email
+
 
 
 public struct HappnUser : Hashable, Codable {
@@ -136,7 +138,7 @@ extension HappnUser : DirectoryUser {
 	}
 	
 	public var identifyingEmail: RemoteProperty<Email?> {
-		return .set(login.flatMap{ Email(string: $0) })
+		return .set(login.flatMap{ Email(rawValue: $0) })
 	}
 	public var otherEmails: RemoteProperty<[Email]> {
 		return .set([])

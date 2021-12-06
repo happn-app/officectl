@@ -14,6 +14,7 @@ public typealias OpenDirectoryService = DummyService
 import Foundation
 import OpenDirectory
 
+import Email
 import GenericJSON
 import NIO
 import SemiSingleton
@@ -193,7 +194,7 @@ public final class OpenDirectoryService : UserDirectoryService {
 					res.insert(.identifyingEmail)
 					continue
 				}
-				guard let email = Email(string: emailStr) else {
+				guard let email = Email(rawValue: emailStr) else {
 					OfficeKitConfig.logger?.warning("Invalid value for the identifying email of an OD user; not applying hint: \(value ?? "<null>")")
 					continue
 				}
@@ -211,7 +212,7 @@ public final class OpenDirectoryService : UserDirectoryService {
 				/* Yes. We cannot represent an element in the list which contains a
 				 * comma. Maybe one day we’ll do the generic thing… */
 				let emailsArrayStr = emailsStr.split(separator: ",")
-				guard let emails = try? emailsArrayStr.map({ try nil2throw(Email(string: String($0))) }) else {
+				guard let emails = try? emailsArrayStr.map({ try nil2throw(Email(rawValue: String($0))) }) else {
 					OfficeKitConfig.logger?.warning("Invalid value for the other emails of an OD user; not applying hint: \(value ?? "<null>")")
 					continue
 				}

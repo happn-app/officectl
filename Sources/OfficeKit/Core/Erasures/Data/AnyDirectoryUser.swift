@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Email
+
 
 
 /* Note: Cannot erase with this erasure type

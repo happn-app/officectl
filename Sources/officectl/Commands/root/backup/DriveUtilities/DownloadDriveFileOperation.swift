@@ -40,7 +40,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 	override func startBaseOperation(isRetry: Bool) {
 		if let n = doc.name     { _ = try? state.logFile.logCSVLine([doc.id, "name", n]) }
 		if let t = doc.mimeType { _ = try? state.logFile.logCSVLine([doc.id, "mime-type", t]) }
-		if let o = doc.owners   { _ = try? state.logFile.logCSVLine([doc.id, "owners", o.map{ $0.emailAddress?.stringValue ?? "<unknown address>" }.joined(separator: ", ")]) }
+		if let o = doc.owners   { _ = try? state.logFile.logCSVLine([doc.id, "owners", o.map{ $0.emailAddress?.rawValue ?? "<unknown address>" }.joined(separator: ", ")]) }
 		if let p = doc.parents  { _ = try? state.logFile.logCSVLine([doc.id, "parent_ids", p.joined(separator: ", ")]) }
 		if let perms = doc.permissions {
 			let encoder = JSONEncoder()

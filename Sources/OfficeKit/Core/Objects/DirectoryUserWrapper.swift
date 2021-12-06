@@ -7,6 +7,7 @@
 
 import Foundation
 
+import Email
 import GenericJSON
 import Logging
 
@@ -73,8 +74,8 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		userId = try forcedUserId ?? TaggedId(string: json.string(forKey: CodingKeys.userId.rawValue))
 		persistentId = try json.optionalString(forKey: CodingKeys.persistentId.rawValue, errorOnMissingKey: false).flatMap{ .set(TaggedId(string: $0)) } ?? .unsupported
 		
-		identifyingEmail = try json.optionalString(forKey: CodingKeys.identifyingEmail.rawValue, errorOnMissingKey: false).flatMap{ try .set(nil2throw(Email(string: $0))) } ?? .unsupported
-		otherEmails = (try json.optionalArrayOfStrings(forKey: CodingKeys.otherEmails.rawValue, errorOnMissingKey: false)?.map{ try nil2throw(Email(string: $0)) }).flatMap{ .set($0) } ?? .unsupported
+		identifyingEmail = try json.optionalString(forKey: CodingKeys.identifyingEmail.rawValue, errorOnMissingKey: false).flatMap{ try .set(nil2throw(Email(rawValue: $0))) } ?? .unsupported
+		otherEmails = (try json.optionalArrayOfStrings(forKey: CodingKeys.otherEmails.rawValue, errorOnMissingKey: false)?.map{ try nil2throw(Email(rawValue: $0)) }).flatMap{ .set($0) } ?? .unsupported
 		
 		if (try? json.null(forKey: CodingKeys.firstName.rawValue)) != nil {
 			firstName = .set(nil)
@@ -138,8 +139,8 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		/* userId added above. */
 		if let pId = persistentId.value {res[CodingKeys.persistentId.rawValue] = .string(pId.stringValue)}
 		
-		if let e = identifyingEmail.value {res[CodingKeys.identifyingEmail.rawValue] = e.flatMap{ .string($0.stringValue) } ?? .null}
-		if let e = otherEmails.value      {res[CodingKeys.otherEmails.rawValue]      = .array(e.map{ .string($0.stringValue) })}
+		if let e = identifyingEmail.value {res[CodingKeys.identifyingEmail.rawValue] = e.flatMap{ .string($0.rawValue) } ?? .null}
+		if let e = otherEmails.value      {res[CodingKeys.otherEmails.rawValue]      = .array(e.map{ .string($0.rawValue) })}
 		
 		if let fn = firstName.value {res[CodingKeys.firstName.rawValue] = fn.flatMap{ .string($0) } ?? .null}
 		if let ln = lastName.value  {res[CodingKeys.lastName.rawValue]  = ln.flatMap{ .string($0) } ?? .null}
@@ -189,7 +190,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 				
 			case (.identifyingEmail, nil): identifyingEmail = .unset
 			case (.identifyingEmail, let s?):
-				guard let e = Email(string: s) else {
+				guard let e = Email(rawValue: s) else {
 					OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value is an invalid email: \(String(describing: v))")
 					continue
 				}
@@ -200,7 +201,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 				/* Yes. We cannot represent an element in the list which contains a
 				 * comma. Maybe one day we’ll do the generic thing… */
 				let l = s.split(separator: ",")
-				guard let e = try? l.map({ try nil2throw(Email(string: String($0))) }) else {
+				guard let e = try? l.map({ try nil2throw(Email(rawValue: String($0))) }) else {
 					OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value has invalid email(s): \(String(describing: v))")
 					continue
 				}

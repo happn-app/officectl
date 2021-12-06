@@ -7,6 +7,7 @@
 
 import Foundation
 
+import Email
 import GenericJSON
 import GenericStorage
 import NIO

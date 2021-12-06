@@ -8,6 +8,7 @@
 import Foundation
 
 import Crypto
+import Email
 import GenericJSON
 import NIO
 import SemiSingleton
@@ -48,15 +49,15 @@ public final class GoogleService : UserDirectoryService {
 	}
 	
 	public func shortDescription(fromUser user: GoogleUser) -> String {
-		return user.primaryEmail.stringValue
+		return user.primaryEmail.rawValue
 	}
 	
 	public func string(fromUserId userId: Email) -> String {
-		return userId.stringValue
+		return userId.rawValue
 	}
 	
 	public func userId(fromString string: String) throws -> Email {
-		guard let e = Email(string: string) else {
+		guard let e = Email(rawValue: string) else {
 			throw InvalidArgumentError(message: "The given string is not a valid email: \(string)")
 		}
 		return e
@@ -96,7 +97,7 @@ public final class GoogleService : UserDirectoryService {
 		if userWrapper.sourceServiceId == config.serviceId {
 			/* The underlying user (though absent) is from our service; the
 			 * original id can be decoded as a valid id for our service. */
-			guard let email = Email(string: userWrapper.userId.id) else {
+			guard let email = Email(rawValue: userWrapper.userId.id) else {
 				throw InvalidArgumentError(message: "Got an invalid id for a GoogleService user.")
 			}
 			inferredUserId = email
@@ -119,13 +120,13 @@ public final class GoogleService : UserDirectoryService {
 		/* TODO: Maybe migrate this to a switch one day… */
 		var res = Set<DirectoryUserProperty>()
 		if allowUserIdChange {
-			if let email = hints[.userId].flatMap({ $0 }).flatMap({ Email(string: $0) }) {
+			if let email = hints[.userId].flatMap({ $0 }).flatMap({ Email(rawValue: $0) }) {
 				if hints[.identifyingEmail] != nil && hints[.identifyingEmail] != hints[.userId] {
 					OfficeKitConfig.logger?.warning("Invalid hints given for a GoogleUser: both userId and identifyingEmail are defined with different values. Only userId will be used.")
 				}
 				user.primaryEmail = email
 				res.insert(.userId)
-			} else if let identifyingEmail = hints[.identifyingEmail].flatMap({ $0 }).flatMap({ Email(string: $0) }) {
+			} else if let identifyingEmail = hints[.identifyingEmail].flatMap({ $0 }).flatMap({ Email(rawValue: $0) }) {
 				user.primaryEmail = identifyingEmail
 				res.insert(.identifyingEmail)
 			}
@@ -138,7 +139,7 @@ public final class GoogleService : UserDirectoryService {
 			/* Yes. We cannot represent an element in the list which contains a
 			 * comma. Maybe one day we’ll do the generic thing… */
 			let emailsStrArray = otherEmailsStr.split(separator: ",")
-			if let emails = try? emailsStrArray.map({ try nil2throw(Email(string: String($0))) }) {
+			if let emails = try? emailsStrArray.map({ try nil2throw(Email(rawValue: String($0))) }) {
 				user.aliases = .set(emails)
 				res.insert(.otherEmails)
 			}
@@ -169,7 +170,7 @@ public final class GoogleService : UserDirectoryService {
 		
 		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
 		
-		let op = SearchGoogleUsersOperation(searchedDomain: email.domain, query: #"email="\#(email.stringValue)""#, googleConnector: googleConnector)
+		let op = SearchGoogleUsersOperation(searchedDomain: email.domainPart, query: #"email="\#(email.rawValue)""#, googleConnector: googleConnector)
 		let objects = try await EventLoopFuture<[GoogleUser]>.future(from: op, on: eventLoop).get()
 		guard objects.count <= 1 else {
 			throw UserIdConversionError.tooManyUsersFound

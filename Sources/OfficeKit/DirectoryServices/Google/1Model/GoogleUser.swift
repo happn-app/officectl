@@ -7,6 +7,8 @@
 
 import Foundation
 
+import Email
+
 
 
 public struct GoogleUser : Hashable, Codable {
@@ -33,13 +35,14 @@ public struct GoogleUser : Hashable, Codable {
 		
 	}
 	
-	#warning("""
-	TODO: I did not find a way to automate this. Ideally I’d have liked to have a
-	`nil`-like implementation of RemoteProperty that would drop absent keys
-	automatically (from encoding and decoding) but this does not seem possible.
-	So instead I do the same thing manually… A thing to check would be code
-	generation. This seems like a good candidate for code generation.
-	""")
+	/* TODO: Either use code generation or a property wrapper (a property wrapper seems better).
+	 *
+	 * Original comment:
+	 * I did not find a way to automate this.
+	 * Ideally I’d have liked to have a `nil`-like implementation of RemoteProperty that would drop absent keys automatically (from encoding and decoding) but this does not seem possible.
+	 * So instead I do the same thing manually…
+	 * A thing to check would be code generation.
+	 * This seems like a good candidate for code generation. */
 	public init(from decoder: Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
 		
