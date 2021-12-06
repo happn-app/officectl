@@ -183,21 +183,14 @@ public final class HappnService : UserDirectoryService {
 		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		return try await happnConnector.connect(scope: GetHappnUserOperation.scopes, eventLoop: eventLoop)
-		.flatMap{ _ in
-			let op = GetHappnUserOperation(userKey: pId, connector: happnConnector)
-			return EventLoopFuture<HappnUser>.future(from: op, on: eventLoop).map{ $0 as HappnUser? }
+		try await happnConnector.connect(scope: GetHappnUserOperation.scopes)
+		
+		let op = GetHappnUserOperation(userKey: pId, connector: happnConnector)
+		do {
+			return try await EventLoopFuture<HappnUser>.future(from: op, on: eventLoop).map({ $0 as HappnUser? }).get()
+		} catch let error as NSError where error.domain == "com.happn.officectl.happn" && error.code == 25002 {
+			return nil
 		}
-		.flatMapErrorThrowing{ e in
-			switch e {
-			case let error as NSError where error.domain == "com.happn.officectl.happn" && error.code == 25002:
-				/* User not found error*/
-				return nil
-				
-			default: throw e
-			}
-		}
-		.get()
 	}
 	
 	public func existingUser(fromUserId uId: String?, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> HappnUser? {
@@ -210,34 +203,37 @@ public final class HappnService : UserDirectoryService {
 		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		return try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: eventLoop)
-		.flatMap{ _ in
-			let ids = Set(Email(string: uId)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.stringValue } ?? [uId])
-			let futures = ids.map{ id -> EventLoopFuture<[HappnUser]> in
-				let op = SearchHappnUsersOperation(email: id, happnConnector: happnConnector)
-				return EventLoopFuture<[HappnUser]>.future(from: op, on: eventLoop)
+		try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes)
+		
+		let ids = Set(Email(string: uId)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.stringValue } ?? [uId])
+		let users = try await withThrowingTaskGroup(of: [HappnUser].self, returning: [HappnUser].self, body: { group in
+			for id in ids {
+				group.addTask{
+					let op = SearchHappnUsersOperation(email: id, happnConnector: happnConnector)
+					return try await EventLoopFuture<[HappnUser]>.future(from: op, on: eventLoop).get()
+				}
 			}
-			return EventLoopFuture.reduce([HappnUser](), futures, on: eventLoop, +)
-		}
-		.flatMapThrowing{ (users: [HappnUser]) -> HappnUser? in
-			guard users.count <= 1 else {
-				throw InvalidArgumentError(message: "Given user id has more than one user found")
+			
+			var ret = [HappnUser]()
+			while let users = try await group.next() {
+				ret += users
 			}
-			return users.first
+			return ret
+		})
+		guard users.count <= 1 else {
+			throw InvalidArgumentError(message: "Given user id has more than one user found")
 		}
-		.get()
+		return users.first
 	}
 	
 	public func listAllUsers(using services: Services) async throws -> [HappnUser] {
 		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		return try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: eventLoop)
-		.flatMap{ _ in
-			let searchOp = SearchHappnUsersOperation(email: nil, happnConnector: happnConnector)
-			return EventLoopFuture<[HappnUser]>.future(from: searchOp, on: eventLoop)
-		}
-		.get()
+		try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes)
+		
+		let searchOp = SearchHappnUsersOperation(email: nil, happnConnector: happnConnector)
+		return try await EventLoopFuture<[HappnUser]>.future(from: searchOp, on: eventLoop).get()
 	}
 	
 	public let supportsUserCreation = true
@@ -254,12 +250,10 @@ public final class HappnService : UserDirectoryService {
 			user.password = .set(String((0..<64).map{ _ in chars.randomElement()! }))
 		}
 		
-		return try await happnConnector.connect(scope: CreateHappnUserOperation.scopes, eventLoop: eventLoop)
-		.flatMap{ _ in
-			let op = CreateHappnUserOperation(user: user, connector: happnConnector)
-			return EventLoopFuture<HappnUser>.future(from: op, on: eventLoop)
-		}
-		.get()
+		try await happnConnector.connect(scope: CreateHappnUserOperation.scopes)
+		
+		let op = CreateHappnUserOperation(user: user, connector: happnConnector)
+		return try await EventLoopFuture<HappnUser>.future(from: op, on: eventLoop).get()
 	}
 	
 	public let supportsUserUpdate = true
@@ -272,12 +266,10 @@ public final class HappnService : UserDirectoryService {
 		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		return try await happnConnector.connect(scope: DeleteHappnUserOperation.scopes, eventLoop: eventLoop)
-		.flatMap{ _ in
-			let op = DeleteHappnUserOperation(user: user, connector: happnConnector)
-			return EventLoopFuture<Void>.future(from: op, on: eventLoop)
-		}
-		.get()
+		try await happnConnector.connect(scope: DeleteHappnUserOperation.scopes)
+		
+		let op = DeleteHappnUserOperation(user: user, connector: happnConnector)
+		return try await EventLoopFuture<Void>.future(from: op, on: eventLoop).get()
 	}
 	
 	public let supportsPasswordChange = true

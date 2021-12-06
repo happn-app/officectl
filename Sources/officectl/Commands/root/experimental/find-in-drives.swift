@@ -47,46 +47,46 @@ struct FindInDrivesCommand : ParsableCommand {
 		_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
 		
 		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-		return try await googleConnector
-			.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
-			.flatMap{ _ -> EventLoopFuture<[GoogleUserAndDest]> in
-				GoogleUserAndDest.fetchListToBackup(
-					googleConfig: googleConfig, googleConnector: googleConnector,
-					usersFilter: nil, disabledUserSuffix: nil,
-					downloadsDestinationFolder: URL(fileURLWithPath: "/tmp/not_used", isDirectory: true), archiveDestinationFolder: nil,
-					skipIfArchiveFound: false, console: context.console, eventLoop: eventLoop
-				)
+		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
+		
+		let usersAndDest = try await GoogleUserAndDest.fetchListToBackup(
+			googleConfig: googleConfig, googleConnector: googleConnector,
+			usersFilter: nil, disabledUserSuffix: nil,
+			downloadsDestinationFolder: URL(fileURLWithPath: "/tmp/not_used", isDirectory: true), archiveDestinationFolder: nil,
+			skipIfArchiveFound: false, console: context.console, eventLoop: eventLoop
+		)
+		
+		try await withThrowingTaskGroup(
+			of: String?.self,
+			returning: Void.self,
+			body: { group in
+				for userAndDest in usersAndDest {
+					group.addTask{ try await searchResults(for: userAndDest, searchedString: self.filename, mainConnector: googleConnector, eventLoop: eventLoop) }
+				}
+				
+				while let res = try await group.next() {
+					if let res = res {
+						context.console.info("\(res)")
+					}
+				}
 			}
-			.flatMap{ usersAndDest -> EventLoopFuture<[String]> in
-				let futureResults = usersAndDest.map{ self.futureSearchResults(for: $0, searchedString: self.filename, mainConnector: googleConnector, eventLoop: eventLoop) }
-				return EventLoopFuture.reduce(into: [String](), futureResults, on: eventLoop, { (currentResult, newResult) in
-					if let u = newResult {currentResult.append(u)}
-				})
-			}
-			.map{ searchResults in
-				context.console.info("\(searchResults)")
-			}
-			.transform(to:())
-			.get()
+		)
 	}
 	
-	private func futureSearchResults(for userAndDest: GoogleUserAndDest, searchedString: String, mainConnector: GoogleJWTConnector, eventLoop: EventLoop) -> EventLoopFuture<String?> {
+	private func searchResults(for userAndDest: GoogleUserAndDest, searchedString: String, mainConnector: GoogleJWTConnector, eventLoop: EventLoop) async throws -> String? {
 		let connector = GoogleJWTConnector(from: mainConnector, userBehalf: userAndDest.user.primaryEmail.stringValue)
-		return connector.connect(scope: driveROScope, eventLoop: eventLoop)
-			.flatMap{ _ -> EventLoopFuture<GoogleDriveFilesList> in
-				var urlComponents = URLComponents(url: driveApiBaseURL.appendingPathComponent("files", isDirectory: false), resolvingAgainstBaseURL: false)!
-				urlComponents.queryItems = (urlComponents.queryItems ?? []) + [
-					URLQueryItem(name: "q", value: "name contains '\(searchedString.replacingOccurrences(of: #"'"#, with: #"\'"#))'") /* add " and trashed = true" to the query if needed */
-				]
-				let decoder = JSONDecoder()
-				decoder.dateDecodingStrategy = .customISO8601
-				decoder.keyDecodingStrategy = .useDefaultKeys
-				let op = AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
-				return EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: eventLoop)
-			}
-			.map{ filesList in
-				return (filesList.files?.map{ $0.id } ?? []).isEmpty ? nil : userAndDest.user.primaryEmail.stringValue
-			}
+		try await connector.connect(scope: driveROScope)
+		
+		var urlComponents = URLComponents(url: driveApiBaseURL.appendingPathComponent("files", isDirectory: false), resolvingAgainstBaseURL: false)!
+		urlComponents.queryItems = (urlComponents.queryItems ?? []) + [
+			URLQueryItem(name: "q", value: "name contains '\(searchedString.replacingOccurrences(of: #"'"#, with: #"\'"#))'") /* add " and trashed = true" to the query if needed */
+		]
+		let decoder = JSONDecoder()
+		decoder.dateDecodingStrategy = .customISO8601
+		decoder.keyDecodingStrategy = .useDefaultKeys
+		let op = AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
+		let filesList = try await EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: eventLoop).get()
+		return (filesList.files?.map{ $0.id } ?? []).isEmpty ? nil : userAndDest.user.primaryEmail.stringValue
 	}
 	
 }

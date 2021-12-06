@@ -64,9 +64,19 @@ class DownloadDriveState {
 					decoder.dateDecodingStrategy = .customISO8601
 					decoder.keyDecodingStrategy = .useDefaultKeys
 					let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveDoc>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
-					let futureObject = connector.connect(scope: driveROScope, eventLoop: eventLoop)
-					.flatMap{ _ in EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.eventLoop) }
-					.flatMap{ doc in self.getPaths(objectId: doc.id, objectName: (doc.name ?? doc.id), parentIds: doc.parents) }
+					
+					let connectionPromise = eventLoop.makePromise(of: Void.self)
+					Task{
+						do {
+							try await connector.connect(scope: driveROScope)
+							connectionPromise.completeWith(.success(()))
+						} catch {
+							connectionPromise.fail(error)
+						}
+					}
+					let futureObject = connectionPromise.futureResult
+						.flatMap{ _ in EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.eventLoop) }
+						.flatMap{ doc in self.getPaths(objectId: doc.id, objectName: (doc.name ?? doc.id), parentIds: doc.parents) }
 					
 					pathsCache[parentId] = futureObject
 					return futureObject

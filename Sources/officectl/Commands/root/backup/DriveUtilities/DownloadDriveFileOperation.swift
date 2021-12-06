@@ -56,7 +56,16 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 		let fileDownloadDestinationURL = self.state.allFilesDestinationBaseURL.appendingPathComponent(self.doc.id, isDirectory: false)
 		let fileObjectURL = driveApiBaseURL.appendingPathComponent("files", isDirectory: true).appendingPathComponent(doc.id)
 		
-		_ = state.connector.connect(scope: driveROScope, eventLoop: state.eventLoop)
+		let connectionPromise = state.eventLoop.makePromise(of: Void.self)
+		Task{
+			do {
+				try await state.connector.connect(scope: driveROScope)
+				connectionPromise.completeWith(.success(()))
+			} catch {
+				connectionPromise.fail(error)
+			}
+		}
+		_ = connectionPromise.futureResult
 		.flatMap{ _ in
 			self.state.getPaths(objectId: self.doc.id, objectName: self.doc.name ?? self.doc.id, parentIds: self.doc.parents)
 		}
@@ -136,7 +145,16 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				return self.state.eventLoop.future()
 			}
 			
-			return self.state.connector.connect(scope: driveScope, eventLoop: self.state.eventLoop)
+			let connectionPromise = self.state.eventLoop.makePromise(of: Void.self)
+			Task{
+				do {
+					try await self.state.connector.connect(scope: driveScope)
+					connectionPromise.completeWith(.success(()))
+				} catch {
+					connectionPromise.fail(error)
+				}
+			}
+			return connectionPromise.futureResult
 			.flatMap{ _ in
 				var request = URLRequest(url: fileObjectURL)
 				request.httpMethod = "DELETE"

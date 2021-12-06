@@ -257,9 +257,9 @@ public final class OpenDirectoryService : UserDirectoryService {
 		
 		let searchQuery = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeMetaRecordName, matchType: ODMatchType(kODMatchAny), queryValues: nil, returnAttributes: [kODAttributeTypeEMailAddress, kODAttributeTypeFullName], maximumResults: nil)
 		let op = SearchOpenDirectoryOperation(request: searchQuery, openDirectoryConnector: openDirectoryConnector)
-		return try await openDirectoryConnector.connect(scope: (), eventLoop: eventLoop)
-		.flatMap{ EventLoopFuture<[ODRecord]>.future(from: op, on: eventLoop).map{ $0.compactMap{ try? ODRecordOKWrapper(record: $0) } } }
-		.get()
+		
+		try await openDirectoryConnector.connect(scope: ())
+		return try await EventLoopFuture<[ODRecord]>.future(from: op, on: eventLoop).get().compactMap{ try? ODRecordOKWrapper(record: $0) }
 	}
 	
 	public let supportsUserCreation = true
@@ -268,9 +268,9 @@ public final class OpenDirectoryService : UserDirectoryService {
 		let openDirectoryConnector: OpenDirectoryConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		let op = try CreateOpenDirectoryRecordOperation(user: user, connector: openDirectoryConnector)
-		return try await openDirectoryConnector.connect(scope: (), eventLoop: eventLoop)
-		.flatMap{ _ in EventLoopFuture<ODRecordOKWrapper>.future(from: op, on: eventLoop).flatMapThrowing{ try ODRecordOKWrapper(record: $0) } }
-		.get()
+		
+		try await openDirectoryConnector.connect(scope: ())
+		return try await ODRecordOKWrapper(record: EventLoopFuture<ODRecordOKWrapper>.future(from: op, on: eventLoop).get())
 	}
 	
 	public let supportsUserUpdate = true
@@ -306,18 +306,15 @@ public final class OpenDirectoryService : UserDirectoryService {
 		
 		let eventLoop = try services.eventLoop()
 		let openDirectoryConnector: OpenDirectoryConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		let future = openDirectoryConnector.connect(scope: (), eventLoop: eventLoop)
-		.flatMap{ _ -> EventLoopFuture<[ODRecord]> in
-			let op = SearchOpenDirectoryOperation(request: request, openDirectoryConnector: openDirectoryConnector)
-			return EventLoopFuture<[ODRecord]>.future(from: op, on: eventLoop)
+		
+		try await openDirectoryConnector.connect(scope: ())
+		
+		let op = SearchOpenDirectoryOperation(request: request, openDirectoryConnector: openDirectoryConnector)
+		let objects = try await EventLoopFuture<[ODRecord]>.future(from: op, on: eventLoop).get()
+		guard objects.count <= 1 else {
+			throw ODError.tooManyUsersFound
 		}
-		.flatMapThrowing{ objects -> ODRecordOKWrapper? in
-			guard objects.count <= 1 else {
-				throw ODError.tooManyUsersFound
-			}
-			return try objects.first.flatMap{ try ODRecordOKWrapper(record: $0) }
-		}
-		return try await future.get()
+		return try objects.first.flatMap{ try ODRecordOKWrapper(record: $0) }
 	}
 	
 }

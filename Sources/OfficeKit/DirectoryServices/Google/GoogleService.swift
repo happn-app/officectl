@@ -167,34 +167,36 @@ public final class GoogleService : UserDirectoryService {
 		let eventLoop = try services.eventLoop()
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		let future = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
-		.flatMap{ _ -> EventLoopFuture<[GoogleUser]> in
-			let op = SearchGoogleUsersOperation(searchedDomain: email.domain, query: #"email="\#(email.stringValue)""#, googleConnector: googleConnector)
-			return EventLoopFuture<[GoogleUser]>.future(from: op, on: eventLoop)
+		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
+		
+		let op = SearchGoogleUsersOperation(searchedDomain: email.domain, query: #"email="\#(email.stringValue)""#, googleConnector: googleConnector)
+		let objects = try await EventLoopFuture<[GoogleUser]>.future(from: op, on: eventLoop).get()
+		guard objects.count <= 1 else {
+			throw UserIdConversionError.tooManyUsersFound
 		}
-		.flatMapThrowing{ objects -> GoogleUser? in
-			guard objects.count <= 1 else {
-				throw UserIdConversionError.tooManyUsersFound
-			}
-			return objects.first
-		}
-		return try await future.get()
+		return objects.first
 	}
 	
 	public func listAllUsers(using services: Services) async throws -> [GoogleUser] {
 		let eventLoop = try services.eventLoop()
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		return try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
-		.flatMap{ _ in
-			let futures = self.config.primaryDomains.map{ domain -> EventLoopFuture<[GoogleUser]> in
-				let searchOp = SearchGoogleUsersOperation(searchedDomain: domain, query: "isSuspended=false", googleConnector: googleConnector)
-				return EventLoopFuture<[GoogleUser]>.future(from: searchOp, on: eventLoop)
+		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
+		
+		return try await withThrowingTaskGroup(of: [GoogleUser].self, returning: [GoogleUser].self, body: { group in
+			for domain in config.primaryDomains {
+				group.addTask{
+					let searchOp = SearchGoogleUsersOperation(searchedDomain: domain, query: "isSuspended=false", googleConnector: googleConnector)
+					return try await EventLoopFuture<[GoogleUser]>.future(from: searchOp, on: eventLoop).get()
+				}
 			}
-			/* Merging all the users from all the domains. */
-			return EventLoopFuture.reduce([GoogleUser](), futures, on: eventLoop, +)
-		}
-		.get()
+			
+			var ret = [GoogleUser]()
+			while let users = try await group.next() {
+				ret += users
+			}
+			return ret
+		})
 	}
 	
 	public let supportsUserCreation = true
@@ -203,9 +205,8 @@ public final class GoogleService : UserDirectoryService {
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		let op = CreateGoogleUserOperation(user: user, connector: googleConnector)
-		return try await googleConnector.connect(scope: CreateGoogleUserOperation.scopes, eventLoop: eventLoop)
-		.flatMap{ _ in EventLoopFuture<GoogleUser>.future(from: op, on: eventLoop) }
-		.get()
+		try await googleConnector.connect(scope: CreateGoogleUserOperation.scopes)
+		return try await EventLoopFuture<GoogleUser>.future(from: op, on: eventLoop).get()
 	}
 	
 	public let supportsUserUpdate = true

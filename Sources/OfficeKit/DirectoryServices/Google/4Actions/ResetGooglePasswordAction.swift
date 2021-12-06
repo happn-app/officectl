@@ -30,10 +30,11 @@ public final class ResetGooglePasswordAction : Action<GoogleUser, String, Void>,
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
-		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
-		
-		let f = deps.connector.connect(scope: ModifyGoogleUserOperation.scopes, eventLoop: eventLoop)
-		.flatMap{ _ -> EventLoopFuture<Void> in
+		Task{
+			let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
+			
+			try await deps.connector.connect(scope: ModifyGoogleUserOperation.scopes)
+			
 			var googleUser = self.subject.cloneForPatching()
 			
 			let passwordSHA1 = Insecure.SHA1.hash(data: Data(newPassword.utf8)).reduce("", { $0 + String(format: "%02x", $1) })
@@ -42,11 +43,11 @@ public final class ResetGooglePasswordAction : Action<GoogleUser, String, Void>,
 			googleUser.changePasswordAtNextLogin = .set(false)
 			
 			let modifyUserOperation = ModifyGoogleUserOperation(user: googleUser, connector: self.deps.connector)
-			return EventLoopFuture<Void>.future(from: modifyUserOperation, on: eventLoop)
+			let f = EventLoopFuture<Void>.future(from: modifyUserOperation, on: eventLoop)
+			
+			f.whenSuccess{ _   in handler(.success(())) }
+			f.whenFailure{ err in handler(.failure(err)) }
 		}
-		
-		f.whenSuccess{ _   in handler(.success(())) }
-		f.whenFailure{ err in handler(.failure(err)) }
 	}
 	
 	private struct Dependencies {

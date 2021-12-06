@@ -102,78 +102,73 @@ struct BackupMailsCommand : ParsableCommand {
 		try app.auditLogger.log(action: "Backing up mails w/ service \(backupMailOptions.serviceId ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(backupMailOptions.linkify ? "w/": "w/o") linkification, \(archivesDestinationFolder != nil ? "w/": "w/o") archiving.", source: .cli)
 		
 		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-		let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
-			.flatMap{ _ -> EventLoopFuture<[GoogleUserAndDest]> in
-				GoogleUserAndDest.fetchListToBackup(
-					googleConfig: googleConfig, googleConnector: googleConnector,
-					usersFilter: usersFilter, disabledUserSuffix: self.backupMailOptions.disabledEmailSuffix,
-					downloadsDestinationFolder: downloadsDestinationFolder, archiveDestinationFolder: archivesDestinationFolderURL,
-					skipIfArchiveFound: self.backupMailOptions.skipIfArchiveExists,
-					console: context.console, eventLoop: eventLoop
-				)
+		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
+		
+		let filteredUsers = try await GoogleUserAndDest.fetchListToBackup(
+			googleConfig: googleConfig, googleConnector: googleConnector,
+			usersFilter: usersFilter, disabledUserSuffix: self.backupMailOptions.disabledEmailSuffix,
+			downloadsDestinationFolder: downloadsDestinationFolder, archiveDestinationFolder: archivesDestinationFolderURL,
+			skipIfArchiveFound: self.backupMailOptions.skipIfArchiveExists,
+			console: context.console, eventLoop: eventLoop
+		)
+		
+		/* Backup given mails */
+		let options = BackupMailContext(options: backupMailOptions, console: context.console, mainConnector: googleConnector, users: filteredUsers)
+		let usersAndDests = try await EventLoopFuture<[URL]>.future(from: FetchAllMailsOperation(options: options), on: eventLoop, resultRetriever: { ret throws -> [GoogleUserAndDest] in
+			try throwIfError(ret.fetchError)
+			return ret.context.users
+		}).get()
+		
+		/* Linkify the backed-up emails */
+		if backupMailOptions.linkify && !usersAndDests.isEmpty {
+			context.console.info("Optimizing backups size")
+			let q = OperationQueue()
+			q.maxConcurrentOperationCount = 2 /* No need to spam the hard-drive… */
+			let operations = usersAndDests.filter{ self.backupMailOptions.linkify && $0.archiveDestination != nil }.map{ $0.downloadDestination }.compactMap{ url -> LinkifyOperation? in
+				do    {return try LinkifyOperation(folderURL: url, stopOnErrors: false)}
+				catch {context.console.warning("cannot linkify backup at URL \(url.absoluteString)"); return nil}
 			}
-			.flatMap{ filteredUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
-				let options = BackupMailContext(options: self.backupMailOptions, console: context.console, mainConnector: googleConnector, users: filteredUsers)
-				
-				return EventLoopFuture<[URL]>.future(from: FetchAllMailsOperation(options: options), on: eventLoop, resultRetriever: {
-					try throwIfError($0.fetchError)
-					return $0.context.users
-				})
-			}
-			.flatMap{ usersAndDests -> EventLoopFuture<[GoogleUserAndDest]> in /* Linkify the backed-up emails */
-				guard self.backupMailOptions.linkify && usersAndDests.count > 0 else {return eventLoop.future(usersAndDests)}
-				
-				context.console.info("Optimizing backups size")
-				let q = OperationQueue()
-				q.maxConcurrentOperationCount = 2 /* No need to spam the hard-drive… */
-				let operations = usersAndDests.filter{ self.backupMailOptions.linkify && $0.archiveDestination != nil }.map{ $0.downloadDestination }.compactMap{ url -> LinkifyOperation? in
-					do    {return try LinkifyOperation(folderURL: url, stopOnErrors: false)}
-					catch {context.console.warning("cannot linkify backup at URL \(url.absoluteString)"); return nil}
-				}
-				let futureFromOperations = EventLoopFuture<[Result<Void, Error>]>.executeAll(operations, on: eventLoop, resultRetriever: { op -> Void in
-					if op.errors.count > 0 {
-						context.console.warning("got errors when linkifying backup at URL \(op.folderURL.absoluteString):")
-						for (url, error) in op.errors {
-							context.console.warning("   \(url.absoluteString): \(error)")
-						}
-					}
-					return ()
-				})
-				return futureFromOperations.transform(to: usersAndDests)
-			}
-			.flatMap{ usersAndDests -> EventLoopFuture<Void> in /* Compressing the backed-up emails */
-				guard archivesDestinationFolder != nil && usersAndDests.count > 0 else {return eventLoop.future()}
-				
-				context.console.info("Compressing backups")
-				let q = OperationQueue()
-				q.maxConcurrentOperationCount = 4 /* Seems fair on today’s hardware… */
-				let operations = usersAndDests.compactMap{ userAndDest -> TarOperation? in
-					return userAndDest.archiveDestination.flatMap{ archiveDestination in
-						/* Will create the enclosing folder if not already there (a bit of
-						  * trivia: the the call don’t fail if the directory already exist). */
-						_ = try? FileManager.default.createDirectory(at: archiveDestination.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-						return TarOperation(
-							sources: [userAndDest.downloadDestination.lastPathComponent],
-							relativeTo: userAndDest.downloadDestination.deletingLastPathComponent(),
-							destination: archiveDestination,
-							compress: true,
-							deleteSourcesOnSuccess: true
-						)
+			_ = try await EventLoopFuture<[Result<Void, Error>]>.executeAll(operations, on: eventLoop, resultRetriever: { op -> Void in
+				if op.errors.count > 0 {
+					context.console.warning("got errors when linkifying backup at URL \(op.folderURL.absoluteString):")
+					for (url, error) in op.errors {
+						context.console.warning("   \(url.absoluteString): \(error)")
 					}
 				}
-				let futureFromOperations = EventLoopFuture<[Result<Void, Error>]>.executeAll(operations, on: eventLoop, resultRetriever: { op -> Void in
-					if let tarError = op.tarError {
-						context.console.warning("could not compress \(op.sources.first!): \(tarError)")
-					}
-					/* We have at most one deletion error because there is only one source.*/
-					if let deletionError = op.sourceDeletionErrors.randomElement() {
-						context.console.warning("could not delete \(deletionError.key): \(deletionError.value)")
-					}
-					return ()
-				})
-				return futureFromOperations.transform(to: ())
+				return ()
+			}).get()
+		}
+		
+		/* Compress the backed-up emails */
+		if archivesDestinationFolder != nil, !usersAndDests.isEmpty {
+			context.console.info("Compressing backups")
+			
+			let q = OperationQueue()
+			q.maxConcurrentOperationCount = 4 /* Seems fair on today’s hardware… */
+			let operations = usersAndDests.compactMap{ userAndDest -> TarOperation? in
+				return userAndDest.archiveDestination.flatMap{ archiveDestination in
+					/* Will create the enclosing folder if not already there (a bit of trivia: the the call don’t fail if the directory already exist). */
+					_ = try? FileManager.default.createDirectory(at: archiveDestination.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+					return TarOperation(
+						sources: [userAndDest.downloadDestination.lastPathComponent],
+						relativeTo: userAndDest.downloadDestination.deletingLastPathComponent(),
+						destination: archiveDestination,
+						compress: true,
+						deleteSourcesOnSuccess: true
+					)
+				}
 			}
-		return try await f.get()
+			_ = try await EventLoopFuture<[Result<Void, Error>]>.executeAll(operations, on: eventLoop, resultRetriever: { op -> Void in
+				if let tarError = op.tarError {
+					context.console.warning("could not compress \(op.sources.first!): \(tarError)")
+				}
+				/* We have at most one deletion error because there is only one source.*/
+				if let deletionError = op.sourceDeletionErrors.randomElement() {
+					context.console.warning("could not delete \(deletionError.key): \(deletionError.value)")
+				}
+				return ()
+			}).get()
+		}
 	}
 	
 	/* ****************************************** */
@@ -217,40 +212,47 @@ struct BackupMailsCommand : ParsableCommand {
 		}
 		
 		override func startBaseOperation(isRetry: Bool) {
-			do {
-				let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
-				
-				let futureAccessTokens = context.users.map{ futureAccessToken(for: $0, eventLoop: eventLoop) }
-				let f = EventLoopFuture.reduce(into: (tokens: [GoogleUser: (token: String, destination: URL)](), minExpirationDate: Date.distantFuture), futureAccessTokens, on: eventLoop, { (currentResult, newResult) in
-					currentResult.minExpirationDate = min(currentResult.minExpirationDate, newResult.2)
-					currentResult.tokens[newResult.0.user] = (newResult.1, newResult.0.downloadDestination)
-				})
-				.flatMap{ (info: (tokens: [GoogleUser : (token: String, destination: URL)], minExpirationDate: Date)) -> EventLoopFuture<Void> in
+			Task{
+				do {
+					let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
+					
+					let info = try await withThrowingTaskGroup(
+						of: (GoogleUserAndDest, String, Date).self,
+						returning: (tokens: [GoogleUser: (token: String, destination: URL)], minExpirationDate: Date).self,
+						body: { group in
+							for user in context.users {
+								group.addTask{ try await self.futureAccessToken(for: user) }
+							}
+							
+							var ret = (tokens: [GoogleUser: (token: String, destination: URL)](), minExpirationDate: Date.distantFuture)
+							while let curResult = try await group.next() {
+								ret.minExpirationDate = min(ret.minExpirationDate, curResult.2)
+								ret.tokens[curResult.0.user] = (curResult.1, curResult.0.downloadDestination)
+							}
+							return ret
+						}
+					)
+					
 					let operation = OfflineimapRunOperation(userInfos: info.tokens, tokensMinExpirationDate: info.minExpirationDate, context: self.context)
-					return EventLoopFuture<Void>.future(from: operation, on: eventLoop, resultRetriever: { if let e = $0.runError {throw e} })
+					try await EventLoopFuture<Void>.future(from: operation, on: eventLoop, resultRetriever: { if let e = $0.runError {throw e} }).get()
+					baseOperationEnded()
+				} catch _ as OfflineimapRunOperation.ConfigExpiredError {
+					baseOperationEnded(needsRetryIn: 0)
+				} catch {
+					fetchError = error
+					baseOperationEnded()
 				}
-				try f.wait()
-				baseOperationEnded()
-			} catch _ as OfflineimapRunOperation.ConfigExpiredError {
-				baseOperationEnded(needsRetryIn: 0)
-			} catch {
-				fetchError = error
-				baseOperationEnded()
 			}
 		}
 		
-		private func futureAccessToken(for userAndDest: GoogleUserAndDest, eventLoop: EventLoop) -> EventLoopFuture<(GoogleUserAndDest, String, Date)> {
+		private func futureAccessToken(for userAndDest: GoogleUserAndDest) async throws -> (GoogleUserAndDest, String, Date) {
 			let scope = Set(arrayLiteral: "https://mail.google.com/")
 			let connector = GoogleJWTConnector(from: context.mainConnector, userBehalf: userAndDest.user.primaryEmail.stringValue)
-			return connector.connect(scope: scope, eventLoop: eventLoop)
-				.flatMap{
-					let promise: EventLoopPromise<(GoogleUserAndDest, String, Date)> = eventLoop.makePromise()
-					
-					if let token = connector.token, let expirationDate = connector.expirationDate {promise.succeed((userAndDest, token, expirationDate))}
-					else                                                                          {promise.fail(NSError(domain: "com.happn.officectl", code: 42, userInfo: [NSLocalizedDescriptionKey: "Internal error"]))}
-					
-					return promise.futureResult
-				}
+			
+			try await connector.connect(scope: scope)
+			
+			if let token = connector.token, let expirationDate = connector.expirationDate {return (userAndDest, token, expirationDate)}
+			else                                                                          {throw NSError(domain: "com.happn.officectl", code: 42, userInfo: [NSLocalizedDescriptionKey: "Internal error"])}
 		}
 		
 	}

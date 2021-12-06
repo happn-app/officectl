@@ -49,48 +49,43 @@ class DownloadDriveOperation : RetryingOperation {
 	}
 	
 	override func startBaseOperation(isRetry: Bool) {
-		_ = state.connector.connect(scope: driveROScope, eventLoop: state.eventLoop)
-		.flatMap{ _ in self.fetchAndDownloadDriveDocs(currentListOfFiles: [], nextPageToken: nil) }
-		.flatMap{ futures in EventLoopFuture.whenAllComplete(futures, on: self.state.eventLoop) }
-		.flatMapThrowing{ r -> Void in
-			if r.first(where: { $0.failureValue != nil }) != nil {
-				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "At least one file was not successfully downloaded from drive \(self.state.userAndDest.user.userId.stringValue); see the log file for more info."])
-			}
-			return ()
-		}
-		.flatMap{ _ -> EventLoopFuture<Void> in
-			/* Archive backup if applicable. */
-			guard let archiveURL = self.state.userAndDest.archiveDestination else {
-				return self.state.eventLoop.future()
-			}
-			
-			self.state.status.syncQueue.sync{
-				self.state.status[self.state.userAndDest.user].archiving = true
-			}
-			
-			/* Will create the enclosing folder if not already there (a bit of
-			 * trivia: the the call don’t fail if the directory already exist). */
-			_ = try? FileManager.default.createDirectory(at: archiveURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-			let op = TarOperation(
-				sources: [self.state.userAndDest.downloadDestination.lastPathComponent],
-				relativeTo: self.state.userAndDest.downloadDestination.deletingLastPathComponent(),
-				destination: archiveURL,
-				compress: true,
-				deleteSourcesOnSuccess: true
-			)
-			return EventLoopFuture<Void>.future(from: op, on: self.state.eventLoop, resultRetriever: { op in
-				if let e = op.tarError ?? op.sourceDeletionErrors.randomElement()?.value {
-					throw e
+		Task{
+			do {
+				try await state.connector.connect(scope: driveROScope)
+				let futures = try await fetchAndDownloadDriveDocs(currentListOfFiles: [], nextPageToken: nil).get()
+				let r = try await EventLoopFuture.whenAllComplete(futures, on: state.eventLoop).get()
+				guard r.first(where: { $0.failureValue != nil }) == nil else {
+					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "At least one file was not successfully downloaded from drive \(self.state.userAndDest.user.userId.stringValue); see the log file for more info."])
 				}
-				return ()
-			})
-		}
-		.always{ r in
+				
+				/* Archive backup if applicable. */
+				if let archiveURL = self.state.userAndDest.archiveDestination {
+					self.state.status.syncQueue.sync{
+						self.state.status[self.state.userAndDest.user].archiving = true
+					}
+					
+					/* Will create the enclosing folder if not already there (a bit of trivia: the the call don’t fail if the directory already exist). */
+					_ = try? FileManager.default.createDirectory(at: archiveURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+					let op = TarOperation(
+						sources: [self.state.userAndDest.downloadDestination.lastPathComponent],
+						relativeTo: self.state.userAndDest.downloadDestination.deletingLastPathComponent(),
+						destination: archiveURL,
+						compress: true,
+						deleteSourcesOnSuccess: true
+					)
+					try await EventLoopFuture<Void>.future(from: op, on: self.state.eventLoop, resultRetriever: { op -> Void in
+						if let e = op.tarError ?? op.sourceDeletionErrors.randomElement()?.value {
+							throw e
+						}
+					}).get()
+				}
+			} catch {
+				self.error = error
+			}
 			self.state.status.syncQueue.sync{
 				self.state.status[self.state.userAndDest.user].finished = true
 			}
-			self.error = r.failureValue
-			self.baseOperationEnded()
+			baseOperationEnded()
 		}
 	}
 	
@@ -107,7 +102,17 @@ class DownloadDriveOperation : RetryingOperation {
 		decoder.dateDecodingStrategy = .customISO8601
 		decoder.keyDecodingStrategy = .useDefaultKeys
 		let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: state.connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
-		return state.connector.connect(scope: driveROScope, eventLoop: state.eventLoop)
+		
+		let connectionPromise = state.eventLoop.makePromise(of: Void.self)
+		Task{
+			do {
+				try await state.connector.connect(scope: driveROScope)
+				connectionPromise.succeed(())
+			} catch {
+				connectionPromise.fail(error)
+			}
+		}
+		return connectionPromise.futureResult
 		.flatMap{ _ in EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: self.state.eventLoop) }
 		.flatMap{ newFilesList in
 			var newFullListOfFiles = currentListOfFiles

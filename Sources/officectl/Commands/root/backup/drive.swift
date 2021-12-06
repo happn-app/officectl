@@ -118,48 +118,41 @@ struct BackupDriveCommand : ParsableCommand {
 		let downloadFilesQueue = OperationQueue(name_OperationQueue: "Files Download Queue")
 		
 		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-		let f = googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
-		.flatMap{ _ -> EventLoopFuture<[GoogleUserAndDest]> in
-			GoogleUserAndDest.fetchListToBackup(
+		let res = await Result{
+			try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
+			
+			let filteredUsers = try await GoogleUserAndDest.fetchListToBackup(
 				googleConfig: googleConfig, googleConnector: googleConnector,
 				usersFilter: usersFilter, disabledUserSuffix: self.disabledEmailSuffix,
 				downloadsDestinationFolder: downloadsDestinationFolder, archiveDestinationFolder: archivesDestinationFolderURL,
 				skipIfArchiveFound: self.skipIfArchiveExists,
 				console: context.console, eventLoop: eventLoop
 			)
-		}
-		.flatMapThrowing{ filteredUsers -> EventLoopFuture<[GoogleUserAndDest]> in /* Backup given mails */
+			
+			/* Backup given mails */
 			downloadDriveStatus.initStatuses(users: filteredUsers.map{ $0.user })
 			
 			let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, filters: filters, skipOtherOwner: self.skipOtherOwner, skipZeroQuotaFiles: self.skipZeroQuotaFiles, eraseDownloadedFiles: self.eraseDownloadedFiles, downloadFilesQueue: downloadFilesQueue) }
-			return EventLoopFuture<GoogleUserAndDest>.executeAll(operations, on: eventLoop, resultRetriever: { (o: DownloadDriveOperation) -> GoogleUserAndDest in
+			let downloadResults = try await EventLoopFuture<GoogleUserAndDest>.executeAll(operations, on: eventLoop, resultRetriever: { (o: DownloadDriveOperation) -> GoogleUserAndDest in
 				try throwIfError(o.error)
 				return o.state.userAndDest
-			})
-			.flatMapThrowing{ downloadResults in
-				assert(downloadResults.count == filteredUsers.count)
-				let errors = downloadResults.enumerated().compactMap{ result in result.element.failureValue.flatMap{ (filteredUsers[result.offset], $0) } }
-				guard errors.isEmpty else {
-					/* Currently we stop everything if we got at least one error. */
-					/* TODO: Properly report the error (say this user got an error,
-					 * not just here are the errors!) */
-					throw ErrorCollection(errors.map{ $0.1 })
-				}
-				return filteredUsers
+			}).get()
+			
+			assert(downloadResults.count == filteredUsers.count)
+			let errors = downloadResults.enumerated().compactMap{ result in result.element.failureValue.flatMap{ (filteredUsers[result.offset], $0) } }
+			guard errors.isEmpty else {
+				/* Currently we stop everything if we got at least one error. */
+				/* TODO: Properly report the error (say this user got an error, not just here are the errors!) */
+				throw ErrorCollection(errors.map{ $0.1 })
 			}
 		}
-		.flatMap{ $0 }
-		.transform(to: ())
-		.always{ r in
-			guard !disableConsole else {return}
-			switch r {
-			case .success: consoleActivity.succeed()
-			case .failure: consoleActivity.fail()
+		if !disableConsole {
+			switch res {
+				case .success: consoleActivity.succeed()
+				case .failure: consoleActivity.fail()
 			}
 			OfficeKitConfig.logger = previousOfficeKitLogger
 		}
-		
-		return try await f.get()
 	}
 	
 }

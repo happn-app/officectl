@@ -48,21 +48,21 @@ struct GetTokenCommand : ParsableCommand {
 		
 		try app.auditLogger.log(action: "Getting token for service \(serviceId ?? "<inferred service>") with scope \(scopes ?? "<no scope defined>").", source: .cli)
 		
-		let token: EventLoopFuture<String>
+		let token: String
 		if let googleConfig: GoogleServiceConfig = serviceConfig.unbox() {
-			token = try getGoogleToken(googleConfig: googleConfig, scopesStr: scopes, userBehalf: userBehalf, on: eventLoop)
+			token = try await getGoogleToken(googleConfig: googleConfig, scopesStr: scopes, userBehalf: userBehalf)
 			
 		} else if let gitHubConfig: GitHubServiceConfig = serviceConfig.unbox() {
-			token = try getGitHubToken(gitHubConfig: gitHubConfig, scopesStr: scopes, userBehalf: userBehalf, on: eventLoop)
+			token = try await getGitHubToken(gitHubConfig: gitHubConfig, scopesStr: scopes, userBehalf: userBehalf)
 			
 		} else {
 			throw InvalidArgumentError(message: "Unsupported service to get a token from.")
 		}
 		
-		try await context.console.output("token: \(token.get())", style: .plain)
+		context.console.output("token: \(token)", style: .plain)
 	}
 	
-	private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String?, userBehalf: String?, on eventLoop: EventLoop) throws -> EventLoopFuture<String> {
+	private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String?, userBehalf: String?) async throws -> String {
 		guard let scopesStr = scopesStr else {
 			throw InvalidArgumentError(message: "The --scopes option is required to get a Google token.")
 		}
@@ -70,13 +70,11 @@ struct GetTokenCommand : ParsableCommand {
 		var settings = googleConfig.connectorSettings
 		settings.userBehalf = userBehalf
 		let googleConnector = try GoogleJWTConnector(key: settings)
-		return googleConnector.connect(scope: Set(scopesStr.components(separatedBy: ",")), eventLoop: eventLoop)
-			.map{ _ -> String in
-				return googleConnector.token!
-		}
+		try await googleConnector.connect(scope: Set(scopesStr.components(separatedBy: ",")))
+		return googleConnector.token!
 	}
 	
-	private func getGitHubToken(gitHubConfig: GitHubServiceConfig, scopesStr: String?, userBehalf: String?, on eventLoop: EventLoop) throws -> EventLoopFuture<String> {
+	private func getGitHubToken(gitHubConfig: GitHubServiceConfig, scopesStr: String?, userBehalf: String?) async throws -> String {
 		guard scopesStr == nil else {
 			throw InvalidArgumentError(message: "Scopes are not supported to retrieve a GitHub token.")
 		}
@@ -85,10 +83,8 @@ struct GetTokenCommand : ParsableCommand {
 		}
 		
 		let gitHubConnector = try GitHubJWTConnector(key: gitHubConfig.connectorSettings)
-		return gitHubConnector.connect(scope: (), eventLoop: eventLoop)
-			.map{ _ -> String in
-				return gitHubConnector.token!
-		}
+		try await gitHubConnector.connect(scope: ())
+		return gitHubConnector.token!
 	}
 	
 }
