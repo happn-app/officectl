@@ -76,7 +76,7 @@ extension MultiServicesUser {
 	
 	public static func fetchAll(in services: Set<AnyUserDirectoryService>, using depServices: Services) async throws -> (users: [MultiServicesUser], fetchErrorsByServices: [AnyUserDirectoryService: Error]) {
 		let eventLoop = try depServices.eventLoop()
-		let (pairs, fetchErrorsByService) = try await AnyDSUPair.fetchAll(in: services, using: depServices)
+		let (pairs, fetchErrorsByService) = await AnyDSUPair.fetchAll(in: services, using: depServices)
 		let validServices = services.subtracting(fetchErrorsByService.keys)
 		return try await MultiServicesUser.merge(dsuPairs: Set(pairs), validServices: validServices, eventLoop: eventLoop).map{ ($0, fetchErrorsByService) }.get()
 	}
