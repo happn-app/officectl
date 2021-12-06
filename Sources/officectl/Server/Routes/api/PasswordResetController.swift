@@ -62,7 +62,7 @@ class PasswordResetController {
 		let resets = try await MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), using: req.services)
 		/* Then launch them. */
 		try req.application.auditLogger.log(action: "Launching password reset for user \(dsuIdPair.taggedId.stringValue).", source: .api(user: loggedInUser))
-		Task.detached{ try await resets.start(newPass: passChangeData.newPassword, weakeningMode: .always(successDelay: 180, errorDelay: 180), eventLoop: req.eventLoop) }
+		Task.detached{ try await resets.start(newPass: passChangeData.newPassword, weakeningMode: .always(successDelay: 180, errorDelay: 180)) }
 		
 		/* Return the resets response. */
 		return ApiResponse.data(ApiPasswordReset(requestedUserId: dsuIdPair.taggedId, multiPasswordResets: resets, environment: req.application.environment))

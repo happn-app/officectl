@@ -24,22 +24,33 @@ extension MultiServicesPasswordReset {
 		return itemsByService.reduce(false, { $0 || $1.value?.passwordReset.isExecuting ?? false })
 	}
 	
-	public func start(newPass: String, weakeningMode: WeakeningMode, eventLoop: EventLoop) async throws -> [AnyUserDirectoryService: Result<Void, Error>] {
+	public func start(newPass: String, weakeningMode: WeakeningMode) async throws -> [AnyUserDirectoryService: Result<Void, Error>] {
 		guard !isExecuting else {throw OperationAlreadyInProgressError()}
 		
-		let futures = errorsAndItemsByService.map{ serviceIdAndResetPairResult -> (AnyUserDirectoryService, EventLoopFuture<Void>) in
-			let (service, resetPairResult) = serviceIdAndResetPairResult
-			
-			switch resetPairResult {
-			case .success(nil):            return (service, eventLoop.makeSucceededFuture(()))
-			case .success(let resetPair?): return (service, resetPair.passwordReset.start(parameters: newPass, weakeningMode: weakeningMode, eventLoop: eventLoop))
-			case .failure(let error):      return (service, eventLoop.makeFailedFuture(error))
+		return await withTaskGroup(
+			of: (AnyUserDirectoryService, Result<Void, Error>).self,
+			returning: [AnyUserDirectoryService: Result<Void, Error>].self,
+			body: { group in
+				for (service, resetPairResult) in errorsAndItemsByService {
+					group.addTask{
+						return await (service, Result<Void, Error>{
+							switch resetPairResult {
+								case .success(nil):            return ()
+								case .success(let resetPair?): return try await resetPair.passwordReset.start(parameters: newPass, weakeningMode: weakeningMode)
+								case .failure(let error):      throw error
+							}
+						})
+					}
+				}
+				
+				var ret = [AnyUserDirectoryService: Result<Void, Error>]()
+				while let (service, curRes) = await group.next() {
+					assert(ret[service] == nil)
+					ret[service] = curRes
+				}
+				return ret
 			}
-		}
-		
-		return try await EventLoopFuture<Void>.waitAll(futures, eventLoop: eventLoop)
-		.flatMapThrowing{ try $0.group(by: { $0.0 }, mappingValues: { $0.1 }) }
-		.get()
+		)
 	}
 	
 }

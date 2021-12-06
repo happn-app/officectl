@@ -40,9 +40,10 @@ final class IosTestDevicesController {
 		let token = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		let getDevicesAction: GetMDMDevicesAction = semiSingletonStore.semiSingleton(forKey: token)
-		return try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: req.eventLoop)
-		.map{ devices in
-			devices.filter{ $0.relationships.deviceGroup.id == 61452 }.sorted(by: { $0.attributes.deviceName < $1.attributes.deviceName }).map{
+		let devices = try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful })
+			.filter{ $0.relationships.deviceGroup.id == 61452 }
+			.sorted(by: { $0.attributes.deviceName < $1.attributes.deviceName })
+			.map{
 				DevicesContext.Device(
 					name: $0.attributes.deviceName,
 					dateLastSeen: $0.attributes.lastSeenAt,
@@ -55,11 +56,8 @@ final class IosTestDevicesController {
 					bluetoothMAC: $0.attributes.bluetoothMac
 				)
 			}
-		}
-		.flatMap{ devices in
-			req.view.render("IosTestDevicesList", DevicesContext(devices: devices))
-		}
-		.get()
+		
+		return try await req.view.render("IosTestDevicesList", DevicesContext(devices: devices))
 	}
 	
 }

@@ -135,7 +135,7 @@ struct SyncCommand : ParsableCommand {
 								let pass = generateRandomPassword()
 								newPass = pass
 								let changePassAction = try plan.service.changePasswordAction(for: user, using: app.services)
-								_ = try await changePassAction.start(parameters: pass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop).get()
+								_ = try await changePassAction.start(parameters: pass, weakeningMode: .alwaysInstantly)
 							}
 							
 							return UserSyncResult.create(serviceId: serviceId, userStr: userStr, password: newPass, error: nil)

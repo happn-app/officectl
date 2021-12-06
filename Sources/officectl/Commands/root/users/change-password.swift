@@ -59,7 +59,7 @@ struct UserChangePasswordCommand : ParsableCommand {
 		let resets = try await MultiServicesPasswordReset.fetch(from: dsuIdPair, in: services, using: app.services)
 		
 		try app.auditLogger.log(action: "Changing password of \(dsuIdPair.taggedId) on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
-		let results = try await resets.start(newPass: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)
+		let results = try await resets.start(newPass: newPass, weakeningMode: .alwaysInstantly)
 		
 		context.console.info()
 		context.console.info("********* PASSWORD CHANGES RESULTS *********")

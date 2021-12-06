@@ -25,7 +25,7 @@ public protocol ResetPasswordAction/* : AnyAction where ParametersType == String
 	var latestParameters: String? {get}
 	var result: Result<Void, Error>? {get}
 	
-	func start(parameters: String, weakeningMode: WeakeningMode, shouldJoinRunningAction: (_ currentParameters: String) -> Bool, shouldRetrievePreviousRun: (_ previousParameters: String?, _ runWasSuccessful: Bool) -> Bool, eventLoop: EventLoop) -> EventLoopFuture<Void>
+	func start(parameters: String, weakeningMode: WeakeningMode, shouldJoinRunningAction: (_ currentParameters: String) -> Bool, shouldRetrievePreviousRun: (_ previousParameters: String?, _ runWasSuccessful: Bool) -> Bool) async throws
 	func start(parameters: String, weakeningMode: WeakeningMode, shouldJoinRunningAction: (_ currentParameters: String) -> Bool, shouldRetrievePreviousRun: (_ previousParameters: String?, _ runWasSuccessful: Bool) -> Bool, handler: ((_ result: Result<Void, Error>) -> Void)?)
 	
 	func weaken() throws
@@ -36,8 +36,8 @@ public protocol ResetPasswordAction/* : AnyAction where ParametersType == String
 
 public extension ResetPasswordAction {
 	
-	func start(parameters newPass: String, weakeningMode: WeakeningMode, eventLoop: EventLoop) -> EventLoopFuture<Void> {
-		return start(parameters: newPass, weakeningMode: weakeningMode, shouldJoinRunningAction: { currentResetPassword in newPass == currentResetPassword }, shouldRetrievePreviousRun: { _, _ in false }, eventLoop: eventLoop)
+	func start(parameters newPass: String, weakeningMode: WeakeningMode) async throws {
+		try await start(parameters: newPass, weakeningMode: weakeningMode, shouldJoinRunningAction: { currentResetPassword in newPass == currentResetPassword }, shouldRetrievePreviousRun: { _, _ in false })
 	}
 	
 	func start(parameters newPass: String, weakeningMode: WeakeningMode, handler: ((_ result: Result<Void, Error>) -> Void)?) {

@@ -121,7 +121,7 @@ struct UserCreateCommand : ParsableCommand {
 					group.addTask{
 						return await (service, Result{
 							let user = try await service.createUser(user, using: app.services)
-							try await service.changePasswordAction(for: user, using: app.services).start(parameters: password, weakeningMode: .alwaysInstantly, eventLoop: eventLoop).get()
+							try await service.changePasswordAction(for: user, using: app.services).start(parameters: password, weakeningMode: .alwaysInstantly)
 							return user
 						})
 					}

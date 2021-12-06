@@ -28,24 +28,22 @@ final class GetMDMDevicesWithAttributesAction : Action<String, Void, [(SimpleMDM
 	}
 	
 	override func unsafeStart(parameters: Void, handler: @escaping (Result<[(SimpleMDMDevice, [String: String])], Error>) -> Void) throws {
-		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
-		_ = getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: eventLoop)
-		.flatMap{ devices -> EventLoopFuture<[(SimpleMDMDevice, [String: String])]> in
-			let futures: [(SimpleMDMDevice, EventLoopFuture<[String: String]>)] = devices.map{ device in
-				return (device, self.getDeviceAttributes(token: self.subject, deviceId: device.id, eventLoop: eventLoop))
-			}
-			/* waitAll returns an array of (SimpleMDM, Result<[String: String], Error>)
-			 * The next flatMapThrowing will fail the whole future if any of the
-			 * Result in the tuples is a failure, and drop the Result in its return
-			 * type, effectively giving us an array of (SimpleMDM, [String: String])
-			 * which is what we want! */
-			return EventLoopFuture<[String: String]>.waitAll(futures, eventLoop: eventLoop)
-			.flatMapThrowing{ result in
-				try result.map{ try ($0.0, $0.1.get()) }
-			}
-		}
-		.always{
-			handler($0)
+		Task{
+			await handler(Result{
+				let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
+				let devices = try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful })
+				let futures: [(SimpleMDMDevice, EventLoopFuture<[String: String]>)] = devices.map{ device in
+					return (device, self.getDeviceAttributes(token: self.subject, deviceId: device.id, eventLoop: eventLoop))
+				}
+				/* waitAll returns an array of (SimpleMDM, Result<[String: String], Error>)
+				 * The next flatMapThrowing will fail the whole future if any of the Result in the tuples is a failure,
+				 * and drop the Result in its return type, effectively giving us an array of (SimpleMDM, [String: String]) which is what we want! */
+				return try await EventLoopFuture<[String: String]>.waitAll(futures, eventLoop: eventLoop)
+				.flatMapThrowing{ result in
+					try result.map{ try ($0.0, $0.1.get()) }
+				}
+				.get()
+			})
 		}
 	}
 	

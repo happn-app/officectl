@@ -29,40 +29,37 @@ class GetLicensesController {
 		let token = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		let getDevicesAction: GetMDMDevicesWithAttributesAction = semiSingletonStore.semiSingleton(forKey: token)
-		return try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: req.eventLoop)
-		.flatMapThrowing{ devicesAndAttributes -> [[String: String]] in
-			return devicesAndAttributes.compactMap{ deviceAndAttributes -> [[String: String]]? in
-				guard deviceAndAttributes.1["user_email"] == emailStr else {return nil}
-				
-				guard
-					let licensesStr = deviceAndAttributes.1["software_licenses"]?
-						.splitLines()
-						.map({ $0.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines) })
-						.filter({ !$0.isEmpty })
-				else {return nil}
-				
-				let jsonDecoder = JSONDecoder()
-				return licensesStr.compactMap{ licenseStr -> [String: String]? in
-					guard let license = try? jsonDecoder.decode(Dictionary<String, String>.self, from: Data(licenseStr.utf8)) else {
-						req.logger.warning("Found invalid license (cannot decode as [String: String]) stored for user \(emailStr) in device \(deviceAndAttributes.0.id)")
-						return nil
-					}
-					return license
-				}
-			}
-			.flatMap{ $0 }
-		}
-		.flatMap{ licenses -> EventLoopFuture<View> in
-			struct LicencesContext : Encodable {
-				var email: String
-				var columnNames: [String]
-				var licenses: [[String: String]]
-			}
+		let devicesAndAttributes = try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful })
+		
+		let licenses = devicesAndAttributes.compactMap{ deviceAndAttributes -> [[String: String]]? in
+			guard deviceAndAttributes.1["user_email"] == emailStr else {return nil}
 			
-			let context = LicencesContext(email: emailStr, columnNames: Array(licenses.reduce(Set<String>(), { $0.union($1.keys) })).sorted(), licenses: licenses)
-			return req.view.render("GetLicenses", context)
+			guard
+				let licensesStr = deviceAndAttributes.1["software_licenses"]?
+					.splitLines()
+					.map({ $0.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines) })
+					.filter({ !$0.isEmpty })
+			else {return nil}
+			
+			let jsonDecoder = JSONDecoder()
+			return licensesStr.compactMap{ licenseStr -> [String: String]? in
+				guard let license = try? jsonDecoder.decode(Dictionary<String, String>.self, from: Data(licenseStr.utf8)) else {
+					req.logger.warning("Found invalid license (cannot decode as [String: String]) stored for user \(emailStr) in device \(deviceAndAttributes.0.id)")
+					return nil
+				}
+				return license
+			}
 		}
-		.get()
+		.flatMap{ $0 }
+		
+		struct LicencesContext : Encodable {
+			var email: String
+			var columnNames: [String]
+			var licenses: [[String: String]]
+		}
+		
+		let context = LicencesContext(email: emailStr, columnNames: Array(licenses.reduce(Set<String>(), { $0.union($1.keys) })).sorted(), licenses: licenses)
+		return try await req.view.render("GetLicenses", context)
 	}
 	
 }
