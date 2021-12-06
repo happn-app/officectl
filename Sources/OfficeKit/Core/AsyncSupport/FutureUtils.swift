@@ -45,7 +45,6 @@ public extension EventLoopFuture {
 		return body
 	}
 	
-	#warning("TODO Swift 5.1: It will be highly probably that we’ll be able to return “some Sequence” instead of an explicit Array, which would avoid a useless conversion")
 	static func waitAll<IdType>(_ idFutureTuples: [(IdType, EventLoopFuture<Value>)], eventLoop: EventLoop) -> EventLoopFuture<[(IdType, Result<Value, Error>)]> {
 		let ids = idFutureTuples.map{ $0.0 }
 		let futures = idFutureTuples.map{ $0.1 }

@@ -66,6 +66,7 @@ let package = Package(
 		.executable(name: "officectl", targets: ["officectl"])
 	] + platformDependentProducts,
 	dependencies: [
+		.package(                     url: "https://github.com/Frizlab/OperationAwaiting.git", from: "0.7.0"),
 		.package(                     url: "https://github.com/happn-tech/URLRequestOperation.git", from: "1.1.7"),
 		.package(                     url: "https://github.com/happn-tech/RetryingOperation.git", from: "1.1.4"),
 		.package(                     url: "https://github.com/happn-tech/SemiSingleton.git", from: "2.0.0"),
@@ -99,6 +100,7 @@ let package = Package(
 				.product(name: "JWTKit",              package: "jwt-kit"),
 				.product(name: "Logging",             package: "swift-log"),
 				.product(name: "NIO",                 package: "swift-nio"),
+				.product(name: "OperationAwaiting",   package: "OperationAwaiting"),
 				.product(name: "RetryingOperation",   package: "RetryingOperation"),
 				.product(name: "SemiSingleton",       package: "SemiSingleton"),
 				.product(name: "URLRequestOperation", package: "URLRequestOperation"),

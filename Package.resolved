@@ -92,6 +92,15 @@
         }
       },
       {
+        "package": "HasResult",
+        "repositoryURL": "https://github.com/Frizlab/HasResult.git",
+        "state": {
+          "branch": null,
+          "revision": "a6eb60f65e33f9fb3ad425fea0838a05e298f270",
+          "version": "1.0.0"
+        }
+      },
+      {
         "package": "jwt-kit",
         "repositoryURL": "https://github.com/vapor/jwt-kit.git",
         "state": {
@@ -134,6 +143,15 @@
           "branch": null,
           "revision": "82f255699b1de9ba1f34dfc6b99e99aba5a1f8eb",
           "version": "4.5.0"
+        }
+      },
+      {
+        "package": "OperationAwaiting",
+        "repositoryURL": "https://github.com/Frizlab/OperationAwaiting.git",
+        "state": {
+          "branch": null,
+          "revision": "acd525000677e358240e91813e07ab4e9413521b",
+          "version": "0.7.0"
         }
       },
       {
