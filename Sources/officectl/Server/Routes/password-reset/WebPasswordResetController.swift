@@ -73,7 +73,7 @@ final class WebPasswordResetController {
 		try req.application.auditLogger.log(action: "Resetting password for user email: \(email).", source: .web)
 		
 		let multiPasswordReset = try await multiServicesPasswordReset(for: email, request: req)
-		_ = try multiPasswordReset.start(newPass: resetPasswordData.newPass, weakeningMode: .always(successDelay: 180, errorDelay: 180), eventLoop: req.eventLoop)
+		Task.detached{ try await multiPasswordReset.start(newPass: resetPasswordData.newPass, weakeningMode: .always(successDelay: 180, errorDelay: 180), eventLoop: req.eventLoop) }
 		return try await renderMultiServicesPasswordReset(multiPasswordReset, for: email, viewRenderer: req.view)
 	}
 	

@@ -57,22 +57,17 @@ class PasswordResetController {
 			authFuture = req.eventLoop.future(true)
 		}
 		
-		return try await authFuture
-		.flatMapThrowing{ verifiedOldPass in guard verifiedOldPass else {throw Abort(.forbidden, reason: "Invalid old password")} }
-		.flatMapThrowing{ _ in
-			/* The password of the user is verified. Let’s fetch the resets! */
-			return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), using: req.services)
+		guard try await authFuture.get() else {
+			throw Abort(.forbidden, reason: "Invalid old password")
 		}
-		.flatMap{ $0 }
-		.flatMapThrowing{ resets in
-			/* Then launch them. */
-			try req.application.auditLogger.log(action: "Launching password reset for user \(dsuIdPair.taggedId.stringValue).", source: .api(user: loggedInUser))
-			_ = try resets.start(newPass: passChangeData.newPassword, weakeningMode: .always(successDelay: 180, errorDelay: 180), eventLoop: req.eventLoop)
-			
-			/* Return the resets response. */
-			return ApiResponse.data(ApiPasswordReset(requestedUserId: dsuIdPair.taggedId, multiPasswordResets: resets, environment: req.application.environment))
-		}
-		.get()
+		/* The password of the user is verified. Let’s fetch the resets! */
+		let resets = try await MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), using: req.services).get()
+		/* Then launch them. */
+		try req.application.auditLogger.log(action: "Launching password reset for user \(dsuIdPair.taggedId.stringValue).", source: .api(user: loggedInUser))
+		Task.detached{ try await resets.start(newPass: passChangeData.newPassword, weakeningMode: .always(successDelay: 180, errorDelay: 180), eventLoop: req.eventLoop) }
+		
+		/* Return the resets response. */
+		return ApiResponse.data(ApiPasswordReset(requestedUserId: dsuIdPair.taggedId, multiPasswordResets: resets, environment: req.application.environment))
 	}
 	
 	private struct PassChangeData : Decodable {

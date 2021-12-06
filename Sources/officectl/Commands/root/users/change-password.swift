@@ -56,25 +56,21 @@ struct UserChangePasswordCommand : ParsableCommand {
 		guard newPass == newPassConfirmation else {throw InvalidArgumentError(message: "Try again")}
 		
 		let dsuIdPair = try AnyDSUIdPair(string: userIdStr, servicesProvider: sProvider)
-		return try await MultiServicesPasswordReset.fetch(from: dsuIdPair, in: services, using: app.services)
-		.flatMapThrowing{ passwordResets in
-			try app.auditLogger.log(action: "Changing password of \(dsuIdPair.taggedId) on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
-			return try passwordResets.start(newPass: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)
-			.map{ results in
-				context.console.info()
-				context.console.info("********* PASSWORD CHANGES RESULTS *********")
-				for (service, result) in results {
-					let serviceId = service.config.serviceId
-					let serviceName = service.config.serviceName
-					switch result {
-					case .success:            context.console.info("✅ \(serviceId) (\(serviceName))")
-					case .failure(let error): context.console.info("🛑 \(serviceId) (\(serviceName): \(error)")
-					}
-				}
+		let resets = try await MultiServicesPasswordReset.fetch(from: dsuIdPair, in: services, using: app.services).get()
+		
+		try app.auditLogger.log(action: "Changing password of \(dsuIdPair.taggedId) on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
+		let results = try await resets.start(newPass: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)
+		
+		context.console.info()
+		context.console.info("********* PASSWORD CHANGES RESULTS *********")
+		for (service, result) in results {
+			let serviceId = service.config.serviceId
+			let serviceName = service.config.serviceName
+			switch result {
+			case .success:            context.console.info("✅ \(serviceId) (\(serviceName))")
+			case .failure(let error): context.console.info("🛑 \(serviceId) (\(serviceName): \(error)")
 			}
 		}
-		.flatMap{ $0 }
-		.get()
 	}
 	
 }
