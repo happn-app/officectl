@@ -56,7 +56,7 @@ struct UserChangePasswordCommand : ParsableCommand {
 		guard newPass == newPassConfirmation else {throw InvalidArgumentError(message: "Try again")}
 		
 		let dsuIdPair = try AnyDSUIdPair(string: userIdStr, servicesProvider: sProvider)
-		let resets = try await MultiServicesPasswordReset.fetch(from: dsuIdPair, in: services, using: app.services).get()
+		let resets = try await MultiServicesPasswordReset.fetch(from: dsuIdPair, in: services, using: app.services)
 		
 		try app.auditLogger.log(action: "Changing password of \(dsuIdPair.taggedId) on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
 		let results = try await resets.start(newPass: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)

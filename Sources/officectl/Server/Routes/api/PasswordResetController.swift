@@ -24,9 +24,8 @@ class PasswordResetController {
 		}
 		
 		let sProvider = req.application.officeKitServiceProvider
-		return try await MultiServicesPasswordReset.fetch(from: fetchedUserId, in: sProvider.getAllUserDirectoryServices(), using: req.services)
-		.map{ passwordResets in ApiResponse.data(ApiPasswordReset(requestedUserId: fetchedUserId.taggedId, multiPasswordResets: passwordResets, environment: req.application.environment)) }
-		.get()
+		let passwordResets = try await MultiServicesPasswordReset.fetch(from: fetchedUserId, in: sProvider.getAllUserDirectoryServices(), using: req.services)
+		return ApiResponse.data(ApiPasswordReset(requestedUserId: fetchedUserId.taggedId, multiPasswordResets: passwordResets, environment: req.application.environment))
 	}
 	
 	func createReset(_ req: Request) async throws -> ApiResponse<ApiPasswordReset> {
@@ -61,7 +60,7 @@ class PasswordResetController {
 			throw Abort(.forbidden, reason: "Invalid old password")
 		}
 		/* The password of the user is verified. Let’s fetch the resets! */
-		let resets = try await MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), using: req.services).get()
+		let resets = try await MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), using: req.services)
 		/* Then launch them. */
 		try req.application.auditLogger.log(action: "Launching password reset for user \(dsuIdPair.taggedId.stringValue).", source: .api(user: loggedInUser))
 		Task.detached{ try await resets.start(newPass: passChangeData.newPassword, weakeningMode: .always(successDelay: 180, errorDelay: 180), eventLoop: req.eventLoop) }
