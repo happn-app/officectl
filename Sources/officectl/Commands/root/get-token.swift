@@ -43,7 +43,6 @@ struct GetTokenCommand : ParsableCommand {
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
-		let eventLoop = try app.services.make(EventLoop.self)
 		let serviceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
 		
 		try app.auditLogger.log(action: "Getting token for service \(serviceId ?? "<inferred service>") with scope \(scopes ?? "<no scope defined>").", source: .cli)
