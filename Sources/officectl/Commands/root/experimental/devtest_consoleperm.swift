@@ -73,36 +73,29 @@ struct ConsolepermCommand : ParsableCommand {
 			throw InternalError(message: "no userid… (should not happen!)")
 		}
 		
-		return try await hConnector.connect(scope: Set(arrayLiteral: "acl_create", "acl_update", "acl_read"), eventLoop: eventLoop).map{ _ in userID }
-			.flatMap{ userID -> EventLoopFuture<(result: URLRequest, userInfo: Any?)> in
-				let url = hService.config.connectorSettings.baseURL.appendingPathComponent("api").appendingPathComponent("user-acls").appendingPathComponent(userID)
-				
-				var urlRequest = URLRequest(url: url)
-				urlRequest.httpMethod = "POST"
-				urlRequest.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-				
-				var urlComponents = URLComponents(string: "https://example.com")!
-				urlComponents.queryItems = [
-					URLQueryItem(name: "permissions", value: permissions)
-				]
-				urlRequest.httpBody = Data(urlComponents.percentEncodedQuery!.utf8)
-				
-				return hConnector.authenticate(request: urlRequest, eventLoop: eventLoop)
+		try await hConnector.connect(scope: Set(arrayLiteral: "acl_create", "acl_update", "acl_read"), eventLoop: eventLoop).get()
+		
+		let url = hService.config.connectorSettings.baseURL.appendingPathComponent("api").appendingPathComponent("user-acls").appendingPathComponent(userID)
+		var urlRequest = URLRequest(url: url)
+		urlRequest.httpMethod = "POST"
+		urlRequest.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+		
+		var urlComponents = URLComponents(string: "https://example.com")!
+		urlComponents.queryItems = [
+			URLQueryItem(name: "permissions", value: permissions)
+		]
+		urlRequest.httpBody = Data(urlComponents.percentEncodedQuery!.utf8)
+		
+		let authenticatedURLRequest = try await hConnector.authenticate(request: urlRequest)
+		
+		let operation = URLRequestOperation(request: authenticatedURLRequest.result)
+		let data = try await EventLoopFuture<Data>.future(from: operation, on: eventLoop, resultRetriever: { o -> Data in
+			guard let data = o.fetchedData else {
+				throw o.finalError ?? InternalError(message: "no data and no known error from the request")
 			}
-			.flatMap{ authenticatedURLRequest -> EventLoopFuture<Data> in
-				let operation = URLRequestOperation(request: authenticatedURLRequest.result)
-				return EventLoopFuture<Data>.future(from: operation, on: eventLoop, resultRetriever: { o -> Data in
-					guard let data = o.fetchedData else {
-						throw o.finalError ?? InternalError(message: "no data and no known error from the request")
-					}
-					return data
-				})
-			}
-			.map{ data in
-				app.console.print(String(data: data, encoding: .utf8) ?? data.reduce("", { $0 + String(format: "%02x", $1) }))
-				return ()
-			}
-			.get()
+			return data
+		}).get()
+		app.console.print(String(data: data, encoding: .utf8) ?? data.reduce("", { $0 + String(format: "%02x", $1) }))
 	}
 	
 }
