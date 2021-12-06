@@ -56,19 +56,16 @@ final class WebPasswordResetController {
 			throw Abort(.forbidden, reason: "Non-admin users can only reset their own password.")
 		}
 		
-		let authFuture: EventLoopFuture<Bool>
 		if let oldPass = resetPasswordData.oldPass {
 			let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService()
 			let authServiceUser = try authService.logicalUser(fromEmail: email, servicesProvider: officeKitServiceProvider)
-			authFuture = try authService.authenticate(userId: authServiceUser.userId, challenge: oldPass, using: req.services)
+			guard try await authService.authenticate(userId: authServiceUser.userId, challenge: oldPass, using: req.services) else {
+				throw Abort(.forbidden, reason: "Invalid old password.")
+			}
 		} else {
 			/* Only admins are allowed to change the pass of someone without specifying the old password. */
 			guard loggedInUser.isAdmin else {throw Abort(.forbidden, reason: "Old password is required for non-admin users")}
-			authFuture = req.eventLoop.future(true)
 		}
-		
-		let authSuccess = try await authFuture.get()
-		guard authSuccess else {throw Abort(.forbidden, reason: "Invalid old password.")}
 		
 		try req.application.auditLogger.log(action: "Resetting password for user email: \(email).", source: .web)
 		

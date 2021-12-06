@@ -226,15 +226,15 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		return res
 	}
 	
-	public func existingUser(fromPersistentId pId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<LDAPInetOrgPersonWithObject?> {
+	public func existingUser(fromPersistentId pId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> LDAPInetOrgPersonWithObject? {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(fromUserId uId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<LDAPInetOrgPersonWithObject?> {
+	public func existingUser(fromUserId uId: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> LDAPInetOrgPersonWithObject? {
 		let eventLoop = try services.eventLoop()
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		return ldapConnector.connect(scope: (), eventLoop: eventLoop)
+		return try await ldapConnector.connect(scope: (), eventLoop: eventLoop)
 		.flatMap{ _ in
 			#warning("TODO: Implement properties to fetch")
 			let searchOp = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .base, base: uId, searchQuery: nil, attributesToFetch: nil))
@@ -249,13 +249,14 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 				return ret
 			}
 		}
+		.get()
 	}
 	
-	public func listAllUsers(using services: Services) throws -> EventLoopFuture<[LDAPInetOrgPersonWithObject]> {
+	public func listAllUsers(using services: Services) async throws -> [LDAPInetOrgPersonWithObject] {
 		let eventLoop = try services.eventLoop()
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		return ldapConnector.connect(scope: (), eventLoop: eventLoop)
+		return try await ldapConnector.connect(scope: (), eventLoop: eventLoop)
 		.flatMap{ _ in
 			let futures = self.config.baseDNs.allBaseDNs.map{ dn -> EventLoopFuture<[LDAPInetOrgPersonWithObject]> in
 				let searchOp = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: dn, searchQuery: nil, attributesToFetch: nil))
@@ -266,15 +267,16 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 			/* Merging all the users from all the domains. */
 			return EventLoopFuture.reduce([LDAPInetOrgPersonWithObject](), futures, on: eventLoop, +)
 		}
+		.get()
 	}
 	
 	public let supportsUserCreation = true
-	public func createUser(_ user: LDAPInetOrgPersonWithObject, using services: Services) throws -> EventLoopFuture<LDAPInetOrgPersonWithObject> {
+	public func createUser(_ user: LDAPInetOrgPersonWithObject, using services: Services) async throws -> LDAPInetOrgPersonWithObject {
 		let eventLoop = try services.eventLoop()
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		let op = CreateLDAPObjectsOperation(objects: [user.object], connector: ldapConnector)
-		return ldapConnector.connect(scope: (), eventLoop: eventLoop)
+		return try await ldapConnector.connect(scope: (), eventLoop: eventLoop)
 		.flatMap{ _ in
 			EventLoopFuture<[LDAPObject]>.future(from: op, on: eventLoop).flatMapThrowing{ results in
 				guard let result = results.onlyElement else {
@@ -287,23 +289,25 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 				return LDAPInetOrgPersonWithObject(inetOrgPerson: person)
 			}
 		}
+		.get()
 	}
 	
 	public let supportsUserUpdate = true
-	public func updateUser(_ user: LDAPInetOrgPersonWithObject, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<LDAPInetOrgPersonWithObject> {
+	public func updateUser(_ user: LDAPInetOrgPersonWithObject, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) async throws -> LDAPInetOrgPersonWithObject {
 		throw NotImplementedError()
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: LDAPInetOrgPersonWithObject, using services: Services) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: LDAPInetOrgPersonWithObject, using services: Services) async throws {
 		let eventLoop = try services.eventLoop()
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		let op = DeleteLDAPObjectsOperation(users: [user.inetOrgPerson], connector: ldapConnector)
-		return ldapConnector.connect(scope: (), eventLoop: eventLoop)
+		return try await ldapConnector.connect(scope: (), eventLoop: eventLoop)
 		.flatMap{ _ in
 			EventLoopFuture<Void>.future(from: op, on: eventLoop, resultRetriever: { if let e = $0.errors[0] {throw e} })
 		}
+		.get()
 	}
 	
 	public let supportsPasswordChange = true
@@ -313,9 +317,9 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		return semiSingletonStore.semiSingleton(forKey: user.userId, additionalInitInfo: ldapConnector) as ResetLDAPPasswordAction
 	}
 	
-	public func authenticate(userId dn: LDAPDistinguishedName, challenge checkedPassword: String, using services: Services) throws -> EventLoopFuture<Bool> {
+	public func authenticate(userId dn: LDAPDistinguishedName, challenge checkedPassword: String, using services: Services) async throws -> Bool {
 		let eventLoop = try services.eventLoop()
-		return eventLoop.makeSucceededFuture(())
+		return try await eventLoop.makeSucceededFuture(())
 		.flatMapThrowing{ _ in
 			guard !checkedPassword.isEmpty else {throw Error.passwordIsEmpty}
 			
@@ -332,13 +336,14 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 			}
 			throw error
 		}
+		.get()
 	}
 	
-	public func validateAdminStatus(userId: LDAPDistinguishedName, using services: Services) throws -> EventLoopFuture<Bool> {
+	public func validateAdminStatus(userId: LDAPDistinguishedName, using services: Services) async throws -> Bool {
 		let eventLoop = try services.eventLoop()
 		
 		let adminGroupsDN = config.adminGroupsDN
-		guard adminGroupsDN.count > 0 else {return eventLoop.makeSucceededFuture(false)}
+		guard adminGroupsDN.count > 0 else {return false}
 		
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
@@ -346,7 +351,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 			LDAPSearchQuery.simple(attribute: .memberof, filtertype: .equal, value: Data($0.stringValue.utf8))
 		})
 		
-		return ldapConnector.connect(scope: (), eventLoop: eventLoop)
+		return try await ldapConnector.connect(scope: (), eventLoop: eventLoop)
 		.flatMap{ _ -> EventLoopFuture<[LDAPInetOrgPersonWithObject]> in
 			let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .subtree, base: userId, searchQuery: searchQuery, attributesToFetch: nil))
 			return EventLoopFuture<[LDAPInetOrgPerson]>.future(from: op, on: eventLoop).map{ $0.results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) } }
@@ -360,15 +365,16 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 			}
 			return inetOrgPerson.userId == userId
 		}
+		.get()
 	}
 	
-	public func fetchProperties(_ properties: Set<String>?, from dn: LDAPDistinguishedName, using services: Services) throws -> EventLoopFuture<[String: [Data]]> {
+	public func fetchProperties(_ properties: Set<String>?, from dn: LDAPDistinguishedName, using services: Services) async throws -> [String: [Data]] {
 		let eventLoop = try services.eventLoop()
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		let searchRequest = LDAPSearchRequest(scope: .base, base: dn, searchQuery: nil, attributesToFetch: properties)
 		let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: searchRequest)
-		return ldapConnector.connect(scope: (), eventLoop: eventLoop)
+		return try await ldapConnector.connect(scope: (), eventLoop: eventLoop)
 		.flatMap{ _ in
 			return EventLoopFuture<[LDAPInetOrgPerson]>.future(from: op, on: eventLoop).map{ $0.results }
 		}
@@ -377,24 +383,23 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 			guard let ldapObject = ldapObjects.first else {throw Error.userNotFound}
 			return ldapObject.attributes
 		}
+		.get()
 	}
 	
-	public func fetchUniqueEmails(from user: LDAPInetOrgPersonWithObject, deduplicateAliases: Bool = true, using services: Services) throws -> EventLoopFuture<Set<Email>> {
-		return try fetchProperties([LDAPInetOrgPerson.propNameMail], from: user.userId, using: services)
-		.flatMapThrowing{ properties in
-			guard let emailDataArray = properties[LDAPInetOrgPerson.propNameMail] else {
-				throw Error.internalError
-			}
-			let emails = try emailDataArray.map{ emailData -> Email in
-				guard let emailStr = String(data: emailData, encoding: .utf8), let email = Email(string: emailStr) else {
-					throw Error.invalidEmailInLDAP
-				}
-				return email
-			}
-			/* Deduplication */
-			if !deduplicateAliases {return Set(emails)}
-			return Set(emails.map{ $0.primaryDomainVariant(aliasMap: self.globalConfig.domainAliases) })
+	public func fetchUniqueEmails(from user: LDAPInetOrgPersonWithObject, deduplicateAliases: Bool = true, using services: Services) async throws -> Set<Email> {
+		let properties = try await fetchProperties([LDAPInetOrgPerson.propNameMail], from: user.userId, using: services)
+		guard let emailDataArray = properties[LDAPInetOrgPerson.propNameMail] else {
+			throw Error.internalError
 		}
+		let emails = try emailDataArray.map{ emailData -> Email in
+			guard let emailStr = String(data: emailData, encoding: .utf8), let email = Email(string: emailStr) else {
+				throw Error.invalidEmailInLDAP
+			}
+			return email
+		}
+		/* Deduplication */
+		if !deduplicateAliases {return Set(emails)}
+		return Set(emails.map{ $0.primaryDomainVariant(aliasMap: self.globalConfig.domainAliases) })
 	}
 	
 }

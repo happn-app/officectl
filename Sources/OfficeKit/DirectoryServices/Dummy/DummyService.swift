@@ -98,28 +98,28 @@ public final class DummyService : UserDirectoryService {
 		return []
 	}
 	
-	public func existingUser(fromPersistentId pId: Never, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<DummyServiceUser?> {
+	public func existingUser(fromPersistentId pId: Never, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DummyServiceUser? {
 	}
 	
-	public func existingUser(fromUserId dn: Never, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<DummyServiceUser?> {
+	public func existingUser(fromUserId dn: Never, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DummyServiceUser? {
 	}
 	
-	public func listAllUsers(using services: Services) throws -> EventLoopFuture<[DummyServiceUser]> {
+	public func listAllUsers(using services: Services) async throws -> [DummyServiceUser] {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
 	public let supportsUserCreation = false
-	public func createUser(_ user: DummyServiceUser, using services: Services) throws -> EventLoopFuture<DummyServiceUser> {
+	public func createUser(_ user: DummyServiceUser, using services: Services) async throws -> DummyServiceUser {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
 	public let supportsUserUpdate = false
-	public func updateUser(_ user: DummyServiceUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<DummyServiceUser> {
+	public func updateUser(_ user: DummyServiceUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) async throws -> DummyServiceUser {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
 	public let supportsUserDeletion = false
-	public func deleteUser(_ user: DummyServiceUser, using services: Services) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: DummyServiceUser, using services: Services) async throws {
 		throw NotAvailableOnThisPlatformError()
 	}
 	

@@ -16,8 +16,8 @@ public protocol DirectoryAuthenticatorService : UserDirectoryService, DirectoryA
 	
 	associatedtype AuthenticationChallenge
 	
-	func authenticate(userId: UserType.IdType, challenge: AuthenticationChallenge, using services: Services) throws -> EventLoopFuture<Bool>
-	func validateAdminStatus(userId: UserType.IdType, using services: Services) throws -> EventLoopFuture<Bool>
+	func authenticate(userId: UserType.IdType, challenge: AuthenticationChallenge, using services: Services) async throws -> Bool
+	func validateAdminStatus(userId: UserType.IdType, using services: Services) async throws -> Bool
 	
 }
 

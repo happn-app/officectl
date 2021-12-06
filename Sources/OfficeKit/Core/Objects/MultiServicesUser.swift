@@ -15,32 +15,40 @@ import ServiceKit
 public typealias MultiServicesUser = MultiServicesItem<AnyDSUPair?>
 extension MultiServicesUser {
 	
-	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) throws -> EventLoopFuture<MultiServicesUser> {
+	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) async throws -> MultiServicesUser {
+		return try await fetch(from: dsuIdPair.dsuPair(), in: services, using: depServices)
+	}
+	
+	public static func fetch(from dsuPair: AnyDSUPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) async -> MultiServicesUser {
 		#warning("TODO: Properties to fetch")
-		let eventLoop = try depServices.eventLoop()
-		
 		var allFetchedUsers = [AnyUserDirectoryService: AnyDSUPair?]()
 		var allFetchedErrors = [AnyUserDirectoryService: [Error]]()
 		var triedServiceIdSource = Set<AnyUserDirectoryService>()
 		
-		func getUsers(from dsuPair: AnyDSUPair, in services: Set<AnyUserDirectoryService>) -> EventLoopFuture<[AnyUserDirectoryService: Result<AnyDSUPair?, Error>]> {
-			let userFutures = services.map{ curService in
-				(curService, eventLoop.makeSucceededFuture(()).flatMapThrowing{
-					try curService.existingUser(fromUser: dsuPair.user, in: dsuPair.service, propertiesToFetch: [], using: depServices)
-				}.flatMap{ $0 })
-			}
-			return EventLoopFuture.waitAll(userFutures, eventLoop: eventLoop).flatMapThrowing{ userResults in
-				return try userResults.group(
-					by:            { $0.0 },
-					mappingValues: {
-						let (service, userOrError) = $0
-						return userOrError.map{ curUser in curUser.flatMap{ curUser -> AnyDSUPair in AnyDSUPair(service: service, user: curUser) } }
+		func getUsers(from dsuPair: AnyDSUPair, in services: Set<AnyUserDirectoryService>) async -> [AnyUserDirectoryService: Result<AnyDSUPair?, Error>] {
+			return await withTaskGroup(
+				of: (service: AnyUserDirectoryService, users: Result<AnyDirectoryUser?, Error>).self,
+				returning: [AnyUserDirectoryService: Result<AnyDSUPair?, Error>].self,
+				body: { group in
+					for service in services {
+						group.addTask{
+							let userResult = await Result{ try await service.existingUser(fromUser: dsuPair.user, in: dsuPair.service, propertiesToFetch: [], using: depServices) }
+							return (service, userResult)
+						}
 					}
-				)
-			}
+					
+					var users = [AnyUserDirectoryService: Result<AnyDSUPair?, Error>]()
+//					for await (service, userResult) in group { /* Crashes w/ Xcode 13.1 (13A1030d) */
+					while let (service, userResult) = await group.next() {
+						assert(users[service] == nil)
+						users[service] = userResult.map{ curUser in curUser.flatMap{ curUser -> AnyDSUPair in AnyDSUPair(service: service, user: curUser) } }
+					}
+					return users
+				}
+			)
 		}
 		
-		func fetchStep(fetchedUsersAndErrors: [AnyUserDirectoryService: Result<AnyDSUPair?, Error>]) throws -> EventLoopFuture<MultiServicesUser> {
+		func fetchStep(fetchedUsersAndErrors: [AnyUserDirectoryService: Result<AnyDSUPair?, Error>]) async -> MultiServicesUser {
 			/* Try and fetch the users that were not successfully fetched. */
 			allFetchedUsers = allFetchedUsers.merging(fetchedUsersAndErrors.compactMapValues{ $0.successValue }, uniquingKeysWith: { old, new in
 				OfficeKitConfig.logger?.error("Got a user fetched twice for id \(String(describing: old?.user.userId ?? new?.user.userId)). old user = \(String(describing: old)), new user = \(String(describing: new))")
@@ -56,15 +64,14 @@ extension MultiServicesUser {
 			
 			guard let serviceIdToTry = serviceIdsToTry.first, servicesToFetch.count > 0 else {
 				/* We have finished. Let’s return the results. */
-				let multiServicesUser = MultiServicesUser(itemsByService: allFetchedUsers, errorsByService: allFetchedErrors.mapValues{ ErrorCollection($0) })
-				return eventLoop.makeSucceededFuture(multiServicesUser)
+				return MultiServicesUser(itemsByService: allFetchedUsers, errorsByService: allFetchedErrors.mapValues{ ErrorCollection($0) })
 			}
 			
 			triedServiceIdSource.insert(serviceIdToTry)
-			return getUsers(from: allFetchedUsers[serviceIdToTry]!!, in: servicesToFetch).flatMapThrowing(fetchStep).flatMap{ $0 }
+			return await fetchStep(fetchedUsersAndErrors: getUsers(from: allFetchedUsers[serviceIdToTry]!!, in: servicesToFetch))
 		}
 		
-		return try getUsers(from: dsuIdPair.dsuPair(), in: services).flatMapThrowing(fetchStep).flatMap{ $0 }
+		return await fetchStep(fetchedUsersAndErrors: getUsers(from: dsuPair, in: services))
 	}
 	
 	public static func fetchAll(in services: Set<AnyUserDirectoryService>, using depServices: Services) async throws -> (users: [MultiServicesUser], fetchErrorsByServices: [AnyUserDirectoryService: Error]) {

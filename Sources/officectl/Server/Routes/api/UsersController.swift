@@ -50,18 +50,15 @@ class UsersController {
 	private func getUserNoAuthCheck(userId: AnyDSUIdPair, request: Request) async throws -> ApiResponse<ApiUserSearchResult> {
 		let officeKitConfig = request.application.officeKitConfig
 		let sProvider = request.application.officeKitServiceProvider
-		return try await MultiServicesUser.fetch(from: userId, in: sProvider.getAllUserDirectoryServices(), using: request.services)
-		.flatMapThrowing{ multiUser in
-			let orderedServices = try officeKitConfig.orderedServiceConfigs.map{ try sProvider.getUserDirectoryService(id: $0.serviceId) }
-			return try ApiResponse.data(
-				ApiUserSearchResult(
-					request: userId.taggedId,
-					errorsByServiceId: Dictionary(uniqueKeysWithValues: multiUser.errorsByService.map{ ($0.key.config.serviceId, ApiError(error: $0.value, environment: request.application.environment)) }),
-					result: ApiUser(multiUsers: multiUser, orderedServices: orderedServices)
-				)
+		let multiUser = try await MultiServicesUser.fetch(from: userId, in: sProvider.getAllUserDirectoryServices(), using: request.services)
+		let orderedServices = try officeKitConfig.orderedServiceConfigs.map{ try sProvider.getUserDirectoryService(id: $0.serviceId) }
+		return try ApiResponse.data(
+			ApiUserSearchResult(
+				request: userId.taggedId,
+				errorsByServiceId: Dictionary(uniqueKeysWithValues: multiUser.errorsByService.map{ ($0.key.config.serviceId, ApiError(error: $0.value, environment: request.application.environment)) }),
+				result: ApiUser(multiUsers: multiUser, orderedServices: orderedServices)
 			)
-		}
-		.get()
+		)
 	}
 	
 }

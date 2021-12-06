@@ -66,16 +66,16 @@ struct ConsolepermCommand : ParsableCommand {
 			default: throw InvalidArgumentError(message: "Unknown group")
 		}
 		
-		return try await hService.existingUser(fromUserId: usermail, propertiesToFetch: [], using: app.services)
-			.unwrap(or: InvalidArgumentError(message: "No user found with the given email"))
-			.flatMapThrowing{ user in
-				return try nil2throw(user.id.value, "no userid… (should not happen!)")
-			}
-			.flatMap{ userId -> EventLoopFuture<String> in
-				return hConnector.connect(scope: Set(arrayLiteral: "acl_create", "acl_update", "acl_read"), eventLoop: eventLoop).map{ _ in userId }
-			}
-			.flatMap{ userId -> EventLoopFuture<(result: URLRequest, userInfo: Any?)> in
-				let url = hService.config.connectorSettings.baseURL.appendingPathComponent("api").appendingPathComponent("user-acls").appendingPathComponent(userId)
+		guard let user = try await hService.existingUser(fromUserId: usermail, propertiesToFetch: [], using: app.services) else {
+			throw InvalidArgumentError(message: "No user found with the given email")
+		}
+		guard let userID = user.id.value else {
+			throw InternalError(message: "no userid… (should not happen!)")
+		}
+		
+		return try await hConnector.connect(scope: Set(arrayLiteral: "acl_create", "acl_update", "acl_read"), eventLoop: eventLoop).map{ _ in userID }
+			.flatMap{ userID -> EventLoopFuture<(result: URLRequest, userInfo: Any?)> in
+				let url = hService.config.connectorSettings.baseURL.appendingPathComponent("api").appendingPathComponent("user-acls").appendingPathComponent(userID)
 				
 				var urlRequest = URLRequest(url: url)
 				urlRequest.httpMethod = "POST"

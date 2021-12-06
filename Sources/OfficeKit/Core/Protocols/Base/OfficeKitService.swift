@@ -46,7 +46,7 @@ import Foundation
  * If Swift simplifies type erasure someday, we might do this; for now erasing
  * is too complex. */
 
-public protocol OfficeKitService : class, Hashable, OfficeKitServiceInit {
+public protocol OfficeKitService : AnyObject, Hashable, OfficeKitServiceInit {
 	
 	/** The id of the linked provider, e.g. "internal_openldap". External
 	provider ids (not builtin to OfficeKit) must not have the “internal_” prefix. */

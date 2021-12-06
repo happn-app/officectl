@@ -14,8 +14,8 @@ import ServiceKit
 
 private protocol DirectoryAuthenticatorServiceBox {
 	
-	func authenticate(userId: AnyId, challenge: Any, using services: Services) throws -> EventLoopFuture<Bool>
-	func validateAdminStatus(userId: AnyId, using services: Services) throws -> EventLoopFuture<Bool>
+	func authenticate(userId: AnyId, challenge: Any, using services: Services) async throws -> Bool
+	func validateAdminStatus(userId: AnyId, using services: Services) async throws -> Bool
 	
 }
 
@@ -23,18 +23,18 @@ private struct ConcreteDirectoryAuthenticatorBox<Base : DirectoryAuthenticatorSe
 	
 	let originalAuthenticator: Base
 	
-	func authenticate(userId: AnyId, challenge: Any, using services: Services) throws -> EventLoopFuture<Bool> {
+	func authenticate(userId: AnyId, challenge: Any, using services: Services) async throws -> Bool {
 		guard let uid: Base.UserType.IdType = userId.unbox(), let c = challenge as? Base.AuthenticationChallenge else {
 			throw InvalidArgumentError(message: "Got invalid user id (\(userId)) or auth challenge (\(challenge)) to authenticate with a directory service authenticator of type \(Base.self)")
 		}
-		return try originalAuthenticator.authenticate(userId: uid, challenge: c, using: services)
+		return try await originalAuthenticator.authenticate(userId: uid, challenge: c, using: services)
 	}
 	
-	func validateAdminStatus(userId: AnyId, using services: Services) throws -> EventLoopFuture<Bool> {
+	func validateAdminStatus(userId: AnyId, using services: Services) async throws -> Bool {
 		guard let uid: Base.UserType.IdType = userId.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user id type (\(userId)) to check if user is admin with a directory service authenticator of type \(Base.self)")
 		}
-		return try originalAuthenticator.validateAdminStatus(userId: uid, using: services)
+		return try await originalAuthenticator.validateAdminStatus(userId: uid, using: services)
 	}
 	
 }
@@ -72,12 +72,12 @@ public class AnyDirectoryAuthenticatorService : AnyUserDirectoryService, Directo
 		fatalError("init(config:globalConfig:) unavailable for a directory authenticator service erasure")
 	}
 	
-	public func authenticate(userId: AnyId, challenge: Any, using services: Services) throws -> EventLoopFuture<Bool> {
-		return try box.authenticate(userId: userId, challenge: challenge, using: services)
+	public func authenticate(userId: AnyId, challenge: Any, using services: Services) async throws -> Bool {
+		return try await box.authenticate(userId: userId, challenge: challenge, using: services)
 	}
 	
-	public func validateAdminStatus(userId: AnyId, using services: Services) throws -> EventLoopFuture<Bool> {
-		return try box.validateAdminStatus(userId: userId, using: services)
+	public func validateAdminStatus(userId: AnyId, using services: Services) async throws -> Bool {
+		return try await box.validateAdminStatus(userId: userId, using: services)
 	}
 	
 	fileprivate let box: DirectoryAuthenticatorServiceBox

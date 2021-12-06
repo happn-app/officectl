@@ -100,32 +100,30 @@ public final class EmailService : UserDirectoryService {
 		return [.userId, .persistentId, .identifyingEmail]
 	}
 	
-	public func existingUser(fromPersistentId pId: Email, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<EmailUser?> {
-		let eventLoop = try services.eventLoop()
-		return eventLoop.makeSucceededFuture(EmailUser(userId: pId))
+	public func existingUser(fromPersistentId pId: Email, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> EmailUser? {
+		return EmailUser(userId: pId)
 	}
 	
-	public func existingUser(fromUserId uId: Email, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<EmailUser?> {
-		let eventLoop = try services.eventLoop()
-		return eventLoop.makeSucceededFuture(EmailUser(userId: uId))
+	public func existingUser(fromUserId uId: Email, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> EmailUser? {
+		return EmailUser(userId: uId)
 	}
 	
-	public func listAllUsers(using services: Services) throws -> EventLoopFuture<[EmailUser]> {
+	public func listAllUsers(using services: Services) async throws -> [EmailUser] {
 		throw NotSupportedError()
 	}
 	
 	public let supportsUserCreation = false
-	public func createUser(_ user: EmailUser, using services: Services) throws -> EventLoopFuture<EmailUser> {
+	public func createUser(_ user: EmailUser, using services: Services) async throws -> EmailUser {
 		throw NotSupportedError()
 	}
 	
 	public let supportsUserUpdate = false
-	public func updateUser(_ user: EmailUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<EmailUser> {
+	public func updateUser(_ user: EmailUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) async throws -> EmailUser {
 		throw NotSupportedError()
 	}
 	
 	public let supportsUserDeletion = false
-	public func deleteUser(_ user: EmailUser, using services: Services) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: EmailUser, using services: Services) async throws {
 		throw NotSupportedError()
 	}
 	

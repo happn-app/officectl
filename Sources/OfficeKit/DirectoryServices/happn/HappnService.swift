@@ -178,12 +178,12 @@ public final class HappnService : UserDirectoryService {
 		return res
 	}
 	
-	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<HappnUser?> {
+	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> HappnUser? {
 		#warning("TODO: properties to fetch")
 		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		return happnConnector.connect(scope: GetHappnUserOperation.scopes, eventLoop: eventLoop)
+		return try await happnConnector.connect(scope: GetHappnUserOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let op = GetHappnUserOperation(userKey: pId, connector: happnConnector)
 			return EventLoopFuture<HappnUser>.future(from: op, on: eventLoop).map{ $0 as HappnUser? }
@@ -197,19 +197,20 @@ public final class HappnService : UserDirectoryService {
 			default: throw e
 			}
 		}
+		.get()
 	}
 	
-	public func existingUser(fromUserId uId: String?, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<HappnUser?> {
+	public func existingUser(fromUserId uId: String?, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> HappnUser? {
 		guard let uId = uId else {
 			/* Yes. It’s ugly. But the only admin user with a nil login is 244. */
-			return try existingUser(fromPersistentId: HappnConnector.nullLoginUserId, propertiesToFetch: propertiesToFetch, using: services)
+			return try await existingUser(fromPersistentId: HappnConnector.nullLoginUserId, propertiesToFetch: propertiesToFetch, using: services)
 		}
 		
 		#warning("TODO: properties to fetch")
 		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: eventLoop)
+		return try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let ids = Set(Email(string: uId)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.stringValue } ?? [uId])
 			let futures = ids.map{ id -> EventLoopFuture<[HappnUser]> in
@@ -224,55 +225,59 @@ public final class HappnService : UserDirectoryService {
 			}
 			return users.first
 		}
+		.get()
 	}
 	
-	public func listAllUsers(using services: Services) throws -> EventLoopFuture<[HappnUser]> {
+	public func listAllUsers(using services: Services) async throws -> [HappnUser] {
 		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		return happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: eventLoop)
+		return try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let searchOp = SearchHappnUsersOperation(email: nil, happnConnector: happnConnector)
 			return EventLoopFuture<[HappnUser]>.future(from: searchOp, on: eventLoop)
 		}
+		.get()
 	}
 	
 	public let supportsUserCreation = true
-	public func createUser(_ user: HappnUser, using services: Services) throws -> EventLoopFuture<HappnUser> {
+	public func createUser(_ user: HappnUser, using services: Services) async throws -> HappnUser {
 		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		var user = user
 		if user.password.value == nil {
-			/* Creating a user without a password is not possible. Let’s generate a
-			 * password! A long and complex one. */
+			/* Creating a user without a password is not possible. Let’s generate a password!
+			 * A long and complex one. */
 			OfficeKitConfig.logger?.warning("Auto-generating a random password for happn user creation: creating a happn user w/o a password is not supported.")
 			let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789=+_-$!@#%^&*(){}[]'\\\";:/?.>,<§"
 			user.password = .set(String((0..<64).map{ _ in chars.randomElement()! }))
 		}
 		
-		return happnConnector.connect(scope: CreateHappnUserOperation.scopes, eventLoop: eventLoop)
+		return try await happnConnector.connect(scope: CreateHappnUserOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let op = CreateHappnUserOperation(user: user, connector: happnConnector)
 			return EventLoopFuture<HappnUser>.future(from: op, on: eventLoop)
 		}
+		.get()
 	}
 	
 	public let supportsUserUpdate = true
-	public func updateUser(_ user: HappnUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<HappnUser> {
+	public func updateUser(_ user: HappnUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) async throws -> HappnUser {
 		throw NotImplementedError()
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: HappnUser, using services: Services) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: HappnUser, using services: Services) async throws {
 		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		return happnConnector.connect(scope: DeleteHappnUserOperation.scopes, eventLoop: eventLoop)
+		return try await happnConnector.connect(scope: DeleteHappnUserOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let op = DeleteHappnUserOperation(user: user, connector: happnConnector)
 			return EventLoopFuture<Void>.future(from: op, on: eventLoop)
 		}
+		.get()
 	}
 	
 	public let supportsPasswordChange = true

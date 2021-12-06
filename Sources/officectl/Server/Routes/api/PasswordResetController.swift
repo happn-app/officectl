@@ -44,21 +44,20 @@ class PasswordResetController {
 		let sProvider = req.application.officeKitServiceProvider
 		let dsuPair = try dsuIdPair.dsuPair()
 		
-		let authFuture: EventLoopFuture<Bool>
+		/* Verify user authorization */
 		if let oldPass = passChangeData.oldPassword {
 			let authService = try sProvider.getDirectoryAuthenticatorService()
 			let authServiceUser = try authService.logicalUser(fromUser: dsuPair.user, in: dsuPair.service)
-			authFuture = try authService.authenticate(userId: authServiceUser.userId, challenge: oldPass, using: req.services)
+			guard try await authService.authenticate(userId: authServiceUser.userId, challenge: oldPass, using: req.services) else {
+				throw Abort(.forbidden, reason: "Invalid old password")
+			}
 		} else {
-			/* Only admins are allowed to change the pass of someone without
-			 * specifying the old password. */
-			guard loggedInUser.isAdmin else {throw Abort(.forbidden, reason: "Old password is required for non-admin users")}
-			authFuture = req.eventLoop.future(true)
+			/* Only admins are allowed to change the pass of someone without specifying the old password. */
+			guard loggedInUser.isAdmin else {
+				throw Abort(.forbidden, reason: "Old password is required for non-admin users")
+			}
 		}
 		
-		guard try await authFuture.get() else {
-			throw Abort(.forbidden, reason: "Invalid old password")
-		}
 		/* The password of the user is verified. Let’s fetch the resets! */
 		let resets = try await MultiServicesPasswordReset.fetch(from: dsuIdPair, in: sProvider.getAllUserDirectoryServices(), using: req.services)
 		/* Then launch them. */

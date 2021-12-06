@@ -45,14 +45,10 @@ struct CurrentDevTestCommand : ParsableCommand {
 		
 		/* List users by creation date decreasing */
 		let gougleService: GoogleService = try app.officeKitServiceProvider.getService(id: nil)
-		return try await gougleService.listAllUsers(using: app.services)
-			.map{ users in
-				for user in users.sorted(by: { $0.creationTime.value ?? .distantFuture < $1.creationTime.value ?? .distantFuture }) {
-					print("\(user.creationTime.value ?? .distantFuture) - \(user.primaryEmail)")
-				}
-				return ()
-			}
-			.get()
+		let users = try await gougleService.listAllUsers(using: app.services)
+		for user in users.sorted(by: { $0.creationTime.value ?? .distantFuture < $1.creationTime.value ?? .distantFuture }) {
+			print("\(user.creationTime.value ?? .distantFuture) - \(user.primaryEmail)")
+		}
 		
 		/* Delete happn console user */
 //		let consoleService: HappnService = try sProvider.getService(id: nil)

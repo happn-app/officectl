@@ -157,11 +157,11 @@ public final class GoogleService : UserDirectoryService {
 		return res
 	}
 	
-	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<GoogleUser?> {
+	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> GoogleUser? {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(fromUserId email: Email, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<GoogleUser?> {
+	public func existingUser(fromUserId email: Email, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> GoogleUser? {
 		#warning("TODO: Implement propertiesToFetch")
 		/* Note: We do **NOT** map the email to the main domain. Maybe we should? */
 		let eventLoop = try services.eventLoop()
@@ -178,14 +178,14 @@ public final class GoogleService : UserDirectoryService {
 			}
 			return objects.first
 		}
-		return future
+		return try await future.get()
 	}
 	
-	public func listAllUsers(using services: Services) throws -> EventLoopFuture<[GoogleUser]> {
+	public func listAllUsers(using services: Services) async throws -> [GoogleUser] {
 		let eventLoop = try services.eventLoop()
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
-		return googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
+		return try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in
 			let futures = self.config.primaryDomains.map{ domain -> EventLoopFuture<[GoogleUser]> in
 				let searchOp = SearchGoogleUsersOperation(searchedDomain: domain, query: "isSuspended=false", googleConnector: googleConnector)
@@ -194,25 +194,27 @@ public final class GoogleService : UserDirectoryService {
 			/* Merging all the users from all the domains. */
 			return EventLoopFuture.reduce([GoogleUser](), futures, on: eventLoop, +)
 		}
+		.get()
 	}
 	
 	public let supportsUserCreation = true
-	public func createUser(_ user: GoogleUser, using services: Services) throws -> EventLoopFuture<GoogleUser> {
+	public func createUser(_ user: GoogleUser, using services: Services) async throws -> GoogleUser {
 		let eventLoop = try services.eventLoop()
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		
 		let op = CreateGoogleUserOperation(user: user, connector: googleConnector)
-		return googleConnector.connect(scope: CreateGoogleUserOperation.scopes, eventLoop: eventLoop)
+		return try await googleConnector.connect(scope: CreateGoogleUserOperation.scopes, eventLoop: eventLoop)
 		.flatMap{ _ in EventLoopFuture<GoogleUser>.future(from: op, on: eventLoop) }
+		.get()
 	}
 	
 	public let supportsUserUpdate = true
-	public func updateUser(_ user: GoogleUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<GoogleUser> {
+	public func updateUser(_ user: GoogleUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) async throws -> GoogleUser {
 		throw NotImplementedError()
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: GoogleUser, using services: Services) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: GoogleUser, using services: Services) async throws {
 		throw NotImplementedError()
 	}
 	

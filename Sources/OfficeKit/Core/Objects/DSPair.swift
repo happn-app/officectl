@@ -71,20 +71,31 @@ public struct DSUPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 
 extension AnyDSUPair {
 	
-	public static func fetchAll(in services: Set<AnyUserDirectoryService>, using depServices: Services) async throws -> (dsuPairs: [AnyDSUPair], fetchErrorsByServices: [AnyUserDirectoryService: Error]) {
-		let eventLoop = try depServices.eventLoop()
-		let serviceAndFutureUsers = services.map{ service in (service, eventLoop.makeSucceededFuture(()).flatMapThrowing{ try service.listAllUsers(using: depServices) }.flatMap{ $0 }) }
-		let futureUsersByService = Dictionary(uniqueKeysWithValues: serviceAndFutureUsers)
-		
-		return try await EventLoopFuture.waitAll(futureUsersByService, eventLoop: eventLoop).map{ usersResultsByService in
-			let fetchErrorsByService = usersResultsByService.compactMapValues{ $0.failureValue }
-			let userPairs = usersResultsByService.compactMap{ serviceAndUsersResult -> [AnyDSUPair]? in
-				let (service, usersResult) = serviceAndUsersResult
-				return usersResult.successValue?.map{ AnyDSUPair(service: service, user: $0) }
-			}.flatMap{ $0 }
-			
-			return (userPairs, fetchErrorsByService)
-		}.get()
+	public static func fetchAll(in services: Set<AnyUserDirectoryService>, using depServices: Services) async -> (dsuPairs: [AnyDSUPair], fetchErrorsByServices: [AnyUserDirectoryService: Error]) {
+		return await withTaskGroup(
+			of: (service: AnyUserDirectoryService, users: Result<[AnyDirectoryUser], Error>).self,
+			returning: (dsuPairs: [AnyDSUPair], fetchErrorsByServices: [AnyUserDirectoryService: Error]).self,
+			body: { group in
+				for service in services {
+					group.addTask{
+						let usersResult = await Result{ try await service.listAllUsers(using: depServices) }
+						return (service, usersResult)
+					}
+				}
+				
+				var dsuPairs = [AnyDSUPair]()
+				var fetchErrorsByServices = [AnyUserDirectoryService: Error]()
+				while let (service, usersResult) = await group.next() {
+					assert(fetchErrorsByServices[service] == nil)
+					assert(!dsuPairs.contains{ $0.service == service })
+					switch usersResult {
+						case .success(let users): dsuPairs.append(contentsOf: users.map{ AnyDSUPair(service: service, user: $0) })
+						case .failure(let error): fetchErrorsByServices[service] = error
+					}
+				}
+				return (dsuPairs, fetchErrorsByServices)
+			}
+		)
 	}
 	
 }

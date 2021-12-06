@@ -71,30 +71,30 @@ public final class GitHubService : UserDirectoryService {
 		return []
 	}
 	
-	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<GitHubUser?> {
+	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> GitHubUser? {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(fromUserId uId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<GitHubUser?> {
+	public func existingUser(fromUserId uId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> GitHubUser? {
 		throw NotImplementedError()
 	}
 	
-	public func listAllUsers(using services: Services) throws -> EventLoopFuture<[GitHubUser]> {
+	public func listAllUsers(using services: Services) async throws -> [GitHubUser] {
 		throw NotImplementedError()
 	}
 	
 	public let supportsUserCreation = true
-	public func createUser(_ user: GitHubUser, using services: Services) throws -> EventLoopFuture<GitHubUser> {
+	public func createUser(_ user: GitHubUser, using services: Services) async throws -> GitHubUser {
 		throw NotImplementedError()
 	}
 	
 	public let supportsUserUpdate = false
-	public func updateUser(_ user: GitHubUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) throws -> EventLoopFuture<GitHubUser> {
+	public func updateUser(_ user: GitHubUser, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) async throws -> GitHubUser {
 		throw NotSupportedError(message: "Not sure what updating a user would mean for GitHub as the users use personal accounts.")
 	}
 	
 	public let supportsUserDeletion = true
-	public func deleteUser(_ user: GitHubUser, using services: Services) throws -> EventLoopFuture<Void> {
+	public func deleteUser(_ user: GitHubUser, using services: Services) async throws {
 		throw NotImplementedError()
 	}
 	

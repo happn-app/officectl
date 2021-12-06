@@ -13,6 +13,11 @@ import AsyncOperationResult
 
 extension Result {
 	
+	public init(_ catching: () async throws -> Success) async where Failure == Error {
+		do    {self = try await .success(catching())}
+		catch {self =           .failure(error)}
+	}
+	
 	public var successValue: Success? {
 		switch self {
 		case .success(let s): return s

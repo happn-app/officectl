@@ -49,59 +49,53 @@ struct UserListCommand : ParsableCommand {
 	/* We don’t technically require Vapor, but it’s convenient. */
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
-		let eventLoop = try app.services.make(EventLoop.self)
 		
 		let serviceProvider = app.officeKitServiceProvider
 		let service = try serviceProvider.getUserDirectoryService(id: serviceId)
 		
 		try app.auditLogger.log(action: "List all users for service \(serviceId ?? "<inferred service>"), \(includeSuspendedUsers ? "" : "not ")including inactive users.", source: .cli)
 		
-		let usersFuture: EventLoopFuture<[String]>
+		let users: [String]
 		if let googleService: GoogleService = service.unbox() {
-			usersFuture = try getUsersList(googleService: googleService, includeSuspendedUsers: includeSuspendedUsers, using: app.services)
+			users = try await getUsersList(googleService: googleService, includeSuspendedUsers: includeSuspendedUsers, using: app.services)
 		} else if let odService: OpenDirectoryService = service.unbox() {
-			usersFuture = try getUsersList(openDirectoryService: odService, includeSuspendedUsers: includeSuspendedUsers, using: app.services)
+			users = try await getUsersList(openDirectoryService: odService, includeSuspendedUsers: includeSuspendedUsers, using: app.services)
 		} else if let hService: HappnService = service.unbox() {
-			usersFuture = try getUsersList(happnService: hService, includeSuspendedUsers: includeSuspendedUsers, using: app.services)
+			users = try await getUsersList(happnService: hService, includeSuspendedUsers: includeSuspendedUsers, using: app.services)
 		} else {
 			throw InvalidArgumentError(message: "Unsupported service to list users from.")
 		}
 		
-		return try await usersFuture
-			.flatMap{ users -> EventLoopFuture<Void> in
-				switch format {
-					case .email:
-						var i = 1
-						for user in users {
-							print(user + ",", terminator: "")
-							if i == 69 {print(); print(); i = 0}
-							i += 1
-						}
-						print()
-						
-					case .onePerLine:
-						for user in users {
-							print(user)
-						}
+		switch format {
+			case .email:
+				var i = 1
+				for user in users {
+					print(user + ",", terminator: "")
+					if i == 69 {print(); print(); i = 0}
+					i += 1
 				}
-				return eventLoop.makeSucceededFuture(())
-			}
-			.get()
+				print()
+				
+			case .onePerLine:
+				for user in users {
+					print(user)
+				}
+		}
 	}
 	
-	private func getUsersList(googleService: GoogleService, includeSuspendedUsers: Bool, using services: Services) throws -> EventLoopFuture<[String]> {
-		return try googleService.listAllUsers(using: services)
-			.map{ $0.map{ googleService.shortDescription(fromUser: $0) } }
+	private func getUsersList(googleService: GoogleService, includeSuspendedUsers: Bool, using services: Services) async throws -> [String] {
+		return try await googleService.listAllUsers(using: services)
+			.map{ googleService.shortDescription(fromUser: $0) }
 	}
 	
-	private func getUsersList(openDirectoryService: OpenDirectoryService, includeSuspendedUsers: Bool, using services: Services) throws -> EventLoopFuture<[String]> {
-		return try openDirectoryService.listAllUsers(using: services)
-			.map{ $0.map{ openDirectoryService.shortDescription(fromUser: $0) } }
+	private func getUsersList(openDirectoryService: OpenDirectoryService, includeSuspendedUsers: Bool, using services: Services) async throws -> [String] {
+		return try await openDirectoryService.listAllUsers(using: services)
+			.map{ openDirectoryService.shortDescription(fromUser: $0) }
 	}
 	
-	private func getUsersList(happnService: HappnService, includeSuspendedUsers: Bool, using services: Services) throws -> EventLoopFuture<[String]> {
-		return try happnService.listAllUsers(using: services)
-			.map{ $0.map{ happnService.shortDescription(fromUser: $0) } }
+	private func getUsersList(happnService: HappnService, includeSuspendedUsers: Bool, using services: Services) async throws -> [String] {
+		return try await happnService.listAllUsers(using: services)
+			.map{ happnService.shortDescription(fromUser: $0) }
 	}
 	
 }

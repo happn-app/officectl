@@ -19,11 +19,11 @@ private protocol GroupOfUsersDirectoryServiceBox {
 	
 	func shortDescription(fromGroup group: AnyDirectoryGroup) -> String
 	
-	func listUsers(inGroup group: AnyDirectoryGroup, using services: Services) throws -> EventLoopFuture<[AnyDirectoryUser]>
-	func listGroups(withUser user: AnyDirectoryUser, using services: Services) throws -> EventLoopFuture<[AnyDirectoryGroup]>
+	func listUsers(inGroup group: AnyDirectoryGroup, using services: Services) async throws -> [AnyDirectoryUser]
+	func listGroups(withUser user: AnyDirectoryUser, using services: Services) async throws -> [AnyDirectoryGroup]
 	
 	var supportsEmbeddedGroupsOfUsers: Bool {get}
-	func listGroups(inGroup group: AnyDirectoryGroup, using services: Services) throws -> EventLoopFuture<[AnyDirectoryGroup]>
+	func listGroups(inGroup group: AnyDirectoryGroup, using services: Services) async throws -> [AnyDirectoryGroup]
 	
 }
 
@@ -42,29 +42,29 @@ private struct ConcreteGroupOfUsersDirectoryServiceBox<Base : GroupOfUsersDirect
 		return originalDirectory.shortDescription(fromGroup: g)
 	}
 	
-	func listUsers(inGroup group: AnyDirectoryGroup, using services: Services) throws -> EventLoopFuture<[AnyDirectoryUser]> {
+	func listUsers(inGroup group: AnyDirectoryGroup, using services: Services) async throws -> [AnyDirectoryUser] {
 		guard let g: Base.GroupType = group.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid group (\(group)) from which to list users in.")
 		}
-		return try originalDirectory.listUsers(inGroup: g, using: services).map{ $0.map{ AnyDirectoryUser($0) } }
+		return try await originalDirectory.listUsers(inGroup: g, using: services).map{ AnyDirectoryUser($0) }
 	}
 	
-	func listGroups(withUser user: AnyDirectoryUser, using services: Services) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
+	func listGroups(withUser user: AnyDirectoryUser, using services: Services) async throws -> [AnyDirectoryGroup] {
 		guard let u: Base.UserType = user.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid user (\(user)) for which to list groups that contains it.")
 		}
-		return try originalDirectory.listGroups(withUser: u, using: services).map{ $0.map{ AnyDirectoryGroup($0) } }
+		return try await originalDirectory.listGroups(withUser: u, using: services).map{ AnyDirectoryGroup($0) }
 	}
 	
 	var supportsEmbeddedGroupsOfUsers: Bool {
 		return originalDirectory.supportsEmbeddedGroupsOfUsers
 	}
 	
-	func listGroups(inGroup group: AnyDirectoryGroup, using services: Services) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
+	func listGroups(inGroup group: AnyDirectoryGroup, using services: Services) async throws -> [AnyDirectoryGroup] {
 		guard let g: Base.GroupType = group.unbox() else {
 			throw InvalidArgumentError(message: "Got invalid group (\(group)) from which to list users in.")
 		}
-		return try originalDirectory.listGroups(inGroup: g, using: services).map{ $0.map{ AnyDirectoryGroup($0) } }
+		return try await originalDirectory.listGroups(inGroup: g, using: services).map{ AnyDirectoryGroup($0) }
 	}
 	
 }
@@ -90,20 +90,20 @@ public class AnyGroupOfUsersDirectoryService : AnyUserDirectoryService, GroupOfU
 		return box.shortDescription(fromGroup: group)
 	}
 	
-	public func listUsers(inGroup group: AnyDirectoryGroup, using services: Services) throws -> EventLoopFuture<[AnyDirectoryUser]> {
-		return try box.listUsers(inGroup: group, using: services)
+	public func listUsers(inGroup group: AnyDirectoryGroup, using services: Services) async throws -> [AnyDirectoryUser] {
+		return try await box.listUsers(inGroup: group, using: services)
 	}
 	
-	public func listGroups(withUser user: AnyDirectoryUser, using services: Services) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
-		return try box.listGroups(withUser: user, using: services)
+	public func listGroups(withUser user: AnyDirectoryUser, using services: Services) async throws -> [AnyDirectoryGroup] {
+		return try await box.listGroups(withUser: user, using: services)
 	}
 	
 	public var supportsEmbeddedGroupsOfUsers: Bool {
 		return box.supportsEmbeddedGroupsOfUsers
 	}
 	
-	public func listGroups(inGroup group: AnyDirectoryGroup, using services: Services) throws -> EventLoopFuture<[AnyDirectoryGroup]> {
-		return try box.listGroups(inGroup: group, using: services)
+	public func listGroups(inGroup group: AnyDirectoryGroup, using services: Services) async throws -> [AnyDirectoryGroup] {
+		return try await box.listGroups(inGroup: group, using: services)
 	}
 	
 	fileprivate let box: GroupOfUsersDirectoryServiceBox

@@ -125,7 +125,7 @@ struct SyncCommand : ParsableCommand {
 					let userStr = plan.service.shortDescription(fromUser: userToCreate)
 					group.addTask{
 						do {
-							let user = try await plan.service.createUser(userToCreate, using: app.services).get()
+							let user = try await plan.service.createUser(userToCreate, using: app.services)
 							
 							/* If the service we’re creating the user in is the auth service, we create a password. */
 							let newPass: String?
@@ -150,7 +150,7 @@ struct SyncCommand : ParsableCommand {
 					let userStr = plan.service.shortDescription(fromUser: userToDelete)
 					group.addTask{
 						do {
-							try await plan.service.deleteUser(userToDelete, using: app.services).get()
+							try await plan.service.deleteUser(userToDelete, using: app.services)
 							return UserSyncResult.delete(serviceId: serviceId, userStr: userStr, error: nil)
 						} catch {
 							return UserSyncResult.delete(serviceId: serviceId, userStr: userStr, error: error)

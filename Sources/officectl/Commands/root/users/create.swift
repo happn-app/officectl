@@ -107,38 +107,47 @@ struct UserCreateCommand : ParsableCommand {
 		
 		try app.auditLogger.log(action: "Creating user with email “\(email.stringValue)”, first name “\(firstname)”, last name “\(lastname)” on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
 		
-		struct SkippedUser : Error {}
-		let futures = users.enumerated().map{ serviceIdxAndUser -> EventLoopFuture<AnyDirectoryUser> in
-			let (serviceIdx, userResult) = serviceIdxAndUser
-			let service = services[serviceIdx]
-			guard let user = userResult.successValue else {
-				return eventLoop.future(error: SkippedUser())
-			}
-			
-			return eventLoop.future()
-			.flatMapThrowing{ _    in try service.createUser(user, using: app.services) }.flatMap{ $0 }
-			.flatMapThrowing{ user in try service.changePasswordAction(for: user, using: app.services).start(parameters: password, weakeningMode: .alwaysInstantly, eventLoop: eventLoop).map{ user } }.flatMap{ $0 }
-		}
-		
-		return try await EventLoopFuture.waitAll(futures, eventLoop: eventLoop)
-		.map{ results in
-			if !self.yes {
-				context.console.info()
-				context.console.info()
-			}
-			context.console.info("********* CREATION RESULTS *********")
-			for (idx, result) in results.enumerated() {
-				let service = services[idx]
-				let serviceId = service.config.serviceId
-				switch result {
-				case .failure(_ as SkippedUser): (/* nop! (The user is skipped; this is a “normal” error and the error is shown before.) */)
-				case .success(let user):         context.console.info("✅ \(serviceId): \(service.shortDescription(fromUser: user))")
-				case .failure(let error):        context.console.info("🛑 \(serviceId): \(error)")
+		let results = await withTaskGroup(
+			of: (AnyUserDirectoryService, Result<AnyDirectoryUser, Error>).self,
+			returning: [(AnyUserDirectoryService, Result<AnyDirectoryUser, Error>)].self,
+			body: { group in
+				for (serviceIdx, userResult) in users.enumerated() {
+					let service = services[serviceIdx]
+					guard let user = userResult.successValue else {
+						/* Error for given service is already shown. */
+						continue
+					}
+					
+					group.addTask{
+						return await (service, Result{
+							let user = try await service.createUser(user, using: app.services)
+							try await service.changePasswordAction(for: user, using: app.services).start(parameters: password, weakeningMode: .alwaysInstantly, eventLoop: eventLoop).get()
+							return user
+						})
+					}
 				}
+				
+				var result = [(AnyUserDirectoryService, Result<AnyDirectoryUser, Error>)]()
+				while let curRes = await group.next() {
+					result.append(curRes)
+				}
+				return result
 			}
-			context.console.info("Password for created users: \(password)")
+		)
+		
+		if !self.yes {
+			context.console.info()
+			context.console.info()
 		}
-		.get()
+		context.console.info("********* CREATION RESULTS *********")
+		for (service, result) in results {
+			let serviceID = service.config.serviceId
+			switch result {
+			case .success(let user):         context.console.info("✅ \(serviceID): \(service.shortDescription(fromUser: user))")
+			case .failure(let error):        context.console.info("🛑 \(serviceID): \(error)")
+			}
+		}
+		context.console.info("Password for created users: \(password)")
 	}
 	
 }

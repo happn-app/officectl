@@ -49,7 +49,7 @@ extension LDAPInetOrgPersonWithObject : DirectoryUser {
 	}
 	
 	public var persistentId: RemoteProperty<LDAPDistinguishedName> {
-		#warning("TODO (LDAP does not have a built-in persistent id. We must define the property that is used for this in the config.)")
+#warning("TODO (LDAP does not have a built-in persistent id. We must define the property that is used for this in the config.)")
 		return .unsupported
 	}
 	
