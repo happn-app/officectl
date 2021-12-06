@@ -36,12 +36,12 @@ struct CurrentDevTestCommand : ParsableCommand {
 	/* We don’t technically require Vapor, but it’s convenient. */
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
-		let officeKitConfig = app.officeKitConfig
-		let officectlConfig = app.officectlConfig
-		let sProvider = app.officeKitServiceProvider
-		let semiSingletonStore = app.semiSingletonStore
-		let eventLoop: EventLoop = try app.services.make()
-		let simpleMDMToken = try nil2throw(officectlConfig.tmpSimpleMDMToken)
+//		let officeKitConfig = app.officeKitConfig
+//		let officectlConfig = app.officectlConfig
+//		let sProvider = app.officeKitServiceProvider
+//		let semiSingletonStore = app.semiSingletonStore
+//		let eventLoop: EventLoop = try app.services.make()
+//		let simpleMDMToken = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		/* List users by creation date decreasing */
 		let gougleService: GoogleService = try app.officeKitServiceProvider.getService(id: nil)

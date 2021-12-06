@@ -50,7 +50,6 @@ struct UserCreateCommand : ParsableCommand {
 	/* We don’t technically require Vapor, but it’s convenient. */
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
-		let eventLoop = try app.services.make(EventLoop.self)
 		
 		let password = self.password ?? generateRandomPassword()
 		let serviceIds = self.serviceIds?.split(separator: ",").map(String.init)

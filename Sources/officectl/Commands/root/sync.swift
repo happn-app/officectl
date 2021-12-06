@@ -39,7 +39,6 @@ struct SyncCommand : ParsableCommand {
 	 * logging/retrieving user input from the Console. */
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
-		let eventLoop = try app.services.make(EventLoop.self)
 		
 		guard let syncConfig = app.officectlConfig.syncConfig else {
 			throw InvalidArgumentError(message: "Won’t sync without a sync config.")
