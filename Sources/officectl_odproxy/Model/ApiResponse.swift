@@ -39,10 +39,14 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 }
 
 
-extension ApiResponse : ResponseEncodable {
+extension ApiResponse : ResponseEncodable, AsyncResponseEncodable {
 	
 	func encodeResponse(for request: Request) -> EventLoopFuture<Response> {
 		return request.eventLoop.makeSucceededFuture(()).flatMapThrowing{ try self.syncEncode(for: request) }
+	}
+	
+	func encodeResponse(for request: Request) async throws -> Response {
+		return try syncEncode(for: request)
 	}
 	
 	/* Convenience, not part of the protocol. */

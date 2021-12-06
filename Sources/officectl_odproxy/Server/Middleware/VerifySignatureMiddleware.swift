@@ -13,7 +13,7 @@ import Vapor
 
 
 
-class VerifySignatureMiddleware : Middleware {
+class VerifySignatureMiddleware : AsyncMiddleware {
 	
 	typealias SignatureURLPathPrefixTransform = (from: String, to: String)
 	
@@ -25,12 +25,7 @@ class VerifySignatureMiddleware : Middleware {
 		signatureURLPathPrefixTransform = t
 	}
 	
-	func respond(to request: Request, chainingTo next: Responder) -> EventLoopFuture<Response> {
-		do    {return try respondThrowing(to: request, chainingTo: next)}
-		catch {return request.eventLoop.makeFailedFuture(error)}
-	}
-	
-	func respondThrowing(to request: Request, chainingTo next: Responder) throws -> EventLoopFuture<Response> {
+	func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
 		let signatureHeaders = request.headers["Officectl-Signature"]
 		guard let signatureHeader = signatureHeaders.onlyElement else {
 			throw Abort(.badRequest, reason: "No or too many signature headers")
@@ -73,7 +68,7 @@ class VerifySignatureMiddleware : Middleware {
 			throw Abort(.badRequest, reason: "Incorrectly signed request")
 		}
 		
-		return next.respond(to: request)
+		return try await next.respond(to: request)
 	}
 	
 	private func transformURLPath(_ path: String) throws -> String {

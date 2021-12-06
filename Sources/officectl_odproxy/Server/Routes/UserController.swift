@@ -14,18 +14,19 @@ import Vapor
 
 final class UserController {
 	
-	func createUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<DirectoryUserWrapper>> {
+	func createUser(_ req: Request) async throws -> ApiResponse<DirectoryUserWrapper> {
 		struct Request : Decodable {
 			var user: DirectoryUserWrapper
 		}
 		let input = try req.content.decode(Request.self)
 		
 		let odService = req.application.openDirectoryService
-		let user = try odService.logicalUser(fromWrappedUser: input.user)
-		return try odService.createUser(user, using: req.services).flatMapThrowing{ try ApiResponse.data(odService.wrappedUser(fromUser: $0)) }
+		let logicalUser = try odService.logicalUser(fromWrappedUser: input.user)
+		let createduser = try await odService.createUser(logicalUser, using: req.services)
+		return try ApiResponse.data(odService.wrappedUser(fromUser: createduser))
 	}
 	
-	func updateUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<DirectoryUserWrapper>> {
+	func updateUser(_ req: Request) async throws -> ApiResponse<DirectoryUserWrapper> {
 		struct Request : Decodable {
 			var user: DirectoryUserWrapper
 			var propertiesToUpdate: Set<String>
@@ -34,22 +35,24 @@ final class UserController {
 		let properties = Set(input.propertiesToUpdate.map{ DirectoryUserProperty(stringLiteral: $0 )})
 		
 		let odService = req.application.openDirectoryService
-		let user = try odService.logicalUser(fromWrappedUser: input.user)
-		return try odService.updateUser(user, propertiesToUpdate: properties, using: req.services).flatMapThrowing{ try ApiResponse.data(odService.wrappedUser(fromUser: $0)) }
+		let logicalUser = try odService.logicalUser(fromWrappedUser: input.user)
+		let updatedUser = try await odService.updateUser(logicalUser, propertiesToUpdate: properties, using: req.services)
+		return try ApiResponse.data(odService.wrappedUser(fromUser: updatedUser))
 	}
 	
-	func deleteUser(_ req: Request) throws -> EventLoopFuture<ApiResponse<String>> {
+	func deleteUser(_ req: Request) async throws -> ApiResponse<String> {
 		struct Request : Decodable {
 			var user: DirectoryUserWrapper
 		}
 		let input = try req.content.decode(Request.self)
 		
 		let odService = req.application.openDirectoryService
-		let user = try odService.logicalUser(fromWrappedUser: input.user)
-		return try odService.deleteUser(user, using: req.services).map{ _ in ApiResponse.data("ok") }
+		let logicalUser = try odService.logicalUser(fromWrappedUser: input.user)
+		try await odService.deleteUser(logicalUser, using: req.services)
+		return .data("ok")
 	}
 	
-	func changePassword(_ req: Request) throws -> EventLoopFuture<ApiResponse<String>> {
+	func changePassword(_ req: Request) async throws -> ApiResponse<String> {
 		/* The data we should have in input. */
 		struct Request : Decodable {
 			var userId: TaggedId
@@ -60,15 +63,11 @@ final class UserController {
 		let odService = req.application.openDirectoryService
 		let user = try odService.logicalUser(fromWrappedUser: DirectoryUserWrapper(userId: input.userId))
 		
-		let ret = req.eventLoop.makePromise(of: ApiResponse<String>.self)
 		let resetPasswordAction = try odService.changePasswordAction(for: user, using: req.services)
-		resetPasswordAction.start(parameters: input.newPassword, weakeningMode: .alwaysInstantly, handler: { result in
-			switch result {
-			case .success:            ret.succeed(ApiResponse.data("ok"))
-			case .failure(let error): ret.fail(error)
-			}
-		})
-		return ret.futureResult
+		try await withCheckedThrowingContinuation{ continuation in
+			resetPasswordAction.start(parameters: input.newPassword, weakeningMode: .alwaysInstantly, handler: { continuation.resume(with: $0) })
+		}
+		return ApiResponse.data("ok")
 	}
 	
 }
