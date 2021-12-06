@@ -40,7 +40,6 @@ struct UserDeleteCommand : ParsableCommand {
 	
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
-		let eventLoop = try app.services.make(EventLoop.self)
 		
 		let serviceIds = self.serviceIds?.split(separator: ",").map(String.init)
 		
