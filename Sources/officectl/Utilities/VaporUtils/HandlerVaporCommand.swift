@@ -21,7 +21,7 @@ struct HandlerVaporCommand : Vapor.Command {
 	
 	let help = "Internal command to launch a custom handler command. You should never see this."
 	
-	typealias Run = (CommandContext) throws -> EventLoopFuture<Void>
+	typealias Run = (CommandContext) async throws -> Void
 	let run: Run
 	
 	init(run r: @escaping Run) {
@@ -29,7 +29,13 @@ struct HandlerVaporCommand : Vapor.Command {
 	}
 	
 	func run(using context: CommandContext, signature: HandlerVaporCommand.Signature) throws {
-		try run(context).wait()
+		let group = DispatchGroup()
+		group.enter()
+		Task{
+			try await run(context)
+			group.leave()
+		}
+		group.wait()
 	}
 	
 }

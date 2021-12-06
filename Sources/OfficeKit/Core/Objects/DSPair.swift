@@ -71,12 +71,12 @@ public struct DSUPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 
 extension AnyDSUPair {
 	
-	public static func fetchAll(in services: Set<AnyUserDirectoryService>, using depServices: Services) throws -> EventLoopFuture<(dsuPairs: [AnyDSUPair], fetchErrorsByServices: [AnyUserDirectoryService: Error])> {
+	public static func fetchAll(in services: Set<AnyUserDirectoryService>, using depServices: Services) async throws -> (dsuPairs: [AnyDSUPair], fetchErrorsByServices: [AnyUserDirectoryService: Error]) {
 		let eventLoop = try depServices.eventLoop()
 		let serviceAndFutureUsers = services.map{ service in (service, eventLoop.makeSucceededFuture(()).flatMapThrowing{ try service.listAllUsers(using: depServices) }.flatMap{ $0 }) }
 		let futureUsersByService = Dictionary(uniqueKeysWithValues: serviceAndFutureUsers)
 		
-		return EventLoopFuture.waitAll(futureUsersByService, eventLoop: eventLoop).map{ usersResultsByService in
+		return try await EventLoopFuture.waitAll(futureUsersByService, eventLoop: eventLoop).map{ usersResultsByService in
 			let fetchErrorsByService = usersResultsByService.compactMapValues{ $0.failureValue }
 			let userPairs = usersResultsByService.compactMap{ serviceAndUsersResult -> [AnyDSUPair]? in
 				let (service, usersResult) = serviceAndUsersResult
@@ -84,7 +84,7 @@ extension AnyDSUPair {
 			}.flatMap{ $0 }
 			
 			return (userPairs, fetchErrorsByService)
-		}
+		}.get()
 	}
 	
 }

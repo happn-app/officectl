@@ -41,7 +41,7 @@ struct ConsolepermCommand : ParsableCommand {
 	}
 	
 	/* We don’t technically require Vapor, but it’s convenient. */
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let sProvider = app.officeKitServiceProvider
 		let eventLoop = try app.services.make(EventLoop.self)
@@ -66,7 +66,7 @@ struct ConsolepermCommand : ParsableCommand {
 			default: throw InvalidArgumentError(message: "Unknown group")
 		}
 		
-		return try hService.existingUser(fromUserId: usermail, propertiesToFetch: [], using: app.services)
+		return try await hService.existingUser(fromUserId: usermail, propertiesToFetch: [], using: app.services)
 			.unwrap(or: InvalidArgumentError(message: "No user found with the given email"))
 			.flatMapThrowing{ user in
 				return try nil2throw(user.id.value, "no userid… (should not happen!)")
@@ -102,6 +102,7 @@ struct ConsolepermCommand : ParsableCommand {
 				app.console.print(String(data: data, encoding: .utf8) ?? data.reduce("", { $0 + String(format: "%02x", $1) }))
 				return ()
 			}
+			.get()
 	}
 	
 }

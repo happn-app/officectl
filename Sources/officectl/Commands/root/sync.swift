@@ -37,7 +37,7 @@ struct SyncCommand : ParsableCommand {
 	
 	/* We don’t technically require Vapor, but it’s convenient, especially for
 	 * logging/retrieving user input from the Console. */
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let eventLoop = try app.services.make(EventLoop.self)
 		
@@ -52,7 +52,7 @@ struct SyncCommand : ParsableCommand {
 		let toIds = Set(to).subtracting([fromId])
 		guard !toIds.isEmpty else {
 			/* If there is nothing in toIds, we are done! */
-			return eventLoop.future()
+			return
 		}
 		
 		try app.auditLogger.log(action: "Computing sync from service \(fromId) to \(toIds.joined(separator: ",")).", source: .cli)
@@ -60,135 +60,124 @@ struct SyncCommand : ParsableCommand {
 		let fromDirectory = try officeKitServiceProvider.getUserDirectoryService(id: fromId)
 		let toDirectories = try toIds.map{ try officeKitServiceProvider.getUserDirectoryService(id: String($0)) }
 		
-		return try MultiServicesUser.fetchAll(in: Set([fromDirectory] + toDirectories), using: app.services).flatMapThrowing{
-			let (users, fetchErrorsByService) = $0
-			guard fetchErrorsByService.count == 0 else {
-				throw ErrorCollection(Array(fetchErrorsByService.values))
-			}
+		let (users, fetchErrorsByService) = try await MultiServicesUser.fetchAll(in: Set([fromDirectory] + toDirectories), using: app.services)
+		guard fetchErrorsByService.count == 0 else {
+			throw ErrorCollection(Array(fetchErrorsByService.values))
+		}
+		
+		let plans: [ServiceSyncPlan] = try toDirectories.map{ toDirectory in
+			let toDirectoryBlacklist   = syncConfig.blacklistsByServiceId[toDirectory.config.serviceId]   ?? []
+			let fromDirectoryBlacklist = syncConfig.blacklistsByServiceId[fromDirectory.config.serviceId] ?? []
 			
-			return try toDirectories.map{ toDirectory in
-				let toDirectoryBlacklist   = syncConfig.blacklistsByServiceId[toDirectory.config.serviceId]   ?? []
-				let fromDirectoryBlacklist = syncConfig.blacklistsByServiceId[fromDirectory.config.serviceId] ?? []
-				
-				let usersToCreate = try users
-					.filter{ $0[toDirectory] == .some(nil) }                                                      /* Multi-users w/o a value in the destination directory */
-					.compactMap{ $0[fromDirectory]! }                                                             /* W/ a value in the source directory */
-					.filter{ !fromDirectoryBlacklist.contains(fromDirectory.string(fromUserId: $0.user.userId)) } /* Not blacklisted from source */
-					.map{ try $0.hop(to: toDirectory).user }                                                      /* Converted to destination directory */
-					.filter{ !toDirectoryBlacklist.contains(toDirectory.string(fromUserId: $0.userId)) }          /* Not blacklisted in destination either */
-				
-				let usersToDelete = users
-					.filter{ $0[fromDirectory] == .some(nil) }                                           /* Multi-users w/o a value in the source directory */
-					.compactMap{ $0[toDirectory]!?.user }                                                /* W/ a value in the destination directory */
-					.filter{ !toDirectoryBlacklist.contains(toDirectory.string(fromUserId: $0.userId)) } /* Not blacklisted in destination */
-				
-				return ServiceSyncPlan(service: toDirectory, usersToCreate: usersToCreate, usersToDelete: usersToDelete)
+			let usersToCreate = try users
+				.filter{ $0[toDirectory] == .some(nil) }                                                      /* Multi-users w/o a value in the destination directory */
+				.compactMap{ $0[fromDirectory]! }                                                             /* W/ a value in the source directory */
+				.filter{ !fromDirectoryBlacklist.contains(fromDirectory.string(fromUserId: $0.user.userId)) } /* Not blacklisted from source */
+				.map{ try $0.hop(to: toDirectory).user }                                                      /* Converted to destination directory */
+				.filter{ !toDirectoryBlacklist.contains(toDirectory.string(fromUserId: $0.userId)) }          /* Not blacklisted in destination either */
+			
+			let usersToDelete = users
+				.filter{ $0[fromDirectory] == .some(nil) }                                           /* Multi-users w/o a value in the source directory */
+				.compactMap{ $0[toDirectory]!?.user }                                                /* W/ a value in the destination directory */
+				.filter{ !toDirectoryBlacklist.contains(toDirectory.string(fromUserId: $0.userId)) } /* Not blacklisted in destination */
+			
+			return ServiceSyncPlan(service: toDirectory, usersToCreate: usersToCreate, usersToDelete: usersToDelete)
+		}
+		
+		/* Let’s verify the user is ok with the plan */
+		guard !plans.reduce([], { $0 + $1.usersToCreate + $1.usersToDelete }).isEmpty else {
+			context.console.info("Everything is in sync.")
+			return
+		}
+		
+		var textPlan = "********* SYNC PLAN *********" + ConsoleText.newLine
+		for plan in plans.sorted(by: { $0.service.config.serviceName < $1.service.config.serviceName }) {
+			textPlan += ConsoleText.newLine + ConsoleText.newLine + "*** For service \(plan.service.config.serviceName) (id=\(plan.service.config.serviceId))".consoleText() + ConsoleText.newLine
+			
+			var printedSomething = false
+			if !plan.usersToCreate.isEmpty {
+				printedSomething = true
+				textPlan += ConsoleText.newLine + "   - Users creation:" + ConsoleText.newLine
+				plan.usersToCreate.forEach{ textPlan += "      \(plan.service.shortDescription(fromUser: $0))".consoleText() + ConsoleText.newLine }
+			}
+			if !plan.usersToDelete.isEmpty {
+				printedSomething = true
+				textPlan += ConsoleText.newLine + "   - Users deletion:" + ConsoleText.newLine
+				plan.usersToDelete.forEach{ textPlan += "      \(plan.service.shortDescription(fromUser: $0))".consoleText() + ConsoleText.newLine }
+			}
+			if !printedSomething {
+				textPlan += "   <Nothing to do for this service>" + ConsoleText.newLine
 			}
 		}
-		.flatMapThrowing{ (plans: [ServiceSyncPlan]) -> [ServiceSyncPlan] in
-			/* Let’s verify the user is ok with the plan */
-			guard !plans.reduce([], { $0 + $1.usersToCreate + $1.usersToDelete }).isEmpty else {
-				context.console.info("Everything is in sync.")
-				throw NoSyncActions()
-			}
-			
-			var textPlan = "********* SYNC PLAN *********" + ConsoleText.newLine
-			for plan in plans.sorted(by: { $0.service.config.serviceName < $1.service.config.serviceName }) {
-				textPlan += ConsoleText.newLine + ConsoleText.newLine + "*** For service \(plan.service.config.serviceName) (id=\(plan.service.config.serviceId))".consoleText() + ConsoleText.newLine
-				
-				var printedSomething = false
-				if !plan.usersToCreate.isEmpty {
-					printedSomething = true
-					textPlan += ConsoleText.newLine + "   - Users creation:" + ConsoleText.newLine
-					plan.usersToCreate.forEach{ textPlan += "      \(plan.service.shortDescription(fromUser: $0))".consoleText() + ConsoleText.newLine }
-				}
-				if !plan.usersToDelete.isEmpty {
-					printedSomething = true
-					textPlan += ConsoleText.newLine + "   - Users deletion:" + ConsoleText.newLine
-					plan.usersToDelete.forEach{ textPlan += "      \(plan.service.shortDescription(fromUser: $0))".consoleText() + ConsoleText.newLine }
-				}
-				if !printedSomething {
-					textPlan += "   <Nothing to do for this service>" + ConsoleText.newLine
-				}
-			}
-			textPlan += ConsoleText.newLine + ConsoleText.newLine + ConsoleText.newLine + "Do you want to continue?"
-			guard context.console.confirm(textPlan) else {
-				throw UserAbortedError()
-			}
-			return plans
+		textPlan += ConsoleText.newLine + ConsoleText.newLine + ConsoleText.newLine + "Do you want to continue?"
+		guard context.console.confirm(textPlan) else {
+			throw UserAbortedError()
 		}
-		.flatMapThrowing{ plans in
-			/* Now let’s do the actual sync! */
-			try app.auditLogger.log(action: "Applying sync from service \(fromId) to \(toIds.joined(separator: ",")).", source: .cli)
-			
-			let futures = plans.flatMap{ plan in
-				plan.usersToCreate.map{ user -> EventLoopFuture<UserSyncResult> in
+		
+		/* Now let’s do the actual sync! */
+		try app.auditLogger.log(action: "Applying sync from service \(fromId) to \(toIds.joined(separator: ",")).", source: .cli)
+		
+		await withTaskGroup(of: UserSyncResult.self, returning: Void.self, body: { group in
+			for plan in plans {
+				/* User creations */
+				for userToCreate in plan.usersToCreate {
 					let serviceId = plan.service.config.serviceId
-					let userStr = plan.service.shortDescription(fromUser: user)
-					/* Create the user */
-					return eventLoop.future()
-					.flatMapThrowing{ _ in try plan.service.createUser(user, using: app.services) }
-					.flatMap{ $0 }
-					.flatMapThrowing{ user in
-						/* If the service we’re creating the user in is the auth
-						 * service, we also set a password on the user. */
-						guard serviceId == authServiceId else {return eventLoop.future(nil)}
-						
-						let newPass = generateRandomPassword()
-						let changePassAction = try plan.service.changePasswordAction(for: user, using: app.services)
-						return changePassAction.start(parameters: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)
-							.map{ newPass }
-					}
-					.flatMap{ $0 }
-					.map{ pass in Result<String?, Error>.success(pass) }.flatMapErrorThrowing{ error in Result<String?, Error>.failure(error) }
-					.map{ UserSyncResult.create(serviceId: serviceId, userStr: userStr, password: $0.successValue ?? nil, error: $0.failureValue) }
-				}
-				+
-				plan.usersToDelete.map{ user -> EventLoopFuture<UserSyncResult> in
-					let serviceId = plan.service.config.serviceId
-					let userStr = plan.service.shortDescription(fromUser: user)
-					/* Delete the user */
-					return eventLoop.future()
-					.flatMapThrowing{ _ in try plan.service.deleteUser(user, using: app.services) }
-					.flatMap{ $0 }
-					.map{ pass in Result<Void, Error>.success(()) }.flatMapErrorThrowing{ error in Result<Void, Error>.failure(error) }
-					.map{ UserSyncResult.delete(serviceId: serviceId, userStr: userStr, error: $0.failureValue) }
-				}
-			}
-			
-			return EventLoopFuture.whenAllComplete(futures, on: eventLoop)
-			.map{ resultsAll in
-				let results = resultsAll.compactMap{ $0.successValue }
-				let internalErrorFailures = resultsAll.compactMap{ $0.failureValue }
-				
-				context.console.info()
-				context.console.info("********* SYNC RESULTS *********")
-				for internalError in internalErrorFailures {
-					context.console.error("Internal Error: Got error \(internalError) for a future that should not fail!", newLine: true)
-				}
-				for result in results.sorted() {
-					switch result {
-					case .create(serviceId: let serviceId, userStr: let userStr, password: nil, error: nil):       context.console.info("\(serviceId): created user \(userStr)", newLine: true)
-					case .create(serviceId: let serviceId, userStr: let userStr, password: let pass?, error: nil): context.console.info("\(serviceId): created user \(userStr) w/ pass \(pass)", newLine: true)
-					case .create(serviceId: let serviceId, userStr: let userStr, password: _, error: let error?):  context.console.error("\(serviceId): failed to create user \(userStr): \(error)", newLine: true)
-					case .delete(serviceId: let serviceId, userStr: let userStr, error: nil):                      context.console.info("\(serviceId): deleted user \(userStr)", newLine: true)
-					case .delete(serviceId: let serviceId, userStr: let userStr, error: let error?):               context.console.error("\(serviceId): failed to delete user \(userStr): \(error)", newLine: true)
+					let userStr = plan.service.shortDescription(fromUser: userToCreate)
+					group.addTask{
+						do {
+							let user = try await plan.service.createUser(userToCreate, using: app.services).get()
+							
+							/* If the service we’re creating the user in is the auth service, we create a password. */
+							let newPass: String?
+							if serviceId != authServiceId {
+								newPass = nil
+							} else {
+								let pass = generateRandomPassword()
+								newPass = pass
+								let changePassAction = try plan.service.changePasswordAction(for: user, using: app.services)
+								_ = try await changePassAction.start(parameters: pass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop).get()
+							}
+							
+							return UserSyncResult.create(serviceId: serviceId, userStr: userStr, password: newPass, error: nil)
+						} catch {
+							return UserSyncResult.create(serviceId: serviceId, userStr: userStr, password: nil, error: error)
+						}
 					}
 				}
-				context.console.info()
+				/* User deletions */
+				for userToDelete in plan.usersToDelete {
+					let serviceId = plan.service.config.serviceId
+					let userStr = plan.service.shortDescription(fromUser: userToDelete)
+					group.addTask{
+						do {
+							try await plan.service.deleteUser(userToDelete, using: app.services).get()
+							return UserSyncResult.delete(serviceId: serviceId, userStr: userStr, error: nil)
+						} catch {
+							return UserSyncResult.delete(serviceId: serviceId, userStr: userStr, error: error)
+						}
+					}
+				}
 			}
-		}
-		.flatMap{ $0 }
-		.flatMapErrorThrowing{ error in
-			guard error is NoSyncActions else {
-				throw error
+			
+			/* Let’s print the results */
+			var results = [UserSyncResult]()
+			for await result in group {results.append(result)}
+			
+			context.console.info()
+			context.console.info("********* SYNC RESULTS *********")
+			for result in results.sorted() {
+				switch result {
+				case .create(serviceId: let serviceId, userStr: let userStr, password: nil, error: nil):       context.console.info("\(serviceId): created user \(userStr)", newLine: true)
+				case .create(serviceId: let serviceId, userStr: let userStr, password: let pass?, error: nil): context.console.info("\(serviceId): created user \(userStr) w/ pass \(pass)", newLine: true)
+				case .create(serviceId: let serviceId, userStr: let userStr, password: _, error: let error?):  context.console.error("\(serviceId): failed to create user \(userStr): \(error)", newLine: true)
+				case .delete(serviceId: let serviceId, userStr: let userStr, error: nil):                      context.console.info("\(serviceId): deleted user \(userStr)", newLine: true)
+				case .delete(serviceId: let serviceId, userStr: let userStr, error: let error?):               context.console.error("\(serviceId): failed to delete user \(userStr): \(error)", newLine: true)
+				}
 			}
-			return ()
-		}
+			context.console.info()
+		})
 	}
 	
-	private struct NoSyncActions : Error {}
-
 	private struct ServiceSyncPlan {
 		
 		var service: AnyUserDirectoryService

@@ -47,7 +47,7 @@ struct UserListCommand : ParsableCommand {
 	}
 	
 	/* We don’t technically require Vapor, but it’s convenient. */
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let eventLoop = try app.services.make(EventLoop.self)
 		
@@ -67,7 +67,7 @@ struct UserListCommand : ParsableCommand {
 			throw InvalidArgumentError(message: "Unsupported service to list users from.")
 		}
 		
-		return usersFuture
+		return try await usersFuture
 			.flatMap{ users -> EventLoopFuture<Void> in
 				switch format {
 					case .email:
@@ -86,6 +86,7 @@ struct UserListCommand : ParsableCommand {
 				}
 				return eventLoop.makeSucceededFuture(())
 			}
+			.get()
 	}
 	
 	private func getUsersList(googleService: GoogleService, includeSuspendedUsers: Bool, using services: Services) throws -> EventLoopFuture<[String]> {

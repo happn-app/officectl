@@ -36,7 +36,7 @@ struct UserChangePasswordCommand : ParsableCommand {
 	}
 	
 	/* We don’t technically require Vapor, but it’s convenient. */
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let eventLoop = try app.services.make(EventLoop.self)
 		
@@ -47,7 +47,7 @@ struct UserChangePasswordCommand : ParsableCommand {
 		let services = try sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsPasswordChange }
 		guard !services.isEmpty else {
 			context.console.warning("Nothing to do.")
-			return eventLoop.future()
+			return
 		}
 		
 		/* Let’s ask for the new password */
@@ -56,7 +56,7 @@ struct UserChangePasswordCommand : ParsableCommand {
 		guard newPass == newPassConfirmation else {throw InvalidArgumentError(message: "Try again")}
 		
 		let dsuIdPair = try AnyDSUIdPair(string: userIdStr, servicesProvider: sProvider)
-		return try MultiServicesPasswordReset.fetch(from: dsuIdPair, in: services, using: app.services)
+		return try await MultiServicesPasswordReset.fetch(from: dsuIdPair, in: services, using: app.services)
 		.flatMapThrowing{ passwordResets in
 			try app.auditLogger.log(action: "Changing password of \(dsuIdPair.taggedId) on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
 			return try passwordResets.start(newPass: newPass, weakeningMode: .alwaysInstantly, eventLoop: eventLoop)
@@ -74,6 +74,7 @@ struct UserChangePasswordCommand : ParsableCommand {
 			}
 		}
 		.flatMap{ $0 }
+		.get()
 	}
 	
 }

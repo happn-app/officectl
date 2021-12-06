@@ -83,7 +83,7 @@ struct BackupMailsCommand : ParsableCommand {
 	}
 	
 	/* We don’t technically require Vapor, but it’s convenient. */
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
 		let eventLoop = try app.services.make(EventLoop.self)
@@ -173,7 +173,7 @@ struct BackupMailsCommand : ParsableCommand {
 				})
 				return futureFromOperations.transform(to: ())
 			}
-		return f
+		return try await f.get()
 	}
 	
 	/* ****************************************** */

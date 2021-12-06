@@ -38,7 +38,7 @@ struct FindInDrivesCommand : ParsableCommand {
 	}
 	
 	/* We don’t technically require Vapor, but it’s convenient. */
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
 		let eventLoop = try app.services.make(EventLoop.self)
@@ -47,7 +47,7 @@ struct FindInDrivesCommand : ParsableCommand {
 		_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
 		
 		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-		return googleConnector
+		return try await googleConnector
 			.connect(scope: SearchGoogleUsersOperation.scopes, eventLoop: eventLoop)
 			.flatMap{ _ -> EventLoopFuture<[GoogleUserAndDest]> in
 				GoogleUserAndDest.fetchListToBackup(
@@ -67,6 +67,7 @@ struct FindInDrivesCommand : ParsableCommand {
 				context.console.info("\(searchResults)")
 			}
 			.transform(to:())
+			.get()
 	}
 	
 	private func futureSearchResults(for userAndDest: GoogleUserAndDest, searchedString: String, mainConnector: GoogleJWTConnector, eventLoop: EventLoop) -> EventLoopFuture<String?> {

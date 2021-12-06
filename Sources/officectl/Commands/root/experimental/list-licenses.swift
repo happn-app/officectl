@@ -33,7 +33,7 @@ struct ListLicensesCommand : ParsableCommand {
 	}
 	
 	/* We don’t technically require Vapor, but it’s convenient. */
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let officectlConfig = app.officectlConfig
 		let semiSingletonStore = app.semiSingletonStore
@@ -42,7 +42,7 @@ struct ListLicensesCommand : ParsableCommand {
 		
 		/* Get all licenses in SimpleMDM */
 		let getDevicesAction: GetMDMDevicesWithAttributesAction = semiSingletonStore.semiSingleton(forKey: simpleMDMToken)
-		return getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: eventLoop)
+		return try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: eventLoop)
 			.flatMapThrowing{ devicesAndAttributes -> [String] in
 				return devicesAndAttributes.compactMap{ deviceAndAttributes -> String? in
 					guard
@@ -70,6 +70,7 @@ struct ListLicensesCommand : ParsableCommand {
 				lines.sorted().forEach{ print($0) }
 				return ()
 			}
+			.get()
 	}
 	
 }

@@ -34,7 +34,7 @@ struct CurrentDevTestCommand : ParsableCommand {
 	}
 	
 	/* We don’t technically require Vapor, but it’s convenient. */
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
 		let officectlConfig = app.officectlConfig
@@ -45,17 +45,18 @@ struct CurrentDevTestCommand : ParsableCommand {
 		
 		/* List users by creation date decreasing */
 		let gougleService: GoogleService = try app.officeKitServiceProvider.getService(id: nil)
-		return try gougleService.listAllUsers(using: app.services)
+		return try await gougleService.listAllUsers(using: app.services)
 			.map{ users in
 				for user in users.sorted(by: { $0.creationTime.value ?? .distantFuture < $1.creationTime.value ?? .distantFuture }) {
 					print("\(user.creationTime.value ?? .distantFuture) - \(user.primaryEmail)")
 				}
 				return ()
 			}
+			.get()
 		
 		/* Delete happn console user */
 //		let consoleService: HappnService = try sProvider.getService(id: nil)
-//		return try consoleService.existingUser(fromUserId: "happn.agent16@tana.admvalue.com", propertiesToFetch: [], using: app.services)
+//		return try await consoleService.existingUser(fromUserId: "happn.agent16@tana.admvalue.com", propertiesToFetch: [], using: app.services)
 //			.flatMapThrowing{
 //				guard let user = $0 else {throw "Cannot get user"}
 //				return user
@@ -64,11 +65,12 @@ struct CurrentDevTestCommand : ParsableCommand {
 //				try consoleService.deleteUser(user, using: app.services)
 //			}
 //			.flatMap{ $0 }
-		
+//			.get()
+
 		/* List all admins and their permissions */
 //		let consoleService: HappnService = try sProvider.getService(id: nil)
 //		let hConnector: HappnConnector = app.semiSingletonStore.semiSingleton(forKey: consoleService.config.connectorSettings)
-//		return hConnector.connect(scope: Set(arrayLiteral: "acl_update", "acl_read"), eventLoop: eventLoop)
+//		return try await hConnector.connect(scope: Set(arrayLiteral: "acl_update", "acl_read"), eventLoop: eventLoop)
 //			.flatMapThrowing{ _ in
 //				try consoleService.listAllUsers(using: app.services)
 //			}
@@ -89,11 +91,12 @@ struct CurrentDevTestCommand : ParsableCommand {
 //				}
 //				return ()
 //			}
+//			.get()
 		
 		/* Search for LDAP users without an mail */
 //		let ldapConfig: LDAPServiceConfig = try app.officeKitConfig.getServiceConfig(id: nil)
 //		let ldapConnector = try LDAPConnector(key: ldapConfig.connectorSettings)
-//		return ldapConnector.connect(scope: (), eventLoop: eventLoop)
+//		return try await ldapConnector.connect(scope: (), eventLoop: eventLoop)
 //			.flatMap{
 //				let query = LDAPSearchQuery.not(.present(attribute: LDAPAttributeDescription.mail))
 //				let request = LDAPSearchRequest(scope: .children, base: ldapConfig.baseDNs.peopleBaseDNPerDomain!.values.randomElement()!, searchQuery: query, attributesToFetch: nil)
@@ -106,6 +109,7 @@ struct CurrentDevTestCommand : ParsableCommand {
 //				}
 //				return ()
 //			}
+//			.get()
 		
 		/* List all GitHub project’s hooks */
 //		let gitHubConfig: GitHubServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
@@ -148,7 +152,7 @@ struct CurrentDevTestCommand : ParsableCommand {
 //
 //		}
 //
-//		return f
+//		return try await f.get()
 	}
 	
 }

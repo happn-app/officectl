@@ -24,15 +24,12 @@ class UsersController {
 		let serviceIds = serviceIdsStr?.split(separator: ",").map(String.init)
 		let services = try Set(serviceIds.flatMap{ try $0.map{ try sProvider.getUserDirectoryService(id: $0) } } ?? Array(sProvider.getAllUserDirectoryServices()))
 		
-		return try await MultiServicesUser.fetchAll(in: services, using: req.services).flatMapThrowing{
-			let (users, fetchErrorsByService) = $0
-			let fetchApiErrorsByService = fetchErrorsByService.mapValues{ ApiError(error: $0, environment: req.application.environment) }
-			let orderedServices = try req.application.officeKitConfig.orderedServiceConfigs.map{ try sProvider.getUserDirectoryService(id: $0.serviceId) }
-			return try ApiResponse.data(ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchApiErrorsByService.mapKeys{ $0.config.serviceId }, result: users.map{
-				try ApiUser(multiUsers: $0, orderedServices: orderedServices)
-			}.sorted{ ($0.lastName ?? "").localizedCompare($1.lastName ?? "") != .orderedDescending }))
-		}
-		.get()
+		let (users, fetchErrorsByService) = try await MultiServicesUser.fetchAll(in: services, using: req.services)
+		let fetchApiErrorsByService = fetchErrorsByService.mapValues{ ApiError(error: $0, environment: req.application.environment) }
+		let orderedServices = try req.application.officeKitConfig.orderedServiceConfigs.map{ try sProvider.getUserDirectoryService(id: $0.serviceId) }
+		return try ApiResponse.data(ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchApiErrorsByService.mapKeys{ $0.config.serviceId }, result: users.map{
+			try ApiUser(multiUsers: $0, orderedServices: orderedServices)
+		}.sorted{ ($0.lastName ?? "").localizedCompare($1.lastName ?? "") != .orderedDescending }))
 	}
 	
 	func getMe(_ req: Request) async throws -> ApiResponse<ApiUserSearchResult> {

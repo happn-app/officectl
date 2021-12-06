@@ -48,7 +48,7 @@ struct UserCreateCommand : ParsableCommand {
 	}
 	
 	/* We don’t technically require Vapor, but it’s convenient. */
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let eventLoop = try app.services.make(EventLoop.self)
 		
@@ -59,7 +59,7 @@ struct UserCreateCommand : ParsableCommand {
 		let services = try Array(sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsUserCreation })
 		guard !services.isEmpty else {
 			context.console.warning("Nothing to do.")
-			return eventLoop.future()
+			return
 		}
 		
 		let users = services.map{ s in Result{ try s.logicalUser(fromEmail: email, hints: [.firstName: firstname, .lastName: lastname, .password: password], servicesProvider: sProvider) } }
@@ -73,7 +73,7 @@ struct UserCreateCommand : ParsableCommand {
 		}
 		guard users.contains(where: { $0.successValue != nil }) else {
 			context.console.warning("Nothing to do.")
-			return eventLoop.future()
+			return
 		}
 		if skippedSomeUsers {context.console.info()}
 		
@@ -120,7 +120,7 @@ struct UserCreateCommand : ParsableCommand {
 			.flatMapThrowing{ user in try service.changePasswordAction(for: user, using: app.services).start(parameters: password, weakeningMode: .alwaysInstantly, eventLoop: eventLoop).map{ user } }.flatMap{ $0 }
 		}
 		
-		return EventLoopFuture.waitAll(futures, eventLoop: eventLoop)
+		return try await EventLoopFuture.waitAll(futures, eventLoop: eventLoop)
 		.map{ results in
 			if !self.yes {
 				context.console.info()
@@ -138,6 +138,7 @@ struct UserCreateCommand : ParsableCommand {
 			}
 			context.console.info("Password for created users: \(password)")
 		}
+		.get()
 	}
 	
 }

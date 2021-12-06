@@ -38,7 +38,7 @@ struct UserDeleteCommand : ParsableCommand {
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}
 	
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let eventLoop = try app.services.make(EventLoop.self)
 		
@@ -48,10 +48,10 @@ struct UserDeleteCommand : ParsableCommand {
 		let services = try Array(sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsUserDeletion })
 		guard !services.isEmpty else {
 			context.console.warning("Nothing to do.")
-			return eventLoop.future()
+			return
 		}
 		
-		return try MultiServicesUser.fetch(from: AnyDSUIdPair(taggedId: TaggedId(string: userId), servicesProvider: sProvider), in: Set(services), using: app.services)
+		return try await MultiServicesUser.fetch(from: AnyDSUIdPair(taggedId: TaggedId(string: userId), servicesProvider: sProvider), in: Set(services), using: app.services)
 			.flatMap{ msu -> EventLoopFuture<[(String, Result<Void, Error>)]> in
 				for (id, error) in msu.errorsByServiceId {
 					app.console.warning("⚠️ Skipping service id \(id) because I cannot get the user from this service. Error is \(error)")
@@ -111,6 +111,7 @@ struct UserDeleteCommand : ParsableCommand {
 					}
 				}
 			}
+			.get()
 	}
 	
 }

@@ -39,7 +39,7 @@ struct BackupGitHubCommand : ParsableCommand {
 	}
 	
 	/* We don’t technically require Vapor, but it’s convenient. */
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
 		let eventLoop = try app.services.make(EventLoop.self)
@@ -110,7 +110,7 @@ struct BackupGitHubCommand : ParsableCommand {
 				throw NSError(domain: "com.happn.officectl", code: 3, userInfo: [NSLocalizedDescriptionKey: "Got the following errors while backing up the repositories" + errors.reduce("", { $0 + "\n   " + $1.legibleLocalizedDescription })])
 			}
 		}
-		return f
+		return try await f.get()
 	}
 	
 	/// Iterate over paths matching the "\*/\*" glob in baseFolder.

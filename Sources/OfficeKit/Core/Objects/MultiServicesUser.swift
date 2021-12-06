@@ -67,13 +67,11 @@ extension MultiServicesUser {
 		return try getUsers(from: dsuIdPair.dsuPair(), in: services).flatMapThrowing(fetchStep).flatMap{ $0 }
 	}
 	
-	public static func fetchAll(in services: Set<AnyUserDirectoryService>, using depServices: Services) throws -> EventLoopFuture<(users: [MultiServicesUser], fetchErrorsByServices: [AnyUserDirectoryService: Error])> {
+	public static func fetchAll(in services: Set<AnyUserDirectoryService>, using depServices: Services) async throws -> (users: [MultiServicesUser], fetchErrorsByServices: [AnyUserDirectoryService: Error]) {
 		let eventLoop = try depServices.eventLoop()
-		return try AnyDSUPair.fetchAll(in: services, using: depServices).flatMap{
-			let (pairs, fetchErrorsByService) = $0
-			let validServices = services.subtracting(fetchErrorsByService.keys)
-			return MultiServicesUser.merge(dsuPairs: Set(pairs), validServices: validServices, eventLoop: eventLoop).map{ ($0, fetchErrorsByService) }
-		}
+		let (pairs, fetchErrorsByService) = try await AnyDSUPair.fetchAll(in: services, using: depServices)
+		let validServices = services.subtracting(fetchErrorsByService.keys)
+		return try await MultiServicesUser.merge(dsuPairs: Set(pairs), validServices: validServices, eventLoop: eventLoop).map{ ($0, fetchErrorsByService) }.get()
 	}
 	
 	/**

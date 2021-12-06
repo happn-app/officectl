@@ -40,7 +40,7 @@ struct GetTokenCommand : ParsableCommand {
 	}
 	
 	/* We don’t technically require Vapor, but it’s convenient. */
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
 		let eventLoop = try app.services.make(EventLoop.self)
@@ -59,9 +59,7 @@ struct GetTokenCommand : ParsableCommand {
 			throw InvalidArgumentError(message: "Unsupported service to get a token from.")
 		}
 		
-		return token.map{
-			context.console.output("token: " + $0, style: .plain)
-		}
+		try await context.console.output("token: \(token.get())", style: .plain)
 	}
 	
 	private func getGoogleToken(googleConfig: GoogleServiceConfig, scopesStr: String?, userBehalf: String?, on eventLoop: EventLoop) throws -> EventLoopFuture<String> {

@@ -53,10 +53,9 @@ struct ServerServeCommand : ParsableCommand {
 		try Application.runSync(officectlConfig: config, configureHandler: setup_routes_and_middlewares, vaporRun)
 	}
 	
-	func vaporRun(_ context: CommandContext) throws -> EventLoopFuture<Void> {
+	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let config = app.officectlConfig
-		let eventLoop = try app.services.make(EventLoop.self)
 		
 		guard let serverConfig = config.serverConfig else {
 			throw "Internal error: serverConfig is nil for the serve command!"
@@ -70,7 +69,6 @@ struct ServerServeCommand : ParsableCommand {
 		context.input = CommandInput(arguments: ["fake vapor", "--port", String(serverConfig.serverPort), "--hostname", serverConfig.serverHost])
 		
 		try serveCommand.run(using: &context)
-		return eventLoop.makeSucceededFuture(())
 	}
 	
 }

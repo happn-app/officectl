@@ -16,7 +16,7 @@ import Vapor
 
 extension Application {
 	
-	static func runSync(officectlConfig: OfficectlConfig, configureHandler: (_ app: Application) throws -> Void, _ runHandler: @escaping (_ commandContext: CommandContext) throws -> EventLoopFuture<Void>) throws {
+	static func runSync(officectlConfig: OfficectlConfig, configureHandler: (_ app: Application) throws -> Void, _ runHandler: @escaping (_ commandContext: CommandContext) async throws -> Void) throws {
 		var env = Environment(officectlConfig: officectlConfig)
 		try LoggingSystem.bootstrap(from: &env, { level in
 			return { label in
