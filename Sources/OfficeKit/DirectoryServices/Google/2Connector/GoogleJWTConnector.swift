@@ -20,7 +20,7 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 	public typealias RequestType = URLRequest
 	
 	public let userBehalf: String?
-	public let privateKey: SecKey
+	public let privateKey: Data
 	public let superuserEmail: String
 	
 	public var currentScope: ScopeType? {

@@ -19,7 +19,7 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 	
 	public let appId: String
 	public let installationId: String
-	public let privateKey: SecKey
+	public let privateKey: Data
 	
 	public var currentScope: Void? {
 		guard let auth = auth else {return nil}
