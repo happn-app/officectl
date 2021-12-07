@@ -79,9 +79,15 @@ let package = Package(
 		.package(                     url: "https://github.com/xcode-actions/clt-logger.git", from: "0.3.4")
 	] + platformDependentDependencies,
 	targets: [
-		.target(name: "GenericStorage", dependencies: []),
+		.target(name: "GenericStorage", swiftSettings: [
+			.unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
+			.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+		]),
 		
-		.target(name: "ServiceKit", dependencies: []),
+		.target(name: "ServiceKit", swiftSettings: [
+			.unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
+			.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+		]),
 		
 		.target(
 			name: "OfficeKit",
@@ -99,7 +105,11 @@ let package = Package(
 				.product(name: "Yaml",                package: "Yaml"),
 				"GenericStorage",
 				"ServiceKit"
-			] + platformDependentOfficeKitDependencies
+			] + platformDependentOfficeKitDependencies,
+			swiftSettings: [
+				.unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
+				.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+			]
 		),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
 		
@@ -118,6 +128,10 @@ let package = Package(
 				.product(name: "Yaml",           package: "Yaml"),
 				"OfficeKit"
 			] + platformDependentOfficectlDependencies,
+			swiftSettings: [
+				.unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
+				.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+			],
 			linkerSettings: [.linkedLibrary("ncurses", .when(platforms: [.macOS]))]
 		)
 		
