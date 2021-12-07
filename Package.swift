@@ -82,12 +82,12 @@ let package = Package(
 	targets: [
 		.target(name: "GenericStorage", swiftSettings: [
 			.unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
-			.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+//			.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
 		]),
 		
 		.target(name: "ServiceKit", swiftSettings: [
 			.unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
-			.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+//			.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
 		]),
 		
 		.target(
@@ -110,7 +110,7 @@ let package = Package(
 			] + platformDependentOfficeKitDependencies,
 			swiftSettings: [
 				.unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
-				.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+//				.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
 			]
 		),
 		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
@@ -132,7 +132,7 @@ let package = Package(
 			] + platformDependentOfficectlDependencies,
 			swiftSettings: [
 				.unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
-				.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+//				.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
 			],
 			linkerSettings: [.linkedLibrary("ncurses", .when(platforms: [.macOS]))]
 		)
