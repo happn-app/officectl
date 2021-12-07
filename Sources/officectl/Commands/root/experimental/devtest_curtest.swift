@@ -1,9 +1,9 @@
 /*
- * devtest_curtest.swift
- * officectl
- *
- * Created by François Lamboley on 6/26/18.
- */
+ * devtest_curtest.swift
+ * officectl
+ *
+ * Created by François Lamboley on 6/26/18.
+ */
 
 import Foundation
 
@@ -62,7 +62,7 @@ struct CurrentDevTestCommand : ParsableCommand {
 //			}
 //			.flatMap{ $0 }
 //			.get()
-
+		
 		/* List all admins and their permissions */
 //		let consoleService: HappnService = try sProvider.getService(id: nil)
 //		let hConnector: HappnConnector = app.semiSingletonStore.semiSingleton(forKey: consoleService.config.connectorSettings)

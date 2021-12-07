@@ -1,9 +1,9 @@
 /*
- * FullUserId+Parameter.swift
- * officectl
- *
- * Created by François Lamboley on 12/08/2019.
- */
+ * FullUserId+Parameter.swift
+ * officectl
+ *
+ * Created by François Lamboley on 12/08/2019.
+ */
 
 import Foundation
 

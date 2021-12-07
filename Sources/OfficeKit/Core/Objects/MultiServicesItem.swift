@@ -1,9 +1,9 @@
 /*
- * MultiServicesItem.swift
- * OfficeKit
- *
- * Created by François Lamboley on 19/08/2019.
- */
+ * MultiServicesItem.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 19/08/2019.
+ */
 
 import Foundation
 
@@ -27,8 +27,9 @@ public struct MultiServicesItem<ItemType> {
 		return Set(errorsAndItemsByService.keys)
 	}
 	
-	/** Creates the MultiServicesUser with the given pairs and errors. If, for a
-	given service there is a user and some errors, the user will be chosen. */
+	/**
+	 Creates the MultiServicesUser with the given pairs and errors.
+	 If, for a given service there is a user and some errors, the user will be chosen. */
 	init(itemsByService pbsi: [AnyUserDirectoryService: ItemType] = [:], errorsByService ebsi: [AnyUserDirectoryService: Error] = [:]) {
 		self.init(errorsAndItemsByService: pbsi.mapValues{ .success($0) }.merging(ebsi.mapValues{ .failure($0) }, uniquingKeysWith: { old, _ in old }))
 	}

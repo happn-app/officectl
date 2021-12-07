@@ -1,9 +1,9 @@
 /*
- * GitHubServiceConfig.swift
- * OfficeKit
- *
- * Created by François Lamboley on 20/06/2019.
- */
+ * GitHubServiceConfig.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 20/06/2019.
+ */
 
 import Foundation
 

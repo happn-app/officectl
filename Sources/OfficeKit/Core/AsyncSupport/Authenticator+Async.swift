@@ -1,9 +1,9 @@
 /*
- * Authenticator+EventLoopFuture.swift
- * OfficeKit
- *
- * Created by François Lamboley on 20/11/2018.
- */
+ * Authenticator+Async.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 20/11/2018.
+ */
 
 import Foundation
 

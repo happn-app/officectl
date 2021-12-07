@@ -1,9 +1,9 @@
 /*
- * LoggedInUser.swift
- * officectl
- *
- * Created by François Lamboley on 17/04/2020.
- */
+ * LoggedInUser.swift
+ * officectl
+ *
+ * Created by François Lamboley on 17/04/2020.
+ */
 
 import Foundation
 
@@ -29,17 +29,16 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 		return IsAdminAuthMiddleware()
 	}
 	
-	/** A login guard middleware a little more permissive than the strict login
-	guard. It will allow a non-authed connexion as long as a previous authed
-	connexion has been logged by this middleware from the same IP address less
-	than `leeway` seconds ago. Set the leeway to 0 or less to get a standard
-	guard middleware (but that still log authed connexions so another Xcode guard
-	middleware can use them).
-	
-	Why? Because iOS does not retransmit the cookies set in the browser when
-	downloading the manifest for installing an IPA, or when downloading the IPA
-	(these requests are done by another process). AFAICT the process that
-	downloads the IPA sends no other identifying information than the IP. */
+	/**
+	 A login guard middleware a little more permissive than the strict login guard.
+	 It will allow a non-authed connexion as long as a previous authed connexion has been logged by
+	 this middleware from the same IP address less than `leeway` seconds ago.
+	 Set the leeway to 0 or less to get a standard guard middleware (but that still log authed connexions so another Xcode guard middleware can use them).
+	 
+	 Why?
+	 Because iOS does not retransmit the cookies set in the browser when downloading the manifest for installing an IPA,
+	 or when downloading the IPA (these requests are done by another process).
+	 AFAICT the process that downloads the IPA sends no other identifying information than the IP. */
 	static func xcodeGuardMiddleware(leeway: TimeInterval) -> AsyncMiddleware {
 		struct XcodeGuardAuthMiddleware : AsyncMiddleware {
 			var leeway: TimeInterval
@@ -49,8 +48,8 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 					guard leeway > 0, let currentIP = req.remoteAddress?.ipAddress else {
 						throw Abort(.unauthorized)
 					}
-					/* We do! Has there been an auth’d connexion less than leeway ago
-					 * on the same IP than the current request? */
+					/* We do!
+					 * Has there been an auth’d connexion less than leeway ago on the same IP than the current request? */
 					let lock = req.application.locks.lock(for: XcodeGuardMiddlewareConnectionsLock.self)
 					let hadAuth = lock.withLock{ () -> Bool in
 						let storage = req.application.officectlStorage.xcodeGuardMiddlewareConnections
@@ -65,8 +64,7 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 					guard hadAuth else {
 						throw Abort(.unauthorized)
 					}
-					/* We do **not** register the successful auth (because the
-					 * request was not actually auth’d…) */
+					/* We do **not** register the successful auth (because the request was not actually auth’d…) */
 					return try await next.respond(to: req)
 				}
 				/* Let’s register the successfully auth’d request if possible */

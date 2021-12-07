@@ -1,9 +1,9 @@
 /*
- * AuditLogger.swift
- * officectl
- *
- * Created by François Lamboley on 04/08/2019.
- */
+ * AuditLogger.swift
+ * officectl
+ *
+ * Created by François Lamboley on 04/08/2019.
+ */
 
 import Foundation
 
@@ -13,7 +13,7 @@ import Vapor
 
 
 
-#warning("TODO: When I find one, use a FileLogger instead of manually writing to the file?")
+/* TODO: When I find one, use a FileLogger instead of manually writing to the file? */
 class AuditLogger {
 	
 	enum ActionSource {
@@ -45,9 +45,11 @@ class AuditLogger {
 		}
 	}
 	
-	/** Log the given action in the destination path set when initing the logger.
-	This method **can** throw by design. Because we’re doing audit logs, we want
-	whatever action is taken to fail if it cannot be logged. */
+	/**
+	 Log the given action in the destination path set when initing the logger.
+	 
+	 This method **can** throw by design.
+	 Because we’re doing audit logs, we want whatever action is taken to fail if it cannot be logged. */
 	func log(action: String, source: ActionSource, file: String = #file, function: String = #function, line: UInt = #line, column: UInt = #column) throws {
 		guard let destinationURL = destinationURL else {return}
 		
@@ -60,17 +62,17 @@ class AuditLogger {
 			"column": JSON.number(Float(column))
 		]
 		switch source {
-		case .cli: loggedDict["source"] = "cli"
-		case .web: loggedDict["source"] = "web"
-		case .api(user: let loggedInUser):
-			loggedDict["source"] = "api"
-			loggedDict["api_user"] = JSON.string(loggedInUser.user.taggedId.stringValue)
-			loggedDict["api_user_is_admin"] = JSON.bool(loggedInUser.isAdmin)
+			case .cli: loggedDict["source"] = "cli"
+			case .web: loggedDict["source"] = "web"
+			case .api(user: let loggedInUser):
+				loggedDict["source"] = "api"
+				loggedDict["api_user"] = JSON.string(loggedInUser.user.taggedId.stringValue)
+				loggedDict["api_user_is_admin"] = JSON.bool(loggedInUser.isAdmin)
 		}
 		let loggedData = try jsonEncoder.encode(JSON.object(loggedDict)) + Data("\n".utf8)
 		
-		/* Note: We open the file for each new log… for our load this will work
-		 *       well enough; we may have to change that if we had more traffic. */
+		/* Note: We open the file for each new log.
+		 * For our load this will work well enough; we may have to change that if we had more traffic. */
 		let fh = try FileHandle.init(forWritingTo: destinationURL)
 		defer {fh.closeFile()}
 		

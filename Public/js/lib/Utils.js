@@ -10,9 +10,8 @@ function show_validation_error(error) {
 }
 
 function get_input_value(input_name, show_error_function) {
-	/* Note: The show_error_function is not validated to actually be a function,
-	 *       nor the input_name to be a string (they should if we wanted to be
-	 *       extra thorough; but I don’t…) */
+	/* Note: The show_error_function is not validated to actually be a function, nor the input_name to be a string
+	 * (they should if we wanted to be extra thorough; but I don’t…) */
 	
 	/* Get the input */
 	var input = document.getElementById(input_name)

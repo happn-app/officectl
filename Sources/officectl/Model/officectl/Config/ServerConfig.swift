@@ -1,9 +1,9 @@
 /*
- * ServerConfig.swift
- * officectl
- *
- * Created by François Lamboley on 11/06/2020.
- */
+ * ServerConfig.swift
+ * officectl
+ *
+ * Created by François Lamboley on 11/06/2020.
+ */
 
 import Foundation
 

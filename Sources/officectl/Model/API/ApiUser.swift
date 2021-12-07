@@ -1,9 +1,9 @@
 /*
- * ApiUser.swift
- * officectl
- *
- * Created by François Lamboley on 15/08/2019.
- */
+ * ApiUser.swift
+ * officectl
+ *
+ * Created by François Lamboley on 15/08/2019.
+ */
 
 import Foundation
 
@@ -24,7 +24,7 @@ struct ApiUser : Encodable {
 	var usersByServiceId: [String: DirectoryUserWrapper?]
 	
 	init(multiUsers: MultiServicesUser, orderedServices: [AnyUserDirectoryService]) throws {
-		#warning("TODO: Note that we ignore the errors by service ids. Is this what we really want?")
+		/* TODO: We ignore the errors by service ids. Is this what we really want? */
 		try self.init(usersByService: multiUsers.itemsByService.mapValues{ try $0?.userWrapper() }, orderedServices: orderedServices)
 	}
 	

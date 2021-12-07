@@ -1,9 +1,9 @@
 /*
- * ApiPasswordReset.swift
- * officectl
- *
- * Created by François Lamboley on 15/04/2019.
- */
+ * ApiPasswordReset.swift
+ * officectl
+ *
+ * Created by François Lamboley on 15/04/2019.
+ */
 
 import Foundation
 

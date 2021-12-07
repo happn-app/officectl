@@ -1,9 +1,9 @@
 /*
- * SimpleMDMDevice.swift
- * officectl
- *
- * Created by François Lamboley on 2020/4/8.
- */
+ * SimpleMDMDevice.swift
+ * officectl
+ *
+ * Created by François Lamboley on 2020/4/8.
+ */
 
 import Foundation
 

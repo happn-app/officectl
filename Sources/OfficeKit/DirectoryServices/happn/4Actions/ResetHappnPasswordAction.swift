@@ -1,9 +1,9 @@
 /*
- * ResetHappnPasswordAction.swift
- * OfficeKit
- *
- * Created by François Lamboley on 18/09/2018.
- */
+ * ResetHappnPasswordAction.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 18/09/2018.
+ */
 
 import Foundation
 

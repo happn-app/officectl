@@ -1,9 +1,9 @@
 /*
- * DeleteLDAPObjectsOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 11/09/2018.
- */
+ * DeleteLDAPObjectsOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 11/09/2018.
+ */
 
 import Foundation
 
@@ -42,8 +42,8 @@ public final class DeleteLDAPObjectsOperation : RetryingOperation {
 		assert(objects.count == errors.count)
 		
 		for (idx, object) in objects.enumerated() {
-			/* We use the synchronous version of the function. See long comment in
-			 * search operation for details. */
+			/* We use the synchronous version of the function.
+			 * See long comment in search operation for details. */
 			let r = connector.performLDAPCommunication{ ldap_delete_ext_s($0, object.distinguishedName.stringValue, nil /* Server controls */, nil /* Client controls */) }
 			if r == LDAP_SUCCESS {errors[idx] = nil}
 			else                 {errors[idx] = NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])}

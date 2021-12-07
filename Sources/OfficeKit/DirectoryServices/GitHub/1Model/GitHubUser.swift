@@ -1,9 +1,9 @@
 /*
- * GitHubUser.swift
- * OfficeKit
- *
- * Created by François Lamboley on 02/07/2019.
- */
+ * GitHubUser.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 02/07/2019.
+ */
 
 import Foundation
 

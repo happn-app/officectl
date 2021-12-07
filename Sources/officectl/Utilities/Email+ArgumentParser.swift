@@ -1,9 +1,9 @@
 /*
- * Email+ArgumentParser.swift
- * officectl
- *
- * Created by François Lamboley on 12/06/2020.
- */
+ * Email+ArgumentParser.swift
+ * officectl
+ *
+ * Created by François Lamboley on 12/06/2020.
+ */
 
 import Foundation
 

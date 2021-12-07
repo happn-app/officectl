@@ -1,9 +1,9 @@
 /*
- * GitHubJWTConnector+SemiSingleton.swift
- * OfficeKit
- *
- * Created by François Lamboley on 11/01/2019.
- */
+ * GitHubJWTConnector+SemiSingleton.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 11/01/2019.
+ */
 
 import Foundation
 

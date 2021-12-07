@@ -1,9 +1,9 @@
 /*
- * DirectoryUser.swift
- * OfficeKit
- *
- * Created by François Lamboley on 01/07/2019.
- */
+ * DirectoryUser.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 01/07/2019.
+ */
 
 import Foundation
 
@@ -39,15 +39,15 @@ extension DirectoryUser {
 
 
 /**
-A directory user property.
-
-Tested:
-```
-let a = DirectoryUserProperty.userId
-let b = DirectoryUserProperty.custom("userId")
-a           == b           /* <-- This is true. */
-a.hashValue == b.hashValue /* <-- This is true. */
-``` */
+ A directory user property.
+ 
+ Tested:
+ ```
+ let a = DirectoryUserProperty.userId
+ let b = DirectoryUserProperty.custom("userId")
+ a           == b           /* <-- This is true. */
+ a.hashValue == b.hashValue /* <-- This is true. */
+ ``` */
 public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStringLiteral, Codable {
 	
 	public typealias RawValue = String
@@ -69,15 +69,15 @@ public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStr
 	
 	public init(stringLiteral value: String) {
 		switch value {
-		case "userId":           self = .userId
-		case "persistentId":     self = .persistentId
-		case "identifyingEmail": self = .identifyingEmail
-		case "otherEmails":      self = .otherEmails
-		case "firstName":        self = .firstName
-		case "lastName":         self = .lastName
-		case "nickname":         self = .nickname
-		case "password":         self = .password
-		default:                 self = .custom(value)
+			case "userId":           self = .userId
+			case "persistentId":     self = .persistentId
+			case "identifyingEmail": self = .identifyingEmail
+			case "otherEmails":      self = .otherEmails
+			case "firstName":        self = .firstName
+			case "lastName":         self = .lastName
+			case "nickname":         self = .nickname
+			case "password":         self = .password
+			default:                 self = .custom(value)
 		}
 	}
 	
@@ -87,22 +87,22 @@ public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStr
 	
 	public var rawValue: String {
 		switch self {
-		case .userId:           return "userId"
-		case .persistentId:     return "persistentId"
-		case .identifyingEmail: return "identifyingEmail"
-		case .otherEmails:      return "otherEmails"
-		case .firstName:        return "firstName"
-		case .lastName:         return "lastName"
-		case .nickname:         return "nickname"
-		case .password:         return "password"
-		case .custom(let v):    return v
+			case .userId:           return "userId"
+			case .persistentId:     return "persistentId"
+			case .identifyingEmail: return "identifyingEmail"
+			case .otherEmails:      return "otherEmails"
+			case .firstName:        return "firstName"
+			case .lastName:         return "lastName"
+			case .nickname:         return "nickname"
+			case .password:         return "password"
+			case .custom(let v):    return v
 		}
 	}
 	
-	/** Even though `.userId == .custom("userId")` (and the same applies for hash
-	values), when switching on a value from this enum, we should prefer switching
-	on the normalized value as the case `.userId` and `.custom("userId")` are
-	indeed different. */
+	/**
+	 Even though `.userId == .custom("userId")` (and the same applies for hash values),
+	 when switching on a value from this enum, we should prefer switching on the normalized value as
+	 the case `.userId` and `.custom("userId")` are indeed different. */
 	public func normalized() -> DirectoryUserProperty {
 		if case .custom(let v) = self {
 			return DirectoryUserProperty(stringLiteral: v)

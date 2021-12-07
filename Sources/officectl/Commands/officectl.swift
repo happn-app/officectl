@@ -1,9 +1,9 @@
 /*
- * officectl.swift
- * officectl
- *
- * Created by François Lamboley on 6/26/18.
- */
+ * officectl.swift
+ * officectl
+ *
+ * Created by François Lamboley on 6/26/18.
+ */
 
 import Foundation
 
@@ -25,10 +25,10 @@ struct OfficectlRootCommand : ParsableCommand {
 			
 			init?(argument: String) {
 				switch argument {
-				case "dev", "development", nil: self = .development
-				case "prod", "production": self = .production
-				case "test", "testing": self = .testing
-				default: return nil
+					case "dev", "development", nil: self = .development
+					case "prod", "production": self = .production
+					case "test", "testing": self = .testing
+					default: return nil
 				}
 			}
 			

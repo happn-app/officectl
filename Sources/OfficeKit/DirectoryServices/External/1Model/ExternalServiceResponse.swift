@@ -1,9 +1,9 @@
 /*
- * ExternalServiceResponse.swift
- * OfficeKit
- *
- * Created by François Lamboley on 10/07/2019.
- */
+ * ExternalServiceResponse.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 10/07/2019.
+ */
 
 import Foundation
 
@@ -26,15 +26,15 @@ enum ExternalServiceResponse<ObjectType : Decodable> : Decodable {
 	
 	func asResult() -> Result<ObjectType, ExternalServiceError> {
 		switch self {
-		case .data(let data):   return .success(data)
-		case .error(let error): return .failure(error)
+			case .data(let data):   return .success(data)
+			case .error(let error): return .failure(error)
 		}
 	}
 	
 	func getData() throws -> ObjectType {
 		switch self {
-		case .data(let data):   return data
-		case .error(let error): throw error
+			case .data(let data):   return data
+			case .error(let error): throw error
 		}
 	}
 	

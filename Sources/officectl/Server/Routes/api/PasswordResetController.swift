@@ -1,9 +1,9 @@
 /*
- * PasswordResetController.swift
- * officectl
- *
- * Created by François Lamboley on 09/05/2019.
- */
+ * PasswordResetController.swift
+ * officectl
+ *
+ * Created by François Lamboley on 09/05/2019.
+ */
 
 import Foundation
 
@@ -35,8 +35,7 @@ class PasswordResetController {
 		let dsuIdPair = try AnyDSUIdPair.getAsParameter(named: "dsuid-pair", from: req)
 		let passChangeData = try req.content.decode(PassChangeData.self)
 		
-		/* Only admins are allowed to create a password reset for someone else
-		 * than themselves. */
+		/* Only admins are allowed to create a password reset for someone else than themselves. */
 		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIdPair: dsuIdPair, request: req) else {
 			throw Abort(.forbidden, reason: "Non-admin users can only reset their own password.")
 		}

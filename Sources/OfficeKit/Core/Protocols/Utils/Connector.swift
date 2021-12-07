@@ -1,14 +1,14 @@
 /*
- * Connector.swift
- * officectl
- *
- * Created by François Lamboley on 3/22/18.
- */
+ * Connector.swift
+ * officectl
+ *
+ * Created by François Lamboley on 3/22/18.
+ */
 
 import Foundation
 
 #if os(iOS)
-	import UIKit
+import UIKit
 #endif
 
 
@@ -34,16 +34,18 @@ public protocol Connector {
 	associatedtype ScopeType
 	
 	/**
-	A connector should only do one “connection” operation at a time. The handler
-	operation queue given here will be used by default to serialize “unsafe”
-	operations in a queue so they’re executed safely in order. The current scope
-	should never be modified outside this queue. */
+	 A connector should only do one “connection” operation at a time.
+	 
+	 The handler operation queue given here will be used by default to serialize “unsafe” operations in a queue so they’re executed safely in order.
+	 The current scope should never be modified outside this queue. */
 	var connectorOperationQueue: SyncOperationQueue {get}
 	
 	/**
-	`nil` if not connected, otherwise, any non-nil value. Thread-safety of the
-	property is up to the implementer. The value of this property should not be
-	modified outside the connector operation queue. */
+	 `nil` if not connected, otherwise, any non-nil value.
+	 
+	 Thread-safety of the property is up to the implementer.
+	 
+	 The value of this property should not be modified outside the connector operation queue. */
 	var currentScope: ScopeType? {get}
 	func currentScopeContainsAll(of scope: ScopeType) -> Bool
 	func currentScopeContainsAny(of scope: ScopeType) -> Bool
@@ -57,17 +59,14 @@ public protocol Connector {
 //	#endif
 	
 	/**
-	The actual connection method. Should not be used by clients, use the
-	`(dis)connect…` methods instead.
-	
-	This method does not care whether the connector is connected, nor if there is
-	already a connection in progress (hence the unsafe part of the name).
-	
-	The method should disconnect the scopes that are not needed anymore and
-	connect the new ones. Connectors that are also authenticators should take
-	care not to authenticate a request when a change of scope is in progress. A
-	good way to do this would be to implement the actual authentication in the
-	connector queue. */
+	 The actual connection method.
+	 Should not be used by clients, use the `(dis)connect…` methods instead.
+	 
+	 This method does not care whether the connector is connected, nor if there is already a connection in progress (hence the unsafe part of the name).
+	 
+	 The method should disconnect the scopes that are not needed anymore and connect the new ones.
+	 Connectors that are also authenticators should take care not to authenticate a request when a change of scope is in progress.
+	 A good way to do this would be to implement the actual authentication in the connector queue. */
 	func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<ScopeType>, handler: @escaping (_ error: Error?) -> Void)
 	
 }
@@ -75,25 +74,23 @@ public protocol Connector {
 public extension Connector {
 	
 	/**
-	Uses the `currentScope` to determine if the connector is connected. As
-	thread-safe as the `currentScope` property… */
+	 Uses the `currentScope` to determine if the connector is connected.
+	 
+	 As thread-safe as the `currentScope` property… */
 	var isConnected: Bool {
 		return currentScope != nil
 	}
 	
 	/**
-	Connects the given scope.
-	
-	If the connector was already connected with the given scopes, the method is
-	no-op, unless forceReconnect is set to `true`. If some of the scopes were not
-	connected, they will be added in the connected scopes.
-
-	Fully thread-safe, and concurrent-connection-operation-safe (if another
-	(dis-)connection operation is in progress, the connection operation will not
-	be launched while the previously running and queued operations are over).
-	
-	The handler will be called with the new scopes after the connection operation
-	and an optional error. */
+	 Connects the given scope.
+	 
+	 If the connector was already connected with the given scopes, the method is no-op, unless forceReconnect is set to `true`.
+	 If some of the scopes were not connected, they will be added in the connected scopes.
+	 
+	 Fully thread-safe, and concurrent-connection-operation-safe
+	 (if another (dis-)connection operation is in progress, the connection operation will not be launched while the previously running and queued operations are over).
+	 
+	 The handler will be called with the new scopes after the connection operation and an optional error. */
 	func connect(scope: ScopeType, forceReconnect: Bool = false, handlerQueue: DispatchQueue = defaultDispatchQueueForFutureSupport, handler: @escaping (_ result: Result<ScopeType?, Error>) -> Void) {
 		assert(connectorOperationQueue.maxConcurrentOperationCount == 1)
 		connectorOperationQueue.addAsyncBlock{ stopOperationHandler in
@@ -111,20 +108,17 @@ public extension Connector {
 	}
 	
 	/**
-	Disonnect the given scope.
-	
-	If the given scope is `nil` (default), fully disconnect the connector.
-	
-	If the connector was already disconnected for the given scopes, the method is
-	no-op, unless forceDisconnect is set to `true`. If some of the scopes were
-	not present, these will be removed from the connected scopes.
-	
-	Fully thread-safe, and concurrent-connection-operation-safe (if another
-	(dis-)connection operation is in progress, the disconnection operation will
-	not be launched while the previously running and queued operations are over).
-	
-	The handler will be called with the new scopes after the disconnection
-	operation and an optional error. */
+	 Disonnect the given scope.
+	 
+	 If the given scope is `nil` (default), fully disconnect the connector.
+	 
+	 If the connector was already disconnected for the given scopes, the method is no-op, unless forceDisconnect is set to `true`.
+	 If some of the scopes were not present, these will be removed from the connected scopes.
+	 
+	 Fully thread-safe, and concurrent-connection-operation-safe
+	 (if another (dis-)connection operation is in progress, the disconnection operation will not be launched while the previously running and queued operations are over).
+	 
+	 The handler will be called with the new scopes after the disconnection operation and an optional error. */
 	func disconnect(scope: ScopeType? = nil, forceDisconnect: Bool = false, handlerQueue: DispatchQueue = defaultDispatchQueueForFutureSupport, handler: @escaping (_ result: Result<ScopeType?, Error>) -> Void) {
 		assert(connectorOperationQueue.maxConcurrentOperationCount == 1)
 		connectorOperationQueue.addAsyncBlock{ stopOperationHandler in
@@ -208,8 +202,8 @@ class AnyConnector<ScopeType> : Connector {
 	}
 	
 	/* *************************
-	   MARK: - Connector Erasure
-	   ************************* */
+	   MARK: - Connector Erasure
+	   ************************* */
 	
 	private let connectionOperationQueueHandler: () -> SyncOperationQueue
 	

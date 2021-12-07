@@ -1,9 +1,9 @@
 /*
- * GitHubRepository.swift
- * officectl
- *
- * Created by François Lamboley on 27/06/2018.
- */
+ * GitHubRepository.swift
+ * officectl
+ *
+ * Created by François Lamboley on 27/06/2018.
+ */
 
 import Foundation
 

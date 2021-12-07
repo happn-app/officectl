@@ -1,13 +1,13 @@
 /*
- * ExternalServiceAuthenticator.swift
- * OfficeKit
- *
- * Created by François Lamboley on 10/07/2019.
- */
+ * ExternalServiceAuthenticator.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 10/07/2019.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import Crypto
@@ -26,7 +26,7 @@ public class ExternalServiceAuthenticator : Authenticator {
 	
 	public func authenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
 		/* TODO one day, maybe: https://datatracker.ietf.org/doc/draft-cavage-http-signatures/?include_text=1.
-		 * Note that at the time of writing, the revision is spec 11 and is not finalized. */
+		 * Note that at the time of writing, the revision is spec 11 and is not finalized. */
 		do {
 			var request = request
 			

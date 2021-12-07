@@ -1,9 +1,9 @@
 /*
- * SearchOpenDirectoryOperation.swift
- * officectl
- *
- * Created by François Lamboley on 21/05/2019.
- */
+ * SearchOpenDirectoryOperation.swift
+ * officectl
+ *
+ * Created by François Lamboley on 21/05/2019.
+ */
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)
 
@@ -43,7 +43,7 @@ public final class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 					throw InternalError(message: "Launched a search open directory action with a non-connected connector!")
 				}
 				/* Note: This shortcut exists when searching directly with a UID:
-				 *       try node.record(withRecordType: kODRecordTypeUsers, name: the_uid (e.g. "francois.lamboley"), attributes: request.returnAttributes) */
+				 *       try node.record(withRecordType: kODRecordTypeUsers, name: the_uid (e.g. "francois.lamboley"), attributes: request.returnAttributes) */
 				let odQuery = try ODQuery(
 					node: node,
 					forRecordTypes: request.recordTypes,
@@ -53,9 +53,8 @@ public final class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 					returnAttributes: request.returnAttributes/* ?? kODAttributeTypeAllAttributes*/,
 					maximumResults: request.maximumResults ?? 0
 				)
-				/* The as! should be valid; OpenDirectory is simply not updated
-				 * anymore and the returned array is not typed. But doc says this
-				 * method returns an array of ODRecord. */
+				/* The “as!” should be valid; OpenDirectory is simply not updated anymore and the returned array is not typed.
+				 * But doc says this method returns an array of ODRecord. */
 				let odResults = try odQuery.resultsAllowingPartial(false) as! [ODRecord]
 				results = .success(odResults)
 			}

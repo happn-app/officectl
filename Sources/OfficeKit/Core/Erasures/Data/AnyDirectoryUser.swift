@@ -1,9 +1,9 @@
 /*
- * AnyDirectoryUser.swift
- * OfficeKit
- *
- * Created by François Lamboley on 01/07/2019.
- */
+ * AnyDirectoryUser.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 01/07/2019.
+ */
 
 import Foundation
 
@@ -12,23 +12,23 @@ import Email
 
 
 /* Note: Cannot erase with this erasure type
- *
- * public struct AnyDirectoryUser : DirectoryUser {
- *    public init<U : DirectoryUser>(_ user: U) {
- *       erasureForId = { AnyId(user.id) }
- *       erasureForEmail = { user.email }
- *       ...
- *    }
- *    public var id: AnyId {
- *       return erasureForId()
- *    }
- *    public var email: RemoteProperty<Email?> {
- *       return erasureForEmail()
- *    }
- *    ...
- * }
- *
- * because if we do, we cannot unbox to the original user… */
+ *
+ * public struct AnyDirectoryUser : DirectoryUser {
+ *    public init<U : DirectoryUser>(_ user: U) {
+ *       erasureForId = { AnyId(user.id) }
+ *       erasureForEmail = { user.email }
+ *       ...
+ *    }
+ *    public var id: AnyId {
+ *       return erasureForId()
+ *    }
+ *    public var email: RemoteProperty<Email?> {
+ *       return erasureForEmail()
+ *    }
+ *    ...
+ * }
+ *
+ * because if we do, we cannot unbox to the original user… */
 
 private protocol DirectoryUserBox {
 	

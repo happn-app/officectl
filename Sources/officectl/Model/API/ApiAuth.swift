@@ -1,9 +1,9 @@
 /*
- * ApiAuth.swift
- * officectl
- *
- * Created by François Lamboley on 22/02/2019.
- */
+ * ApiAuth.swift
+ * officectl
+ *
+ * Created by François Lamboley on 22/02/2019.
+ */
 
 import Foundation
 
@@ -35,8 +35,9 @@ struct ApiAuth : Codable {
 		
 		var aud = URL(string: "https://office.happn.io")!
 		
-		/** The tagged id of the authenticated person. Should always be tagged
-		with the auth service. */
+		/**
+		 The tagged id of the authenticated person.
+		 Should always be tagged with the auth service. */
 		var sub: TaggedId
 		
 		/** The expiration time of the token. */

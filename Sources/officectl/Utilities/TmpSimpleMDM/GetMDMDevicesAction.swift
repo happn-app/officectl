@@ -1,13 +1,13 @@
 /*
- * GetMDMDevicesAction.swift
- * officectl
- *
- * Created by François Lamboley on 2020/4/8.
- */
+ * GetMDMDevicesAction.swift
+ * officectl
+ *
+ * Created by François Lamboley on 2020/4/8.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import NIO
@@ -56,17 +56,17 @@ final class GetMDMDevicesAction : Action<String, Void, [SimpleMDMDevice]>, SemiS
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
 		let op = AuthenticatedJSONOperation<Response>(url: urlComponents.url!, authenticator: authenticate, decoder: decoder)
 		return EventLoopFuture<Response>.future(from: op, on: eventLoop)
-		.flatMapThrowing{ response in
-			if !response.hasMore {
-				return eventLoop.future(response.data)
+			.flatMapThrowing{ response in
+				if !response.hasMore {
+					return eventLoop.future(response.data)
+				}
+				
+				guard let latestDevice = response.data.last?.id else {
+					throw InvalidArgumentError(message: "SimpleMDM returned no devices, but told it has more to give")
+				}
+				return self.getAllDevices(startingAfter: latestDevice, token: token, eventLoop: eventLoop).map{ response.data + $0 }
 			}
-			
-			guard let latestDevice = response.data.last?.id else {
-				throw InvalidArgumentError(message: "SimpleMDM returned no devices, but told it has more to give")
-			}
-			return self.getAllDevices(startingAfter: latestDevice, token: token, eventLoop: eventLoop).map{ response.data + $0 }
-		}
-		.flatMap{ $0 }
+			.flatMap{ $0 }
 	}
 	
 }

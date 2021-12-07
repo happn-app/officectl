@@ -1,9 +1,9 @@
 /*
- * ApiResponse.swift
- * officectl
- *
- * Created by François Lamboley on 21/02/2019.
- */
+ * ApiResponse.swift
+ * officectl
+ *
+ * Created by François Lamboley on 21/02/2019.
+ */
 
 import Foundation
 
@@ -18,8 +18,8 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 	
 	init(result: Result<ObjectType, Error>, environment: Environment) {
 		switch result {
-		case .success(let o): self = .data(o)
-		case .failure(let e): self = .error(ApiError(error: e, environment: environment))
+			case .success(let o): self = .data(o)
+			case .failure(let e): self = .error(ApiError(error: e, environment: environment))
 		}
 	}
 	
@@ -30,11 +30,11 @@ enum ApiResponse<ObjectType : Encodable> : Encodable {
 	func encode(to encoder: Encoder) throws {
 		var container = encoder.container(keyedBy: ApiResponse<ObjectType>.CodingKeys.self)
 		switch self {
-		case .data(let object):
-			try container.encode(object, forKey: .data)
-			
-		case .error(let error):
-			try container.encode(error, forKey: .error)
+			case .data(let object):
+				try container.encode(object, forKey: .data)
+				
+			case .error(let error):
+				try container.encode(error, forKey: .error)
 		}
 	}
 	

@@ -1,9 +1,9 @@
 /*
- * GlobalConfig.swift
- * OfficeKit
- *
- * Created by François Lamboley on 12/08/2019.
- */
+ * GlobalConfig.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 12/08/2019.
+ */
 
 import Foundation
 

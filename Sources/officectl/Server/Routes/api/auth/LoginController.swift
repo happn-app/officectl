@@ -1,9 +1,9 @@
 /*
- * LoginController.swift
- * officectl
- *
- * Created by François Lamboley on 22/02/2019.
- */
+ * LoginController.swift
+ * officectl
+ *
+ * Created by François Lamboley on 22/02/2019.
+ */
 
 import Foundation
 

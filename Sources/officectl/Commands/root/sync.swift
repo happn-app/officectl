@@ -1,9 +1,9 @@
 /*
- * sync.swift
- * officectl
- *
- * Created by François Lamboley on 13/07/2018.
- */
+ * sync.swift
+ * officectl
+ *
+ * Created by François Lamboley on 13/07/2018.
+ */
 
 import Foundation
 
@@ -35,8 +35,7 @@ struct SyncCommand : ParsableCommand {
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}
 	
-	/* We don’t technically require Vapor, but it’s convenient, especially for
-	 * logging/retrieving user input from the Console. */
+	/* We don’t technically require Vapor, but it’s convenient, especially for logging/retrieving user input from the Console. */
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		
@@ -166,11 +165,11 @@ struct SyncCommand : ParsableCommand {
 			context.console.info("********* SYNC RESULTS *********")
 			for result in results.sorted() {
 				switch result {
-				case .create(serviceId: let serviceId, userStr: let userStr, password: nil, error: nil):       context.console.info("\(serviceId): created user \(userStr)", newLine: true)
-				case .create(serviceId: let serviceId, userStr: let userStr, password: let pass?, error: nil): context.console.info("\(serviceId): created user \(userStr) w/ pass \(pass)", newLine: true)
-				case .create(serviceId: let serviceId, userStr: let userStr, password: _, error: let error?):  context.console.error("\(serviceId): failed to create user \(userStr): \(error)", newLine: true)
-				case .delete(serviceId: let serviceId, userStr: let userStr, error: nil):                      context.console.info("\(serviceId): deleted user \(userStr)", newLine: true)
-				case .delete(serviceId: let serviceId, userStr: let userStr, error: let error?):               context.console.error("\(serviceId): failed to delete user \(userStr): \(error)", newLine: true)
+					case .create(serviceId: let serviceId, userStr: let userStr, password: nil, error: nil):       context.console.info("\(serviceId): created user \(userStr)", newLine: true)
+					case .create(serviceId: let serviceId, userStr: let userStr, password: let pass?, error: nil): context.console.info("\(serviceId): created user \(userStr) w/ pass \(pass)", newLine: true)
+					case .create(serviceId: let serviceId, userStr: let userStr, password: _, error: let error?):  context.console.error("\(serviceId): failed to create user \(userStr): \(error)", newLine: true)
+					case .delete(serviceId: let serviceId, userStr: let userStr, error: nil):                      context.console.info("\(serviceId): deleted user \(userStr)", newLine: true)
+					case .delete(serviceId: let serviceId, userStr: let userStr, error: let error?):               context.console.error("\(serviceId): failed to delete user \(userStr): \(error)", newLine: true)
 				}
 			}
 			context.console.info()
@@ -193,36 +192,36 @@ struct SyncCommand : ParsableCommand {
 		
 		static func <(lhs: UserSyncResult, rhs: UserSyncResult) -> Bool {
 			switch (lhs, rhs) {
-			case (.create(serviceId: let lhsServiceId, userStr: let lhsUserStr, password: _, error: _),
-					.create(serviceId: let rhsServiceId, userStr: let rhsUserStr, password: _, error: _)):
-				if lhsServiceId == rhsServiceId {return lhsUserStr < rhsUserStr}
-				return lhsServiceId < rhsServiceId
-				
-			case (.delete(serviceId: let lhsServiceId, userStr: let lhsUserStr, error: _),
-					.delete(serviceId: let rhsServiceId, userStr: let rhsUserStr, error: _)):
-				if lhsServiceId == rhsServiceId {return lhsUserStr < rhsUserStr}
-				return lhsServiceId < rhsServiceId
-				
-			case (.create, .delete):
-				return false
-				
-			case (.delete, .create):
-				return true
+				case (.create(serviceId: let lhsServiceId, userStr: let lhsUserStr, password: _, error: _),
+						.create(serviceId: let rhsServiceId, userStr: let rhsUserStr, password: _, error: _)):
+					if lhsServiceId == rhsServiceId {return lhsUserStr < rhsUserStr}
+					return lhsServiceId < rhsServiceId
+					
+				case (.delete(serviceId: let lhsServiceId, userStr: let lhsUserStr, error: _),
+						.delete(serviceId: let rhsServiceId, userStr: let rhsUserStr, error: _)):
+					if lhsServiceId == rhsServiceId {return lhsUserStr < rhsUserStr}
+					return lhsServiceId < rhsServiceId
+					
+				case (.create, .delete):
+					return false
+					
+				case (.delete, .create):
+					return true
 			}
 		}
 		
 		static func ==(lhs: UserSyncResult, rhs: UserSyncResult) -> Bool {
 			switch (lhs, rhs) {
-			case (.create(serviceId: let lhsServiceId, userStr: let lhsUserStr, password: _, error: _),
-					.create(serviceId: let rhsServiceId, userStr: let rhsUserStr, password: _, error: _)):
-				return lhsServiceId == rhsServiceId && lhsUserStr == rhsUserStr
-				
-			case (.delete(serviceId: let lhsServiceId, userStr: let lhsUserStr, error: _),
-					.delete(serviceId: let rhsServiceId, userStr: let rhsUserStr, error: _)):
-				return lhsServiceId == rhsServiceId && lhsUserStr == rhsUserStr
-				
-			case (.create, .delete), (.delete, .create):
-				return false
+				case (.create(serviceId: let lhsServiceId, userStr: let lhsUserStr, password: _, error: _),
+						.create(serviceId: let rhsServiceId, userStr: let rhsUserStr, password: _, error: _)):
+					return lhsServiceId == rhsServiceId && lhsUserStr == rhsUserStr
+					
+				case (.delete(serviceId: let lhsServiceId, userStr: let lhsUserStr, error: _),
+						.delete(serviceId: let rhsServiceId, userStr: let rhsUserStr, error: _)):
+					return lhsServiceId == rhsServiceId && lhsUserStr == rhsUserStr
+					
+				case (.create, .delete), (.delete, .create):
+					return false
 			}
 		}
 		

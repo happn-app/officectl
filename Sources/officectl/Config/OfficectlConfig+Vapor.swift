@@ -1,9 +1,9 @@
 /*
- * GlobalVaporConfig.swift
- * officectl
- *
- * Created by François Lamboley on 11/06/2020.
- */
+ * GlobalVaporConfig.swift
+ * officectl
+ *
+ * Created by François Lamboley on 11/06/2020.
+ */
 
 import Foundation
 
@@ -21,11 +21,11 @@ extension OfficectlConfig {
 		SemiSingletonConfig.logger = app.logger
 		RetryingOperationConfig.logger = app.logger
 		URLRequestOperationConfig.logger = app.logger
-		#if canImport(os)
+#if canImport(os)
 		SemiSingletonConfig.oslog = nil
 		RetryingOperationConfig.oslog = nil
 		URLRequestOperationConfig.oslog = nil
-		#endif
+#endif
 		
 		/* Register the services/configs we got from CLI, if any */
 		app.officectlConfig = self
@@ -39,8 +39,8 @@ extension OfficectlConfig {
 		app.leaf.tags[SnailCaseToHumanLeafTag.name] = SnailCaseToHumanLeafTag()
 		app.leaf.tags[DictionaryGetValueForDynKeyLeafTag.name] = DictionaryGetValueForDynKeyLeafTag()
 		
-		/* We use the memory store for the sessions for now (rebooting officectl
-		 * will drop the sessions…). This is the default but we make it explicit. */
+		/* We use the memory store for the sessions for now (rebooting officectl will drop the sessions…).
+		 * This is the default but we make it explicit. */
 		app.sessions.use(.memory)
 		
 		/* Set OfficeKit options */

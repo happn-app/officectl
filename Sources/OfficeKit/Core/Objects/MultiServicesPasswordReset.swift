@@ -1,9 +1,9 @@
 /*
- * MultiServicesPasswordReset.swift
- * OfficeKit
- *
- * Created by François Lamboley on 24/08/2019.
- */
+ * MultiServicesPasswordReset.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 24/08/2019.
+ */
 
 import Foundation
 

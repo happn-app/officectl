@@ -1,9 +1,9 @@
 /*
- * ExternalServiceError.swift
- * OfficeKit
- *
- * Created by François Lamboley on 10/07/2019.
- */
+ * ExternalServiceError.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 10/07/2019.
+ */
 
 import Foundation
 

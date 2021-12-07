@@ -1,9 +1,9 @@
 /*
- * SearchGoogleUsers.swift
- * officectl
- *
- * Created by François Lamboley on 09/01/2020.
- */
+ * SearchGoogleUsers.swift
+ * officectl
+ *
+ * Created by François Lamboley on 09/01/2020.
+ */
 
 import Foundation
 
@@ -67,7 +67,7 @@ struct GoogleUserAndDest {
 			.filter{ !skipIfArchiveFound || !($0.archiveDestination.flatMap{ FileManager.default.fileExists(atPath: $0.path) } ?? false) } /* Not optimal but we don’t care. */
 		
 		/* Let’s check if two users have the same download or archive destination.
-		 * We fail if this happens.
+		 * We fail if this happens.
 		 * The whole process is most likely sub-optimal in this implementation but we don’t care, really. */
 		let downloadsDestinationsSet = Set(filteredUsers.map{ $0.downloadDestination })
 		guard filteredUsers.count == downloadsDestinationsSet.count else {

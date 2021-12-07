@@ -1,9 +1,9 @@
 /*
- * ErasureUtils.swift
- * OfficeKit
- *
- * Created by François Lamboley on 11/07/2019.
- */
+ * ErasureUtils.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 11/07/2019.
+ */
 
 import Foundation
 
@@ -38,8 +38,8 @@ public struct DSUPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 		}
 		
 		guard let u: DirectoryServiceType.UserType = u.unbox() else {
-			/* In theory we can fatalError here. However, because we’re a library
-			 * and must not crash, let’s play it safe. */
+			/* In theory we can fatalError here.
+			 * However, because we’re a library and must not crash, let’s play it safe. */
 			OfficeKitConfig.logger?.error("Got impossible situation where service is unboxed to \(DirectoryServiceType.self), but the user is not unboxed to this directory user type!")
 			return nil
 		}

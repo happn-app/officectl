@@ -1,9 +1,9 @@
 /*
- * AnyOfficeKitServiceConfig.swift
- * OfficeKit
- *
- * Created by François Lamboley on 28/06/2019.
- */
+ * AnyOfficeKitServiceConfig.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 28/06/2019.
+ */
 
 import Foundation
 

@@ -1,9 +1,9 @@
 /*
- * DummyOpenDirectoryService.swift
- * OfficeKit
- *
- * Created by François Lamboley on 21/07/2019.
- */
+ * DummyOpenDirectoryService.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 21/07/2019.
+ */
 
 import Foundation
 

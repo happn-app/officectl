@@ -1,9 +1,9 @@
 /*
- * AnyGroupOfUsersDirectoryService.swift
- * OfficeKit
- *
- * Created by François Lamboley on 26/09/2019.
- */
+ * AnyGroupOfUsersDirectoryService.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 26/09/2019.
+ */
 
 import Foundation
 

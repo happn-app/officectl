@@ -1,13 +1,13 @@
 /*
- * CreateGoogleUserOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 2019/7/13.
- */
+ * CreateGoogleUserOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 2019/7/13.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import RetryingOperation

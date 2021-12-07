@@ -1,8 +1,8 @@
 /*
- * HandlerVaporCommand.swift
- * officectl
- *
- * Created by François Lamboley on 07/08/2018.
+ * HandlerVaporCommand.swift
+ * officectl
+ *
+ * Created by François Lamboley on 07/08/2018.
  */
 
 import Foundation
@@ -13,7 +13,7 @@ import Vapor
 
 
 /**
-A Vapor command to run a custom handler… */
+ A Vapor command to run a custom handler… */
 struct HandlerVaporCommand : Vapor.Command {
 	
 	struct Signature: CommandSignature {

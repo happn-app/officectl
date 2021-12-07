@@ -1,9 +1,9 @@
 /*
- * EmailService.swift
- * OfficeKit
- *
- * Created by François Lamboley on 26/08/2019.
- */
+ * EmailService.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 26/08/2019.
+ */
 
 import Foundation
 
@@ -75,8 +75,7 @@ public final class EmailService : UserDirectoryService {
 		
 		let inferredUserId: Email
 		if userWrapper.sourceServiceId == config.serviceId {
-			/* The underlying user (though absent) is from our service; the
-			 * original id can be decoded as a valid id for our service. */
+			/* The underlying user (though absent) is from our service; the original id can be decoded as a valid id for our service. */
 			guard let email = Email(rawValue: userWrapper.userId.id) else {
 				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid email.")
 			}
@@ -132,5 +131,5 @@ public final class EmailService : UserDirectoryService {
 	public func changePasswordAction(for user: EmailUser, using services: Services) throws -> ResetPasswordAction {
 		throw NotSupportedError()
 	}
-
+	
 }

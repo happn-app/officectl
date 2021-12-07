@@ -1,9 +1,9 @@
 /*
- * GitHubRepositorySearchOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 18/07/2018.
- */
+ * GitHubRepositorySearchOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 18/07/2018.
+ */
 
 import Foundation
 
@@ -35,8 +35,8 @@ public final class GitHubRepositorySearchOperation : RetryingOperation, HasResul
 	}
 	
 	/* ***************
-	   MARK: - Private
-	   *************** */
+	   MARK: - Private
+	   *************** */
 	
 	private var repositories = [GitHubRepository]()
 	

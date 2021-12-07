@@ -1,9 +1,9 @@
 /*
- * OpenDirectoryServiceConfig.swift
- * OfficeKit
- *
- * Created by François Lamboley on 20/06/2019.
- */
+ * OpenDirectoryServiceConfig.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 20/06/2019.
+ */
 
 #if !canImport(DirectoryService) || !canImport(OpenDirectory)
 

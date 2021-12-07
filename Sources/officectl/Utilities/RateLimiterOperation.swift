@@ -1,9 +1,9 @@
 /*
- * RateLimiterOperation.swift
- * officectl
- *
- * Created by François Lamboley on 11/02/2020.
- */
+ * RateLimiterOperation.swift
+ * officectl
+ *
+ * Created by François Lamboley on 11/02/2020.
+ */
 
 import Foundation
 
@@ -41,22 +41,20 @@ class RateLimiterOperation : RetryingOperation {
 			let timesToWait = limits.compactMap{ limit -> TimeInterval? in
 				let previousResetDateO: Date?
 				switch limit.time {
-				case .duration(let i):                                         previousResetDateO = Date() - i
-				case .resetAtDateComponents(let dateComponents, let calendar): previousResetDateO = calendar.nextDate(after: Date(), matching: dateComponents, matchingPolicy: .strict, repeatedTimePolicy: .first, direction: .backward)
+					case .duration(let i):                                         previousResetDateO = Date() - i
+					case .resetAtDateComponents(let dateComponents, let calendar): previousResetDateO = calendar.nextDate(after: Date(), matching: dateComponents, matchingPolicy: .strict, repeatedTimePolicy: .first, direction: .backward)
 				}
 				
 				guard let previousResetDate = previousResetDateO else {return nil}
 				
 				let nHits: Int
 				let counts = RateLimiterOperation.counts[rateLimitId, default: []]
-				/* TODO: Optimize this search (reverse search). Currently, the more
-				 *       dates are registered, the longer the search! */
+				/* TODO: Optimize this search (reverse search). Currently, the more dates are registered, the longer the search! */
 				let dateAndOffset = counts.enumerated().first{ $0.element >= previousResetDate } /* The last date that was rate-limited */
 				if let dateAndOffset = dateAndOffset {
 					nHits = counts.count - dateAndOffset.offset
 				} else {
-					/* If no dates are after the reset date, that means none of the
-					 * registered dates are in the rate-limit period.*/
+					/* If no dates are after the reset date, that means none of the registered dates are in the rate-limit period.*/
 					nHits = 0
 				}
 				
@@ -64,8 +62,8 @@ class RateLimiterOperation : RetryingOperation {
 				
 				let nextResetDate: Date?
 				switch limit.time {
-				case .duration(let i):                                                   nextResetDate = (dateAndOffset?.element ?? counts.last).flatMap{ $0 + i }
-				case .resetAtDateComponents(let dateComponents, calendar: let calendar): nextResetDate = calendar.nextDate(after: Date(), matching: dateComponents, matchingPolicy: .strict, repeatedTimePolicy: .first, direction: .forward)
+					case .duration(let i):                                                   nextResetDate = (dateAndOffset?.element ?? counts.last).flatMap{ $0 + i }
+					case .resetAtDateComponents(let dateComponents, calendar: let calendar): nextResetDate = calendar.nextDate(after: Date(), matching: dateComponents, matchingPolicy: .strict, repeatedTimePolicy: .first, direction: .forward)
 				}
 				return nextResetDate?.timeIntervalSinceNow
 			}
@@ -82,8 +80,7 @@ class RateLimiterOperation : RetryingOperation {
 		else                  {baseOperationEnded()}
 	}
 	
-	/* The base operation is not in itself asynchronous, but there’s no need to
-	 * wait the next available slot synchronously, so let’s say we’re async. */
+	/* The base operation is not in itself asynchronous, but there’s no need to wait the next available slot synchronously, so let’s say we’re async. */
 	override var isAsynchronous: Bool {
 		return true
 	}

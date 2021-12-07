@@ -1,9 +1,9 @@
 /*
- * HappnUser.swift
- * OfficeKit
- *
- * Created by François Lamboley on 28/08/2019.
- */
+ * HappnUser.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 28/08/2019.
+ */
 
 import Foundation
 
@@ -53,7 +53,7 @@ public struct HappnUser : Hashable, Codable {
 	
 	public func encode(to encoder: Encoder) throws {
 		var container = encoder.container(keyedBy: CodingKeys.self)
-
+		
 		try container.encode(type, forKey: .type)
 		
 		try container.encode(login, forKey: .login)
@@ -74,9 +74,8 @@ public struct HappnUser : Hashable, Codable {
 	public var login: String?
 	public var id: RemoteProperty<String> = .unset
 	
-	/* Technically I think the type is more RemoteProperty<String> but it does
-	 * not change much, and avoids have “happnFirstName” and “firstName” (one
-	 * representing the happn model, the other the DirectoryUser conformance). */
+	/* Technically I think the type is more RemoteProperty<String> but it does not change much,
+	 * and avoids have “happnFirstName” and “firstName” (one representing the happn model, the other the DirectoryUser conformance). */
 	public var firstName: RemoteProperty<String?> = .unset
 	public var lastName: RemoteProperty<String?> = .unset
 	public var nickname: RemoteProperty<String?> = .unset

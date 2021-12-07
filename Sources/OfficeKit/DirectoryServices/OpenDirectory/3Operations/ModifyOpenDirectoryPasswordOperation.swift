@@ -1,9 +1,9 @@
 /*
- * ModifyOpenDirectoryPasswordOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 11/09/2018.
- */
+ * ModifyOpenDirectoryPasswordOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 11/09/2018.
+ */
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)
 

@@ -1,9 +1,9 @@
 /*
- * LDAPConnector.swift
- * officectl
- *
- * Created by François Lamboley on 28/06/2018.
- */
+ * LDAPConnector.swift
+ * officectl
+ *
+ * Created by François Lamboley on 28/06/2018.
+ */
 
 import Foundation
 
@@ -20,9 +20,10 @@ public final class LDAPConnector : Connector {
 		return nsError.code == LDAP_INVALID_CREDENTIALS && nsError.domain == "com.happn.officectl.openldap"
 	}
 	
-	/** Sets the CA for all LDAP connections. I’d have like this to be able to be
-	set on a connector basis instead of being global, but the option is global in
-	the OpenLDAP lib. */
+	/**
+	 Sets the CA for all LDAP connections.
+	 
+	 I’d have like this to be able to be set on a connector basis instead of being global, but the option is global in the OpenLDAP lib. */
 	public static func setCA(_ caURL: URL) throws {
 		guard caURL.isFileURL else {
 			throw NSError(domain: "com.happn.officectl.ldapconnector", code: 42, userInfo: [NSLocalizedDescriptionKey: "CA cert file must be a file URL"])
@@ -39,9 +40,9 @@ public final class LDAPConnector : Connector {
 		
 		fileprivate var ldapVal: Int32 {
 			switch self {
-			case .v1: return LDAP_VERSION1
-			case .v2: return LDAP_VERSION2
-			case .v3: return LDAP_VERSION3
+				case .v1: return LDAP_VERSION1
+				case .v2: return LDAP_VERSION2
+				case .v3: return LDAP_VERSION3
 			}
 		}
 		
@@ -76,12 +77,11 @@ public final class LDAPConnector : Connector {
 		authMode = a
 		
 		/* As per the LDAP man, we single-thread the init...
-		 *    “Note: the first call into the LDAP library also initializes the
-		 *     global options for the library. As such the first call should be
-		 *     single-threaded or otherwise protected to insure that only one call
-		 *     is active. It is recommended that ldap_get_option() or
-		 *     ldap_set_option() be used in the program's main thread before any
-		 *     additional threads are created. See ldap_get_option(3).” */
+		 *
+		 * “Note: the first call into the LDAP library also initializes the global options for the library.
+		 *  As such the first call should be single-threaded or otherwise protected to insure that only one call is active.
+		 *  It is recommended that ldap_get_option() or ldap_set_option() be used in the program's main thread before any additional threads are created.
+		 *  See ldap_get_option(3).” */
 		LDAPConnector.initSemaphore.wait()
 		defer {LDAPConnector.initSemaphore.signal()}
 		
@@ -110,58 +110,58 @@ public final class LDAPConnector : Connector {
 		ldap_unbind_ext_s(ldapPtr, nil, nil)
 	}
 	
-	/** Lets the client communicate directly with the LDAP. Use the pointer
-	inside the block only, do **not** store it!
-	
-	- Parameter communicationBlock: The block to execute.
-	- Parameter ldapPtr: An opaque pointer to the underlying LDAP C structure.
-	The structure is opaque in the openldap headers, so we get an opaque pointer
-	in Swift. */
+	/**
+	 Lets the client communicate directly with the LDAP.
+	 Use the pointer inside the block only, do **not** store it!
+	 
+	 - Parameter communicationBlock: The block to execute.
+	 - Parameter ldapPtr: An opaque pointer to the underlying LDAP C structure.
+	 The structure is opaque in the openldap headers, so we get an opaque pointer in Swift. */
 	public func performLDAPCommunication<T>(_ communicationBlock: (_ ldapPtr: OpaquePointer) throws -> T) rethrows -> T {
 		return try ldapCommunicationQueue.sync{ try communicationBlock(ldapPtr) }
 	}
 	
 	/* ********************************
-	   MARK: - Connector Implementation
-	   ******************************** */
+	   MARK: - Connector Implementation
+	   ******************************** */
 	
 	public func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<Void>, handler: @escaping (Error?) -> Void) {
 		switch changeType {
-		case .remove, .removeAll:
-			handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Disconnecting an LDAP connection but retaining the connection is not supported by (Open)LDAP"]))
-			
-		case .add(let scope):
-			switch authMode {
-			case .none:
-				self.currentScope = scope
-				handler(nil)
+			case .remove, .removeAll:
+				handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Disconnecting an LDAP connection but retaining the connection is not supported by (Open)LDAP"]))
 				
-			case .userPass(username: let username, password: let password):
-				guard let cStringPass = password.cString(using: .ascii) else {
-					handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Password cannot be converted to C String using ascii encoding"]))
-					return
+			case .add(let scope):
+				switch authMode {
+					case .none:
+						self.currentScope = scope
+						handler(nil)
+						
+					case .userPass(username: let username, password: let password):
+						guard let cStringPass = password.cString(using: .ascii) else {
+							handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Password cannot be converted to C String using ascii encoding"]))
+							return
+						}
+						DispatchQueue(label: "LDAP Connector Connect Queue").async{
+							var cred = berval(bv_len: ber_len_t(strlen(cStringPass)), bv_val: ber_strdup(cStringPass))
+							defer {ber_memfree(cred.bv_val)}
+							
+							/* TODO: https://twitter.com/CodaFi_/status/1362671988171370496 */
+							let r = ldap_sasl_bind_s(self.ldapPtr, username, nil, &cred, nil, nil, nil)
+							guard r == LDAP_SUCCESS else {
+								handler(NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))]))
+								return
+							}
+							
+							self.currentScope = scope
+							handler(nil)
+						}
 				}
-				DispatchQueue(label: "LDAP Connector Connect Queue").async{
-					var cred = berval(bv_len: ber_len_t(strlen(cStringPass)), bv_val: ber_strdup(cStringPass))
-					defer {ber_memfree(cred.bv_val)}
-					
-					/* TODO: https://twitter.com/CodaFi_/status/1362671988171370496 */
-					let r = ldap_sasl_bind_s(self.ldapPtr, username, nil, &cred, nil, nil, nil)
-					guard r == LDAP_SUCCESS else {
-						handler(NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))]))
-						return
-					}
-					
-					self.currentScope = scope
-					handler(nil)
-				}
-			}
 		}
 	}
 	
 	/* ***************
-	   MARK: - Private
-	   *************** */
+	   MARK: - Private
+	   *************** */
 	
 	private static let initSemaphore = DispatchSemaphore(value: 1)
 	

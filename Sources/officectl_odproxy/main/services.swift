@@ -1,9 +1,9 @@
 /*
- * services.swift
- * officectl_odproxy
- *
- * Created by François Lamboley on 06/01/2020.
- */
+ * services.swift
+ * officectl_odproxy
+ *
+ * Created by François Lamboley on 06/01/2020.
+ */
 
 import Foundation
 
@@ -29,7 +29,7 @@ extension Application {
 
 
 extension Application {
-		
+	
 	var semiSingletonStore: SemiSingletonStore {
 		/* I’m not sure accessing storage outside of the queue is thread-safe… */
 		if let existing = storage[SemiSingletonStoreKey.self] {

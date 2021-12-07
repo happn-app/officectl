@@ -1,9 +1,9 @@
 /*
- * UserSessionAuthenticator.swift
- * officectl
- *
- * Created by François Lamboley on 17/04/2020.
- */
+ * UserSessionAuthenticator.swift
+ * officectl
+ *
+ * Created by François Lamboley on 17/04/2020.
+ */
 
 import Foundation
 

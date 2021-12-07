@@ -1,9 +1,9 @@
 /*
- * create.swift
- * officectl
- *
- * Created by François Lamboley on 2019/7/13.
- */
+ * create.swift
+ * officectl
+ *
+ * Created by François Lamboley on 2019/7/13.
+ */
 
 import Foundation
 
@@ -86,18 +86,19 @@ struct UserCreateCommand : ParsableCommand {
 				ConsoleText(stringLiteral: "   - password:   \(password)") + ConsoleText.newLine +
 				ConsoleText.newLine +
 				ConsoleText(stringLiteral: "Resolved to:") +
-					(users.enumerated()
-						.sorted{ services[$0.offset].config.serviceId < services[$1.offset].config.serviceId }
-						.map{ serviceIdxAndUser in
-							let (serviceIdx, userResult) = serviceIdxAndUser
-							let service = services[serviceIdx]
-							guard let user = userResult.successValue else {return ConsoleText()}
-							return
-								ConsoleText.newLine +
-								ConsoleText(stringLiteral: "   - \(service.config.serviceId) (\(service.config.serviceName)): ") +
-								ConsoleText(stringLiteral: service.shortDescription(fromUser: user))
-						}
-					).reduce(ConsoleText(), +) + ConsoleText.newLine +
+				(users.enumerated()
+					.sorted{ services[$0.offset].config.serviceId < services[$1.offset].config.serviceId }
+					.map{ serviceIdxAndUser in
+						let (serviceIdx, userResult) = serviceIdxAndUser
+						let service = services[serviceIdx]
+						guard let user = userResult.successValue else {return ConsoleText()}
+						return (
+							ConsoleText.newLine +
+							ConsoleText(stringLiteral: "   - \(service.config.serviceId) (\(service.config.serviceName)): ") +
+							ConsoleText(stringLiteral: service.shortDescription(fromUser: user))
+						)
+					}
+				).reduce(ConsoleText(), +) + ConsoleText.newLine +
 				ConsoleText.newLine + ConsoleText(stringLiteral: "Is this ok?")
 			)
 			guard context.console.confirm(confirmationPrompt) else {
@@ -143,8 +144,8 @@ struct UserCreateCommand : ParsableCommand {
 		for (service, result) in results {
 			let serviceID = service.config.serviceId
 			switch result {
-			case .success(let user):         context.console.info("✅ \(serviceID): \(service.shortDescription(fromUser: user))")
-			case .failure(let error):        context.console.info("🛑 \(serviceID): \(error)")
+				case .success(let user):         context.console.info("✅ \(serviceID): \(service.shortDescription(fromUser: user))")
+				case .failure(let error):        context.console.info("🛑 \(serviceID): \(error)")
 			}
 		}
 		context.console.info("Password for created users: \(password)")

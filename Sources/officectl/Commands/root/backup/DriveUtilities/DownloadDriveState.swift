@@ -1,9 +1,9 @@
 /*
- * DownloadDriveState.swift
- * officectl
- *
- * Created by François Lamboley on 11/02/2020.
- */
+ * DownloadDriveState.swift
+ * officectl
+ *
+ * Created by François Lamboley on 11/02/2020.
+ */
 
 import Foundation
 
@@ -84,7 +84,7 @@ class DownloadDriveState {
 			}
 			
 			return futureObject
-			.map{ paths in return paths.map{ self.deduplicatePath(originalPath: ($0 as NSString).appendingPathComponent(objectName), for: objectId) } }
+				.map{ paths in return paths.map{ self.deduplicatePath(originalPath: ($0 as NSString).appendingPathComponent(objectName), for: objectId) } }
 		}
 		return EventLoopFuture<[String]>.whenAllSucceed(futures, on: eventLoop).map{ $0.flatMap{ $0 } }
 	}

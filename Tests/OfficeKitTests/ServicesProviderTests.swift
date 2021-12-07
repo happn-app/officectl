@@ -1,9 +1,9 @@
 /*
- * ServicesProviderTests.swift
- * OfficeKitTests
- *
- * Created by François Lamboley on 17/08/2019.
- */
+ * ServicesProviderTests.swift
+ * OfficeKitTests
+ *
+ * Created by François Lamboley on 17/08/2019.
+ */
 
 import Foundation
 import XCTest

@@ -1,13 +1,13 @@
 /*
- * GetMDMDevicesAction.swift
- * officectl
- *
- * Created by François Lamboley on 2020/4/8.
- */
+ * GetMDMDevicesAction.swift
+ * officectl
+ *
+ * Created by François Lamboley on 2020/4/8.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import NIO
@@ -36,13 +36,13 @@ final class GetMDMDevicesWithAttributesAction : Action<String, Void, [(SimpleMDM
 					return (device, self.getDeviceAttributes(token: self.subject, deviceId: device.id, eventLoop: eventLoop))
 				}
 				/* waitAll returns an array of (SimpleMDM, Result<[String: String], Error>)
-				 * The next flatMapThrowing will fail the whole future if any of the Result in the tuples is a failure,
+				 * The next flatMapThrowing will fail the whole future if any of the Result in the tuples is a failure,
 				 * and drop the Result in its return type, effectively giving us an array of (SimpleMDM, [String: String]) which is what we want! */
 				return try await EventLoopFuture<[String: String]>.waitAll(futures, eventLoop: eventLoop)
-				.flatMapThrowing{ result in
-					try result.map{ try ($0.0, $0.1.get()) }
-				}
-				.get()
+					.flatMapThrowing{ result in
+						try result.map{ try ($0.0, $0.1.get()) }
+					}
+					.get()
 			})
 		}
 	}
@@ -54,18 +54,16 @@ final class GetMDMDevicesWithAttributesAction : Action<String, Void, [(SimpleMDM
 			var data: [AttributesResponse]
 			
 			struct AttributesResponse : Decodable {
-				/* Probably actually an enum; seems to always be
-				 * “custom_attribute_value”. Not used. */
+				/* Probably actually an enum; seems to always be “custom_attribute_value”.
+				 * Not used. */
 				var type: String
 				var id: String
 				var attributes: AttributesValueResponse
 				struct AttributesValueResponse : Decodable {
-					/* I cannot guarantee the value is non-optional and always a
-					 * String (did not find confirmation in the doc) but this seems
-					 * reasonable */
+					/* I cannot guarantee the value is non-optional and always a String (did not find confirmation in the doc) but this seems reasonable */
 					var value: String
 					/* I don’t know if SimpleMDM might send some other properties…
-					 * For the cases I have today, I have nothing else. */
+					 * For the cases I have today, I have nothing else. */
 				}
 			}
 		}

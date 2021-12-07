@@ -1,9 +1,9 @@
 /*
- * LDAPSearchQuery.swift
- * OfficeKit
- *
- * Created by François Lamboley on 05/09/2018.
- */
+ * LDAPSearchQuery.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 05/09/2018.
+ */
 
 import Foundation
 
@@ -34,42 +34,40 @@ public indirect enum LDAPSearchQuery {
 	var stringValue: String {
 		let ret: String
 		switch self {
-		case .present(attribute: let attribute):
-			ret = attribute.stringValue + "=*"
-			
-		case .simple(attribute: let attribute, filtertype: let filter, value: let value):
-			ret = attribute.stringValue + filter.rawValue + dataToStr(value)
-			
-		case .substring(attribute: let attribute, prefix: let prefix, middleData: let middle, suffix: let suffix):
-			ret = attribute.stringValue + "=" + dataToStr(prefix) + "*" + middle.reduce("", { $0 + dataToStr($1) + "*" }) + dataToStr(suffix)
-			
-		case .extensibleWithAttribute(attribute: let attribute, dnAttribute: let hasDN, matchingRule: let matchingRule, value: let value):
-			let matchingRuleString = (matchingRule.flatMap{ ":" + $0.stringValue } ?? "")
-			ret = attribute.stringValue + (hasDN ? ":dn" : "") + matchingRuleString + ":=" + dataToStr(value)
-			
-		case .extensibleWithoutAttribute(dnAttribute: let hasDN, matchingRule: let matchingRule, value: let value):
-			ret = (hasDN ? ":dn" : "") + ":" + matchingRule.stringValue + ":=" + dataToStr(value)
-			
-		case .and(let subsearches):
-			ret = "&" + subsearches.reduce("", { $0 + $1.stringValue })
-			
-		case .or(let subsearches):
-			ret = "|" + subsearches.reduce("", { $0 + $1.stringValue })
-			
-		case .not(let subsearch):
-			ret = "!" + subsearch.stringValue
+			case .present(attribute: let attribute):
+				ret = attribute.stringValue + "=*"
+				
+			case .simple(attribute: let attribute, filtertype: let filter, value: let value):
+				ret = attribute.stringValue + filter.rawValue + dataToStr(value)
+				
+			case .substring(attribute: let attribute, prefix: let prefix, middleData: let middle, suffix: let suffix):
+				ret = attribute.stringValue + "=" + dataToStr(prefix) + "*" + middle.reduce("", { $0 + dataToStr($1) + "*" }) + dataToStr(suffix)
+				
+			case .extensibleWithAttribute(attribute: let attribute, dnAttribute: let hasDN, matchingRule: let matchingRule, value: let value):
+				let matchingRuleString = (matchingRule.flatMap{ ":" + $0.stringValue } ?? "")
+				ret = attribute.stringValue + (hasDN ? ":dn" : "") + matchingRuleString + ":=" + dataToStr(value)
+				
+			case .extensibleWithoutAttribute(dnAttribute: let hasDN, matchingRule: let matchingRule, value: let value):
+				ret = (hasDN ? ":dn" : "") + ":" + matchingRule.stringValue + ":=" + dataToStr(value)
+				
+			case .and(let subsearches):
+				ret = "&" + subsearches.reduce("", { $0 + $1.stringValue })
+				
+			case .or(let subsearches):
+				ret = "|" + subsearches.reduce("", { $0 + $1.stringValue })
+				
+			case .not(let subsearch):
+				ret = "!" + subsearch.stringValue
 		}
 		return "(" + ret + ")"
 	}
 	
 	private func dataToStr(_ data: Data?) -> String {
 		guard let data = data else {return ""}
-		/* RFC says that any UTFMB (UTF2, UTF3 & UTF4) chat can be left unescaped
-		 * in the resulting string, and almost all UTF1 (exactly UTF1 minus NULL,
-		 * left and right parenthesis, the asterisk and the backlash). For
-		 * simplicity and readability (we would prefer not having non-printable
-		 * characters in the resulting query), we’ll escape everything that is not
-		 * whilelisted in whiteListedChars… */
+		/* RFC says that any UTFMB (UTF2, UTF3 & UTF4) chat can be left unescaped in the resulting string, and almost all UTF1
+		 * (exactly UTF1 minus NULL, left and right parenthesis, the asterisk and the backlash).
+		 * For simplicity and readability (we would prefer not having non-printable characters in the resulting query),
+		 * we’ll escape everything that is not whilelisted in whiteListedChars… */
 		return data.reduce("", { $0 + (LDAPSearchQuery.whiteListedChars.contains($1) ? String(Character(UnicodeScalar($1))) : String(format: "\\%02x", $1)) })
 	}
 	

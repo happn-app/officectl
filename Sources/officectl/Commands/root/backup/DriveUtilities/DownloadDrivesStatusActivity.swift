@@ -1,9 +1,9 @@
 /*
- * DownloadDrivesStatusActivity.swift
- * officectl
- *
- * Created by François Lamboley on 11/02/2020.
- */
+ * DownloadDrivesStatusActivity.swift
+ * officectl
+ *
+ * Created by François Lamboley on 11/02/2020.
+ */
 
 import Foundation
 
@@ -69,9 +69,8 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 		
 		console.info("Drive Download Statuses by Users:")
 		
-		/* Note: We do not check the console size before doing the printing. If
-		 *       there is a very long username (or a very small console), the
-		 *       output will probably be weird… */
+		/* Note: We do not check the console size before doing the printing.
+		 * If there is a very long username (or a very small console), the output will probably be weird… */
 		
 		let maxAccountWidth = self.maxAccountWidth ?? statuses.keys.map{ $0.primaryEmail.rawValue.count }.max() ?? 0
 		
@@ -115,15 +114,15 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 				/* Indeterminate progress bar as we don’t know the progress. */
 				let bulletPosition: Int
 				switch state {
-				case .active(tick: let actualT):
-					let t = UInt((Float(actualT)/2).rounded(.down)) /* Slow down the back-and forth motion */
-					let period = loadingBarWidth - 1
-					let offset  = Int(t % UInt(period))
-					let reverse = Int(t % UInt(period*2)) >= period
-					bulletPosition = !reverse ? offset : loadingBarWidth - offset - 1
-					
-				default:
-					bulletPosition = 0
+					case .active(tick: let actualT):
+						let t = UInt((Float(actualT)/2).rounded(.down)) /* Slow down the back-and forth motion */
+						let period = loadingBarWidth - 1
+						let offset  = Int(t % UInt(period))
+						let reverse = Int(t % UInt(period*2)) >= period
+						bulletPosition = !reverse ? offset : loadingBarWidth - offset - 1
+						
+					default:
+						bulletPosition = 0
 				}
 				line.append(ConsoleTextFragment(string: String(repeating: status.archiving ? "~" : " ", count: bulletPosition), style: .plain))
 				line.append(ConsoleTextFragment(string: status.archiving ? "=" : "•", style: .plain))
@@ -179,10 +178,10 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 	
 	private func numberWidth(_ n: Int) -> Int {
 		switch n {
-		case 0: return 1
-		case ...(-1): return numberWidth(n) + 1
-		case 1...:    return Int(log10(Float(n))) + 1
-		default: return 1 /* Should not be possible… */
+			case 0: return 1
+			case ...(-1): return numberWidth(n) + 1
+			case 1...:    return Int(log10(Float(n))) + 1
+			default: return 1 /* Should not be possible… */
 		}
 	}
 	

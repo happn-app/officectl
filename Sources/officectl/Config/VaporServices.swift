@@ -1,9 +1,9 @@
 /*
- * services.swift
- * officectl
- *
- * Created by François Lamboley on 06/01/2020.
- */
+ * services.swift
+ * officectl
+ *
+ * Created by François Lamboley on 06/01/2020.
+ */
 
 import Foundation
 
@@ -14,8 +14,7 @@ import Vapor
 
 
 
-/* *** IMPORTANT: When adding a new property that set something in the storage,
- * do remember to access it in Application+officectl.swift! */
+/* *** IMPORTANT: When adding a new property that set something in the storage, do remember to access it in Application+officectl.swift! */
 
 
 
@@ -58,8 +57,7 @@ extension Application {
 
 extension Application {
 	
-	/* Note: Once this is accessed, officectlConfig won’t clear the cached
-	 *       services provider. */
+	/* Note: Once this is accessed, officectlConfig won’t clear the cached services provider. */
 	var officeKitServiceProvider: OfficeKitServiceProvider {
 		if let existing = storage[OfficeKitServiceProviderKey.self] {
 			return existing

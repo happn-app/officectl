@@ -1,9 +1,9 @@
 /*
- * GetGoogleUserOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 13/09/2018.
- */
+ * GetGoogleUserOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 13/09/2018.
+ */
 
 import Foundation
 
@@ -24,8 +24,9 @@ public final class GetGoogleUserOperation : RetryingOperation, HasResult {
 	
 	public private(set) var result = Result<GoogleUser, Error>.failure(OperationIsNotFinishedError())
 	
-	/** Init the operation with the given user key. A user key is either the
-	Google id of the user or the email of the user. */
+	/**
+	 Init the operation with the given user key.
+	 A user key is either the Google id of the user or the email of the user. */
 	public init(userKey k: String, connector c: GoogleJWTConnector) {
 		userKey = k
 		connector = c

@@ -1,16 +1,17 @@
 /*
- * LDAPObject.swift
- * officectl
- *
- * Created by François Lamboley on 04/07/2018.
- */
+ * LDAPObject.swift
+ * officectl
+ *
+ * Created by François Lamboley on 04/07/2018.
+ */
 
 import Foundation
 
 
 
-/** A generic LDAP object. Contains the dn and the attributes/values of the
-object. */
+/**
+ A generic LDAP object.
+ Contains the dn and the attributes/values of the object. */
 public struct LDAPObject {
 	
 	public var distinguishedName: LDAPDistinguishedName
@@ -31,8 +32,7 @@ public struct LDAPObject {
 		return v.compactMap{ String(data: $0, encoding: .utf8) }
 	}
 	
-	/* Return the first value for the given key which has a valid UTF-8 string
-	 * representation. */
+	/* Return the first value for the given key which has a valid UTF-8 string representation. */
 	public func firstStringValue(for key: String) -> String? {
 		return stringValues(for: key)?.first /* This is not very optimized… */
 	}

@@ -1,9 +1,9 @@
 /*
- * EmailServiceConfig.swift
- * OfficeKit
- *
- * Created by François Lamboley on 26/08/2019.
- */
+ * EmailServiceConfig.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 26/08/2019.
+ */
 
 import Foundation
 

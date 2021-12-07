@@ -1,9 +1,9 @@
 /*
- * SearchLDAPOperation.swift
- * officectl
- *
- * Created by François Lamboley on 29/06/2018.
- */
+ * SearchLDAPOperation.swift
+ * officectl
+ *
+ * Created by François Lamboley on 29/06/2018.
+ */
 
 import Foundation
 
@@ -34,18 +34,15 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 		assert(ldapConnector.isConnected)
 		defer {baseOperationEnded()}
 		
-		/* We use ldap_search_ext_s (the synchronous version of the function). The
-		 * operation should be run on a queue to have async behavior. We won't use
-		 * the async version of the function because it does not have a handler;
-		 * instead one have to poll the results using the ldap_result method,
-		 * which is not convenient nor useful for our use-case compared to the
-		 * synchronous alternative. As a downside, we cannot cancel the search
-		 * operation quickly (the search from the libldap has to finish first).
-		 * For our use case it should be fine (actually correct cancellation has
-		 * not even been implemented later).
-		 * Another (guessed) downside is if we have multiple requests launched on
-		 * the same connection, they won’t be run at the same time, one long
-		 * request potentially blocking another small request. */
+		/* We use ldap_search_ext_s (the synchronous version of the function).
+		 * The operation should be run on a queue to have async behavior.
+		 * We won't use the async version of the function because it does not have a handler;
+		 * instead one have to poll the results using the ldap_result method, which
+		 * is not convenient nor useful for our use-case compared to the synchronous alternative.
+		 * As a downside, we cannot cancel the search operation quickly (the search from the libldap has to finish first).
+		 * For our use case it should be fine (actually correct cancellation has not even been implemented later).
+		 * Another (guessed) downside is if we have multiple requests launched on the same connection, they won’t be run at the same time,
+		 * one long request potentially blocking another small request. */
 		ldapConnector.performLDAPCommunication{ ldapPtr in
 			var searchResultMessagePtr: OpaquePointer? /* “LDAPMessage*”; Cannot use the LDAPMessage type (not exported to Swift, because opaque in C headers...) */
 			let searchResultError = withCLDAPArrayOfString(array: request.attributesToFetch.flatMap{ Array($0) }){ attributesPtr in
@@ -71,70 +68,69 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 				nextMessage = ldap_next_message(ldapPtr, currentMessage)
 				
 				switch ber_tag_t(ldap_msgtype(currentMessage)) {
-				case LDAP_RES_SEARCH_ENTRY: /* A search result */
-					guard let dnCString = ldap_get_dn(ldapPtr, currentMessage) else {
-						OfficeKitConfig.logger?.info("Cannot get DN for search entry")
-						continue
-					}
-					defer {ldap_memfree(dnCString)}
-					
-					var ber: OpaquePointer?
-					var swiftAttributesAndValues = [String: [Data]]()
-					var nextAttribute = ldap_first_attribute(ldapPtr, currentMessage, &ber)
-					defer {ber_free(ber, 0)}
-					while let currentAttribute = nextAttribute {
-						defer {ldap_memfree(currentAttribute)}
-						nextAttribute = ldap_next_attribute(ldapPtr, currentMessage, ber)
-						
-						let currentAttributeString = String(cString: currentAttribute)
-						guard let valueSetPtr = ldap_get_values_len(ldapPtr, currentMessage, currentAttribute) else {
-							/* To retrieve the error message: ldap_err2string(ldapPtr.pointee.ld_errno)
-							 * But does not work because ldapPtr is an Opaque Pointer
-							 * (because it is opaque in the OpenLDAP headers...) */
-							OfficeKitConfig.logger?.info("Cannot get value set for attribute \(currentAttributeString)")
+					case LDAP_RES_SEARCH_ENTRY: /* A search result */
+						guard let dnCString = ldap_get_dn(ldapPtr, currentMessage) else {
+							OfficeKitConfig.logger?.info("Cannot get DN for search entry")
 							continue
 						}
-						var swiftValues = [Data]()
-						var currentValuePtr = valueSetPtr
-						while let currentValue = currentValuePtr.pointee {
-							defer {currentValuePtr = currentValuePtr.successor()}
-							swiftValues.append(Data(bytes: currentValue.pointee.bv_val, count: Int(currentValue.pointee.bv_len)))
-						}
-						ldap_value_free_len(valueSetPtr)
-						swiftAttributesAndValues[currentAttributeString] = swiftValues
-					}
-					let dnString = String(cString: dnCString)
-					guard let dn = try? LDAPDistinguishedName(string: dnString) else {
-						results = .failure(InternalError(message: "Got malformed dn '\(dnString)' from LDAP. Aborting search."))
-						return
-					}
-					swiftResults.append(LDAPObject(distinguishedName: dn, attributes: swiftAttributesAndValues))
-					
-				case LDAP_RES_SEARCH_REFERENCE: /* UNTESTED (our server does not return search references; not sure what search references are anyway…) */
-					var referrals: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?
-					let err = ldap_parse_reference(ldapPtr, currentMessage, &referrals, nil /* Server Controls */, 0 /* Do not free the message */)
-					guard err == LDAP_SUCCESS else {
-						OfficeKitConfig.logger?.info("Cannot get search reference: got error \(String(cString: ldap_err2string(err)))")
-						continue
-					}
-					
-					var swiftValues = [String]()
-					var nextReferralPtr = referrals
-					while let currentReferral = nextReferralPtr?.pointee {
-						defer {ldap_memfree(currentReferral)}
-						nextReferralPtr = nextReferralPtr?.successor()
+						defer {ldap_memfree(dnCString)}
 						
-						swiftValues.append(String(cString: currentReferral))
-					}
-					ldap_memfree(referrals)
-					
-					swiftReferences.append(swiftValues)
-					
-				case LDAP_RES_SEARCH_RESULT: /* The metadata about the search results */
-					()
-					
-				default:
-					OfficeKitConfig.logger?.info("Got unknown message of type \(ldap_msgtype(currentMessage)). Ignoring.")
+						var ber: OpaquePointer?
+						var swiftAttributesAndValues = [String: [Data]]()
+						var nextAttribute = ldap_first_attribute(ldapPtr, currentMessage, &ber)
+						defer {ber_free(ber, 0)}
+						while let currentAttribute = nextAttribute {
+							defer {ldap_memfree(currentAttribute)}
+							nextAttribute = ldap_next_attribute(ldapPtr, currentMessage, ber)
+							
+							let currentAttributeString = String(cString: currentAttribute)
+							guard let valueSetPtr = ldap_get_values_len(ldapPtr, currentMessage, currentAttribute) else {
+								/* To retrieve the error message: ldap_err2string(ldapPtr.pointee.ld_errno)
+								 * But does not work because ldapPtr is an Opaque Pointer (because it is opaque in the OpenLDAP headers...) */
+								OfficeKitConfig.logger?.info("Cannot get value set for attribute \(currentAttributeString)")
+								continue
+							}
+							var swiftValues = [Data]()
+							var currentValuePtr = valueSetPtr
+							while let currentValue = currentValuePtr.pointee {
+								defer {currentValuePtr = currentValuePtr.successor()}
+								swiftValues.append(Data(bytes: currentValue.pointee.bv_val, count: Int(currentValue.pointee.bv_len)))
+							}
+							ldap_value_free_len(valueSetPtr)
+							swiftAttributesAndValues[currentAttributeString] = swiftValues
+						}
+						let dnString = String(cString: dnCString)
+						guard let dn = try? LDAPDistinguishedName(string: dnString) else {
+							results = .failure(InternalError(message: "Got malformed dn '\(dnString)' from LDAP. Aborting search."))
+							return
+						}
+						swiftResults.append(LDAPObject(distinguishedName: dn, attributes: swiftAttributesAndValues))
+						
+					case LDAP_RES_SEARCH_REFERENCE: /* UNTESTED (our server does not return search references; not sure what search references are anyway…) */
+						var referrals: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?
+						let err = ldap_parse_reference(ldapPtr, currentMessage, &referrals, nil /* Server Controls */, 0 /* Do not free the message */)
+						guard err == LDAP_SUCCESS else {
+							OfficeKitConfig.logger?.info("Cannot get search reference: got error \(String(cString: ldap_err2string(err)))")
+							continue
+						}
+						
+						var swiftValues = [String]()
+						var nextReferralPtr = referrals
+						while let currentReferral = nextReferralPtr?.pointee {
+							defer {ldap_memfree(currentReferral)}
+							nextReferralPtr = nextReferralPtr?.successor()
+							
+							swiftValues.append(String(cString: currentReferral))
+						}
+						ldap_memfree(referrals)
+						
+						swiftReferences.append(swiftValues)
+						
+					case LDAP_RES_SEARCH_RESULT: /* The metadata about the search results */
+						()
+						
+					default:
+						OfficeKitConfig.logger?.info("Got unknown message of type \(ldap_msgtype(currentMessage)). Ignoring.")
 				}
 			}
 			results = .success((results: swiftResults, references: swiftReferences))

@@ -1,13 +1,13 @@
 /*
- * ModifyHappnUserOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 01/09/2019.
- */
+ * ModifyHappnUserOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 01/09/2019.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import RetryingOperation
@@ -19,7 +19,7 @@ public final class ModifyHappnUserOperation : RetryingOperation, HasResult {
 	public typealias ResultType = Void
 	
 	public static let scopes = Set(arrayLiteral: "admin_read", "all_user_update")
-
+	
 	public let connector: HappnConnector
 	
 	public let user: HappnUser

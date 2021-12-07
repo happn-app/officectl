@@ -1,17 +1,17 @@
 /*
- * LDAPOperationTests.swift
- * OfficeKitTests
- *
- * Created by François Lamboley on 03/01/2019.
- */
+ * LDAPOperationTests.swift
+ * OfficeKitTests
+ *
+ * Created by François Lamboley on 03/01/2019.
+ */
 
 import XCTest
 @testable import OfficeKit
 
 
 
-/* Tests must run IN THE CORRECT ORDER (test1, test2, etc.). You must run
- * ./Scripts/start_tests_helpers.sh before starting the tests. */
+/* Tests must run IN THE CORRECT ORDER (test1, test2, etc.).
+ * You must run ./Scripts/start_tests_helpers.sh before starting the tests. */
 class LDAPOperationTests : XCTestCase {
 	
 	func test1_LDAPObjectCreation() throws {
@@ -52,8 +52,7 @@ class LDAPOperationTests : XCTestCase {
 		let expectationObject = ErrorContainer()
 		let expectation = XCTKVOExpectation(keyPath: #keyPath(ErrorContainer.error), object: expectationObject)
 		
-		/* We use the semi-singleton init, but purposefully not init via a
-		 * semi-singleton store. */
+		/* We use the semi-singleton init, but purposefully not init via a semi-singleton store. */
 		let connector = try LDAPConnector(key: ldapConfForTests.connectorSettings)
 		connector.connect(scope: (), handler: { result in
 			expectationObject.error = result.failureValue

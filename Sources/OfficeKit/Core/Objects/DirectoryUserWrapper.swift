@@ -1,9 +1,9 @@
 /*
- * DirectoryUserWrapper.swift
- * OfficeKit
- *
- * Created by François Lamboley on 09/07/2019.
- */
+ * DirectoryUserWrapper.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 09/07/2019.
+ */
 
 import Foundation
 
@@ -28,12 +28,12 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	public var lastName: RemoteProperty<String?> = .unsupported
 	public var nickname: RemoteProperty<String?> = .unsupported
 	
-	/* Note: We could use GenericStorage, but this would complexify conformance
-	 *       to Codable so we’ll keep JSON, at least for now. */
+	/* Note: We could use GenericStorage, but this would complexify conformance to Codable so we’ll keep JSON, at least for now. */
 	public var underlyingUser: JSON?
 	
-	/** An attempt at something at some point. Can probably be removed (set to
-	private in the mean time). */
+	/**
+	 An attempt at something at some point.
+	 Can probably be removed (set to private in the mean time). */
 	private var savedHints = [DirectoryUserProperty: String?]()
 	
 	public var sourceServiceId: String {
@@ -113,7 +113,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	
 	public func encode(to encoder: Encoder) throws {
 		var container = encoder.container(keyedBy: CodingKeys.self)
-
+		
 		try container.encode(underlyingUser, forKey: .underlyingUser)
 		try container.encode(savedHints, forKey: .savedHints)
 		
@@ -164,11 +164,12 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		return ret
 	}
 	
-	/** Applies the hints it can, and trump all saved hints with the new ones. If
-	`replaceAllPreviouslySavedHints` is `true`, will also delete previously saved
-	hints in the user. Blacklisted keys are not saved.
-	
-	- Returns: The keys that have been modified. */
+	/**
+	 Applies the hints it can, and trump all saved hints with the new ones.
+	 If `replaceAllPreviouslySavedHints` is `true`, will also delete previously saved hints in the user.
+	 Blacklisted keys are not saved.
+	 
+	 - Returns: The keys that have been modified. */
 	@discardableResult
 	public mutating func applyAndSaveHints(_ hints: [DirectoryUserProperty: String?], blacklistedKeys: Set<DirectoryUserProperty> = [.userId], replaceAllPreviouslySavedHints: Bool = false) -> Set<DirectoryUserProperty> {
 		if replaceAllPreviouslySavedHints {
@@ -183,42 +184,43 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 			
 			var touchedKey = true
 			switch (k, v) {
-			case (.userId, let s?): userId = TaggedId(string: s)
-				
-			case (.persistentId, nil):    persistentId = .unset
-			case (.persistentId, let s?): persistentId = .set(TaggedId(string: s))
-				
-			case (.identifyingEmail, nil): identifyingEmail = .unset
-			case (.identifyingEmail, let s?):
-				guard let e = Email(rawValue: s) else {
-					OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value is an invalid email: \(String(describing: v))")
-					continue
-				}
-				identifyingEmail = .set(e)
-				
-			case (.otherEmails, nil):               otherEmails = .unset
-			case (.otherEmails, let s?):
-				/* Yes. We cannot represent an element in the list which contains a
-				 * comma. Maybe one day we’ll do the generic thing… */
-				let l = s.split(separator: ",")
-				guard let e = try? l.map({ try nil2throw(Email(rawValue: String($0))) }) else {
-					OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value has invalid email(s): \(String(describing: v))")
-					continue
-				}
-				otherEmails = .set(e)
-				
-			case (.firstName, nil):    firstName = .unset
-			case (.firstName, let s?): firstName = .set(s)
-				
-			case (.lastName, nil):    lastName = .unset
-			case (.lastName, let s?): lastName = .set(s)
-				
-			case (.nickname, nil):    nickname = .unset
-			case (.nickname, let s?): nickname = .set(s)
-				
-			default:
-				OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value has not a compatible type or key is unknown: \(String(describing: v))")
-				touchedKey = false
+				case (.userId, let s?): userId = TaggedId(string: s)
+					
+				case (.persistentId, nil):    persistentId = .unset
+				case (.persistentId, let s?): persistentId = .set(TaggedId(string: s))
+					
+				case (.identifyingEmail, nil): identifyingEmail = .unset
+				case (.identifyingEmail, let s?):
+					guard let e = Email(rawValue: s) else {
+						OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value is an invalid email: \(String(describing: v))")
+						continue
+					}
+					identifyingEmail = .set(e)
+					
+				case (.otherEmails, nil): otherEmails = .unset
+				case (.otherEmails, let s?):
+					/* Yes.
+					 * We cannot represent an element in the list which contains a comma.
+					 * Maybe one day we’ll do the generic thing… */
+					let l = s.split(separator: ",")
+					guard let e = try? l.map({ try nil2throw(Email(rawValue: String($0))) }) else {
+						OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value has invalid email(s): \(String(describing: v))")
+						continue
+					}
+					otherEmails = .set(e)
+					
+				case (.firstName, nil):    firstName = .unset
+				case (.firstName, let s?): firstName = .set(s)
+					
+				case (.lastName, nil):    lastName = .unset
+				case (.lastName, let s?): lastName = .set(s)
+					
+				case (.nickname, nil):    nickname = .unset
+				case (.nickname, let s?): nickname = .set(s)
+					
+				default:
+					OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value has not a compatible type or key is unknown: \(String(describing: v))")
+					touchedKey = false
 			}
 			if touchedKey {modifiedKeys.insert(k)}
 		}
@@ -230,8 +232,8 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	}
 	
 	/* ***************
-	   MARK: - Private
-	   *************** */
+	   MARK: - Private
+	   *************** */
 	
 	private enum CodingKeys : String, CodingKey {
 		case underlyingUser

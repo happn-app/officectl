@@ -1,9 +1,9 @@
 /*
- * AnyAction.swift
- * OfficeKit
- *
- * Created by François Lamboley on 01/07/2019.
- */
+ * AnyAction.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 01/07/2019.
+ */
 
 import Foundation
 

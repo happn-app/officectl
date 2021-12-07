@@ -1,9 +1,9 @@
 /*
- * serve.swift
- * officectl
- *
- * Created by François Lamboley on 26/07/2018.
- */
+ * serve.swift
+ * officectl
+ *
+ * Created by François Lamboley on 26/07/2018.
+ */
 
 import Foundation
 
@@ -15,16 +15,14 @@ import OfficeKit
 
 
 struct ServerServeCommand : ParsableCommand {
-
+	
 	struct Options : ParsableArguments {
 		
 		/* Note: We do **not** provide the bind option because I don’t like it
-		 *       (because of IPv6; Vapor simply ignores there are hostname that
-		 *       can contain semicolons; I don’t want to ignore that but also want
-		 *       to be as compatible as possible with Vapor’s options, so the best
-		 *       solution is to simply not provide the bind option).
-		 *       Also, not providing the bind option simplifies the hostname and
-		 *       port selection! */
+		 * (because of IPv6; Vapor simply ignores there are hostname that can contain semicolons;
+		 *  I don’t want to ignore that but also want to be as compatible as possible with Vapor’s options,
+		 *  so the best solution is to simply not provide the bind option).
+		 * Also, not providing the bind option simplifies the hostname and port selection! */
 		
 		@ArgumentParser.Option(name: [.customShort("H"), .long], help: "The hostname the server will run on. Defaults to localhost.")
 		var hostname: String?

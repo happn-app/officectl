@@ -1,9 +1,9 @@
 /*
- * OfficeKitServiceProvider.swift
- * OfficeKit
- *
- * Created by François Lamboley on 28/06/2019.
- */
+ * OfficeKitServiceProvider.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 28/06/2019.
+ */
 
 import Foundation
 
@@ -18,8 +18,8 @@ public class OfficeKitServiceProvider {
 	}
 	
 	/* ******************************************
-	   MARK: Generic OfficeKit Services Retrieval
-	   ****************************************** */
+	   MARK: Generic OfficeKit Services Retrieval
+	   ****************************************** */
 	
 	public func getAllServices() throws -> Set<AnyOfficeKitService> {
 		return try queue.sync{
@@ -30,8 +30,7 @@ public class OfficeKitServiceProvider {
 		}
 	}
 	
-	/* Convenience that avoids having to explicitly give the AnyOfficeKitService
-	 * type to the compiler when using get Service for AnyOfficeKitService. */
+	/* Convenience that avoids having to explicitly give the AnyOfficeKitService type to the compiler when using get Service for AnyOfficeKitService. */
 	public func getService(id: String?) throws -> AnyOfficeKitService {
 		let config = try officeKitConfig.getServiceConfig(id: id)
 		return try queue.sync{ try service(with: config) }
@@ -60,8 +59,8 @@ public class OfficeKitServiceProvider {
 	}
 	
 	/* ***************************************
-	   MARK: User Directory Services Retrieval
-	   *************************************** */
+	   MARK: User Directory Services Retrieval
+	   *************************************** */
 	
 	public func getAllUserDirectoryServices() throws -> Set<AnyUserDirectoryService> {
 		return try queue.sync{
@@ -99,8 +98,8 @@ public class OfficeKitServiceProvider {
 	}
 	
 	/* *************************************************
-	   MARK: Group of Users Directory Services Retrieval
-	   ************************************************* */
+	   MARK: Group of Users Directory Services Retrieval
+	   ************************************************* */
 	
 	public func getAllGroupOfUsersDirectoryServices() throws -> Set<AnyGroupOfUsersDirectoryService> {
 		return try queue.sync{
@@ -138,8 +137,8 @@ public class OfficeKitServiceProvider {
 	}
 	
 	/* ***********************************************
-	   MARK: Directory Authenticator Service Retrieval
-	   *********************************************** */
+	   MARK: Directory Authenticator Service Retrieval
+	   *********************************************** */
 	
 	public func getDirectoryAuthenticatorService() throws -> AnyDirectoryAuthenticatorService {
 		return try queue.sync{ try directoryAuthenticatorService(with: officeKitConfig.authServiceConfig) }
@@ -153,8 +152,8 @@ public class OfficeKitServiceProvider {
 	}
 	
 	/* ***************
-	   MARK: - Private
-	   *************** */
+	   MARK: - Private
+	   *************** */
 	
 	private let officeKitConfig: OfficeKitConfig
 	
@@ -166,8 +165,8 @@ public class OfficeKitServiceProvider {
 	private var directoryAuthenticatorServiceCache: AnyDirectoryAuthenticatorService?
 	
 	/* ****************************************
-	   MARK: Generic OfficeKit Service Creation
-	   **************************************** */
+	   MARK: Generic OfficeKit Service Creation
+	   **************************************** */
 	
 	private func service(with config: AnyOfficeKitServiceConfig) throws -> AnyOfficeKitService {
 		if let service = servicesCache[config.serviceId] {
@@ -191,8 +190,8 @@ public class OfficeKitServiceProvider {
 	}
 	
 	/* *************************************
-	   MARK: User Directory Service Creation
-	   ************************************* */
+	   MARK: User Directory Service Creation
+	   ************************************* */
 	
 	private func userDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyUserDirectoryService {
 		if let service = userDirectoryServicesCache[config.serviceId] {
@@ -217,8 +216,8 @@ public class OfficeKitServiceProvider {
 	}
 	
 	/* ***********************************************
-	   MARK: Group of Users Directory Service Creation
-	   *********************************************** */
+	   MARK: Group of Users Directory Service Creation
+	   *********************************************** */
 	
 	private func groupOfUsersDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyGroupOfUsersDirectoryService {
 		if let service = groupOfUsersDirectoryServicesCache[config.serviceId] {
@@ -244,8 +243,8 @@ public class OfficeKitServiceProvider {
 	}
 	
 	/* **********************************************
-	   MARK: Directory Authenticator Service Creation
-	   ********************************************** */
+	   MARK: Directory Authenticator Service Creation
+	   ********************************************** */
 	
 	private func directoryAuthenticatorService(with config: AnyOfficeKitServiceConfig) throws -> AnyDirectoryAuthenticatorService {
 		if let service = directoryAuthenticatorServiceCache {

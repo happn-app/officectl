@@ -1,13 +1,13 @@
 /*
- * SearchHappnUsersOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 29/08/2019.
- */
+ * SearchHappnUsersOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 29/08/2019.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import GenericJSON
@@ -41,8 +41,8 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 	}
 	
 	/* ***************
-	   MARK: - Private
-	   *************** */
+	   MARK: - Private
+	   *************** */
 	
 	private var users = [HappnUser]()
 	

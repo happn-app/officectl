@@ -1,9 +1,9 @@
 /*
- * OpenDirectoryService.swift
- * OfficeKit
- *
- * Created by François Lamboley on 20/06/2019.
- */
+ * OpenDirectoryService.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 20/06/2019.
+ */
 
 #if !canImport(DirectoryService) || !canImport(OpenDirectory)
 
@@ -27,7 +27,7 @@ import ServiceKit
  
  Dependencies:
  - Event-loop
- - Semi-singleton store */
+ - Semi-singleton store. */
 public final class OpenDirectoryService : UserDirectoryService {
 	
 	public static let providerId = "internal_opendirectory"
@@ -82,8 +82,9 @@ public final class OpenDirectoryService : UserDirectoryService {
 	public func json(fromUser user: ODRecordOKWrapper) throws -> JSON {
 		var ret: [String: JSON] = [:]
 		if let record = user.record {
-			/* Is this making IO? Who knows… But it shouldn’t be; doc says if
-			 * attributes is nil the method returns what’s in the cache. */
+			/* Is this making IO?
+			 * Who knows…
+			 * But it shouldn’t be; doc says if attributes is nil the method returns what’s in the cache. */
 			let attributes = try record.recordDetails(forAttributes: nil)
 			for (key, val) in attributes {
 				guard let keyStr = key as? String else {
@@ -91,13 +92,13 @@ public final class OpenDirectoryService : UserDirectoryService {
 					continue
 				}
 				switch val {
-				case let str       as  String:  ret[keyStr] =                          JSON.object(["str": JSON.string(str)])
-				case let strArray  as [String]: ret[keyStr] = JSON.array(strArray.map{ JSON.object(["str": JSON.string($0)]) })
-				case let data      as  Data:    ret[keyStr] =                           JSON.object(["dta": JSON.string(data.base64EncodedString())])
-				case let dataArray as [Data]:   ret[keyStr] = JSON.array(dataArray.map{ JSON.object(["dta": JSON.string($0.base64EncodedString())]) })
-				default:
-					OfficeKitConfig.logger?.warning("Skipping conversion of a key \(keyStr) in an OpenDirectory Object because the value is not of a known type: \(val)")
-					continue
+					case let str       as  String:  ret[keyStr] =                          JSON.object(["str": JSON.string(str)])
+					case let strArray  as [String]: ret[keyStr] = JSON.array(strArray.map{ JSON.object(["str": JSON.string($0)]) })
+					case let data      as  Data:    ret[keyStr] =                           JSON.object(["dta": JSON.string(data.base64EncodedString())])
+					case let dataArray as [Data]:   ret[keyStr] = JSON.array(dataArray.map{ JSON.object(["dta": JSON.string($0.base64EncodedString())]) })
+					default:
+						OfficeKitConfig.logger?.warning("Skipping conversion of a key \(keyStr) in an OpenDirectory Object because the value is not of a known type: \(val)")
+						continue
 				}
 			}
 		}
@@ -137,15 +138,14 @@ public final class OpenDirectoryService : UserDirectoryService {
 		
 		let inferredUserId: LDAPDistinguishedName
 		if userWrapper.sourceServiceId == config.serviceId {
-			/* The underlying user (though absent) is from our service; the
-			 * original id can be decoded as a valid id for our service. */
+			/* The underlying user (though absent) is from our service; the original id can be decoded as a valid id for our service. */
 			guard let dn = try? LDAPDistinguishedName(string: userWrapper.userId.id) else {
 				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
 			}
 			inferredUserId = dn
 		} else {
-			/* The given user comes from another service. Let’s try and infer an id
-			 * from this user, using its email. */
+			/* The given user comes from another service.
+			 * Let’s try and infer an id from this user, using its email. */
 			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create an ODRecordOKWrapper")
 			}
@@ -162,79 +162,79 @@ public final class OpenDirectoryService : UserDirectoryService {
 	
 	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout ODRecordOKWrapper, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
 		var res = Set<DirectoryUserProperty>()
-		/* For all changes below we nullify the record because changing the record
-		 * is not something that is possible and we want the record wrapper and
-		 * its underlying record to be in sync. So all changes to the wrapper must
-		 * be done with a nullification of the underlying record. */
+		/* For all changes below we nullify the record because changing the record is not something that is possible and
+		 * we want the record wrapper and its underlying record to be in sync.
+		 * So all changes to the wrapper must be done with a nullification of the underlying record. */
 		for (property, value) in hints {
 			switch property {
-			case .userId:
-				guard allowUserIdChange else {continue}
-				guard let dn = value.flatMap({ try? LDAPDistinguishedName(string: $0) }) else {
-					OfficeKitConfig.logger?.warning("Invalid value for the user id of an OD user; not applying hint: \(value ?? "<null>")")
-					continue
-				}
-				user.record = nil
-				user.userId = dn
-				res.insert(.userId)
-				
-			case .persistentId:
-				guard let uuid = value.flatMap({ UUID(uuidString: $0) }) else {
-					OfficeKitConfig.logger?.warning("Invalid value for the persistent id of an OD user; not applying hint: \(value ?? "<null>")")
-					continue
-				}
-				user.record = nil
-				user.persistentId = .set(uuid)
-				res.insert(.persistentId)
-				
-			case .identifyingEmail:
-				guard let emailStr = value else {
+				case .userId:
+					guard allowUserIdChange else {continue}
+					guard let dn = value.flatMap({ try? LDAPDistinguishedName(string: $0) }) else {
+						OfficeKitConfig.logger?.warning("Invalid value for the user id of an OD user; not applying hint: \(value ?? "<null>")")
+						continue
+					}
 					user.record = nil
-					user.identifyingEmail = .set(nil)
+					user.userId = dn
+					res.insert(.userId)
+					
+				case .persistentId:
+					guard let uuid = value.flatMap({ UUID(uuidString: $0) }) else {
+						OfficeKitConfig.logger?.warning("Invalid value for the persistent id of an OD user; not applying hint: \(value ?? "<null>")")
+						continue
+					}
+					user.record = nil
+					user.persistentId = .set(uuid)
+					res.insert(.persistentId)
+					
+				case .identifyingEmail:
+					guard let emailStr = value else {
+						user.record = nil
+						user.identifyingEmail = .set(nil)
+						res.insert(.identifyingEmail)
+						continue
+					}
+					guard let email = Email(rawValue: emailStr) else {
+						OfficeKitConfig.logger?.warning("Invalid value for the identifying email of an OD user; not applying hint: \(value ?? "<null>")")
+						continue
+					}
+					user.record = nil
+					user.identifyingEmail = .set(email)
 					res.insert(.identifyingEmail)
-					continue
-				}
-				guard let email = Email(rawValue: emailStr) else {
-					OfficeKitConfig.logger?.warning("Invalid value for the identifying email of an OD user; not applying hint: \(value ?? "<null>")")
-					continue
-				}
-				user.record = nil
-				user.identifyingEmail = .set(email)
-				res.insert(.identifyingEmail)
-				
-			case .otherEmails:
-				guard let emailsStr = value else {
+					
+				case .otherEmails:
+					guard let emailsStr = value else {
+						user.record = nil
+						user.otherEmails = .set([])
+						res.insert(.otherEmails)
+						continue
+					}
+					/* Yes.
+					 * We cannot represent an element in the list which contains a comma.
+					 * Maybe one day we’ll do the generic thing… */
+					let emailsArrayStr = emailsStr.split(separator: ",")
+					guard let emails = try? emailsArrayStr.map({ try nil2throw(Email(rawValue: String($0))) }) else {
+						OfficeKitConfig.logger?.warning("Invalid value for the other emails of an OD user; not applying hint: \(value ?? "<null>")")
+						continue
+					}
 					user.record = nil
-					user.otherEmails = .set([])
+					user.otherEmails = .set(emails)
 					res.insert(.otherEmails)
-					continue
-				}
-				/* Yes. We cannot represent an element in the list which contains a
-				 * comma. Maybe one day we’ll do the generic thing… */
-				let emailsArrayStr = emailsStr.split(separator: ",")
-				guard let emails = try? emailsArrayStr.map({ try nil2throw(Email(rawValue: String($0))) }) else {
-					OfficeKitConfig.logger?.warning("Invalid value for the other emails of an OD user; not applying hint: \(value ?? "<null>")")
-					continue
-				}
-				user.record = nil
-				user.otherEmails = .set(emails)
-				res.insert(.otherEmails)
-				
-			case .firstName:
-				user.record = nil
-				user.firstName = .set(value)
-				res.insert(.firstName)
-				
-			case .lastName:
-				user.record = nil
-				user.lastName = .set(value)
-				res.insert(.lastName)
-				
-			case .password:
-				OfficeKitConfig.logger?.warning("Cannot set password of an OD user by applying hints. Please use the dedicated method to change password in the service.")
-				
-			case .nickname, .custom:
-				(/*nop (not supported)*/)
+					
+				case .firstName:
+					user.record = nil
+					user.firstName = .set(value)
+					res.insert(.firstName)
+					
+				case .lastName:
+					user.record = nil
+					user.lastName = .set(value)
+					res.insert(.lastName)
+					
+				case .password:
+					OfficeKitConfig.logger?.warning("Cannot set password of an OD user by applying hints. Please use the dedicated method to change password in the service.")
+					
+				case .nickname, .custom:
+					(/*nop (not supported)*/)
 			}
 		}
 		return res
@@ -245,8 +245,7 @@ public final class OpenDirectoryService : UserDirectoryService {
 	}
 	
 	public func existingUser(fromUserId dn: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> ODRecordOKWrapper? {
-		/* Note: I’d very much like to search the whole DN instead of the UID
-		 *       only, but I was not able to make it work. */
+		/* Note: I’d very much like to search the whole DN instead of the UID only, but I was not able to make it work. */
 		guard let uid = dn.uid else {throw ODError.uidMissingInDN}
 		let request = OpenDirectorySearchRequest(uid: uid)
 		return try await existingRecord(fromSearchRequest: request, using: services)
@@ -283,7 +282,7 @@ public final class OpenDirectoryService : UserDirectoryService {
 	public func deleteUser(_ user: ODRecordOKWrapper, using services: Services) async throws {
 		let eventLoop = try services.eventLoop()
 		let u = try await self.existingUser(fromUserId: user.userId, propertiesToFetch: [], using: services)
-#warning("TODO: Error is not correct")
+		/* TODO: Error is not correct. */
 		guard let r = u?.record else {throw ODError.noRecordInRecordWrapper}
 		return try await EventLoopFuture<Void>.future(from: DeleteOpenDirectoryRecordOperation(record: r), on: eventLoop).get()
 	}
@@ -296,8 +295,8 @@ public final class OpenDirectoryService : UserDirectoryService {
 	}
 	
 	/* ***************
-	   MARK: - Private
-	   *************** */
+	   MARK: - Private
+	   *************** */
 	
 	private let serialQueueForUserCreationOperation: OperationQueue
 	

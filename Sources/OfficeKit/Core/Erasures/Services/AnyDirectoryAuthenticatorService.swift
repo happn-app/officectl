@@ -1,9 +1,9 @@
 /*
- * AnyDirectoryAuthenticatorService.swift
- * OfficeKit
- *
- * Created by François Lamboley on 28/06/2019.
- */
+ * AnyDirectoryAuthenticatorService.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 28/06/2019.
+ */
 
 import Foundation
 
@@ -43,21 +43,20 @@ public class AnyDirectoryAuthenticatorService : AnyUserDirectoryService, Directo
 	
 	public typealias AuthenticationChallenge = Any
 	
-	/* About the init here. Before latest Swift to date (running on master rn for
-	 * bugfix reasons on Linux), we could override super’s init with (super init
-	 * argument used to be unnamed):
-	 *    override init<T : DirectoryAuthenticatorService>(_ object: T)
-	 * W/ latest Swift we get an error that we’re overriding with incompatible
-	 * argument type (which tbf is not wrong).
-	 * For now we simply dissociate the init w/ a DirectoryService and a
-	 * DirectoryAuthenticatorService, and crash w/ a DirectoryService in the
-	 * AnyDirectoryAuthenticatorService.
-	 * A better solution would be for AnyDirectoryAuthenticatorService not to
-	 * inherit from AnyDirectoryService and implement all the methods from
-	 * DirectoryService too, keeping an AnyDirectoryService internally if needed.
-	 * I’m not doing that for now because I don’t have a codegen setup (yet?) and
-	 * it’d be a pain to copy and modify two erasures each time there’s a
-	 * modification in the DirectoryService… */
+	/* About the init here.
+	 *
+	 * Before latest Swift to date (running on master rn for bugfix reasons on Linux),
+	 * we could override super’s init with (super init argument used to be unnamed):
+	 *    override init<T : DirectoryAuthenticatorService>(_ object: T)
+	 *
+	 * W/ latest Swift we get an error that we’re overriding with incompatible argument type (which tbf is not wrong).
+	 * For now we simply dissociate the init w/ a DirectoryService and a DirectoryAuthenticatorService, and crash w/ a DirectoryService in the AnyDirectoryAuthenticatorService.
+	 *
+	 * A better solution would be for AnyDirectoryAuthenticatorService not to inherit from AnyDirectoryService and implement all the methods from DirectoryService too,
+	 * keeping an AnyDirectoryService internally if needed.
+	 *
+	 * I’m not doing that for now because I don’t have a codegen setup (yet?)
+	 * and it’d be a pain to copy and modify two erasures each time there’s a modification in the DirectoryService… */
 	
 	override init<T : UserDirectoryService>(uds object: T) {
 		fatalError()

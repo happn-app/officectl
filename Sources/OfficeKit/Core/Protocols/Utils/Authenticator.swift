@@ -1,9 +1,9 @@
 /*
  * Authenticator.swift
- * officectl
- *
- * Created by François Lamboley on 29/06/2018.
- */
+ * officectl
+ *
+ * Created by François Lamboley on 29/06/2018.
+ */
 
 import Foundation
 
@@ -29,8 +29,8 @@ public class AnyAuthenticator<RequestType> : Authenticator {
 	}
 	
 	/* *************************
-	   MARK: - Connector Erasure
-	   ************************* */
+	   MARK: - Connector Erasure
+	   ************************* */
 	
 	private let authenticateHandler: (_ request: RequestType, _ handler: @escaping (_ result: Result<RequestType, Error>, _ userInfo: Any?) -> Void) -> Void
 	

@@ -1,9 +1,9 @@
 /*
- * EmailUtils.swift
- * OfficeKit
- *
- * Created by François Lamboley on 06/12/2021.
- */
+ * EmailUtils.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 06/12/2021.
+ */
 
 import Foundation
 
@@ -25,7 +25,7 @@ extension Email {
 		}
 		return self
 	}
-
+	
 	/** Key of the alias map is a domain alias, value is the actual domain. */
 	public func allDomainVariants(aliasMap: [String: String]) -> Set<Email> {
 		let primaryDomain = aliasMap[domainPart] ?? domainPart

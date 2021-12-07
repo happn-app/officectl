@@ -1,13 +1,13 @@
 /*
- * URLRequestOperationWithRetryRecoveryHandler.swift
- * OfficeKit
- *
- * Created by François Lamboley on 07/02/2020.
- */
+ * URLRequestOperationWithRetryRecoveryHandler.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 07/02/2020.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import URLRequestOperation
@@ -15,10 +15,10 @@ import URLRequestOperation
 
 
 /**
-If the computeRetryInfo tells not to retry the operation and error is not nil,
-a custom handler is called that can tell to retry the operation anyway.
-
-Should probably be built-in URLRequestOperation tbh. */
+ If the computeRetryInfo tells not to retry the operation and error is not nil,
+ a custom handler is called that can tell to retry the operation anyway.
+ 
+ Should probably be built-in URLRequestOperation tbh. */
 open class URLRequestOperationWithRetryRecoveryHandler : URLRequestOperation {
 	
 	public typealias ComputeRetryInfoRecoverHandlerType = (_ operation: URLRequestOperationWithRetryRecoveryHandler, _ sourceError: Error, _ completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) -> Void

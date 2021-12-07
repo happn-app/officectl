@@ -1,9 +1,9 @@
 /*
- * users.swift
- * officectl
- *
- * Created by François Lamboley on 20/08/2018.
- */
+ * users.swift
+ * officectl
+ *
+ * Created by François Lamboley on 20/08/2018.
+ */
 
 import Foundation
 

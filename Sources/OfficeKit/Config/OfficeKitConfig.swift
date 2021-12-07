@@ -1,9 +1,9 @@
 /*
- * OfficeKitConfig.swift
- * OfficeKit
- *
- * Created by François Lamboley on 11/01/2019.
- */
+ * OfficeKitConfig.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 11/01/2019.
+ */
 
 import Foundation
 
@@ -16,7 +16,7 @@ public struct OfficeKitConfig {
 	
 	static public var logger: Logger?
 	
-	#warning("TODO: Allow clients of OfficeKit to register their own services!")
+	/* TODO: Allow clients of OfficeKit to register their own services! */
 	static public private(set) var registeredServices: [String : OfficeKitServiceInit.Type] = {
 		var res: [String : OfficeKitServiceInit.Type] = [
 			EmailService.providerId:               EmailService.self,
@@ -26,9 +26,9 @@ public struct OfficeKitConfig {
 			LDAPService.providerId:                LDAPService.self,
 			HappnService.providerId:               HappnService.self
 		]
-		#if canImport(DirectoryService) && canImport(OpenDirectory)
-			res[OpenDirectoryService.providerId] = OpenDirectoryService.self
-		#endif
+#if canImport(DirectoryService) && canImport(OpenDirectory)
+		res[OpenDirectoryService.providerId] = OpenDirectoryService.self
+#endif
 		return res
 	}()
 	
@@ -40,23 +40,23 @@ public struct OfficeKitConfig {
 	public var orderedServiceConfigs: [AnyOfficeKitServiceConfig] {
 		return serviceConfigs.values.sorted(by: { s1, s2 in
 			switch (s1.mergePriority, s2.mergePriority) {
-			case let (p1, p2) where p1 == p2: return s1.serviceId < s2.serviceId
-				
-			case let (.some(p1), .some(p2)): return p1 > p2
-				
-			case (.some, .none): return true
-			case (.none, .some): return false
-				
-			default:
-				OfficeKitConfig.logger?.warning("Internal logic error: Going in a case that shouldn’t be possible when sorting the service configs.")
-				return true
+				case let (p1, p2) where p1 == p2: return s1.serviceId < s2.serviceId
+					
+				case let (.some(p1), .some(p2)): return p1 > p2
+					
+				case (.some, .none): return true
+				case (.none, .some): return false
+					
+				default:
+					OfficeKitConfig.logger?.warning("Internal logic error: Going in a case that shouldn’t be possible when sorting the service configs.")
+					return true
 			}
 		})
 	}
 	
 	/* ************
-	   MARK: - Init
-	   ************ */
+	   MARK: - Init
+	   ************ */
 	
 	public init(genericConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		let domain = ["OfficeKit Config"]
@@ -98,8 +98,8 @@ public struct OfficeKitConfig {
 		try self.init(globalConfig: gConfig, serviceConfigs: serviceConfigsBuilding, authServiceId: authServiceId)
 	}
 	
-	/** It is a programmer error to give an array of services containing two or
-	more services with the same id. */
+	/**
+	 It is a programmer error to give an array of services containing two or more services with the same id. */
 	public init(globalConfig gConfig: GlobalConfig, serviceConfigs s: [AnyOfficeKitServiceConfig], authServiceId: String) throws {
 		globalConfig = gConfig
 		serviceConfigs = [String: AnyOfficeKitServiceConfig](uniqueKeysWithValues: zip(s.map{ $0.serviceId }, s))

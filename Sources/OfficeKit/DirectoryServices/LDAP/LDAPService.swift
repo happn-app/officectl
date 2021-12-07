@@ -1,9 +1,9 @@
 /*
- * LDAPService.swift
- * OfficeKit
- *
- * Created by François Lamboley on 29/05/2019.
- */
+ * LDAPService.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 29/05/2019.
+ */
 
 import Foundation
 
@@ -15,10 +15,11 @@ import ServiceKit
 
 
 
-/** An LDAP service.
-
-Dependencies:
-- Semi-singleton store */
+/**
+ An LDAP service.
+ 
+ Dependencies:
+ - Semi-singleton store. */
 public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorService {
 	
 	public static var providerId = "internal_openldap"
@@ -119,8 +120,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		
 		let inferredUserId: LDAPDistinguishedName
 		if userWrapper.sourceServiceId == config.serviceId {
-			/* The underlying user (though absent) is from our service; the
-			 * original id can be decoded as a valid id for our service. */
+			/* The underlying user (though absent) is from our service; the original id can be decoded as a valid id for our service. */
 			guard let dn = try? LDAPDistinguishedName(string: userWrapper.userId.id) else {
 				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
 			}
@@ -149,72 +149,73 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		var res = Set<DirectoryUserProperty>()
 		for (property, value) in hints {
 			switch property {
-			case .userId:
-				guard allowUserIdChange else {continue}
-				guard let dn = value.flatMap({ try? LDAPDistinguishedName(string: $0) }) else {
-					OfficeKitConfig.logger?.warning("Invalid value for the user id of an LDAP user; not applying hint: \(value ?? "<null>")")
-					continue
-				}
-				newLDAPObject.distinguishedName = dn
-				res.insert(.userId)
-				
-			case .persistentId:
-				OfficeKitConfig.logger?.warning("Changing the persistent id of an LDAP user is not supported.")
-				
-			case .identifyingEmail:
-				guard let emailStr = value else {
-					if hints[.otherEmails].flatMap({ $0 }) != nil {
-						OfficeKitConfig.logger?.warning("Setting all emails of LDAP user to nil even though other emails is not nil because the identifying email hint is set to nil.")
+				case .userId:
+					guard allowUserIdChange else {continue}
+					guard let dn = value.flatMap({ try? LDAPDistinguishedName(string: $0) }) else {
+						OfficeKitConfig.logger?.warning("Invalid value for the user id of an LDAP user; not applying hint: \(value ?? "<null>")")
+						continue
 					}
-					newLDAPObject.attributes[LDAPInetOrgPerson.propNameMail] = nil
-					continue
-				}
-				guard let email = Email(rawValue: emailStr) else {
-					OfficeKitConfig.logger?.warning("Invalid value for an identifying email; not applying this hint nor otherEmails: \(value ?? "<null>")")
-					continue
-				}
-				/* Yes. We cannot represent an element in the list which contains a
-				 * comma. Maybe one day we’ll do the generic thing… */
-				let otherEmails: [Email]
-				let otherEmailsStrArray = hints[.otherEmails]??.split(separator: ",")
-				if let emails = try? otherEmailsStrArray?.map({ try nil2throw(Email(rawValue: String($0))) }) {
-					otherEmails = emails
-					res.insert(.otherEmails)
-				} else {
-					otherEmails = []
-				}
-				res.insert(.identifyingEmail)
-				newLDAPObject.attributes[LDAPInetOrgPerson.propNameMail] = [Data(email.rawValue.utf8)] + otherEmails.map{ Data($0.rawValue.utf8) }
-				
-			case .otherEmails:
-				if value != nil && hints[.identifyingEmail].flatMap({ $0 }) == nil {
-					OfficeKitConfig.logger?.warning("Unsupported config for an LDAP user: other emails is set but identifying email is not. For an LDAP user the identifying user is the first one.")
-				}
-				
-			case .firstName:
-				newLDAPObject.attributes[LDAPInetOrgPerson.propNameGivenName] = value.flatMap{ [Data($0.utf8)] } ?? []
-				let sn = newLDAPObject.attributes[LDAPInetOrgPerson.propNameSN]?.first.flatMap{ String(data: $0, encoding: .utf8) }
-				/* Updating cn (full name) */
-				newLDAPObject.attributes[LDAPInetOrgPerson.propNameCN] = fullNameFrom(firstName: value, lastName: sn).flatMap{ [Data($0.utf8)] } ?? []
-				
-				res.insert(.firstName)
-				res.insert(.custom("cn"))
-				
-			case .lastName:
-				newLDAPObject.attributes[LDAPInetOrgPerson.propNameSN] = value.flatMap{ [Data($0.utf8)] } ?? []
-				let gn = newLDAPObject.attributes[LDAPInetOrgPerson.propNameGivenName]?.first.flatMap{ String(data: $0, encoding: .utf8) }
-				/* Updating cn (full name) */
-				newLDAPObject.attributes[LDAPInetOrgPerson.propNameCN] = fullNameFrom(firstName: gn, lastName: value).flatMap{ [Data($0.utf8)] } ?? []
-				
-				res.insert(.lastName)
-				res.insert(.custom("cn"))
-				
-			case .password:
-				OfficeKitConfig.logger?.warning("Updating the password of an LDAP user might have unexpected consequences including security concerns. Please change the password of a user using the dedicated password change method.")
-				newLDAPObject.attributes[LDAPInetOrgPerson.propNameUserPassword] = value.flatMap{ [Data($0.utf8)] } ?? []
-				
-			case .nickname, .custom:
-				(/*nop (not supported)*/)
+					newLDAPObject.distinguishedName = dn
+					res.insert(.userId)
+					
+				case .persistentId:
+					OfficeKitConfig.logger?.warning("Changing the persistent id of an LDAP user is not supported.")
+					
+				case .identifyingEmail:
+					guard let emailStr = value else {
+						if hints[.otherEmails].flatMap({ $0 }) != nil {
+							OfficeKitConfig.logger?.warning("Setting all emails of LDAP user to nil even though other emails is not nil because the identifying email hint is set to nil.")
+						}
+						newLDAPObject.attributes[LDAPInetOrgPerson.propNameMail] = nil
+						continue
+					}
+					guard let email = Email(rawValue: emailStr) else {
+						OfficeKitConfig.logger?.warning("Invalid value for an identifying email; not applying this hint nor otherEmails: \(value ?? "<null>")")
+						continue
+					}
+					/* Yes.
+					 * We cannot represent an element in the list which contains a comma.
+					 * Maybe one day we’ll do the generic thing… */
+					let otherEmails: [Email]
+					let otherEmailsStrArray = hints[.otherEmails]??.split(separator: ",")
+					if let emails = try? otherEmailsStrArray?.map({ try nil2throw(Email(rawValue: String($0))) }) {
+						otherEmails = emails
+						res.insert(.otherEmails)
+					} else {
+						otherEmails = []
+					}
+					res.insert(.identifyingEmail)
+					newLDAPObject.attributes[LDAPInetOrgPerson.propNameMail] = [Data(email.rawValue.utf8)] + otherEmails.map{ Data($0.rawValue.utf8) }
+					
+				case .otherEmails:
+					if value != nil && hints[.identifyingEmail].flatMap({ $0 }) == nil {
+						OfficeKitConfig.logger?.warning("Unsupported config for an LDAP user: other emails is set but identifying email is not. For an LDAP user the identifying user is the first one.")
+					}
+					
+				case .firstName:
+					newLDAPObject.attributes[LDAPInetOrgPerson.propNameGivenName] = value.flatMap{ [Data($0.utf8)] } ?? []
+					let sn = newLDAPObject.attributes[LDAPInetOrgPerson.propNameSN]?.first.flatMap{ String(data: $0, encoding: .utf8) }
+					/* Updating cn (full name) */
+					newLDAPObject.attributes[LDAPInetOrgPerson.propNameCN] = fullNameFrom(firstName: value, lastName: sn).flatMap{ [Data($0.utf8)] } ?? []
+					
+					res.insert(.firstName)
+					res.insert(.custom("cn"))
+					
+				case .lastName:
+					newLDAPObject.attributes[LDAPInetOrgPerson.propNameSN] = value.flatMap{ [Data($0.utf8)] } ?? []
+					let gn = newLDAPObject.attributes[LDAPInetOrgPerson.propNameGivenName]?.first.flatMap{ String(data: $0, encoding: .utf8) }
+					/* Updating cn (full name) */
+					newLDAPObject.attributes[LDAPInetOrgPerson.propNameCN] = fullNameFrom(firstName: gn, lastName: value).flatMap{ [Data($0.utf8)] } ?? []
+					
+					res.insert(.lastName)
+					res.insert(.custom("cn"))
+					
+				case .password:
+					OfficeKitConfig.logger?.warning("Updating the password of an LDAP user might have unexpected consequences including security concerns. Please change the password of a user using the dedicated password change method.")
+					newLDAPObject.attributes[LDAPInetOrgPerson.propNameUserPassword] = value.flatMap{ [Data($0.utf8)] } ?? []
+					
+				case .nickname, .custom:
+					(/*nop (not supported)*/)
 			}
 		}
 		
@@ -237,7 +238,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		
 		try await ldapConnector.connect(scope: ())
 		
-#warning("TODO: Implement properties to fetch")
+		/* TODO: Implement properties to fetch. */
 		let searchOp = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .base, base: uId, searchQuery: nil, attributesToFetch: nil))
 		let searchResults = try await EventLoopFuture<[LDAPInetOrgPerson]>.future(from: searchOp, on: eventLoop).get()
 		

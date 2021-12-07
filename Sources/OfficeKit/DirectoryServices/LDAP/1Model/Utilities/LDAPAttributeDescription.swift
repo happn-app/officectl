@@ -1,9 +1,9 @@
 /*
- * LDAPAttributeDescription.swift
- * OfficeKit
- *
- * Created by François Lamboley on 07/09/2018.
- */
+ * LDAPAttributeDescription.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 07/09/2018.
+ */
 
 import Foundation
 
@@ -17,9 +17,10 @@ public struct LDAPAttributeDescription : Hashable {
 	public static let memberof = LDAPAttributeDescription(string: "memberof")!
 	
 	public var oid: LDAPObjectID
-	/** Each option must be one or more keychar (alphanumeric or a hyphen). The
-	options must be changed via the `setOptions` method. This is to have a
-	validation of the options before they are changed (the method can fail). */
+	/**
+	 Each option must be one or more keychar (alphanumeric or a hyphen).
+	 The options must be changed via the `setOptions` method.
+	 This is to have a validation of the options before they are changed (the method can fail). */
 	public private(set) var options: [String]
 	
 	public var stringValue: String {

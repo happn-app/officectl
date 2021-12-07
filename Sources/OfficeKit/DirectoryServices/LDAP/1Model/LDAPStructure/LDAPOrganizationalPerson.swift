@@ -1,9 +1,9 @@
 /*
- * LDAPOrganizationalPerson.swift
- * OfficeKit
- *
- * Created by François Lamboley on 16/07/2018.
- */
+ * LDAPOrganizationalPerson.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 16/07/2018.
+ */
 
 import Foundation
 

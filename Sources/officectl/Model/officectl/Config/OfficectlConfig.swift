@@ -1,9 +1,9 @@
 /*
- * OfficectlConfig.swift
- * officectl
- *
- * Created by François Lamboley on 21/01/2019.
- */
+ * OfficectlConfig.swift
+ * officectl
+ *
+ * Created by François Lamboley on 21/01/2019.
+ */
 
 import Foundation
 
@@ -42,11 +42,10 @@ struct OfficectlConfig {
 	var tmpVaultIssuerName: String?
 	/* Certificates will be revoked on the issuer name and the active issuers too */
 	var tmpVaultAdditionalActiveIssuers: [String]?
-	/* CA of the issuer name, the active issuers and the passive issuers will be
-	 * included in the CA chain */
+	/* CA of the issuer name, the active issuers and the passive issuers will be included in the CA chain. */
 	var tmpVaultAdditionalPassiveIssuers: [String]?
-	/* These additional certificates will be added in the CA chain. Format should
-	 * be issuer/certificate_id */
+	/* These additional certificates will be added in the CA chain.
+	 * Format should be issuer/certificate_id. */
 	var tmpVaultAdditionalCertificates: [TmpVaultAdditionalCertificate]?
 	var tmpVaultToken: String?
 	var tmpVaultTTL: String?

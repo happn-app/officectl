@@ -1,9 +1,9 @@
 /*
- * DeleteOpenDirectoryRecordOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 19/07/2019.
- */
+ * DeleteOpenDirectoryRecordOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 19/07/2019.
+ */
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)
 

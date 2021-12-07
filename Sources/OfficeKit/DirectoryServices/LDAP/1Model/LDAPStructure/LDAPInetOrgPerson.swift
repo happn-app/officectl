@@ -1,9 +1,9 @@
 /*
- * LDAPInetOrgPerson.swift
- * OfficeKit
- *
- * Created by François Lamboley on 13/07/2018.
- */
+ * LDAPInetOrgPerson.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 13/07/2018.
+ */
 
 import Foundation
 

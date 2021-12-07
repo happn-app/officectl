@@ -1,13 +1,13 @@
 /*
- * ExternalDirectoryServiceV1.swift
- * OfficeKit
- *
- * Created by François Lamboley on 20/06/2019.
- */
+ * ExternalDirectoryServiceV1.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 20/06/2019.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import GenericJSON
@@ -17,11 +17,12 @@ import ServiceKit
 
 
 
-/** A service that uses an external http service to handle the requests.
-
-Dependencies:
-- Event-loop
-- Semi-singleton store */
+/**
+ A service that uses an external http service to handle the requests.
+ 
+ Dependencies:
+ - Event-loop
+ - Semi-singleton store */
 public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	
 	public static let providerId = "http_service_v1"
@@ -39,7 +40,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		authenticator = ExternalServiceAuthenticator(secret: c.secret)
 		
 		/* Note: We assume JSON encoder/decoder are thread-safe.
-		 *       https://stackoverflow.com/a/52183880 */
+		 *       https://stackoverflow.com/a/52183880 */
 		
 		jsonEncoder = JSONEncoder()
 //		jsonEncoder.keyEncodingStrategy = .convertToSnakeCase
@@ -85,8 +86,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		
 		let inferredUserId: TaggedId
 		if userWrapper.sourceServiceId == config.serviceId {
-			/* The underlying user (though absent) is from our service; the
-			 * original id can be decoded as a valid id for our service. */
+			/* The underlying user (though absent) is from our service; the original id can be decoded as a valid id for our service. */
 			inferredUserId = TaggedId(string: userWrapper.userId.id)
 		} else {
 			var idStr: String?

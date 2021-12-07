@@ -1,9 +1,9 @@
 /*
- * ODRecordOKWrapper.swift
- * OfficeKit
- *
- * Created by François Lamboley on 05/07/2019.
- */
+ * ODRecordOKWrapper.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 05/07/2019.
+ */
 
 #if !canImport(DirectoryService) || !canImport(OpenDirectory)
 
@@ -25,7 +25,8 @@ public struct ODRecordOKWrapper : DirectoryUser {
 	
 	public init(record r: ODRecord) throws {
 		/* Is this making IO?
-		 * Who knows… But it shouldn’t be; doc says if attributes is nil the method returns what’s in the cache. */
+		 * Who knows…
+		 * But it shouldn’t be; doc says if attributes is nil the method returns what’s in the cache. */
 		let attributes = try r.recordDetails(forAttributes: nil)
 		try self.init(recordAttributes: attributes)
 		record = r

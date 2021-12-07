@@ -1,9 +1,9 @@
 /*
- * MultiServicesUser.swift
- * OfficeKit
- *
- * Created by François Lamboley on 24/08/2019.
- */
+ * MultiServicesUser.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 24/08/2019.
+ */
 
 import Foundation
 
@@ -20,7 +20,7 @@ extension MultiServicesUser {
 	}
 	
 	public static func fetch(from dsuPair: AnyDSUPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) async -> MultiServicesUser {
-		#warning("TODO: Properties to fetch")
+		/* TODO: Properties to fetch. */
 		var allFetchedUsers = [AnyUserDirectoryService: AnyDSUPair?]()
 		var allFetchedErrors = [AnyUserDirectoryService: [Error]]()
 		var triedServiceIdSource = Set<AnyUserDirectoryService>()
@@ -56,7 +56,7 @@ extension MultiServicesUser {
 			})
 			allFetchedErrors = allFetchedErrors.merging(fetchedUsersAndErrors.compactMapValues{ $0.failureValue.flatMap{ [$0] } }, uniquingKeysWith: { old, new in old + new })
 			
-			#warning("TODO: Only try and re-fetched users whose fetch error was a “I don’t have enough info to fetch” error.")
+			/* TODO: Only try and re-fetched users whose fetch error was a “I don’t have enough info to fetch” error. */
 			/* Line below: All the service ids for which we haven’t already successfully fetched a user (or its absence from the service). */
 			let servicesToFetch = services.filter{ !allFetchedUsers.keys.contains($0) }
 			/* Line below: All the service ids for which we have a user that we do not already have tried fetching from. */
@@ -82,16 +82,14 @@ extension MultiServicesUser {
 	}
 	
 	/**
-	Try and merge all the given users in a collection of multi-services users.
-	
-	All the returned users will have a DSU pair for all the valid services ids
-	(the value being `nil` if a linked user was not found for a given user for
-	the given service). If the valid services ids are set to `nil`, they are
-	inferred from the set of DSU pairs.
-	
-	If the `allowNonValidServices` arg is set to `true`, the returned users might
-	contain a DSU pair for a service that has not been declared valid. (The
-	argument is only useful when `validServices` is set to a non-`nil` value.) */
+	 Try and merge all the given users in a collection of multi-services users.
+	 
+	 All the returned users will have a DSU pair for all the valid services ids
+	 (the value being `nil` if a linked user was not found for a given user for the given service).
+	 If the valid services ids are set to `nil`, they are inferred from the set of DSU pairs.
+	 
+	 If the `allowNonValidServices` arg is set to `true`, the returned users might contain a DSU pair for a service that has not been declared valid.
+	 (The argument is only useful when `validServices` is set to a non-`nil` value.) */
 	public static func merge(dsuPairs: Set<AnyDSUPair>, validServices: Set<AnyUserDirectoryService>? = nil, allowNonValidServices: Bool = false, eventLoop: EventLoop, dispatchQueue: DispatchQueue = defaultDispatchQueueForFutureSupport) -> EventLoopFuture<[MultiServicesUser]> {
 		let promise = eventLoop.makePromise(of: [MultiServicesUser].self)
 		dispatchQueue.async{

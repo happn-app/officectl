@@ -1,9 +1,9 @@
 /*
- * CloneGitHubRepoOperation.swift
- * officectl
- *
- * Created by François Lamboley on 27/06/2018.
- */
+ * CloneGitHubRepoOperation.swift
+ * officectl
+ *
+ * Created by François Lamboley on 27/06/2018.
+ */
 
 import Foundation
 
@@ -52,25 +52,25 @@ public final class CloneGitHubRepoOperation : RetryingOperation, HasResult {
 		}
 		
 		let process = Process()
-		#if !os(Linux)
-			process.standardInput = FileHandle.nullDevice
-			process.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when git fails... */
-			process.standardOutput = FileHandle.nullDevice
-		#endif
+#if !os(Linux)
+		process.standardInput = FileHandle.nullDevice
+		process.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when git fails... */
+		process.standardOutput = FileHandle.nullDevice
+#endif
 		
 		process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
 		if !destinationExists {
 			process.arguments = ["clone", "--quiet", "--mirror", repoCloneURL, destinationURL.path]
 		} else {
 			/* The repository already exists. We must modify the config to update
-			 * the remote for the URL. We could modify the config file directly,
-			 * but let's do things properly and call git for that. */
+			  * the remote for the URL. We could modify the config file directly,
+			  * but let's do things properly and call git for that. */
 			let updateRemoteProcess = Process()
-			#if !os(Linux)
-				updateRemoteProcess.standardInput = FileHandle.nullDevice
-				updateRemoteProcess.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when git fails... */
-				updateRemoteProcess.standardOutput = FileHandle.nullDevice
-			#endif
+#if !os(Linux)
+			updateRemoteProcess.standardInput = FileHandle.nullDevice
+			updateRemoteProcess.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when git fails... */
+			updateRemoteProcess.standardOutput = FileHandle.nullDevice
+#endif
 			updateRemoteProcess.executableURL = process.executableURL
 			updateRemoteProcess.arguments = ["-C", destinationURL.path, "remote", "set-url", "origin", repoCloneURL]
 			do {try updateRemoteProcess.run()}

@@ -1,9 +1,9 @@
 /*
- * Connector+EventLoopFuture.swift
- * OfficeKit
- *
- * Created by François Lamboley on 17/07/2018.
- */
+ * Connector+Async.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 17/07/2018.
+ */
 
 import Foundation
 

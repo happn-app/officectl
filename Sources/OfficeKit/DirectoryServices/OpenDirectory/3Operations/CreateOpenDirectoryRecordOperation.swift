@@ -1,9 +1,9 @@
 /*
- * CreateOpenDirectoryRecordOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 12/07/2019.
- */
+ * CreateOpenDirectoryRecordOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 12/07/2019.
+ */
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)
 
@@ -40,8 +40,7 @@ public final class CreateOpenDirectoryRecordOperation : RetryingOperation, HasRe
 	}
 	
 	/**
-	If fullName is `nil`, it’ll be inferred by concatenating the first and last
-	name, separated by a space. */
+	 If fullName is `nil`, it’ll be inferred by concatenating the first and last name, separated by a space. */
 	public convenience init(userId: String, firstName: String, lastName: String, fullName: String? = nil, emails: [Email] = [], groupId: String = "20", nfsHomeDirectory: String? = "/dev/null", shell: String? = "/usr/bin/false", connector: OpenDirectoryConnector) {
 		var attributes = [
 			kODAttributeTypeFirstName: [firstName],
@@ -75,8 +74,7 @@ public final class CreateOpenDirectoryRecordOperation : RetryingOperation, HasRe
 					throw InternalError(message: "Launched a search open directory action with a non-connected connector!")
 				}
 				
-				/* Let’s first search all the record of given type (trust me on
-				 * this, we’ll need them; see later). */
+				/* Let’s first search all the record of given type (trust me on this, we’ll need them; see later). */
 				let odQuery = try ODQuery(
 					node: node,
 					forRecordTypes: [recordType],
@@ -88,34 +86,33 @@ public final class CreateOpenDirectoryRecordOperation : RetryingOperation, HasRe
 				)
 				/* See SearchOpenDirectoryOperation for the force unwrap. */
 				let odResults = try odQuery.resultsAllowingPartial(false) as! [ODRecord]
-				/* Now find the max UID of these records. We start at 501; users
-				 * with a UID <= 500 are invisble. */
+				/* Now find the max UID of these records.
+				 * We start at 501; users with a UID <= 500 are invisble. */
 				var maxUID = 501
 				for odResult in odResults {
-					/* The kODAttributeTypeUniqueID should already be fetched, so
-					 * asking for nil here is ok. */
+					/* The kODAttributeTypeUniqueID should already be fetched, so asking for nil here is ok. */
 					let attributes = try odResult.recordDetails(forAttributes: nil)
 					guard let uids = attributes[kODAttributeTypeUniqueID] as? [Any] else {
 						continue
 					}
 					for uid in uids {
 						switch uid {
-						case let str as String:
-							guard let uidInt = Int(str) else {
-								OfficeKitConfig.logger?.warning("Found non-int string uid \(str) in OpenDirectory record \(odResult)")
-								continue
-							}
-							maxUID = max(maxUID, uidInt)
-							
-						case let data as Data:
-							guard let str = String(data: data, encoding: .utf8), let uidInt = Int(str) else {
-								OfficeKitConfig.logger?.warning("Found non-int data uid \(data) in OpenDirectory record \(odResult)")
-								continue
-							}
-							maxUID = max(maxUID, uidInt)
-							
-						default:
-							OfficeKitConfig.logger?.warning("Found non-data and non-string uid \(uid) in OpenDirectory record \(odResult)")
+							case let str as String:
+								guard let uidInt = Int(str) else {
+									OfficeKitConfig.logger?.warning("Found non-int string uid \(str) in OpenDirectory record \(odResult)")
+									continue
+								}
+								maxUID = max(maxUID, uidInt)
+								
+							case let data as Data:
+								guard let str = String(data: data, encoding: .utf8), let uidInt = Int(str) else {
+									OfficeKitConfig.logger?.warning("Found non-int data uid \(data) in OpenDirectory record \(odResult)")
+									continue
+								}
+								maxUID = max(maxUID, uidInt)
+								
+							default:
+								OfficeKitConfig.logger?.warning("Found non-data and non-string uid \(uid) in OpenDirectory record \(odResult)")
 						}
 					}
 				}

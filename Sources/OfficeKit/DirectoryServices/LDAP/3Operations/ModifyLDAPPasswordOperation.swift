@@ -1,9 +1,9 @@
 /*
- * ModifyLDAPPasswordOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 11/09/2018.
- */
+ * ModifyLDAPPasswordOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 11/09/2018.
+ */
 
 import Foundation
 
@@ -15,21 +15,24 @@ import COpenLDAP
 
 /* Adapted from ldappasswd source code: https://github.com/openldap/openldap/blob/59e9ff6243465640956b58ad1756a3ede53eca7c/clients/tools/ldappasswd.c*/
 
-/* If the LDAPObject does not contain a password, will set to a randomly
-generated password. */
+/* If the LDAPObject does not contain a password, will set to a randomly generated password. */
 public final class ModifyLDAPPasswordsOperation : RetryingOperation {
 	
 	public let connector: LDAPConnector
 	
 	public let resets: [(dn: LDAPDistinguishedName, pass: String?)]
 	
-	/** Keys are distinguished names, values are passwords. Only set for users
-	whose password was successfully set. */
+	/**
+	 Keys are distinguished names, values are passwords.
+	 
+	 Only set for users whose password was successfully set. */
 	public private(set) var passwords = [LDAPDistinguishedName: String]()
 	public private(set) var errors: [Error?]
 	
-	/** Init with a DNs/passwords array. If the password is nil for a given DN,
-	a new auto-generated password will be created. */
+	/**
+	 Init with a DNs/passwords array.
+	 
+	 If the password is nil for a given DN, a new auto-generated password will be created. */
 	public init(resets r: [(LDAPDistinguishedName, String?)], connector c: LDAPConnector) {
 		resets = r
 		connector = c
@@ -64,8 +67,8 @@ public final class ModifyLDAPPasswordsOperation : RetryingOperation {
 //				for i in 0..<bv.bv_len {data.append(UInt8((Int(bv.bv_val.advanced(by: Int(i)).pointee) + 256) % 256))}
 //				OfficeKitConfig.logger?.debug(data.reduce("", { $0 + String(format: "%02x", $1) }))
 				
-				/* We use the synchronous version of the function. See long comment
-				 * in search operation for details. */
+				/* We use the synchronous version of the function.
+				 * See long comment in search operation for details. */
 				let r = connector.performLDAPCommunication{ ldap_extended_operation_s($0, LDAP_EXOP_MODIFY_PASSWD, &bv, nil /* Server controls */, nil /* Client controls */, nil, nil) }
 				guard r == LDAP_SUCCESS else {
 					throw NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])
@@ -84,10 +87,11 @@ public final class ModifyLDAPPasswordsOperation : RetryingOperation {
 	
 	private func buildBervalPasswordChangeRequest(dn: String, newPass: String, ber: OpaquePointer, berval: inout berval) throws {
 		/* Basically what we wanne do is:
-		 *    ber_printf(ber, "{tstON}", LDAP_TAG_EXOP_MODIFY_PASSWD_ID, dn, LDAP_TAG_EXOP_MODIFY_PASSWD_NEW, &newPassBER);
-		 * But ber_printf is unavailable in Swift! So we build the ber manually…
-		 * The resulting bytes we get when building manually have been tested to
-		 * be the same that we get when building with ber_printf. */
+		 *    ber_printf(ber, "{tstON}", LDAP_TAG_EXOP_MODIFY_PASSWD_ID, dn, LDAP_TAG_EXOP_MODIFY_PASSWD_NEW, &newPassBER);
+		 * but ber_printf is unavailable in Swift!
+		 *
+		 * So we build the ber manually…
+		 * The resulting bytes we get when building manually have been tested to be the same that we get when building with ber_printf. */
 		
 		guard ber_start_seq(ber, LDAP_TAG_MESSAGE) >= 0 else {
 			throw NSError(domain: "com.happn.officectl.lber", code: 1, userInfo: [NSLocalizedDescriptionKey: "ber_start_seq returned a value < 0"])

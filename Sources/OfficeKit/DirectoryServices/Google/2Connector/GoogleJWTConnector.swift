@@ -1,13 +1,13 @@
 /*
- * GoogleJWTConnector.swift
- * officectl
- *
- * Created by François Lamboley on 31/05/2018.
- */
+ * GoogleJWTConnector.swift
+ * officectl
+ *
+ * Created by François Lamboley on 31/05/2018.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import URLRequestOperation
@@ -25,9 +25,7 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 	
 	public var currentScope: ScopeType? {
 		guard let auth = auth else {return nil}
-		/* We let a 21 secs leeway in which we consider we’re not connected to
-		 * mitigate the potential time difference between the server and our local
-		 * time. */
+		/* We let a 21 secs leeway in which we consider we’re not connected to mitigate the potential time difference between the server and our local time. */
 		guard auth.expirationDate.timeIntervalSinceNow > 21 else {return nil}
 		return auth.scope
 	}
@@ -63,16 +61,16 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 	}
 	
 	/* ********************************
-	   MARK: - Connector Implementation
-	   ******************************** */
+	   MARK: - Connector Implementation
+	   ******************************** */
 	
 	public func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<Set<String>>, handler: @escaping (Error?) -> Void) {
 		let newScope: Set<String>?
 		
 		switch changeType {
-		case .add(let scope):    newScope = (scope.isEmpty ? currentScope : (currentScope ?? Set()).union(scope))
-		case .remove(let scope): newScope = currentScope?.subtracting(scope)
-		case .removeAll:         newScope = nil
+			case .add(let scope):    newScope = (scope.isEmpty ? currentScope : (currentScope ?? Set()).union(scope))
+			case .remove(let scope): newScope = currentScope?.subtracting(scope)
+			case .removeAll:         newScope = nil
 		}
 		assert(newScope?.isEmpty != true) /* The scope is either nil or non-empty */
 		
@@ -92,8 +90,8 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 	}
 	
 	/* ************************************
-	   MARK: - Authenticator Implementation
-	   ************************************ */
+	   MARK: - Authenticator Implementation
+	   ************************************ */
 	
 	public func authenticate(request: RequestType, handler: @escaping (Result<RequestType, Error>, Any?) -> Void) {
 		connectorOperationQueue.addAsyncBlock{ endHandler in
@@ -105,8 +103,8 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 	}
 	
 	/* ***************
-	   MARK: - Private
-	   *************** */
+	   MARK: - Private
+	   *************** */
 	
 	private var auth: Auth?
 	
@@ -177,8 +175,7 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 		op.start()
 		
 		/* ***** TokenResponse Object ***** */
-		/* This struct is used strictly for conveniently decoding the response
-		 * when reading the results of the token request */
+		/* This struct is used strictly for conveniently decoding the response when reading the results of the token request. */
 		struct TokenResponse : Decodable {
 			
 			let tokenType: String
@@ -195,8 +192,7 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 		components.queryItems = [URLQueryItem(name: "token", value: auth.token)]
 		let op = URLRequestOperation(url: components.url!)
 		op.completionBlock = {
-			/* We consider the 400 status code to be normal (usually it will be an
-			 * invalid token, which we don’t care about as we’re disconnecting). */
+			/* We consider the 400 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
 			let error = (op.statusCode == 400 ? nil : op.finalError)
 			if error == nil {self.auth = nil}
 			handler(error)

@@ -1,9 +1,9 @@
 /*
- * SetupRoutes.swift
- * officectl
- *
- * Created by François Lamboley on 06/08/2018.
- */
+ * SetupRoutes.swift
+ * officectl
+ *
+ * Created by François Lamboley on 06/08/2018.
+ */
 
 import Foundation
 
@@ -13,28 +13,23 @@ import Vapor
 
 
 func setup_routes_and_middlewares(_ app: Application) throws {
-	/* The officectl server now has two main routes groups: the API and the web
-	 * routes. In theory it shouldn’t have the web routes, but here we are…
-	 *
-	 * Because of this, in order to have a clear separation of middlewares, in
-	 * particular for the error middleware (api errors are JSON, web errors are
-	 * HTML), but also for the file middleware (must only serve files if not in
-	 * the /api “domain”), we must add the “catchAll” route to both the /api
-	 * group and the web route!
-	 * We have nevertheless left the standard error middleware (the API one) as
-	 * a global middleware. That is, if the request matches NO routes, at least
-	 * there will be a middleware to catch the error and the client won’t get a
-	 * connection reset by peer. This should not happen though; all routes should
-	 * be caught, either by the api or the web group, and we could in theory put
-	 * the api error middleware in the api group.
-	 * Note after the fact, discovery of unhandled routes: When POST-ing for
-	 * instance on an unknown route, as the catch-all in on the GET only, we
-	 * effectively get a fully unknown route!
-	 * Whenever (if) we remove the web group one day, we should be able to fully
-	 * get rid of all the groups (though we might as well keep the api one to
-	 * avoid having to prefix all routes w/ api, or to prepare for a /api/v2
-	 * group ¯\_(ツ)_/¯). The “catchAll” should be removed though; it would not
-	 * be of any use anymore. */
+	/* The officectl server now has two main routes groups: the API and the web routes.
+	 * In theory it shouldn’t have the web routes, but here we are…
+	 *
+	 * Because of this, in order to have a clear separation of middlewares,
+	 * in particular for the error middleware (api errors are JSON, web errors are HTML),
+	 * but also for the file middleware (must only serve files if not in the /api “domain”),
+	 * we must add the “catchAll” route to both the /api group and the web route!
+	 *
+	 * We have nevertheless left the standard error middleware (the API one) as a global middleware.
+	 * That is, if the request matches NO routes, at least there will be a middleware to catch the error and the client won’t get a connection reset by peer.
+	 * This should not happen though; all routes should be caught, either by the api or the web group, and we could in theory put the api error middleware in the api group.
+	 *
+	 * Note after the fact, discovery of unhandled routes:
+	 * When POST-ing for instance on an unknown route, as the catch-all in on the GET only, we effectively get a fully unknown route!
+	 * Whenever (if) we remove the web group one day, we should be able to fully get rid of all the groups
+	 * (though we might as well keep the api one to avoid having to prefix all routes w/ api, or to prepare for a /api/v2 group ¯\_(ツ)_/¯).
+	 * The “catchAll” should be removed though; it would not be of any use anymore. */
 	
 	/* Register global middlewares */
 	/* Note: This middleware setup is the default. We simply make it explict. */
@@ -62,11 +57,11 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	apiRoutesBuilder.get("services", use: { req in
 		ApiResponse.data(
 			req.application.officeKitConfig.serviceConfigs
-			.map{ kv -> ApiService in
-				let (_, config) = kv
-				return ApiService(providerId: config.providerId, serviceId: config.serviceId, serviceFullName: config.serviceName, isHelperService: config.isHelperService)
-			}
-			.sorted(by: { $0.serviceFullName.localizedCompare($1.serviceFullName) != .orderedDescending })
+				.map{ kv -> ApiService in
+					let (_, config) = kv
+					return ApiService(providerId: config.providerId, serviceId: config.serviceId, serviceFullName: config.serviceName, isHelperService: config.isHelperService)
+				}
+				.sorted(by: { $0.serviceFullName.localizedCompare($1.serviceFullName) != .orderedDescending })
 		)
 	})
 	
@@ -79,9 +74,8 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	authedApiRoutesBuilder.get("users", "me", use: usersController.getMe)
 	authedApiRoutesBuilder.get("users", ":dsuid-pair", use: usersController.getUser)
 	
-	/* Intentionnally not giving access to listing of all resets: We do not keep
-	 * a table of the lists of password resets, and it would not be trivial to do
-	 * so we just don’t do it. */
+	/* Intentionnally not giving access to listing of all resets:
+	 * We do not keep a table of the lists of password resets, and it would not be trivial to do, so we just don’t do it. */
 	let passwordResetController = PasswordResetController()
 	authedApiRoutesBuilder.get("password-resets", ":dsuid-pair", use: passwordResetController.getReset)
 	authedApiRoutesBuilder.put("password-resets", ":dsuid-pair", use: passwordResetController.createReset)
@@ -104,13 +98,12 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	authedWebRoutesBuilder.get("login", use: webLoginController.showLoginPage)
 	authedWebRoutesBuilder.grouped(UserCredsAuthenticator(usernameType: .email))
 		.post("login", use: webLoginController.doLogin)
-	/* ↑ We use the session authenticator in order to save the login session on
-	 * successful authentication, and not to use the user creds auth if unneeded. */
+	/* ↑ We use the session authenticator in order to save the login session on successful authentication, and not to use the user creds auth if unneeded. */
 	
 	authedWebRoutesBuilderGuard.get("auth-check", use: webLoginController.authCheck)
 	
-	/* Both endpoints below are used by nginx to check auth for Xcode Server. See
-	 * comment on the `xcodeGuardMiddleware` function for explanations. */
+	/* Both endpoints below are used by nginx to check auth for Xcode Server.
+	 * See comment on the `xcodeGuardMiddleware` function for explanations. */
 	authedWebRoutesBuilder.grouped(LoggedInUser.xcodeGuardMiddleware(leeway: -1)).get("xcode-auth-check", use: webLoginController.authCheck)
 	authedWebRoutesBuilder.grouped(LoggedInUser.xcodeGuardMiddleware(leeway:  7)).get("xcode-auth-check-lax", use: webLoginController.authCheck)
 	

@@ -1,9 +1,9 @@
 /*
- * OpenDirectoryConnector+SemiSingleton.swift
- * OfficeKit
- *
- * Created by François Lamboley on 21/05/2019.
- */
+ * OpenDirectoryConnector+SemiSingleton.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 21/05/2019.
+ */
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)
 
@@ -29,8 +29,7 @@ extension OpenDirectoryConnector : SemiSingletonWithFallibleInit {
 			nodeCredentials = creds
 		}
 		
-		/* Yes, if ProxySettings and CredentialsSettings were structs, the == and
-		 * hash functions would not be needed, I know… */
+		/* Yes, if ProxySettings and CredentialsSettings were structs, the == and hash functions would not be needed, I know… */
 		public static func ==(lhs: OpenDirectoryConnector.Settings, rhs: OpenDirectoryConnector.Settings) -> Bool {
 			return (
 				lhs.proxySettings?.hostname == rhs.proxySettings?.hostname &&

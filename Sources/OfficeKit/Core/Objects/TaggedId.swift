@@ -1,27 +1,23 @@
 /*
- * TaggedId.swift
- * OfficeKit
- *
- * Created by François Lamboley on 28/12/2018.
- */
+ * TaggedId.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 28/12/2018.
+ */
 
 import Foundation
 
 
 
 /**
-A `TaggedId` is simple an id with a “namespace” (e.g. “email:a@example.com”, the
-tag is “email”, the id is “a@example.com”).
-
-A tag in a tagged id should not contain a colon as the string representation of
-a tagged id is simply the tag followed by a colon and the id. No backslashing is
-done on the tag, which means if a tag contains a colon, re-reading the TaggedId
-from its string reprsentation will not return the same TaggedId!
-
-- important: The `TaggedId` conforms to `LosslessStringConvertible`, which is
-true as long as one does not set a tag with a colon in the TaggedId, otherwise
-converting the TaggedId to a string and then back to a TaggedId will not produce
-the same TaggedId. */
+ A `TaggedId` is simple an id with a “namespace” (e.g. “email:a@example.com”, the tag is “email”, the id is “a@example.com”).
+ 
+ A tag in a tagged id should not contain a colon as the string representation of a tagged id is simply the tag followed by a colon and the id.
+ No backslashing is done on the tag, which means if a tag contains a colon,
+ re-reading the TaggedId from its string reprsentation will not return the same TaggedId!
+ 
+ - Important: The `TaggedId` conforms to `LosslessStringConvertible`, which is true as long as one does not set a tag with a colon in the TaggedId,
+ otherwise converting the TaggedId to a string and then back to a TaggedId will not produce the same TaggedId. */
 public struct TaggedId : LosslessStringConvertible {
 	
 	public var tag: String

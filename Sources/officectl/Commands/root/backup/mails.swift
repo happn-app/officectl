@@ -1,9 +1,9 @@
 /*
- * mails.swift
- * officectl
- *
- * Created by François Lamboley on 6/26/18.
- */
+ * mails.swift
+ * officectl
+ *
+ * Created by François Lamboley on 6/26/18.
+ */
 
 import Foundation
 
@@ -335,8 +335,8 @@ struct BackupMailsCommand : ParsableCommand {
 		}
 		
 		/* ***************
-		   MARK: - Private
-		   *************** */
+		   MARK: - Private
+		   *************** */
 		
 		private var timer: DispatchSourceTimer
 		private let timerQueue = DispatchQueue(label: "OfflineimapRun Timer Queue")
@@ -351,18 +351,17 @@ struct BackupMailsCommand : ParsableCommand {
 				}
 			}
 			
-			/* About processOutput, an interesting thing to do would be to set it to a
-			 * a Pipe() so we can parse the output in real-time and process it! */
+			/* We could use XcodeTools to stream the process output. */
 			let processOutput = try offlineimapOutputFileURL.map{ try FileHandle(forWritingTo: $0) } ?? FileHandle.nullDevice
 			processOutput.seekToEndOfFile(); processOutput.write(Data("***** \(Date()): NEW OFFLINEIMAP RUN!\n".utf8))
 			
 			let process = Process()
 			process.executableURL = URL(fileURLWithPath: "/usr/local/bin/offlineimap")
 			process.arguments = ["-c", configurationFileURL.path]
-			#if !os(Linux)
+#if !os(Linux)
 			process.standardInput = FileHandle.nullDevice /* Forces failure of getting user pass from input when auth token expires. */
 			process.standardOutput = processOutput
-			#endif
+#endif
 			
 			return process
 		}
@@ -381,10 +380,9 @@ struct BackupMailsCommand : ParsableCommand {
 		}
 		
 		private func setupKillTimer() {
-			/* We guess in 5 minutes offlineimap will have time to close. If not, it's
-			 * no big deal anyway, it will simply not be able to finish whatever it
-			 * was doing remote side before closing, but we'll still relaunch it when
-			 * it finishes. */
+			/* We guess in 5 minutes offlineimap will have time to close.
+			 * If not, it's no big deal anyway, it will simply not be able to finish whatever it was doing remote side before closing,
+			 * but we'll still relaunch it when it finishes. */
 			let killTime = max(
 				DispatchTime.now() + .milliseconds(Int(tokensMinExpirationDate.timeIntervalSinceNow*1000)) - .seconds(5*60),
 				DispatchTime.now() + .seconds(5)
@@ -423,11 +421,10 @@ struct BackupMailsCommand : ParsableCommand {
 			signalNotifObservers.removeAll()
 		}
 		
-		/** Writes the offlineimap config file in configFileURL and returns the
-		expiration date of the config.
-		
-		- returns: The date after which the configuration file will not be valid
-		anymore (access tokens expired). */
+		/**
+		 Writes the offlineimap config file in configFileURL and returns the expiration date of the config.
+		 
+		 - returns: The date after which the configuration file will not be valid anymore (access tokens expired). */
 		private func updateOfflineimapConfig() throws {
 			console.info("Generating config for offlineimap")
 			
@@ -440,11 +437,9 @@ struct BackupMailsCommand : ParsableCommand {
 			}
 			
 			/* About maxsyncaccounts:
-			 *    We default arbitrarily to 4 (ncores/2 would probably be better).
-			 *    Even on an 8-core machine, offlineimap seems greedy, and I got a
-			 *    "pthread_cond_wait: Resource busy" error with maxsyncaccounts = 8.
-			 * About the forced unwrapped below, we know the id is fetched on all the
-			 * users (checked above). */
+			 *    We default arbitrarily to 4 (ncores/2 would probably be better).
+			 *    Even on an 8-core machine, offlineimap seems greedy, and I got a “pthread_cond_wait: Resource busy” error with maxsyncaccounts = 8.
+			 * About the forced unwrapped below, we know the id is fetched on all the users (checked above). */
 			let config = """
 			[general]
 			ui = MachineUI
@@ -459,7 +454,8 @@ struct BackupMailsCommand : ParsableCommand {
 				 *    - When using the system (macOS) Python, we must use the dummycert trick (sslcacertfile = ~/.dummycert_for_python.pem);
 				 *    - When using homebrew’s Python2 (offlineimap uses Python2…), we must specify the cacert file. We use the one from openssl. */
 				/* About the ssl_version:
-				 *    - When using Python2 w/ OpenSSL 1.1.1, offlineimap cannot validate Gogle’s certificate. We can fix that by forcing using the TLS 1.2 protocol. (youhou) */
+				 *    - When using Python2 w/ OpenSSL 1.1.1, offlineimap cannot validate Gougle’s certificate.
+				 *      We can fix that by forcing using the TLS 1.2 protocol. (youhou) */
 				return """
 					[Account AccountUserID_\(user.id.value!)]
 					localrepository = LocalRepoID_\(user.id.value!)

@@ -1,13 +1,13 @@
 /*
- * AuthenticatedJSONOperation.swift
- * officectl
- *
- * Created by François Lamboley on 25/06/2018.
- */
+ * AuthenticatedJSONOperation.swift
+ * officectl
+ *
+ * Created by François Lamboley on 25/06/2018.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import AsyncOperationResult
@@ -33,9 +33,9 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 	public var fetchedObject: ObjectType?
 	public var result: Result<ObjectType, Error> {
 		switch (fetchedObject, finalError) {
-		case (nil,               nil):              return .failure(OperationIsNotFinishedError())
-		case (.some(let object), _):                return .success(object)
-		case (_,                 .some(let error)): return .failure(error)
+			case (nil,               nil):              return .failure(OperationIsNotFinishedError())
+			case (.some(let object), _):                return .success(object)
+			case (_,                 .some(let error)): return .failure(error)
 		}
 	}
 	

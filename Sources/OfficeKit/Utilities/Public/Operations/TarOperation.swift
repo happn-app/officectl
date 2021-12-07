@@ -1,9 +1,9 @@
 /*
- * TarOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 13/08/2018.
- */
+ * TarOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 13/08/2018.
+ */
 
 import Foundation
 
@@ -21,8 +21,7 @@ public class TarOperation : RetryingOperation {
 	public let deleteSourcesOnSuccess: Bool
 	
 	public private(set) var tarError: Error?
-	/** Always empty if there was a tar error! (sources are not deleted in case
-	of a tar error) */
+	/** Always empty if there was a tar error! (sources are not deleted in case of a tar error) */
 	public private(set) var sourceDeletionErrors = [URL: Error]()
 	
 	public init(sources s: [String], relativeTo relativeSource: URL, destination d: URL, compress cprs: Bool, deleteSourcesOnSuccess del: Bool) {
@@ -47,21 +46,21 @@ public class TarOperation : RetryingOperation {
 		let destinationPath = destination.path
 		
 		let process = Process()
-		#if !os(Linux)
-			process.standardInput = FileHandle.nullDevice
-			process.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when tar fails... */
-			process.standardOutput = FileHandle.nullDevice
-		#endif
+#if !os(Linux)
+		process.standardInput = FileHandle.nullDevice
+		process.standardError = FileHandle.nullDevice /* TODO: Retrieve stderr to have more context when tar fails... */
+		process.standardOutput = FileHandle.nullDevice
+#endif
 		
-		#if !os(Linux)
-			/* BSD tar */
-			process.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
-			process.arguments = ["-C", sourceBase.path, "-c" + (compress ? "j" : "") + "f", destinationPath] + sources
-		#else
-			/* GNU tar */
-			process.executableURL = URL(fileURLWithPath: "/bin/tar")
-			process.arguments = ["-C", sourceBase.path, "-c" + (compress ? "j" : "") + "f", destinationPath] + sources
-		#endif
+#if !os(Linux)
+		/* BSD tar */
+		process.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
+		process.arguments = ["-C", sourceBase.path, "-c" + (compress ? "j" : "") + "f", destinationPath] + sources
+#else
+		/* GNU tar */
+		process.executableURL = URL(fileURLWithPath: "/bin/tar")
+		process.arguments = ["-C", sourceBase.path, "-c" + (compress ? "j" : "") + "f", destinationPath] + sources
+#endif
 		
 		do {try process.run()}
 		catch {tarError = error; return}

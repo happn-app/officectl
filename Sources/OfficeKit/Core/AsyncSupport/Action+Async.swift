@@ -1,9 +1,9 @@
 /*
- * Action+EventLoopFuture.swift
- * OfficeKit
- *
- * Created by François Lamboley on 09/01/2019.
- */
+ * Action+Async.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 09/01/2019.
+ */
 
 import Foundation
 

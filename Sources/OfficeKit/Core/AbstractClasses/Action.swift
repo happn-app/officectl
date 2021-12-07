@@ -1,18 +1,19 @@
 /*
- * Action.swift
- * OfficeKit
- *
- * Created by François Lamboley on 08/01/2019.
- */
+ * Action.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 08/01/2019.
+ */
 
 import Foundation
 
 
 
-/** The weakening mode for an Action. When the `TimeInterval` is `nil`, the
-action is weakened before the handler is called, otherwise, whatever the time
-interval value, the weakening is done asynchronously after the handler is
-called, on an internal queue. */
+/**
+ The weakening mode for an Action.
+ 
+ When the `TimeInterval` is `nil`, the action is weakened before the handler is called, otherwise,
+ whatever the time interval value, the weakening is done asynchronously after the handler is called, on an internal queue. */
 public enum WeakeningMode {
 	
 	case never
@@ -28,11 +29,12 @@ public enum WeakeningMode {
 }
 
 
-/** An Action is basically an Operation that can be run more than once. It does
-not have all the conveniences the Operations do (dependencies, queues, etc.). An
-Action is not in itself a SemiSingleton, however it is more or less expected
-that subclasses are. In particular, an Action has an option to keep a strong
-reference to itself, and automatically clear it at a given point in time. */
+/**
+ An `Action` is basically an `Operation` that can be run more than once.
+ It does not have all the conveniences the `Operation`s do (dependencies, queues, etc.).
+ 
+ An `Action` is not in itself a SemiSingleton, however it is more or less expected that subclasses are.
+ In particular, an Action has an option to keep a strong reference to itself, and automatically clear it at a given point in time. */
 open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	
 	public final var isExecuting: Bool {
@@ -40,14 +42,14 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	}
 	
 	/**
-	Is the operation weak? If not, the action keeps a strong reference to itself,
-	thus preventing itself from being deallocated. This is useful mainly for
-	subclasses that are semi-singletons.
-	
-	The following is true: `if isWeak then !isExecuting`. However, it is
-	possible to have a non executing weak action.
-	
-	A weak action does not have a result. */
+	 Is the operation weak?
+	 If not, the action keeps a strong reference to itself, thus preventing itself from being deallocated.
+	 This is useful mainly for subclasses that are semi-singletons.
+	 
+	 The following is true: `if isWeak then !isExecuting`.
+	 However, it is possible to have a non executing weak action.
+	 
+	 A weak action does not have a result. */
 	public final var isWeak: Bool {
 		return stateSyncQueue.sync{ currentState.isWeak }
 	}
@@ -70,40 +72,34 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	}
 	
 	/**
-	Start the action.
-	
-	If you try to start a running action, the `shouldJoinRunningAction` handler
-	will be called with the parameters w/ which the action is currently running.
-	You can decide whether to join the action and get your handler called when
-	the action is over, but the parameters won’t change.
-	You can for instance join the action to relaunch it w/ your parameters in
-	your end handler.
-	If you decide _not_ to join the action (the default), your end handler will
-	be called w/ an `OperationAlreadyInProgressError` error.
-	
-	If you try to start an action that has a result (the action is finished &
-	strong), the `shouldRetrievePreviousRun` handler will be called, with the
-	previous known parameters w/ which the action was run (might be `nil` because
-	the client can clear the latest parameters to free up some memory), and a
-	boolean set to whether the run was successful (`result.isSuccessful`).
-	If you decide _not_ to retrieve the previous results, the action will be run
-	again normally. Otherwise your end handler will be called w/ the current
-	result of the action.
-	This is the preferred method to run the action depending on the previous
-	result. Not doing that and instead checking the `result` value before
-	starting the action for instance, won’t be thread-safe and someone might
-	start the action before you. Or the action might get a result before you can
-	start it!
-	
-	Never assume the end handler will be called asynchronously.
-	
-	When the end handler is called, the state of the action will either be
-	`idleWeak` or `idleStrong` (you decide with the `weakeningMode` parameter).
-	
-	- important: If you weaken the action instantly (`nil` delay, which is the
-	default), the only way to retrieve the result of the action is through the
-	handler given as argument of this method. A weak action always have a `nil`
-	result. */
+	 Start the action.
+	 
+	 If you try to start a running action, the `shouldJoinRunningAction` handler will be called with the parameters w/ which the action is currently running.
+	 You can decide whether to join the action and get your handler called when the action is over, but the parameters won’t change.
+	 You can for instance join the action to relaunch it w/ your parameters in your end handler.
+	 If you decide _not_ to join the action (the default), your end handler will be called w/ an `OperationAlreadyInProgressError` error.
+	 
+	 If you try to start an action that has a result (the action is finished & strong),
+	 the `shouldRetrievePreviousRun` handler will be called, with the previous known parameters w/ which the action was run
+	 (might be `nil` because the client can clear the latest parameters to free up some memory),
+	 and a boolean set to whether the run was successful (`result.isSuccessful`).
+	 
+	 If you decide _not_ to retrieve the previous results, the action will be run again normally.
+	 Otherwise your end handler will be called w/ the current result of the action.
+	 
+	 This is the preferred method to run the action depending on the previous result.
+	 Not doing that and instead checking the `result` value before starting the action for instance,
+	 won’t be thread-safe and someone might start the action before you.
+	 
+	 Or the action might get a result before you can start it!
+	 
+	 Never assume the end handler will be called asynchronously.
+	 
+	 When the end handler is called, the state of the action will either be `idleWeak` or `idleStrong` (you decide with the `weakeningMode` parameter).
+	 
+	 - Important: If you weaken the action instantly (`nil` delay, which is the default),
+	 the only way to retrieve the result of the action is through the handler given as argument of this method.
+	 A weak action always have a `nil` result. */
 	public final func start(
 		parameters: ParametersType,
 		weakeningMode: WeakeningMode = WeakeningMode.defaultMode,
@@ -114,8 +110,7 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 		/* Pre-checks before running the action */
 		let (shouldLaunch, handlerCallArgument) = stateSyncQueue.sync{ () -> (Bool, Result<ResultType, Error>?) in
 			guard !currentState.isRunning else {
-				/* If we’re running, let’s check whether the client wants to join
-				 * the currently running action and be called when we’re done. */
+				/* If we’re running, let’s check whether the client wants to join the currently running action and be called when we’re done. */
 				if shouldJoinRunningAction(self.latestParameters!) {
 					if let h = handler {endHandlers.append(h)}
 					else               {OfficeKitConfig.logger?.warning("Asked to join a running action of type \(type(of: self)) for subject \(self.subject) but no handler given…")}
@@ -126,8 +121,7 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 			}
 			
 			if let r = currentState.result {
-				/* If we’re not running but have a result from a previous run, let’s
-				 * see if the client wants to retrieve the result directly. */
+				/* If we’re not running but have a result from a previous run, let’s see if the client wants to retrieve the result directly. */
 				guard !shouldRetrievePreviousRun(latestParameters, r.isSuccessful) else {
 					return (false, r)
 				}
@@ -149,13 +143,13 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 				let weaken: Bool
 				let weakeningDelay: TimeInterval?
 				switch (weakeningMode, result) {
-				case (.never, _):                                             weaken = false; weakeningDelay = nil
-				case (.onSuccess(delay: let d), .success):                    weaken = true;  weakeningDelay = d
-				case (.onSuccess, .failure):                                  weaken = false; weakeningDelay = nil
-				case (.onError(delay: let d), .failure):                      weaken = true;  weakeningDelay = d
-				case (.onError, .success):                                    weaken = false; weakeningDelay = nil
-				case (.always(successDelay: let d, errorDelay: _), .success): weaken = true;  weakeningDelay = d
-				case (.always(successDelay: _, errorDelay: let d), .failure): weaken = true;  weakeningDelay = d
+					case (.never, _):                                             weaken = false; weakeningDelay = nil
+					case (.onSuccess(delay: let d), .success):                    weaken = true;  weakeningDelay = d
+					case (.onSuccess, .failure):                                  weaken = false; weakeningDelay = nil
+					case (.onError(delay: let d), .failure):                      weaken = true;  weakeningDelay = d
+					case (.onError, .success):                                    weaken = false; weakeningDelay = nil
+					case (.always(successDelay: let d, errorDelay: _), .success): weaken = true;  weakeningDelay = d
+					case (.always(successDelay: _, errorDelay: let d), .failure): weaken = true;  weakeningDelay = d
 				}
 				if weaken {
 					if let delay = weakeningDelay {
@@ -183,8 +177,7 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 			/* Start the action */
 			try unsafeStart(parameters: parameters, handler: privateHandler)
 		} catch {
-			/* There was a sync error starting the action; let's call the end
-			 * handler directly. */
+			/* There was a sync error starting the action; let's call the end handler directly. */
 			privateHandler(.failure(error))
 		}
 	}
@@ -193,15 +186,15 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	public final func weaken() throws {
 		try stateSyncQueue.sync{
 			switch currentState {
-			case .idleWeak:
-				(/*nop*/)
-				
-			case .idleStrong:
-				/* Setting the state cancels the weakening timer if any. */
-				currentState = .idleWeak
-				
-			case .running:
-				throw OperationIsNotFinishedError()
+				case .idleWeak:
+					(/*nop*/)
+					
+				case .idleStrong:
+					/* Setting the state cancels the weakening timer if any. */
+					currentState = .idleWeak
+					
+				case .running:
+					throw OperationIsNotFinishedError()
 			}
 		}
 	}
@@ -215,30 +208,30 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	}
 	
 	/* **********************
-	   MARK: - For Subclasses
-	   ********************** */
+	   MARK: - For Subclasses
+	   ********************** */
 	
 	/**
-	This method is reserved for subclasses; do **not** call it directly.
-	
-	Start the action here. You do not need to call `super`, though you can.
-	
-	Call the handler when the action is done. You can call the handler
-	synchronously or asynchronously. */
+	 This method is reserved for subclasses; do **not** call it directly.
+	 
+	 Start the action here. You do not need to call `super`, though you can.
+	 
+	 Call the handler when the action is done.
+	 You can call the handler synchronously or asynchronously. */
 	open /* protected */ func unsafeStart(parameters: ParametersType, handler: @escaping (_ result: Result<ResultType, Error>) -> Void) throws {
 	}
 	
 	/* ***************
-	   MARK: - Private
-	   *************** */
+	   MARK: - Private
+	   *************** */
 	
 	private enum State {
 		
 		/** The action is not running and has no forced reference to itself. */
 		case idleWeak
-		/** The action is not running and has a forced reference to itself (the
-		action keeps a strong reference to itself). If the weakening timer is nil,
-		the action will never weaken on its own. */
+		/**
+		 The action is not running and has a forced reference to itself (the action keeps a strong reference to itself).
+		 If the weakening timer is nil, the action will never weaken on its own. */
 		case idleStrong(result: Result<ResultType, Error>, weakeningTimer: DispatchSourceTimer?, selfReference: Action)
 		
 		/** The action is running (and has a forced reference to itself). */
@@ -246,29 +239,29 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 		
 		var isRunning: Bool {
 			switch self {
-			case .running:               return true
-			case .idleWeak, .idleStrong: return false
+				case .running:               return true
+				case .idleWeak, .idleStrong: return false
 			}
 		}
 		
 		var isWeak: Bool {
 			switch self {
-			case .idleWeak:             return true
-			case .running, .idleStrong: return false
+				case .idleWeak:             return true
+				case .running, .idleStrong: return false
 			}
 		}
 		
 		var result: Result<ResultType, Error>? {
 			switch self {
-			case .idleWeak, .running:                                             return nil
-			case .idleStrong(result: let r, weakeningTimer: _, selfReference: _): return r
+				case .idleWeak, .running:                                             return nil
+				case .idleStrong(result: let r, weakeningTimer: _, selfReference: _): return r
 			}
 		}
 		
 		var timer: DispatchSourceTimer? {
 			switch self {
-			case .running, .idleWeak:      return nil
-			case .idleStrong(_, let t, _): return t
+				case .running, .idleWeak:      return nil
+				case .idleStrong(_, let t, _): return t
 			}
 		}
 		
@@ -279,7 +272,7 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 		willSet {currentState.timer?.cancel()}
 		didSet  {currentState.timer?.resume()}
 	}
-	/* **Must** be changed on the stateSyncQueue */
+	/** **Must** be changed on the `stateSyncQueue`. */
 	private var endHandlers = Array<(_ result: Result<ResultType, Error>) -> Void>()
 	
 }

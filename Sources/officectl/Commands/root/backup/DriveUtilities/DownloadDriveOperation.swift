@@ -1,9 +1,9 @@
 /*
- * DownloadDriveOperation.swift
- * officectl
- *
- * Created by François Lamboley on 11/02/2020.
- */
+ * DownloadDriveOperation.swift
+ * officectl
+ *
+ * Created by François Lamboley on 11/02/2020.
+ */
 
 import Foundation
 
@@ -113,47 +113,46 @@ class DownloadDriveOperation : RetryingOperation {
 			}
 		}
 		return connectionPromise.futureResult
-		.flatMap{ _ in EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: self.state.eventLoop) }
-		.flatMap{ newFilesList in
-			var newFullListOfFiles = currentListOfFiles
-			if let files = newFilesList.files {
-				var nBytesFound = 0
-				var nBytesIgnored = 0
-				var nFilesIgnored = 0
-				for file in files {
-					/* We keep the files (not folders) I own, or whose quota is
-					 * either invalid (cannot be converted to an Int) or is > 0 */
-					let mimeType = file.mimeType ?? ""
-					let bytes = file.size.flatMap{ Int($0) } ?? 0
-					let quota = file.quotaBytesUsed.flatMap({ Int($0) })
-					let isSkippedBecauseOfOwner = self.state.skipOtherOwner && !(file.ownedByMe ?? true)
-					let isFobiddenMimeType = mimeType.starts(with: "application/vnd.google-apps.")
-					let isSkippedBecauseOfQuota = self.state.skipZeroQuotaFiles && quota != nil && quota! <= 0 /* If quota is nil we don’t skip; we consider we just do not have the quota but it might be non-zero */
-					guard !isFobiddenMimeType && !isSkippedBecauseOfOwner && !isSkippedBecauseOfQuota else {
-						nFilesIgnored += 1
-						nBytesIgnored += bytes
-						continue
+			.flatMap{ _ in EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: self.state.eventLoop) }
+			.flatMap{ newFilesList in
+				var newFullListOfFiles = currentListOfFiles
+				if let files = newFilesList.files {
+					var nBytesFound = 0
+					var nBytesIgnored = 0
+					var nFilesIgnored = 0
+					for file in files {
+						/* We keep the files (not folders) I own, or whose quota is either invalid (cannot be converted to an Int) or is > 0. */
+						let mimeType = file.mimeType ?? ""
+						let bytes = file.size.flatMap{ Int($0) } ?? 0
+						let quota = file.quotaBytesUsed.flatMap({ Int($0) })
+						let isSkippedBecauseOfOwner = self.state.skipOtherOwner && !(file.ownedByMe ?? true)
+						let isFobiddenMimeType = mimeType.starts(with: "application/vnd.google-apps.")
+						let isSkippedBecauseOfQuota = self.state.skipZeroQuotaFiles && quota != nil && quota! <= 0 /* If quota is nil we don’t skip; we consider we just do not have the quota but it might be non-zero */
+						guard !isFobiddenMimeType && !isSkippedBecauseOfOwner && !isSkippedBecauseOfQuota else {
+							nFilesIgnored += 1
+							nBytesIgnored += bytes
+							continue
+						}
+						
+						nBytesFound += bytes
+						
+						let op = DownloadDriveFileOperation(state: self.state, doc: file)
+						let f = EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.state.eventLoop, queue: self.downloadFilesQueue)
+						newFullListOfFiles.append(f)
 					}
-					
-					nBytesFound += bytes
-					
-					let op = DownloadDriveFileOperation(state: self.state, doc: file)
-					let f = EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.state.eventLoop, queue: self.downloadFilesQueue)
-					newFullListOfFiles.append(f)
+					self.state.status.syncQueue.sync{
+						self.state.status[self.state.userAndDest.user].nBytesToProcess += nBytesFound
+						self.state.status[self.state.userAndDest.user].nFilesToProcess = newFullListOfFiles.count
+						self.state.status[self.state.userAndDest.user].nBytesIgnored += nBytesIgnored
+						self.state.status[self.state.userAndDest.user].nFilesIgnored += nFilesIgnored
+					}
 				}
 				self.state.status.syncQueue.sync{
-					self.state.status[self.state.userAndDest.user].nBytesToProcess += nBytesFound
-					self.state.status[self.state.userAndDest.user].nFilesToProcess = newFullListOfFiles.count
-					self.state.status[self.state.userAndDest.user].nBytesIgnored += nBytesIgnored
-					self.state.status[self.state.userAndDest.user].nFilesIgnored += nFilesIgnored
+					self.state.status[self.state.userAndDest.user].foundAllFiles = newFilesList.nextPageToken == nil
 				}
+				if let t = newFilesList.nextPageToken {return self.fetchAndDownloadDriveDocs(currentListOfFiles: newFullListOfFiles, nextPageToken: t)}
+				else                                  {return self.state.eventLoop.makeSucceededFuture(newFullListOfFiles)}
 			}
-			self.state.status.syncQueue.sync{
-				self.state.status[self.state.userAndDest.user].foundAllFiles = newFilesList.nextPageToken == nil
-			}
-			if let t = newFilesList.nextPageToken {return self.fetchAndDownloadDriveDocs(currentListOfFiles: newFullListOfFiles, nextPageToken: t)}
-			else                                  {return self.state.eventLoop.makeSucceededFuture(newFullListOfFiles)}
-		}
 	}
 	
 }

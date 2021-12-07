@@ -1,9 +1,9 @@
 /*
- * JSON+GenericStorage.swift
- * OfficeKit
- *
- * Created by François Lamboley on 13/08/2019.
- */
+ * JSON+GenericStorage.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 13/08/2019.
+ */
 
 import Foundation
 
@@ -43,7 +43,7 @@ extension JSON : GenericStorage {
 	public var arrayValue: [GenericStorage]? {
 		/* Note: Don’t know how to access JSON’s original arrayValue var… */
 		if case .array(let value) = self {
-			 return value
+			return value
 		}
 		return nil
 	}

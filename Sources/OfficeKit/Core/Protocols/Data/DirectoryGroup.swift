@@ -1,9 +1,9 @@
 /*
- * DirectoryGroup.swift
- * OfficeKit
- *
- * Created by François Lamboley on 24/09/2019.
- */
+ * DirectoryGroup.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 24/09/2019.
+ */
 
 import Foundation
 

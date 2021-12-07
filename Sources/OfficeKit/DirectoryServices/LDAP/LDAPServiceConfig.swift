@@ -1,9 +1,9 @@
 /*
- * LDAPServiceConfig.swift
- * OfficeKit
- *
- * Created by François Lamboley on 20/06/2019.
- */
+ * LDAPServiceConfig.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 20/06/2019.
+ */
 
 import Foundation
 
@@ -26,9 +26,8 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 	public var baseDNs: LDAPBaseDNs
 	
 	/**
-	- parameter peopleDNString: The DN for the people, **relative to the base
-	DN**. This is a different than the `peopleBaseDN` var in this struct, as
-	the var contains the full people DN. */
+	 - parameter peopleDNString: The DN for the people, **relative to the base DN**.
+	 This is a different than the `peopleBaseDN` var in this struct, as the var contains the full people DN. */
 	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: LDAPConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?, adminGroupsDNString: [String]) throws {
 		let adn = try adminGroupsDNString.map{ try LDAPDistinguishedName(string: $0) }
 		let bdn = try LDAPBaseDNs(baseDNPerDomainString: baseDNPerDomainString, peopleDNString: peopleDNString)
@@ -62,10 +61,10 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 		
 		let connectorSettings: LDAPConnector.Settings
 		switch (adminUsername, adminPassword) {
-		case (.none, .none):             connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3, startTLS: startTLS)
-		case let (username?, password?): connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3, startTLS: startTLS, username: username, password: password)
-		case (.some, .none), (.none, .some):
-			throw InvalidArgumentError(message: "Invalid config in yaml: neither both or none of admin_username & admin_password defined in an LDAP config")
+			case (.none, .none):             connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3, startTLS: startTLS)
+			case let (username?, password?): connectorSettings = LDAPConnector.Settings(ldapURL: url, protocolVersion: .v3, startTLS: startTLS, username: username, password: password)
+			case (.some, .none), (.none, .some):
+				throw InvalidArgumentError(message: "Invalid config in yaml: neither both or none of admin_username & admin_password defined in an LDAP config")
 		}
 		
 		try self.init(providerId: pId, serviceId: id, serviceName: name, mergePriority: p, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)

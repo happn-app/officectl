@@ -1,9 +1,9 @@
 /*
- * ExternalDirectoryServiceV1Config.swift
- * OfficeKit
- *
- * Created by François Lamboley on 09/07/2019.
- */
+ * ExternalDirectoryServiceV1Config.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 09/07/2019.
+ */
 
 import Foundation
 

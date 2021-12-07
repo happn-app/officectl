@@ -1,9 +1,9 @@
 /*
- * GroupOfUsersDirectoryService.swift
- * OfficeKit
- *
- * Created by François Lamboley on 24/09/2019.
- */
+ * GroupOfUsersDirectoryService.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 24/09/2019.
+ */
 
 import Foundation
 
@@ -30,8 +30,8 @@ public protocol GroupOfUsersDirectoryService : UserDirectoryService, GroupOfUser
 
 
 /* **********************
-   MARK: - Erasure Things
-   ********************** */
+   MARK: - Erasure Things
+   ********************** */
 
 public protocol GroupOfUsersDirectoryServiceInit {
 	

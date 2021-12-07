@@ -1,9 +1,9 @@
 /*
- * CreateLDAPObjectsOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 19/07/2018.
- */
+ * CreateLDAPObjectsOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 19/07/2018.
+ */
 
 import Foundation
 
@@ -16,14 +16,13 @@ import COpenLDAP
 /* Most of this class is adapted from https://github.com/PerfectlySoft/Perfect-LDAP/blob/3ec5155c2a3efa7aa64b66353024ed36ae77349b/Sources/PerfectLDAP/PerfectLDAP.swift */
 
 /**
-Result is an array of LDAPObject (the objects created). The operation as a whole
-does not fail from the `HasResult` protocol point of view. If all users failed
-to be created, the result will simply be an empty array.
-
-You should access the errors array to get the errors that happened while
-creating the objects. There is one optional error per object created. If the
-error is nil for a given object, it means the object has successfully been
-created, otherwise the error tells you what went wrong. */
+ Result is an array of LDAPObject (the objects created).
+ The operation as a whole does not fail from the `HasResult` protocol point of view.
+ If all users failed to be created, the result will simply be an empty array.
+ 
+ You should access the errors array to get the errors that happened while creating the objects.
+ There is one optional error per object created.
+ If the error is nil for a given object, it means the object has successfully been created, otherwise the error tells you what went wrong. */
 public final class CreateLDAPObjectsOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = [Result<LDAPObject, Error>]
@@ -63,8 +62,8 @@ public final class CreateLDAPObjectsOperation : RetryingOperation, HasResult {
 			var ldapModifsRequest = object.attributes.map{ v -> UnsafeMutablePointer<LDAPMod>? in ldapModAlloc(method: LDAP_MOD_ADD | LDAP_MOD_BVALUES, key: v.key, values: v.value) } + [nil]
 			defer {ldap_mods_free(&ldapModifsRequest, 0)}
 			
-			/* We use the synchronous version of the function. See long comment in
-			 * search operation for details. */
+			/* We use the synchronous version of the function.
+			 * See long comment in search operation for details. */
 			let r = connector.performLDAPCommunication{ ldap_add_ext_s($0, object.distinguishedName.stringValue, &ldapModifsRequest, nil /* Server controls */, nil /* Client controls */) }
 			if r == LDAP_SUCCESS {errors[idx] = nil}
 			else                 {errors[idx] = NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])}

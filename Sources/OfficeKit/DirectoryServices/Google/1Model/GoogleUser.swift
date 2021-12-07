@@ -1,9 +1,9 @@
 /*
- * GoogleUser.swift
- * officectl
- *
- * Created by François Lamboley on 26/06/2018.
- */
+ * GoogleUser.swift
+ * officectl
+ *
+ * Created by François Lamboley on 26/06/2018.
+ */
 
 import Foundation
 
@@ -74,7 +74,7 @@ public struct GoogleUser : Hashable, Codable {
 	
 	public func encode(to encoder: Encoder) throws {
 		var container = encoder.container(keyedBy: CodingKeys.self)
-
+		
 		try container.encode(kind, forKey: .kind)
 		try container.encodeIfSet(etag, forKey: .etag)
 		

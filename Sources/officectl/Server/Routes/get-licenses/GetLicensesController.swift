@@ -1,13 +1,13 @@
 /*
- * GetLicensesController.swift
- * officectl
- *
- * Created by François Lamboley on 2020/4/7.
- */
+ * GetLicensesController.swift
+ * officectl
+ *
+ * Created by François Lamboley on 2020/4/7.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import OfficeKit
@@ -50,7 +50,7 @@ class GetLicensesController {
 				return license
 			}
 		}
-		.flatMap{ $0 }
+			.flatMap{ $0 }
 		
 		struct LicencesContext : Encodable {
 			var email: String

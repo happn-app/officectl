@@ -1,9 +1,9 @@
 /*
- * HappnApiResult.swift
- * OfficeKit
- *
- * Created by François Lamboley on 29/08/2019.
- */
+ * HappnApiResult.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 29/08/2019.
+ */
 
 import Foundation
 

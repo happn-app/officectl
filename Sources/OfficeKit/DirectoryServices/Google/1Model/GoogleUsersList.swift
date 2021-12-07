@@ -1,9 +1,9 @@
 /*
- * GoogleUsersList.swift
- * officectl
- *
- * Created by François Lamboley on 26/06/2018.
- */
+ * GoogleUsersList.swift
+ * officectl
+ *
+ * Created by François Lamboley on 26/06/2018.
+ */
 
 import Foundation
 

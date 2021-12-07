@@ -1,9 +1,9 @@
 /*
- * LDAPUtils.swift
- * OfficeKit
- *
- * Created by François Lamboley on 11/09/2018.
- */
+ * LDAPUtils.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 11/09/2018.
+ */
 
 import Foundation
 

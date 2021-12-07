@@ -1,9 +1,9 @@
 /*
- * LDAPObjectID.swift
- * OfficeKit
- *
- * Created by François Lamboley on 07/09/2018.
- */
+ * LDAPObjectID.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 07/09/2018.
+ */
 
 import Foundation
 
@@ -15,13 +15,11 @@ public struct LDAPObjectID : Hashable {
 	public let numericoidValues: [UInt]?
 	
 	/**
-	Init the object id with an OID string.
-	
-	An OID must be a “numericoid” or a “description”. Where:
-	- “description” is a keystring (an alphanumeric string that can contain
-	hyphens and starts with a letter);
-	- “numericoid” is something like “1.2.3” (must at least have two numbers;
-	e.g. “1.1”). */
+	 Init the object id with an OID string.
+	 
+	 An OID must be a “numericoid” or a “description”. Where:
+	 - “description” is a keystring (an alphanumeric string that can contain hyphens and starts with a letter);
+	 - “numericoid” is something like “1.2.3” (must at least have two numbers; e.g. “1.1”). */
 	public init?(oid: String) {
 		/* Let’s validate the oid */
 		if oid.contains(".") {
@@ -41,10 +39,9 @@ public struct LDAPObjectID : Hashable {
 					/* A valid number must not start with a 0, or must **be** 0. */
 					return nil
 				}
-				/* This is all the validation we need to do for the number! As we
-				 * have validated earlier that there are no invalid numericoid
-				 * chars in the string, we _know_ the number is valid. As a
-				 * defensive programming technique, let’s assert it… */
+				/* This is all the validation we need to do for the number!
+				 * As we have validated earlier that there are no invalid numericoid chars in the string, we _know_ the number is valid.
+				 * As a defensive programming technique, let’s assert it… */
 				assert(stringNumber.rangeOfCharacter(from: CharacterSet.asciiNumbers.inverted, options: [.literal]) == nil)
 				numbers.append(UInt(stringNumber)!)
 			}

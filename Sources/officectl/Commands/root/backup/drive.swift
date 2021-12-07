@@ -1,16 +1,16 @@
 /*
- * drive.swift
- * officectl
- *
- * Created by François Lamboley on 09/01/2020.
- */
+ * drive.swift
+ * officectl
+ *
+ * Created by François Lamboley on 09/01/2020.
+ */
 
 /* TODO: Use ncurses to draw the current download status of the drive.
- *       https://dev.iachieved.it/iachievedit/ncurses-with-swift-on-linux/ */
+ *       https://dev.iachieved.it/iachievedit/ncurses-with-swift-on-linux/ */
 #if canImport(Darwin)
-	import Darwin.ncurses
+import Darwin.ncurses
 #else
-	import CNCurses
+import CNCurses
 #endif
 import Foundation
 

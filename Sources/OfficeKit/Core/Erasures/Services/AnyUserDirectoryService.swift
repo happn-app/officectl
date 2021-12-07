@@ -1,9 +1,9 @@
 /*
- * AnyUserDirectoryService.swift
- * OfficeKit
- *
- * Created by François Lamboley on 27/06/2019.
- */
+ * AnyUserDirectoryService.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 27/06/2019.
+ */
 
 import Foundation
 
@@ -67,8 +67,8 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 	func string(fromUserId userId: AnyId) -> String {
 		guard let typedId: Base.UserType.IdType = userId.unbox() else {
 			OfficeKitConfig.logger?.error("Asked to convert a user id to a string for a user id of unknown type in erasure: \(userId)")
-			/* The source user type is unknown, so we return a purposefully invalid
-			 * id. This is not ideal… */
+			/* The source user type is unknown, so we return a purposefully invalid id.
+			 * This is not ideal… */
 			return ""
 		}
 		return originalDirectory.string(fromUserId: typedId)
@@ -81,8 +81,8 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 	func string(fromPersistentUserId pId: AnyId) -> String {
 		guard let typedId: Base.UserType.PersistentIdType = pId.unbox() else {
 			OfficeKitConfig.logger?.error("Asked to convert a persistend id to a string for a persistent id of unknown type in erasure: \(pId)")
-			/* The source user type is unknown, so we return a purposefully invalid
-			 * id. This is not ideal… */
+			/* The source user type is unknown, so we return a purposefully invalid id.
+			 * This is not ideal… */
 			return ""
 		}
 		return originalDirectory.string(fromPersistentUserId: typedId)

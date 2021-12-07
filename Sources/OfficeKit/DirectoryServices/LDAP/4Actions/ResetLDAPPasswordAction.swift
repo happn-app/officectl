@@ -1,9 +1,9 @@
 /*
- * ResetLDAPPasswordAction.swift
- * OfficeKit
- *
- * Created by François Lamboley on 13/11/2018.
- */
+ * ResetLDAPPasswordAction.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 13/11/2018.
+ */
 
 import Foundation
 
@@ -28,8 +28,7 @@ public final class ResetLDAPPasswordAction : Action<LDAPDistinguishedName, Strin
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Error>) -> Void) throws {
-		/* Note: To be symmetrical with the reset google user action, we could use
-		 *       the existingLDAPUser method. */
+		/* Note: To be symmetrical with the reset google user action, we could use the existingLDAPUser method. */
 		deps.connector.connect(scope: (), handler: { result in
 			if let e = result.failureValue {return handler(.failure(e))}
 			

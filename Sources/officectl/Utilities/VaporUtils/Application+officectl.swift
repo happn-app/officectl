@@ -1,9 +1,9 @@
 /*
- * Application+Officectl.swift
- * officectl
- *
- * Created by François Lamboley on 11/06/2020.
- */
+ * Application+Officectl.swift
+ * officectl
+ *
+ * Created by François Lamboley on 11/06/2020.
+ */
 
 import Foundation
 
@@ -41,11 +41,9 @@ extension Application {
 		app.commands.use(vaporCommand, as: "handler", isDefault: true)
 		
 		do {
-			/* This whole block should be removed once storage is thread-safe (see
-			 * https://github.com/vapor/vapor/issues/2330).
-			 * In the mean time we force get all the properties that set something
-			 * in the storage so the storage is effectively read-only later.
-			 * Must be done after the app is configured. */
+			/* This whole block should be removed once storage is thread-safe (see https://github.com/vapor/vapor/issues/2330).
+			 * In the mean time we force get all the properties that set something in the storage so the storage is effectively read-only later.
+			 * Must be done after the app is configured. */
 			_ = app.semiSingletonStore
 			_ = app.officeKitServiceProvider
 			_ = app.services
@@ -65,10 +63,10 @@ private extension Environment {
 	init(officectlConfig: OfficectlConfig) {
 		/* Default (`env` is `nil` in the config) is `.development`. */
 		switch officectlConfig.env {
-		case "dev", "development", nil: self = .development
-		case "prod", "production": self = .production
-		case "test", "testing": self = .testing
-		case let str?: self.init(name: str)
+			case "dev", "development", nil: self = .development
+			case "prod", "production": self = .production
+			case "test", "testing": self = .testing
+			case let str?: self.init(name: str)
 		}
 		
 		/* Arguments are parsed w/ ArgumentParser! Not Vapor. */

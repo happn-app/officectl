@@ -1,9 +1,9 @@
 /*
- * LDAPBaseDNs.swift
- * OfficeKit
- *
- * Created by François Lamboley on 16/08/2019.
- */
+ * LDAPBaseDNs.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 16/08/2019.
+ */
 
 import Foundation
 

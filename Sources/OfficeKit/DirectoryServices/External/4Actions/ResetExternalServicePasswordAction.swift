@@ -1,13 +1,13 @@
 /*
- * ResetGooglePasswordAction.swift
- * OfficeKit
- *
- * Created by François Lamboley on 18/09/2018.
- */
+ * ResetGooglePasswordAction.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 18/09/2018.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import SemiSingleton

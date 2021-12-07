@@ -1,9 +1,9 @@
 /*
- * SearchGoogleUsersOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 17/07/2018.
- */
+ * SearchGoogleUsersOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 17/07/2018.
+ */
 
 import Foundation
 
@@ -38,8 +38,8 @@ public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 	}
 	
 	/* ***************
-	   MARK: - Private
-	   *************** */
+	   MARK: - Private
+	   *************** */
 	
 	private var users = [GoogleUser]()
 	
@@ -73,9 +73,13 @@ public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 public struct GoogleUserSearchRequest {
 	
 	let domain: String
-	/** The query for the search. If `nil`, the search will return all users in
-	the given domain. No validation on the query is done. The format is described
-	here: https://developers.google.com/admin-sdk/directory/v1/guides/search-users */
+	/**
+	 The query for the search.
+	 
+	 If `nil`, the search will return all users in the given domain.
+	 No validation on the query is done.
+	 
+	 The format is described here: https://developers.google.com/admin-sdk/directory/v1/guides/search-users. */
 	let query: String?
 	
 	public init(domain d: String, query q: String?) {

@@ -27,16 +27,9 @@ platformDependentTargets.append(.systemLibrary(name: "CNCurses", pkgConfig: "ncu
 platformDependentOfficectlDependencies.append("CNCurses")
 #endif
 
-/* We try and use OpenLDAP from Homebrew instead of the system one if possible
- * (the system one is deprecated, but there are no alternatives; OpenDirectory
- * simply does not do what OpenLDAP does).
- * Note the project compiles if the system OpenLDAP is used, but you’ll get a
- * lot of useless warnings. */
 #if !os(Linux)
-/* On macOS we use a custom-made xcframework to avoid the deprecation warnings
- * macOS has added on OpenLDAP (they say to use OpenDirectory, but I did not
- * find a way to do LDAP requests using OpenDirectory and I’m pretty sure it’s
- * because it’s not possible). */
+/* On macOS we use a custom-made xcframework to avoid the deprecation warnings macOS has added on OpenLDAP
+ * (they say to use OpenDirectory, but I did not find a way to do LDAP requests using OpenDirectory and I’m pretty sure it’s because it’s not possible). */
 platformDependentDependencies.append(contentsOf: [
 	.package(url: "https://github.com/xcode-actions/COpenSSL.git",  from: "1.1.111"),
 	.package(url: "https://github.com/xcode-actions/COpenLDAP.git", from: "2.5.5")
@@ -47,8 +40,7 @@ platformDependentOfficeKitDependencies.append(contentsOf: [
 ])
 #else
 /* On Linux we use the standard OpenLDAP package.
- * Note: The standard OpenLDAP package does not have a pkg-config file, so no
- *       pkgconfig argument here, */
+ * Note: The standard OpenLDAP package does not have a pkg-config file, so no pkgconfig argument here, */
 platformDependentTargets.append(.systemLibrary(name: "COpenLDAP", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])]))
 platformDependentOfficeKitDependencies.append(
 	.target(name: "COpenLDAP")

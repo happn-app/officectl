@@ -1,14 +1,14 @@
 /*
- * Crypto.swift
- * officectl
- *
- * Created by François Lamboley on 26/06/2018.
- */
+ * Crypto.swift
+ * officectl
+ *
+ * Created by François Lamboley on 26/06/2018.
+ */
 
 /* A note about this file: JWTKit did not exist (at least not on this form) previously.
  * So we manually signed the JWT tokens.
  * Now we should use JWTKit properly but I still kept this file to avoir changing the code everywhere.
- * It should not be too difficult to do if we want to. */
+ * It should not be too difficult to do if we want to. */
 
 import Foundation
 import JWTKit

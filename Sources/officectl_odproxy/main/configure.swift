@@ -1,9 +1,9 @@
 /*
- * configure.swift
- * officectl_odproxy
- *
- * Created by François Lamboley on 10/07/2019.
- */
+ * configure.swift
+ * officectl_odproxy
+ *
+ * Created by François Lamboley on 10/07/2019.
+ */
 
 import Foundation
 
@@ -23,7 +23,7 @@ func configure(_ app: Application, forcedConfigPath: String?, verbose: Bool) thr
 	RetryingOperationConfig.logger = app.logger
 	URLRequestOperationConfig.oslog = nil
 	URLRequestOperationConfig.logger = app.logger
-
+	
 	let (url, conf) = try readYamlConfig(forcedConfigFilePath: forcedConfigPath)
 	let serverConfigYaml = try conf.storage(forKey: "server", currentKeyPath: ["Global config"])
 	
@@ -35,10 +35,10 @@ func configure(_ app: Application, forcedConfigPath: String?, verbose: Bool) thr
 		let serverHostname = try serverConfigYaml.optionalString(forKey: "hostname", currentKeyPath: ["Server Config"])
 		let serverPort = try serverConfigYaml.optionalInt(forKey: "port", currentKeyPath: ["Server Config"])
 		switch (serverHostname, serverPort) {
-		case (let hostname?, let port?): app.http.server.configuration.hostname = hostname; app.http.server.configuration.port = port
-		case (let hostname?, nil):       app.http.server.configuration.hostname = hostname
-		case (nil,           let port?): app.http.server.configuration.port = port
-		case (nil,           nil):       (/*nop*/)
+			case (let hostname?, let port?): app.http.server.configuration.hostname = hostname; app.http.server.configuration.port = port
+			case (let hostname?, nil):       app.http.server.configuration.hostname = hostname
+			case (nil,           let port?): app.http.server.configuration.port = port
+			case (nil,           nil):       (/*nop*/)
 		}
 	}
 	

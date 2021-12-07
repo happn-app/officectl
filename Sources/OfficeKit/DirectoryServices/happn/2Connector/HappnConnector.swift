@@ -1,13 +1,13 @@
 /*
- * HappnConnector.swift
- * officectl
- *
- * Created by François Lamboley on 27/06/2018.
- */
+ * HappnConnector.swift
+ * officectl
+ *
+ * Created by François Lamboley on 27/06/2018.
+ */
 
 import Foundation
 #if canImport(FoundationNetworking)
-	import FoundationNetworking
+import FoundationNetworking
 #endif
 
 import Crypto
@@ -38,8 +38,7 @@ public final class HappnConnector : Connector, Authenticator {
 	
 	public var currentScope: Set<String>? {
 		guard let auth = auth else {return nil}
-		/* We let a 21 secs leeway in which we consider we’re not connected to
-		 * mitigate time difference between the server and our local time. */
+		/* We let a 21 secs leeway in which we consider we’re not connected to mitigate time difference between the server and our local time. */
 		guard auth.expirationDate.timeIntervalSinceNow > 21 else {return nil}
 		return auth.scope
 	}
@@ -70,16 +69,16 @@ public final class HappnConnector : Connector, Authenticator {
 	}
 	
 	/* ********************************
-	   MARK: - Connector Implementation
-	   ******************************** */
+	   MARK: - Connector Implementation
+	   ******************************** */
 	
 	public func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<Set<String>>, handler: @escaping (Error?) -> Void) {
 		let newScope: Set<String>?
 		
 		switch changeType {
-		case .add(let scope):    newScope = (scope.isEmpty ? currentScope : (currentScope ?? Set()).union(scope))
-		case .remove(let scope): newScope = currentScope?.subtracting(scope)
-		case .removeAll:         newScope = nil
+			case .add(let scope):    newScope = (scope.isEmpty ? currentScope : (currentScope ?? Set()).union(scope))
+			case .remove(let scope): newScope = currentScope?.subtracting(scope)
+			case .removeAll:         newScope = nil
 		}
 		assert(newScope?.isEmpty != true) /* The scope is either nil or non-empty */
 		
@@ -99,8 +98,8 @@ public final class HappnConnector : Connector, Authenticator {
 	}
 	
 	/* ************************************
-	   MARK: - Authenticator Implementation
-	   ************************************ */
+	   MARK: - Authenticator Implementation
+	   ************************************ */
 	
 	public func authenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
 		connectorOperationQueue.addAsyncBlock{ endHandler in
@@ -112,8 +111,8 @@ public final class HappnConnector : Connector, Authenticator {
 	}
 	
 	/* ***************
-	   MARK: - Private
-	   *************** */
+	   MARK: - Private
+	   *************** */
 	
 	private var auth: Auth?
 	
@@ -138,17 +137,17 @@ public final class HappnConnector : Connector, Authenticator {
 			URLQueryItem(name: "client_secret", value: clientSecret)
 		]
 		switch authMode {
-		case .userPass(username: let username, password: let password):
-			components.queryItems!.append(contentsOf: [
-				URLQueryItem(name: "grant_type", value: "password"),
-				URLQueryItem(name: "username", value: username),
-				URLQueryItem(name: "password", value: password)
-			])
-		case .refreshToken(let refreshToken):
-			components.queryItems!.append(contentsOf: [
-				URLQueryItem(name: "grant_type", value: "refresh_token"),
-				URLQueryItem(name: "refresh_token", value: refreshToken)
-			])
+			case .userPass(username: let username, password: let password):
+				components.queryItems!.append(contentsOf: [
+					URLQueryItem(name: "grant_type", value: "password"),
+					URLQueryItem(name: "username", value: username),
+					URLQueryItem(name: "password", value: password)
+				])
+			case .refreshToken(let refreshToken):
+				components.queryItems!.append(contentsOf: [
+					URLQueryItem(name: "grant_type", value: "refresh_token"),
+					URLQueryItem(name: "refresh_token", value: refreshToken)
+				])
 		}
 		let requestData = components.percentEncodedQuery!.data(using: .utf8)!
 		
@@ -173,8 +172,7 @@ public final class HappnConnector : Connector, Authenticator {
 		op.start()
 		
 		/* ***** TokenResponse Object ***** */
-		/* This struct is used strictly for conveniently decoding the response
-		 * when reading the results of the token request */
+		/* This struct is used strictly for conveniently decoding the response when reading the results of the token request */
 		struct TokenResponse : Decodable {
 			
 			let scope: String
@@ -196,8 +194,7 @@ public final class HappnConnector : Connector, Authenticator {
 		request.setValue("OAuth=\"\(auth.accessToken)\"", forHTTPHeaderField: "Authorization")
 		let op = URLRequestOperation(request: request)
 		op.completionBlock = {
-			/* We consider the 410 status code to be normal (usually it will be an
-			 * invalid token, which we don’t care about as we’re disconnecting). */
+			/* We consider the 410 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
 			let error = (op.statusCode == 410 ? nil : op.finalError)
 			if error == nil {self.auth = nil}
 			handler(error)
@@ -245,8 +242,7 @@ public final class HappnConnector : Connector, Authenticator {
 			if let body = request.httpBody {content.append(body)}
 			content.append(semiColonData)
 			content.append(httpMethodData)
-			/* content is (the part in brackets is only there if the value of the
-			 * field is not empty): "url_path[?url_query];http_body;http_method" */
+			/* content is (the part in brackets is only there if the value of the field is not empty): "url_path[?url_query];http_body;http_method" */
 			
 			let hmac = Data(HMAC<SHA256>.authenticationCode(for: content, using: SymmetricKey(data: key)))
 			request.setValue(hmac.reduce("", { $0 + String(format: "%02x", $1) }), forHTTPHeaderField: "Signature")

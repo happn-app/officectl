@@ -1,9 +1,9 @@
 /*
- * GoogleService.swift
- * OfficeKit
- *
- * Created by François Lamboley on 20/06/2019.
- */
+ * GoogleService.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 20/06/2019.
+ */
 
 import Foundation
 
@@ -16,11 +16,12 @@ import ServiceKit
 
 
 
-/** A Googl Apps service.
-
-Dependencies:
-- Event-loop
-- Semi-singleton store */
+/**
+ A Gougle Apps service.
+ 
+ Dependencies:
+ - Event-loop;
+ - Semi-singleton store. */
 public final class GoogleService : UserDirectoryService {
 	
 	public static let providerId = "internal_google"
@@ -72,16 +73,12 @@ public final class GoogleService : UserDirectoryService {
 	}
 	
 	public func json(fromUser user: GoogleUser) throws -> JSON {
-		/* Probably not optimal in terms of speed, but works well and avoids
-		 * having a shit-ton of glue to create in the GoogleUser (or in this
-		 * method). */
+		/* Probably not optimal in terms of speed, but works well and avoids having a shit-ton of glue to create in the GoogleUser (or in this method). */
 		return try JSON(encodable: user)
 	}
 	
 	public func logicalUser(fromJSON json: JSON) throws -> GoogleUser {
-		/* Probably not optimal in terms of speed, but works well and avoids
-		 * having a shit-ton of glue to create in the GoogleUser (or in this
-		 * method). */
+		/* Probably not optimal in terms of speed, but works well and avoids having a shit-ton of glue to create in the GoogleUser (or in this method). */
 		let encoded = try JSONEncoder().encode(json)
 		return try JSONDecoder().decode(GoogleUser.self, from: encoded)
 	}
@@ -95,8 +92,7 @@ public final class GoogleService : UserDirectoryService {
 		
 		let inferredUserId: Email
 		if userWrapper.sourceServiceId == config.serviceId {
-			/* The underlying user (though absent) is from our service; the
-			 * original id can be decoded as a valid id for our service. */
+			/* The underlying user (though absent) is from our service; the original id can be decoded as a valid id for our service. */
 			guard let email = Email(rawValue: userWrapper.userId.id) else {
 				throw InvalidArgumentError(message: "Got an invalid id for a GoogleService user.")
 			}
@@ -136,8 +132,9 @@ public final class GoogleService : UserDirectoryService {
 			res.insert(.persistentId)
 		}
 		if let otherEmailsStr = hints[.otherEmails].flatMap({ $0 }) {
-			/* Yes. We cannot represent an element in the list which contains a
-			 * comma. Maybe one day we’ll do the generic thing… */
+			/* Yes.
+			 * We cannot represent an element in the list which contains a comma.
+			 * Maybe one day we’ll do the generic thing… */
 			let emailsStrArray = otherEmailsStr.split(separator: ",")
 			if let emails = try? emailsStrArray.map({ try nil2throw(Email(rawValue: String($0))) }) {
 				user.aliases = .set(emails)
@@ -163,7 +160,7 @@ public final class GoogleService : UserDirectoryService {
 	}
 	
 	public func existingUser(fromUserId email: Email, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> GoogleUser? {
-		#warning("TODO: Implement propertiesToFetch")
+		/* TODO: Implement propertiesToFetch. */
 		/* Note: We do **NOT** map the email to the main domain. Maybe we should? */
 		let eventLoop = try services.eventLoop()
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)

@@ -1,9 +1,9 @@
 /*
- * RedirectMiddlewareWithNextParam.swift
- * officectl
- *
- * Created by François Lamboley on 20/04/2020.
- */
+ * RedirectMiddlewareWithNextParam.swift
+ * officectl
+ *
+ * Created by François Lamboley on 20/04/2020.
+ */
 
 import Foundation
 
@@ -35,10 +35,9 @@ private struct RedirectMiddlewareWithNextParam<A : Authenticatable> : AsyncMiddl
 	let nextParamName: String?
 	
 	init(_ authenticatableType: A.Type = A.self, baseURL url: URL, nextParamName npn: String?) {
-		/* About that force unwrap… I have no idea when URLComponents fails to
-		 * retrieve the components from a URL, so we’ll say it always work. In any
-		 * case this init should always be called when the server starts, thus
-		 * failing soon (and crashing) if failing… */
+		/* About that force unwrap…
+		 * I have no idea when URLComponents fails to retrieve the components from a URL, so we’ll say it always work.
+		 * In any case this init should always be called when the server starts, thus failing soon (and crashing) if failing… */
 		baseURLComponents = URLComponents(url: url, resolvingAgainstBaseURL: false)!
 		nextParamName = npn
 	}

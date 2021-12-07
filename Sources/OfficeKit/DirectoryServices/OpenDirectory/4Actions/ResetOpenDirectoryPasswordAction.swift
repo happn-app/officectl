@@ -1,9 +1,9 @@
 /*
- * ResetOpenDirectoryPasswordAction.swift
- * OfficeKit
- *
- * Created by François Lamboley on 21/05/2019.
- */
+ * ResetOpenDirectoryPasswordAction.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 21/05/2019.
+ */
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)
 

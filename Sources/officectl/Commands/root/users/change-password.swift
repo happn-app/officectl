@@ -1,9 +1,9 @@
 /*
- * change-password.swift
- * officectl
- *
- * Created by François Lamboley on 2019/7/13.
- */
+ * change-password.swift
+ * officectl
+ *
+ * Created by François Lamboley on 2019/7/13.
+ */
 
 import Foundation
 
@@ -66,8 +66,8 @@ struct UserChangePasswordCommand : ParsableCommand {
 			let serviceId = service.config.serviceId
 			let serviceName = service.config.serviceName
 			switch result {
-			case .success:            context.console.info("✅ \(serviceId) (\(serviceName))")
-			case .failure(let error): context.console.info("🛑 \(serviceId) (\(serviceName): \(error)")
+				case .success:            context.console.info("✅ \(serviceId) (\(serviceName))")
+				case .failure(let error): context.console.info("🛑 \(serviceId) (\(serviceName): \(error)")
 			}
 		}
 	}

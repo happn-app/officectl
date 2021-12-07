@@ -1,9 +1,9 @@
 /*
- * LinkifyOperation.swift
- * OfficeKit
- *
- * Created by François Lamboley on 09/08/2018.
- */
+ * LinkifyOperation.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 09/08/2018.
+ */
 
 import Foundation
 
@@ -17,9 +17,11 @@ public class LinkifyOperation : RetryingOperation {
 	public let folderURL: URL
 	public let stopOnErrors: Bool
 	
-	/** The errors that occurred during the run by URL (if any). Only meaningful
-	when the run has finished. If stopOnErrors is true, there will be at most one
-	entry in this dictionary. */
+	/**
+	 The errors that occurred during the run by URL (if any).
+	 
+	 Only meaningful when the run has finished.
+	 If stopOnErrors is true, there will be at most one entry in this dictionary. */
 	public var errors: [URL: Error] {
 		return errorsContainer.errors
 	}
@@ -33,11 +35,11 @@ public class LinkifyOperation : RetryingOperation {
 			return !flag
 		}
 		let options: FileManager.DirectoryEnumerationOptions
-		#if !os(Linux)
-			options = .skipsHiddenFiles
-		#else
-			options = []
-		#endif
+#if !os(Linux)
+		options = .skipsHiddenFiles
+#else
+		options = []
+#endif
 		guard let e = FileManager.default.enumerator(at: folderURL, includingPropertiesForKeys: [.isDirectoryKey], options: options, errorHandler: handler) else {
 			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot enumerate URL \(folderURL)"])
 		}
@@ -56,16 +58,16 @@ public class LinkifyOperation : RetryingOperation {
 				
 				do {
 					/* Let's make sure we are not treating a directory. */
-					#if !os(Linux)
-						guard !(try curFileURL.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? true) else {
-							return /* Return from autoreleasepool. Effectively continues to next file from enumerator. */
-						}
-					#else
-						var isDir = ObjCBool(false)
-						guard FileManager.default.fileExists(atPath: curFileURL.path, isDirectory: &isDir), !isDir.boolValue else {
-							return /* Return from autoreleasepool. Effectively continues to next file from enumerator. */
-						}
-					#endif
+#if !os(Linux)
+					guard !(try curFileURL.resourceValues(forKeys: [.isDirectoryKey]).isDirectory ?? true) else {
+						return /* Return from autoreleasepool. Effectively continues to next file from enumerator. */
+					}
+#else
+					var isDir = ObjCBool(false)
+					guard FileManager.default.fileExists(atPath: curFileURL.path, isDirectory: &isDir), !isDir.boolValue else {
+						return /* Return from autoreleasepool. Effectively continues to next file from enumerator. */
+					}
+#endif
 					
 					let data = try Data(contentsOf: curFileURL, options: Data.ReadingOptions.mappedIfSafe)
 					let hash = Data(SHA256.hash(data: data))
@@ -95,8 +97,8 @@ public class LinkifyOperation : RetryingOperation {
 	}
 	
 	/* ***************
-	   MARK: - Private
-	   *************** */
+	   MARK: - Private
+	   *************** */
 	
 	private class ErrorsContainer {
 		

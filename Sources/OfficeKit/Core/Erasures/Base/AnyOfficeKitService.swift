@@ -1,9 +1,9 @@
 /*
- * AnyOfficeKitService.swift
- * OfficeKit
- *
- * Created by François Lamboley on 24/09/2019.
- */
+ * AnyOfficeKitService.swift
+ * OfficeKit
+ *
+ * Created by François Lamboley on 24/09/2019.
+ */
 
 import Foundation
 
@@ -63,8 +63,7 @@ public class AnyOfficeKitService : OfficeKitService {
 	public typealias ConfigType = AnyOfficeKitServiceConfig
 	public typealias UserType = AnyDirectoryUser
 	
-	/* See AnyDirectoryAuthenticatorService for info about the init for this
-	 * erasure and subclasses */
+	/* See AnyDirectoryAuthenticatorService for info about the init for this erasure and subclasses */
 	
 	init<T : OfficeKitService>(s object: T) {
 		box = ConcreteOfficeKitBox(originalService: object)
