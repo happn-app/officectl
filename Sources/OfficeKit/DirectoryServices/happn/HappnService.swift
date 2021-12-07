@@ -10,6 +10,7 @@ import Foundation
 import Email
 import GenericJSON
 import NIO
+import OperationAwaiting
 import SemiSingleton
 import ServiceKit
 
@@ -225,13 +226,11 @@ public final class HappnService : UserDirectoryService {
 	}
 	
 	public func listAllUsers(using services: Services) async throws -> [HappnUser] {
-		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
+		let searchOp = SearchHappnUsersOperation(email: nil, happnConnector: happnConnector)
 		
 		try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes)
-		
-		let searchOp = SearchHappnUsersOperation(email: nil, happnConnector: happnConnector)
-		return try await EventLoopFuture<[HappnUser]>.future(from: searchOp, on: eventLoop).get()
+		return try await defaultOperationQueueForFutureSupport.addOperationWaitingForCompletionAndGetResult(searchOp)
 	}
 	
 	public let supportsUserCreation = true
