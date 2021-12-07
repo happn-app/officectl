@@ -10,6 +10,7 @@ import Foundation
 import FoundationNetworking
 #endif
 
+import HasResult
 import NIO
 import RetryingOperation
 

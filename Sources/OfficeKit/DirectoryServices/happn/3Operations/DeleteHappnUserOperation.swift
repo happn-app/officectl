@@ -11,6 +11,7 @@ import FoundationNetworking
 #endif
 
 import GenericJSON
+import HasResult
 import NIO
 import RetryingOperation
 

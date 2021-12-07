@@ -11,6 +11,7 @@ import FoundationNetworking
 #endif
 
 import AsyncOperationResult
+import HasResult
 import URLRequestOperation
 
 

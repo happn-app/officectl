@@ -11,6 +11,7 @@ import Foundation
 import OpenDirectory
 
 import Email
+import HasResult
 import RetryingOperation
 
 

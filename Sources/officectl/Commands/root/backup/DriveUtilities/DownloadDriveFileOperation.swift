@@ -12,6 +12,7 @@ import FoundationNetworking
 
 import AsyncOperationResult
 import GenericJSON
+import HasResult
 import NIO
 import OfficeKit
 import RetryingOperation

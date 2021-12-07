@@ -7,6 +7,7 @@
 
 import Foundation
 
+import HasResult
 import RetryingOperation
 
 import COpenLDAP

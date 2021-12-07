@@ -58,6 +58,7 @@ let package = Package(
 		.executable(name: "officectl", targets: ["officectl"])
 	] + platformDependentProducts,
 	dependencies: [
+		.package(                     url: "https://github.com/Frizlab/HasResult.git", from: "1.0.0"),
 		.package(                     url: "https://github.com/Frizlab/OperationAwaiting.git", from: "0.7.0"),
 		.package(                     url: "https://github.com/Frizlab/swift-email.git", from: "0.2.2"),
 		.package(                     url: "https://github.com/happn-tech/URLRequestOperation.git", from: "1.1.7"),
@@ -95,6 +96,7 @@ let package = Package(
 				.product(name: "Crypto",              package: "swift-crypto"),
 				.product(name: "Email",               package: "swift-email"),
 				.product(name: "GenericJSON",         package: "GenericJSON"),
+				.product(name: "HasResult",           package: "HasResult"),
 				.product(name: "JWTKit",              package: "jwt-kit"),
 				.product(name: "Logging",             package: "swift-log"),
 				.product(name: "NIO",                 package: "swift-nio"),

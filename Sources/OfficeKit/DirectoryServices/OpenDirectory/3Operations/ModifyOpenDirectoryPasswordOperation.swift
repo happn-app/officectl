@@ -10,6 +10,7 @@
 import Foundation
 import OpenDirectory
 
+import HasResult
 import RetryingOperation
 
 
