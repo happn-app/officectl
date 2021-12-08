@@ -115,10 +115,11 @@ struct BackupMailsCommand : ParsableCommand {
 		
 		/* Backup given mails */
 		let options = BackupMailContext(options: backupMailOptions, console: context.console, mainConnector: googleConnector, users: filteredUsers)
-		let usersAndDests = try await EventLoopFuture<[URL]>.future(from: FetchAllMailsOperation(options: options), on: eventLoop, resultRetriever: { ret throws -> [GoogleUserAndDest] in
-			try throwIfError(ret.fetchError)
-			return ret.context.users
-		}).get()
+		let op = FetchAllMailsOperation(options: options)
+		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+		await op.startAndWait()
+		try throwIfError(op.fetchError)
+		let usersAndDests = op.context.users
 		
 		/* Linkify the backed-up emails */
 		if backupMailOptions.linkify && !usersAndDests.isEmpty {
@@ -129,15 +130,15 @@ struct BackupMailsCommand : ParsableCommand {
 				do    {return try LinkifyOperation(folderURL: url, stopOnErrors: false)}
 				catch {context.console.warning("cannot linkify backup at URL \(url.absoluteString)"); return nil}
 			}
-			_ = try await EventLoopFuture<[Result<Void, Error>]>.executeAll(operations, on: eventLoop, resultRetriever: { op -> Void in
+			try await app.services.make(OperationQueue.self).addOperationsAndWait(operations)
+			operations.forEach{ op in
 				if op.errors.count > 0 {
 					context.console.warning("got errors when linkifying backup at URL \(op.folderURL.absoluteString):")
 					for (url, error) in op.errors {
 						context.console.warning("   \(url.absoluteString): \(error)")
 					}
 				}
-				return ()
-			}).get()
+			}
 		}
 		
 		/* Compress the backed-up emails */
@@ -159,7 +160,8 @@ struct BackupMailsCommand : ParsableCommand {
 					)
 				}
 			}
-			_ = try await EventLoopFuture<[Result<Void, Error>]>.executeAll(operations, on: eventLoop, resultRetriever: { op -> Void in
+			try await app.services.make(OperationQueue.self).addOperationsAndWait(operations)
+			operations.forEach{ op in
 				if let tarError = op.tarError {
 					context.console.warning("could not compress \(op.sources.first!): \(tarError)")
 				}
@@ -167,8 +169,7 @@ struct BackupMailsCommand : ParsableCommand {
 				if let deletionError = op.sourceDeletionErrors.randomElement() {
 					context.console.warning("could not delete \(deletionError.key): \(deletionError.value)")
 				}
-				return ()
-			}).get()
+			}
 		}
 	}
 	
@@ -215,8 +216,6 @@ struct BackupMailsCommand : ParsableCommand {
 		override func startBaseOperation(isRetry: Bool) {
 			Task{
 				do {
-					let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
-					
 					let info = try await withThrowingTaskGroup(
 						of: (GoogleUserAndDest, String, Date).self,
 						returning: (tokens: [GoogleUser: (token: String, destination: URL)], minExpirationDate: Date).self,
@@ -235,7 +234,9 @@ struct BackupMailsCommand : ParsableCommand {
 					)
 					
 					let operation = OfflineimapRunOperation(userInfos: info.tokens, tokensMinExpirationDate: info.minExpirationDate, context: self.context)
-					try await EventLoopFuture<Void>.future(from: operation, on: eventLoop, resultRetriever: { if let e = $0.runError {throw e} }).get()
+					/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+					await operation.startAndWait()
+					if let e = operation.runError {throw e}
 					baseOperationEnded()
 				} catch _ as OfflineimapRunOperation.ConfigExpiredError {
 					baseOperationEnded(needsRetryIn: 0)

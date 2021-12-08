@@ -176,15 +176,13 @@ public final class HappnService : UserDirectoryService {
 	}
 	
 	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> HappnUser? {
-		/* TODO: Properties to fetch. */
-		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		
 		try await happnConnector.connect(scope: GetHappnUserOperation.scopes)
 		
+		/* TODO: Properties to fetch. */
 		let op = GetHappnUserOperation(userKey: pId, connector: happnConnector)
 		do {
-			return try await EventLoopFuture<HappnUser>.future(from: op, on: eventLoop).map({ $0 as HappnUser? }).get()
+			return try await services.opQ.addOperationAndGetResult(op)
 		} catch let error as NSError where error.domain == "com.happn.officectl.happn" && error.code == 25002 {
 			return nil
 		}
@@ -198,18 +196,17 @@ public final class HappnService : UserDirectoryService {
 			return try await existingUser(fromPersistentId: HappnConnector.nullLoginUserId, propertiesToFetch: propertiesToFetch, using: services)
 		}
 		
-		/* TODO: Properties to fetch. */
-		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		
 		try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes)
 		
+		let opQ = try services.opQ
 		let ids = Set(Email(rawValue: uId)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.rawValue } ?? [uId])
 		let users = try await withThrowingTaskGroup(of: [HappnUser].self, returning: [HappnUser].self, body: { group in
 			for id in ids {
 				group.addTask{
+					/* TODO: Properties to fetch. */
 					let op = SearchHappnUsersOperation(email: id, happnConnector: happnConnector)
-					return try await EventLoopFuture<[HappnUser]>.future(from: op, on: eventLoop).get()
+					return try await opQ.addOperationAndGetResult(op)
 				}
 			}
 			
@@ -227,30 +224,29 @@ public final class HappnService : UserDirectoryService {
 	
 	public func listAllUsers(using services: Services) async throws -> [HappnUser] {
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		let searchOp = SearchHappnUsersOperation(email: nil, happnConnector: happnConnector)
-		
 		try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes)
-		return try await defaultOperationQueueForFutureSupport.addOperationWaitingForCompletionAndGetResult(searchOp)
+		
+		let searchOp = SearchHappnUsersOperation(email: nil, happnConnector: happnConnector)
+		return try await services.opQ.addOperationAndGetResult(searchOp)
 	}
 	
 	public let supportsUserCreation = true
 	public func createUser(_ user: HappnUser, using services: Services) async throws -> HappnUser {
-		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
+		try await happnConnector.connect(scope: CreateHappnUserOperation.scopes)
 		
 		var user = user
 		if user.password.value == nil {
-			/* Creating a user without a password is not possible. Let’s generate a password!
+			/* Creating a user without a password is not possible.
+			 * Let’s generate a password!
 			 * A long and complex one. */
 			OfficeKitConfig.logger?.warning("Auto-generating a random password for happn user creation: creating a happn user w/o a password is not supported.")
 			let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789=+_-$!@#%^&*(){}[]'\\\";:/?.>,<§"
 			user.password = .set(String((0..<64).map{ _ in chars.randomElement()! }))
 		}
 		
-		try await happnConnector.connect(scope: CreateHappnUserOperation.scopes)
-		
 		let op = CreateHappnUserOperation(user: user, connector: happnConnector)
-		return try await EventLoopFuture<HappnUser>.future(from: op, on: eventLoop).get()
+		return try await services.opQ.addOperationAndGetResult(op)
 	}
 	
 	public let supportsUserUpdate = true
@@ -260,13 +256,11 @@ public final class HappnService : UserDirectoryService {
 	
 	public let supportsUserDeletion = true
 	public func deleteUser(_ user: HappnUser, using services: Services) async throws {
-		let eventLoop = try services.eventLoop()
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		
 		try await happnConnector.connect(scope: DeleteHappnUserOperation.scopes)
 		
 		let op = DeleteHappnUserOperation(user: user, connector: happnConnector)
-		return try await EventLoopFuture<Void>.future(from: op, on: eventLoop).get()
+		return try await services.opQ.addOperationAndGetResult(op)
 	}
 	
 	public let supportsPasswordChange = true

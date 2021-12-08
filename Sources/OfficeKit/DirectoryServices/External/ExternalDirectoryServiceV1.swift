@@ -113,8 +113,6 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	}
 	
 	public func existingUser(fromPersistentId pId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper? {
-		let eventLoop = try services.eventLoop()
-		
 		guard let url = URL(string: "existing-user-from/persistent-id", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to retrieve existing user from persistent id")
 		}
@@ -132,12 +130,10 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<DirectoryUserWrapper?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return try await EventLoopFuture<ExternalServiceResponse<DirectoryUserWrapper?>>.future(from: operation, on: eventLoop).flatMapThrowing{ try $0.getData() }.get()
+		return try await services.opQ.addOperationAndGetResult(operation).getData()
 	}
 	
 	public func existingUser(fromUserId uId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper? {
-		let eventLoop = try services.eventLoop()
-		
 		guard let url = URL(string: "existing-user-from/user-id", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to retrieve existing user from user id")
 		}
@@ -155,24 +151,20 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<DirectoryUserWrapper?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return try await EventLoopFuture<ExternalServiceResponse<DirectoryUserWrapper?>>.future(from: operation, on: eventLoop).flatMapThrowing{ try $0.getData() }.get()
+		return try await services.opQ.addOperationAndGetResult(operation).getData()
 	}
 	
 	public func listAllUsers(using services: Services) async throws -> [DirectoryUserWrapper] {
-		let eventLoop = try services.eventLoop()
-		
 		guard let url = URL(string: "list-all-users", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to list all users")
 		}
 		
 		let operation = ApiRequestOperation<[DirectoryUserWrapper]>(url: url, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return try await EventLoopFuture<ExternalServiceResponse<[DirectoryUserWrapper]>>.future(from: operation, on: eventLoop).flatMapThrowing{ try $0.getData() }.get()
+		return try await services.opQ.addOperationAndGetResult(operation).getData()
 	}
 	
 	public var supportsUserCreation: Bool {return config.supportsUserCreation}
 	public func createUser(_ user: DirectoryUserWrapper, using services: Services) async throws -> DirectoryUserWrapper {
-		let eventLoop = try services.eventLoop()
-		
 		guard let url = URL(string: "create-user", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to create a user")
 		}
@@ -189,13 +181,11 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<DirectoryUserWrapper>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return try await EventLoopFuture<ExternalServiceResponse<DirectoryUserWrapper>>.future(from: operation, on: eventLoop).flatMapThrowing{ try $0.getData() }.get()
+		return try await services.opQ.addOperationAndGetResult(operation).getData()
 	}
 	
 	public var supportsUserUpdate: Bool {return config.supportsUserUpdate}
 	public func updateUser(_ user: DirectoryUserWrapper, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper {
-		let eventLoop = try services.eventLoop()
-		
 		guard let url = URL(string: "update-user", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to update a user")
 		}
@@ -213,13 +203,11 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<DirectoryUserWrapper>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return try await EventLoopFuture<ExternalServiceResponse<DirectoryUserWrapper>>.future(from: operation, on: eventLoop).flatMapThrowing{ try $0.getData() }.get()
+		return try await services.opQ.addOperationAndGetResult(operation).getData()
 	}
 	
 	public var supportsUserDeletion: Bool {return config.supportsUserDeletion}
 	public func deleteUser(_ user: DirectoryUserWrapper, using services: Services) async throws {
-		let eventLoop = try services.eventLoop()
-		
 		guard let url = URL(string: "delete-user", relativeTo: config.url) else {
 			throw InternalError(message: "Cannot get external service URL to delete a user")
 		}
@@ -236,7 +224,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 		
 		let operation = ApiRequestOperation<String>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return try await EventLoopFuture<DirectoryUserWrapper>.future(from: operation, on: eventLoop).map{ _ in () }.get()
+		_ = try await services.opQ.addOperationAndGetResult(operation)
 	}
 	
 	public var supportsPasswordChange: Bool {return config.supportsPasswordChange}

@@ -59,7 +59,7 @@ let package = Package(
 	] + platformDependentProducts,
 	dependencies: [
 		.package(                     url: "https://github.com/Frizlab/HasResult.git", from: "1.0.0"),
-		.package(                     url: "https://github.com/Frizlab/OperationAwaiting.git", from: "0.7.0"),
+		.package(                     url: "https://github.com/Frizlab/OperationAwaiting.git", from: "1.2.0-beta.1"),
 		.package(                     url: "https://github.com/Frizlab/swift-email.git", from: "0.2.2"),
 		.package(                     url: "https://github.com/happn-tech/URLRequestOperation.git", from: "1.1.7"),
 		.package(                     url: "https://github.com/happn-tech/RetryingOperation.git", from: "1.1.4"),

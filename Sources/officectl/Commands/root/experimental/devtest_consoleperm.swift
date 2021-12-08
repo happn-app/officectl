@@ -44,7 +44,6 @@ struct ConsolepermCommand : ParsableCommand {
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let sProvider = app.officeKitServiceProvider
-		let eventLoop = try app.services.make(EventLoop.self)
 		
 		let hService: HappnService = try sProvider.getService(id: nil)
 		let hConnector: HappnConnector = app.semiSingletonStore.semiSingleton(forKey: hService.config.connectorSettings)
@@ -89,12 +88,11 @@ struct ConsolepermCommand : ParsableCommand {
 		let authenticatedURLRequest = try await hConnector.authenticate(request: urlRequest)
 		
 		let operation = URLRequestOperation(request: authenticatedURLRequest.result)
-		let data = try await EventLoopFuture<Data>.future(from: operation, on: eventLoop, resultRetriever: { o -> Data in
-			guard let data = o.fetchedData else {
-				throw o.finalError ?? InternalError(message: "no data and no known error from the request")
-			}
-			return data
-		}).get()
+		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+		await operation.startAndWait()
+		guard let data = operation.fetchedData else {
+			throw operation.finalError ?? InternalError(message: "no data and no known error from the request")
+		}
 		app.console.print(String(data: data, encoding: .utf8) ?? data.reduce("", { $0 + String(format: "%02x", $1) }))
 	}
 	

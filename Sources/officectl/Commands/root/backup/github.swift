@@ -42,8 +42,6 @@ struct BackupGitHubCommand : ParsableCommand {
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
-		let eventLoop = try app.services.make(EventLoop.self)
-		
 		let gitHubConfig: GitHubServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
 		
 		let destinationFolderURL = URL(fileURLWithPath: backupOptions.downloadsDestinationFolder, isDirectory: true)
@@ -55,7 +53,8 @@ struct BackupGitHubCommand : ParsableCommand {
 		
 		context.console.info("Fetching repositories list from GitHub...")
 		let searchOp = GitHubRepositorySearchOperation(searchedOrganisation: self.orgname, gitHubConnector: gitHubConnector)
-		let repositories = try await EventLoopFuture<[GitHubRepository]>.future(from: searchOp, on: eventLoop).get()
+		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+		let repositories = try await searchOp.startAndGetResult()
 		
 		let repositoryNames = Set(repositories.map{ $0.fullName })
 		
@@ -82,9 +81,8 @@ struct BackupGitHubCommand : ParsableCommand {
 		context.console.info("Updating clones...")
 		let q = OperationQueue(); q.maxConcurrentOperationCount = 7 /* We do not use the default operation queue from async config. Indeed, we are launching one sub-process per operation. We do not want a configuration suited for threads, we want one suited for launching subprocesses. */
 		let operations = repositoryNames.map{ CloneGitHubRepoOperation(in: destinationFolderURL, repoFullName: $0, accessToken: gitHubConnector.token!) }
-		let operationResults = try await EventLoopFuture<[Result<Void, Error>]>
-			.executeAll(operations, on: eventLoop, queue: q, resultRetriever: { o -> Void in try throwIfError(o.cloneError) })
-			.get()
+		await q.addOperationsAndWait(operations)
+		let operationResults = operations.map{ o in Result{ try throwIfError(o.cloneError) } }
 		
 		/* Let's check we have all the repositories backed-up. */
 		var localRepoNames = Set<String>()

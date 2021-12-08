@@ -86,7 +86,8 @@ struct FindInDrivesCommand : ParsableCommand {
 		decoder.dateDecodingStrategy = .customISO8601
 		decoder.keyDecodingStrategy = .useDefaultKeys
 		let op = AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
-		let filesList = try await EventLoopFuture<GoogleDriveFilesList>.future(from: op, on: eventLoop).get()
+		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+		let filesList = try await op.startAndGetResult()
 		return (filesList.files?.map{ $0.id } ?? []).isEmpty ? nil : userAndDest.user.primaryEmail.rawValue
 	}
 	

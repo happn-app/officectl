@@ -54,10 +54,17 @@ struct GoogleUserAndDest {
 		console: Console, eventLoop: EventLoop
 	) async throws -> [GoogleUserAndDest] {
 		/* Fetch users */
-		let searchFutures = googleConfig.primaryDomains.map{ domain in
-			return EventLoopFuture<[GoogleUser]>.future(from: SearchGoogleUsersOperation(searchedDomain: domain, googleConnector: googleConnector), on: eventLoop)
-		}
-		let allUsers = try await EventLoopFuture.reduce([], searchFutures, on: eventLoop, +).get()
+		let allUsers = try await withThrowingTaskGroup(of: [GoogleUser].self, returning: [GoogleUser].self, body: { group in
+			for domain in googleConfig.primaryDomains {
+				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+				group.addTask{ try await SearchGoogleUsersOperation(searchedDomain: domain, googleConnector: googleConnector).startAndGetResult() }
+			}
+			var ret = [GoogleUser]()
+			while let nextRet = try await group.next() {
+				ret += nextRet
+			}
+			return ret
+		})
 		
 		/* Find mails to backup */
 		let allUsersFilter = usersFilter?.flatMap{ Set(arrayLiteral: $0.source, $0.destination) }

@@ -46,7 +46,7 @@ class WebCertificateRenewController {
 		}
 		
 		let officectlConfig = req.application.officectlConfig
-		let baseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
+		let vaultBaseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
 		let issuerName = try nil2throw(officectlConfig.tmpVaultIssuerName)
 		let additionalActiveIssuers = officectlConfig.tmpVaultAdditionalActiveIssuers ?? []
 		let additionalPassiveIssuers = officectlConfig.tmpVaultAdditionalPassiveIssuers ?? []
@@ -56,98 +56,120 @@ class WebCertificateRenewController {
 		let expirationLeeway = try nil2throw(officectlConfig.tmpVaultExpirationLeeway)
 		let expectedExpiration = Date() + expirationLeeway
 		
+		@Sendable
 		func authenticateSync(_ request: inout URLRequest) -> Void {
 			request.addValue(token, forHTTPHeaderField: "X-Vault-Token")
 		}
 		
+		@Sendable
 		func authenticate(_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void {
 			var request = request
 			authenticateSync(&request)
 			handler(.success(request), nil)
 		}
 		
-		let getCertificatesFutures = ([issuerName] + additionalActiveIssuers).map{ issuerName in
-			req.eventLoop.future()
-				.flatMap{ _ -> EventLoopFuture<CRL> in
-					/* Let’s get the CRL */
-					var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("crl"))
-					authenticateSync(&urlRequest)
-					let op = URLRequestOperation(request: urlRequest)
-					return EventLoopFuture<CRL>.future(from: op, on: req.eventLoop, resultRetriever: { op in
-						guard let data = op.fetchedData else {
-							throw op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown error fetching the CRL"])
+		let certificatesToRevoke = try await withThrowingTaskGroup(
+			of: [(id: String, issuerName: String, certif: X509Certificate)].self,
+			returning: [(id: String, issuerName: String, certif: X509Certificate)].self,
+			body: { groupCertifsList in
+				for issuerName in [issuerName] + additionalActiveIssuers {
+					groupCertifsList.addTask{
+						/* Let’s get the CRL */
+						var urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(issuerName).appendingPathComponent("crl"))
+						authenticateSync(&urlRequest)
+						let opCRL = URLRequestOperation(request: urlRequest)
+						/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+						await opCRL.startAndWait()
+						guard let data = opCRL.fetchedData else {
+							throw opCRL.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown error fetching the CRL"])
 						}
-						return try CRL(der: data)
-					})
-				}
-				.flatMapThrowing{ crl -> EventLoopFuture<(CertificateSerialsList, CRL)> in
-					/* Let’s fetch the list of current certificates in the vault */
-					var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("certs"))
-					urlRequest.httpMethod = "LIST"
-					let op = AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>(request: urlRequest, authenticator: authenticate, retryInfoRecoveryHandler: { operation, error, handler in
-						if (operation.urlResponse as? HTTPURLResponse)?.statusCode == 404,
-							let data = operation.fetchedData,
-							let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any?],
-							(jsonObject["errors"] as? [Any?])?.isEmpty ?? false
-						{
-							/* When there are no certificates in the PKI, vault returns a fucking 404! */
-							(operation as! AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>).fetchedObject = .init(data: .init(keys: []))
-							return handler(.doNotRetry, operation.currentURLRequest, nil)
-						}
-						handler(.doNotRetry, operation.currentURLRequest, error)
-					})
-					return EventLoopFuture<VaultResponse<CertificateSerialsList>>.future(from: op, on: req.eventLoop).map{ ($0.data, crl) }
-				}
-				.flatMap{ $0 }
-				.flatMap{ (certificatesList, crl) -> EventLoopFuture<[(id: String, issuerName: String, certif: X509Certificate)]> in
-					/* Get the list of certificates to revoke */
-					let futures = certificatesList.keys.compactMap{ id -> EventLoopFuture<(id: String, issuerName: String, certif: X509Certificate)?>? in
-						/* If the certificate is already revoked, we don’t have to do anything w/ it. */
-						guard !crl.revokedCertificateIds.contains(normalizeCertificateId(id)) else {
-							return nil
-						}
+						let crl = try CRL(der: data)
 						
-						let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent(id))
-						let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
-						return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, on: req.eventLoop).flatMapThrowing{ certificateResponse in
-							guard let subjectDNStr = certificateResponse.data.certificate.subjectDistinguishedName else {
-								throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN for\n\(certificateResponse.data.pem)"])
+						/* Let’s fetch the list of current certificates in the vault */
+						urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(issuerName).appendingPathComponent("certs"))
+						urlRequest.httpMethod = "LIST"
+						let opListCurrentCertifs = AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>(request: urlRequest, authenticator: authenticate, retryInfoRecoveryHandler: { operation, error, handler in
+							if (operation.urlResponse as? HTTPURLResponse)?.statusCode == 404,
+								let data = operation.fetchedData,
+								let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any?],
+								(jsonObject["errors"] as? [Any?])?.isEmpty ?? false
+							{
+								/* When there are no certificates in the PKI, vault returns a fucking 404! */
+								(operation as! AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>).fetchedObject = .init(data: .init(keys: []))
+								return handler(.doNotRetry, operation.currentURLRequest, nil)
 							}
-							let subjectDN = try LDAPDistinguishedName(string: subjectDNStr)
-							guard let dnValue = subjectDN.values.onlyElement, dnValue.key == "CN" else {
-								throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN certificate DN \(subjectDN)"])
+							handler(.doNotRetry, operation.currentURLRequest, error)
+						})
+						/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+						let certificatesList = try await opListCurrentCertifs.startAndGetResult().data
+						
+						/* Get the list of certificates to revoke */
+						return try await withThrowingTaskGroup(
+							of: (id: String, issuerName: String, certif: X509Certificate)?.self,
+							returning: [(id: String, issuerName: String, certif: X509Certificate)].self,
+							body: { groupCertifs in
+								for id in certificatesList.keys {
+									/* If the certificate is already revoked, we don’t have to do anything w/ it. */
+									guard !crl.revokedCertificateIds.contains(normalizeCertificateId(id)) else {
+										continue
+									}
+									
+									groupCertifs.addTask{
+										let urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent(id))
+										let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
+										/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+										let certificateResponse = try await op.startAndGetResult()
+										guard let subjectDNStr = certificateResponse.data.certificate.subjectDistinguishedName else {
+											throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN for\n\(certificateResponse.data.pem)"])
+										}
+										let subjectDN = try LDAPDistinguishedName(string: subjectDNStr)
+										guard let dnValue = subjectDN.values.onlyElement, dnValue.key == "CN" else {
+											throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN certificate DN \(subjectDN)"])
+										}
+										let subjectCN = dnValue.value
+										guard subjectCN == renewedCommonName else {return nil}
+										print((id: id, issuerName: issuerName, certif: certificateResponse.data.certificate))
+										return (id: id, issuerName: issuerName, certif: certificateResponse.data.certificate)
+									}
+								}
+								
+								var ret = [(id: String, issuerName: String, certif: X509Certificate)]()
+								while let newRet = try await groupCertifs.next() {
+									if let new = newRet {
+										ret.append(new)
+									}
+								}
+								return ret
 							}
-							let subjectCN = dnValue.value
-							guard subjectCN == renewedCommonName else {return nil}
-							return (id: id, issuerName: issuerName, certif: certificateResponse.data.certificate)
-						}
-					}
-					return EventLoopFuture.reduce([(id: String, issuerName: String, certif: X509Certificate)](), futures, on: req.eventLoop, { full, new in
-						guard let new = new else {return full}
-						return full + [new]
-					})
-				}
-		}
-		return try await EventLoopFuture<[(id: String, issuerName: String, certif: X509Certificate)]>.reduce([], getCertificatesFutures, on: req.eventLoop, +)
-			.flatMapThrowing{ certificatesToRevoke -> [(id: String, issuerName: String)] in
-				/* We check if all of the certificates to revoke will expire in less than n seconds (where n is defined in the conf).
-				 * If the user is admin we don’t do this check (admin can renew any certif they want whenever they want). */
-				if !loggedInUser.isAdmin {
-					try certificatesToRevoke.forEach{ idAndCertif in
-						let certif = idAndCertif.certif
-						guard !certif.checkValidity(expectedExpiration) else {
-							throw InvalidArgumentError(message: "You’ve got at least one certificate still valid, please use it or see an ops!")
-						}
+						)
 					}
 				}
-				return certificatesToRevoke.map{ (id: $0.id, issuerName: $0.issuerName) }
+				var ret = [(id: String, issuerName: String, certif: X509Certificate)]()
+				while let newRet = try await groupCertifsList.next() {
+					ret += newRet
+				}
+				return ret
 			}
-			.flatMapThrowing{ certificateIdsWithIssuersToRevoke -> EventLoopFuture<Void> in
-				/* Revoke the certificates to revoke */
-				try req.application.auditLogger.log(action: "Revoking \(certificateIdsWithIssuersToRevoke.count) certificate(s): \(certificateIdsWithIssuersToRevoke.map{ $0.issuerName + ":" + $0.id }.joined(separator: " ")).", source: .web)
-				let futures = certificateIdsWithIssuersToRevoke.map{ idAndIssuer -> EventLoopFuture<Void> in
-					let (id, issuerName) = idAndIssuer
-					var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("revoke"))
+		)
+		
+		/* We check if all of the certificates to revoke will expire in less than n seconds (where n is defined in the conf).
+		 * If the user is admin we don’t do this check (admin can renew any certif they want whenever they want). */
+		if !loggedInUser.isAdmin {
+			try certificatesToRevoke.forEach{ idAndCertif in
+				let certif = idAndCertif.certif
+				guard !certif.checkValidity(expectedExpiration) else {
+					throw InvalidArgumentError(message: "You’ve got at least one certificate still valid, please use it or see an ops!")
+				}
+			}
+		}
+		
+		/* Revoke the certificates to revoke */
+		try req.application.auditLogger.log(action: "Revoking \(certificatesToRevoke.count) certificate(s): \(certificatesToRevoke.map{ $0.issuerName + ":" + $0.id }.joined(separator: " ")).", source: .web)
+		try await withThrowingTaskGroup(of: Void.self, returning: Void.self, body: { group in
+			for certificateToRevoke in certificatesToRevoke {
+				group.addTask{
+					let (id, issuerName, _) = certificateToRevoke
+					var urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(issuerName).appendingPathComponent("revoke"))
 					urlRequest.httpMethod = "POST"
 					let json = JSON(dictionaryLiteral: ("serial_number", JSON(stringLiteral: id)))
 					urlRequest.httpBody = try! JSONEncoder().encode(json)
@@ -164,82 +186,86 @@ class WebCertificateRenewController {
 						}
 						return completionHandler(.doNotRetry, op.currentURLRequest, err)
 					})
-					return EventLoopFuture<VaultResponse<RevocationResult?>>.future(from: op, on: req.eventLoop).map{ _ in return () }
+					/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+					_ = try await op.startAndGetResult()
 				}
-				return EventLoopFuture.reduce((), futures, on: req.eventLoop, { _, _ in () })
 			}
-			.flatMap{ $0 }
-			.flatMapThrowing{ _ -> EventLoopFuture<NewCertificate> in
-				/* Create the new certificate */
-				try req.application.auditLogger.log(action: "Creating certificate w/ CN \(renewedCommonName).", source: .web)
-				var urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("issue").appendingPathComponent("client"))
-				urlRequest.httpMethod = "POST"
-				let json = JSON(dictionaryLiteral: ("common_name", JSON(stringLiteral: renewedCommonName)), ("ttl", JSON(stringLiteral: ttl)))
-				urlRequest.httpBody = try! JSONEncoder().encode(json)
-				let op = AuthenticatedJSONOperation<VaultResponse<NewCertificate>>(request: urlRequest, authenticator: authenticate)
-				return EventLoopFuture<VaultResponse<NewCertificate>>.future(from: op, on: req.eventLoop).map{ $0.data }
-			}
-			.flatMap{ $0 }
-			.flatMapThrowing{ newCertificate -> EventLoopFuture<NewCertificate> in
-				/* We recreate the CA chain because we can have more than one, and because vault does not add the root CA anyway… */
-				var newCertificate = newCertificate
-				newCertificate.caChain.removeAll()
-				/* Let’s retrieve CAs */
-				let futures1 = ([issuerName] + additionalActiveIssuers + additionalPassiveIssuers).map{ issuerName -> EventLoopFuture<CertificateContainer> in
-					let urlRequest = URLRequest(url: baseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent("ca"))
+			while try await group.next() != nil {}
+		})
+		
+		/* Create the new certificate */
+		try req.application.auditLogger.log(action: "Creating certificate w/ CN \(renewedCommonName).", source: .web)
+		var urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(issuerName).appendingPathComponent("issue").appendingPathComponent("client"))
+		urlRequest.httpMethod = "POST"
+		let json = JSON(dictionaryLiteral: ("common_name", JSON(stringLiteral: renewedCommonName)), ("ttl", JSON(stringLiteral: ttl)))
+		urlRequest.httpBody = try! JSONEncoder().encode(json)
+		let opCreateCertif = AuthenticatedJSONOperation<VaultResponse<NewCertificate>>(request: urlRequest, authenticator: authenticate)
+		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+		var newCertificate = try await opCreateCertif.startAndGetResult().data
+		
+		/* We recreate the CA chain because we can have more than one, and because vault does not add the root CA anyway… */
+		newCertificate.caChain.removeAll()
+		try await withThrowingTaskGroup(of: CertificateContainer.self, returning: Void.self, body: { group in
+			/* Let’s retrieve CAs */
+			for issuerName in ([issuerName] + additionalActiveIssuers + additionalPassiveIssuers) {
+				group.addTask{
+					let urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent("ca"))
 					let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
-					return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, on: req.eventLoop).map{ $0.data }
+					/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+					return try await op.startAndGetResult().data
 				}
-				/* Let’s retrieve additional certificates */
-				let futures2 = additionalCertificates.map{ additionalCertificate -> EventLoopFuture<CertificateContainer> in
-					let urlRequest = URLRequest(url: baseURL.appendingPathComponent(additionalCertificate.issuer).appendingPathComponent("cert").appendingPathComponent(additionalCertificate.id))
+			}
+			/* Let’s retrieve additional certificates */
+			for additionalCertificate in additionalCertificates {
+				group.addTask{
+					let urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(additionalCertificate.issuer).appendingPathComponent("cert").appendingPathComponent(additionalCertificate.id))
 					let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
-					return EventLoopFuture<VaultResponse<CertificateContainer>>.future(from: op, on: req.eventLoop).map{ $0.data }
+					/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+					return try await op.startAndGetResult().data
 				}
-				return EventLoopFuture<NewCertificate>.reduce(into: newCertificate, futures1 + futures2, on: req.eventLoop, { certif, currentChainCertificate in
-					certif.caChain.append(currentChainCertificate.pem)
-				})
 			}
-			.flatMap{ $0 }
-			.flatMap{ newCertificate -> EventLoopFuture<URL> in
-				let randomId = UUID().uuidString
-				let baseURL = FileManager.default.temporaryDirectory.appendingPathComponent(randomId, isDirectory: true)
-				
-				let caURL = URL(fileURLWithPath: "ca.pem", relativeTo: baseURL)
-				let keyURL = URL(fileURLWithPath: renewedCommonName + ".key", relativeTo: baseURL)
-				let certifURL = URL(fileURLWithPath: renewedCommonName + ".pem", relativeTo: baseURL)
-				
-				var failure: Error?
-				let op = BlockOperation{
-					do {
-						try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true, attributes: nil)
-						let keyData = Data(newCertificate.privateKey.utf8)
-						let certifData = Data(newCertificate.certificate.utf8)
-						let caData = Data(Set(newCertificate.caChain).joined(separator: "\n").utf8)
-						
-						try caData.write(to: caURL)
-						try keyData.write(to: keyURL)
-						try certifData.write(to: certifURL)
-					} catch {
-						failure = error
-					}
-				}
-				
-				let tarURL = baseURL.appendingPathComponent(randomId).appendingPathExtension("tar.bz2")
-				let tarOp = TarOperation(sources: [keyURL.relativePath, certifURL.relativePath, caURL.relativePath], relativeTo: baseURL, destination: tarURL, compress: true, deleteSourcesOnSuccess: true)
-				tarOp.addDependency(op)
-				
-				defaultOperationQueueForFutureSupport.addOperation(op)
-				return EventLoopFuture<URL>.future(from: tarOp, on: req.eventLoop, queue: defaultOperationQueueForFutureSupport, resultRetriever: { _ in if let error = failure {throw error}; return tarURL })
+			
+			while let currentChainCertificate = try await group.next() {
+				newCertificate.caChain.append(currentChainCertificate.pem)
 			}
-			.map{ url in
-				let certificateFileName = "certificates_happn_\(renewedCommonName)"
-				let res = req.fileio.streamFile(at: url.path)
-				res.headers.contentType = .binary
-				res.headers.contentDisposition = .init(.attachment, name: certificateFileName, filename: certificateFileName + ".tar.bz2")
-				return res
+		})
+		
+		let randomId = UUID().uuidString
+		let baseURL = FileManager.default.temporaryDirectory.appendingPathComponent(randomId, isDirectory: true)
+		
+		let caURL = URL(fileURLWithPath: "ca.pem", relativeTo: baseURL)
+		let keyURL = URL(fileURLWithPath: renewedCommonName + ".key", relativeTo: baseURL)
+		let certifURL = URL(fileURLWithPath: renewedCommonName + ".pem", relativeTo: baseURL)
+		
+		var failure: Error?
+		let opWriteCertif = BlockOperation{
+			do {
+				try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true, attributes: nil)
+				let keyData = Data(newCertificate.privateKey.utf8)
+				let certifData = Data(newCertificate.certificate.utf8)
+				let caData = Data(Set(newCertificate.caChain).joined(separator: "\n").utf8)
+				
+				try caData.write(to: caURL)
+				try keyData.write(to: keyURL)
+				try certifData.write(to: certifURL)
+			} catch {
+				failure = error
 			}
-			.get()
+		}
+		
+		let tarURL = baseURL.appendingPathComponent(randomId).appendingPathExtension("tar.bz2")
+		let tarOp = TarOperation(sources: [keyURL.relativePath, certifURL.relativePath, caURL.relativePath], relativeTo: baseURL, destination: tarURL, compress: true, deleteSourcesOnSuccess: true)
+		tarOp.addDependency(opWriteCertif)
+		
+		defaultOperationQueueForFutureSupport.addOperation(opWriteCertif)
+		await defaultOperationQueueForFutureSupport.addOperationAndWait(tarOp)
+		if let error = failure {throw error}
+		
+		let certificateFileName = "certificates_happn_\(renewedCommonName)"
+		let res = req.fileio.streamFile(at: tarURL.path)
+		res.headers.contentType = .binary
+		res.headers.contentDisposition = .init(.attachment, name: certificateFileName, filename: certificateFileName + ".tar.bz2")
+		return res
 	}
 	
 	private struct CertRenewData : Decodable {

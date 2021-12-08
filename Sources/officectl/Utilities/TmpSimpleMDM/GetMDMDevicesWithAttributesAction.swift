@@ -28,28 +28,31 @@ final class GetMDMDevicesWithAttributesAction : Action<String, Void, [(SimpleMDM
 	}
 	
 	override func unsafeStart(parameters: Void, handler: @escaping (Result<[(SimpleMDMDevice, [String: String])], Error>) -> Void) throws {
-		Task{
-			await handler(Result{
-				let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
-				let devices = try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful })
-				let futures: [(SimpleMDMDevice, EventLoopFuture<[String: String]>)] = devices.map{ device in
-					return (device, self.getDeviceAttributes(token: self.subject, deviceId: device.id, eventLoop: eventLoop))
-				}
-				/* waitAll returns an array of (SimpleMDM, Result<[String: String], Error>)
-				 * The next flatMapThrowing will fail the whole future if any of the Result in the tuples is a failure,
-				 * and drop the Result in its return type, effectively giving us an array of (SimpleMDM, [String: String]) which is what we want! */
-				return try await EventLoopFuture<[String: String]>.waitAll(futures, eventLoop: eventLoop)
-					.flatMapThrowing{ result in
-						try result.map{ try ($0.0, $0.1.get()) }
+		Task{await handler(Result{
+			let devices = try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful })
+			return try await withThrowingTaskGroup(
+				of: (SimpleMDMDevice, [String: String]).self,
+				returning: [(SimpleMDMDevice, [String: String])].self,
+				body: { group in
+					for device in devices {
+						group.addTask{
+							return try await (device, self.getDeviceAttributes(token: self.subject, deviceId: device.id))
+						}
 					}
-					.get()
-			})
-		}
+					
+					var ret = [(SimpleMDMDevice, [String: String])]()
+					while let curRet = try await group.next() {
+						ret.append(curRet)
+					}
+					return ret
+				}
+			)
+		})}
 	}
 	
 	private let getDevicesAction: GetMDMDevicesAction
 	
-	private func getDeviceAttributes(token: String, deviceId: Int, eventLoop: EventLoop) -> EventLoopFuture<[String: String]> {
+	private func getDeviceAttributes(token: String, deviceId: Int) async throws -> [String: String] {
 		struct Response : Decodable {
 			var data: [AttributesResponse]
 			
@@ -80,10 +83,9 @@ final class GetMDMDevicesWithAttributesAction : Action<String, Void, [(SimpleMDM
 		decoder.dateDecodingStrategy = .iso8601
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
 		let op = AuthenticatedJSONOperation<Response>(url: url, authenticator: authenticate, decoder: decoder)
-		return EventLoopFuture<Response>.future(from: op, on: eventLoop).map{ response in
-			/* We do not verify the API send only one value for a given key. */
-			response.data.reduce(into: [String: String](), { $0[$1.id] = $1.attributes.value })
-		}
+		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+		/* We do not verify the API send only one value for a given key. */
+		return try await op.startAndGetResult().data.reduce(into: [String: String](), { $0[$1.id] = $1.attributes.value })
 	}
 	
 }

@@ -38,72 +38,61 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		/* A loop for conveniences */
-		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
-		
-		let userId = user.persistentId.value ?? user.userId ?? HappnConnector.nullLoginUserId
-		let decoder = JSONDecoder()
-		decoder.dateDecodingStrategy = .customISO8601
-		decoder.keyDecodingStrategy = .useDefaultKeys
-		
-		let f = eventLoop.makeSucceededFuture(())
-			.flatMapThrowing{ _ -> AuthenticatedJSONOperation<HappnApiResult<Int8>> in
+		Task{
+			error = await Result<Void, Error>{
+				let userId = user.persistentId.value ?? user.userId ?? HappnConnector.nullLoginUserId
+				let decoder = JSONDecoder()
+				decoder.dateDecodingStrategy = .customISO8601
+				decoder.keyDecodingStrategy = .useDefaultKeys
+				
 				guard case .userPass(_, let adminPass) = self.connector.authMode else {
 					throw InvalidArgumentError(message: "Cannot delete a user without the password of the admin")
 				}
 				
-				var urlRequest = URLRequest(url: URL(string: "api/administrators/", relativeTo: self.connector.baseURL)!)
-				urlRequest.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-				do {
-					/* Let’s build the request content */
-					var urlComponents = URLComponents()
-					urlComponents.queryItems = [
-						URLQueryItem(name: "_action", value: "revoke"),
-						URLQueryItem(name: "user_id", value: userId),
-						URLQueryItem(name: "password", value: adminPass)
-					]
-					guard let qstr = urlComponents.percentEncodedQuery else {
-						throw NSError(domain: "com.happn.officectl.happn", code: 1, userInfo: [NSLocalizedDescriptionKey: "cannot build url component to delete admin"])
-					}
-					urlRequest.httpBody = Data(qstr.utf8)
+				/* 1. Revoke user admin privileges. */
+				
+				var urlComponentsRevokeAdminContent = URLComponents()
+				urlComponentsRevokeAdminContent.queryItems = [
+					URLQueryItem(name: "_action", value: "revoke"),
+					URLQueryItem(name: "user_id", value: userId),
+					URLQueryItem(name: "password", value: adminPass)
+				]
+				guard let revokeAdminRequestContent = urlComponentsRevokeAdminContent.percentEncodedQuery else {
+					throw NSError(domain: "com.happn.officectl.happn", code: 1, userInfo: [NSLocalizedDescriptionKey: "cannot build request content to revoke admin"])
 				}
-				urlRequest.httpMethod = "POST"
+				var urlRequestRevokeAdmin = URLRequest(url: URL(string: "api/administrators/", relativeTo: self.connector.baseURL)!)
+				urlRequestRevokeAdmin.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+				urlRequestRevokeAdmin.httpBody = Data(revokeAdminRequestContent.utf8)
+				urlRequestRevokeAdmin.httpMethod = "POST"
 				
 				/* We declare a decoded type HappnApiResult<Int8>.
 				 * We chose Int8, but could have taken anything that’s decodable: the API returns null all the time… */
-				return AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequest, authenticator: self.connector.authenticate, decoder: decoder)
-			}.flatMap{
-				return EventLoopFuture<HappnApiResult<Int8>>.future(from: $0, on: eventLoop).flatMapThrowing{
-					guard $0.success else {
-						throw NSError(domain: "com.happn.officectl.happn", code: $0.error_code, userInfo: [NSLocalizedDescriptionKey: $0.error ?? "Unknown error while revoking user admin access"])
-					}
+				let revokeAdminOp = AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequestRevokeAdmin, authenticator: connector.authenticate, decoder: decoder)
+				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+				let revokeAdminResult = try await revokeAdminOp.startAndGetResult()
+				guard revokeAdminResult.success else {
+					throw NSError(domain: "com.happn.officectl.happn", code: revokeAdminResult.error_code, userInfo: [NSLocalizedDescriptionKey: revokeAdminResult.error ?? "Unknown error while revoking user admin access"])
 				}
-			}
-			.flatMap{ _ -> EventLoopFuture<Void> in
-				do {
-					guard
-						let url = URL(string: userId, relativeTo: URL(string: "api/users/", relativeTo: self.connector.baseURL)!),
-						var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true)
-					else {
-						throw InternalError(message: "Cannot build URL to get happn user with key \(userId)")
-					}
-					urlComponents.queryItems = [
-						URLQueryItem(name: "to_delete", value: "true")
-					]
-					var urlRequest = URLRequest(url: urlComponents.url!)
-					urlRequest.httpMethod = "DELETE"
-					
-					let op = AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequest, authenticator: self.connector.authenticate, decoder: decoder)
-					return EventLoopFuture<Void>.future(from: op, on: eventLoop, resultRetriever: { _ in /* We don’t care about the error if any. */ })
-				} catch {
-					/* We don’t care about the error here… */
-					return eventLoop.makeSucceededFuture(())
+				
+				/* 2. Delete the user. */
+				
+				guard
+					let urlDeleteUser = URL(string: userId, relativeTo: URL(string: "api/users/", relativeTo: connector.baseURL)!),
+					var urlComponentsDeleteUser = URLComponents(url: urlDeleteUser, resolvingAgainstBaseURL: true)
+				else {
+					throw InternalError(message: "Cannot build URL to delete happn user with key \(userId)")
 				}
-			}
-		
-		f.whenComplete{ r in
-			self.error = r.failureValue
-			self.baseOperationEnded()
+				urlComponentsDeleteUser.queryItems = [
+					URLQueryItem(name: "to_delete", value: "true")
+				]
+				var urlRequestDeleteUser = URLRequest(url: urlComponentsDeleteUser.url!)
+				urlRequestDeleteUser.httpMethod = "DELETE"
+				
+				let op = AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequestDeleteUser, authenticator: connector.authenticate, decoder: decoder)
+				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+				await op.startAndWait() /* We don’t care about the error if any. */
+			}.failureValue
+			baseOperationEnded()
 		}
 	}
 	

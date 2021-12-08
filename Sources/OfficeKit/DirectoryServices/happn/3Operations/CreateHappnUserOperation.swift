@@ -33,75 +33,70 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		/* A loop for conveniences */
-		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
-		
-		let decoder = JSONDecoder()
-		decoder.dateDecodingStrategy = .customISO8601
-		decoder.keyDecodingStrategy = .useDefaultKeys
-		
-		let f = eventLoop.makeSucceededFuture(())
-			.flatMapThrowing{ _ -> EventLoopFuture<(apiUserResult: HappnApiResult<HappnUser>, adminPass: String)> in
-				guard case .userPass(_, let adminPass) = self.connector.authMode else {
+		Task{
+			result = await Result{
+				let decoder = JSONDecoder()
+				decoder.dateDecodingStrategy = .customISO8601
+				decoder.keyDecodingStrategy = .useDefaultKeys
+				
+				guard case .userPass(_, let adminPass) = connector.authMode else {
 					throw InvalidArgumentError(message: "Cannot create an admin user without the password of the admin creating the account (non user/pass connectors are not supported)")
 				}
 				
-				guard self.user.password.value != nil else {
+				guard user.password.value != nil else {
 					throw InvalidArgumentError(message: "A user must be created w/ a password (or we get a weird error when creating the account, and the account is unusable though it appear to exist)")
 				}
 				
-				var urlComponents = URLComponents(url: URL(string: "api/users/", relativeTo: self.connector.baseURL)!, resolvingAgainstBaseURL: true)!
-				urlComponents.queryItems = [
+				/* 1. Create the user. */
+				
+				var urlComponentsUserCreation = URLComponents(url: URL(string: "api/users/", relativeTo: connector.baseURL)!, resolvingAgainstBaseURL: true)!
+				urlComponentsUserCreation.queryItems = [
 					URLQueryItem(name: "fields", value: "id,first_name,last_name,acl,login,nickname")
 				]
-				var urlRequest = URLRequest(url: urlComponents.url!)
-				urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-				urlRequest.httpBody = try JSONEncoder().encode(self.user)
-				urlRequest.httpMethod = "POST"
+				var urlRequestUserCreation = URLRequest(url: urlComponentsUserCreation.url!)
+				urlRequestUserCreation.addValue("application/json", forHTTPHeaderField: "Content-Type")
+				urlRequestUserCreation.httpBody = try JSONEncoder().encode(user)
+				urlRequestUserCreation.httpMethod = "POST"
 				
-				let op = AuthenticatedJSONOperation<HappnApiResult<HappnUser>>(request: urlRequest, authenticator: self.connector.authenticate, decoder: decoder)
-				return EventLoopFuture<HappnApiResult<HappnUser>>.future(from: op, on: eventLoop).map{ ($0, adminPass) }
-			}
-			.flatMap{ $0 }
-			.flatMapThrowing{ (r: (apiUserResult: HappnApiResult<HappnUser>, adminPass: String)) -> (user: HappnUser, userId: String, adminPass: String) in
-				guard r.apiUserResult.success, let user = r.apiUserResult.data, let userId = user.id.value else {
-					throw NSError(domain: "com.happn.officectl.happn", code: r.apiUserResult.error_code, userInfo: [NSLocalizedDescriptionKey: r.apiUserResult.error ?? "Unknown error while creating the user"])
+				let createUserOperation = AuthenticatedJSONOperation<HappnApiResult<HappnUser>>(request: urlRequestUserCreation, authenticator: connector.authenticate, decoder: decoder)
+				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+				let apiUserResult = try await createUserOperation.startAndGetResult()
+				guard apiUserResult.success, let user = apiUserResult.data, let userId = user.id.value else {
+					throw NSError(domain: "com.happn.officectl.happn", code: apiUserResult.error_code, userInfo: [NSLocalizedDescriptionKey: apiUserResult.error ?? "Unknown error while creating the user"])
 				}
-				return (user, userId, r.adminPass)
-			}
-			.flatMap{ (r: (user: HappnUser, userId: String, adminPass: String)) -> EventLoopFuture<(apiGrantResult: HappnApiResult<Int8>, user: HappnUser)> in
-				var components = URLComponents()
-				components.queryItems = [
+				
+				/* 2. Make it an admin. */
+				
+				var urlComponentsMakeAdmin = URLComponents()
+				urlComponentsMakeAdmin.queryItems = [
 					URLQueryItem(name: "_action",  value: "grant"),
-					URLQueryItem(name: "user_id",  value: r.userId),
-					URLQueryItem(name: "password", value: r.adminPass)
+					URLQueryItem(name: "user_id",  value: userId),
+					URLQueryItem(name: "password", value: adminPass)
 				]
 				
-				var urlRequest = URLRequest(url: URL(string: "api/administrators/", relativeTo: self.connector.baseURL)!)
-				urlRequest.httpBody = components.percentEncodedQuery.flatMap{ Data($0.utf8) }
-				urlRequest.httpMethod = "POST"
+				var urlRequestMakeAdmin = URLRequest(url: URL(string: "api/administrators/", relativeTo: connector.baseURL)!)
+				urlRequestMakeAdmin.httpBody = urlComponentsMakeAdmin.percentEncodedQuery.flatMap{ Data($0.utf8) }
+				urlRequestMakeAdmin.httpMethod = "POST"
 				
 				/* We declare a decoded type HappnApiResult<Int8>.
 				 * We chose Int8, but could have taken anything that’s decodable: the API returns null all the time… */
-				let op = AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequest, authenticator: self.connector.authenticate, decoder: decoder)
-				return EventLoopFuture<HappnApiResult<Int8>>.future(from: op, on: eventLoop).map{ ($0, r.user) }
-			}
-			.flatMapThrowing{ (r: (apiGrantResult: HappnApiResult<Int8>, user: HappnUser)) -> HappnUser in
-				guard r.apiGrantResult.success else {
-					throw NSError(domain: "com.happn.officectl.happn", code: r.apiGrantResult.error_code, userInfo: [NSLocalizedDescriptionKey: r.apiGrantResult.error ?? "Unknown error while granting user admin access"])
+				let makeUserAdminOperation = AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequestMakeAdmin, authenticator: connector.authenticate, decoder: decoder)
+				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+				let apiGrantResult = try await makeUserAdminOperation.startAndGetResult()
+				guard apiGrantResult.success else {
+					throw NSError(domain: "com.happn.officectl.happn", code: apiGrantResult.error_code, userInfo: [NSLocalizedDescriptionKey: apiGrantResult.error ?? "Unknown error while granting user admin access"])
 				}
-				return r.user
+				
+				/* 3. Set the ACLs. */
+				// POST /api/user-acls
+				// Data: x-www-form-urlencoded
+				//    - permissions: ...
+				//    - user_id: ...
+				// Response: null (in a standard response)
+				
+				return user
 			}
-		// 3. To set the ACLs
-		// POST /api/user-acls
-		// Data: x-www-form-urlencoded
-		//    - permissions: ...
-		//    - user_id: ...
-		// Response: null (in a standard response)
-		
-		f.whenComplete{ r in
-			self.result = r
-			self.baseOperationEnded()
+			baseOperationEnded()
 		}
 	}
 	

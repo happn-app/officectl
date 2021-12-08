@@ -27,13 +27,12 @@ final class GetMDMDevicesAction : Action<String, Void, [SimpleMDMDevice]>, SemiS
 	}
 	
 	override func unsafeStart(parameters: Void, handler: @escaping (Result<[SimpleMDMDevice], Error>) -> Void) throws {
-		let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
-		_ = getAllDevices(token: subject, eventLoop: eventLoop).always{
-			handler($0)
-		}
+		Task{handler(await Result{
+			try await getAllDevices(token: subject)
+		})}
 	}
 	
-	private func getAllDevices(startingAfter previousMaxDeviceId: Int? = nil, token: String, eventLoop: EventLoop) -> EventLoopFuture<[SimpleMDMDevice]> {
+	private func getAllDevices(startingAfter previousMaxDeviceId: Int? = nil, token: String) async throws -> [SimpleMDMDevice] {
 		struct Response : Decodable {
 			var data: [SimpleMDMDevice]
 			var hasMore: Bool
@@ -55,18 +54,16 @@ final class GetMDMDevicesAction : Action<String, Void, [SimpleMDMDevice]>, SemiS
 		decoder.dateDecodingStrategy = .iso8601
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
 		let op = AuthenticatedJSONOperation<Response>(url: urlComponents.url!, authenticator: authenticate, decoder: decoder)
-		return EventLoopFuture<Response>.future(from: op, on: eventLoop)
-			.flatMapThrowing{ response in
-				if !response.hasMore {
-					return eventLoop.future(response.data)
-				}
-				
-				guard let latestDevice = response.data.last?.id else {
-					throw InvalidArgumentError(message: "SimpleMDM returned no devices, but told it has more to give")
-				}
-				return self.getAllDevices(startingAfter: latestDevice, token: token, eventLoop: eventLoop).map{ response.data + $0 }
-			}
-			.flatMap{ $0 }
+		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+		let response = try await op.startAndGetResult()
+		if !response.hasMore {
+			return response.data
+		}
+		
+		guard let latestDevice = response.data.last?.id else {
+			throw InvalidArgumentError(message: "SimpleMDM returned no devices, but told it has more to give")
+		}
+		return try await response.data + getAllDevices(startingAfter: latestDevice, token: token)
 	}
 	
 }

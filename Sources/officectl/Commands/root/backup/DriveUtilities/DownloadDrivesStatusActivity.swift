@@ -12,7 +12,7 @@ import Vapor
 
 
 
-class DownloadDrivesStatusActivity : ActivityIndicatorType {
+actor DownloadDrivesStatusActivity : ActivityIndicatorType {
 	
 	struct DownloadDriveStatus {
 		
@@ -35,19 +35,14 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 	
 	var loadingBarWidth: Int = 27
 	
-	let syncQueue = DispatchQueue(label: "com.happn.officectl.downloaddrivestatusactivitysync")
-	
 	func initStatuses(users: [GoogleUser]) {
-		syncQueue.sync{
-			var res = [GoogleUser: DownloadDriveStatus](minimumCapacity: users.count)
-			for u in users {
-				res[u] = DownloadDriveStatus()
-			}
-			statuses = res
+		var res = [GoogleUser: DownloadDriveStatus](minimumCapacity: users.count)
+		for u in users {
+			res[u] = DownloadDriveStatus()
 		}
+		statuses = res
 	}
 	
-	/** - Important: Call the subscript on syncQueue, or you might get races. */
 	subscript(_ user: GoogleUser) -> DownloadDriveStatus {
 		get {
 			statuses?[user] ?? DownloadDriveStatus()
@@ -58,11 +53,18 @@ class DownloadDrivesStatusActivity : ActivityIndicatorType {
 		}
 	}
 	
-	/* Note: This method is highly unoptimized. Let’s not care, at least for now. */
-	func outputActivityIndicator(to console: Console, state: ActivityIndicatorState) {
-		let safeStatuses = syncQueue.sync{ statuses }
-		
-		guard let statuses = safeStatuses else {
+	func updateStatus(for user: GoogleUser, _ updateBlock: @Sendable (inout DownloadDriveStatus) -> Void) {
+		var status = self[user]
+		updateBlock(&status)
+		self[user] = status
+	}
+	
+	nonisolated func outputActivityIndicator(to console: Console, state: ActivityIndicatorState) {
+		Task{await _outputActivityIndicator(to: console, state: state)}
+	}
+	
+	private func _outputActivityIndicator(to console: Console, state: ActivityIndicatorState) {
+		guard let statuses = statuses else {
 			console.info("Loading Users to Backup…")
 			return
 		}

@@ -30,24 +30,18 @@ public final class ResetGooglePasswordAction : Action<GoogleUser, String, Void>,
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
-		Task{
-			let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
-			
+		Task{await handler(Result{
 			try await deps.connector.connect(scope: ModifyGoogleUserOperation.scopes)
 			
 			var googleUser = self.subject.cloneForPatching()
-			
-			let passwordSHA1 = Insecure.SHA1.hash(data: Data(newPassword.utf8)).reduce("", { $0 + String(format: "%02x", $1) })
-			googleUser.password = .set(passwordSHA1)
+			googleUser.password = .set(Insecure.SHA1.hash(data: Data(newPassword.utf8)).reduce("", { $0 + String(format: "%02x", $1) }))
 			googleUser.hashFunction = .set(.sha1)
 			googleUser.changePasswordAtNextLogin = .set(false)
 			
 			let modifyUserOperation = ModifyGoogleUserOperation(user: googleUser, connector: self.deps.connector)
-			let f = EventLoopFuture<Void>.future(from: modifyUserOperation, on: eventLoop)
-			
-			f.whenSuccess{ _   in handler(.success(())) }
-			f.whenFailure{ err in handler(.failure(err)) }
-		}
+			/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+			try await modifyUserOperation.startAndGetResult()
+		})}
 	}
 	
 	private struct Dependencies {

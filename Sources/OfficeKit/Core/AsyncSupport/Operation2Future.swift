@@ -14,6 +14,7 @@ import NIO
 
 public extension EventLoopFuture {
 	
+	@available(*, deprecated, message: "Use async")
 	static func future<T, O : Operation>(from operation: O, on eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport, resultRetriever: @escaping (_ operation: O) throws -> T) -> EventLoopFuture<T> {
 		let promise: EventLoopPromise<T> = eventLoop.makePromise(of: T.self)
 		let resultRetrieverOperation = BlockOperation{
@@ -25,6 +26,7 @@ public extension EventLoopFuture {
 		return promise.futureResult
 	}
 	
+	@available(*, deprecated, message: "Use async")
 	static func future<O : Operation>(from operation: O, on eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport) -> EventLoopFuture<O.ResultType> where O : HasResult {
 		return EventLoopFuture.future(from: operation, on: eventLoop, queue: q, resultRetriever: { try $0.resultOrThrow() })
 	}
@@ -32,6 +34,7 @@ public extension EventLoopFuture {
 	/**
 	 Executes all the operations and returns an array of results.
 	 If any operation failes the future fails (but all operations will run). */
+	@available(*, deprecated, message: "Use async")
 	static func reduce<R, O : Operation>(operations: [O], on eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport, resultRetriever: @escaping (_ operation: O) throws -> R) -> EventLoopFuture<[R]> where Value == [R] {
 		let futures = operations.map{ EventLoopFuture.future(from: $0, on: eventLoop, queue: q, resultRetriever: resultRetriever) }
 		
@@ -43,6 +46,7 @@ public extension EventLoopFuture {
 	/**
 	 Executes all the operations in order and stop at first failure (reduce the operations).
 	 The future only succeeds if all the operations succeed. */
+	@available(*, deprecated, message: "Use async")
 	static func reduce<O : Operation>(operations: [O], on eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport) -> EventLoopFuture<[O.ResultType]> where O : HasResult, Value == [O.ResultType] {
 		return EventLoopFuture.reduce(operations: operations, on: eventLoop, queue: q, resultRetriever: { try $0.resultOrThrow() })
 	}
@@ -66,6 +70,7 @@ public extension EventLoopFuture {
 	 Returns the success value if the operation succeeded, throws if the operation failed.
 	 - parameter operation: The operation from which to retrieve the result.
 	 - returns: A future (that will never fail) whose resolution will give an array of future results (one result per operations given). */
+	@available(*, deprecated, message: "Use async")
 	static func executeAll<T, O : Operation>(_ operations: [O], on eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport, resultRetriever: @escaping (_ operation: O) throws -> T) -> EventLoopFuture<[Result<T, Error>]> {
 		let promise = eventLoop.makePromise(of: [Swift.Result<T, Error>].self)
 		let resultRetrieverOperation = BlockOperation{
@@ -97,6 +102,7 @@ public extension EventLoopFuture {
 	 - parameter operations: The list of operations to exectue.
 	 - parameter q: The queue on which the operations will be run.
 	 - returns: A future (that will never fail) whose resolution will give an array of future results (one result per operations given). */
+	@available(*, deprecated, message: "Use async")
 	static func executeAll<O : Operation>(_ operations: [O], on eventLoop: EventLoop, queue q: OperationQueue = defaultOperationQueueForFutureSupport) -> EventLoopFuture<[Result<O.ResultType, Error>]> where O : HasResult {
 		return EventLoopFuture.executeAll(operations, on: eventLoop, queue: q, resultRetriever: { try $0.resultOrThrow() })
 	}

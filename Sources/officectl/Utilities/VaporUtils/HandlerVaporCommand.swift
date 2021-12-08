@@ -14,7 +14,7 @@ import Vapor
 
 /**
  A Vapor command to run a custom handler… */
-struct HandlerVaporCommand : Vapor.Command {
+class HandlerVaporCommand : Vapor.Command {
 	
 	struct Signature: CommandSignature {
 	}
@@ -32,10 +32,14 @@ struct HandlerVaporCommand : Vapor.Command {
 		let group = DispatchGroup()
 		group.enter()
 		Task{
-			try await run(context)
+			do    {try await run(context)}
+			catch {err = error}
 			group.leave()
 		}
 		group.wait()
+		if let err = err {throw err}
 	}
+	
+	private var err: Error?
 	
 }

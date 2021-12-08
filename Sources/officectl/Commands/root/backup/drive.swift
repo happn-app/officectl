@@ -86,6 +86,8 @@ struct BackupDriveCommand : ParsableCommand {
 	}
 	
 	func vaporRun(_ context: CommandContext) async throws {
+		URLRequestOperationConfig.logger = nil
+		
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
 		let eventLoop = try app.services.make(EventLoop.self)
@@ -101,7 +103,7 @@ struct BackupDriveCommand : ParsableCommand {
 		
 		let filters = pathFilters.map{ $0.lowercased() }
 		
-		let archivesDestinationFolder = self.archivesDestinationFolder
+		let archivesDestinationFolder = archivesDestinationFolder
 		let archivesDestinationFolderStr = (archive ? try nil2throw(archivesDestinationFolder) : nil)
 		let archivesDestinationFolderURL = archivesDestinationFolderStr.flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
 		
@@ -115,37 +117,32 @@ struct BackupDriveCommand : ParsableCommand {
 			consoleActivity.start()
 		}
 		
-		let downloadFilesQueue = OperationQueue(name_OperationQueue: "Files Download Queue")
-		
-		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 		let res = await Result{
+			let downloadFilesQueue = OperationQueue(name_OperationQueue: "Files Download Queue")
+			
+			let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 			try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
 			
 			let filteredUsers = try await GoogleUserAndDest.fetchListToBackup(
 				googleConfig: googleConfig, googleConnector: googleConnector,
-				usersFilter: usersFilter, disabledUserSuffix: self.disabledEmailSuffix,
+				usersFilter: usersFilter, disabledUserSuffix: disabledEmailSuffix,
 				downloadsDestinationFolder: downloadsDestinationFolder, archiveDestinationFolder: archivesDestinationFolderURL,
-				skipIfArchiveFound: self.skipIfArchiveExists,
+				skipIfArchiveFound: skipIfArchiveExists,
 				console: context.console, eventLoop: eventLoop
 			)
 			
 			/* Backup given mails */
-			downloadDriveStatus.initStatuses(users: filteredUsers.map{ $0.user })
+			await downloadDriveStatus.initStatuses(users: filteredUsers.map{ $0.user })
 			
-			let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, filters: filters, skipOtherOwner: self.skipOtherOwner, skipZeroQuotaFiles: self.skipZeroQuotaFiles, eraseDownloadedFiles: self.eraseDownloadedFiles, downloadFilesQueue: downloadFilesQueue) }
-			let downloadResults = try await EventLoopFuture<GoogleUserAndDest>.executeAll(operations, on: eventLoop, resultRetriever: { (o: DownloadDriveOperation) -> GoogleUserAndDest in
+			let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, filters: filters, skipOtherOwner: skipOtherOwner, skipZeroQuotaFiles: skipZeroQuotaFiles, eraseDownloadedFiles: eraseDownloadedFiles, downloadFilesQueue: downloadFilesQueue) }
+			try await app.services.make(OperationQueue.self).addOperationsAndWait(operations)
+			/* Currently we stop everything if we got at least one error. */
+			/* TODO: Properly report the error (say this user got an error, not just here are the errors!) */
+			try operations.forEach{ o in
 				try throwIfError(o.error)
-				return o.state.userAndDest
-			}).get()
-			
-			assert(downloadResults.count == filteredUsers.count)
-			let errors = downloadResults.enumerated().compactMap{ result in result.element.failureValue.flatMap{ (filteredUsers[result.offset], $0) } }
-			guard errors.isEmpty else {
-				/* Currently we stop everything if we got at least one error. */
-				/* TODO: Properly report the error (say this user got an error, not just here are the errors!) */
-				throw ErrorCollection(errors.map{ $0.1 })
 			}
 		}
+		
 		if !disableConsole {
 			switch res {
 				case .success: consoleActivity.succeed()

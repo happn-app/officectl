@@ -141,8 +141,8 @@
         "repositoryURL": "https://github.com/Frizlab/OperationAwaiting.git",
         "state": {
           "branch": null,
-          "revision": "acd525000677e358240e91813e07ab4e9413521b",
-          "version": "0.7.0"
+          "revision": "a3e47af46b23ebef62e29db9a22a970b4ed1bd09",
+          "version": "1.2.0-beta.1"
         }
       },
       {

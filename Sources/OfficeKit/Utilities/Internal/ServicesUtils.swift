@@ -15,6 +15,12 @@ import ServiceKit
 
 extension Services {
 	
+	var opQ: OperationQueue {
+		get throws {
+			return try self.make()
+		}
+	}
+	
 	func eventLoop() throws -> EventLoop {
 		return try self.make()
 	}

@@ -39,86 +39,71 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 	}
 	
 	override func startBaseOperation(isRetry: Bool) {
-		if let n = doc.name     { _ = try? state.logFile.logCSVLine([doc.id, "name", n]) }
-		if let t = doc.mimeType { _ = try? state.logFile.logCSVLine([doc.id, "mime-type", t]) }
-		if let o = doc.owners   { _ = try? state.logFile.logCSVLine([doc.id, "owners", o.map{ $0.emailAddress?.rawValue ?? "<unknown address>" }.joined(separator: ", ")]) }
-		if let p = doc.parents  { _ = try? state.logFile.logCSVLine([doc.id, "parent_ids", p.joined(separator: ", ")]) }
-		if let perms = doc.permissions {
-			let encoder = JSONEncoder()
-			for pjson in perms {
-				guard let pstr = (try? encoder.encode(pjson)).flatMap({ String(data: $0, encoding: .utf8) }) else {
-					_ = try? state.logFile.logCSVLine([doc.id, "permission_string_interpolated_because_json_encoding_failed", "\(pjson)"])
-					continue
-				}
-				_ = try? state.logFile.logCSVLine([doc.id, "permission", pstr])
-			}
-		}
-		
-		let fileDownloadDestinationURL = self.state.allFilesDestinationBaseURL.appendingPathComponent(self.doc.id, isDirectory: false)
-		let fileObjectURL = driveApiBaseURL.appendingPathComponent("files", isDirectory: true).appendingPathComponent(doc.id)
-		
-		let connectionPromise = state.eventLoop.makePromise(of: Void.self)
 		Task{
-			do {
+			let result = await Result{
+				let fm = FileManager.default
+				if let n = doc.name     {_ = try? state.logFile.logCSVLine([doc.id, "name", n])}
+				if let t = doc.mimeType {_ = try? state.logFile.logCSVLine([doc.id, "mime-type", t])}
+				if let o = doc.owners   {_ = try? state.logFile.logCSVLine([doc.id, "owners", o.map{ $0.emailAddress?.rawValue ?? "<unknown address>" }.joined(separator: ", ")])}
+				if let p = doc.parents  {_ = try? state.logFile.logCSVLine([doc.id, "parent_ids", p.joined(separator: ", ")])}
+				if let perms = doc.permissions {
+					let encoder = JSONEncoder()
+					for pjson in perms {
+						guard let pstr = (try? encoder.encode(pjson)).flatMap({ String(data: $0, encoding: .utf8) }) else {
+							_ = try? state.logFile.logCSVLine([doc.id, "permission_string_interpolated_because_json_encoding_failed", "\(pjson)"])
+							continue
+						}
+						_ = try? state.logFile.logCSVLine([doc.id, "permission", pstr])
+					}
+				}
+				
+				let fileDownloadDestinationURL = state.allFilesDestinationBaseURL.appendingPathComponent(doc.id, isDirectory: false)
+				let fileObjectURL = driveApiBaseURL.appendingPathComponent("files", isDirectory: true).appendingPathComponent(doc.id)
+				
 				try await state.connector.connect(scope: driveROScope)
-				connectionPromise.completeWith(.success(()))
-			} catch {
-				connectionPromise.fail(error)
-			}
-		}
-		_ = connectionPromise.futureResult
-			.flatMap{ _ in
-				self.state.getPaths(objectId: self.doc.id, objectName: self.doc.name ?? self.doc.id, parentIds: self.doc.parents)
-			}
-			.flatMap{ paths -> EventLoopFuture<[String]> in
-				/* First let’s make sure the paths match the given filters */
-				if let filters = self.state.filters {
+				
+				let paths = try await state.getPaths(objectId: doc.id, objectName: doc.name ?? doc.id, parentIds: doc.parents)
+				
+				/* First let’s make sure the paths match the given filters. */
+				if let filters = state.filters {
 					var match = false
 					for filter in filters where !match {
-						if filter.starts(with: "^") {
-							match = match || (paths.contains{ $0.lowercased().starts(with: filter.dropFirst()) })
-						} else {
-							match = match || (paths.contains{ $0.lowercased().contains(filter) })
-						}
+						if filter.starts(with: "^") {match = match || (paths.contains{ $0.lowercased().starts(with: filter.dropFirst()) })}
+						else                        {match = match || (paths.contains{ $0.lowercased().contains(filter) })}
 					}
 					
 					guard match else {
-						return self.state.eventLoop.makeFailedFuture(FileSkippedError())
+						throw FileSkippedError()
 					}
 				}
 				
 				var isDir = ObjCBool(true)
-				guard !FileManager.default.fileExists(atPath: fileDownloadDestinationURL.path, isDirectory: &isDir) else {
+				if fm.fileExists(atPath: fileDownloadDestinationURL.path, isDirectory: &isDir) {
 					/* If the file exists and is not a directory we assume it has already been downloaded from the drive.
 					 * We do not check whether it is out of date or not; we’re not a sync service,
 					 * all we want mostly is being able to continue downloading if the process stopped for whatever reason.
 					 * We still re-link the file even if it was already downloaded because we cannot be certain it has been linked without a db or an xattr on the files,
 					 * which are neither solutions I want to implement. */
 					guard !isDir.boolValue else {
-						return self.state.eventLoop.makeFailedFuture(InvalidArgumentError(message: "A folder exists where a file would be downloaded (at \(fileDownloadDestinationURL.path)."))
+						throw InvalidArgumentError(message: "A folder exists where a file would be downloaded (at \(fileDownloadDestinationURL.path).")
 					}
-					return self.state.eventLoop.future(paths)
+				} else {
+					var urlComponents = URLComponents(url: fileObjectURL, resolvingAgainstBaseURL: true)!
+					urlComponents.queryItems = [URLQueryItem(name: "alt", value: "media")]
+					var urlRequest = URLRequest(url: urlComponents.url!)
+					urlRequest.timeoutInterval = 24*3600
+					
+					var downloadConfig = URLRequestOperation.Config(request: urlRequest, session: nil)
+					downloadConfig.maximumNumberOfRetries = DownloadDriveFileOperation.maximumNumberOfRetries
+					downloadConfig.destinationURL = fileDownloadDestinationURL
+					downloadConfig.downloadBehavior = .failIfDestinationExists
+					downloadConfig.acceptableStatusCodes = IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403))
+					
+					let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DownloadBinaryForDoc(config: downloadConfig, authenticator: self.state.connector.authenticate), queue: DownloadDriveFileOperation.downloadBinaryQueue)
+					await DownloadDriveFileOperation.downloadBinaryQueue.addOperationAndWait(op)
+					if let e = op.finalError {throw e}
 				}
 				
-				var urlComponents = URLComponents(url: fileObjectURL, resolvingAgainstBaseURL: true)!
-				urlComponents.queryItems = [URLQueryItem(name: "alt", value: "media")]
-				var urlRequest = URLRequest(url: urlComponents.url!)
-				urlRequest.timeoutInterval = 24*3600
-				
-				var downloadConfig = URLRequestOperation.Config(request: urlRequest, session: nil)
-				downloadConfig.maximumNumberOfRetries = DownloadDriveFileOperation.maximumNumberOfRetries
-				downloadConfig.destinationURL = fileDownloadDestinationURL
-				downloadConfig.downloadBehavior = .failIfDestinationExists
-				downloadConfig.acceptableStatusCodes = IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403))
-				
-				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DownloadBinaryForDoc(config: downloadConfig, authenticator: self.state.connector.authenticate), queue: DownloadDriveFileOperation.downloadBinaryQueue)
-				return EventLoopFuture<Void>.future(from: op, on: self.state.eventLoop, queue: DownloadDriveFileOperation.downloadBinaryQueue, resultRetriever: { o in
-					if let e = o.finalError {throw e}
-					else                    {return paths}
-				})
-			}
-			.flatMapThrowing{ paths in
-				let fm = FileManager.default
 				for p in paths {
 					_ = try? self.state.logFile.logCSVLine([self.doc.id, "path", p])
 					
@@ -127,7 +112,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 					
 					/* Remove previous file if applicable. */
 					var isDir = ObjCBool(true)
-					guard !FileManager.default.fileExists(atPath: destinationURL.path, isDirectory: &isDir) || !isDir.boolValue else {
+					guard !fm.fileExists(atPath: destinationURL.path, isDirectory: &isDir) || !isDir.boolValue else {
 						throw InvalidArgumentError(message: "A folder exists where a link would be created (at \(destinationURL.path).")
 					}
 					_ = try? fm.removeItem(at: destinationURL)
@@ -135,43 +120,30 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 					try fm.createDirectory(at: destinationURLFolder, withIntermediateDirectories: true, attributes: nil)
 					try fm.linkItem(at: fileDownloadDestinationURL, to: destinationURL)
 				}
-			}
-			.flatMap{ _ -> EventLoopFuture<Void> in
-				/* Try and delete the downloaded file if needed */
-				guard self.state.eraseDownloadedFiles else {
-					return self.state.eventLoop.future()
+				
+				/* Try and delete the downloaded file if needed. */
+				guard state.eraseDownloadedFiles else {
+					return
 				}
 				
-				let connectionPromise = self.state.eventLoop.makePromise(of: Void.self)
-				Task{
-					do {
-						try await self.state.connector.connect(scope: driveScope)
-						connectionPromise.completeWith(.success(()))
-					} catch {
-						connectionPromise.fail(error)
-					}
-				}
-				return connectionPromise.futureResult
-					.flatMap{ _ in
-						var request = URLRequest(url: fileObjectURL)
-						request.httpMethod = "DELETE"
-						
-						let requestOperationConfig = URLRequestOperation.Config(request: request, session: nil, maximumNumberOfRetries: DownloadDriveFileOperation.maximumNumberOfRetries, allowRetryingNonIdempotentRequests: true, acceptableStatusCodes: IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403)))
-						let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DeleteFileURLRequestOperation(config: requestOperationConfig, authenticator: self.state.connector.authenticate))
-						
-						return EventLoopFuture<Void>.future(from: op, on: self.state.eventLoop, queue: DownloadDriveFileOperation.downloadBinaryQueue, resultRetriever: { o in
-							if let e = o.finalError {throw InvalidArgumentError(message: "Cannot delete file; error: \(e)")}
-							else                    {return ()}
-						})
-					}
-			}
-			.always{ result in
-				switch result {
-					case .success:                                    self.succeedDownload()
-					case .failure(let e) where e is FileSkippedError: self.succeedSkippedDownload()
-					case .failure(let e):                             self.failDownload(error: e)
+				try await state.connector.connect(scope: driveScope)
+				
+				var request = URLRequest(url: fileObjectURL)
+				request.httpMethod = "DELETE"
+				
+				let requestOperationConfig = URLRequestOperation.Config(request: request, session: nil, maximumNumberOfRetries: DownloadDriveFileOperation.maximumNumberOfRetries, allowRetryingNonIdempotentRequests: true, acceptableStatusCodes: IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403)))
+				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DeleteFileURLRequestOperation(config: requestOperationConfig, authenticator: self.state.connector.authenticate))
+				await DownloadDriveFileOperation.downloadBinaryQueue.addOperationAndWait(op)
+				if let e = op.finalError {
+					throw InvalidArgumentError(message: "Cannot delete file; error: \(e)")
 				}
 			}
+			switch result {
+				case .success:                                    await succeedDownload()
+				case .failure(let e) where e is FileSkippedError: await succeedSkippedDownload()
+				case .failure(let e):                             await failDownload(error: e)
+			}
+		}
 	}
 	
 	override var isAsynchronous: Bool {
@@ -250,29 +222,29 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 		
 	}
 	
-	private func succeedDownload() {
-		state.status.syncQueue.sync{
-			state.status[state.userAndDest.user].nFilesProcessed += 1
-			state.status[state.userAndDest.user].nBytesProcessed += doc.size.flatMap{ Int($0) } ?? 0
-		}
+	private func succeedDownload() async {
+		await state.status.updateStatus(for: state.userAndDest.user, { userStatus in
+			userStatus.nFilesProcessed += 1
+			userStatus.nBytesProcessed += doc.size.flatMap{ Int($0) } ?? 0
+		})
 		result = .success(doc)
 		baseOperationEnded()
 	}
 	
-	private func succeedSkippedDownload() {
-		state.status.syncQueue.sync{
-			state.status[state.userAndDest.user].nFilesIgnored += 1
-			state.status[state.userAndDest.user].nFilesToProcess -= 1
-			state.status[state.userAndDest.user].nBytesIgnored -= doc.size.flatMap{ Int($0) } ?? 0
-			state.status[state.userAndDest.user].nBytesToProcess -= doc.size.flatMap{ Int($0) } ?? 0
-		}
+	private func succeedSkippedDownload() async {
+		await state.status.updateStatus(for: state.userAndDest.user, { userStatus in
+			userStatus.nFilesIgnored += 1
+			userStatus.nFilesToProcess -= 1
+			userStatus.nBytesIgnored -= doc.size.flatMap{ Int($0) } ?? 0
+			userStatus.nBytesToProcess -= doc.size.flatMap{ Int($0) } ?? 0
+		})
 		result = .success(doc)
 		baseOperationEnded()
 	}
 	
-	private func failDownload(error: Error) {
+	private func failDownload(error: Error) async {
 		_ = try? state.logFile.logCSVLine([doc.id, "download_error", error.legibleLocalizedDescription])
-		state.status.syncQueue.sync{ state.status[state.userAndDest.user].nFailures += 1 }
+		await state.status.updateStatus(for: state.userAndDest.user, { $0.nFailures += 1 })
 		result = .failure(error)
 		baseOperationEnded()
 	}

@@ -160,15 +160,14 @@ public final class GoogleService : UserDirectoryService {
 	}
 	
 	public func existingUser(fromUserId email: Email, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> GoogleUser? {
-		/* TODO: Implement propertiesToFetch. */
 		/* Note: We do **NOT** map the email to the main domain. Maybe we should? */
-		let eventLoop = try services.eventLoop()
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		
 		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
 		
+		/* TODO: Implement propertiesToFetch. */
 		let op = SearchGoogleUsersOperation(searchedDomain: email.domainPart, query: #"email="\#(email.rawValue)""#, googleConnector: googleConnector)
-		let objects = try await EventLoopFuture<[GoogleUser]>.future(from: op, on: eventLoop).get()
+		let objects = try await services.opQ.addOperationAndGetResult(op)
+		
 		guard objects.count <= 1 else {
 			throw UserIdConversionError.tooManyUsersFound
 		}
@@ -176,16 +175,15 @@ public final class GoogleService : UserDirectoryService {
 	}
 	
 	public func listAllUsers(using services: Services) async throws -> [GoogleUser] {
-		let eventLoop = try services.eventLoop()
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		
 		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
 		
+		let opQ = try services.opQ
 		return try await withThrowingTaskGroup(of: [GoogleUser].self, returning: [GoogleUser].self, body: { group in
 			for domain in config.primaryDomains {
 				group.addTask{
 					let searchOp = SearchGoogleUsersOperation(searchedDomain: domain, query: "isSuspended=false", googleConnector: googleConnector)
-					return try await EventLoopFuture<[GoogleUser]>.future(from: searchOp, on: eventLoop).get()
+					return try await opQ.addOperationAndGetResult(searchOp)
 				}
 			}
 			
@@ -199,12 +197,11 @@ public final class GoogleService : UserDirectoryService {
 	
 	public let supportsUserCreation = true
 	public func createUser(_ user: GoogleUser, using services: Services) async throws -> GoogleUser {
-		let eventLoop = try services.eventLoop()
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
+		try await googleConnector.connect(scope: CreateGoogleUserOperation.scopes)
 		
 		let op = CreateGoogleUserOperation(user: user, connector: googleConnector)
-		try await googleConnector.connect(scope: CreateGoogleUserOperation.scopes)
-		return try await EventLoopFuture<GoogleUser>.future(from: op, on: eventLoop).get()
+		return try await services.opQ.addOperationAndGetResult(op)
 	}
 	
 	public let supportsUserUpdate = true

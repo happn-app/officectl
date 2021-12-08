@@ -29,21 +29,16 @@ public final class ResetHappnPasswordAction : Action<HappnUser, String, Void>, R
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
-		Task{
-			let eventLoop = MultiThreadedEventLoopGroup(numberOfThreads: 1).next()
-			
+		Task{await handler(Result{
 			try await deps.connector.connect(scope: ModifyHappnUserOperation.scopes)
 			
 			var happnUser = self.subject.cloneForPatching()
-			
 			happnUser.password = .set(newPassword)
 			
 			let modifyUserOperation = ModifyHappnUserOperation(user: happnUser, connector: self.deps.connector)
-			let f = EventLoopFuture<Void>.future(from: modifyUserOperation, on: eventLoop)
-			
-			f.whenSuccess{ _   in handler(.success(())) }
-			f.whenFailure{ err in handler(.failure(err)) }
-		}
+			/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+			try await modifyUserOperation.startAndGetResult()
+		})}
 	}
 	
 	private struct Dependencies {

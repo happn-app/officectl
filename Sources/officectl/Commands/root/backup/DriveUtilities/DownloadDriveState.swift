@@ -12,7 +12,7 @@ import OfficeKit
 
 
 
-class DownloadDriveState {
+actor DownloadDriveState {
 	
 	let connector: GoogleJWTConnector
 	let eventLoop: EventLoop
@@ -46,69 +46,57 @@ class DownloadDriveState {
 		allFilesDestinationBaseURL = afdbu
 	}
 	
-	func getPaths(objectId: String, objectName: String, parentIds: [String]?) -> EventLoopFuture<[String]> {
+	func getPaths(objectId: String, objectName: String, parentIds: [String]?) async throws -> [String] {
 		guard let parentIds = parentIds, !parentIds.isEmpty else {
-			return eventLoop.future([deduplicatePath(originalPath: objectName, for: objectId)])
+			return [deduplicatePath(originalPath: objectName, for: objectId)]
 		}
 		
-		let futures = parentIds.map{ parentId -> EventLoopFuture<[String]> in
-			let futureObject = pathsCacheQueue.sync{ () -> EventLoopFuture<[String]> in
-				/* Do we already have the object future in the cache? */
-				if let futureObject = pathsCache[parentId] {
-					return futureObject
-				} else {
-					var urlComponents = URLComponents(url: URL(string: "files/" + parentId, relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
-					urlComponents.queryItems = [URLQueryItem(name: "fields", value: "id,name,parents,ownedByMe")]
-					
-					let decoder = JSONDecoder()
-					decoder.dateDecodingStrategy = .customISO8601
-					decoder.keyDecodingStrategy = .useDefaultKeys
-					let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveDoc>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
-					
-					let connectionPromise = eventLoop.makePromise(of: Void.self)
-					Task{
-						do {
-							try await connector.connect(scope: driveROScope)
-							connectionPromise.completeWith(.success(()))
-						} catch {
-							connectionPromise.fail(error)
-						}
-					}
-					let futureObject = connectionPromise.futureResult
-						.flatMap{ _ in EventLoopFuture<GoogleDriveDoc>.future(from: op, on: self.eventLoop) }
-						.flatMap{ doc in self.getPaths(objectId: doc.id, objectName: (doc.name ?? doc.id), parentIds: doc.parents) }
-					
-					pathsCache[parentId] = futureObject
-					return futureObject
-				}
+		/* Not sure of the performance implications of using a task group instead of this directly.
+		 * Anyway I don’t think doing this exactly is possible with a task group. */
+		let tasks = parentIds.map{ parentId -> Task<[String], Error> in
+			let task = pathsCache[parentId] ?? Task{
+				try await connector.connect(scope: driveROScope)
+				
+				var urlComponents = URLComponents(url: URL(string: "files/" + parentId, relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
+				urlComponents.queryItems = [URLQueryItem(name: "fields", value: "id,name,parents,ownedByMe")]
+				
+				let decoder = JSONDecoder()
+				decoder.dateDecodingStrategy = .customISO8601
+				decoder.keyDecodingStrategy = .useDefaultKeys
+				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveDoc>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
+				
+				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
+				let doc = try await op.startAndGetResult()
+				return try await getPaths(objectId: doc.id, objectName: (doc.name ?? doc.id), parentIds: doc.parents)
 			}
 			
-			return futureObject
-				.map{ paths in return paths.map{ self.deduplicatePath(originalPath: ($0 as NSString).appendingPathComponent(objectName), for: objectId) } }
+			pathsCache[parentId] = task
+			return Task{
+				try await task.value.map{ self.deduplicatePath(originalPath: ($0 as NSString).appendingPathComponent(objectName), for: objectId) }
+			}
 		}
-		return EventLoopFuture<[String]>.whenAllSucceed(futures, on: eventLoop).map{ $0.flatMap{ $0 } }
+		var res = [String]()
+		for task in tasks {res += try await task.value}
+		return res
 	}
 	
-	private let pathsCacheQueue = DispatchQueue(label: "com.happn.officectl.downloaddrivepathscachequeue")
-	private var pathsCache = [String: EventLoopFuture<[String]>]()
+	private var pathsCache = [String: Task<[String], Error>]()
 	private var knownPaths = Set<String>()
 	
 	private func deduplicatePath(originalPath: String, for objectId: String) -> String {
-		pathsCacheQueue.sync{
-			var i = 2
-			var newPath = originalPath
-			let pathExt = (originalPath as NSString).pathExtension
-			let pathBase = (originalPath as NSString).deletingPathExtension
-			while !knownPaths.insert(newPath).inserted {
-				let newPathBase = pathBase + " " + String(i)
-				newPath = (newPathBase as NSString).appendingPathExtension(pathExt) ?? newPathBase + "." + pathExt
-				i += 1
-			}
-			if i > 2 {
-				_ = try? logFile.logCSVLine([objectId, "duplicate_path_warning", "Path “\(originalPath)” already exist; renamed to “\(newPath)”"])
-			}
-			return newPath
+		var i = 2
+		var newPath = originalPath
+		let pathExt = (originalPath as NSString).pathExtension
+		let pathBase = (originalPath as NSString).deletingPathExtension
+		while !knownPaths.insert(newPath).inserted {
+			let newPathBase = pathBase + " " + String(i)
+			newPath = (newPathBase as NSString).appendingPathExtension(pathExt) ?? newPathBase + "." + pathExt
+			i += 1
 		}
+		if i > 2 {
+			_ = try? logFile.logCSVLine([objectId, "duplicate_path_warning", "Path “\(originalPath)” already exist; renamed to “\(newPath)”"])
+		}
+		return newPath
 	}
 	
 }

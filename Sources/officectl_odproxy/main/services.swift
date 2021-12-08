@@ -101,8 +101,8 @@ extension Application {
 					return existing
 				} else {
 					let new = Services()
-					let eventLoop = self.eventLoopGroup.next()
-					new.register{ eventLoop } /* We always want to return the same event loop */
+					let queue = OperationQueue()
+					new.register{ queue } /* We always want to return the same queue */
 					new.register{ self.semiSingletonStore }
 					storage[ServicesKey.self] = new
 					return new
@@ -122,7 +122,6 @@ extension Request {
 	
 	var services: Services {
 		let ret = Services(duplicating: application.services)
-		ret.register{ self.eventLoop }
 		return ret
 	}
 	
