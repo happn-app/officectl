@@ -78,7 +78,7 @@ extension MultiServicesUser {
 		let eventLoop = try depServices.eventLoop()
 		let (pairs, fetchErrorsByService) = await AnyDSUPair.fetchAll(in: services, using: depServices)
 		let validServices = services.subtracting(fetchErrorsByService.keys)
-		return try await MultiServicesUser.merge(dsuPairs: Set(pairs), validServices: validServices, eventLoop: eventLoop).map{ ($0, fetchErrorsByService) }.get()
+		return try await (MultiServicesUser.merge(dsuPairs: Set(pairs), validServices: validServices, eventLoop: eventLoop), fetchErrorsByService)
 	}
 	
 	/**
@@ -90,82 +90,82 @@ extension MultiServicesUser {
 	 
 	 If the `allowNonValidServices` arg is set to `true`, the returned users might contain a DSU pair for a service that has not been declared valid.
 	 (The argument is only useful when `validServices` is set to a non-`nil` value.) */
-	public static func merge(dsuPairs: Set<AnyDSUPair>, validServices: Set<AnyUserDirectoryService>? = nil, allowNonValidServices: Bool = false, eventLoop: EventLoop, dispatchQueue: DispatchQueue = defaultDispatchQueueForFutureSupport) -> EventLoopFuture<[MultiServicesUser]> {
-		let promise = eventLoop.makePromise(of: [MultiServicesUser].self)
-		dispatchQueue.async{
-			do {
-				/* Transform the input to get something we can use (DSUPairs to LinkedUsers + extracting the list of services). */
-				let services: Set<AnyUserDirectoryService>
-				let linkedUsersByDSUPair: [AnyDSUPair: LinkedUser]
+	public static func merge(dsuPairs: Set<AnyDSUPair>, validServices: Set<AnyUserDirectoryService>? = nil, allowNonValidServices: Bool = false, eventLoop: EventLoop, dispatchQueue: DispatchQueue = defaultDispatchQueueForFutureSupport) async throws -> [MultiServicesUser] {
+		return try await withCheckedThrowingContinuation{ continuation in
+			dispatchQueue.async{
 				do {
-					var servicesBuilding = Set<AnyUserDirectoryService>()
-					var linkedUsersByDSUPairBuilding = [AnyDSUPair: LinkedUser](minimumCapacity: dsuPairs.count)
-					for pair in dsuPairs {
-						assert(linkedUsersByDSUPairBuilding[pair] == nil)
-						linkedUsersByDSUPairBuilding[pair] = LinkedUser(dsuPair: pair)
-						servicesBuilding.insert(pair.service)
-					}
-					linkedUsersByDSUPair = linkedUsersByDSUPairBuilding
-					services = servicesBuilding
-				}
-				let validServices = validServices ?? services
-				
-				/* Compute relations between the users. */
-				for (_, linkedUser) in linkedUsersByDSUPair {
-					let currentUserServiceId = linkedUser.dsuPair.serviceId
-					for service in services {
-						let serviceId = service.config.serviceId
-						guard serviceId != currentUserServiceId else {continue}
-						guard let logicallyLinkedPair = try? linkedUser.dsuPair.hop(to: service) else {
-//							OfficeKitConfig.logger?.debug("Error finding logically linked user with: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user pair: \(linkedUser.dsuPair)\n}")
-							continue
+					/* Transform the input to get something we can use (DSUPairs to LinkedUsers + extracting the list of services). */
+					let services: Set<AnyUserDirectoryService>
+					let linkedUsersByDSUPair: [AnyDSUPair: LinkedUser]
+					do {
+						var servicesBuilding = Set<AnyUserDirectoryService>()
+						var linkedUsersByDSUPairBuilding = [AnyDSUPair: LinkedUser](minimumCapacity: dsuPairs.count)
+						for pair in dsuPairs {
+							assert(linkedUsersByDSUPairBuilding[pair] == nil)
+							linkedUsersByDSUPairBuilding[pair] = LinkedUser(dsuPair: pair)
+							servicesBuilding.insert(pair.service)
 						}
-						guard let logicallyLinkedLinkedUser = linkedUsersByDSUPair[logicallyLinkedPair] else {
-//							OfficeKitConfig.logger?.debug("Found logically linked user, but user does not exist: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user pair: \(linkedUser.dsuPair)\n  dest user pair: \(logicallyLinkedPair.dsuIdPair)\n}")
-							continue
-						}
-						try linkedUser.link(to: logicallyLinkedLinkedUser)
+						linkedUsersByDSUPair = linkedUsersByDSUPairBuilding
+						services = servicesBuilding
 					}
-				}
-				
-				/* Merge the linked users in MultiServicesUsers. */
-				var treatedDSUPairs = Set<AnyDSUPair>()
-				let results = try linkedUsersByDSUPair.compactMap{ kv -> MultiServicesUser? in
-					let (dsuPair, linkedUser) = kv
+					let validServices = validServices ?? services
 					
-					guard !treatedDSUPairs.contains(dsuPair) else {return nil}
-					treatedDSUPairs.insert(dsuPair)
-					
-					guard allowNonValidServices || validServices.contains(dsuPair.service) else {
-						OfficeKitConfig.logger?.info("Not adding DSU pair \(dsuPair) in multi-user because it doesn’t have an explicitly-declared-valid service")
-						return nil
+					/* Compute relations between the users. */
+					for (_, linkedUser) in linkedUsersByDSUPair {
+						let currentUserServiceId = linkedUser.dsuPair.serviceId
+						for service in services {
+							let serviceId = service.config.serviceId
+							guard serviceId != currentUserServiceId else {continue}
+							guard let logicallyLinkedPair = try? linkedUser.dsuPair.hop(to: service) else {
+//								OfficeKitConfig.logger?.debug("Error finding logically linked user with: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user pair: \(linkedUser.dsuPair)\n}")
+								continue
+							}
+							guard let logicallyLinkedLinkedUser = linkedUsersByDSUPair[logicallyLinkedPair] else {
+//								OfficeKitConfig.logger?.debug("Found logically linked user, but user does not exist: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user pair: \(linkedUser.dsuPair)\n  dest user pair: \(logicallyLinkedPair.dsuIdPair)\n}")
+								continue
+							}
+							try linkedUser.link(to: logicallyLinkedLinkedUser)
+						}
 					}
 					
-					var res: [AnyUserDirectoryService: AnyDSUPair?] = [linkedUser.dsuPair.service: linkedUser.dsuPair]
-					for subLinkedUser in linkedUser.linkedUserByServiceId.values {
-						guard !treatedDSUPairs.contains(subLinkedUser.dsuPair) else {
-							throw InternalError(message: "Got already treated linked user! \(subLinkedUser.dsuPair) for \(dsuPair)")
+					/* Merge the linked users in MultiServicesUsers. */
+					var treatedDSUPairs = Set<AnyDSUPair>()
+					let results = try linkedUsersByDSUPair.compactMap{ kv -> MultiServicesUser? in
+						let (dsuPair, linkedUser) = kv
+						
+						guard !treatedDSUPairs.contains(dsuPair) else {return nil}
+						treatedDSUPairs.insert(dsuPair)
+						
+						guard allowNonValidServices || validServices.contains(dsuPair.service) else {
+							OfficeKitConfig.logger?.info("Not adding DSU pair \(dsuPair) in multi-user because it doesn’t have an explicitly-declared-valid service")
+							return nil
 						}
-						guard res[subLinkedUser.dsuPair.service] == nil else {
-							throw InternalError(message: "Got two users for service id \(subLinkedUser.dsuPair.service): \(res[subLinkedUser.dsuPair.service]!!) and \(subLinkedUser.dsuPair)")
+						
+						var res: [AnyUserDirectoryService: AnyDSUPair?] = [linkedUser.dsuPair.service: linkedUser.dsuPair]
+						for subLinkedUser in linkedUser.linkedUserByServiceId.values {
+							guard !treatedDSUPairs.contains(subLinkedUser.dsuPair) else {
+								throw InternalError(message: "Got already treated linked user! \(subLinkedUser.dsuPair) for \(dsuPair)")
+							}
+							guard res[subLinkedUser.dsuPair.service] == nil else {
+								throw InternalError(message: "Got two users for service id \(subLinkedUser.dsuPair.service): \(res[subLinkedUser.dsuPair.service]!!) and \(subLinkedUser.dsuPair)")
+							}
+							res[subLinkedUser.dsuPair.service] = subLinkedUser.dsuPair
+							treatedDSUPairs.insert(subLinkedUser.dsuPair)
 						}
-						res[subLinkedUser.dsuPair.service] = subLinkedUser.dsuPair
-						treatedDSUPairs.insert(subLinkedUser.dsuPair)
+						/* Setting a value for all valid services ids */
+						for s in validServices {
+							guard res[s] == nil else {continue}
+							res[s] = .some(nil)
+						}
+						return MultiServicesUser(itemsByService: res)
 					}
-					/* Setting a value for all valid services ids */
-					for s in validServices {
-						guard res[s] == nil else {continue}
-						res[s] = .some(nil)
-					}
-					return MultiServicesUser(itemsByService: res)
+					
+					continuation.resume(returning: results)
+				} catch {
+					continuation.resume(throwing: error)
 				}
-				
-				promise.succeed(results)
-			} catch {
-				promise.fail(error)
 			}
 		}
-		return promise.futureResult
 	}
 	
 }
