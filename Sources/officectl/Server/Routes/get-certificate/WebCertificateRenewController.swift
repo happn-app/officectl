@@ -128,7 +128,6 @@ class WebCertificateRenewController {
 										}
 										let subjectCN = dnValue.value
 										guard subjectCN == renewedCommonName else {return nil}
-										print((id: id, issuerName: issuerName, certif: certificateResponse.data.certificate))
 										return (id: id, issuerName: issuerName, certif: certificateResponse.data.certificate)
 									}
 								}
