@@ -9,6 +9,7 @@ import Foundation
 
 import HasResult
 import RetryingOperation
+import URLRequestOperation
 
 
 
@@ -31,7 +32,19 @@ public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 	
 	public override func startBaseOperation(isRetry: Bool) {
 		assert(connector.isConnected)
-		fetchNextPage(nextPageToken: nil)
+		Task{
+			result = await Result{
+				var token: String?
+				var res = [GoogleUser]()
+				repeat {
+					let newUsersList = try await fetchNextPage(nextPageToken: nil)
+					token = newUsersList.nextPageToken
+					res += newUsersList.users ?? []
+				} while token != nil
+				return res
+			}
+			baseOperationEnded()
+		}
 	}
 	
 	public override var isAsynchronous: Bool {
@@ -42,30 +55,23 @@ public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 	   MARK: - Private
 	   *************** */
 	
-	private var users = [GoogleUser]()
 	
-	private func fetchNextPage(nextPageToken: String?) {
-		var urlComponents = URLComponents(string: "https://www.googleapis.com/admin/directory/v1/users")!
-		urlComponents.queryItems = [URLQueryItem(name: "domain", value: request.domain)]
-		if let q = request.query {urlComponents.queryItems!.append(URLQueryItem(name: "query", value: q))}
-		if let t = nextPageToken {urlComponents.queryItems!.append(URLQueryItem(name: "pageToken", value: t))}
+	private func fetchNextPage(nextPageToken: String?) async throws -> GoogleUsersList {
+		let queryParams = RequestQuery(domain: request.domain, query: request.query, pageToken: nextPageToken)
 		
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .customISO8601
-		decoder.keyDecodingStrategy = .useDefaultKeys
-		let op = AuthenticatedJSONOperation<GoogleUsersList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
-		op.completionBlock = {
-			guard let o = op.result.successValue else {
-				self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the users"]))
-				self.baseOperationEnded()
-				return
-			}
-			
-			self.users.append(contentsOf: o.users ?? [])
-			if let t = o.nextPageToken {self.fetchNextPage(nextPageToken: t)}
-			else                       {self.result = .success(self.users); self.baseOperationEnded()}
+		let op = try URLRequestDataOperation<GoogleUsersList>.forAPIRequest(
+			baseURL: URL(string: "https://www.googleapis.com/admin/directory/v1")!, path: "users", urlParameters: queryParams,
+			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+		)
+		return try await op.startAndGetResult().result
+		
+		struct RequestQuery : Encodable {
+			var domain: String
+			var query: String?
+			var pageToken: String?
 		}
-		op.start()
 	}
 	
 }

@@ -11,6 +11,7 @@ import FoundationNetworking
 #endif
 
 import SemiSingleton
+import URLRequestOperation
 
 
 
@@ -26,28 +27,18 @@ public final class ResetExternalServicePasswordAction : Action<TaggedId, String,
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
-		guard let url = URL(string: "change-password", relativeTo: deps.serviceURL) else {
-			throw InternalError(message: "Cannot get external service URL to update the password of a user")
-		}
+		Task{await handler(Result{
+			let op = try URLRequestDataOperation<ExternalServiceResponse<String>>.forAPIRequest(
+				baseURL: deps.serviceURL, path: "change-password", httpBody: RequestBody(userId: subject, newPassword: newPassword),
+				requestProcessors: [AuthRequestProcessor(deps.authenticator)], retryProviders: []
+			)
+			_ = try await op.startAndGetResult().result.asResult().get()
+		})}
 		
-		struct Request : Encodable {
+		struct RequestBody : Encodable {
 			var userId: TaggedId
 			var newPassword: String
 		}
-		let request = Request(userId: subject, newPassword: newPassword)
-		let requestData = try deps.jsonEncoder.encode(request)
-		
-		var urlRequest = URLRequest(url: url)
-		urlRequest.httpMethod = "POST"
-		urlRequest.httpBody = requestData
-		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-		
-		let operation = AuthenticatedJSONOperation<ExternalServiceResponse<String>>(request: urlRequest, authenticator: deps.authenticator.authenticate, decoder: deps.jsonDecoder)
-		operation.completionBlock = {
-			let r = operation.result.flatMap{ $0.asResult().map{ _ in () }.mapError{ $0 as Error } }
-			handler(r)
-		}
-		defaultOperationQueueForFutureSupport.addOperation(operation)
 	}
 	
 	private struct Dependencies {

@@ -9,6 +9,7 @@ import Foundation
 
 import HasResult
 import RetryingOperation
+import URLRequestOperation
 
 
 
@@ -32,35 +33,42 @@ public final class GitHubRepositorySearchOperation : RetryingOperation, HasResul
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		fetchRepos(from: 0)
+		Task{
+			result = await Result{
+				var curPage = 0
+				var nReposAtCurPage = 0
+				var repos = [GitHubRepository]()
+				repeat {
+					let reposAtPage = try await fetchRepos(at: curPage)
+					nReposAtCurPage = reposAtPage.count
+					repos += reposAtPage
+					curPage += 1
+				} while nReposAtCurPage > 0
+				return repos
+			}
+			baseOperationEnded()
+		}
 	}
 	
 	/* ***************
 	   MARK: - Private
 	   *************** */
 	
-	private var repositories = [GitHubRepository]()
-	
-	private func fetchRepos(from pageNumber: Int) {
-		var urlComponents = URLComponents(string: "https://api.github.com/orgs/\(searchedOrganisation)/repos")!
-		urlComponents.queryItems = [URLQueryItem(name: "type", value: "all"), URLQueryItem(name: "page", value: String(pageNumber))]
-		
+	private func fetchRepos(at pageNumber: Int) async throws -> [GitHubRepository] {
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .iso8601
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
-		let op = AuthenticatedJSONOperation<[GitHubRepository]>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
-		op.completionBlock = {
-			guard let o = op.result.successValue else {
-				self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the repositories"]))
-				self.baseOperationEnded()
-				return
-			}
-			
-			self.repositories.append(contentsOf: o)
-			if o.count > 0 {self.fetchRepos(from: pageNumber+1)}
-			else           {self.result = .success(self.repositories); self.baseOperationEnded()}
+		
+		let op = try URLRequestDataOperation<[GitHubRepository]>.forAPIRequest(
+			baseURL: URL(string: "https://api.github.com")!, path: "orgs/" + searchedOrganisation + "/repos", urlParameters: RequestParams(page: pageNumber),
+			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+		)
+		return try await op.startAndGetResult().result
+		
+		struct RequestParams : Encodable {
+			var type = "all"
+			var page: Int
 		}
-		op.start()
 	}
 	
 }

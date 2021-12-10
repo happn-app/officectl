@@ -12,6 +12,7 @@ import FoundationNetworking
 
 import HasResult
 import RetryingOperation
+import URLRequestOperation
 
 
 
@@ -33,30 +34,19 @@ public final class CreateGoogleUserOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		do {
-			let dataToSend = try JSONEncoder().encode(user)
-			
-			var urlRequest = URLRequest(url: URL(string: "https://www.googleapis.com/admin/directory/v1/users/")!)
-			urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-			urlRequest.httpBody = dataToSend
-			urlRequest.httpMethod = "POST"
-			
-			let decoder = JSONDecoder()
-			decoder.dateDecodingStrategy = .customISO8601
-			decoder.keyDecodingStrategy = .useDefaultKeys
-			let op = AuthenticatedJSONOperation<GoogleUser>(request: urlRequest, authenticator: connector.authenticate, decoder: decoder)
-			op.completionBlock = {
-				guard let user = op.result.successValue else {
-					self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while creating the user"]))
-					return self.baseOperationEnded()
-				}
+		Task{
+			result = await Result{
+				let baseURL = URL(string: "https://www.googleapis.com/admin/directory/v1/")!
 				
-				self.result = .success(user)
-				self.baseOperationEnded()
+				let decoder = JSONDecoder()
+				decoder.dateDecodingStrategy = .customISO8601
+				decoder.keyDecodingStrategy = .useDefaultKeys
+				let op = try URLRequestDataOperation<GoogleUser>.forAPIRequest(
+					baseURL: baseURL, path: "users", httpBody: user,
+					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+				)
+				return try await op.startAndGetResult().result
 			}
-			op.start()
-		} catch let err {
-			result = .failure(err)
 			baseOperationEnded()
 		}
 	}

@@ -10,6 +10,9 @@ import Foundation
 import FoundationNetworking
 #endif
 
+import JWTKit
+import URLRequestOperation
+
 
 
 public final class GitHubJWTConnector : Connector, Authenticator {
@@ -19,7 +22,7 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 	
 	public let appId: String
 	public let installationId: String
-	public let privateKey: Data
+	public let privateKey: RSAKey
 	
 	public var currentScope: Void? {
 		guard let auth = auth else {return nil}
@@ -36,7 +39,7 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 	public init(appId a: String, installationId i: String, privateKeyURL: URL) throws {
 		appId = a
 		installationId = i
-		privateKey = try Crypto.privateKey(pemURL: privateKeyURL)
+		privateKey = try RSAKey.private(pem: Data(contentsOf: privateKeyURL))
 	}
 	
 	/* ********************************
@@ -44,44 +47,34 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 	   ******************************** */
 	
 	public func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<Void>, handler: @escaping (Error?) -> Void) {
-		switch changeType {
-			case .remove, .removeAll:
-				handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not implemented (could not find doc to revoke token...)"]))
-				
-			case .add(_):
-				/* Retrieve connection information */
-				let authURL = URL(string: "https://api.github.com/app/installations/\(installationId)/access_tokens")!
-				let jwtRequestContent: [String: Any] = [
-					"iss": appId,
-					"iat": Int(Date(timeIntervalSinceNow: -90).timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 90).timeIntervalSince1970)
-				]
-				guard let jwtRequest = try? Crypto.createRS256JWT(payload: jwtRequestContent, privateKey: privateKey) else {
-					handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."]))
-					return
-				}
-				
-				/* Create the URLRequest for the JWT request */
-				var request = URLRequest(url: authURL)
-				request.addValue("application/vnd.github.v3+json", forHTTPHeaderField: "Accept")
-				request.addValue("Bearer \(jwtRequest)", forHTTPHeaderField: "Authorization")
-				request.httpMethod = "POST"
-				
-				/* Run the URLRequest and parse the response in the TokenResponse object */
-				let decoder = JSONDecoder()
-				decoder.dateDecodingStrategy = .iso8601
-				decoder.keyDecodingStrategy = .convertFromSnakeCase
-				let op = AuthenticatedJSONOperation<Auth>(request: request, authenticator: nil, decoder: decoder)
-				op.completionBlock = {
-					guard let o = op.result.successValue else {
-						handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
-						return
-					}
+		Task{await handler(Result{
+			switch changeType {
+				case .remove, .removeAll:
+					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not implemented (could not find doc to revoke token...)"])
 					
-					self.auth = o
-					handler(nil)
-				}
-				op.start()
-		}
+				case .add:
+					struct GitHubJWTPayload : JWTPayload {
+						var iss: IssuerClaim
+						var iat: IssuedAtClaim
+						var exp: ExpirationClaim
+						func verify(using signer: JWTSigner) throws {
+							/* We do not care, we won’t verify it, the server will. */
+						}
+					}
+					let jwtPayload = GitHubJWTPayload(iss: .init(value: appId), iat: .init(value: Date()), exp: .init(value: Date() + 30))
+					let jwtToken = try JWTSigner.rs256(key: privateKey).sign(jwtPayload)
+					
+					let decoder = JSONDecoder()
+					decoder.dateDecodingStrategy = .iso8601
+					decoder.keyDecodingStrategy = .convertFromSnakeCase
+					let op = URLRequestDataOperation<Auth>.forAPIRequest(
+						baseURL: URL(string: "https://api.github.com/app/installations/\(installationId)/access_tokens")!, method: "POST",
+						headers: ["authorization": "Bearer \(jwtToken)"],
+						decoders: [decoder], retryProviders: []
+					)
+					auth = try await op.startAndGetResult().result
+			}
+		}.failureValue)}
 	}
 	
 	/* ************************************

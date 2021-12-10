@@ -14,6 +14,7 @@ import GenericJSON
 import SemiSingleton
 import NIO
 import ServiceKit
+import URLRequestOperation
 
 
 
@@ -113,118 +114,80 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	}
 	
 	public func existingUser(fromPersistentId pId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper? {
-		guard let url = URL(string: "existing-user-from/persistent-id", relativeTo: config.url) else {
-			throw InternalError(message: "Cannot get external service URL to retrieve existing user from persistent id")
-		}
+		let operation = try ApiRequestOperation<DirectoryUserWrapper?>.forAPIRequest(
+			baseURL: config.url, path: "existing-user-from/persistent-id", method: "POST",
+			httpBody: Request(persistentId: pId, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue })),
+			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		return try await services.opQ.addOperationAndGetResult(operation).result.getData()
 		
 		struct Request : Encodable {
 			var persistentId: TaggedId
 			var propertiesToFetch: Set<String>
 		}
-		let request = Request(persistentId: pId, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue }))
-		let requestData = try jsonEncoder.encode(request)
-		
-		var urlRequest = URLRequest(url: url)
-		urlRequest.httpMethod = "POST"
-		urlRequest.httpBody = requestData
-		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-		
-		let operation = ApiRequestOperation<DirectoryUserWrapper?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return try await services.opQ.addOperationAndGetResult(operation).getData()
 	}
 	
 	public func existingUser(fromUserId uId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper? {
-		guard let url = URL(string: "existing-user-from/user-id", relativeTo: config.url) else {
-			throw InternalError(message: "Cannot get external service URL to retrieve existing user from user id")
-		}
+		let operation = try ApiRequestOperation<DirectoryUserWrapper?>.forAPIRequest(
+			baseURL: config.url, path: "existing-user-from/user-id", method: "POST",
+			httpBody: Request(userId: uId, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue })),
+			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		return try await services.opQ.addOperationAndGetResult(operation).result.getData()
 		
 		struct Request : Encodable {
 			var userId: TaggedId
 			var propertiesToFetch: Set<String>
 		}
-		let request = Request(userId: uId, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue }))
-		let requestData = try jsonEncoder.encode(request)
-		
-		var urlRequest = URLRequest(url: url)
-		urlRequest.httpMethod = "POST"
-		urlRequest.httpBody = requestData
-		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-		
-		let operation = ApiRequestOperation<DirectoryUserWrapper?>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return try await services.opQ.addOperationAndGetResult(operation).getData()
 	}
 	
 	public func listAllUsers(using services: Services) async throws -> [DirectoryUserWrapper] {
-		guard let url = URL(string: "list-all-users", relativeTo: config.url) else {
-			throw InternalError(message: "Cannot get external service URL to list all users")
-		}
-		
-		let operation = ApiRequestOperation<[DirectoryUserWrapper]>(url: url, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return try await services.opQ.addOperationAndGetResult(operation).getData()
+		let operation = ApiRequestOperation<[DirectoryUserWrapper]>.forAPIRequest(
+			baseURL: config.url, path: "list-all-users",
+			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		return try await services.opQ.addOperationAndGetResult(operation).result.getData()
 	}
 	
 	public var supportsUserCreation: Bool {return config.supportsUserCreation}
 	public func createUser(_ user: DirectoryUserWrapper, using services: Services) async throws -> DirectoryUserWrapper {
-		guard let url = URL(string: "create-user", relativeTo: config.url) else {
-			throw InternalError(message: "Cannot get external service URL to create a user")
-		}
+		let operation = try ApiRequestOperation<DirectoryUserWrapper>.forAPIRequest(
+			baseURL: config.url, path: "create-user", method: "POST", httpBody: Request(user: user),
+			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		return try await services.opQ.addOperationAndGetResult(operation).result.getData()
 		
 		struct Request : Encodable {
 			var user: DirectoryUserWrapper
 		}
-		let request = Request(user: user)
-		let requestData = try jsonEncoder.encode(request)
-		
-		var urlRequest = URLRequest(url: url)
-		urlRequest.httpMethod = "POST"
-		urlRequest.httpBody = requestData
-		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-		
-		let operation = ApiRequestOperation<DirectoryUserWrapper>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return try await services.opQ.addOperationAndGetResult(operation).getData()
 	}
 	
 	public var supportsUserUpdate: Bool {return config.supportsUserUpdate}
 	public func updateUser(_ user: DirectoryUserWrapper, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper {
-		guard let url = URL(string: "update-user", relativeTo: config.url) else {
-			throw InternalError(message: "Cannot get external service URL to update a user")
-		}
+		let operation = try ApiRequestOperation<DirectoryUserWrapper>.forAPIRequest(
+			baseURL: config.url, path: "update-user", method: "POST",
+			httpBody: Request(user: user, propertiesToUpdate: Set(propertiesToUpdate.map{ $0.rawValue })),
+			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		return try await services.opQ.addOperationAndGetResult(operation).result.getData()
 		
 		struct Request : Encodable {
 			var user: DirectoryUserWrapper
 			var propertiesToUpdate: Set<String>
 		}
-		let request = Request(user: user, propertiesToUpdate: Set(propertiesToUpdate.map{ $0.rawValue }))
-		let requestData = try jsonEncoder.encode(request)
-		
-		var urlRequest = URLRequest(url: url)
-		urlRequest.httpMethod = "POST"
-		urlRequest.httpBody = requestData
-		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-		
-		let operation = ApiRequestOperation<DirectoryUserWrapper>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		return try await services.opQ.addOperationAndGetResult(operation).getData()
 	}
 	
 	public var supportsUserDeletion: Bool {return config.supportsUserDeletion}
 	public func deleteUser(_ user: DirectoryUserWrapper, using services: Services) async throws {
-		guard let url = URL(string: "delete-user", relativeTo: config.url) else {
-			throw InternalError(message: "Cannot get external service URL to delete a user")
-		}
+		let operation = try ApiRequestOperation<String>.forAPIRequest(
+			baseURL: config.url, path: "delete-user", method: "POST", httpBody: Request(user: user),
+			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		_ = try await services.opQ.addOperationAndGetResult(operation).result.getData()
 		
 		struct Request : Encodable {
 			var user: DirectoryUserWrapper
 		}
-		let request = Request(user: user)
-		let requestData = try jsonEncoder.encode(request)
-		
-		var urlRequest = URLRequest(url: url)
-		urlRequest.httpMethod = "POST"
-		urlRequest.httpBody = requestData
-		urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-		
-		let operation = ApiRequestOperation<String>(request: urlRequest, authenticator: authenticator.authenticate, decoder: jsonDecoder)
-		_ = try await services.opQ.addOperationAndGetResult(operation)
 	}
 	
 	public var supportsPasswordChange: Bool {return config.supportsPasswordChange}
@@ -233,7 +196,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		return semiSingletonStore.semiSingleton(forKey: user.userId, additionalInitInfo: (config.url, authenticator, jsonEncoder, jsonDecoder)) as ResetExternalServicePasswordAction
 	}
 	
-	private typealias ApiRequestOperation<T : Decodable> = AuthenticatedJSONOperation<ExternalServiceResponse<T>>
+	private typealias ApiRequestOperation<T : Decodable> = URLRequestDataOperation<ExternalServiceResponse<T>>
 	
 	private let jsonEncoder: JSONEncoder
 	private let jsonDecoder: JSONDecoder

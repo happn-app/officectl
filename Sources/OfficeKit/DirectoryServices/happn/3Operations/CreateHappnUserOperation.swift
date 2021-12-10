@@ -13,6 +13,7 @@ import FoundationNetworking
 import HasResult
 import NIO
 import RetryingOperation
+import URLRequestOperation
 
 
 
@@ -49,40 +50,31 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 				
 				/* 1. Create the user. */
 				
+				let createUserOperation = try URLRequestDataOperation<HappnApiResult<HappnUser>>.forAPIRequest(
+					baseURL: connector.baseURL, path: "api/users",
+					urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname"], httpBody: user,
+					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+				)
 				var urlComponentsUserCreation = URLComponents(url: URL(string: "api/users/", relativeTo: connector.baseURL)!, resolvingAgainstBaseURL: true)!
 				urlComponentsUserCreation.queryItems = [
 					URLQueryItem(name: "fields", value: "id,first_name,last_name,acl,login,nickname")
 				]
-				var urlRequestUserCreation = URLRequest(url: urlComponentsUserCreation.url!)
-				urlRequestUserCreation.addValue("application/json", forHTTPHeaderField: "Content-Type")
-				urlRequestUserCreation.httpBody = try JSONEncoder().encode(user)
-				urlRequestUserCreation.httpMethod = "POST"
-				
-				let createUserOperation = AuthenticatedJSONOperation<HappnApiResult<HappnUser>>(request: urlRequestUserCreation, authenticator: connector.authenticate, decoder: decoder)
 				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-				let apiUserResult = try await createUserOperation.startAndGetResult()
+				let apiUserResult = try await createUserOperation.startAndGetResult().result
 				guard apiUserResult.success, let user = apiUserResult.data, let userId = user.id.value else {
 					throw NSError(domain: "com.happn.officectl.happn", code: apiUserResult.error_code, userInfo: [NSLocalizedDescriptionKey: apiUserResult.error ?? "Unknown error while creating the user"])
 				}
 				
 				/* 2. Make it an admin. */
 				
-				var urlComponentsMakeAdmin = URLComponents()
-				urlComponentsMakeAdmin.queryItems = [
-					URLQueryItem(name: "_action",  value: "grant"),
-					URLQueryItem(name: "user_id",  value: userId),
-					URLQueryItem(name: "password", value: adminPass)
-				]
-				
-				var urlRequestMakeAdmin = URLRequest(url: URL(string: "api/administrators/", relativeTo: connector.baseURL)!)
-				urlRequestMakeAdmin.httpBody = urlComponentsMakeAdmin.percentEncodedQuery.flatMap{ Data($0.utf8) }
-				urlRequestMakeAdmin.httpMethod = "POST"
-				
 				/* We declare a decoded type HappnApiResult<Int8>.
 				 * We chose Int8, but could have taken anything that’s decodable: the API returns null all the time… */
-				let makeUserAdminOperation = AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequestMakeAdmin, authenticator: connector.authenticate, decoder: decoder)
+				let makeUserAdminOperation = try URLRequestDataOperation<HappnApiResult<Int8>>.forAPIRequest(
+					baseURL: connector.baseURL, path: "api/administrators", httpBody: GrantRequestBody(userId: userId, adminPassword: adminPass),
+					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+				)
 				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-				let apiGrantResult = try await makeUserAdminOperation.startAndGetResult()
+				let apiGrantResult = try await makeUserAdminOperation.startAndGetResult().result
 				guard apiGrantResult.success else {
 					throw NSError(domain: "com.happn.officectl.happn", code: apiGrantResult.error_code, userInfo: [NSLocalizedDescriptionKey: apiGrantResult.error ?? "Unknown error while granting user admin access"])
 				}
@@ -97,6 +89,17 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 				return user
 			}
 			baseOperationEnded()
+		}
+		
+		/* ***** */
+		
+		struct GrantRequestBody : Encodable {
+			var action = "grant"
+			var userId: String
+			var adminPassword: String
+			private enum CodingKeys : String, CodingKey {
+				case action = "_action", userId = "user_id", adminPassword = "password"
+			}
 		}
 	}
 	

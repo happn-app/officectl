@@ -9,6 +9,7 @@ import Foundation
 
 import HasResult
 import RetryingOperation
+import URLRequestOperation
 
 
 
@@ -31,35 +32,20 @@ public final class GetHappnUserOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		guard
-			let url = URL(string: userKey, relativeTo: URL(string: "api/users/", relativeTo: connector.baseURL)!),
-			var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true)
-		else {
-			result = .failure(InternalError(message: "Cannot build URL to get happn user with key \(userKey)"))
-			return baseOperationEnded()
-		}
-		urlComponents.queryItems = [
-			URLQueryItem(name: "fields", value: "id,first_name,last_name,acl,login,nickname")
-		]
-		
-		let decoder = JSONDecoder()
-		decoder.keyDecodingStrategy = .useDefaultKeys
-		let op = AuthenticatedJSONOperation<HappnApiResult<HappnUser>>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
-		op.completionBlock = {
-			defer {self.baseOperationEnded()}
-			
-			guard let o = op.result.successValue else {
-				self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the user"]))
-				return
+		Task{
+			result = await Result{
+				let op = try URLRequestDataOperation<HappnApiResult<HappnUser>>.forAPIRequest(
+					baseURL: connector.baseURL, path: "api/users/" + userKey, urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname"],
+					requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+				)
+				let res = try await op.startAndGetResult().result
+				guard res.success, let user = res.data else {
+					throw NSError(domain: "com.happn.officectl.happn", code: res.error_code, userInfo: [NSLocalizedDescriptionKey: res.error ?? "Unknown error while fetching the user"])
+				}
+				return user
 			}
-			guard o.success, let user = o.data else {
-				self.result = .failure(NSError(domain: "com.happn.officectl.happn", code: o.error_code, userInfo: [NSLocalizedDescriptionKey: o.error ?? "Unknown error while fetching the user"]))
-				return
-			}
-			
-			self.result = .success(user)
+			baseOperationEnded()
 		}
-		op.start()
 	}
 	
 	public override var isAsynchronous: Bool {

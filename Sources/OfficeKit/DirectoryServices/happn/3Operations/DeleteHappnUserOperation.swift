@@ -10,10 +10,12 @@ import Foundation
 import FoundationNetworking
 #endif
 
+import FormURLEncodedEncoding
 import GenericJSON
 import HasResult
 import NIO
 import RetryingOperation
+import URLRequestOperation
 
 
 
@@ -43,7 +45,6 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 				let userId = user.persistentId.value ?? user.userId ?? HappnConnector.nullLoginUserId
 				let decoder = JSONDecoder()
 				decoder.dateDecodingStrategy = .customISO8601
-				decoder.keyDecodingStrategy = .useDefaultKeys
 				
 				guard case .userPass(_, let adminPass) = self.connector.authMode else {
 					throw InvalidArgumentError(message: "Cannot delete a user without the password of the admin")
@@ -51,48 +52,43 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 				
 				/* 1. Revoke user admin privileges. */
 				
-				var urlComponentsRevokeAdminContent = URLComponents()
-				urlComponentsRevokeAdminContent.queryItems = [
-					URLQueryItem(name: "_action", value: "revoke"),
-					URLQueryItem(name: "user_id", value: userId),
-					URLQueryItem(name: "password", value: adminPass)
-				]
-				guard let revokeAdminRequestContent = urlComponentsRevokeAdminContent.percentEncodedQuery else {
-					throw NSError(domain: "com.happn.officectl.happn", code: 1, userInfo: [NSLocalizedDescriptionKey: "cannot build request content to revoke admin"])
-				}
-				var urlRequestRevokeAdmin = URLRequest(url: URL(string: "api/administrators/", relativeTo: self.connector.baseURL)!)
-				urlRequestRevokeAdmin.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-				urlRequestRevokeAdmin.httpBody = Data(revokeAdminRequestContent.utf8)
-				urlRequestRevokeAdmin.httpMethod = "POST"
-				
 				/* We declare a decoded type HappnApiResult<Int8>.
 				 * We chose Int8, but could have taken anything that’s decodable: the API returns null all the time… */
-				let revokeAdminOp = AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequestRevokeAdmin, authenticator: connector.authenticate, decoder: decoder)
+				let revokeOp = try URLRequestDataOperation<HappnApiResult<Int8>>.forAPIRequest(
+					baseURL: connector.baseURL, path: "api/administrators/", httpBody: RevokeRequestBody(userId: userId, adminPassword: adminPass),
+					bodyEncoder: FormURLEncodedEncoder(), decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+				)
 				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-				let revokeAdminResult = try await revokeAdminOp.startAndGetResult()
-				guard revokeAdminResult.success else {
-					throw NSError(domain: "com.happn.officectl.happn", code: revokeAdminResult.error_code, userInfo: [NSLocalizedDescriptionKey: revokeAdminResult.error ?? "Unknown error while revoking user admin access"])
-				}
+				_ = try await revokeOp.startAndGetResult()
 				
 				/* 2. Delete the user. */
 				
-				guard
-					let urlDeleteUser = URL(string: userId, relativeTo: URL(string: "api/users/", relativeTo: connector.baseURL)!),
-					var urlComponentsDeleteUser = URLComponents(url: urlDeleteUser, resolvingAgainstBaseURL: true)
-				else {
-					throw InternalError(message: "Cannot build URL to delete happn user with key \(userId)")
-				}
-				urlComponentsDeleteUser.queryItems = [
-					URLQueryItem(name: "to_delete", value: "true")
-				]
-				var urlRequestDeleteUser = URLRequest(url: urlComponentsDeleteUser.url!)
-				urlRequestDeleteUser.httpMethod = "DELETE"
-				
-				let op = AuthenticatedJSONOperation<HappnApiResult<Int8>>(request: urlRequestDeleteUser, authenticator: connector.authenticate, decoder: decoder)
+				let deleteOp = try URLRequestDataOperation<HappnApiResult<Int8>>.forAPIRequest(
+					baseURL: connector.baseURL, path: "api/users/" + userId, method: "DELETE", urlParameters: DeleteRequestQuery(),
+					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+				)
 				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-				await op.startAndWait() /* We don’t care about the error if any. */
+				await deleteOp.startAndWait() /* We don’t care about the error if any. */
 			}.failureValue
 			baseOperationEnded()
+		}
+		
+		/* ***** */
+		
+		struct RevokeRequestBody : Encodable {
+			var action = "revoke"
+			var userId: String
+			var adminPassword: String
+			private enum CodingKeys : String, CodingKey {
+				case action = "_action", userId = "user_id", adminPassword = "password"
+			}
+		}
+		
+		struct DeleteRequestQuery : Encodable {
+			var toDelete = "true"
+			private enum CodingKeys : String, CodingKey {
+				case toDelete = "to_delete"
+			}
 		}
 	}
 	

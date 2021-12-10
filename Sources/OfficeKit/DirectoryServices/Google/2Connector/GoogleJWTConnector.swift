@@ -10,6 +10,9 @@ import Foundation
 import FoundationNetworking
 #endif
 
+import FormURLEncodedEncoding
+import JWTKit
+import OperationAwaiting
 import URLRequestOperation
 
 
@@ -20,7 +23,7 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 	public typealias RequestType = URLRequest
 	
 	public let userBehalf: String?
-	public let privateKey: Data
+	public let privateKey: RSAKey
 	public let superuserEmail: String
 	
 	public var currentScope: ScopeType? {
@@ -51,7 +54,7 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 		
 		userBehalf = u
 		superuserEmail = superuserCreds.clientEmail
-		privateKey = try Crypto.privateKey(pemData: Data(superuserCreds.privateKey.utf8))
+		privateKey = try RSAKey.private(pem: Data(superuserCreds.privateKey.utf8))
 	}
 	
 	public init(from connector: GoogleJWTConnector, userBehalf u: String?) {
@@ -133,71 +136,88 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 	}
 	
 	private func unsafeConnect(scope: ScopeType, handler: @escaping (Error?) -> Void) {
-		/* Retrieve connection information */
-		let authURL = URL(string: "https://www.googleapis.com/oauth2/v4/token")!
-		var jwtRequestContent: [String: Any] = [
-			"iss": superuserEmail,
-			"scope": scope.joined(separator: " "), "aud": authURL.absoluteString,
-			"iat": Int(Date().timeIntervalSince1970), "exp": Int(Date(timeIntervalSinceNow: 30).timeIntervalSince1970)
-		]
-		if let subemail = userBehalf {jwtRequestContent["sub"] = subemail}
-		guard let jwtRequest = try? Crypto.createRS256JWT(payload: jwtRequestContent, privateKey: privateKey) else {
-			handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Creating signature for JWT request to get access token failed."]))
-			return
-		}
-		
-		/* Create the URLRequest for the JWT request */
-		var request = URLRequest(url: authURL)
-		var components = URLComponents()
-		components.queryItems = [
-			URLQueryItem(name: "grant_type", value: "urn:ietf:params:oauth:grant-type:jwt-bearer"),
-			URLQueryItem(name: "assertion", value: jwtRequest)
-		]
-		request.httpBody = components.percentEncodedQuery?.addingPercentEncoding(withAllowedCharacters: CharacterSet(charactersIn: "+").inverted)?.data(using: .utf8)
-		request.httpMethod = "POST"
-		
-		/* Run the URLRequest and parse the response in the TokenResponse object */
-		let op = AuthenticatedJSONOperation<TokenResponse>(request: request, authenticator: nil)
-		op.completionBlock = {
-			guard let o = op.result.successValue else {
-				handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
+		Task{await handler(Result{
+			let authURL = URL(string: "https://www.googleapis.com/oauth2/v4/token")!
+			let requestBody = TokenRequestBody(
+				grantType: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+				assertion: .init(
+					iss: .init(value: superuserEmail), scope: scope.joined(separator: " "),
+					aud: .init(value: authURL.absoluteString), iat: .init(value: Date()), exp: .init(value: Date() + 30),
+					sub: userBehalf
+				),
+				assertionSigner: JWTSigner.rs256(key: privateKey)
+			)
+			
+			let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(baseURL: authURL, httpBody: requestBody, bodyEncoder: FormURLEncodedEncoder(), retryProviders: [])
+			let res = try await op.startAndGetResult().result
+			guard res.tokenType == "Bearer" else {
+				handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unexpected token type \(res.tokenType)"]))
 				return
 			}
 			
-			guard o.tokenType == "Bearer" else {
-				handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unexpected token type \(o.tokenType)"]))
-				return
+			self.auth = Auth(token: res.accessToken, expirationDate: Date(timeIntervalSinceNow: TimeInterval(res.expiresIn)), scope: scope)
+		}.failureValue)}
+		
+		struct TokenRequestBody : Encodable {
+			
+			struct Assertion : JWTPayload {
+				var iss: IssuerClaim
+				var scope: String
+				var aud: AudienceClaim
+				var iat: IssuedAtClaim
+				var exp: ExpirationClaim
+				var sub: String?
+				func verify(using signer: JWTSigner) throws {
+					/* We do not care, we won’t verify it, the server will. */
+				}
 			}
 			
-			self.auth = Auth(token: o.accessToken, expirationDate: Date(timeIntervalSinceNow: TimeInterval(o.expiresIn)), scope: scope)
-			handler(nil)
+			var grantType: String
+			var assertion: Assertion
+			var assertionSigner: JWTSigner
+			
+			func encode(to encoder: Encoder) throws {
+				var container = encoder.container(keyedBy: CodingKeys.self)
+				try container.encode(grantType, forKey: .grantType)
+				try container.encode(assertionSigner.sign(assertion), forKey: .assertion)
+			}
+			
+			private enum CodingKeys : String, CodingKey {
+				case grantType = "grant_type", assertion
+			}
+			
 		}
-		op.start()
 		
-		/* ***** TokenResponse Object ***** */
-		/* This struct is used strictly for conveniently decoding the response when reading the results of the token request. */
-		struct TokenResponse : Decodable {
+		struct TokenResponseBody : Decodable {
 			
 			let tokenType: String
 			let accessToken: String
 			let expiresIn: Int
 			
+			private enum CodingKeys : String, CodingKey {
+				case tokenType = "token_type", accessToken = "access_token", expiresIn = "expires_in"
+			}
+			
 		}
 	}
 	
 	private func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
-		guard let auth = auth else {handler(nil); return}
+		Task{await handler(Result{
+			guard let auth = auth else {return}
+			
+			let op = try URLRequestDataOperation<RevokeResponseBody>.forAPIRequest(baseURL: URL(string: "https://accounts.google.com/o/oauth2/revoke")!, urlParameters: RevokeRequestQuery(token: auth.token), retryProviders: [])
+			do {_ = try await op.startAndGetResult()}
+			catch where ((error as? URLRequestOperationError)?.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)/*?.actual == 400*/ != nil {
+				/* We consider the 400 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
+			}
+		}.failureValue)}
 		
-		var components = URLComponents(string: "https://accounts.google.com/o/oauth2/revoke")!
-		components.queryItems = [URLQueryItem(name: "token", value: auth.token)]
-		let op = URLRequestOperation(url: components.url!)
-		op.completionBlock = {
-			/* We consider the 400 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
-			let error = (op.statusCode == 400 ? nil : op.finalError)
-			if error == nil {self.auth = nil}
-			handler(error)
+		struct RevokeRequestQuery : Encodable {
+			let token: String
 		}
-		op.start()
+		struct RevokeResponseBody : Decodable {
+			/* I don’t know! */
+		}
 	}
 	
 	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {

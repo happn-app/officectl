@@ -10,8 +10,10 @@ import Foundation
 import FoundationNetworking
 #endif
 
+import Email
 import HasResult
 import RetryingOperation
+import URLRequestOperation
 
 
 
@@ -37,36 +39,20 @@ public final class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		do {
-			let dataToSend = try JSONEncoder().encode(user)
-			
-			let userId = user.persistentId.value ?? user.userId.rawValue
-			let baseURL = URL(string: "https://www.googleapis.com/admin/directory/v1/users/")!
-			guard let url = URL(string: userId, relativeTo: baseURL), let urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true) else {
-				throw InternalError(message: "Cannot build URL to modify Google user \(user)")
-			}
-			var urlRequest = URLRequest(url: urlComponents.url!)
-			urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-			urlRequest.httpBody = dataToSend
-			urlRequest.httpMethod = "PUT"
-			
-			let decoder = JSONDecoder()
-			decoder.dateDecodingStrategy = .customISO8601
-			decoder.keyDecodingStrategy = .useDefaultKeys
-			let op = AuthenticatedJSONOperation<GoogleUser>(request: urlRequest, authenticator: connector.authenticate, decoder: decoder)
-			op.completionBlock = {
-				guard op.result.successValue != nil else {
-					self.error = op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the user"])
-					self.baseOperationEnded()
-					return
-				}
+		Task{
+			error = await Result<Void, Error>{
+				let baseURL = URL(string: "https://www.googleapis.com/admin/directory/v1/")!
 				
-				self.error = nil
-				self.baseOperationEnded()
-			}
-			op.start()
-		} catch let err {
-			error = err
+				let decoder = JSONDecoder()
+				decoder.dateDecodingStrategy = .customISO8601
+				decoder.keyDecodingStrategy = .useDefaultKeys
+				let userId = user.persistentId.value ?? user.userId.rawValue
+				let op = try URLRequestDataOperation<GoogleUser>.forAPIRequest(
+					baseURL: baseURL, path: "users/" + userId, method: "PUT", httpBody: user,
+					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+				)
+				_ = try await op.startAndGetResult().result
+			}.failureValue
 			baseOperationEnded()
 		}
 	}

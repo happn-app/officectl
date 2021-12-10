@@ -12,6 +12,7 @@ import FoundationNetworking
 
 import HasResult
 import RetryingOperation
+import URLRequestOperation
 
 
 
@@ -36,43 +37,22 @@ public final class ModifyHappnUserOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		do {
-			let dataToSend = try JSONEncoder().encode(user)
-			
-			let userId = user.persistentId.value ?? user.userId ?? HappnConnector.nullLoginUserId
-			let baseURL = URL(string: "api/users/", relativeTo: connector.baseURL)!
-			guard let url = URL(string: userId, relativeTo: baseURL), var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true) else {
-				throw InternalError(message: "Cannot build URL to modify happn user \(user)")
-			}
-			urlComponents.queryItems = [
-				URLQueryItem(name: "fields", value: "id,first_name,last_name,acl,login,nickname")
-			]
-			var urlRequest = URLRequest(url: urlComponents.url!)
-			urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-			urlRequest.httpBody = dataToSend
-			urlRequest.httpMethod = "PUT"
-			
-			let decoder = JSONDecoder()
-			decoder.dateDecodingStrategy = .customISO8601
-			decoder.keyDecodingStrategy = .useDefaultKeys
-			let op = AuthenticatedJSONOperation<HappnApiResult<HappnUser>>(request: urlRequest, authenticator: connector.authenticate, decoder: decoder)
-			op.completionBlock = {
-				defer {self.baseOperationEnded()}
-				
-				guard let o = op.result.successValue else {
-					self.error = op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the user"])
-					return
+		Task{
+			error = await Result<Void, Error>{
+				let decoder = JSONDecoder()
+				decoder.dateDecodingStrategy = .customISO8601
+				decoder.keyDecodingStrategy = .useDefaultKeys
+				let userId = user.persistentId.value ?? user.userId ?? HappnConnector.nullLoginUserId
+				let op = try URLRequestDataOperation<HappnApiResult<HappnUser>>.forAPIRequest(
+					baseURL: connector.baseURL, path: "api/users/" + userId, method: "PUT",
+					urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname"], httpBody: user,
+					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+				)
+				let result = try await op.startAndGetResult().result
+				guard result.success else {
+					throw NSError(domain: "com.happn.officectl.happn", code: result.error_code, userInfo: [NSLocalizedDescriptionKey: result.error ?? "Unknown error while fetching the user"])
 				}
-				guard o.success else {
-					self.error = NSError(domain: "com.happn.officectl.happn", code: o.error_code, userInfo: [NSLocalizedDescriptionKey: o.error ?? "Unknown error while fetching the user"])
-					return
-				}
-				
-				self.error = nil
-			}
-			op.start()
-		} catch let err {
-			error = err
+			}.failureValue
 			baseOperationEnded()
 		}
 	}

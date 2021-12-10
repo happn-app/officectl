@@ -9,6 +9,7 @@ import Foundation
 
 import HasResult
 import RetryingOperation
+import URLRequestOperation
 
 
 
@@ -34,26 +35,20 @@ public final class GetGoogleUserOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		let baseURL = URL(string: "https://www.googleapis.com/admin/directory/v1/users/")!
-		guard let url = URL(string: userKey, relativeTo: baseURL) else {
-			result = .failure(InternalError(message: "Cannot build URL to get Google user with key \(userKey)"))
-			return baseOperationEnded()
-		}
-		
-		let decoder = JSONDecoder()
-		decoder.dateDecodingStrategy = .customISO8601
-		decoder.keyDecodingStrategy = .useDefaultKeys
-		let op = AuthenticatedJSONOperation<GoogleUser>(url: url, authenticator: connector.authenticate, decoder: decoder)
-		op.completionBlock = {
-			guard let o = op.result.successValue else {
-				self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the user"]))
-				return self.baseOperationEnded()
+		Task{
+			result = await Result{
+				let baseURL = URL(string: "https://www.googleapis.com/admin/directory/v1/")!
+				
+				let decoder = JSONDecoder()
+				decoder.dateDecodingStrategy = .customISO8601
+				let op = URLRequestDataOperation<GoogleUser>.forAPIRequest(
+					baseURL: baseURL, path: "users/" + userKey,
+					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+				)
+				return try await op.startAndGetResult().result
 			}
-			
-			self.result = .success(o)
-			self.baseOperationEnded()
+			baseOperationEnded()
 		}
-		op.start()
 	}
 	
 	public override var isAsynchronous: Bool {

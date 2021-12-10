@@ -10,7 +10,6 @@ import Foundation
 import FoundationNetworking
 #endif
 
-import AsyncOperationResult
 import GenericJSON
 import HasResult
 import NIO

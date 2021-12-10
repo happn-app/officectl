@@ -29,15 +29,6 @@
         }
       },
       {
-        "package": "AsyncOperationResult",
-        "repositoryURL": "https://github.com/happn-tech/AsyncOperationResult.git",
-        "state": {
-          "branch": null,
-          "revision": "fe81cdaa25a577a9ea688d71aa81387bfed213c7",
-          "version": "1.0.7"
-        }
-      },
-      {
         "package": "clt-logger",
         "repositoryURL": "https://github.com/xcode-actions/clt-logger.git",
         "state": {
@@ -182,6 +173,15 @@
         }
       },
       {
+        "package": "stream-reader",
+        "repositoryURL": "https://github.com/Frizlab/stream-reader.git",
+        "state": {
+          "branch": null,
+          "revision": "09104092cb7e87dc6d1086d40c06d7606fc6cb94",
+          "version": "3.2.3"
+        }
+      },
+      {
         "package": "swift-argument-parser",
         "repositoryURL": "https://github.com/apple/swift-argument-parser.git",
         "state": {
@@ -197,6 +197,15 @@
           "branch": null,
           "revision": "d3e04a9d4b3833363fb6192065b763310b156d54",
           "version": "1.3.1"
+        }
+      },
+      {
+        "package": "swift-collections",
+        "repositoryURL": "https://github.com/apple/swift-collections",
+        "state": {
+          "branch": null,
+          "revision": "48254824bb4248676bf7ce56014ff57b142b77eb",
+          "version": "1.0.2"
         }
       },
       {
@@ -294,8 +303,8 @@
         "repositoryURL": "https://github.com/happn-tech/URLRequestOperation.git",
         "state": {
           "branch": null,
-          "revision": "58768e27a229184b3da813ffb60612eb2f1daf45",
-          "version": "1.1.9"
+          "revision": "973b40f2dd4bd5d8d99c351d206562d326094417",
+          "version": "2.0.0-alpha.12"
         }
       },
       {

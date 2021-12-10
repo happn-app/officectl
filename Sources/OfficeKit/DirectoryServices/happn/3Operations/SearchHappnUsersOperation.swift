@@ -13,6 +13,7 @@ import FoundationNetworking
 import GenericJSON
 import HasResult
 import RetryingOperation
+import URLRequestOperation
 
 
 
@@ -34,7 +35,22 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 	
 	public override func startBaseOperation(isRetry: Bool) {
 		assert(connector.isConnected)
-		fetchNextPage(currentOffset: 0)
+		Task{
+			result = await Result{
+				let limit = 500
+				var curOffset = 0
+				var nUsersAtCurPage = 0
+				var users = [HappnUser]()
+				repeat {
+					let reposAtPage = try await fetchPage(offset: curOffset, limit: limit)
+					nUsersAtCurPage = reposAtPage.count
+					users += reposAtPage
+					curOffset += limit
+				} while nUsersAtCurPage >= limit/2
+				return users
+			}
+			baseOperationEnded()
+		}
 	}
 	
 	public override var isAsynchronous: Bool {
@@ -45,50 +61,25 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 	   MARK: - Private
 	   *************** */
 	
-	private var users = [HappnUser]()
-	
-	private func fetchNextPage(currentOffset: Int) {
-		do {
-			let limit = 500
-			var urlComponents = URLComponents(url: URL(string: "api/v1/users-search", relativeTo: connector.baseURL)!, resolvingAgainstBaseURL: true)!
-			urlComponents.queryItems = [
-				URLQueryItem(name: "fields", value: "id,first_name,last_name,acl,login,nickname,type"),
-			]
-			var requestBody = JSON.object([
-				"offset": .number(Float(currentOffset)),
-				"limit": .number(Float(limit)),
-				"is_admin": true
-			])
-			if let e = email {requestBody = requestBody.merging(with: JSON.object(["full_text_search_with_all_terms": .string(e)]))}
-			var urlRequest = URLRequest(url: urlComponents.url!)
-			urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-			urlRequest.httpBody = try JSONEncoder().encode(requestBody)
-			urlRequest.httpMethod = "POST"
-			
-			let decoder = JSONDecoder()
-			decoder.keyDecodingStrategy = .useDefaultKeys
-			let op = AuthenticatedJSONOperation<HappnApiResult<[HappnUser]>>(request: urlRequest, authenticator: connector.authenticate, decoder: decoder)
-			op.completionBlock = {
-				guard let o = op.result.successValue else {
-					self.result = .failure(op.finalError ?? NSError(domain: "com.happn.officectl", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unknown error while fetching the users"]))
-					self.baseOperationEnded()
-					return
-				}
-				guard o.success else {
-					self.result = .failure(NSError(domain: "com.happn.officectl.happn", code: o.error_code, userInfo: [NSLocalizedDescriptionKey: o.error ?? "Unknown error while fetching the users"]))
-					return self.baseOperationEnded()
-				}
-				
-				let users = o.data ?? []
-				self.users.append(contentsOf: users)
-				if users.count >= limit/2 {self.fetchNextPage(currentOffset: currentOffset + limit)}
-				else                      {self.result = .success(self.users); self.baseOperationEnded()}
+	private func fetchPage(offset: Int, limit: Int) async throws -> [HappnUser] {
+		struct RequestBody : Encodable {
+			var offset: Int?
+			var limit: Int?
+			var isAdmin: Bool = true
+			var fullTextSearchWithAllTerms: String?
+			private enum CodingKeys : String, CodingKey {
+				case offset, limit
+				case isAdmin = "is_admin"
+				case fullTextSearchWithAllTerms = "full_text_search_with_all_terms"
 			}
-			op.start()
-		} catch {
-			result = .failure(error)
-			baseOperationEnded()
 		}
+		let op = try URLRequestDataOperation<HappnApiResult<[HappnUser]>>.forAPIRequest(
+			baseURL: connector.baseURL, path: "api/v1/users-search",
+			urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname,type"],
+			httpBody: RequestBody(offset: offset, limit: limit, fullTextSearchWithAllTerms: email),
+			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+		)
+		return try await op.startAndGetResult().result.data ?? []
 	}
 	
 }

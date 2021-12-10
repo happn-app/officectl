@@ -129,51 +129,52 @@ public final class HappnConnector : Connector, Authenticator {
 	}
 	
 	private func unsafeConnect(scope: Set<String>, authMode: AuthMode, handler: @escaping (Error?) -> Void) {
-		let url = URL(string: "connect/oauth/token", relativeTo: baseURL)!
-		var components = URLComponents()
-		components.queryItems = [
-			URLQueryItem(name: "scope", value: scope.joined(separator: " ")),
-			URLQueryItem(name: "client_id", value: clientId),
-			URLQueryItem(name: "client_secret", value: clientSecret)
-		]
-		switch authMode {
-			case .userPass(username: let username, password: let password):
-				components.queryItems!.append(contentsOf: [
-					URLQueryItem(name: "grant_type", value: "password"),
-					URLQueryItem(name: "username", value: username),
-					URLQueryItem(name: "password", value: password)
-				])
-			case .refreshToken(let refreshToken):
-				components.queryItems!.append(contentsOf: [
-					URLQueryItem(name: "grant_type", value: "refresh_token"),
-					URLQueryItem(name: "refresh_token", value: refreshToken)
-				])
-		}
-		let requestData = components.percentEncodedQuery!.data(using: .utf8)!
+		Task{await handler(Result{
+			let request = TokenRequestBody(scope: scope.joined(separator: " "), clientId: clientId, clientSecret: clientSecret, grant: authMode)
+			let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(baseURL: baseURL, path: "connect/oauth/token", httpBody: request, retryProviders: [])
+			let response = try await op.startAndGetResult().result
+			self.auth = Auth(
+				scope: Set(response.scope.components(separatedBy: " ")), userId: response.userId,
+				accessToken: response.accessToken, refreshToken: response.refreshToken,
+				expirationDate: Date() + TimeInterval(response.expiresIn)
+			)
+		}.failureValue)}
 		
-		var request = URLRequest(url: url)
-		request.httpMethod = "POST"
-		request.httpBody = requestData
-		
-		let op = AuthenticatedJSONOperation<TokenResponse>(request: request, authenticator: nil)
-		op.completionBlock = {
-			guard let o = op.result.successValue else {
-				handler(op.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unkown error"]))
-				return
+		struct TokenRequestBody : Encodable {
+			
+			var scope: String
+			var clientId: String
+			var clientSecret: String?
+			
+			var grant: AuthMode
+			
+			func encode(to encoder: Encoder) throws {
+				var container = encoder.container(keyedBy: CodingKeys.self)
+				try container.encode(scope, forKey: .scope)
+				try container.encode(clientId, forKey: .clientId)
+				try container.encode(clientSecret, forKey: .clientSecret)
+				switch grant {
+					case let .userPass(username: username, password: password):
+						try container.encode("password", forKey: .grantType)
+						try container.encode(username, forKey: .username)
+						try container.encode(password, forKey: .password)
+						
+					case let .refreshToken(refreshToken):
+						try container.encode("refresh_token", forKey: .grantType)
+						try container.encode(refreshToken, forKey: .refreshToken)
+				}
 			}
 			
-			self.auth = Auth(
-				scope: Set(o.scope.components(separatedBy: " ")), userId: o.userId,
-				accessToken: o.accessToken, refreshToken: o.refreshToken,
-				expirationDate: Date(timeIntervalSinceNow: TimeInterval(o.expiresIn))
-			)
-			handler(nil)
+			private enum CodingKeys : String, CodingKey {
+				case scope, clientId = "client_id", clientSecret = "client_secret"
+				case grantType = "grant_type"
+				case username, password
+				case refreshToken = "refresh_token"
+			}
+			
 		}
-		op.start()
 		
-		/* ***** TokenResponse Object ***** */
-		/* This struct is used strictly for conveniently decoding the response when reading the results of the token request */
-		struct TokenResponse : Decodable {
+		struct TokenResponseBody : Decodable {
 			
 			let scope: String
 			let userId: String
@@ -188,18 +189,21 @@ public final class HappnConnector : Connector, Authenticator {
 	}
 	
 	public func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
-		guard let auth = auth else {handler(nil); return}
+		Task{await handler(Result{
+			guard let auth = auth else {return}
+			
+			/* Code before URLRequestOperation v2 migration was making a GET.
+			 * I find it weird but have not verified if it’s correct or not. */
+			let op = URLRequestDataOperation<RevokeResponseBody>.forAPIRequest(baseURL: baseURL, path: "connect/oauth/revoke-token", headers: ["authorization": #"OAuth="\#(auth.accessToken)""#], retryProviders: [])
+			do {_ = try await op.startAndGetResult()}
+			catch where ((error as? URLRequestOperationError)?.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)/*?.actual == 410*/ != nil {
+				/* We consider the 410 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
+			}
+		}.failureValue)}
 		
-		var request = URLRequest(url: URL(string: "connect/oauth/revoke-token", relativeTo: baseURL)!)
-		request.setValue("OAuth=\"\(auth.accessToken)\"", forHTTPHeaderField: "Authorization")
-		let op = URLRequestOperation(request: request)
-		op.completionBlock = {
-			/* We consider the 410 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
-			let error = (op.statusCode == 410 ? nil : op.finalError)
-			if error == nil {self.auth = nil}
-			handler(error)
+		struct RevokeResponseBody : Decodable {
+			/* I don’t know! */
 		}
-		op.start()
 	}
 	
 	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
