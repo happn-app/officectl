@@ -78,16 +78,16 @@ struct FindInDrivesCommand : ParsableCommand {
 		let connector = GoogleJWTConnector(from: mainConnector, userBehalf: userAndDest.user.primaryEmail.rawValue)
 		try await connector.connect(scope: driveROScope)
 		
-		var urlComponents = URLComponents(url: driveApiBaseURL.appendingPathComponent("files", isDirectory: false), resolvingAgainstBaseURL: false)!
-		urlComponents.queryItems = (urlComponents.queryItems ?? []) + [
-			URLQueryItem(name: "q", value: "name contains '\(searchedString.replacingOccurrences(of: #"'"#, with: #"\'"#))'") /* add " and trashed = true" to the query if needed */
-		]
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .customISO8601
-		decoder.keyDecodingStrategy = .useDefaultKeys
-		let op = AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder)
-		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-		let filesList = try await op.startAndGetResult()
+		
+		let query = "name contains '\(searchedString.replacingOccurrences(of: #"'"#, with: #"\'"#))'"/* add " and trashed = true" to the query if needed */
+		
+		let op = try URLRequestDataOperation<GoogleDriveFilesList>.forAPIRequest(
+			url: driveApiBaseURL.appending("files"), urlParameters: ["q": query],
+			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+		)
+		let filesList = try await op.startAndGetResult().result
 		return (filesList.files?.map{ $0.id } ?? []).isEmpty ? nil : userAndDest.user.primaryEmail.rawValue
 	}
 	

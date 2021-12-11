@@ -29,7 +29,7 @@ public final class ResetExternalServicePasswordAction : Action<TaggedId, String,
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
 		Task{await handler(Result{
 			let op = try URLRequestDataOperation<ExternalServiceResponse<String>>.forAPIRequest(
-				baseURL: deps.serviceURL, path: "change-password", httpBody: RequestBody(userId: subject, newPassword: newPassword),
+				url: deps.serviceURL.appending("change-password"), httpBody: RequestBody(userId: subject, newPassword: newPassword),
 				requestProcessors: [AuthRequestProcessor(deps.authenticator)], retryProviders: []
 			)
 			_ = try await op.startAndGetResult().result.asResult().get()

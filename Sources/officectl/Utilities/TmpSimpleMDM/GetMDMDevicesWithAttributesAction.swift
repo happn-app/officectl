@@ -13,6 +13,7 @@ import FoundationNetworking
 import NIO
 import OfficeKit
 import SemiSingleton
+import URLRequestOperation
 
 
 
@@ -71,21 +72,22 @@ final class GetMDMDevicesWithAttributesAction : Action<String, Void, [(SimpleMDM
 			}
 		}
 		
-		func authenticate(_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void {
+		func authenticate(_ request: URLRequest) -> URLRequest {
 			var request = request
 			request.addValue("Basic " + Data((token + ":").utf8).base64EncodedString(), forHTTPHeaderField: "Authorization")
-			handler(.success(request), nil)
+			return request
 		}
-		
-		let url = URL(string: "https://a.simplemdm.com/api/v1/devices")!.appendingPathComponent(String(deviceId)).appendingPathComponent("custom_attribute_values")
 		
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .iso8601
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
-		let op = AuthenticatedJSONOperation<Response>(url: url, authenticator: authenticate, decoder: decoder)
+		let op = URLRequestDataOperation<Response>.forAPIRequest(
+			url: try URL(string: "https://a.simplemdm.com/api/v1/devices")!.appending(String(deviceId), "custom_attribute_values"),
+			requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
+		)
 		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
 		/* We do not verify the API send only one value for a given key. */
-		return try await op.startAndGetResult().data.reduce(into: [String: String](), { $0[$1.id] = $1.attributes.value })
+		return try await op.startAndGetResult().result.data.reduce(into: [String: String](), { $0[$1.id] = $1.attributes.value })
 	}
 	
 }

@@ -57,15 +57,10 @@ class WebCertificateRenewController {
 		let expectedExpiration = Date() + expirationLeeway
 		
 		@Sendable
-		func authenticateSync(_ request: inout URLRequest) -> Void {
-			request.addValue(token, forHTTPHeaderField: "X-Vault-Token")
-		}
-		
-		@Sendable
-		func authenticate(_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void {
+		func authenticate(_ request: URLRequest) -> URLRequest {
 			var request = request
-			authenticateSync(&request)
-			handler(.success(request), nil)
+			request.addValue(token, forHTTPHeaderField: "X-Vault-Token")
+			return request
 		}
 		
 		let certificatesToRevoke = try await withThrowingTaskGroup(
@@ -75,33 +70,37 @@ class WebCertificateRenewController {
 				for issuerName in [issuerName] + additionalActiveIssuers {
 					groupCertifsList.addTask{
 						/* Let’s get the CRL */
-						var urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(issuerName).appendingPathComponent("crl"))
-						authenticateSync(&urlRequest)
-						let opCRL = URLRequestOperation(request: urlRequest)
+						let opCRL = try URLRequestDataOperation.forData(url: vaultBaseURL.appending(issuerName, "crl"), requestProcessors: [AuthRequestProcessor(authHandler: authenticate)])
 						/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-						await opCRL.startAndWait()
-						guard let data = opCRL.fetchedData else {
-							throw opCRL.finalError ?? NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unknown error fetching the CRL"])
-						}
-						let crl = try CRL(der: data)
+						let crl = try await CRL(der: opCRL.startAndGetResult().result)
 						
 						/* Let’s fetch the list of current certificates in the vault */
-						urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(issuerName).appendingPathComponent("certs"))
-						urlRequest.httpMethod = "LIST"
-						let opListCurrentCertifs = AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>(request: urlRequest, authenticator: authenticate, retryInfoRecoveryHandler: { operation, error, handler in
-							if (operation.urlResponse as? HTTPURLResponse)?.statusCode == 404,
-								let data = operation.fetchedData,
-								let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any?],
-								(jsonObject["errors"] as? [Any?])?.isEmpty ?? false
-							{
-								/* When there are no certificates in the PKI, vault returns a fucking 404! */
-								(operation as! AuthenticatedJSONOperation<VaultResponse<CertificateSerialsList>>).fetchedObject = .init(data: .init(keys: []))
-								return handler(.doNotRetry, operation.currentURLRequest, nil)
-							}
-							handler(.doNotRetry, operation.currentURLRequest, error)
-						})
-						/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-						let certificatesList = try await opListCurrentCertifs.startAndGetResult().data
+						let opListCurrentCertifs = URLRequestDataOperation<VaultResponse<CertificateSerialsList>>.forAPIRequest(
+							url: try vaultBaseURL.appending(issuerName, "certs"), method: "LIST",
+							errorType: VaultError.self, requestProcessors: [AuthRequestProcessor(authHandler: authenticate)],
+							resultProcessorModifier: { rp in
+								rp.flatMapError{ (error, response) in
+									/* When there are no certificates in the PKI, vault returns a fucking 404!
+									 * With a response like so '{"errors":[]}'. */
+									if (response as? HTTPURLResponse)?.statusCode == 404,
+										let e = error as? URLRequestOperationError.APIResultErrorWrapper<VaultError>,
+										e.error.errors.isEmpty
+									{
+										return VaultResponse(data: CertificateSerialsList(keys: []))
+									}
+									throw error
+								}
+							}, retryProviders: []
+						)
+						let certificatesList = try await opListCurrentCertifs.startAndGetResult().result.data
+						/* Note: An alternative to the flatMapError in the resultProcessorModifier in the operation above would be no modifier and catching the error.
+						 * An example of implementation:
+						 * 	let certificatesList: CertificateSerialsList
+						 * 	do {
+						 * 		certificatesList = try await opListCurrentCertifs.startAndGetResult().result.data
+						 * 	} catch where URLRequestOperationError.APIResultErrorWrapper<VaultError>.get(from: error)?.error.errors.isEmpty ?? false {
+						 * 		certificatesList = .init(keys: [])
+						 * 	} */
 						
 						/* Get the list of certificates to revoke */
 						return try await withThrowingTaskGroup(
@@ -115,10 +114,11 @@ class WebCertificateRenewController {
 									}
 									
 									groupCertifs.addTask{
-										let urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent(id))
-										let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
-										/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-										let certificateResponse = try await op.startAndGetResult()
+										let op = URLRequestDataOperation<VaultResponse<CertificateContainer>>.forAPIRequest(
+											url: try vaultBaseURL.appending(issuerName, "cert", id),
+											requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
+										)
+										let certificateResponse = try await op.startAndGetResult().result
 										guard let subjectDNStr = certificateResponse.data.certificate.subjectDistinguishedName else {
 											throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN for\n\(certificateResponse.data.pem)"])
 										}
@@ -168,23 +168,20 @@ class WebCertificateRenewController {
 			for certificateToRevoke in certificatesToRevoke {
 				group.addTask{
 					let (id, issuerName, _) = certificateToRevoke
-					var urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(issuerName).appendingPathComponent("revoke"))
-					urlRequest.httpMethod = "POST"
-					let json = JSON(dictionaryLiteral: ("serial_number", JSON(stringLiteral: id)))
-					urlRequest.httpBody = try! JSONEncoder().encode(json)
-					let op = AuthenticatedJSONOperation<VaultResponse<RevocationResult?>>(request: urlRequest, authenticator: authenticate, retryInfoRecoveryHandler: { op, err, completionHandler in
-						if
-							let op = op as? AuthenticatedJSONOperation<VaultResponse<RevocationResult?>>,
-							op.fetchedData?.count == 0,
-							(op.urlResponse as? HTTPURLResponse)?.statusCode == 204
-						{
-							/* Vault returns an empty reply if revoking an expired certificate,
-							 * so we erase the error in case we get an empty reply from the Vault API. */
-							op.fetchedObject = VaultResponse<RevocationResult?>(data: nil)
-							return completionHandler(.doNotRetry, op.currentURLRequest, nil)
-						}
-						return completionHandler(.doNotRetry, op.currentURLRequest, err)
-					})
+					let op = try URLRequestDataOperation<VaultResponse<RevocationResult?>>.forAPIRequest(
+						url: vaultBaseURL.appending(issuerName, "revoke"), httpBody: ["serial_number": id],
+						requestProcessors: [AuthRequestProcessor(authHandler: authenticate)],
+						resultProcessorModifier: { rp in
+							rp.flatMapError{ (error, response) in
+								/* Vault returns an empty reply if revoking an expired certificate,
+								 * so we erase the error in case we get an empty reply from the Vault API. */
+								if (response as? HTTPURLResponse)?.statusCode == 204 {
+									return VaultResponse(data: nil)
+								}
+								throw error
+							}
+						}, retryProviders: []
+					)
 					/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
 					_ = try await op.startAndGetResult()
 				}
@@ -194,13 +191,12 @@ class WebCertificateRenewController {
 		
 		/* Create the new certificate */
 		try req.application.auditLogger.log(action: "Creating certificate w/ CN \(renewedCommonName).", source: .web)
-		var urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(issuerName).appendingPathComponent("issue").appendingPathComponent("client"))
-		urlRequest.httpMethod = "POST"
-		let json = JSON(dictionaryLiteral: ("common_name", JSON(stringLiteral: renewedCommonName)), ("ttl", JSON(stringLiteral: ttl)))
-		urlRequest.httpBody = try! JSONEncoder().encode(json)
-		let opCreateCertif = AuthenticatedJSONOperation<VaultResponse<NewCertificate>>(request: urlRequest, authenticator: authenticate)
+		let opCreateCertif = try URLRequestDataOperation<VaultResponse<NewCertificate>>.forAPIRequest(
+			url: vaultBaseURL.appending(issuerName, "issue", "client"), httpBody: ["common_name": renewedCommonName, "ttl": ttl],
+			requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
+		)
 		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-		var newCertificate = try await opCreateCertif.startAndGetResult().data
+		var newCertificate = try await opCreateCertif.startAndGetResult().result.data
 		
 		/* We recreate the CA chain because we can have more than one, and because vault does not add the root CA anyway… */
 		newCertificate.caChain.removeAll()
@@ -208,19 +204,21 @@ class WebCertificateRenewController {
 			/* Let’s retrieve CAs */
 			for issuerName in ([issuerName] + additionalActiveIssuers + additionalPassiveIssuers) {
 				group.addTask{
-					let urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(issuerName).appendingPathComponent("cert").appendingPathComponent("ca"))
-					let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
-					/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-					return try await op.startAndGetResult().data
+					let op = URLRequestDataOperation<VaultResponse<CertificateContainer>>.forAPIRequest(
+						url: try vaultBaseURL.appending(issuerName, "cert", "ca"),
+						requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
+					)
+					return try await op.startAndGetResult().result.data
 				}
 			}
 			/* Let’s retrieve additional certificates */
 			for additionalCertificate in additionalCertificates {
 				group.addTask{
-					let urlRequest = URLRequest(url: vaultBaseURL.appendingPathComponent(additionalCertificate.issuer).appendingPathComponent("cert").appendingPathComponent(additionalCertificate.id))
-					let op = AuthenticatedJSONOperation<VaultResponse<CertificateContainer>>(request: urlRequest, authenticator: authenticate)
-					/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-					return try await op.startAndGetResult().data
+					let op = URLRequestDataOperation<VaultResponse<CertificateContainer>>.forAPIRequest(
+						url: try vaultBaseURL.appending(additionalCertificate.issuer, "cert", additionalCertificate.id),
+						requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
+					)
+					return try await op.startAndGetResult().result.data
 				}
 			}
 			
@@ -270,6 +268,12 @@ class WebCertificateRenewController {
 	private struct CertRenewData : Decodable {
 		
 		var userEmail: Email
+		
+	}
+	
+	private struct VaultError : Decodable {
+		
+		var errors: [String] /* I guess this only ever contains strings, but doc is not explicit about it. */
 		
 	}
 	

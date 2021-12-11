@@ -11,6 +11,7 @@ import FoundationNetworking
 #endif
 
 import ArgumentParser
+import GenericJSON
 import Vapor
 
 import OfficeKit
@@ -74,26 +75,14 @@ struct ConsolepermCommand : ParsableCommand {
 		
 		try await hConnector.connect(scope: Set(arrayLiteral: "acl_create", "acl_update", "acl_read"))
 		
-		let url = hService.config.connectorSettings.baseURL.appendingPathComponent("api").appendingPathComponent("user-acls").appendingPathComponent(userID)
-		var urlRequest = URLRequest(url: url)
-		urlRequest.httpMethod = "POST"
-		urlRequest.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-		
-		var urlComponents = URLComponents(string: "https://example.com")!
-		urlComponents.queryItems = [
-			URLQueryItem(name: "permissions", value: permissions)
-		]
-		urlRequest.httpBody = Data(urlComponents.percentEncodedQuery!.utf8)
-		
-		let authenticatedURLRequest = try await hConnector.authenticate(request: urlRequest)
-		
-		let operation = URLRequestOperation(request: authenticatedURLRequest.result)
+		let operation = try URLRequestDataOperation<JSON>.forAPIRequest(
+			url: hService.config.connectorSettings.baseURL.appending("api", "user-acls", userID),
+			httpBody: ["permissions": permissions],
+			requestProcessors: [AuthRequestProcessor(hConnector)], retryProviders: []
+		)
 		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-		await operation.startAndWait()
-		guard let data = operation.fetchedData else {
-			throw operation.finalError ?? InternalError(message: "no data and no known error from the request")
-		}
-		app.console.print(String(data: data, encoding: .utf8) ?? data.reduce("", { $0 + String(format: "%02x", $1) }))
+		let res = try await operation.startAndGetResult()
+		app.console.print("\(res)")
 	}
 	
 }

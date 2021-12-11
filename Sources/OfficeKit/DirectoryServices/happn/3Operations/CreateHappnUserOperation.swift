@@ -51,7 +51,7 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 				/* 1. Create the user. */
 				
 				let createUserOperation = try URLRequestDataOperation<HappnApiResult<HappnUser>>.forAPIRequest(
-					baseURL: connector.baseURL, path: "api/users",
+					url: connector.baseURL.appending("api", "users"),
 					urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname"], httpBody: user,
 					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 				)
@@ -70,7 +70,7 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 				/* We declare a decoded type HappnApiResult<Int8>.
 				 * We chose Int8, but could have taken anything that’s decodable: the API returns null all the time… */
 				let makeUserAdminOperation = try URLRequestDataOperation<HappnApiResult<Int8>>.forAPIRequest(
-					baseURL: connector.baseURL, path: "api/administrators", httpBody: GrantRequestBody(userId: userId, adminPassword: adminPass),
+					url: connector.baseURL.appending("api", "administrators"), httpBody: GrantRequestBody(userId: userId, adminPassword: adminPass),
 					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 				)
 				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */

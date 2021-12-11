@@ -87,20 +87,21 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 						throw InvalidArgumentError(message: "A folder exists where a file would be downloaded (at \(fileDownloadDestinationURL.path).")
 					}
 				} else {
-					var urlComponents = URLComponents(url: fileObjectURL, resolvingAgainstBaseURL: true)!
-					urlComponents.queryItems = [URLQueryItem(name: "alt", value: "media")]
-					var urlRequest = URLRequest(url: urlComponents.url!)
-					urlRequest.timeoutInterval = 24*3600
-					
-					var downloadConfig = URLRequestOperation.Config(request: urlRequest, session: nil)
-					downloadConfig.maximumNumberOfRetries = DownloadDriveFileOperation.maximumNumberOfRetries
-					downloadConfig.destinationURL = fileDownloadDestinationURL
-					downloadConfig.downloadBehavior = .failIfDestinationExists
-					downloadConfig.acceptableStatusCodes = IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403))
-					
-					let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DownloadBinaryForDoc(config: downloadConfig, authenticator: self.state.connector.authenticate), queue: DownloadDriveFileOperation.downloadBinaryQueue)
-					await DownloadDriveFileOperation.downloadBinaryQueue.addOperationAndWait(op)
-					if let e = op.finalError {throw e}
+					let urlRequest = URLRequest(url: try fileObjectURL.appendingQueryParameters(from: ["alt": "media"]), timeoutInterval: 24*3600)
+					let op = DriveUtils.rateLimitGoogleDriveAPIOperation(
+						URLRequestDownloadOperation(
+							request: urlRequest,
+							requestProcessors: [AuthRequestProcessor(state.connector)],
+							urlResponseValidators: [HTTPStatusCodeURLResponseValidator(expectedCodes: Set(200..<300).union([403]))],
+							resultProcessor: DownloadBinaryForDocResultProcessor()
+								.flatMap(URLMoveResultProcessor(
+									destinationURL: fileDownloadDestinationURL,
+									moveBehavior: .failIfDestinationExists
+								)),
+							retryProviders: [RateLimitRetryProvider(maxRetries: DownloadDriveFileOperation.maximumNumberOfRetries)]
+						)
+					)
+					_ = try await DownloadDriveFileOperation.downloadBinaryQueue.addOperationAndGetResult(op)
 				}
 				
 				for p in paths {
@@ -129,13 +130,24 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				
 				var request = URLRequest(url: fileObjectURL)
 				request.httpMethod = "DELETE"
-				
-				let requestOperationConfig = URLRequestOperation.Config(request: request, session: nil, maximumNumberOfRetries: DownloadDriveFileOperation.maximumNumberOfRetries, allowRetryingNonIdempotentRequests: true, acceptableStatusCodes: IndexSet(integersIn: 200..<300).union(IndexSet(integer: 403)))
-				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(DeleteFileURLRequestOperation(config: requestOperationConfig, authenticator: self.state.connector.authenticate))
-				await DownloadDriveFileOperation.downloadBinaryQueue.addOperationAndWait(op)
-				if let e = op.finalError {
-					throw InvalidArgumentError(message: "Cannot delete file; error: \(e)")
-				}
+				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(
+					URLRequestDataOperation<Data>(
+						request: request,
+						requestProcessors: [AuthRequestProcessor(state.connector)],
+						urlResponseValidators: [HTTPStatusCodeURLResponseValidator()],
+						resultProcessor: .identity(),
+						retryProviders: [
+							UnretriedErrorsRetryProvider.forStatusCodes(Set(400..<500).subtracting([403])),
+							NetworkErrorRetryProvider(
+								maximumNumberOfRetries: DownloadDriveFileOperation.maximumNumberOfRetries,
+								alsoRetryNonIdempotentRequests: true,
+								allowOtherSuccessObserver: false,
+								allowReachabilityObserver: false
+							)
+						]
+					)
+				)
+				_ = try await DownloadDriveFileOperation.downloadBinaryQueue.addOperationAndGetResult(op)
 			}
 			switch result {
 				case .success:                                    await succeedDownload()
@@ -151,72 +163,19 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 	
 	private struct FileSkippedError : Error {}
 	
-	private class DownloadBinaryForDoc : URLRequestOperation {
+	private struct DownloadBinaryForDocResultProcessor : ResultProcessor {
 		
-		typealias Authenticator = (_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void
-		let authenticator: Authenticator?
+		public typealias SourceType = URL
+		public typealias ResultType = URL
 		
-		init(config c: URLRequestOperation.Config, authenticator a: @escaping Authenticator) {
-			authenticator = a
-			super.init(config: c)
-		}
-		
-		override func processURLRequestForRunning(_ originalRequest: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>) -> Void) {
-			guard let authenticator = authenticator else {
-				handler(.success(originalRequest))
-				return
-			}
-			
-			authenticator(originalRequest, { r, _ in handler(r.asyncOperationResult) })
-		}
-		
-		override func computeRetryInfo(sourceError error: Error?, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {
-			if statusCode == 403 {
-				/* If we have a 403, we check the content of the file for the error reported by gougle.
-				 * Whatever the error, we will delete the file after checking and reporting the error. */
-				defer {downloadedFileURL.flatMap{ _ = try? FileManager.default.removeItem(at: $0) }}
-				
-				if let data = downloadedFileURL.flatMap({ try? Data(contentsOf: $0) }) {
-					let jsonDecoder = JSONDecoder()
-					guard
-						let json = try? jsonDecoder.decode(JSON.self, from: data),
-						let _ = json["error"]?["errors"]?.arrayValue?.first(where: { $0["domain"]?.stringValue == "usageLimits" && $0["reason"]?.stringValue == "userRateLimitExceeded" })
-					else {
-						return completionHandler(.doNotRetry, currentURLRequest, InvalidArgumentError(message: "Got 403 w/ message from server: \(data.reduce("", { $0 + String(format: "%02x", $1) }))"))
-					}
-					return completionHandler(.retry(withDelay: 100, enableReachability: false, enableOtherRequestsObserver: false), currentURLRequest, nil)
+		func transform(source: URL, urlResponse: URLResponse, handler: @escaping (Result<URL, Error>) -> Void) {
+			handler(Result{
+				if (urlResponse as? HTTPURLResponse)?.statusCode == 403 {
+					let data = try Data(contentsOf: source)
+					throw URLRequestOperationError.UnexpectedStatusCode(expected: Set(200..<400), actual: 403, httpBody: data)
 				}
-				return completionHandler(.doNotRetry, currentURLRequest, InvalidArgumentError(message: "403 from server"))
-			}
-			super.computeRetryInfo(sourceError: error, completionHandler: completionHandler)
-		}
-		
-	}
-	
-	private class DeleteFileURLRequestOperation : URLRequestOperationWithRetryRecoveryHandler {
-		
-		typealias Authenticator = (_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void
-		let authenticator: Authenticator?
-		
-		init(config c: URLRequestOperation.Config, authenticator a: @escaping Authenticator) {
-			authenticator = a
-			super.init(config: c)
-		}
-		
-		override func processURLRequestForRunning(_ originalRequest: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>) -> Void) {
-			guard let authenticator = authenticator else {
-				handler(.success(originalRequest))
-				return
-			}
-			
-			authenticator(originalRequest, { r, _ in handler(r.asyncOperationResult) })
-		}
-		
-		override func computeRetryInfo(sourceError error: Error?, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {
-			if statusCode == 403 {
-				return DriveUtils.retryRecoveryHandler(self, sourceError: InvalidArgumentError(message: "Got 403 when deleting file"), completionHandler: completionHandler)
-			}
-			super.computeRetryInfo(sourceError: error, completionHandler: completionHandler)
+				return source
+			})
 		}
 		
 	}

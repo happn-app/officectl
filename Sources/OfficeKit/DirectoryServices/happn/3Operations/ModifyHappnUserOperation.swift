@@ -44,7 +44,7 @@ public final class ModifyHappnUserOperation : RetryingOperation, HasResult {
 				decoder.keyDecodingStrategy = .useDefaultKeys
 				let userId = user.persistentId.value ?? user.userId ?? HappnConnector.nullLoginUserId
 				let op = try URLRequestDataOperation<HappnApiResult<HappnUser>>.forAPIRequest(
-					baseURL: connector.baseURL, path: "api/users/" + userId, method: "PUT",
+					url: connector.baseURL.appending("api", "users", userId), method: "PUT",
 					urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname"], httpBody: user,
 					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 				)

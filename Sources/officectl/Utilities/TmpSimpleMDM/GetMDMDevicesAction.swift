@@ -13,6 +13,7 @@ import FoundationNetworking
 import NIO
 import OfficeKit
 import SemiSingleton
+import URLRequestOperation
 
 
 
@@ -33,29 +34,20 @@ final class GetMDMDevicesAction : Action<String, Void, [SimpleMDMDevice]>, SemiS
 	}
 	
 	private func getAllDevices(startingAfter previousMaxDeviceId: Int? = nil, token: String) async throws -> [SimpleMDMDevice] {
-		struct Response : Decodable {
-			var data: [SimpleMDMDevice]
-			var hasMore: Bool
-		}
-		
-		func authenticate(_ request: URLRequest, _ handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) -> Void {
+		func authenticate(_ request: URLRequest) -> URLRequest {
 			var request = request
 			request.addValue("Basic " + Data((token + ":").utf8).base64EncodedString(), forHTTPHeaderField: "Authorization")
-			handler(.success(request), nil)
-		}
-		
-		var urlComponents = URLComponents(string: "https://a.simplemdm.com/api/v1/devices")!
-		urlComponents.queryItems = [URLQueryItem(name: "limit", value: "100" /* max */)]
-		if let previousMaxDeviceId = previousMaxDeviceId {
-			urlComponents.queryItems!.append(URLQueryItem(name: "starting_after", value: "\(previousMaxDeviceId)"))
+			return request
 		}
 		
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .iso8601
-		decoder.keyDecodingStrategy = .convertFromSnakeCase
-		let op = AuthenticatedJSONOperation<Response>(url: urlComponents.url!, authenticator: authenticate, decoder: decoder)
+		let op = try URLRequestDataOperation<Response>.forAPIRequest(
+			url: URL(string: "https://a.simplemdm.com/api/v1/devices")!, urlParameters: Parameters(limit: 100/*max*/, startingAfter: previousMaxDeviceId),
+			decoders: [decoder], requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
+		)
 		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-		let response = try await op.startAndGetResult()
+		let response = try await op.startAndGetResult().result
 		if !response.hasMore {
 			return response.data
 		}
@@ -64,6 +56,23 @@ final class GetMDMDevicesAction : Action<String, Void, [SimpleMDMDevice]>, SemiS
 			throw InvalidArgumentError(message: "SimpleMDM returned no devices, but told it has more to give")
 		}
 		return try await response.data + getAllDevices(startingAfter: latestDevice, token: token)
+		
+		
+		struct Parameters : Encodable {
+			var limit: Int
+			var startingAfter: Int?
+			private enum CodingKeys : String, CodingKey {
+				case limit, startingAfter = "starting_after"
+			}
+		}
+		
+		struct Response : Decodable {
+			var data: [SimpleMDMDevice]
+			var hasMore: Bool
+			private enum CodingKeys : String, CodingKey {
+				case data, hasMore = "has_more"
+			}
+		}
 	}
 	
 }

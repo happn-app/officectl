@@ -9,6 +9,7 @@ import Foundation
 
 import NIO
 import OfficeKit
+import URLRequestOperation
 
 
 
@@ -62,11 +63,15 @@ actor DownloadDriveState {
 				
 				let decoder = JSONDecoder()
 				decoder.dateDecodingStrategy = .customISO8601
-				decoder.keyDecodingStrategy = .useDefaultKeys
-				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveDoc>(url: urlComponents.url!, authenticator: connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
+				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(
+					try URLRequestDataOperation<GoogleDriveDoc>.forAPIRequest(
+						url: driveApiBaseURL.appending("files", parentId), urlParameters: ["fields": "id,name,parents,ownedByMe"],
+						retryProviders: [RateLimitRetryProvider()]
+					)
+				)
 				
 				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-				let doc = try await op.startAndGetResult()
+				let doc = try await op.startAndGetResult().result
 				return try await getPaths(objectId: doc.id, objectName: (doc.name ?? doc.id), parentIds: doc.parents)
 			}
 			

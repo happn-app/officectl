@@ -131,7 +131,7 @@ public final class HappnConnector : Connector, Authenticator {
 	private func unsafeConnect(scope: Set<String>, authMode: AuthMode, handler: @escaping (Error?) -> Void) {
 		Task{await handler(Result{
 			let request = TokenRequestBody(scope: scope.joined(separator: " "), clientId: clientId, clientSecret: clientSecret, grant: authMode)
-			let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(baseURL: baseURL, path: "connect/oauth/token", httpBody: request, retryProviders: [])
+			let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(url: baseURL.appending("connect", "oauth", "token"), httpBody: request, retryProviders: [])
 			let response = try await op.startAndGetResult().result
 			self.auth = Auth(
 				scope: Set(response.scope.components(separatedBy: " ")), userId: response.userId,
@@ -194,9 +194,9 @@ public final class HappnConnector : Connector, Authenticator {
 			
 			/* Code before URLRequestOperation v2 migration was making a GET.
 			 * I find it weird but have not verified if it’s correct or not. */
-			let op = URLRequestDataOperation<RevokeResponseBody>.forAPIRequest(baseURL: baseURL, path: "connect/oauth/revoke-token", headers: ["authorization": #"OAuth="\#(auth.accessToken)""#], retryProviders: [])
+			let op = URLRequestDataOperation<RevokeResponseBody>.forAPIRequest(url: baseURL.appendingPathComponents("connect", "oauth", "revoke-token"), headers: ["authorization": #"OAuth="\#(auth.accessToken)""#], retryProviders: [])
 			do {_ = try await op.startAndGetResult()}
-			catch where ((error as? URLRequestOperationError)?.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)/*?.actual == 410*/ != nil {
+			catch where ((error as? URLRequestOperationError)?.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.actual == 410 {
 				/* We consider the 410 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
 			}
 		}.failureValue)}

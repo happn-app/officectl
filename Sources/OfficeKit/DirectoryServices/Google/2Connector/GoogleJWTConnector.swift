@@ -148,7 +148,7 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 				assertionSigner: JWTSigner.rs256(key: privateKey)
 			)
 			
-			let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(baseURL: authURL, httpBody: requestBody, bodyEncoder: FormURLEncodedEncoder(), retryProviders: [])
+			let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(url: authURL, httpBody: requestBody, bodyEncoder: FormURLEncodedEncoder(), retryProviders: [])
 			let res = try await op.startAndGetResult().result
 			guard res.tokenType == "Bearer" else {
 				handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unexpected token type \(res.tokenType)"]))
@@ -205,9 +205,9 @@ public final class GoogleJWTConnector : Connector, Authenticator {
 		Task{await handler(Result{
 			guard let auth = auth else {return}
 			
-			let op = try URLRequestDataOperation<RevokeResponseBody>.forAPIRequest(baseURL: URL(string: "https://accounts.google.com/o/oauth2/revoke")!, urlParameters: RevokeRequestQuery(token: auth.token), retryProviders: [])
+			let op = try URLRequestDataOperation<RevokeResponseBody>.forAPIRequest(url: URL(string: "https://accounts.google.com/o/oauth2/revoke")!, urlParameters: RevokeRequestQuery(token: auth.token), retryProviders: [])
 			do {_ = try await op.startAndGetResult()}
-			catch where ((error as? URLRequestOperationError)?.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)/*?.actual == 400*/ != nil {
+			catch where ((error as? URLRequestOperationError)?.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.actual == 400 {
 				/* We consider the 400 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
 			}
 		}.failureValue)}

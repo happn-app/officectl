@@ -15,6 +15,10 @@ public struct AuthRequestProcessor : RequestProcessor {
 	
 	public let authHandler: (URLRequest, @escaping (Result<URLRequest, Error>) -> Void) -> Void
 	
+	public init(authHandler: @escaping (URLRequest) throws -> URLRequest) {
+		self.authHandler = { req, handler in handler(Result{ try authHandler(req) }) }
+	}
+	
 	public init<Auth : Authenticator>(_ auth: Auth) where Auth.RequestType == URLRequest {
 		authHandler = { req, handler in auth.authenticate(request: req, handler: { res, _ in handler(res) }) }
 	}

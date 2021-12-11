@@ -48,7 +48,7 @@ public final class ModifyGoogleUserOperation : RetryingOperation, HasResult {
 				decoder.keyDecodingStrategy = .useDefaultKeys
 				let userId = user.persistentId.value ?? user.userId.rawValue
 				let op = try URLRequestDataOperation<GoogleUser>.forAPIRequest(
-					baseURL: baseURL, path: "users/" + userId, method: "PUT", httpBody: user,
+					url: baseURL.appending("users", userId), method: "PUT", httpBody: user,
 					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 				)
 				_ = try await op.startAndGetResult().result

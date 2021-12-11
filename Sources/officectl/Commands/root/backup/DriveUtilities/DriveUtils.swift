@@ -12,22 +12,76 @@ import FoundationNetworking
 
 import GenericJSON
 import OfficeKit
+import RetryingOperation
 import URLRequestOperation
 
 
 
+class RateLimitRetryProvider : RetryProvider {
+	
+	var maxRetries: Int?
+	var retryCount: Int = 0
+	
+	init(maxRetries: Int? = nil) {
+		self.maxRetries = maxRetries
+	}
+	
+	func retryHelpers(for request: URLRequest, error: Error, operation: URLRequestOperation) -> [RetryHelper]?? {
+		guard
+			let data = (error as? URLRequestOperationError)?.unexpectedStatusCodeError?.httpBody,
+			DriveUtils.isRateLimitError(data: data)
+		else {
+			/* Not usage limit exceeded error, we do not provide a retry helper. */
+			return nil
+		}
+		guard retryCount < (maxRetries ?? .max) else {return nil}
+		retryCount += 1
+		return [RetryingOperation.TimerRetryHelper(retryDelay: 100, retryingOperation: operation)]
+	}
+	
+}
+
+
 enum DriveUtils {
 	
-	static func retryRecoveryHandler(_ operation: URLRequestOperationWithRetryRecoveryHandler, sourceError error: Error, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {
-		let jsonDecoder = JSONDecoder()
-		guard
-			let data = operation.fetchedData,
-			let json = try? jsonDecoder.decode(JSON.self, from: data),
-			let _ = json["error"]?["errors"]?.arrayValue?.first(where: { $0["domain"]?.stringValue == "usageLimits" && $0["reason"]?.stringValue == "userRateLimitExceeded" })
-		else {
-			return completionHandler(.doNotRetry, operation.currentURLRequest, error)
+	static func isRateLimitError(data: Data) -> Bool {
+		/* We expect this:
+		 * {
+		 * 	"error": {
+		 * 		"errors": [
+		 * 			{
+		 * 				"domain": "usageLimits",
+		 * 				"reason": "dailyLimitExceeded",
+		 * 				"message": "Daily Limit Exceeded"
+		 * 			}
+		 * 		],
+		 * 		"code": 403,
+		 * 		"message": "Daily Limit Exceeded"
+		 * 	}
+		 * }
+		 * Note that because I’m not sure gougle’s apis always return a structured error that has the same format,
+		 * I did not create URLRequestOperations with a structured error, and thus I have to parse it manually here. */
+		struct ExpectedAPIError : Decodable {
+			struct GErr : Decodable {
+				struct GErr2 : Decodable {
+					var domain: String
+					var reason: String
+					var message: String
+				}
+				var errors: [GErr2]
+				var code: Int
+				var message: String
+			}
+			var error: GErr
 		}
-		completionHandler(.retry(withDelay: 100, enableReachability: false, enableOtherRequestsObserver: false), operation.currentURLRequest, nil)
+		if
+			let apiError = try? JSONDecoder().decode(ExpectedAPIError.self, from: data),
+			apiError.error.errors.contains(where: { $0.domain == "usageLimits" && $0.reason == "userRateLimitExceeded" })
+		{
+			return true
+		} else {
+			return false
+		}
 	}
 	
 	static func rateLimitGoogleDriveAPIOperation<T : Operation>(_ operation: T, queue: OperationQueue = OfficeKit.defaultOperationQueueForFutureSupport) -> T {

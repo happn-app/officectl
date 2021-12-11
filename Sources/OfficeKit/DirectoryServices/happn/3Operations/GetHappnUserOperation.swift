@@ -35,7 +35,7 @@ public final class GetHappnUserOperation : RetryingOperation, HasResult {
 		Task{
 			result = await Result{
 				let op = try URLRequestDataOperation<HappnApiResult<HappnUser>>.forAPIRequest(
-					baseURL: connector.baseURL, path: "api/users/" + userKey, urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname"],
+					url: connector.baseURL.appending("api", "users", userKey), urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname"],
 					requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 				)
 				let res = try await op.startAndGetResult().result

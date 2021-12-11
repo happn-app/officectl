@@ -115,7 +115,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	
 	public func existingUser(fromPersistentId pId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper? {
 		let operation = try ApiRequestOperation<DirectoryUserWrapper?>.forAPIRequest(
-			baseURL: config.url, path: "existing-user-from/persistent-id", method: "POST",
+			url: config.url.appending("existing-user-from", "persistent-id"), method: "POST",
 			httpBody: Request(persistentId: pId, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue })),
 			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
 		)
@@ -129,7 +129,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	
 	public func existingUser(fromUserId uId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper? {
 		let operation = try ApiRequestOperation<DirectoryUserWrapper?>.forAPIRequest(
-			baseURL: config.url, path: "existing-user-from/user-id", method: "POST",
+			url: config.url.appending("existing-user-from", "user-id"), method: "POST",
 			httpBody: Request(userId: uId, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue })),
 			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
 		)
@@ -143,7 +143,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	
 	public func listAllUsers(using services: Services) async throws -> [DirectoryUserWrapper] {
 		let operation = ApiRequestOperation<[DirectoryUserWrapper]>.forAPIRequest(
-			baseURL: config.url, path: "list-all-users",
+			url: config.url.appendingPathComponent("list-all-users"),
 			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
 		)
 		return try await services.opQ.addOperationAndGetResult(operation).result.getData()
@@ -152,7 +152,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	public var supportsUserCreation: Bool {return config.supportsUserCreation}
 	public func createUser(_ user: DirectoryUserWrapper, using services: Services) async throws -> DirectoryUserWrapper {
 		let operation = try ApiRequestOperation<DirectoryUserWrapper>.forAPIRequest(
-			baseURL: config.url, path: "create-user", method: "POST", httpBody: Request(user: user),
+			url: config.url.appendingPathComponent("create-user"), method: "POST", httpBody: Request(user: user),
 			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
 		)
 		return try await services.opQ.addOperationAndGetResult(operation).result.getData()
@@ -165,7 +165,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	public var supportsUserUpdate: Bool {return config.supportsUserUpdate}
 	public func updateUser(_ user: DirectoryUserWrapper, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper {
 		let operation = try ApiRequestOperation<DirectoryUserWrapper>.forAPIRequest(
-			baseURL: config.url, path: "update-user", method: "POST",
+			url: config.url.appendingPathComponent("update-user"), method: "POST",
 			httpBody: Request(user: user, propertiesToUpdate: Set(propertiesToUpdate.map{ $0.rawValue })),
 			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
 		)
@@ -180,7 +180,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	public var supportsUserDeletion: Bool {return config.supportsUserDeletion}
 	public func deleteUser(_ user: DirectoryUserWrapper, using services: Services) async throws {
 		let operation = try ApiRequestOperation<String>.forAPIRequest(
-			baseURL: config.url, path: "delete-user", method: "POST", httpBody: Request(user: user),
+			url: config.url.appendingPathComponent("delete-user"), method: "POST", httpBody: Request(user: user),
 			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
 		)
 		_ = try await services.opQ.addOperationAndGetResult(operation).result.getData()

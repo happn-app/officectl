@@ -68,8 +68,8 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 					decoder.dateDecodingStrategy = .iso8601
 					decoder.keyDecodingStrategy = .convertFromSnakeCase
 					let op = URLRequestDataOperation<Auth>.forAPIRequest(
-						baseURL: URL(string: "https://api.github.com/app/installations/\(installationId)/access_tokens")!, method: "POST",
-						headers: ["authorization": "Bearer \(jwtToken)"],
+						url: try URL(string: "https://api.github.com")!.appending("app", "installations", installationId, "access_tokens"),
+						method: "POST", headers: ["authorization": "Bearer \(jwtToken)"],
 						decoders: [decoder], retryProviders: []
 					)
 					auth = try await op.startAndGetResult().result

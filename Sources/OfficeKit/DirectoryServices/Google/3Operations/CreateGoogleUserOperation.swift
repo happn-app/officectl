@@ -42,7 +42,7 @@ public final class CreateGoogleUserOperation : RetryingOperation, HasResult {
 				decoder.dateDecodingStrategy = .customISO8601
 				decoder.keyDecodingStrategy = .useDefaultKeys
 				let op = try URLRequestDataOperation<GoogleUser>.forAPIRequest(
-					baseURL: baseURL, path: "users", httpBody: user,
+					url: baseURL.appending("users"), httpBody: user,
 					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 				)
 				return try await op.startAndGetResult().result

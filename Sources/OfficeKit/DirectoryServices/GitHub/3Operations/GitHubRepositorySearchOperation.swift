@@ -60,7 +60,7 @@ public final class GitHubRepositorySearchOperation : RetryingOperation, HasResul
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
 		
 		let op = try URLRequestDataOperation<[GitHubRepository]>.forAPIRequest(
-			baseURL: URL(string: "https://api.github.com")!, path: "orgs/" + searchedOrganisation + "/repos", urlParameters: RequestParams(page: pageNumber),
+			url: URL(string: "https://api.github.com")!.appending("orgs", searchedOrganisation, "repos"), urlParameters: RequestParams(page: pageNumber),
 			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 		)
 		return try await op.startAndGetResult().result

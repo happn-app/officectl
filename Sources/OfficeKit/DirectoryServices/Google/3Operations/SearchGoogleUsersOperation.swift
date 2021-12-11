@@ -62,7 +62,7 @@ public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .customISO8601
 		let op = try URLRequestDataOperation<GoogleUsersList>.forAPIRequest(
-			baseURL: URL(string: "https://www.googleapis.com/admin/directory/v1")!, path: "users", urlParameters: queryParams,
+			url: URL(string: "https://www.googleapis.com/admin/directory/v1/users")!, urlParameters: queryParams,
 			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 		)
 		return try await op.startAndGetResult().result

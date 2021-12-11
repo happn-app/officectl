@@ -74,7 +74,7 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 			}
 		}
 		let op = try URLRequestDataOperation<HappnApiResult<[HappnUser]>>.forAPIRequest(
-			baseURL: connector.baseURL, path: "api/v1/users-search",
+			url: connector.baseURL.appending("api", "v1", "users-search"),
 			urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname,type"],
 			httpBody: RequestBody(offset: offset, limit: limit, fullTextSearchWithAllTerms: email),
 			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []

@@ -10,6 +10,7 @@ import Foundation
 import NIO
 import OfficeKit
 import RetryingOperation
+import URLRequestOperation
 
 
 
@@ -96,17 +97,23 @@ class DownloadDriveOperation : RetryingOperation {
 	private func fetchAndDownloadDriveDocs(currentListOfFiles: [Task<GoogleDriveDoc, Error>], nextPageToken: String?) async throws -> [Task<GoogleDriveDoc, Error>] {
 		try await state.connector.connect(scope: driveROScope)
 		
-		var urlComponents = URLComponents(url: URL(string: "files", relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
-		urlComponents.queryItems = [URLQueryItem(name: "fields", value: "nextPageToken,files/*,files/permissions/*,files/permissions/permissionDetails/*,kind,incompleteSearch")]
-		if let t = nextPageToken {urlComponents.queryItems!.append(URLQueryItem(name: "pageToken", value: t))}
+		struct RequestParams : Encodable {
+			var fields: String = "nextPageToken,files/*,files/permissions/*,files/permissions/permissionDetails/*,kind,incompleteSearch"
+			var pageToken: String?
+		}
 		
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .customISO8601
-		decoder.keyDecodingStrategy = .useDefaultKeys
-		let op = DriveUtils.rateLimitGoogleDriveAPIOperation(AuthenticatedJSONOperation<GoogleDriveFilesList>(url: urlComponents.url!, authenticator: state.connector.authenticate, decoder: decoder, retryInfoRecoveryHandler: DriveUtils.retryRecoveryHandler(_:sourceError:completionHandler:)))
+		let op = DriveUtils.rateLimitGoogleDriveAPIOperation(
+			try URLRequestDataOperation<GoogleDriveFilesList>.forAPIRequest(
+				url: driveApiBaseURL.appending("files"), urlParameters: RequestParams(pageToken: nextPageToken),
+				decoders: [decoder],
+				requestProcessors: [AuthRequestProcessor(state.connector)], retryProviders: [RateLimitRetryProvider()]
+			)
+		)
 		
 		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-		let newFilesList = try await op.startAndGetResult()
+		let newFilesList = try await op.startAndGetResult().result
 		var newFullListOfFiles = currentListOfFiles
 		if let files = newFilesList.files {
 			var nBytesFound = 0
