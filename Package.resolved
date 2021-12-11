@@ -303,8 +303,8 @@
         "repositoryURL": "https://github.com/happn-tech/URLRequestOperation.git",
         "state": {
           "branch": null,
-          "revision": "4d585e29e4072e1f991da7ad92b0e9ed9cb1ad6b",
-          "version": "2.0.0-alpha.13"
+          "revision": "1d4ba6a43348ce8aceb42704c706b02cbe84df37",
+          "version": "2.0.0-alpha.13.0.1"
         }
       },
       {

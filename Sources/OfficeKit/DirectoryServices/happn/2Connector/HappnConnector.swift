@@ -185,6 +185,13 @@ public final class HappnConnector : Connector, Authenticator {
 			let expiresIn: Int
 			let errorCode: Int
 			
+			private enum CodingKeys : String, CodingKey {
+				case scope, userId = "user_id"
+				case accessToken = "access_token", refreshToken = "refresh_token"
+				case expiresIn = "expires_in"
+				case errorCode = "error_code"
+			}
+			
 		}
 	}
 	
