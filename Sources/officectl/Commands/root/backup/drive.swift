@@ -90,7 +90,7 @@ struct BackupDriveCommand : ParsableCommand {
 		
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
-		let eventLoop = try app.services.make(EventLoop.self)
+		let opQ = try app.services.make(OperationQueue.self)
 		
 		let disableConsole = !globalOptions.interactiveConsole
 		
@@ -128,13 +128,13 @@ struct BackupDriveCommand : ParsableCommand {
 				usersFilter: usersFilter, disabledUserSuffix: disabledEmailSuffix,
 				downloadsDestinationFolder: downloadsDestinationFolder, archiveDestinationFolder: archivesDestinationFolderURL,
 				skipIfArchiveFound: skipIfArchiveExists,
-				console: context.console, eventLoop: eventLoop
+				console: context.console, opQ: opQ
 			)
 			
 			/* Backup given mails */
 			await downloadDriveStatus.initStatuses(users: filteredUsers.map{ $0.user })
 			
-			let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, eventLoop: eventLoop, status: downloadDriveStatus, userAndDest: $0, filters: filters, skipOtherOwner: skipOtherOwner, skipZeroQuotaFiles: skipZeroQuotaFiles, eraseDownloadedFiles: eraseDownloadedFiles, downloadFilesQueue: downloadFilesQueue) }
+			let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, status: downloadDriveStatus, userAndDest: $0, filters: filters, skipOtherOwner: skipOtherOwner, skipZeroQuotaFiles: skipZeroQuotaFiles, eraseDownloadedFiles: eraseDownloadedFiles, downloadFilesQueue: downloadFilesQueue) }
 			try await app.services.make(OperationQueue.self).addOperationsAndWait(operations)
 			/* Currently we stop everything if we got at least one error. */
 			/* TODO: Properly report the error (say this user got an error, not just here are the errors!) */

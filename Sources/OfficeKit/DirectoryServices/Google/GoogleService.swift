@@ -178,21 +178,8 @@ public final class GoogleService : UserDirectoryService {
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
 		
-		let opQ = try services.opQ
-		return try await withThrowingTaskGroup(of: [GoogleUser].self, returning: [GoogleUser].self, body: { group in
-			for domain in config.primaryDomains {
-				group.addTask{
-					let searchOp = SearchGoogleUsersOperation(searchedDomain: domain, query: "isSuspended=false", googleConnector: googleConnector)
-					return try await opQ.addOperationAndGetResult(searchOp)
-				}
-			}
-			
-			var ret = [GoogleUser]()
-			while let users = try await group.next() {
-				ret += users
-			}
-			return ret
-		})
+		let ops = config.primaryDomains.map{ SearchGoogleUsersOperation(searchedDomain: $0, query: "isSuspended=false", googleConnector: googleConnector) }
+		return try await services.opQ.addOperationsAndGetResults(ops).map{ try $0.get() }.flatMap{ $0 }
 	}
 	
 	public let supportsUserCreation = true

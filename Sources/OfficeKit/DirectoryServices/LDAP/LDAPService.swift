@@ -254,21 +254,11 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		try await ldapConnector.connect(scope: ())
 		
-		let opQ = try services.opQ
-		return try await withThrowingTaskGroup(of: [LDAPInetOrgPersonWithObject].self, returning: [LDAPInetOrgPersonWithObject].self, body: { group in
-			for dn in config.baseDNs.allBaseDNs {
-				group.addTask{
-					let searchOp = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: dn, searchQuery: nil, attributesToFetch: nil))
-					return try await opQ.addOperationAndGetResult(searchOp).results.compactMap{ LDAPInetOrgPersonWithObject(object: $0) }
-				}
-			}
-			
-			var ret = [LDAPInetOrgPersonWithObject]()
-			while let users = try await group.next() {
-				ret += users
-			}
-			return ret
-		})
+		let ops = config.baseDNs.allBaseDNs.map{ SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: $0, searchQuery: nil, attributesToFetch: nil)) }
+		return try await services.opQ.addOperationsAndGetResults(ops)
+			.map{ try $0.get().results }
+			.flatMap{ $0 }
+			.compactMap{ LDAPInetOrgPersonWithObject(object: $0) }
 	}
 	
 	public let supportsUserCreation = true

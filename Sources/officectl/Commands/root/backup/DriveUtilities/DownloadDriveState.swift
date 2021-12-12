@@ -16,7 +16,6 @@ import URLRequestOperation
 actor DownloadDriveState {
 	
 	let connector: GoogleJWTConnector
-	let eventLoop: EventLoop
 	let status: DownloadDrivesStatusActivity
 	let logFile: LogFile
 	
@@ -30,9 +29,8 @@ actor DownloadDriveState {
 	let driveDestinationBaseURL: URL
 	let allFilesDestinationBaseURL: URL
 	
-	init(connector c: GoogleJWTConnector, eventLoop el: EventLoop, status s: DownloadDrivesStatusActivity, logFile lf: LogFile, filters f: [String]?, skipOtherOwner soo: Bool, skipZeroQuotaFiles szqf: Bool, eraseDownloadedFiles edf: Bool, userAndDest uad: GoogleUserAndDest, driveDestinationBaseURL ddbu: URL, allFilesDestinationBaseURL afdbu: URL) {
+	init(connector c: GoogleJWTConnector, status s: DownloadDrivesStatusActivity, logFile lf: LogFile, filters f: [String]?, skipOtherOwner soo: Bool, skipZeroQuotaFiles szqf: Bool, eraseDownloadedFiles edf: Bool, userAndDest uad: GoogleUserAndDest, driveDestinationBaseURL ddbu: URL, allFilesDestinationBaseURL afdbu: URL) {
 		connector = c
-		eventLoop = el
 		status = s
 		logFile = lf
 		

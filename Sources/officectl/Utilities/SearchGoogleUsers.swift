@@ -51,20 +51,11 @@ struct GoogleUserAndDest {
 		usersFilter: [EmailSrcAndDst]?, disabledUserSuffix: String?,
 		downloadsDestinationFolder: URL, archiveDestinationFolder: URL?,
 		skipIfArchiveFound: Bool,
-		console: Console, eventLoop: EventLoop
+		console: Console, opQ: OperationQueue
 	) async throws -> [GoogleUserAndDest] {
 		/* Fetch users */
-		let allUsers = try await withThrowingTaskGroup(of: [GoogleUser].self, returning: [GoogleUser].self, body: { group in
-			for domain in googleConfig.primaryDomains {
-				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-				group.addTask{ try await SearchGoogleUsersOperation(searchedDomain: domain, googleConnector: googleConnector).startAndGetResult() }
-			}
-			var ret = [GoogleUser]()
-			while let nextRet = try await group.next() {
-				ret += nextRet
-			}
-			return ret
-		})
+		let ops = googleConfig.primaryDomains.map{ SearchGoogleUsersOperation(searchedDomain: $0, googleConnector: googleConnector) }
+		let allUsers = try await opQ.addOperationsAndGetResults(ops).map{ try $0.get() }.flatMap{ $0 }
 		
 		/* Find mails to backup */
 		let allUsersFilter = usersFilter?.flatMap{ Set(arrayLiteral: $0.source, $0.destination) }

@@ -87,7 +87,7 @@ struct BackupMailsCommand : ParsableCommand {
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
-		let eventLoop = try app.services.make(EventLoop.self)
+		let opQ = try app.services.make(OperationQueue.self)
 		
 		let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: backupMailOptions.serviceId)
 		_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
@@ -110,7 +110,7 @@ struct BackupMailsCommand : ParsableCommand {
 			usersFilter: usersFilter, disabledUserSuffix: self.backupMailOptions.disabledEmailSuffix,
 			downloadsDestinationFolder: downloadsDestinationFolder, archiveDestinationFolder: archivesDestinationFolderURL,
 			skipIfArchiveFound: self.backupMailOptions.skipIfArchiveExists,
-			console: context.console, eventLoop: eventLoop
+			console: context.console, opQ: opQ
 		)
 		
 		/* Backup given mails */

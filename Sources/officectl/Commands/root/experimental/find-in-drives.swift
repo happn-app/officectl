@@ -42,7 +42,7 @@ struct FindInDrivesCommand : ParsableCommand {
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
-		let eventLoop = try app.services.make(EventLoop.self)
+		let opQ = try app.services.make(OperationQueue.self)
 		
 		let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
 		_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
@@ -54,7 +54,7 @@ struct FindInDrivesCommand : ParsableCommand {
 			googleConfig: googleConfig, googleConnector: googleConnector,
 			usersFilter: nil, disabledUserSuffix: nil,
 			downloadsDestinationFolder: URL(fileURLWithPath: "/tmp/not_used", isDirectory: true), archiveDestinationFolder: nil,
-			skipIfArchiveFound: false, console: context.console, eventLoop: eventLoop
+			skipIfArchiveFound: false, console: context.console, opQ: opQ
 		)
 		
 		try await withThrowingTaskGroup(
@@ -62,7 +62,7 @@ struct FindInDrivesCommand : ParsableCommand {
 			returning: Void.self,
 			body: { group in
 				for userAndDest in usersAndDest {
-					group.addTask{ try await searchResults(for: userAndDest, searchedString: self.filename, mainConnector: googleConnector, eventLoop: eventLoop) }
+					group.addTask{ try await searchResults(for: userAndDest, searchedString: self.filename, mainConnector: googleConnector, opQ: opQ) }
 				}
 				
 				while let res = try await group.next() {
@@ -74,7 +74,7 @@ struct FindInDrivesCommand : ParsableCommand {
 		)
 	}
 	
-	private func searchResults(for userAndDest: GoogleUserAndDest, searchedString: String, mainConnector: GoogleJWTConnector, eventLoop: EventLoop) async throws -> String? {
+	private func searchResults(for userAndDest: GoogleUserAndDest, searchedString: String, mainConnector: GoogleJWTConnector, opQ: OperationQueue) async throws -> String? {
 		let connector = GoogleJWTConnector(from: mainConnector, userBehalf: userAndDest.user.primaryEmail.rawValue)
 		try await connector.connect(scope: driveROScope)
 		
@@ -87,7 +87,7 @@ struct FindInDrivesCommand : ParsableCommand {
 			url: driveApiBaseURL.appending("files"), urlParameters: ["q": query],
 			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 		)
-		let filesList = try await op.startAndGetResult().result
+		let filesList = try await opQ.addOperationAndGetResult(op).result
 		return (filesList.files?.map{ $0.id } ?? []).isEmpty ? nil : userAndDest.user.primaryEmail.rawValue
 	}
 	

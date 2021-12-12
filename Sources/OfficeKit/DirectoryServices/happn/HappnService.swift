@@ -199,23 +199,9 @@ public final class HappnService : UserDirectoryService {
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes)
 		
-		let opQ = try services.opQ
 		let ids = Set(Email(rawValue: uId)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.rawValue } ?? [uId])
-		let users = try await withThrowingTaskGroup(of: [HappnUser].self, returning: [HappnUser].self, body: { group in
-			for id in ids {
-				group.addTask{
-					/* TODO: Properties to fetch. */
-					let op = SearchHappnUsersOperation(email: id, happnConnector: happnConnector)
-					return try await opQ.addOperationAndGetResult(op)
-				}
-			}
-			
-			var ret = [HappnUser]()
-			while let users = try await group.next() {
-				ret += users
-			}
-			return ret
-		})
+		let ops = ids.map{ SearchHappnUsersOperation(email: $0, happnConnector: happnConnector) } /* TODO: Properties to fetch. */
+		let users = try await services.opQ.addOperationsAndGetResults(ops).map{ try $0.get() }.flatMap{ $0 }
 		guard users.count <= 1 else {
 			throw InvalidArgumentError(message: "Given user id has more than one user found")
 		}
