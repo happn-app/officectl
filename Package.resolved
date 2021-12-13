@@ -39,11 +39,11 @@
       },
       {
         "package": "CollectionConcurrencyKit",
-        "repositoryURL": "https://github.com/JohnSundell/CollectionConcurrencyKit.git",
+        "repositoryURL": "https://github.com/happn-app/CollectionConcurrencyKit.git",
         "state": {
           "branch": null,
-          "revision": "2e4984dcaed6432f4eff175f6616ba463428cd8a",
-          "version": "0.1.0"
+          "revision": "903a94af1104ccf907982dd35f980b60d95025a3",
+          "version": "0.2.0"
         }
       },
       {

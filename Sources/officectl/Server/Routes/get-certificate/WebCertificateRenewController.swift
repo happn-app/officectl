@@ -11,6 +11,7 @@ import FoundationNetworking
 #endif
 
 import ASN1Decoder
+import CollectionConcurrencyKit
 import Email
 import GenericJSON
 import OfficeKit
@@ -102,45 +103,35 @@ class WebCertificateRenewController {
 						 * 		certificatesList = .init(keys: [])
 						 * 	} */
 						
-						/* Get the list of certificates to revoke */
-						return try await withThrowingTaskGroup(
-							of: (id: String, issuerName: String, certif: X509Certificate)?.self,
-							returning: [(id: String, issuerName: String, certif: X509Certificate)].self,
-							body: { groupCertifs in
-								for id in certificatesList.keys {
-									/* If the certificate is already revoked, we don’t have to do anything w/ it. */
-									guard !crl.revokedCertificateIds.contains(normalizeCertificateId(id)) else {
-										continue
-									}
-									
-									groupCertifs.addTask{
-										let op = URLRequestDataOperation<VaultResponse<CertificateContainer>>.forAPIRequest(
-											url: try vaultBaseURL.appending(issuerName, "cert", id),
-											requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
-										)
-										let certificateResponse = try await op.startAndGetResult().result
-										guard let subjectDNStr = certificateResponse.data.certificate.subjectDistinguishedName else {
-											throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN for\n\(certificateResponse.data.pem)"])
-										}
-										let subjectDN = try LDAPDistinguishedName(string: subjectDNStr)
-										guard let dnValue = subjectDN.values.onlyElement, dnValue.key == "CN" else {
-											throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN certificate DN \(subjectDN)"])
-										}
-										let subjectCN = dnValue.value
-										guard subjectCN == renewedCommonName else {return nil}
-										return (id: id, issuerName: issuerName, certif: certificateResponse.data.certificate)
-									}
-								}
-								
-								var ret = [(id: String, issuerName: String, certif: X509Certificate)]()
-								while let newRet = try await groupCertifs.next() {
-									if let new = newRet {
-										ret.append(new)
-									}
-								}
-								return ret
+						/* Get the list of certificates to revoke. */
+						let opsWithIds = try certificatesList.keys.compactMap{ id -> (String, URLRequestDataOperation<VaultResponse<CertificateContainer>>)? in
+							guard !crl.revokedCertificateIds.contains(normalizeCertificateId(id)) else {
+								/* If the certificate is already revoked, we don’t have to do anything w/ it. */
+								return nil
 							}
-						)
+							return (
+								id,
+								URLRequestDataOperation<VaultResponse<CertificateContainer>>.forAPIRequest(
+									url: try vaultBaseURL.appending(issuerName, "cert", id),
+									requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
+								)
+							)
+						}
+						try await req.services.make(OperationQueue.self).addOperationsAndWait(opsWithIds.map{ $0.1 })
+						return opsWithIds.map{ opWithId in
+							let (id, op) = opWithId
+							let certificateResponse = try op.result.get()
+							guard let subjectDNStr = certificateResponse.data.certificate.subjectDistinguishedName else {
+								throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN for\n\(certificateResponse.data.pem)"])
+							}
+							let subjectDN = try LDAPDistinguishedName(string: subjectDNStr)
+							guard let dnValue = subjectDN.values.onlyElement, dnValue.key == "CN" else {
+								throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN certificate DN \(subjectDN)"])
+							}
+							let subjectCN = dnValue.value
+							guard subjectCN == renewedCommonName else {return nil}
+							return (id: id, issuerName: issuerName, certif: certificateResponse.data.certificate)
+						}
 					}
 				}
 				var ret = [(id: String, issuerName: String, certif: X509Certificate)]()
