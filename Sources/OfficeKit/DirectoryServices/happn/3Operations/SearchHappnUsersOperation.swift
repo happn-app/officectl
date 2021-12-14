@@ -41,12 +41,23 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 				var curOffset = 0
 				var nUsersAtCurPage = 0
 				var users = [HappnUser]()
+				/* Get users from email search */
 				repeat {
-					let reposAtPage = try await fetchPage(offset: curOffset, limit: limit)
-					nUsersAtCurPage = reposAtPage.count
-					users += reposAtPage
+					let usersAtPage = try await searchResults(for: Request(offset: curOffset, limit: limit, fullTextSearchWithAllTerms: email))
+					nUsersAtCurPage = usersAtPage.count
+					users += usersAtPage
 					curOffset += limit
 				} while nUsersAtCurPage >= limit/2
+				if let email = email {
+					/* Get users from ids search */
+					curOffset = 0
+					repeat {
+						let usersAtPage = try await searchResults(for: Request(offset: curOffset, limit: limit, ids: [email]))
+						nUsersAtCurPage = usersAtPage.count
+						users += usersAtPage
+						curOffset += limit
+					} while nUsersAtCurPage >= limit/2
+				}
 				return users
 			}
 			baseOperationEnded()
@@ -61,25 +72,26 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 	   MARK: - Private
 	   *************** */
 	
-	private func fetchPage(offset: Int, limit: Int) async throws -> [HappnUser] {
-		struct RequestBody : Encodable {
-			var offset: Int?
-			var limit: Int?
-			var isAdmin: Bool = true
-			var fullTextSearchWithAllTerms: String?
-			private enum CodingKeys : String, CodingKey {
-				case offset, limit
-				case isAdmin = "is_admin"
-				case fullTextSearchWithAllTerms = "full_text_search_with_all_terms"
-			}
-		}
-		let op = try URLRequestDataOperation<HappnApiResult<[HappnUser]>>.forAPIRequest(
+	private func searchResults(for request: Request) async throws -> [HappnUser] {
+		return try await URLRequestDataOperation<HappnApiResult<[HappnUser]>>.forAPIRequest(
 			url: connector.baseURL.appending("api", "v1", "users-search"),
 			urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname,type"],
-			httpBody: RequestBody(offset: offset, limit: limit, fullTextSearchWithAllTerms: email),
+			httpBody: request,
 			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
-		)
-		return try await op.startAndGetResult().result.data ?? []
+		).startAndGetResult().result.data ?? []
+	}
+	
+	private struct Request : Encodable {
+		var offset: Int?
+		var limit: Int?
+		var isAdmin: Bool = true
+		var ids: [String]?
+		var fullTextSearchWithAllTerms: String?
+		private enum CodingKeys : String, CodingKey {
+			case offset, limit
+			case isAdmin = "is_admin"
+			case ids, fullTextSearchWithAllTerms = "full_text_search_with_all_terms"
+		}
 	}
 	
 }
