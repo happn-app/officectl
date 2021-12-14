@@ -108,33 +108,19 @@ struct UserCreateCommand : ParsableCommand {
 		
 		try app.auditLogger.log(action: "Creating user with email “\(email.rawValue)”, first name “\(firstname)”, last name “\(lastname)” on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
 		
-		let results = await withTaskGroup(
-			of: (AnyUserDirectoryService, Result<AnyDirectoryUser, Error>).self,
-			returning: [(AnyUserDirectoryService, Result<AnyDirectoryUser, Error>)].self,
-			body: { group in
-				for (serviceIdx, userResult) in users.enumerated() {
-					let service = services[serviceIdx]
-					guard let user = userResult.successValue else {
-						/* Error for given service is already shown. */
-						continue
-					}
-					
-					group.addTask{
-						return await (service, Result{
-							let user = try await service.createUser(user, using: app.services)
-							try await service.changePasswordAction(for: user, using: app.services).start(parameters: password, weakeningMode: .alwaysInstantly)
-							return user
-						})
-					}
-				}
+		let results = await users
+			.compactMap{ $0.successValue /* Failure case already handled */ }
+			.enumerated()
+			.concurrentMap{ serviceIdxAndUser -> (AnyUserDirectoryService, Result<AnyDirectoryUser, Error>) in
+				let (serviceIdx, user) = serviceIdxAndUser
+				let service = services[serviceIdx]
 				
-				var result = [(AnyUserDirectoryService, Result<AnyDirectoryUser, Error>)]()
-				while let curRes = await group.next() {
-					result.append(curRes)
-				}
-				return result
+				return await (service, Result{
+					let user = try await service.createUser(user, using: app.services)
+					try await service.changePasswordAction(for: user, using: app.services).start(parameters: password, weakeningMode: .alwaysInstantly)
+					return user
+				})
 			}
-		)
 		
 		if !self.yes {
 			context.console.info()

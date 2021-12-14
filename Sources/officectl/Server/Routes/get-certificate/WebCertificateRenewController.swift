@@ -64,7 +64,7 @@ class WebCertificateRenewController {
 			return request
 		}
 		
-		let certificatesToRevoke = try await ([issuerName] + additionalActiveIssuers).asyncFlatMap{ issuerName -> [(id: String, issuerName: String, certif: X509Certificate)] in
+		let certificatesToRevoke = try await ([issuerName] + additionalActiveIssuers).concurrentFlatMap{ issuerName -> [(id: String, issuerName: String, certif: X509Certificate)] in
 			/* Let’s get the CRL */
 			let opCRL = try URLRequestDataOperation.forData(url: vaultBaseURL.appending(issuerName, "crl"), requestProcessors: [AuthRequestProcessor(authHandler: authenticate)])
 			let crl = try await CRL(der: opCRL.startAndGetResult().result)
@@ -98,7 +98,7 @@ class WebCertificateRenewController {
 			 * 	} */
 			
 			/* Get the list of certificates to revoke. */
-			return try await certificatesList.keys.asyncCompactMap{ id in
+			return try await certificatesList.keys.concurrentCompactMap{ id in
 				guard !crl.revokedCertificateIds.contains(normalizeCertificateId(id)) else {
 					/* If the certificate is already revoked, we don’t have to do anything w/ it. */
 					return nil
@@ -133,7 +133,7 @@ class WebCertificateRenewController {
 		
 		/* Revoke the certificates to revoke */
 		try req.application.auditLogger.log(action: "Revoking \(certificatesToRevoke.count) certificate(s): \(certificatesToRevoke.map{ $0.issuerName + ":" + $0.id }.joined(separator: " ")).", source: .web)
-		try await certificatesToRevoke.asyncForEach{ certificateToRevoke in
+		try await certificatesToRevoke.concurrentForEach{ certificateToRevoke in
 			let (id, issuerName, _) = certificateToRevoke
 			let op = try URLRequestDataOperation<VaultResponse<RevocationResult?>>.forAPIRequest(
 				url: vaultBaseURL.appending(issuerName, "revoke"), httpBody: ["serial_number": id],

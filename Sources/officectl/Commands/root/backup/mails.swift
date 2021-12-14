@@ -216,25 +216,19 @@ struct BackupMailsCommand : ParsableCommand {
 		override func startBaseOperation(isRetry: Bool) {
 			Task{
 				do {
-					let info = try await withThrowingTaskGroup(
-						of: (GoogleUserAndDest, String, Date).self,
-						returning: (tokens: [GoogleUser: (token: String, destination: URL)], minExpirationDate: Date).self,
-						body: { group in
-							for user in context.users {
-								group.addTask{ try await self.futureAccessToken(for: user) }
-							}
-							
-							var ret = (tokens: [GoogleUser: (token: String, destination: URL)](), minExpirationDate: Date.distantFuture)
-							while let curResult = try await group.next() {
-								ret.minExpirationDate = min(ret.minExpirationDate, curResult.2)
-								ret.tokens[curResult.0.user] = (curResult.1, curResult.0.downloadDestination)
-							}
-							return ret
+					let operation = try await withThrowingTaskGroup(of: (GoogleUserAndDest, String, Date).self, returning: OfflineimapRunOperation.self, body: { group in
+						for user in context.users {
+							group.addTask{ try await self.futureAccessToken(for: user) }
 						}
-					)
+						
+						var info = (tokens: [GoogleUser: (token: String, destination: URL)](), minExpirationDate: Date.distantFuture)
+						while let curResult = try await group.next() {
+							info.minExpirationDate = min(info.minExpirationDate, curResult.2)
+							info.tokens[curResult.0.user] = (curResult.1, curResult.0.downloadDestination)
+						}
+						return OfflineimapRunOperation(userInfos: info.tokens, tokensMinExpirationDate: info.minExpirationDate, context: self.context)
+					})
 					
-					let operation = OfflineimapRunOperation(userInfos: info.tokens, tokensMinExpirationDate: info.minExpirationDate, context: self.context)
-					/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
 					await operation.startAndWait()
 					if let e = operation.runError {throw e}
 					baseOperationEnded()

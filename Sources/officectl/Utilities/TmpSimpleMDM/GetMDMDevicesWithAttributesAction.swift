@@ -30,24 +30,8 @@ final class GetMDMDevicesWithAttributesAction : Action<String, Void, [(SimpleMDM
 	
 	override func unsafeStart(parameters: Void, handler: @escaping (Result<[(SimpleMDMDevice, [String: String])], Error>) -> Void) throws {
 		Task{await handler(Result{
-			let devices = try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful })
-			return try await withThrowingTaskGroup(
-				of: (SimpleMDMDevice, [String: String]).self,
-				returning: [(SimpleMDMDevice, [String: String])].self,
-				body: { group in
-					for device in devices {
-						group.addTask{
-							return try await (device, self.getDeviceAttributes(token: self.subject, deviceId: device.id))
-						}
-					}
-					
-					var ret = [(SimpleMDMDevice, [String: String])]()
-					while let curRet = try await group.next() {
-						ret.append(curRet)
-					}
-					return ret
-				}
-			)
+			return try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful })
+				.concurrentMap{ device in try await (device, self.getDeviceAttributes(token: self.subject, deviceId: device.id)) }
 		})}
 	}
 	

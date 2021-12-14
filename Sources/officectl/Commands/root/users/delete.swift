@@ -82,27 +82,9 @@ struct UserDeleteCommand : ParsableCommand {
 			}
 		}
 		
-		let deletionResults = await withTaskGroup(
-			of: (AnyUserDirectoryService, Result<Void, Error>).self,
-			returning: [(AnyUserDirectoryService, Result<Void, Error>)].self,
-			body: { group in
-				for (service, optionalUserIdPair) in msu.itemsByService {
-					guard let uidPair = optionalUserIdPair else {
-						continue
-					}
-					group.addTask{
-						return await (service, Result{ try await service.deleteUser(uidPair.user, using: app.services) })
-					}
-				}
-				
-				var fullRes = [(AnyUserDirectoryService, Result<Void, Error>)]()
-				while let curRes = await group.next() {
-					fullRes.append(curRes)
-				}
-				return fullRes
-			}
-			
-		)
+		let deletionResults = await msu.itemsByService.compactMapValues{ $0 }.concurrentMap{ service, uidPair in
+			return await (service, Result{ try await service.deleteUser(uidPair.user, using: app.services) })
+		}
 		
 		guard !deletionResults.isEmpty else {
 			return

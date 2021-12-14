@@ -8,6 +8,7 @@
 import Foundation
 
 import ArgumentParser
+import CollectionConcurrencyKit
 import Email
 import Vapor
 
@@ -57,21 +58,11 @@ struct FindInDrivesCommand : ParsableCommand {
 			skipIfArchiveFound: false, console: context.console, opQ: opQ
 		)
 		
-		try await withThrowingTaskGroup(
-			of: String?.self,
-			returning: Void.self,
-			body: { group in
-				for userAndDest in usersAndDest {
-					group.addTask{ try await searchResults(for: userAndDest, searchedString: self.filename, mainConnector: googleConnector, opQ: opQ) }
-				}
-				
-				while let res = try await group.next() {
-					if let res = res {
-						context.console.info("\(res)")
-					}
-				}
+		try await usersAndDest.concurrentForEach{ userAndDest in
+			if let res = try await searchResults(for: userAndDest, searchedString: self.filename, mainConnector: googleConnector, opQ: opQ) {
+				context.console.info("\(res)")
 			}
-		)
+		}
 	}
 	
 	private func searchResults(for userAndDest: GoogleUserAndDest, searchedString: String, mainConnector: GoogleJWTConnector, opQ: OperationQueue) async throws -> String? {

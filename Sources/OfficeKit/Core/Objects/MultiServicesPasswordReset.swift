@@ -7,6 +7,7 @@
 
 import Foundation
 
+import CollectionConcurrencyKit
 import NIO
 import ServiceKit
 
@@ -27,30 +28,15 @@ extension MultiServicesPasswordReset {
 	public func start(newPass: String, weakeningMode: WeakeningMode) async throws -> [AnyUserDirectoryService: Result<Void, Error>] {
 		guard !isExecuting else {throw OperationAlreadyInProgressError()}
 		
-		return await withTaskGroup(
-			of: (AnyUserDirectoryService, Result<Void, Error>).self,
-			returning: [AnyUserDirectoryService: Result<Void, Error>].self,
-			body: { group in
-				for (service, resetPairResult) in errorsAndItemsByService {
-					group.addTask{
-						return await (service, Result<Void, Error>{
-							switch resetPairResult {
-								case .success(nil):            return ()
-								case .success(let resetPair?): return try await resetPair.passwordReset.start(parameters: newPass, weakeningMode: weakeningMode)
-								case .failure(let error):      throw error
-							}
-						})
-					}
+		return await errorsAndItemsByService.concurrentMapValues{ resetPairResult in
+			return await Result<Void, Error>{
+				switch resetPairResult {
+					case .success(nil):            return ()
+					case .success(let resetPair?): return try await resetPair.passwordReset.start(parameters: newPass, weakeningMode: weakeningMode)
+					case .failure(let error):      throw error
 				}
-				
-				var ret = [AnyUserDirectoryService: Result<Void, Error>]()
-				while let (service, curRes) = await group.next() {
-					assert(ret[service] == nil)
-					ret[service] = curRes
-				}
-				return ret
 			}
-		)
+		}
 	}
 	
 }
