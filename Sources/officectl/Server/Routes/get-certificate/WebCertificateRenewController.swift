@@ -133,30 +133,24 @@ class WebCertificateRenewController {
 		
 		/* Revoke the certificates to revoke */
 		try req.application.auditLogger.log(action: "Revoking \(certificatesToRevoke.count) certificate(s): \(certificatesToRevoke.map{ $0.issuerName + ":" + $0.id }.joined(separator: " ")).", source: .web)
-		try await withThrowingTaskGroup(of: Void.self, returning: Void.self, body: { group in
-			for certificateToRevoke in certificatesToRevoke {
-				group.addTask{
-					let (id, issuerName, _) = certificateToRevoke
-					let op = try URLRequestDataOperation<VaultResponse<RevocationResult?>>.forAPIRequest(
-						url: vaultBaseURL.appending(issuerName, "revoke"), httpBody: ["serial_number": id],
-						requestProcessors: [AuthRequestProcessor(authHandler: authenticate)],
-						resultProcessorModifier: { rp in
-							rp.flatMapError{ (error, response) in
-								/* Vault returns an empty reply if revoking an expired certificate,
-								 * so we erase the error in case we get an empty reply from the Vault API. */
-								if (response as? HTTPURLResponse)?.statusCode == 204 {
-									return VaultResponse(data: nil)
-								}
-								throw error
-							}
-						}, retryProviders: []
-					)
-					/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
-					_ = try await op.startAndGetResult()
-				}
-			}
-			while try await group.next() != nil {}
-		})
+		try await certificatesToRevoke.asyncForEach{ certificateToRevoke in
+			let (id, issuerName, _) = certificateToRevoke
+			let op = try URLRequestDataOperation<VaultResponse<RevocationResult?>>.forAPIRequest(
+				url: vaultBaseURL.appending(issuerName, "revoke"), httpBody: ["serial_number": id],
+				requestProcessors: [AuthRequestProcessor(authHandler: authenticate)],
+				resultProcessorModifier: { rp in
+					rp.flatMapError{ (error, response) in
+						/* Vault returns an empty reply if revoking an expired certificate,
+						 * so we erase the error in case we get an empty reply from the Vault API. */
+						if (response as? HTTPURLResponse)?.statusCode == 204 {
+							return VaultResponse(data: nil)
+						}
+						throw error
+					}
+				}, retryProviders: []
+			)
+			_ = try await op.startAndGetResult()
+		}
 		
 		/* Create the new certificate */
 		try req.application.auditLogger.log(action: "Creating certificate w/ CN \(renewedCommonName).", source: .web)
