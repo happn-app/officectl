@@ -104,23 +104,15 @@ class WebCertificateRenewController {
 						 * 	} */
 						
 						/* Get the list of certificates to revoke. */
-						let opsWithIds = try certificatesList.keys.compactMap{ id -> (String, URLRequestDataOperation<VaultResponse<CertificateContainer>>)? in
+						return try await certificatesList.keys.asyncCompactMap{ id in
 							guard !crl.revokedCertificateIds.contains(normalizeCertificateId(id)) else {
 								/* If the certificate is already revoked, we don’t have to do anything w/ it. */
 								return nil
 							}
-							return (
-								id,
-								URLRequestDataOperation<VaultResponse<CertificateContainer>>.forAPIRequest(
-									url: try vaultBaseURL.appending(issuerName, "cert", id),
-									requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
-								)
-							)
-						}
-						try await req.services.make(OperationQueue.self).addOperationsAndWait(opsWithIds.map{ $0.1 })
-						return opsWithIds.map{ opWithId in
-							let (id, op) = opWithId
-							let certificateResponse = try op.result.get()
+							let certificateResponse = try await URLRequestDataOperation<VaultResponse<CertificateContainer>>.forAPIRequest(
+								url: try vaultBaseURL.appending(issuerName, "cert", id),
+								requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
+							).startAndGetResult().result
 							guard let subjectDNStr = certificateResponse.data.certificate.subjectDistinguishedName else {
 								throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN for\n\(certificateResponse.data.pem)"])
 							}
