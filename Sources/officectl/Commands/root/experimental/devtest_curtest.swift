@@ -52,16 +52,10 @@ struct CurrentDevTestCommand : ParsableCommand {
 		
 		/* Delete happn console user */
 //		let consoleService: HappnService = try sProvider.getService(id: nil)
-//		return try await consoleService.existingUser(fromUserId: "happn.agent16@tana.admvalue.com", propertiesToFetch: [], using: app.services)
-//			.flatMapThrowing{
-//				guard let user = $0 else {throw "Cannot get user"}
-//				return user
-//			}
-//			.flatMapThrowing{ user in
-//				try consoleService.deleteUser(user, using: app.services)
-//			}
-//			.flatMap{ $0 }
-//			.get()
+//		guard let user = try await consoleService.existingUser(fromUserId: "sebastien.gadalla@happn.fr", propertiesToFetch: [], using: app.services) else {
+//			throw "Cannot get user"
+//		}
+//		try await consoleService.deleteUser(user, using: app.services)
 		
 		/* List all admins and their permissions */
 //		let consoleService: HappnService = try sProvider.getService(id: nil)
