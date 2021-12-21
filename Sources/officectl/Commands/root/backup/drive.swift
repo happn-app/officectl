@@ -131,7 +131,7 @@ struct BackupDriveCommand : ParsableCommand {
 				console: context.console, opQ: opQ
 			)
 			
-			/* Backup given mails */
+			/* Backup given drives. */
 			await downloadDriveStatus.initStatuses(users: filteredUsers.map{ $0.user })
 			
 			let operations = try filteredUsers.map{ try DownloadDriveOperation(googleConnector: googleConnector, status: downloadDriveStatus, userAndDest: $0, filters: filters, skipOtherOwner: skipOtherOwner, skipZeroQuotaFiles: skipZeroQuotaFiles, eraseDownloadedFiles: eraseDownloadedFiles, downloadFilesQueue: downloadFilesQueue) }

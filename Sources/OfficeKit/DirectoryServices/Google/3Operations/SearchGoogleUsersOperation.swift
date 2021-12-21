@@ -37,7 +37,7 @@ public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 				var token: String?
 				var res = [GoogleUser]()
 				repeat {
-					let newUsersList = try await fetchNextPage(nextPageToken: nil)
+					let newUsersList = try await fetchNextPage(nextPageToken: token)
 					token = newUsersList.nextPageToken
 					res += newUsersList.users ?? []
 				} while token != nil
