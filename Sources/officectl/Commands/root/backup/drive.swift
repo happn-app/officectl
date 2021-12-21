@@ -115,6 +115,10 @@ struct BackupDriveCommand : ParsableCommand {
 		if !disableConsole {
 			OfficeKitConfig.logger = nil
 			consoleActivity.start()
+		} else {
+			/* If we do not do that, we get a crash (dispatch queue released but never activated). */
+			consoleActivity.start()
+			consoleActivity.succeed()
 		}
 		
 		let res = await Result{
