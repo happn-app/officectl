@@ -45,6 +45,7 @@ actor DownloadDriveState {
 		allFilesDestinationBaseURL = afdbu
 	}
 	
+	/* This shouldn’t be in a “state” object… */
 	func getPaths(objectId: String, objectName: String, parentIds: [String]?) async throws -> [String] {
 		guard let parentIds = parentIds, !parentIds.isEmpty else {
 			return [deduplicatePath(originalPath: objectName, for: objectId)]
@@ -56,9 +57,6 @@ actor DownloadDriveState {
 			let task = pathsCache[parentId] ?? Task{
 				try await connector.connect(scope: driveROScope)
 				
-				var urlComponents = URLComponents(url: URL(string: "files/" + parentId, relativeTo: driveApiBaseURL)!, resolvingAgainstBaseURL: true)!
-				urlComponents.queryItems = [URLQueryItem(name: "fields", value: "id,name,parents,ownedByMe")]
-				
 				let decoder = JSONDecoder()
 				decoder.dateDecodingStrategy = .customISO8601
 				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(
@@ -68,7 +66,6 @@ actor DownloadDriveState {
 					)
 				)
 				
-				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
 				let doc = try await op.startAndGetResult().result
 				return try await getPaths(objectId: doc.id, objectName: (doc.name ?? doc.id), parentIds: doc.parents)
 			}
