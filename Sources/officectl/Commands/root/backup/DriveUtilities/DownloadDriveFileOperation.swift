@@ -67,6 +67,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				if let filters = state.filters {
 					var match = false
 					for filter in filters where !match {
+						guard !filter.isEmpty else {match = true; continue}
 						if filter.starts(with: "^") {match = match || (paths.contains{ $0.lowercased().starts(with: filter.dropFirst()) })}
 						else                        {match = match || (paths.contains{ $0.lowercased().contains(filter) })}
 					}
