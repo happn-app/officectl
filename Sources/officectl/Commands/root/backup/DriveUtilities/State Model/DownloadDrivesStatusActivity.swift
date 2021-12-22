@@ -17,16 +17,36 @@ actor DownloadDrivesStatusActivity : ActivityIndicatorType {
 	struct DownloadDriveStatus {
 		
 		var foundAllFiles: Bool = false
+		var gotErrorFindingFiles: Bool = false
+		
+		var totalNumberOfFilesInDrive: Int {
+			return nFilesToProcess + nFilesSucceeded + nFilesFailed + nFilesIgnored
+		}
+		
+		var nFilesProcessed: Int {
+			return nFilesSucceeded + nFilesFailed
+		}
+		
+		var nBytesProcessed: Int {
+			return nBytesSucceeded + nBytesFailed
+		}
+		
+		var nFilesRemaining: Int {
+			return nFilesToProcess - nFilesProcessed
+		}
+		
+		/* The total number of files that should be processed, including the ones already processed. */
 		var nFilesToProcess: Int = 0
 		var nBytesToProcess: Int = 0
 		
-		var nFilesIgnored: Int = 0 /* Files that are not taking any quota in the drive. */
-		var nBytesIgnored: Int = 0 /* Files that are not taking any quota in the drive. */
+		var nFilesSucceeded: Int = 0
+		var nBytesSucceeded: Int = 0
 		
-		var nFilesProcessed: Int = 0
-		var nBytesProcessed: Int = 0
+		var nFilesFailed: Int = 0
+		var nBytesFailed: Int = 0
 		
-		var nFailures: Int = 0 /* Should always lower than or equal to the number of files processed. */
+		var nFilesIgnored: Int = 0
+		var nBytesIgnored: Int = 0
 		
 		var archiving: Bool = false
 		var finished: Bool = false
@@ -76,21 +96,21 @@ actor DownloadDrivesStatusActivity : ActivityIndicatorType {
 		
 		let maxAccountWidth = self.maxAccountWidth ?? statuses.keys.map{ $0.primaryEmail.rawValue.count }.max() ?? 0
 		
-		var maxFoundFilesWidth = 0
-		var maxTreatedFilesWidth = 0
+		var maxToProcessFilesWidth = 0
+		var maxSucceededFilesWidth = 0
 		var maxIgnoredFilesWidth = 0
 		var maxFailuresWidth = 0
 		var maxFoundBytesWidth = 0
 		var maxTreatedBytesWidth = 0
 		var maxIgnoredBytesWidth = 0
 		for s in statuses.values {
-			maxFoundFilesWidth   = max(maxFoundFilesWidth,   numberWidth(s.nFilesToProcess) + (s.foundAllFiles ? 0 : 1))
-			maxTreatedFilesWidth = max(maxTreatedFilesWidth, numberWidth(s.nFilesProcessed))
-			maxIgnoredFilesWidth = max(maxIgnoredFilesWidth, numberWidth(s.nFilesIgnored))
-			maxFailuresWidth     = max(maxFailuresWidth,     numberWidth(s.nFailures))
-			maxFoundBytesWidth   = max(maxFoundBytesWidth,   bytesToHumanReadableString(s.nBytesToProcess).count + (s.foundAllFiles ? 0 : 1))
-			maxTreatedBytesWidth = max(maxTreatedBytesWidth, bytesToHumanReadableString(s.nBytesProcessed).count)
-			maxIgnoredBytesWidth = max(maxIgnoredBytesWidth, bytesToHumanReadableString(s.nBytesIgnored).count)
+			maxToProcessFilesWidth = max(maxToProcessFilesWidth, numberWidth(s.nFilesToProcess) + (s.foundAllFiles || s.gotErrorFindingFiles ? 0 : 1))
+			maxSucceededFilesWidth = max(maxSucceededFilesWidth, numberWidth(s.nFilesSucceeded))
+			maxFailuresWidth       = max(maxFailuresWidth,       numberWidth(s.nFilesFailed))
+			maxIgnoredFilesWidth   = max(maxIgnoredFilesWidth,   numberWidth(s.nFilesIgnored))
+			maxFoundBytesWidth     = max(maxFoundBytesWidth,     bytesToHumanReadableString(s.nBytesToProcess).count + (s.foundAllFiles || s.gotErrorFindingFiles ? 0 : 1))
+			maxTreatedBytesWidth   = max(maxTreatedBytesWidth,   bytesToHumanReadableString(s.nBytesProcessed).count)
+			maxIgnoredBytesWidth   = max(maxIgnoredBytesWidth,   bytesToHumanReadableString(s.nBytesIgnored).count)
 		}
 		
 		for user in statuses.keys.sorted(by: { $0.primaryEmail.rawValue < $1.primaryEmail.rawValue }) {
@@ -100,12 +120,12 @@ actor DownloadDrivesStatusActivity : ActivityIndicatorType {
 			let useremail = user.primaryEmail.rawValue
 			
 			line.append(ConsoleTextFragment(string: "   - ", style: .plain))
-			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxAccountWidth - useremail.count) + useremail, style: .info))
+			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxAccountWidth - useremail.count) + useremail, style: (status.gotErrorFindingFiles ? .error : .info)))
 			line.append(ConsoleTextFragment(string: " [", style: .plain))
-			if status.foundAllFiles && (!status.archiving || status.finished) {
+			if (status.foundAllFiles || status.gotErrorFindingFiles) && (!status.archiving || status.finished) {
 				/* Progress bar w/ actual progress shown. */
-				let progressOK = status.nFilesToProcess == 0 ? 1.0 : Float(status.nFilesProcessed) / Float(status.nFilesToProcess)
-				let progressError = status.nFilesToProcess == 0 ? 0.0 : Float(status.nFailures) / Float(status.nFilesToProcess)
+				let progressOK = status.nFilesToProcess == 0 ? 1.0 : Float(status.nFilesSucceeded) / Float(status.nFilesToProcess)
+				let progressError = status.nFilesToProcess == 0 ? 0.0 : Float(status.nFilesFailed) / Float(status.nFilesToProcess)
 				let leftOK = min(Int((Float(loadingBarWidth) * progressOK).rounded()), loadingBarWidth)
 				let leftError = min(Int((Float(loadingBarWidth) * progressError).rounded()), loadingBarWidth - leftOK)
 				let left = min(leftOK + leftError, loadingBarWidth)
@@ -132,14 +152,14 @@ actor DownloadDrivesStatusActivity : ActivityIndicatorType {
 			}
 			/* Showing the number of downloaded files */
 			line.append(ConsoleTextFragment(string: "] Downloaded ", style: .plain))
-			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxTreatedFilesWidth - numberWidth(status.nFilesProcessed)), style: .plain))
-			line.append(ConsoleTextFragment(string: String(status.nFilesProcessed), style: .plain))
+			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxSucceededFilesWidth - numberWidth(status.nFilesSucceeded)), style: .plain))
+			line.append(ConsoleTextFragment(string: String(status.nFilesSucceeded), style: .plain))
 			line.append(ConsoleTextFragment(string: "/", style: .plain))
-			line.append(ConsoleTextFragment(string: String(status.nFilesToProcess), style: status.foundAllFiles ? .plain : .info))
-			if !status.foundAllFiles {
+			line.append(ConsoleTextFragment(string: String(status.nFilesToProcess), style: status.foundAllFiles || status.gotErrorFindingFiles ? .plain : .info))
+			if !(status.foundAllFiles || status.gotErrorFindingFiles) {
 				line.append(ConsoleTextFragment(string: "+", style: .info))
 			}
-			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxFoundFilesWidth - (numberWidth(status.nFilesToProcess) + (status.foundAllFiles ? 0 : 1))), style: .plain))
+			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxToProcessFilesWidth - (numberWidth(status.nFilesToProcess) + (status.foundAllFiles || status.gotErrorFindingFiles ? 0 : 1))), style: .plain))
 			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxIgnoredFilesWidth - numberWidth(status.nFilesIgnored)), style: .plain))
 			line.append(ConsoleTextFragment(string: " (", style: .plain))
 			line.append(ConsoleTextFragment(string: String(status.nFilesIgnored) + " ignored", style: .warning))
@@ -148,17 +168,17 @@ actor DownloadDrivesStatusActivity : ActivityIndicatorType {
 			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxTreatedBytesWidth - bytesToHumanReadableString(status.nBytesProcessed).count), style: .plain))
 			line.append(ConsoleTextFragment(string: bytesToHumanReadableString(status.nBytesProcessed), style: .plain))
 			line.append(ConsoleTextFragment(string: "/", style: .plain))
-			line.append(ConsoleTextFragment(string: bytesToHumanReadableString(status.nBytesToProcess), style: status.foundAllFiles ? .plain : .info))
-			if !status.foundAllFiles {
+			line.append(ConsoleTextFragment(string: bytesToHumanReadableString(status.nBytesToProcess), style: status.foundAllFiles || status.gotErrorFindingFiles ? .plain : .info))
+			if !(status.foundAllFiles || status.gotErrorFindingFiles) {
 				line.append(ConsoleTextFragment(string: "+", style: .info))
 			}
-			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxFoundBytesWidth - (bytesToHumanReadableString(status.nBytesToProcess).count + (status.foundAllFiles ? 0 : 1))), style: .plain))
+			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxFoundBytesWidth - (bytesToHumanReadableString(status.nBytesToProcess).count + (status.foundAllFiles || status.gotErrorFindingFiles ? 0 : 1))), style: .plain))
 			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxIgnoredBytesWidth - bytesToHumanReadableString(status.nBytesIgnored).count), style: .plain))
 			line.append(ConsoleTextFragment(string: " (", style: .plain))
 			line.append(ConsoleTextFragment(string: bytesToHumanReadableString(status.nBytesIgnored) + " ignored", style: .warning))
 			line.append(ConsoleTextFragment(string: "); failed ", style: .plain))
-			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxFailuresWidth - numberWidth(status.nFailures)), style: .plain))
-			line.append(ConsoleTextFragment(string: String(status.nFailures), style: status.nFailures == 0 ? .success : .error))
+			line.append(ConsoleTextFragment(string: String(repeating: " ", count: maxFailuresWidth - numberWidth(status.nFilesFailed)), style: .plain))
+			line.append(ConsoleTextFragment(string: String(status.nFilesFailed), style: status.nFilesFailed == 0 ? .success : .error))
 			
 			console.output(ConsoleText(fragments: line))
 		}

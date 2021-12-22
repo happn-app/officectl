@@ -183,8 +183,8 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 	
 	private func succeedDownload() async {
 		await state.status.updateStatus(for: state.userAndDest.user, { userStatus in
-			userStatus.nFilesProcessed += 1
-			userStatus.nBytesProcessed += doc.size.flatMap{ Int($0) } ?? 0
+			userStatus.nFilesSucceeded += 1
+			userStatus.nBytesSucceeded += doc.size.flatMap{ Int($0) } ?? 0
 		})
 		result = .success(doc)
 		baseOperationEnded()
@@ -194,7 +194,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 		await state.status.updateStatus(for: state.userAndDest.user, { userStatus in
 			userStatus.nFilesIgnored += 1
 			userStatus.nFilesToProcess -= 1
-			userStatus.nBytesIgnored -= doc.size.flatMap{ Int($0) } ?? 0
+			userStatus.nBytesIgnored += doc.size.flatMap{ Int($0) } ?? 0
 			userStatus.nBytesToProcess -= doc.size.flatMap{ Int($0) } ?? 0
 		})
 		result = .success(doc)
@@ -203,7 +203,10 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 	
 	private func failDownload(error: Error) async {
 		_ = try? state.logFile.logCSVLine([doc.id, "download_error", error.legibleLocalizedDescription])
-		await state.status.updateStatus(for: state.userAndDest.user, { $0.nFailures += 1 })
+		await state.status.updateStatus(for: state.userAndDest.user, { userStatus in
+			userStatus.nFilesFailed += 1
+			userStatus.nBytesFailed += doc.size.flatMap{ Int($0) } ?? 0
+		})
 		result = .failure(error)
 		baseOperationEnded()
 	}

@@ -154,6 +154,8 @@ struct BackupDriveCommand : ParsableCommand {
 			}
 			OfficeKitConfig.logger = previousOfficeKitLogger
 		}
+		
+		_ = try res.get()
 	}
 	
 }
