@@ -107,7 +107,9 @@ class DownloadDriveOperation : RetryingOperation {
 			try URLRequestDataOperation<GoogleDriveFilesList>.forAPIRequest(
 				url: driveApiBaseURL.appending("files"), urlParameters: RequestParams(pageToken: nextPageToken),
 				decoders: [decoder],
-				requestProcessors: [AuthRequestProcessor(state.connector)], retryProviders: [RateLimitRetryProvider()]
+				requestProcessors: [AuthRequestProcessor(state.connector)],
+				retryableStatusCodes: [403],
+				retryProviders: [RateLimitRetryProvider()]
 			)
 		)
 		

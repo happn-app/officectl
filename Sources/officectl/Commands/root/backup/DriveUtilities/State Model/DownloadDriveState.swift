@@ -62,6 +62,8 @@ actor DownloadDriveState {
 				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(
 					try URLRequestDataOperation<GoogleDriveDoc>.forAPIRequest(
 						url: driveApiBaseURL.appending("files", parentId), urlParameters: ["fields": "id,name,parents,ownedByMe"],
+						requestProcessors: [AuthRequestProcessor(connector)],
+						retryableStatusCodes: [403],
 						retryProviders: [RateLimitRetryProvider()]
 					)
 				)

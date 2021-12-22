@@ -36,7 +36,7 @@ class RateLimitRetryProvider : RetryProvider {
 		}
 		guard retryCount < (maxRetries ?? .max) else {return nil}
 		retryCount += 1
-		return [RetryingOperation.TimerRetryHelper(retryDelay: 100, retryingOperation: operation)]
+		return [RetryingOperation.TimerRetryHelper(retryDelay: NetworkErrorRetryProvider.exponentialBackoffTimeForIndex(3), retryingOperation: operation)]
 	}
 	
 }

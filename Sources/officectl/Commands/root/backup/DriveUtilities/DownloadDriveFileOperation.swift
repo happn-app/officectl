@@ -138,7 +138,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 						urlResponseValidators: [HTTPStatusCodeURLResponseValidator()],
 						resultProcessor: .identity(),
 						retryProviders: [
-							UnretriedErrorsRetryProvider.forStatusCodes(Set(400..<500).subtracting([403])),
+							UnretriedErrorsRetryProvider.forWhitelistedStatusCodes([403]),
 							NetworkErrorRetryProvider(
 								maximumNumberOfRetries: DownloadDriveFileOperation.maximumNumberOfRetries,
 								alsoRetryNonIdempotentRequests: true,
