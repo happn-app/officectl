@@ -70,7 +70,7 @@ struct GetTokenCommand : ParsableCommand {
 		settings.userBehalf = userBehalf
 		let googleConnector = try GoogleJWTConnector(key: settings)
 		try await googleConnector.connect(scope: Set(scopesStr.components(separatedBy: ",")))
-		return googleConnector.token!
+		return await googleConnector.token!
 	}
 	
 	private func getGitHubToken(gitHubConfig: GitHubServiceConfig, scopesStr: String?, userBehalf: String?) async throws -> String {
@@ -83,7 +83,7 @@ struct GetTokenCommand : ParsableCommand {
 		
 		let gitHubConnector = try GitHubJWTConnector(key: gitHubConfig.connectorSettings)
 		try await gitHubConnector.connect(scope: ())
-		return gitHubConnector.token!
+		return await gitHubConnector.token!
 	}
 	
 }

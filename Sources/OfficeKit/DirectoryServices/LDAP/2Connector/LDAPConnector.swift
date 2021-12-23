@@ -7,13 +7,16 @@
 
 import Foundation
 
+import APIConnectionProtocols
+import TaskQueue
+
 import COpenLDAP
 
 
 
 /* Most of this class is adapted from https://github.com/PerfectlySoft/Perfect-LDAP/blob/master/Sources/PerfectLDAP/PerfectLDAP.swift */
 
-public final class LDAPConnector : Connector {
+public final actor LDAPConnector : Connector, HasTaskQueue {
 	
 	public static func isInvalidPassError(_ error: Error) -> Bool {
 		let nsError = error as NSError
@@ -55,7 +58,8 @@ public final class LDAPConnector : Connector {
 		
 	}
 	
-	public typealias ScopeType = Void
+	public typealias Scope = Void
+	public typealias Authentication = Void
 	
 	public let ldapURL: URL
 	public let authMode: AuthMode
@@ -118,54 +122,55 @@ public final class LDAPConnector : Connector {
 	 - Parameter ldapPtr: An opaque pointer to the underlying LDAP C structure.
 	 The structure is opaque in the openldap headers, so we get an opaque pointer in Swift. */
 	public func performLDAPCommunication<T>(_ communicationBlock: (_ ldapPtr: OpaquePointer) throws -> T) rethrows -> T {
-		return try ldapCommunicationQueue.sync{ try communicationBlock(ldapPtr) }
+		/* If I understand the actor principle correctly, it is not possible this function is called twice in parallel,
+		 * so there should not be any need for a synchronization queue. */
+		return try communicationBlock(ldapPtr)
 	}
 	
 	/* ********************************
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<Void>, handler: @escaping (Error?) -> Void) {
-		switch changeType {
-			case .remove, .removeAll:
-				handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Disconnecting an LDAP connection but retaining the connection is not supported by (Open)LDAP"]))
+	public func unqueuedConnect(scope: Void, auth: Void) async throws -> Void {
+		switch authMode {
+			case .none:
+				self.currentScope = scope
+				return
 				
-			case .add(let scope):
-				switch authMode {
-					case .none:
-						self.currentScope = scope
-						handler(nil)
+			case .userPass(username: let username, password: let password):
+				guard let cStringPass = password.cString(using: .ascii) else {
+					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Password cannot be converted to C String using ascii encoding"])
+				}
+				currentScope = try await withCheckedThrowingContinuation{ continuation in
+					DispatchQueue(label: "LDAP Connector Connect Queue").async{continuation.resume(with: Result{
+						var cred = berval(bv_len: ber_len_t(strlen(cStringPass)), bv_val: ber_strdup(cStringPass))
+						defer {ber_memfree(cred.bv_val)}
 						
-					case .userPass(username: let username, password: let password):
-						guard let cStringPass = password.cString(using: .ascii) else {
-							handler(NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Password cannot be converted to C String using ascii encoding"]))
-							return
+						/* TODO: https://twitter.com/CodaFi_/status/1362671988171370496 */
+						let r = ldap_sasl_bind_s(self.ldapPtr, username, nil, &cred, nil, nil, nil)
+						guard r == LDAP_SUCCESS else {
+							throw NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])
 						}
-						DispatchQueue(label: "LDAP Connector Connect Queue").async{
-							var cred = berval(bv_len: ber_len_t(strlen(cStringPass)), bv_val: ber_strdup(cStringPass))
-							defer {ber_memfree(cred.bv_val)}
-							
-							/* TODO: https://twitter.com/CodaFi_/status/1362671988171370496 */
-							let r = ldap_sasl_bind_s(self.ldapPtr, username, nil, &cred, nil, nil, nil)
-							guard r == LDAP_SUCCESS else {
-								handler(NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))]))
-								return
-							}
-							
-							self.currentScope = scope
-							handler(nil)
-						}
+						
+						return scope
+					})}
 				}
 		}
+	}
+	
+	public func unqueuedDisconnect() async throws {
+		throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Disconnecting an LDAP connection but retaining the connection is not supported by (Open)LDAP"])
 	}
 	
 	/* ***************
 	   MARK: - Private
 	   *************** */
 	
+	/** Technically public because it fulfill the HasTaskQueue requirement, but should not be used directly. */
+	public var _taskQueue = TaskQueue()
+	
 	private static let initSemaphore = DispatchSemaphore(value: 1)
 	
-	private let ldapCommunicationQueue = DispatchQueue(label: "LDAPConnector Communication Queue")
 	private let ldapPtr: OpaquePointer /* “LDAP*”; Cannot use the LDAP type (not exported to Swift, because opaque in C headers...) */
 	
 }

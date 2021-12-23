@@ -31,7 +31,7 @@ public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		assert(connector.isConnected)
+		assert(connector.isConnectedNonAsync)
 		Task{
 			result = await Result{
 				var token: String?

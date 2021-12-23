@@ -7,9 +7,11 @@
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)
 
+import APIConnectionProtocols
 import DirectoryService
 import Foundation
 import OpenDirectory
+import TaskQueue
 
 
 
@@ -27,9 +29,10 @@ import OpenDirectory
  * Reading does not require a password apparently, but the admin pass is required to modify certain fields (I think). */
 
 /* This helps: https://github.com/aosm/OpenDirectory/blob/master/Tests/TestApp.m */
-public final class OpenDirectoryConnector : Connector {
+public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	
-	public typealias ScopeType = Void
+	public typealias Scope = Void
+	public typealias Authentication = Void
 	
 	public typealias ProxySettings = (hostname: String, username: String, password: String)
 	public typealias CredentialsSettings = (recordType: String, username: String, password: String)
@@ -58,45 +61,43 @@ public final class OpenDirectoryConnector : Connector {
 	 - Parameter node: The OpenDirectory node.
 	 If the connector is not connected, will be `nil`. */
 	public func performOpenDirectoryCommunication<T>(_ communicationBlock: (_ node: ODNode?) throws -> T) rethrows -> T {
-		return try odCommunicationQueue.sync{ try communicationBlock(node) }
+		/* If I understand the actor principle correctly, it is not possible this function is called twice in parallel,
+		 * so there should not be any need for a synchronization queue. */
+		return try communicationBlock(node)
 	}
 	
 	/* ********************************
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<Void>, handler: @escaping (Error?) -> Void) {
-		switch changeType {
-			case .remove, .removeAll:
-				currentScope = nil
-				node = nil
-				handler(nil)
-				return
-				
-			case .add(let scopeToAdd):
-				guard currentScope == nil else {
-					handler(InvalidArgumentError(message: "Cannot add a scope for the OpenDirectory connector."))
-					return
+	public func unqueuedConnect(scope: Void, auth: Void) async throws {
+		try await unqueuedDisconnect()
+		
+		node = try await withCheckedThrowingContinuation{ continuation in
+			DispatchQueue(label: "OpenDirectory Connector Connect Queue").async{continuation.resume(with: Result{
+				let session = try ODSession(options: self.sessionOptions)
+				let node = try ODNode(session: session, name: self.nodeName)
+				if let creds = self.nodeCredentials {
+					try node.setCredentialsWithRecordType(creds.recordType, recordName: creds.username, password: creds.password)
 				}
-				
-				DispatchQueue(label: "OpenDirectory Connector Connect Queue").async{
-					do {
-						let session = try ODSession(options: self.sessionOptions)
-						self.node = try ODNode(session: session, name: self.nodeName)
-						if let creds = self.nodeCredentials {
-							try self.node?.setCredentialsWithRecordType(creds.recordType, recordName: creds.username, password: creds.password)
-						}
-						
-						self.currentScope = scopeToAdd
-						handler(nil)
-					} catch {
-						handler(error)
-					}
-				}
+				return node
+			})}
 		}
+		currentScope = scope
 	}
 	
-	private let odCommunicationQueue = DispatchQueue(label: "OpenDirectory Communication Queue")
+	public func unqueuedDisconnect() async throws {
+		currentScope = nil
+		node = nil
+	}
+	
+	/* ***************
+	   MARK: - Private
+	   *************** */
+	
+	/** Technically public because it fulfill the HasTaskQueue requirement, but should not be used directly. */
+	public var _taskQueue = TaskQueue()
+	
 	private var node: ODNode?
 	
 }

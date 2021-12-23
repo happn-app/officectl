@@ -46,22 +46,24 @@ public final class ModifyLDAPObjectsOperation : RetryingOperation {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		assert(connector.isConnected)
+		assert(connector.isConnectedNonAsync)
 		assert(objects.count == errors.count)
 		
-		for (idx, object) in objects.enumerated() {
-			/* TODO: Check we do not leak. We should not, though. */
-			var ldapModifsRequest = object.attributes.filter{ propertiesToUpdate.contains($0.key) }.map{ v -> UnsafeMutablePointer<LDAPMod>? in ldapModAlloc(method: LDAP_MOD_REPLACE | LDAP_MOD_BVALUES, key: v.key, values: v.value) } + [nil]
-			defer {ldap_mods_free(&ldapModifsRequest, 0)}
+		Task{
+			for (idx, object) in objects.enumerated() {
+				/* TODO: Check we do not leak. We should not, though. */
+				var ldapModifsRequest = object.attributes.filter{ propertiesToUpdate.contains($0.key) }.map{ v -> UnsafeMutablePointer<LDAPMod>? in ldapModAlloc(method: LDAP_MOD_REPLACE | LDAP_MOD_BVALUES, key: v.key, values: v.value) } + [nil]
+				defer {ldap_mods_free(&ldapModifsRequest, 0)}
+				
+				/* We use the synchronous version of the function.
+				 * See long comment in search operation for details. */
+				let r = await connector.performLDAPCommunication{ ldap_modify_ext_s($0, object.distinguishedName.stringValue, &ldapModifsRequest, nil /* Server controls */, nil /* Client controls */) }
+				if r == LDAP_SUCCESS {errors[idx] = nil}
+				else                 {errors[idx] = NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])}
+			}
 			
-			/* We use the synchronous version of the function.
-			 * See long comment in search operation for details. */
-			let r = connector.performLDAPCommunication{ ldap_modify_ext_s($0, object.distinguishedName.stringValue, &ldapModifsRequest, nil /* Server controls */, nil /* Client controls */) }
-			if r == LDAP_SUCCESS {errors[idx] = nil}
-			else                 {errors[idx] = NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])}
+			baseOperationEnded()
 		}
-		
-		baseOperationEnded()
 	}
 	
 }

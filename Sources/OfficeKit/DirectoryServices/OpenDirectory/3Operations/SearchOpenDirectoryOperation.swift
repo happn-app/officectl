@@ -36,31 +36,29 @@ public final class SearchOpenDirectoryOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		defer {baseOperationEnded()}
-		
-		do {
-			try openDirectoryConnector.performOpenDirectoryCommunication{ node in
-				guard let node = node else {
-					throw InternalError(message: "Launched a search open directory action with a non-connected connector!")
+		Task{
+			results = await Result{
+				try await openDirectoryConnector.performOpenDirectoryCommunication{ node in
+					guard let node = node else {
+						throw InternalError(message: "Launched a search open directory action with a non-connected connector!")
+					}
+					/* Note: This shortcut exists when searching directly with a UID:
+					 *       try node.record(withRecordType: kODRecordTypeUsers, name: the_uid (e.g. "francois.lamboley"), attributes: request.returnAttributes) */
+					let odQuery = try ODQuery(
+						node: node,
+						forRecordTypes: request.recordTypes,
+						attribute: request.attribute,
+						matchType: request.matchType,
+						queryValues: request.queryValues,
+						returnAttributes: request.returnAttributes/* ?? kODAttributeTypeAllAttributes*/,
+						maximumResults: request.maximumResults ?? 0
+					)
+					/* The “as!” should be valid; OpenDirectory is simply not updated anymore and the returned array is not typed.
+					 * But doc says this method returns an array of ODRecord. */
+					return try odQuery.resultsAllowingPartial(false) as! [ODRecord]
 				}
-				/* Note: This shortcut exists when searching directly with a UID:
-				 *       try node.record(withRecordType: kODRecordTypeUsers, name: the_uid (e.g. "francois.lamboley"), attributes: request.returnAttributes) */
-				let odQuery = try ODQuery(
-					node: node,
-					forRecordTypes: request.recordTypes,
-					attribute: request.attribute,
-					matchType: request.matchType,
-					queryValues: request.queryValues,
-					returnAttributes: request.returnAttributes/* ?? kODAttributeTypeAllAttributes*/,
-					maximumResults: request.maximumResults ?? 0
-				)
-				/* The “as!” should be valid; OpenDirectory is simply not updated anymore and the returned array is not typed.
-				 * But doc says this method returns an array of ODRecord. */
-				let odResults = try odQuery.resultsAllowingPartial(false) as! [ODRecord]
-				results = .success(odResults)
 			}
-		} catch {
-			results = .failure(error)
+			baseOperationEnded()
 		}
 	}
 	

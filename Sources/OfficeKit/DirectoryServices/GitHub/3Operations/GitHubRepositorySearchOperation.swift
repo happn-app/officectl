@@ -23,7 +23,7 @@ public final class GitHubRepositorySearchOperation : RetryingOperation, HasResul
 	public private(set) var result = Result<[GitHubRepository], Error>.failure(OperationIsNotFinishedError())
 	
 	public init(searchedOrganisation orgname: String, gitHubConnector: GitHubJWTConnector) {
-		assert(gitHubConnector.isConnected)
+		assert(gitHubConnector.isConnectedNonAsync)
 		searchedOrganisation = orgname
 		connector = gitHubConnector
 	}

@@ -54,13 +54,13 @@ class LDAPOperationTests : XCTestCase {
 		
 		/* We use the semi-singleton init, but purposefully not init via a semi-singleton store. */
 		let connector = try LDAPConnector(key: ldapConfForTests.connectorSettings)
-		connector.connect(scope: (), handler: { result in
-			expectationObject.error = result.failureValue
-		})
+		Task{
+			expectationObject.error = await Result{ try await connector.connect() }.failureValue
+		}
 		XCTWaiter().wait(for: [expectation], timeout: 3)
 		
 		if let e = expectationObject.error {throw e}
-		assert(connector.isConnected)
+		assert(connector.isConnectedNonAsync)
 		return connector
 	}
 	

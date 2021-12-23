@@ -79,8 +79,9 @@ struct BackupGitHubCommand : ParsableCommand {
 		
 		/* Updating repositories clones. */
 		context.console.info("Updating clones...")
+		let githubToken = await gitHubConnector.token!
 		let q = OperationQueue(); q.maxConcurrentOperationCount = 7 /* We do not use the default operation queue from async config. Indeed, we are launching one sub-process per operation. We do not want a configuration suited for threads, we want one suited for launching subprocesses. */
-		let operations = repositoryNames.map{ CloneGitHubRepoOperation(in: destinationFolderURL, repoFullName: $0, accessToken: gitHubConnector.token!) }
+		let operations = repositoryNames.map{ CloneGitHubRepoOperation(in: destinationFolderURL, repoFullName: $0, accessToken: githubToken) }
 		await q.addOperationsAndWait(operations)
 		let operationResults = operations.map{ o in Result{ try throwIfError(o.cloneError) } }
 		

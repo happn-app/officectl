@@ -45,44 +45,45 @@ public final class ModifyLDAPPasswordsOperation : RetryingOperation {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		assert(connector.isConnected)
 		assert(resets.count == errors.count)
+		assert(connector.isConnectedNonAsync)
 		
-		for (idx, reset) in resets.enumerated() {
-			do {
-				let pass = reset.pass ?? generateRandomPassword()
-				
-				/* Let’s build the password change request */
-				guard let ber = ber_alloc_t(LBER_USE_DER) else {
-					throw NSError(domain: "com.happn.officectl.lber", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot allocate memory"])
+		Task{
+			for (idx, reset) in resets.enumerated() {
+				do {
+					let pass = reset.pass ?? generateRandomPassword()
+			
+					/* Let’s build the password change request */
+					guard let ber = ber_alloc_t(LBER_USE_DER) else {
+						throw NSError(domain: "com.happn.officectl.lber", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot allocate memory"])
+					}
+					defer {ber_free(ber, 1 /* 1 is for “also free buffer” (if I understand correctly) */)}
+			
+					var bv = berval(bv_len: 0, bv_val: nil)
+					try buildBervalPasswordChangeRequest(dn: reset.dn.stringValue, newPass: pass, ber: ber, berval: &bv)
+					assert(bv.bv_val != nil)
+			
+					/* Debug the generated berval data. */
+//					var data = Data()
+//					for i in 0..<bv.bv_len {data.append(UInt8((Int(bv.bv_val.advanced(by: Int(i)).pointee) + 256) % 256))}
+//					OfficeKitConfig.logger?.debug(data.reduce("", { $0 + String(format: "%02x", $1) }))
+			
+					/* We use the synchronous version of the function.
+					 * See long comment in search operation for details. */
+					let r = await connector.performLDAPCommunication{ ldap_extended_operation_s($0, LDAP_EXOP_MODIFY_PASSWD, &bv, nil /* Server controls */, nil /* Client controls */, nil, nil) }
+					guard r == LDAP_SUCCESS else {
+						throw NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])
+					}
+			
+					passwords[reset.dn] = pass
+					errors[idx] = nil
+				} catch {
+					errors[idx] = error
 				}
-				defer {ber_free(ber, 1 /* 1 is for “also free buffer” (if I understand correctly) */)}
-				
-				var bv = berval(bv_len: 0, bv_val: nil)
-				try buildBervalPasswordChangeRequest(dn: reset.dn.stringValue, newPass: pass, ber: ber, berval: &bv)
-				assert(bv.bv_val != nil)
-				
-				/* Debug the generated berval data. */
-//				var data = Data()
-//				for i in 0..<bv.bv_len {data.append(UInt8((Int(bv.bv_val.advanced(by: Int(i)).pointee) + 256) % 256))}
-//				OfficeKitConfig.logger?.debug(data.reduce("", { $0 + String(format: "%02x", $1) }))
-				
-				/* We use the synchronous version of the function.
-				 * See long comment in search operation for details. */
-				let r = connector.performLDAPCommunication{ ldap_extended_operation_s($0, LDAP_EXOP_MODIFY_PASSWD, &bv, nil /* Server controls */, nil /* Client controls */, nil, nil) }
-				guard r == LDAP_SUCCESS else {
-					throw NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])
-				}
-				
-				passwords[reset.dn] = pass
-				errors[idx] = nil
-			} catch {
-				errors[idx] = error
-				continue
 			}
+			
+			baseOperationEnded()
 		}
-		
-		baseOperationEnded()
 	}
 	
 	private func buildBervalPasswordChangeRequest(dn: String, newPass: String, ber: OpaquePointer, berval: inout berval) throws {

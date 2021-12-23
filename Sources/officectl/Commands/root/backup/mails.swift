@@ -247,8 +247,11 @@ struct BackupMailsCommand : ParsableCommand {
 			
 			try await connector.connect(scope: scope)
 			
-			if let token = connector.token, let expirationDate = connector.expirationDate {return (userAndDest, token, expirationDate)}
-			else                                                                          {throw NSError(domain: "com.happn.officectl", code: 42, userInfo: [NSLocalizedDescriptionKey: "Internal error"])}
+			if let token = await connector.token, let expirationDate = await connector.expirationDate {
+				return (userAndDest, token, expirationDate)
+			} else {
+				throw NSError(domain: "com.happn.officectl", code: 42, userInfo: [NSLocalizedDescriptionKey: "Internal error"])
+			}
 		}
 		
 	}

@@ -7,6 +7,8 @@
 
 import Foundation
 
+import APIConnectionProtocols
+import TaskQueue
 import URLRequestOperation
 
 
@@ -19,8 +21,8 @@ public struct AuthRequestProcessor : RequestProcessor {
 		self.authHandler = { req, handler in handler(Result{ try authHandler(req) }) }
 	}
 	
-	public init<Auth : Authenticator>(_ auth: Auth) where Auth.RequestType == URLRequest {
-		authHandler = { req, handler in auth.authenticate(request: req, handler: { res, _ in handler(res) }) }
+	public init<Auth : Authenticator & HasTaskQueue>(_ auth: Auth) where Auth.Request == URLRequest {
+		authHandler = { req, handler in Task{ handler(await Result{ try await auth.authenticate(request: req) }) } }
 	}
 	
 	public func transform(urlRequest: URLRequest, handler: @escaping (Result<URLRequest, Error>) -> Void) {

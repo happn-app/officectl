@@ -10,15 +10,18 @@ import Foundation
 import FoundationNetworking
 #endif
 
+import APIConnectionProtocols
 import JWTKit
+import TaskQueue
 import URLRequestOperation
 
 
 
-public final class GitHubJWTConnector : Connector, Authenticator {
+public final actor GitHubJWTConnector : Connector, Authenticator, HasTaskQueue {
 	
-	public typealias ScopeType = Void
-	public typealias RequestType = URLRequest
+	public typealias Scope = Void
+	public typealias Request = URLRequest
+	public typealias Authentication = Void
 	
 	public let appId: String
 	public let installationId: String
@@ -46,53 +49,57 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<Void>, handler: @escaping (Error?) -> Void) {
-		Task{await handler(Result{
-			switch changeType {
-				case .remove, .removeAll:
-					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not implemented (could not find doc to revoke token...)"])
-					
-				case .add:
-					struct GitHubJWTPayload : JWTPayload {
-						var iss: IssuerClaim
-						var iat: IssuedAtClaim
-						var exp: ExpirationClaim
-						func verify(using signer: JWTSigner) throws {
-							/* We do not care, we won’t verify it, the server will. */
-						}
-					}
-					let jwtPayload = GitHubJWTPayload(iss: .init(value: appId), iat: .init(value: Date()), exp: .init(value: Date() + 30))
-					let jwtToken = try JWTSigner.rs256(key: privateKey).sign(jwtPayload)
-					
-					let decoder = JSONDecoder()
-					decoder.dateDecodingStrategy = .iso8601
-					decoder.keyDecodingStrategy = .convertFromSnakeCase
-					let op = URLRequestDataOperation<Auth>.forAPIRequest(
-						url: try URL(string: "https://api.github.com")!.appending("app", "installations", installationId, "access_tokens"),
-						method: "POST", headers: ["authorization": "Bearer \(jwtToken)"],
-						decoders: [decoder], retryProviders: []
-					)
-					auth = try await op.startAndGetResult().result
+	public func unqueuedConnect(scope _: Void, auth _: Void) async throws -> Void {
+		struct GitHubJWTPayload : JWTPayload {
+			var iss: IssuerClaim
+			var iat: IssuedAtClaim
+			var exp: ExpirationClaim
+			func verify(using signer: JWTSigner) throws {
+				/* We do not care, we won’t verify it, the server will. */
 			}
-		}.failureValue)}
+		}
+		let jwtPayload = GitHubJWTPayload(iss: .init(value: appId), iat: .init(value: Date()), exp: .init(value: Date() + 30))
+		let jwtToken = try JWTSigner.rs256(key: privateKey).sign(jwtPayload)
+		
+		let decoder = JSONDecoder()
+		decoder.dateDecodingStrategy = .iso8601
+		decoder.keyDecodingStrategy = .convertFromSnakeCase
+		let op = URLRequestDataOperation<Auth>.forAPIRequest(
+			url: try URL(string: "https://api.github.com")!.appending("app", "installations", installationId, "access_tokens"),
+			method: "POST", headers: ["authorization": "Bearer \(jwtToken)"],
+			decoders: [decoder], retryProviders: []
+		)
+		auth = try await op.startAndGetResult().result
+	}
+	
+	public func unqueuedDisconnect() async throws {
+		throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not implemented (could not find doc to revoke token...)"])
 	}
 	
 	/* ************************************
 	   MARK: - Authenticator Implementation
 	   ************************************ */
 	
-	public func authenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
-		connectorOperationQueue.addAsyncBlock{ endHandler in
-			self.unsafeAuthenticate(request: request, handler: { (result, userInfo) in
-				endHandler()
-				handler(result, userInfo)
-			})
+	public func unqueuedAuthenticate(request: URLRequest) async throws -> URLRequest {
+		/* Make sure we're connected.
+		 * (Note: at the time of writing, it is technically impossible for isConnected to be true and auth to be nil.
+		 *  We could in theory bang the auth variable, but putting it in the guard is more elegant IMHO.) */
+		guard isConnected, let auth = auth else {
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected."])
 		}
+		
+		/* Add the “Authorization” header to the request */
+		var request = request
+		request.addValue("token \(auth.token)", forHTTPHeaderField: "Authorization")
+		return request
 	}
 	
 	/* ***************
 	   MARK: - Private
 	   *************** */
+	
+	/** Technically public because it fulfill the HasTaskQueue requirement, but should not be used directly. */
+	public var _taskQueue = TaskQueue()
 	
 	private var auth: Auth?
 	
@@ -108,21 +115,6 @@ public final class GitHubJWTConnector : Connector, Authenticator {
 			
 		}
 		
-	}
-	
-	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
-		/* Make sure we're connected.
-		 * (Note: at the time of writing, it is technically impossible for isConnected to be true and auth to be nil.
-		 *  We could in theory bang the auth variable, but putting it in the guard is more elegant IMHO.) */
-		guard isConnected, let auth = auth else {
-			handler(RError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."]), nil)
-			return
-		}
-		
-		/* Add the “Authorization” header to the request */
-		var request = request
-		request.addValue("token \(auth.token)", forHTTPHeaderField: "Authorization")
-		handler(.success(request), nil)
 	}
 	
 }

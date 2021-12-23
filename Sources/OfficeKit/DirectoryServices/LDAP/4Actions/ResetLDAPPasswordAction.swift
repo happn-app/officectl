@@ -28,17 +28,16 @@ public final class ResetLDAPPasswordAction : Action<LDAPDistinguishedName, Strin
 	}
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Error>) -> Void) throws {
-		/* Note: To be symmetrical with the reset google user action, we could use the existingLDAPUser method. */
-		deps.connector.connect(scope: (), handler: { result in
-			if let e = result.failureValue {return handler(.failure(e))}
+		Task{await handler(Result{
+			/* Note: To be symmetrical with the reset google user action, we could use the existingLDAPUser method. */
+			try await deps.connector.connect()
 			
 			let operation = ModifyLDAPPasswordsOperation(resets: [(self.subject, newPassword)], connector: self.deps.connector)
-			operation.completionBlock = {
-				if let e = operation.errors[0] {handler(.failure(e))}
-				else                           {handler(.success(()))}
+			await operation.startAndWait()
+			if let e = operation.errors[0] {
+				throw e
 			}
-			defaultOperationQueueForFutureSupport.addOperations([operation], waitUntilFinished: false)
-		})
+		})}
 	}
 	
 	private struct Dependencies {

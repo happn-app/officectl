@@ -58,6 +58,7 @@ let package = Package(
 		.executable(name: "officectl", targets: ["officectl"])
 	] + platformDependentProducts,
 	dependencies: [
+		.package(                     url: "https://github.com/Frizlab/APIConnectionProtocols.git", from: "1.0.0-beta.3"),
 		.package(                     url: "https://github.com/Frizlab/HasResult.git", from: "1.0.0"),
 		.package(                     url: "https://github.com/Frizlab/OperationAwaiting.git", from: "1.2.0-beta.1"),
 		.package(                     url: "https://github.com/Frizlab/swift-email.git", from: "0.2.2"),
@@ -94,6 +95,7 @@ let package = Package(
 		.target(
 			name: "OfficeKit",
 			dependencies: [
+				.product(name: "APIConnectionProtocols",   package: "APIConnectionProtocols"),
 				.product(name: "CollectionConcurrencyKit", package: "CollectionConcurrencyKit"),
 				.product(name: "Crypto",                   package: "swift-crypto"),
 				.product(name: "Email",                    package: "swift-email"),

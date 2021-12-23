@@ -10,12 +10,14 @@ import Foundation
 import FoundationNetworking
 #endif
 
+import APIConnectionProtocols
 import Crypto
+import TaskQueue
 import URLRequestOperation
 
 
 
-public final class HappnConnector : Connector, Authenticator {
+public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	
 	public static let nullLoginUserId = "244"
 	
@@ -26,8 +28,9 @@ public final class HappnConnector : Connector, Authenticator {
 		
 	}
 	
-	public typealias ScopeType = Set<String>
-	public typealias RequestType = URLRequest
+	public typealias Scope = Set<String>
+	public typealias Request = URLRequest
+	public typealias Authentication = Void
 	
 	public let baseURL: URL
 	
@@ -72,73 +75,21 @@ public final class HappnConnector : Connector, Authenticator {
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unsafeChangeCurrentScope(changeType: ChangeScopeOperationType<Set<String>>, handler: @escaping (Error?) -> Void) {
-		let newScope: Set<String>?
+	public func unqueuedConnect(scope: Set<String>, auth _: Void) async throws -> Set<String> {
+		try await unqueuedDisconnect()
 		
-		switch changeType {
-			case .add(let scope):    newScope = (scope.isEmpty ? currentScope : (currentScope ?? Set()).union(scope))
-			case .remove(let scope): newScope = currentScope?.subtracting(scope)
-			case .removeAll:         newScope = nil
-		}
-		assert(newScope?.isEmpty != true) /* The scope is either nil or non-empty */
+		let request = TokenRequestBody(scope: scope.joined(separator: " "), clientId: clientId, clientSecret: clientSecret, grant: authMode)
+		let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(url: baseURL.appending("connect", "oauth", "token"), httpBody: request, retryProviders: [])
+		let response = try await op.startAndGetResult().result
+		let a = Auth(
+			scope: Set(response.scope.components(separatedBy: " ")), userId: response.userId,
+			accessToken: response.accessToken, refreshToken: response.refreshToken,
+			expirationDate: Date() + TimeInterval(response.expiresIn)
+		)
+		auth = a
+		return a.scope
 		
-		unsafeDisconnect{ error in
-			if let error = error {
-				/* Got an error at disconnection. We stop here. */
-				return handler(error)
-			}
-			
-			guard let scope = newScope else {
-				/* No new scope: simple disconnection. We stop here. */
-				return handler(nil)
-			}
-			
-			self.unsafeConnect(scope: scope, authMode: self.authMode, handler: handler)
-		}
-	}
-	
-	/* ************************************
-	   MARK: - Authenticator Implementation
-	   ************************************ */
-	
-	public func authenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
-		connectorOperationQueue.addAsyncBlock{ endHandler in
-			self.unsafeAuthenticate(request: request, handler: { (result, userInfo) in
-				endHandler()
-				handler(result, userInfo)
-			})
-		}
-	}
-	
-	/* ***************
-	   MARK: - Private
-	   *************** */
-	
-	private var auth: Auth?
-	
-	private struct Auth {
-		
-		let scope: Set<String>
-		let userId: String
-		
-		let accessToken: String
-		let refreshToken: String
-		
-		let expirationDate: Date
-		
-	}
-	
-	private func unsafeConnect(scope: Set<String>, authMode: AuthMode, handler: @escaping (Error?) -> Void) {
-		Task{await handler(Result{
-			let request = TokenRequestBody(scope: scope.joined(separator: " "), clientId: clientId, clientSecret: clientSecret, grant: authMode)
-			let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(url: baseURL.appending("connect", "oauth", "token"), httpBody: request, retryProviders: [])
-			let response = try await op.startAndGetResult().result
-			self.auth = Auth(
-				scope: Set(response.scope.components(separatedBy: " ")), userId: response.userId,
-				accessToken: response.accessToken, refreshToken: response.refreshToken,
-				expirationDate: Date() + TimeInterval(response.expiresIn)
-			)
-		}.failureValue)}
+		/* ***** STRUCTS ***** */
 		
 		struct TokenRequestBody : Encodable {
 			
@@ -195,29 +146,34 @@ public final class HappnConnector : Connector, Authenticator {
 		}
 	}
 	
-	public func unsafeDisconnect(handler: @escaping (Error?) -> Void) {
-		Task{await handler(Result{
-			guard let auth = auth else {return}
-			
-			/* Code before URLRequestOperation v2 migration was making a GET.
-			 * I find it weird but have not verified if it’s correct or not. */
-			let op = URLRequestDataOperation<RevokeResponseBody>.forAPIRequest(url: baseURL.appendingPathComponents("connect", "oauth", "revoke-token"), headers: ["authorization": #"OAuth="\#(auth.accessToken)""#], retryProviders: [])
-			do {_ = try await op.startAndGetResult()}
-			catch where ((error as? URLRequestOperationError)?.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.actual == 410 {
-				/* We consider the 410 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
-			}
-		}.failureValue)}
+	public func unqueuedDisconnect() async throws {
+		guard let auth = auth else {return}
+		
+		/* Code before URLRequestOperation v2 migration was making a GET.
+		 * I find it weird but have not verified if it’s correct or not. */
+		let op = URLRequestDataOperation<RevokeResponseBody>.forAPIRequest(url: baseURL.appendingPathComponents("connect", "oauth", "revoke-token"), headers: ["authorization": #"OAuth="\#(auth.accessToken)""#], retryProviders: [])
+		do {
+			_ = try await op.startAndGetResult()
+			self.auth = nil
+		} catch where ((error as? URLRequestOperationError)?.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.actual == 410 {
+			/* We consider the 410 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
+		}
+		
+		/* ***** STRUCTS ***** */
 		
 		struct RevokeResponseBody : Decodable {
 			/* I don’t know! */
 		}
 	}
 	
-	private func unsafeAuthenticate(request: URLRequest, handler: @escaping (Result<URLRequest, Error>, Any?) -> Void) {
+	/* ************************************
+	   MARK: - Authenticator Implementation
+	   ************************************ */
+	
+	public func unqueuedAuthenticate(request: URLRequest) async throws -> URLRequest {
 		/* Make sure we're connected */
 		guard let auth = auth else {
-			handler(RError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected..."]), nil)
-			return
+			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not Connected."])
 		}
 		
 		var request = request
@@ -259,7 +215,28 @@ public final class HappnConnector : Connector, Authenticator {
 			request.setValue(hmac.reduce("", { $0 + String(format: "%02x", $1) }), forHTTPHeaderField: "Signature")
 		}
 		
-		handler(.success(request), nil)
+		return request
+	}
+	
+	/* ***************
+	   MARK: - Private
+	   *************** */
+	
+	/** Technically public because it fulfill the HasTaskQueue requirement, but should not be used directly. */
+	public var _taskQueue = TaskQueue()
+	
+	private var auth: Auth?
+	
+	private struct Auth {
+		
+		let scope: Set<String>
+		let userId: String
+		
+		let accessToken: String
+		let refreshToken: String
+		
+		let expirationDate: Date
+		
 	}
 	
 }

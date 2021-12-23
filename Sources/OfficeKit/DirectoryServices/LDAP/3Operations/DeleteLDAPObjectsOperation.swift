@@ -38,18 +38,20 @@ public final class DeleteLDAPObjectsOperation : RetryingOperation {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		assert(connector.isConnected)
+		assert(connector.isConnectedNonAsync)
 		assert(objects.count == errors.count)
 		
-		for (idx, object) in objects.enumerated() {
-			/* We use the synchronous version of the function.
-			 * See long comment in search operation for details. */
-			let r = connector.performLDAPCommunication{ ldap_delete_ext_s($0, object.distinguishedName.stringValue, nil /* Server controls */, nil /* Client controls */) }
-			if r == LDAP_SUCCESS {errors[idx] = nil}
-			else                 {errors[idx] = NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])}
+		Task{
+			for (idx, object) in objects.enumerated() {
+				/* We use the synchronous version of the function.
+				 * See long comment in search operation for details. */
+				let r = await connector.performLDAPCommunication{ ldap_delete_ext_s($0, object.distinguishedName.stringValue, nil /* Server controls */, nil /* Client controls */) }
+				if r == LDAP_SUCCESS {errors[idx] = nil}
+				else                 {errors[idx] = NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])}
+			}
+			
+			baseOperationEnded()
 		}
-		
-		baseOperationEnded()
 	}
 	
 }

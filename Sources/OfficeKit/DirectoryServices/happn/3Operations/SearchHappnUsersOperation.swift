@@ -34,7 +34,7 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		assert(connector.isConnected)
+		assert(connector.isConnectedNonAsync)
 		Task{
 			result = await Result{
 				let limit = 500

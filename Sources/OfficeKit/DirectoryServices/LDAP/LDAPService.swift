@@ -309,7 +309,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		let connector = try LDAPConnector(key: ldapConnectorConfig)
 		
 		do {
-			try await connector.connect(scope: (), forceReconnect: true)
+			try await connector.connect()
 		} catch let error where LDAPConnector.isInvalidPassError(error) {
 			return false
 		}
