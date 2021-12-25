@@ -450,7 +450,7 @@ struct BackupMailsCommand : ParsableCommand {
 				let (user, (token, destinationURL)) = userInfo
 				/* About the sslcacertfile:
 				 *    - When using the system (macOS) Python, we must use the dummycert trick (sslcacertfile = ~/.dummycert_for_python.pem);
-				 *    - When using homebrew’s Python2 (offlineimap uses Python2…), we must specify the cacert file. We use the one from openssl. */
+				 *    - When using homebrew’s Python2 (offlineimap uses Python2…), we must specify the cacert file. We use the one from ca-certificates (openssl dependency). */
 				/* About the ssl_version:
 				 *    - When using Python2 w/ OpenSSL 1.1.1, offlineimap cannot validate Gougle’s certificate.
 				 *      We can fix that by forcing using the TLS 1.2 protocol. (youhou) */
@@ -468,7 +468,7 @@ struct BackupMailsCommand : ParsableCommand {
 					readonly = True
 					remoteuser = \(user.primaryEmail.rawValue)
 					oauth2_access_token = \(token)
-					sslcacertfile = /usr/local/etc/openssl/cert.pem
+					sslcacertfile = /usr/local/etc/ca-certificates/cert.pem
 					ssl_version = tls1_2
 					
 					"""
