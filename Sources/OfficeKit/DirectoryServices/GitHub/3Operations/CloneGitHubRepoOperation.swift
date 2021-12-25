@@ -93,6 +93,7 @@ public final class CloneGitHubRepoOperation : RetryingOperation, HasResult {
 			cloneError = NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "git exited with code \(process.terminationStatus) for repository \(repoName)"])
 			return
 		}
+		cloneError = nil
 	}
 	
 }
