@@ -210,7 +210,7 @@ struct BackupMailsCommand : ParsableCommand {
 		}
 		
 		override var isAsynchronous: Bool {
-			return false
+			return true
 		}
 		
 		override func startBaseOperation(isRetry: Bool) {
