@@ -60,7 +60,7 @@ class LDAPOperationTests : XCTestCase {
 		XCTWaiter().wait(for: [expectation], timeout: 3)
 		
 		if let e = expectationObject.error {throw e}
-		assert(connector.isConnectedNonAsync)
+//		assert(connector.isConnected)
 		return connector
 	}
 	

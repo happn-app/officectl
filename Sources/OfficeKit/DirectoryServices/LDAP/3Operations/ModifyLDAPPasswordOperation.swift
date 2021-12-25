@@ -46,7 +46,7 @@ public final class ModifyLDAPPasswordsOperation : RetryingOperation {
 	
 	public override func startBaseOperation(isRetry: Bool) {
 		assert(resets.count == errors.count)
-		assert(connector.isConnectedNonAsync)
+//		assert(connector.isConnected)
 		
 		Task{
 			for (idx, reset) in resets.enumerated() {

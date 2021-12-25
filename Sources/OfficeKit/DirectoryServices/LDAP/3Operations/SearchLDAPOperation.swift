@@ -32,7 +32,7 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		assert(ldapConnector.isConnectedNonAsync)
+//		assert(ldapConnector.isConnected)
 		
 		Task{
 			results = await Result{

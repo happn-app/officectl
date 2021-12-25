@@ -38,7 +38,7 @@ public final class DeleteLDAPObjectsOperation : RetryingOperation {
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
-		assert(connector.isConnectedNonAsync)
+//		assert(connector.isConnected)
 		assert(objects.count == errors.count)
 		
 		Task{
