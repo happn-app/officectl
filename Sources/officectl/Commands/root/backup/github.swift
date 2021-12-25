@@ -62,7 +62,12 @@ struct BackupGitHubCommand : ParsableCommand {
 		context.console.info("Searching for obsolete backed-up repositories...")
 		
 		/* Deleting repositories that are not on GitHub anymore. */
-		self.iterateLevel2Sync(in: destinationFolderURL, handler: { (container, folder, currentFolderURL) in
+		iterateLevel2Sync(in: destinationFolderURL, handler: { (container, folder, currentFolderURL) in
+			guard container == orgname else {
+				/* Let’s not delete repo that are not in the backed-up org. */
+				return
+			}
+			
 			guard currentFolderURL.pathExtension == "git" || currentFolderURL.lastPathComponent == ".DS_Store" else {
 				context.console.warning("found path \"\(currentFolderURL.path)\" which does not have a \"git\" extension; not deleting"/*, to: &stderrStream*/)
 				return
