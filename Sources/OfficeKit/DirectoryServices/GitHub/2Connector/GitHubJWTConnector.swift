@@ -58,7 +58,9 @@ public final actor GitHubJWTConnector : Connector, Authenticator, HasTaskQueue {
 				/* We do not care, we won’t verify it, the server will. */
 			}
 		}
-		let jwtPayload = GitHubJWTPayload(iss: .init(value: appId), iat: .init(value: Date()), exp: .init(value: Date() + 30))
+		/* GitHub does not support non-int exp or iat. */
+		let roundedNow = Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded())
+		let jwtPayload = GitHubJWTPayload(iss: .init(value: appId), iat: .init(value: roundedNow), exp: .init(value: roundedNow + 30))
 		let jwtToken = try JWTSigner.rs256(key: privateKey).sign(jwtPayload)
 		
 		let decoder = JSONDecoder()
