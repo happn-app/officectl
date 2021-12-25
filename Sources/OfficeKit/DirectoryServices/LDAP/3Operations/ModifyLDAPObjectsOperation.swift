@@ -42,7 +42,7 @@ public final class ModifyLDAPObjectsOperation : RetryingOperation {
 	}
 	
 	public override var isAsynchronous: Bool {
-		return false
+		return true
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {

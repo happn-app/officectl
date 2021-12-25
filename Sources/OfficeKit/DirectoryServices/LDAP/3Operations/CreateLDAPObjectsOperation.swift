@@ -51,7 +51,7 @@ public final class CreateLDAPObjectsOperation : RetryingOperation, HasResult {
 	}
 	
 	public override var isAsynchronous: Bool {
-		return false
+		return true
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {

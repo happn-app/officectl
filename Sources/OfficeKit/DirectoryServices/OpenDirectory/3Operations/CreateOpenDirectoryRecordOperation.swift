@@ -63,7 +63,7 @@ public final class CreateOpenDirectoryRecordOperation : RetryingOperation, HasRe
 	}
 	
 	public override var isAsynchronous: Bool {
-		return false
+		return true
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {

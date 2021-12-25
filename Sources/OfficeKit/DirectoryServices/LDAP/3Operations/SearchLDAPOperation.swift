@@ -141,10 +141,11 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 	}
 	
 	public override var isAsynchronous: Bool {
-		return false
+		return true
 	}
 	
 }
+
 
 public struct LDAPSearchRequest {
 	
