@@ -185,9 +185,9 @@
         "package": "SemiSingleton",
         "repositoryURL": "https://github.com/happn-tech/SemiSingleton.git",
         "state": {
-          "branch": null,
-          "revision": "1c17d1ab5d6026b18b22b1aa3c0eca111b8a87db",
-          "version": "2.0.4"
+          "branch": "workaround_swift_crash",
+          "revision": "9371a6040f65f9bab22470321497c9fbcdd3c6a8",
+          "version": null
         }
       },
       {

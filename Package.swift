@@ -65,7 +65,7 @@ let package = Package(
 		.package(                     url: "https://github.com/happn-app/CollectionConcurrencyKit.git", from: "0.2.0"),
 		.package(                     url: "https://github.com/happn-tech/URLRequestOperation.git", from: "2.0.0-alpha.13.1"),
 		.package(                     url: "https://github.com/happn-tech/RetryingOperation.git", from: "1.1.4"),
-		.package(                     url: "https://github.com/happn-tech/SemiSingleton.git", from: "2.0.0"),
+		.package(                     url: "https://github.com/happn-tech/SemiSingleton.git", .branch("workaround_swift_crash")),
 		.package(                     url: "https://github.com/apple/swift-nio.git", from: "2.6.0"),
 		.package(                     url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
 		.package(                     url: "https://github.com/apple/swift-crypto.git", from: "1.0.0"),
