@@ -75,10 +75,9 @@ extension MultiServicesUser {
 	}
 	
 	public static func fetchAll(in services: Set<AnyUserDirectoryService>, using depServices: Services) async throws -> (users: [MultiServicesUser], fetchErrorsByServices: [AnyUserDirectoryService: Error]) {
-		let eventLoop = try depServices.eventLoop()
 		let (pairs, fetchErrorsByService) = await AnyDSUPair.fetchAll(in: services, using: depServices)
 		let validServices = services.subtracting(fetchErrorsByService.keys)
-		return try await (MultiServicesUser.merge(dsuPairs: Set(pairs), validServices: validServices, eventLoop: eventLoop), fetchErrorsByService)
+		return try await (MultiServicesUser.merge(dsuPairs: Set(pairs), validServices: validServices), fetchErrorsByService)
 	}
 	
 	/**
@@ -90,7 +89,7 @@ extension MultiServicesUser {
 	 
 	 If the `allowNonValidServices` arg is set to `true`, the returned users might contain a DSU pair for a service that has not been declared valid.
 	 (The argument is only useful when `validServices` is set to a non-`nil` value.) */
-	public static func merge(dsuPairs: Set<AnyDSUPair>, validServices: Set<AnyUserDirectoryService>? = nil, allowNonValidServices: Bool = false, eventLoop: EventLoop, dispatchQueue: DispatchQueue = defaultDispatchQueueForFutureSupport) async throws -> [MultiServicesUser] {
+	public static func merge(dsuPairs: Set<AnyDSUPair>, validServices: Set<AnyUserDirectoryService>? = nil, allowNonValidServices: Bool = false, dispatchQueue: DispatchQueue = defaultDispatchQueueForFutureSupport) async throws -> [MultiServicesUser] {
 		return try await withCheckedThrowingContinuation{ continuation in
 			dispatchQueue.async{
 				do {
