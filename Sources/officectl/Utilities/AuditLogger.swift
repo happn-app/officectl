@@ -58,8 +58,8 @@ class AuditLogger {
 			"action": JSON.string(action),
 			"file": JSON.string(file),
 			"function": JSON.string(function),
-			"line": JSON.number(Float(line)),
-			"column": JSON.number(Float(column))
+			"line": JSON.number(Double(line)),
+			"column": JSON.number(Double(column))
 		]
 		switch source {
 			case .cli: loggedDict["source"] = "cli"

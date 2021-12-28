@@ -1,6 +1,6 @@
 # Xcode & Finder
 .DS_Store
-*.xcodeproj/
+xcuserdata/
 
 # SwiftPM
 /.build/

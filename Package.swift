@@ -12,11 +12,11 @@ var platformDependentOfficectlDependencies = [PackageDescription.Target.Dependen
 #if canImport(DirectoryService) && canImport(OpenDirectory)
 platformDependentTargets.append(.executableTarget(name: "officectl_odproxy", dependencies: [
 	.product(name: "Crypto",       package: "swift-crypto"),
-	.product(name: "GenericJSON",  package: "GenericJSON"),
+	.product(name: "GenericJSON",  package: "generic-json-swift"),
 	.product(name: "JWTKit",       package: "jwt-kit"),
 	.product(name: "LegibleError", package: "LegibleError"),
 	.product(name: "Vapor",        package: "vapor"),
-	.product(name: "Yaml",         package: "Yaml"),
+	.product(name: "Yaml",         package: "YamlSwift"),
 	"OfficeKit"
 ]))
 platformDependentProducts.append(.executable(name: "officectl_odproxy", targets: ["officectl_odproxy"]))
@@ -58,28 +58,29 @@ let package = Package(
 		.executable(name: "officectl", targets: ["officectl"])
 	] + platformDependentProducts,
 	dependencies: [
-		.package(                     url: "https://github.com/Frizlab/APIConnectionProtocols.git", from: "1.0.0-beta.3"),
-		.package(                     url: "https://github.com/Frizlab/HasResult.git", from: "1.0.0"),
-		.package(                     url: "https://github.com/Frizlab/OperationAwaiting.git", from: "1.2.0-beta.1"),
-		.package(                     url: "https://github.com/Frizlab/swift-email.git", from: "0.2.2"),
-		.package(                     url: "https://github.com/happn-app/CollectionConcurrencyKit.git", from: "0.2.0"),
-		.package(                     url: "https://github.com/happn-tech/URLRequestOperation.git", from: "2.0.0-alpha.13.1"),
-		.package(                     url: "https://github.com/happn-tech/RetryingOperation.git", from: "1.1.4"),
-		.package(                     url: "https://github.com/happn-tech/SemiSingleton.git", .branch("workaround_swift_crash")),
-		.package(                     url: "https://github.com/apple/swift-nio.git", from: "2.6.0"),
-		.package(                     url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
-		.package(                     url: "https://github.com/apple/swift-crypto.git", from: "1.0.0"),
-		.package(                     url: "https://github.com/apple/swift-argument-parser.git", from: "0.1.0"),
-		.package(                     url: "https://github.com/vapor/leaf.git", from: "4.0.0"),
-		.package(                     url: "https://github.com/vapor/vapor.git", from: "4.50.0"),
-//		.package(                     url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
-		.package(name: "Yaml",        url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
-		.package(                     url: "https://github.com/vapor/jwt-kit.git", from: "4.2.2"),
-		.package(                     url: "https://github.com/vapor/console-kit.git", from: "4.0.0"),
-		.package(name: "GenericJSON", url: "https://github.com/zoul/generic-json-swift.git", from: "1.2.0"),
-		.package(                     url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0"),
-		.package(                     url: "https://github.com/filom/ASN1Decoder.git", from: "1.3.3"),
-		.package(                     url: "https://github.com/xcode-actions/clt-logger.git", from: "0.3.4")
+		.package(url: "https://github.com/Frizlab/APIConnectionProtocols.git", from: "1.0.0-beta.3"),
+		.package(url: "https://github.com/Frizlab/HasResult.git", from: "1.0.0"),
+		.package(url: "https://github.com/Frizlab/OperationAwaiting.git", from: "1.2.0-beta.1"),
+		.package(url: "https://github.com/Frizlab/swift-email.git", from: "0.2.2"),
+		.package(url: "https://github.com/happn-app/CollectionConcurrencyKit.git", from: "0.2.0"),
+		.package(url: "https://github.com/happn-app/officectl-model.git", .branch("main")),
+		.package(url: "https://github.com/happn-tech/URLRequestOperation.git", from: "2.0.0-alpha.13.1"),
+		.package(url: "https://github.com/happn-tech/RetryingOperation.git", from: "1.1.4"),
+		.package(url: "https://github.com/happn-tech/SemiSingleton.git", .branch("workaround_swift_crash")),
+		.package(url: "https://github.com/apple/swift-nio.git", from: "2.6.0"),
+		.package(url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
+		.package(url: "https://github.com/apple/swift-crypto.git", from: "1.0.0"),
+		.package(url: "https://github.com/apple/swift-argument-parser.git", from: "0.1.0"),
+		.package(url: "https://github.com/vapor/leaf.git", from: "4.0.0"),
+		.package(url: "https://github.com/vapor/vapor.git", from: "4.50.0"),
+//		.package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
+		.package(url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
+		.package(url: "https://github.com/vapor/jwt-kit.git", from: "4.2.2"),
+		.package(url: "https://github.com/vapor/console-kit.git", from: "4.0.0"),
+		.package(url: "https://github.com/zoul/generic-json-swift.git", from: "2.0.1"),
+		.package(url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0"),
+		.package(url: "https://github.com/filom/ASN1Decoder.git", from: "1.3.3"),
+		.package(url: "https://github.com/xcode-actions/clt-logger.git", from: "0.3.4")
 	] + platformDependentDependencies,
 	targets: [
 		.target(name: "GenericStorage", swiftSettings: [
@@ -99,7 +100,7 @@ let package = Package(
 				.product(name: "CollectionConcurrencyKit", package: "CollectionConcurrencyKit"),
 				.product(name: "Crypto",                   package: "swift-crypto"),
 				.product(name: "Email",                    package: "swift-email"),
-				.product(name: "GenericJSON",              package: "GenericJSON"),
+				.product(name: "GenericJSON",              package: "generic-json-swift"),
 				.product(name: "HasResult",                package: "HasResult"),
 				.product(name: "JWTKit",                   package: "jwt-kit"),
 				.product(name: "Logging",                  package: "swift-log"),
@@ -108,7 +109,7 @@ let package = Package(
 				.product(name: "RetryingOperation",        package: "RetryingOperation"),
 				.product(name: "SemiSingleton",            package: "SemiSingleton"),
 				.product(name: "URLRequestOperation",      package: "URLRequestOperation"),
-				.product(name: "Yaml",                     package: "Yaml"),
+				.product(name: "Yaml",                     package: "YamlSwift"),
 				"GenericStorage",
 				"ServiceKit"
 			] + platformDependentOfficeKitDependencies,
@@ -132,7 +133,7 @@ let package = Package(
 				.product(name: "Leaf",                     package: "leaf"),
 				.product(name: "LegibleError",             package: "LegibleError"),
 				.product(name: "Vapor",                    package: "vapor"),
-				.product(name: "Yaml",                     package: "Yaml"),
+				.product(name: "Yaml",                     package: "YamlSwift"),
 				"OfficeKit"
 			] + platformDependentOfficectlDependencies,
 			swiftSettings: [
