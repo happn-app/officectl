@@ -2,7 +2,7 @@
  * SyncOperationQueue.swift
  * officectl
  *
- * Created by François Lamboley on 14/06/2018.
+ * Created by François Lamboley on 2018/06/14.
  */
 
 import Foundation

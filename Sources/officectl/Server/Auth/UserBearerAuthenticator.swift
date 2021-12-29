@@ -2,7 +2,7 @@
  * UserBearerAuthenticator.swift
  * officectl
  *
- * Created by François Lamboley on 17/04/2020.
+ * Created by François Lamboley on 2020/04/17.
  */
 
 import Foundation

@@ -2,7 +2,7 @@
  * ResetPasswordAction.swift
  * OfficeKit
  *
- * Created by François Lamboley on 28/06/2019.
+ * Created by François Lamboley on 2019/06/28.
  */
 
 import Foundation

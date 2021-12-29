@@ -2,7 +2,7 @@
  * LDAPConnector.swift
  * officectl
  *
- * Created by François Lamboley on 28/06/2018.
+ * Created by François Lamboley on 2018/06/28.
  */
 
 import Foundation

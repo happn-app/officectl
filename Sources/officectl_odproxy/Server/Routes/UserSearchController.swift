@@ -2,7 +2,7 @@
  * UserSearchController.swift
  * officectl_odproxy
  *
- * Created by François Lamboley on 11/07/2019.
+ * Created by François Lamboley on 2019/07/11.
  */
 
 import Foundation

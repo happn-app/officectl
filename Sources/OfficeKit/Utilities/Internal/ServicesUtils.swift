@@ -2,7 +2,7 @@
  * ServicesUtils.swift
  * OfficeKit
  *
- * Created by François Lamboley on 03/01/2020.
+ * Created by François Lamboley on 2020/01/03.
  */
 
 import Foundation

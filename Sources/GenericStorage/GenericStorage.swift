@@ -2,7 +2,7 @@
  * GenericStorage.swift
  * officectl
  *
- * Created by François Lamboley on 13/08/2019.
+ * Created by François Lamboley on 2019/08/13.
  */
 
 import Foundation

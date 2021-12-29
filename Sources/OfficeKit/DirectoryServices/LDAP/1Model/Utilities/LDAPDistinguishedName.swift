@@ -2,7 +2,7 @@
  * LDAPDistinguishedName.swift
  * OfficeKit
  *
- * Created by François Lamboley on 05/09/2018.
+ * Created by François Lamboley on 2018/09/05.
  */
 
 import Foundation

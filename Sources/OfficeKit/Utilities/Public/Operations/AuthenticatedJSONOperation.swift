@@ -2,7 +2,7 @@
  * AuthenticatedJSONOperation.swift
  * officectl
  *
- * Created by François Lamboley on 25/06/2018.
+ * Created by François Lamboley on 2018/06/25.
  */
 
 import Foundation

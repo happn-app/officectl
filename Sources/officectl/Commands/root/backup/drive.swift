@@ -2,7 +2,7 @@
  * drive.swift
  * officectl
  *
- * Created by François Lamboley on 09/01/2020.
+ * Created by François Lamboley on 2020/01/09.
  */
 
 /* TODO: Use ncurses to draw the current download status of the drive.

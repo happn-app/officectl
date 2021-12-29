@@ -2,7 +2,7 @@
  * LogoutController.swift
  * officectl
  *
- * Created by François Lamboley on 28/02/2019.
+ * Created by François Lamboley on 2019/02/28.
  */
 
 import Foundation

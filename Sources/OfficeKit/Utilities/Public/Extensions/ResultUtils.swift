@@ -2,7 +2,7 @@
  * ResultUtils.swift
  * OfficeKit
  *
- * Created by François Lamboley on 02/04/2019.
+ * Created by François Lamboley on 2019/04/02.
  */
 
 import Foundation

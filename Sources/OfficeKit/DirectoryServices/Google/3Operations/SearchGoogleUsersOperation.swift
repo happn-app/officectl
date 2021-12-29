@@ -2,7 +2,7 @@
  * SearchGoogleUsersOperation.swift
  * OfficeKit
  *
- * Created by François Lamboley on 17/07/2018.
+ * Created by François Lamboley on 2018/07/17.
  */
 
 import Foundation

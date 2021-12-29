@@ -2,7 +2,7 @@
  * GoogleJWTConnector.swift
  * officectl
  *
- * Created by François Lamboley on 31/05/2018.
+ * Created by François Lamboley on 2018/05/31.
  */
 
 import Foundation

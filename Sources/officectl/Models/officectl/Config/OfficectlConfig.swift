@@ -2,7 +2,7 @@
  * OfficectlConfig.swift
  * officectl
  *
- * Created by François Lamboley on 21/01/2019.
+ * Created by François Lamboley on 2019/01/21.
  */
 
 import Foundation

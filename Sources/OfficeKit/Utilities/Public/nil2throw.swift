@@ -2,7 +2,7 @@
  * nil2throw.swift
  * OfficeKit
  *
- * Created by François Lamboley on 28/12/2018.
+ * Created by François Lamboley on 2018/12/28.
  */
 
 import Foundation

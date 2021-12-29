@@ -2,7 +2,7 @@
  * ConfsForTests.swift
  * OfficeKitTests
  *
- * Created by François Lamboley on 17/08/2019.
+ * Created by François Lamboley on 2019/08/17.
  */
 
 import Foundation

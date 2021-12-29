@@ -2,7 +2,7 @@
  * configure.swift
  * officectl_odproxy
  *
- * Created by François Lamboley on 10/07/2019.
+ * Created by François Lamboley on 2019/07/10.
  */
 
 import Foundation

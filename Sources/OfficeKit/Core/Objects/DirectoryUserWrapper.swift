@@ -2,7 +2,7 @@
  * DirectoryUserWrapper.swift
  * OfficeKit
  *
- * Created by François Lamboley on 09/07/2019.
+ * Created by François Lamboley on 2019/07/09.
  */
 
 import Foundation

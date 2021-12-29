@@ -2,7 +2,7 @@
  * CreateHappnUserOperation.swift
  * OfficeKit
  *
- * Created by François Lamboley on 02/09/2019.
+ * Created by François Lamboley on 2019/09/02.
  */
 
 import Foundation

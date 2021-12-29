@@ -2,7 +2,7 @@
  * ModifyGoogleUserOperation.swift
  * OfficeKit
  *
- * Created by François Lamboley on 12/09/2018.
+ * Created by François Lamboley on 2018/09/12.
  */
 
 import Foundation

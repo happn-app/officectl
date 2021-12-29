@@ -2,7 +2,7 @@
  * AnyUserUtils.swift
  * OfficeKit
  *
- * Created by François Lamboley on 16/09/2019.
+ * Created by François Lamboley on 2019/09/16.
  */
 
 import Foundation

@@ -2,7 +2,7 @@
  * OfficeKitServiceConfig.swift
  * OfficeKit
  *
- * Created by François Lamboley on 24/06/2019.
+ * Created by François Lamboley on 2019/06/24.
  */
 
 import Foundation

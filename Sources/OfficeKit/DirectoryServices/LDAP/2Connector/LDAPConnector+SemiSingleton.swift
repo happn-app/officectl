@@ -2,7 +2,7 @@
  * LDAPConnector+SemiSingleton.swift
  * OfficeKit
  *
- * Created by François Lamboley on 31/08/2018.
+ * Created by François Lamboley on 2018/08/31.
  */
 
 import Foundation

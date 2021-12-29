@@ -2,7 +2,7 @@
  * PasswordResetController.swift
  * officectl
  *
- * Created by François Lamboley on 09/08/2018.
+ * Created by François Lamboley on 2018/08/09.
  */
 
 import Foundation

@@ -2,7 +2,7 @@
  * IosTestDevicesController.swift
  * officectl
  *
- * Created by François Lamboley on 15/10/2019.
+ * Created by François Lamboley on 2019/10/15.
  */
 
 import Foundation

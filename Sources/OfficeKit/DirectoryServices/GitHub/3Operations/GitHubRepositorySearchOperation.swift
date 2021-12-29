@@ -2,7 +2,7 @@
  * GitHubRepositorySearchOperation.swift
  * OfficeKit
  *
- * Created by François Lamboley on 18/07/2018.
+ * Created by François Lamboley on 2018/07/18.
  */
 
 import Foundation

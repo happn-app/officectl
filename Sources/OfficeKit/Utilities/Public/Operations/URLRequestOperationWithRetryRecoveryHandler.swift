@@ -2,7 +2,7 @@
  * URLRequestOperationWithRetryRecoveryHandler.swift
  * OfficeKit
  *
- * Created by François Lamboley on 07/02/2020.
+ * Created by François Lamboley on 2020/02/07.
  */
 
 import Foundation

@@ -2,7 +2,7 @@
  * AnyDirectoryGroup.swift
  * OfficeKit
  *
- * Created by François Lamboley on 26/09/2019.
+ * Created by François Lamboley on 2019/09/26.
  */
 
 import Foundation

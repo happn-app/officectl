@@ -2,7 +2,7 @@
  * WebLoginController.swift
  * officectl
  *
- * Created by François Lamboley on 16/04/2020.
+ * Created by François Lamboley on 2020/04/16.
  */
 
 import Foundation

@@ -2,7 +2,7 @@
  * SearchLDAPOperation.swift
  * officectl
  *
- * Created by François Lamboley on 29/06/2018.
+ * Created by François Lamboley on 2018/06/29.
  */
 
 import Foundation

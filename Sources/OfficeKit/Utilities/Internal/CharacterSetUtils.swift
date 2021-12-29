@@ -2,7 +2,7 @@
  * CharacterSetUtils.swift
  * OfficeKit
  *
- * Created by François Lamboley on 07/09/2018.
+ * Created by François Lamboley on 2018/09/07.
  */
 
 import Foundation

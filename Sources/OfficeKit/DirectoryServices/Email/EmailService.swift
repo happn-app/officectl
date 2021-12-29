@@ -2,7 +2,7 @@
  * EmailService.swift
  * OfficeKit
  *
- * Created by François Lamboley on 26/08/2019.
+ * Created by François Lamboley on 2019/08/26.
  */
 
 import Foundation

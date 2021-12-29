@@ -2,7 +2,7 @@
  * OpenDirectoryConnector+SemiSingleton.swift
  * OfficeKit
  *
- * Created by François Lamboley on 21/05/2019.
+ * Created by François Lamboley on 2019/05/21.
  */
 
 #if canImport(DirectoryService) && canImport(OpenDirectory)

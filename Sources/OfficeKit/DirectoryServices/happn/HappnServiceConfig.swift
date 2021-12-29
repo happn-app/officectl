@@ -2,7 +2,7 @@
  * HappnServiceConfig.swift
  * OfficeKit
  *
- * Created by François Lamboley on 28/08/2019.
+ * Created by François Lamboley on 2019/08/28.
  */
 
 import Foundation

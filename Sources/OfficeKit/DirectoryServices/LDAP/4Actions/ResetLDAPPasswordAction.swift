@@ -2,7 +2,7 @@
  * ResetLDAPPasswordAction.swift
  * OfficeKit
  *
- * Created by François Lamboley on 13/11/2018.
+ * Created by François Lamboley on 2018/11/13.
  */
 
 import Foundation

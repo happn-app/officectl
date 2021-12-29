@@ -2,7 +2,7 @@
  * LDAPOperationTests.swift
  * OfficeKitTests
  *
- * Created by François Lamboley on 03/01/2019.
+ * Created by François Lamboley on 2019/01/03.
  */
 
 import XCTest

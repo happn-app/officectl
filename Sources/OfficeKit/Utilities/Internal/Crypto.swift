@@ -2,7 +2,7 @@
  * Crypto.swift
  * officectl
  *
- * Created by François Lamboley on 26/06/2018.
+ * Created by François Lamboley on 2018/06/26.
  */
 
 /* A note about this file: JWTKit did not exist (at least not on this form) previously.

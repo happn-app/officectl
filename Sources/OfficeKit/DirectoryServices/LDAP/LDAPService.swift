@@ -2,7 +2,7 @@
  * LDAPService.swift
  * OfficeKit
  *
- * Created by François Lamboley on 29/05/2019.
+ * Created by François Lamboley on 2019/05/29.
  */
 
 import Foundation

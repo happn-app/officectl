@@ -2,7 +2,7 @@
  * URLRequestOperation+HasResult.swift
  *
  *
- * Created by François Lamboley on 09/12/2021.
+ * Created by François Lamboley on 2021/12/09.
  */
 
 import Foundation

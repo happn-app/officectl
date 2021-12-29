@@ -2,7 +2,7 @@
  * mails.swift
  * officectl
  *
- * Created by François Lamboley on 6/26/18.
+ * Created by François Lamboley on 2018/06/26.
  */
 
 import Foundation

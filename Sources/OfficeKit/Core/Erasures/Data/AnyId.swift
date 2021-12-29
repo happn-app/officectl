@@ -2,7 +2,7 @@
  * AnyId.swift
  * OfficeKit
  *
- * Created by François Lamboley on 30/08/2019.
+ * Created by François Lamboley on 2019/08/30.
  */
 
 import Foundation

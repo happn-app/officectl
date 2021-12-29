@@ -2,7 +2,7 @@
  * LDAPObject.swift
  * officectl
  *
- * Created by François Lamboley on 04/07/2018.
+ * Created by François Lamboley on 2018/07/04.
  */
 
 import Foundation

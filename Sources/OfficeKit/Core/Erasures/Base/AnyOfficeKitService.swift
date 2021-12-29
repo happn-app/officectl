@@ -2,7 +2,7 @@
  * AnyOfficeKitService.swift
  * OfficeKit
  *
- * Created by François Lamboley on 24/09/2019.
+ * Created by François Lamboley on 2019/09/24.
  */
 
 import Foundation

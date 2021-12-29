@@ -2,7 +2,7 @@
  * Errors.swift
  * OfficeKit
  *
- * Created by François Lamboley on 12/07/2018.
+ * Created by François Lamboley on 2018/07/12.
  */
 
 import Foundation

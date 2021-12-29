@@ -2,7 +2,7 @@
  * MultiServicesItem.swift
  * OfficeKit
  *
- * Created by François Lamboley on 19/08/2019.
+ * Created by François Lamboley on 2019/08/19.
  */
 
 import Foundation

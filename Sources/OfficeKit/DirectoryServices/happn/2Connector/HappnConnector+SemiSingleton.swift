@@ -2,7 +2,7 @@
  * HappnConnector+SemiSingleton.swift
  * OfficeKit
  *
- * Created by François Lamboley on 29/08/2019.
+ * Created by François Lamboley on 2019/08/29.
  */
 
 import Foundation

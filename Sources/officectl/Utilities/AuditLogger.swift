@@ -2,7 +2,7 @@
  * AuditLogger.swift
  * officectl
  *
- * Created by François Lamboley on 04/08/2019.
+ * Created by François Lamboley on 2019/08/04.
  */
 
 import Foundation

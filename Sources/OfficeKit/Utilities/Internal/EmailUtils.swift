@@ -2,7 +2,7 @@
  * EmailUtils.swift
  * OfficeKit
  *
- * Created by François Lamboley on 06/12/2021.
+ * Created by François Lamboley on 2021/12/06.
  */
 
 import Foundation

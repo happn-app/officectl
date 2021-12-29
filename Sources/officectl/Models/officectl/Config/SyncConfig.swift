@@ -2,7 +2,7 @@
  * SyncConfig.swift
  * officectl
  *
- * Created by François Lamboley on 12/07/2019.
+ * Created by François Lamboley on 2019/07/12.
  */
 
 import Foundation
