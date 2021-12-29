@@ -16,6 +16,8 @@ import NIO
 import ServiceKit
 import URLRequestOperation
 
+import OfficeModel
+
 
 
 /**

@@ -8,6 +8,7 @@
 import Foundation
 
 import OfficeKit
+import OfficeModel
 import Vapor
 
 
@@ -55,19 +56,17 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	apiRoutesBuilder.get("**", use: { _ -> String in throw Abort(.notFound) }) /* See first comment of this function for explanation of this. */
 	
 	apiRoutesBuilder.get("services", use: { req in
-		ApiResponse.data(
-			req.application.officeKitConfig.serviceConfigs
-				.map{ kv -> ApiService in
-					let (_, config) = kv
-					return ApiService(providerId: config.providerId, serviceId: config.serviceId, serviceFullName: config.serviceName, isHelperService: config.isHelperService)
-				}
-				.sorted(by: { $0.serviceFullName.localizedCompare($1.serviceFullName) != .orderedDescending })
-		)
+		req.application.officeKitConfig.serviceConfigs
+			.map{ kv -> ApiService in
+				let (_, config) = kv
+				return ApiService(providerId: config.providerId, serviceId: config.serviceId, serviceFullName: config.serviceName, isHelperService: config.isHelperService)
+			}
+			.sorted(by: { $0.serviceFullName.localizedCompare($1.serviceFullName) != .orderedDescending })
 	})
 	
 	apiRoutesBuilder.grouped(UserCredsAuthenticator(usernameType: .taggedId))
-		.post("auth", "login",  use: LoginController().login)
-	authedApiRoutesBuilder.post("auth", "logout", use: LogoutController().logout)
+		.post("auth", "token",  use: LoginController().token)
+	authedApiRoutesBuilder.post("auth", "token", "revoke", use: LogoutController().revoke)
 	
 	let usersController = UsersController()
 	authedApiRoutesBuilderAdmin.get("users", use: usersController.getAllUsers)

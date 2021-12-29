@@ -10,6 +10,8 @@ import Foundation
 import OfficeKit
 import Vapor
 
+import OfficeModel
+
 
 
 struct LoggedInUser : Authenticatable, SessionAuthenticatable {
@@ -20,7 +22,7 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 	static func guardAdminMiddleware() -> AsyncMiddleware {
 		struct IsAdminAuthMiddleware : AsyncMiddleware {
 			func respond(to req: Request, chainingTo next: AsyncResponder) async throws -> Response {
-				guard let u = req.auth.get(LoggedInUser.self), u.isAdmin else {
+				guard let u = req.auth.get(LoggedInUser.self), u.scopes.contains(.admin) else {
 					throw Abort(.forbidden, reason: "This endpoint is reserved to admins")
 				}
 				return try await next.respond(to: req)
@@ -81,7 +83,12 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 	}
 	
 	var user: AnyDSUPair
-	var isAdmin: Bool
+	var scopes: Set<AuthScope>
+	
+	@available(*, deprecated, message: "Use scopes instead.")
+	var isAdmin: Bool {
+		return scopes.contains(.admin)
+	}
 	
 	var sessionID: TaggedId {
 		return user.taggedId

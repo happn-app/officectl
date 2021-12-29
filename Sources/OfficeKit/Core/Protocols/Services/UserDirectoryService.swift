@@ -12,6 +12,8 @@ import GenericJSON
 import NIO
 import ServiceKit
 
+import OfficeModel
+
 
 
 public protocol UserDirectoryService : OfficeKitService, UserDirectoryServiceInit {

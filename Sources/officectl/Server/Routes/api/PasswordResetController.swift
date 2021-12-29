@@ -9,6 +9,7 @@ import Foundation
 
 import JWTKit
 import OfficeKit
+import OfficeModel
 import SemiSingleton
 import Vapor
 
@@ -16,7 +17,7 @@ import Vapor
 
 class PasswordResetController {
 	
-	func getReset(_ req: Request) async throws -> ApiResponse<ApiPasswordReset> {
+	func getReset(_ req: Request) async throws -> ApiPasswordReset {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let fetchedUserId = try AnyDSUIdPair.getAsParameter(named: "dsuid-pair", from: req)
 		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIdPair: fetchedUserId, request: req) else {
@@ -25,10 +26,10 @@ class PasswordResetController {
 		
 		let sProvider = req.application.officeKitServiceProvider
 		let passwordResets = try await MultiServicesPasswordReset.fetch(from: fetchedUserId, in: sProvider.getAllUserDirectoryServices(), using: req.services)
-		return ApiResponse.data(ApiPasswordReset(requestedUserId: fetchedUserId.taggedId, multiPasswordResets: passwordResets, environment: req.application.environment))
+		return ApiPasswordReset(requestedUserId: fetchedUserId.taggedId, multiPasswordResets: passwordResets, environment: req.application.environment)
 	}
 	
-	func createReset(_ req: Request) async throws -> ApiResponse<ApiPasswordReset> {
+	func createReset(_ req: Request) async throws -> ApiPasswordReset {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		
 		/* Parameter retrieval */
@@ -64,7 +65,7 @@ class PasswordResetController {
 		Task.detached{ try await resets.start(newPass: passChangeData.newPassword, weakeningMode: .always(successDelay: 180, errorDelay: 180)) }
 		
 		/* Return the resets response. */
-		return ApiResponse.data(ApiPasswordReset(requestedUserId: dsuIdPair.taggedId, multiPasswordResets: resets, environment: req.application.environment))
+		return ApiPasswordReset(requestedUserId: dsuIdPair.taggedId, multiPasswordResets: resets, environment: req.application.environment)
 	}
 	
 	private struct PassChangeData : Decodable {

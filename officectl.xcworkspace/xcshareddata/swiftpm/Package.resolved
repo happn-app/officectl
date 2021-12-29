@@ -101,6 +101,15 @@
         }
       },
       {
+        "package": "jwt",
+        "repositoryURL": "https://github.com/vapor/jwt.git",
+        "state": {
+          "branch": null,
+          "revision": "f18aa4f69d9ec781d79b7b89352de326f82e17a9",
+          "version": "4.1.0"
+        }
+      },
+      {
         "package": "jwt-kit",
         "repositoryURL": "https://github.com/vapor/jwt-kit.git",
         "state": {
@@ -143,15 +152,6 @@
           "branch": null,
           "revision": "2dd9368a3c9580792b77c7ef364f3735909d9996",
           "version": "4.5.1"
-        }
-      },
-      {
-        "package": "OfficeModel",
-        "repositoryURL": "https://github.com/happn-app/officectl-model.git",
-        "state": {
-          "branch": "main",
-          "revision": "0645d1322884ad0a724897af582c8999c596bd69",
-          "version": null
         }
       },
       {

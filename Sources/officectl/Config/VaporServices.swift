@@ -18,6 +18,16 @@ import Vapor
 
 
 
+extension Application.JWT {
+	
+	var keyName: JWKIdentifier {
+		return "officectl.1"
+	}
+	
+}
+
+
+
 extension Application {
 	
 	var officectlConfig: OfficectlConfig {

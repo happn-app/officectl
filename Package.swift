@@ -13,7 +13,7 @@ var platformDependentOfficectlDependencies = [PackageDescription.Target.Dependen
 platformDependentTargets.append(.executableTarget(name: "officectl_odproxy", dependencies: [
 	.product(name: "Crypto",       package: "swift-crypto"),
 	.product(name: "GenericJSON",  package: "generic-json-swift"),
-	.product(name: "JWTKit",       package: "jwt-kit"),
+	.product(name: "JWT",          package: "jwt"),
 	.product(name: "LegibleError", package: "LegibleError"),
 	.product(name: "Vapor",        package: "vapor"),
 	.product(name: "Yaml",         package: "YamlSwift"),
@@ -75,7 +75,7 @@ let package = Package(
 		.package(url: "https://github.com/vapor/vapor.git", from: "4.50.0"),
 //		.package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
 		.package(url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
-		.package(url: "https://github.com/vapor/jwt-kit.git", from: "4.2.2"),
+		.package(url: "https://github.com/vapor/jwt.git", from: "4.1.0"),
 		.package(url: "https://github.com/vapor/console-kit.git", from: "4.0.0"),
 		.package(url: "https://github.com/zoul/generic-json-swift.git", from: "2.0.1"),
 		.package(url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0"),
@@ -102,7 +102,7 @@ let package = Package(
 				.product(name: "Email",                    package: "swift-email"),
 				.product(name: "GenericJSON",              package: "generic-json-swift"),
 				.product(name: "HasResult",                package: "HasResult"),
-				.product(name: "JWTKit",                   package: "jwt-kit"),
+				.product(name: "JWT",                      package: "jwt"),
 				.product(name: "Logging",                  package: "swift-log"),
 				.product(name: "NIO",                      package: "swift-nio"),
 				.product(name: "OperationAwaiting",        package: "OperationAwaiting"),
@@ -118,7 +118,7 @@ let package = Package(
 //				.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
 			]
 		),
-		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit"]),
+		.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit", .product(name: "OfficeModel", package: "officectl-model")]),
 		
 		.executableTarget(
 			name: "officectl",
@@ -129,9 +129,10 @@ let package = Package(
 				.product(name: "CollectionConcurrencyKit", package: "CollectionConcurrencyKit"),
 				.product(name: "ConsoleKit",               package: "console-kit"),
 				.product(name: "Crypto",                   package: "swift-crypto"),
-				.product(name: "JWTKit",                   package: "jwt-kit"),
+				.product(name: "JWT",                      package: "jwt"),
 				.product(name: "Leaf",                     package: "leaf"),
 				.product(name: "LegibleError",             package: "LegibleError"),
+				.product(name: "OfficeModel",              package: "officectl-model"),
 				.product(name: "Vapor",                    package: "vapor"),
 				.product(name: "Yaml",                     package: "YamlSwift"),
 				"OfficeKit"

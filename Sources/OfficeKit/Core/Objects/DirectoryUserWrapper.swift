@@ -11,6 +11,8 @@ import Email
 import GenericJSON
 import Logging
 
+import OfficeModel
+
 
 
 public struct DirectoryUserWrapper : DirectoryUser, Codable {

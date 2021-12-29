@@ -10,6 +10,7 @@ import Foundation
 import GenericJSON
 import JWTKit
 import OfficeKit
+import OfficeModel
 import SemiSingleton
 import Vapor
 
@@ -17,7 +18,7 @@ import Vapor
 
 class UsersController {
 	
-	func getAllUsers(_ req: Request) async throws -> ApiResponse<ApiUsersSearchResult> {
+	func getAllUsers(_ req: Request) async throws -> ApiUsersSearchResult {
 		let sProvider = req.application.officeKitServiceProvider
 		
 		let serviceIdsStr: String? = req.query["service_ids"]
@@ -27,17 +28,17 @@ class UsersController {
 		let (users, fetchErrorsByService) = try await MultiServicesUser.fetchAll(in: services, using: req.services)
 		let fetchApiErrorsByService = fetchErrorsByService.mapValues{ ApiError(error: $0, environment: req.application.environment) }
 		let orderedServices = try req.application.officeKitConfig.orderedServiceConfigs.map{ try sProvider.getUserDirectoryService(id: $0.serviceId) }
-		return try ApiResponse.data(ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchApiErrorsByService.mapKeys{ $0.config.serviceId }, result: users.map{
+		return try ApiUsersSearchResult(request: "TODO", errorsByServiceId: fetchApiErrorsByService.mapKeys{ $0.config.serviceId }, result: users.map{
 			try ApiUser(multiUsers: $0, orderedServices: orderedServices)
-		}.sorted{ ($0.lastName ?? "").localizedCompare($1.lastName ?? "") != .orderedDescending }))
+		}.sorted{ ($0.lastName ?? "").localizedCompare($1.lastName ?? "") != .orderedDescending })
 	}
 	
-	func getMe(_ req: Request) async throws -> ApiResponse<ApiUserSearchResult> {
+	func getMe(_ req: Request) async throws -> ApiUserSearchResult {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		return try await getUserNoAuthCheck(userId: loggedInUser.user.dsuIdPair, request: req)
 	}
 	
-	func getUser(_ req: Request) async throws -> ApiResponse<ApiUserSearchResult> {
+	func getUser(_ req: Request) async throws -> ApiUserSearchResult {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let fetchedUserId = try AnyDSUIdPair.getAsParameter(named: "dsuid-pair", from: req)
 		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIdPair: fetchedUserId, request: req) else {
@@ -47,17 +48,15 @@ class UsersController {
 		return try await getUserNoAuthCheck(userId: fetchedUserId, request: req)
 	}
 	
-	private func getUserNoAuthCheck(userId: AnyDSUIdPair, request: Request) async throws -> ApiResponse<ApiUserSearchResult> {
+	private func getUserNoAuthCheck(userId: AnyDSUIdPair, request: Request) async throws -> ApiUserSearchResult {
 		let officeKitConfig = request.application.officeKitConfig
 		let sProvider = request.application.officeKitServiceProvider
 		let multiUser = try await MultiServicesUser.fetch(from: userId, in: sProvider.getAllUserDirectoryServices(), using: request.services)
 		let orderedServices = try officeKitConfig.orderedServiceConfigs.map{ try sProvider.getUserDirectoryService(id: $0.serviceId) }
-		return try ApiResponse.data(
-			ApiUserSearchResult(
-				request: userId.taggedId,
-				errorsByServiceId: Dictionary(uniqueKeysWithValues: multiUser.errorsByService.map{ ($0.key.config.serviceId, ApiError(error: $0.value, environment: request.application.environment)) }),
-				result: ApiUser(multiUsers: multiUser, orderedServices: orderedServices)
-			)
+		return try ApiUserSearchResult(
+			request: userId.taggedId,
+			errorsByServiceId: Dictionary(uniqueKeysWithValues: multiUser.errorsByService.map{ ($0.key.config.serviceId, ApiError(error: $0.value, environment: request.application.environment)) }),
+			result: ApiUser(multiUsers: multiUser, orderedServices: orderedServices)
 		)
 	}
 	

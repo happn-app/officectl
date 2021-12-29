@@ -8,6 +8,7 @@
 import Foundation
 
 import Email
+import LegibleError
 import SemiSingleton
 import Vapor
 

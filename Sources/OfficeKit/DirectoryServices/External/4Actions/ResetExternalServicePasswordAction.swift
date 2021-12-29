@@ -13,6 +13,8 @@ import FoundationNetworking
 import SemiSingleton
 import URLRequestOperation
 
+import OfficeModel
+
 
 
 public final class ResetExternalServicePasswordAction : Action<TaggedId, String, Void>, ResetPasswordAction, SemiSingleton {

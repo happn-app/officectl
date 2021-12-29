@@ -10,6 +10,8 @@ import Foundation
 import NIO
 import ServiceKit
 
+import OfficeModel
+
 
 
 public typealias AnyDSUPair = DSUPair<AnyUserDirectoryService>

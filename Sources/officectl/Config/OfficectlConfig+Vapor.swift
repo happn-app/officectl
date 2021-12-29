@@ -10,6 +10,7 @@ import Foundation
 import OfficeKit
 import RetryingOperation
 import SemiSingleton
+import UnwrapOrThrow
 import URLRequestOperation
 import Vapor
 
@@ -32,6 +33,8 @@ extension OfficectlConfig {
 		if let p = staticDataDirURL?.path {
 			app.directory = DirectoryConfiguration(workingDirectory: p.hasSuffix("/") ? p : p + "/")
 		}
+		
+		try app.jwt.signers.use(.hs256(key: app.officectlConfig.serverConfig?.jwtSecret ?! "No JWT Secret in conf"), kid: app.jwt.keyName)
 		
 		/* Tell the views we want to use Leaf as a renderer and add some tags. */
 		app.views.use(.leaf)
