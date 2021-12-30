@@ -42,6 +42,7 @@ final class GetMDMDevicesAction : Action<String, Void, [SimpleMDMDevice]>, SemiS
 		
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .iso8601
+		decoder.keyDecodingStrategy = .convertFromSnakeCase
 		let op = try URLRequestDataOperation<Response>.forAPIRequest(
 			url: URL(string: "https://a.simplemdm.com/api/v1/devices")!, urlParameters: Parameters(limit: 100/*max*/, startingAfter: previousMaxDeviceId),
 			decoders: [decoder], requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
@@ -69,9 +70,6 @@ final class GetMDMDevicesAction : Action<String, Void, [SimpleMDMDevice]>, SemiS
 		struct Response : Decodable {
 			var data: [SimpleMDMDevice]
 			var hasMore: Bool
-			private enum CodingKeys : String, CodingKey {
-				case data, hasMore = "has_more"
-			}
 		}
 	}
 	
