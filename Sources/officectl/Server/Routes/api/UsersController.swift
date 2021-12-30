@@ -8,7 +8,7 @@
 import Foundation
 
 import GenericJSON
-import JWTKit
+import JWT
 import OfficeKit
 import OfficeModel
 import SemiSingleton
@@ -41,7 +41,7 @@ class UsersController {
 	func getUser(_ req: Request) async throws -> ApiUserSearchResult {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let fetchedUserId = try AnyDSUIdPair.getAsParameter(named: "dsuid-pair", from: req)
-		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIdPair: fetchedUserId, request: req) else {
+		guard try loggedInUser.scopes.contains(.admin) || loggedInUser.representsSameUserAs(dsuIdPair: fetchedUserId, request: req) else {
 			throw Abort(.forbidden, reason: "Non-admin users can only see themselves.")
 		}
 		

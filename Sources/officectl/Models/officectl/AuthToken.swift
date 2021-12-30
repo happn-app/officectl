@@ -7,7 +7,7 @@
 
 import Foundation
 
-import JWTKit
+import JWT
 import UnwrapOrThrow
 import Vapor
 
@@ -63,7 +63,7 @@ struct AuthToken : JWTPayload, Authenticatable {
 	}
 	
 	func verify(using signer: JWTSigner) throws {
-		guard iss.value == "pw" else {throw Abort(.unauthorized)}
+		guard iss.value == "officectl" else {throw Abort(.unauthorized)}
 		try exp.verifyNotExpired()
 	}
 	

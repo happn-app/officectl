@@ -37,8 +37,10 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	app.middleware = Middlewares() /* Drop all default middlewares */
 	app.middleware.use(ErrorMiddleware.default(environment: app.environment)) /* Catches errors and converts them to HTTP response (suitable for API) */
 	
-	let bearerAuth = UserBearerAuthenticator()
+	let jwtAuth = UserJWTAuthenticator()
 	let sessionAuth = UserSessionAuthenticator()
+	let oauthClientAuth = OAuthClientAuthenticator()
+	
 	let loginGuard = LoggedInUser.guardMiddleware()
 	let adminLoginGuard = LoggedInUser.guardAdminMiddleware()
 	let loginGuardRedirect = LoggedInUser.redirectMiddlewareWithNextParam(baseURL: URL(string: "/login")!, nextParamName: "next")
@@ -51,7 +53,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	/* **************************** */
 	
 	let apiRoutesBuilder = app.grouped("api")
-	let authedApiRoutesBuilder = apiRoutesBuilder.grouped(bearerAuth, loginGuard)
+	let authedApiRoutesBuilder = apiRoutesBuilder.grouped(jwtAuth, loginGuard)
 	let authedApiRoutesBuilderAdmin = authedApiRoutesBuilder.grouped(adminLoginGuard)
 	apiRoutesBuilder.get("**", use: { _ -> String in throw Abort(.notFound) }) /* See first comment of this function for explanation of this. */
 	
@@ -64,9 +66,9 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 			.sorted(by: { $0.serviceFullName.localizedCompare($1.serviceFullName) != .orderedDescending })
 	})
 	
-	apiRoutesBuilder.grouped(UserCredsAuthenticator(usernameType: .taggedId))
-		.post("auth", "token",  use: LoginController().token)
-	authedApiRoutesBuilder.post("auth", "token", "revoke", use: LogoutController().revoke)
+	let authController = AuthController()
+	apiRoutesBuilder.grouped(oauthClientAuth).post("auth", "token",           use: authController.token)
+	apiRoutesBuilder.grouped(oauthClientAuth).post("auth", "token", "revoke", use: authController.tokenRevoke)
 	
 	let usersController = UsersController()
 	authedApiRoutesBuilderAdmin.get("users", use: usersController.getAllUsers)
@@ -95,8 +97,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	
 	let webLoginController = WebLoginController()
 	authedWebRoutesBuilder.get("login", use: webLoginController.showLoginPage)
-	authedWebRoutesBuilder.grouped(UserCredsAuthenticator(usernameType: .email))
-		.post("login", use: webLoginController.doLogin)
+	authedWebRoutesBuilder.post("login", use: webLoginController.doLogin)
 	/* ↑ We use the session authenticator in order to save the login session on successful authentication, and not to use the user creds auth if unneeded. */
 	
 	authedWebRoutesBuilderGuard.get("auth-check", use: webLoginController.authCheck)

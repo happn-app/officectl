@@ -11,7 +11,7 @@ import FoundationNetworking
 #endif
 
 import APIConnectionProtocols
-import JWTKit
+import JWT
 import TaskQueue
 import URLRequestOperation
 

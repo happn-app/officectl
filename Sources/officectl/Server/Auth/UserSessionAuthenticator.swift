@@ -7,9 +7,11 @@
 
 import Foundation
 
-import JWTKit
-import OfficeKit
+import JWT
 import Vapor
+
+import OfficeKit
+import OfficeModel
 
 
 
@@ -31,7 +33,7 @@ struct UserSessionAuthenticator : AsyncSessionAuthenticator {
 			throw Abort(.forbidden, reason: "The logged in user seems to have been deleted")
 		}
 		let isAdmin = try await authService.validateAdminStatus(userId: erasedUserId, using: request.services)
-		request.auth.login(LoggedInUser(user: AnyDSUPair(service: authService, user: user), isAdmin: isAdmin))
+		request.auth.login(LoggedInUser(user: AnyDSUPair(service: authService, user: user), scopes: isAdmin ? [.admin] : []))
 	}
 	
 }

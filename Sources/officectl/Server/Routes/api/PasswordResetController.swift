@@ -7,7 +7,7 @@
 
 import Foundation
 
-import JWTKit
+import JWT
 import OfficeKit
 import OfficeModel
 import SemiSingleton

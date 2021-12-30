@@ -13,8 +13,8 @@ import Vapor
 
 extension Request.Authentication {
 	
-	func requireAuthApp(clientIdInBody: String?, clientSecretInBody: String?, logger: Logger) async throws -> AuthApplication {
-		if let clientId = clientIdInBody {
+	func requireAuthApp(clientIDInBody: String?, clientSecretInBody: String?, logger: Logger) async throws -> AuthApplication {
+		if let clientId = clientIDInBody {
 			logger.warning("Including the client ID in the request’s body is supported but not recommended. Please use Basic Auth instead.")
 			guard let authApp = AuthApplication(rawValue: clientId) else {
 				throw OAuthClientAuthenticator.invalidClientError
