@@ -7,8 +7,10 @@
 
 import Foundation
 
+import Email
 import NIO
 import OfficeKit
+import UnwrapOrThrow
 import Vapor
 
 
@@ -33,13 +35,28 @@ class WebLoginController {
 		return try await req.view.render("Login", context)
 	}
 	
-	func doLogin(_ req: Request) throws -> Response {
+	func doLogin(_ req: Request) async throws -> Response {
 		struct LoginData : Decodable {
+			var username: String
+			var password: String
 			var nextURLPath: String?
 		}
+		let loginData = try req.content.decode(LoginData.self)
 		
-		let loginData = try? req.content.decode(LoginData.self)
-		return req.redirect(to: loginData?.nextURLPath ?? "/", type: .normal)
+		let sProvider = req.application.officeKitServiceProvider
+		let authService = try sProvider.getDirectoryAuthenticatorService()
+		
+		let userPair = try AnyDSUPair(service: authService, user: authService.logicalUser(fromEmail: Email(rawValue: loginData.username) ?! "Invalid email", servicesProvider: sProvider))
+		
+		guard try await authService.authenticate(userId: userPair.user.userId, challenge: loginData.password, using: req.services) else {
+			throw Abort(.forbidden, reason: "Invalid credentials. Please check your username and password.")
+		}
+		let isAdmin = try await authService.validateAdminStatus(userId: userPair.user.userId, using: req.services)
+		/* The password of the user is verified and we have its admin status.
+		 * Let’s log it in. */
+		req.auth.login(LoggedInUser(user: userPair, scopes: isAdmin ? [.admin] : []))
+		
+		return req.redirect(to: loginData.nextURLPath ?? "/", type: .normal)
 	}
 	
 }
