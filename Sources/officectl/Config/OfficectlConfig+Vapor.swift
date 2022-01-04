@@ -34,7 +34,9 @@ extension OfficectlConfig {
 			app.directory = DirectoryConfiguration(workingDirectory: p.hasSuffix("/") ? p : p + "/")
 		}
 		
-		try app.jwt.signers.use(.hs256(key: app.officectlConfig.serverConfig?.jwtSecret ?! "No JWT Secret in conf"), kid: app.jwt.keyName)
+		if let jwtSecret = app.officectlConfig.serverConfig?.jwtSecret {
+			app.jwt.signers.use(.hs256(key: jwtSecret), kid: app.jwt.keyName)
+		}
 		
 		/* Tell the views we want to use Leaf as a renderer and add some tags. */
 		app.views.use(.leaf)
