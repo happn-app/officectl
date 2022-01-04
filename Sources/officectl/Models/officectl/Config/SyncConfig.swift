@@ -14,13 +14,13 @@ import OfficeKit
 
 struct SyncConfig {
 	
-	var blacklistsByServiceId: [String: Set<String>]
+	var blacklistsByServiceID: [String: Set<String>]
 	
 	init(genericConfig conf: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		let domain = ["Sync Config"]
 		let blacklistConfig = try conf.dictionary(forKey: "blacklists_by_service", currentKeyPath: domain)
 		
-		blacklistsByServiceId = try blacklistConfig.mapValues{ try Set($0.arrayOfStringsValue(currentKeyPath: domain)) }
+		blacklistsByServiceID = try blacklistConfig.mapValues{ try Set($0.arrayOfStringsValue(currentKeyPath: domain)) }
 	}
 	
 }

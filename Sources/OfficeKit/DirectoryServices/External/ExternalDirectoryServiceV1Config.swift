@@ -13,10 +13,10 @@ import GenericStorage
 
 public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 	
-	public var providerId: String
+	public var providerID: String
 	public let isHelperService = false
 	
-	public var serviceId: String
+	public var serviceID: String
 	public var serviceName: String
 	
 	public var mergePriority: Int?
@@ -29,20 +29,20 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 	public var supportsUserDeletion: Bool
 	public var supportsPasswordChange: Bool
 	
-	public var wrappedUserToUserIdConversionStrategies: [WrappedUserToUserIdConversionStrategy]
+	public var wrappedUserToUserIDConversionStrategies: [WrappedUserToUserIDConversionStrategy]
 	
 	public init(
-		providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?,
+		providerID pID: String, serviceID id: String, serviceName name: String, mergePriority p: Int?,
 		url theURL: URL, secret s: Data,
 		supportsUserCreation suc: Bool,
 		supportsUserUpdate suu: Bool,
 		supportsUserDeletion sud: Bool,
 		supportsPasswordChange spc: Bool,
-		wrappedUserToUserIdConversionStrategies wutuics: [WrappedUserToUserIdConversionStrategy]
+		wrappedUserToUserIDConversionStrategies wutuics: [WrappedUserToUserIDConversionStrategy]
 	) {
 		precondition(id != "invalid" && !id.contains(":"))
-		providerId = pId
-		serviceId = id
+		providerID = pID
+		serviceID = id
 		serviceName = name
 		mergePriority = p
 		
@@ -54,10 +54,10 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 		supportsUserDeletion = sud
 		supportsPasswordChange = spc
 		
-		wrappedUserToUserIdConversionStrategies = wutuics
+		wrappedUserToUserIDConversionStrategies = wutuics
 	}
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+	public init(providerID pID: String, serviceID id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		let domain = [id]
 		let url    = try keyedConfig.url(forKey: "url",                       currentKeyPath: domain)
 		let secret = try keyedConfig.string(forKey: "secret",                 currentKeyPath: domain)
@@ -67,16 +67,16 @@ public struct ExternalDirectoryServiceV1Config : OfficeKitServiceConfig {
 		let spc    = try keyedConfig.bool(forKey: "supports_password_change", currentKeyPath: domain)
 		
 		let wcs = try keyedConfig.optionalArray(forKey: "wrapped_user_to_user_id_conversion_strategies", currentKeyPath: domain)
-		let strategies = try wcs?.map{ try WrappedUserToUserIdConversionStrategy(genericStorage: $0, currentKeyPath: domain) }
+		let strategies = try wcs?.map{ try WrappedUserToUserIDConversionStrategy(genericStorage: $0, currentKeyPath: domain) }
 		
 		self.init(
-			providerId: pId, serviceId: id, serviceName: name, mergePriority: p,
+			providerID: pID, serviceID: id, serviceName: name, mergePriority: p,
 			url: url, secret: Data(secret.utf8),
 			supportsUserCreation: suc,
 			supportsUserUpdate: suu,
 			supportsUserDeletion: sud,
 			supportsPasswordChange: spc,
-			wrappedUserToUserIdConversionStrategies: strategies ?? []
+			wrappedUserToUserIDConversionStrategies: strategies ?? []
 		)
 	}
 	

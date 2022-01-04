@@ -28,7 +28,7 @@ public final class GetGoogleUserOperation : RetryingOperation, HasResult {
 	
 	/**
 	 Init the operation with the given user key.
-	 A user key is either the Google id of the user or the email of the user. */
+	 A user key is either the Google ID of the user or the email of the user. */
 	public init(userKey k: String, connector c: GoogleJWTConnector) {
 		userKey = k
 		connector = c

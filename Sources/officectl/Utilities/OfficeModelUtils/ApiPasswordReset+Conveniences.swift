@@ -16,12 +16,12 @@ import OfficeModel
 
 extension ApiPasswordReset {
 	
-	init(requestedUserId uid: TaggedId, multiPasswordResets: MultiServicesPasswordReset, environment: Environment) {
+	init(requestedUserID uid: TaggedID, multiPasswordResets: MultiServicesPasswordReset, environment: Environment) {
 		self.init(
-			requestedUserId: uid,
-			fetchErrorsByServiceId: multiPasswordResets.errorsByServiceId.mapValues{ ApiError(error: $0, environment: environment) },
+			requestedUserID: uid,
+			fetchErrorsByServiceID: multiPasswordResets.errorsByServiceID.mapValues{ ApiError(error: $0, environment: environment) },
 			isExecuting: multiPasswordResets.isExecuting,
-			serviceResets: multiPasswordResets.itemsByServiceId.mapValues{ resetPair in
+			serviceResets: multiPasswordResets.itemsByServiceID.mapValues{ resetPair in
 				resetPair.flatMap{ ApiServicePasswordReset(passwordResetPair: $0, environment: environment) }
 			}
 		)

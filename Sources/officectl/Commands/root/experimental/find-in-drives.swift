@@ -28,8 +28,8 @@ struct FindInDrivesCommand : ParsableCommand {
 	@OptionGroup()
 	var globalOptions: OfficectlRootCommand.Options
 	
-	@ArgumentParser.Option(help: "The id of the Google service to use to do the search. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.")
-	var serviceId: String?
+	@ArgumentParser.Option(help: "The ID of the Google service to use to do the search. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.")
+	var serviceID: String?
 	
 	@ArgumentParser.Argument()
 	var filename: String
@@ -45,7 +45,7 @@ struct FindInDrivesCommand : ParsableCommand {
 		let officeKitConfig = app.officeKitConfig
 		let opQ = try app.services.make(OperationQueue.self)
 		
-		let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
+		let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceID)
 		_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
 		
 		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)

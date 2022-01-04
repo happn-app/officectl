@@ -1,5 +1,5 @@
 /*
- * WrappedUserToUserIdConversionStrategy.swift
+ * WrappedUserToUserIDConversionStrategy.swift
  * OfficeKit
  *
  * Created by François Lamboley on 2019/08/16.
@@ -11,7 +11,7 @@ import GenericStorage
 
 
 
-public enum WrappedUserToUserIdConversionStrategy : Hashable {
+public enum WrappedUserToUserIDConversionStrategy : Hashable {
 	
 	case emailToTaggedDN(baseDNs: LDAPBaseDNs, tag: String?)
 	
@@ -25,11 +25,11 @@ public enum WrappedUserToUserIdConversionStrategy : Hashable {
 				self = .emailToTaggedDN(baseDNs: baseDNs, tag: tag)
 				
 			default:
-				throw InvalidArgumentError(message: "Unknown WrappedUserToUserIdConversionStrategy type")
+				throw InvalidArgumentError(message: "Unknown WrappedUserToUserIDConversionStrategy type")
 		}
 	}
 	
-	public func convertUserToId(_ userWrapper: DirectoryUserWrapper, globalConfig: GlobalConfig) throws -> String {
+	public func convertUserToID(_ userWrapper: DirectoryUserWrapper, globalConfig: GlobalConfig) throws -> String {
 		switch self {
 			case .emailToTaggedDN(baseDNs: let baseDNs, tag: let tag):
 				guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {

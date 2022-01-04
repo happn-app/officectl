@@ -22,7 +22,7 @@ If error is null, data won’t be null and vice-versa.
 
 === Object Types
 
-The `TaggedId` Object:
+The `TaggedID` Object:
 [code]
 ----
    This is a string with the following format:
@@ -45,10 +45,10 @@ The `User` Object:
 [code]
 ----
 {
-   "id": TaggedId
+   "id": TaggedID
    "linked_ids": [
-      TaggedId,
-      TaggedId,
+      TaggedID,
+      TaggedID,
       ...
    ]
    
@@ -63,7 +63,7 @@ The `PasswordReset` Object:
 [code]
 ----
 {
-   "user_id": TaggedId
+   "user_id": TaggedID
    
    "is_executing": Bool (true if any service password reset is executing)
    "services": {

@@ -16,8 +16,8 @@ import ServiceKit
 public typealias MultiServicesPasswordReset = MultiServicesItem<AnyDSPasswordResetPair?>
 extension MultiServicesPasswordReset {
 	
-	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) async throws -> MultiServicesPasswordReset {
-		let user = try await MultiServicesUser.fetch(from: dsuIdPair, in: services, using: depServices)
+	public static func fetch(from dsuIDPair: AnyDSUIDPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) async throws -> MultiServicesPasswordReset {
+		let user = try await MultiServicesUser.fetch(from: dsuIDPair, in: services, using: depServices)
 		return user.mapItems{ try $0.flatMap{ try $0.service.supportsPasswordChange ? AnyDSPasswordResetPair(dsuPair: $0, using: depServices) : nil } }
 	}
 	

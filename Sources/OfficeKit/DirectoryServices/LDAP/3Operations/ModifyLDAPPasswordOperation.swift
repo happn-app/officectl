@@ -99,11 +99,11 @@ public final class ModifyLDAPPasswordsOperation : RetryingOperation {
 		}
 		
 		let dnData = Data(dn.utf8)
-		let retPassId = dnData.withUnsafeBytes{ (bytes: UnsafeRawBufferPointer) -> Int32 in
+		let retPassID = dnData.withUnsafeBytes{ (bytes: UnsafeRawBufferPointer) -> Int32 in
 			let bytes = bytes.bindMemory(to: Int8.self).baseAddress!
 			return ber_put_ostring(ber, bytes, ber_len_t(dnData.count), LDAP_TAG_EXOP_MODIFY_PASSWD_ID)
 		}
-		guard retPassId >= 0 else {
+		guard retPassID >= 0 else {
 			throw NSError(domain: "com.happn.officectl.lber", code: 1, userInfo: [NSLocalizedDescriptionKey: "ber_put_ostring returned a value < 0"])
 		}
 		

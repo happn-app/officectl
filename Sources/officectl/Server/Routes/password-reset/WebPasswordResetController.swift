@@ -25,7 +25,7 @@ final class WebPasswordResetController {
 		}
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
-		let email = try loggedInUser.user.hop(to: emailService).user.userId
+		let email = try loggedInUser.user.hop(to: emailService).user.userID
 		return try await req.view.render("PasswordResetHome", PasswordResetContext(isAdmin: loggedInUser.isAdmin, userEmail: email.rawValue))
 	}
 	
@@ -34,7 +34,7 @@ final class WebPasswordResetController {
 		
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
-		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIdPair: AnyDSUIdPair(service: emailService.erase(), userId: email.erase()), request: req) else {
+		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIDPair: AnyDSUIDPair(service: emailService.erase(), userID: email.erase()), request: req) else {
 			throw Abort(.forbidden, reason: "Non-admin users can only see their own password reset status.")
 		}
 		
@@ -54,14 +54,14 @@ final class WebPasswordResetController {
 		let officeKitServiceProvider = req.application.officeKitServiceProvider
 		let emailService: EmailService = try officeKitServiceProvider.getService(id: nil)
 		
-		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIdPair: AnyDSUIdPair(service: emailService.erase(), userId: email.erase()), request: req) else {
+		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIDPair: AnyDSUIDPair(service: emailService.erase(), userID: email.erase()), request: req) else {
 			throw Abort(.forbidden, reason: "Non-admin users can only reset their own password.")
 		}
 		
 		if let oldPass = resetPasswordData.oldPass {
 			let authService = try officeKitServiceProvider.getDirectoryAuthenticatorService()
 			let authServiceUser = try authService.logicalUser(fromEmail: email, servicesProvider: officeKitServiceProvider)
-			guard try await authService.authenticate(userId: authServiceUser.userId, challenge: oldPass, using: req.services) else {
+			guard try await authService.authenticate(userID: authServiceUser.userID, challenge: oldPass, using: req.services) else {
 				throw Abort(.forbidden, reason: "Invalid old password.")
 			}
 		} else {
@@ -88,8 +88,8 @@ final class WebPasswordResetController {
 		let emailService: EmailService = try sProvider.getUserDirectoryService(id: nil)
 		let services = try sProvider.getAllUserDirectoryServices().filter{ $0.supportsPasswordChange }
 		
-		let emailUser = try emailService.logicalUser(fromUserId: email)
-		return try await MultiServicesPasswordReset.fetch(from: AnyDSUIdPair(service: emailService.erase(), userId: emailUser.erase().userId), in: services, using: request.services)
+		let emailUser = try emailService.logicalUser(fromUserID: email)
+		return try await MultiServicesPasswordReset.fetch(from: AnyDSUIDPair(service: emailService.erase(), userID: emailUser.erase().userID), in: services, using: request.services)
 	}
 	
 	private func renderMultiServicesPasswordReset(_ multiPasswordReset: MultiServicesPasswordReset, for email: Email, viewRenderer: ViewRenderer) async throws -> View {

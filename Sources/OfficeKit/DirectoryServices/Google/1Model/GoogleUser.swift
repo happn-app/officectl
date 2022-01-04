@@ -9,6 +9,8 @@ import Foundation
 
 import Email
 
+import OfficeModel
+
 
 
 public struct GoogleUser : Hashable, Codable {
@@ -35,96 +37,46 @@ public struct GoogleUser : Hashable, Codable {
 		
 	}
 	
-	/* TODO: Either use code generation or a property wrapper (a property wrapper seems better).
-	 *
-	 * Original comment:
-	 * I did not find a way to automate this.
-	 * Ideally I’d have liked to have a `nil`-like implementation of RemoteProperty that would drop absent keys automatically (from encoding and decoding) but this does not seem possible.
-	 * So instead I do the same thing manually…
-	 * A thing to check would be code generation.
-	 * This seems like a good candidate for code generation. */
-	public init(from decoder: Decoder) throws {
-		let container = try decoder.container(keyedBy: CodingKeys.self)
-		
-		kind = try container.decode(Kind.self, forKey: .kind)
-		etag = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .etag) ?? .unset
-		
-		id = try container.decodeIfPresent(RemoteProperty<String>.self, forKey: .id) ?? .unset
-		customerId = try container.decodeIfPresent(RemoteProperty<String>.self, forKey: .customerId) ?? .unset
-		
-		name = try container.decodeIfPresent(RemoteProperty<Name>.self, forKey: .name) ?? .unset
-		
-		primaryEmail = try container.decode(Email.self, forKey: .primaryEmail)
-		aliases = try container.decodeIfPresent(RemoteProperty<[Email]?>.self, forKey: .aliases) ?? .unset
-		nonEditableAliases = try container.decodeIfPresent(RemoteProperty<[Email]?>.self, forKey: .nonEditableAliases) ?? .unset
-		includeInGlobalAddressList = try container.decodeIfPresent(RemoteProperty<Bool>.self, forKey: .includeInGlobalAddressList) ?? .unset
-		
-		isAdmin = try container.decodeIfPresent(RemoteProperty<Bool>.self, forKey: .isAdmin) ?? .unset
-		isDelegatedAdmin = try container.decodeIfPresent(RemoteProperty<Bool>.self, forKey: .isDelegatedAdmin) ?? .unset
-		
-		lastLoginTime = try container.decodeIfPresent(RemoteProperty<Date?>.self, forKey: .lastLoginTime) ?? .unset
-		creationTime = try container.decodeIfPresent(RemoteProperty<Date>.self, forKey: .creationTime) ?? .unset
-		agreedToTerms = try container.decodeIfPresent(RemoteProperty<Bool>.self, forKey: .agreedToTerms) ?? .unset
-		
-		suspended = try container.decodeIfPresent(RemoteProperty<Bool>.self, forKey: .suspended) ?? .unset
-		hashFunction = try container.decodeIfPresent(RemoteProperty<PasswordHashFunction?>.self, forKey: .hashFunction) ?? .unset
-		password = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .password) ?? .unset
-		changePasswordAtNextLogin = try container.decodeIfPresent(RemoteProperty<Bool>.self, forKey: .changePasswordAtNextLogin) ?? .unset
-	}
-	
-	public func encode(to encoder: Encoder) throws {
-		var container = encoder.container(keyedBy: CodingKeys.self)
-		
-		try container.encode(kind, forKey: .kind)
-		try container.encodeIfSet(etag, forKey: .etag)
-		
-		try container.encodeIfSet(id, forKey: .id)
-		try container.encodeIfSet(customerId, forKey: .customerId)
-		
-		try container.encodeIfSet(name, forKey: .name)
-		
-		try container.encode(primaryEmail, forKey: .primaryEmail)
-		try container.encodeIfSet(aliases, forKey: .aliases)
-		try container.encodeIfSet(nonEditableAliases, forKey: .nonEditableAliases)
-		try container.encodeIfSet(includeInGlobalAddressList, forKey: .includeInGlobalAddressList)
-		
-		try container.encodeIfSet(isAdmin, forKey: .isAdmin)
-		try container.encodeIfSet(isDelegatedAdmin, forKey: .isDelegatedAdmin)
-		
-		try container.encodeIfSet(lastLoginTime, forKey: .lastLoginTime)
-		try container.encodeIfSet(creationTime, forKey: .creationTime)
-		try container.encodeIfSet(agreedToTerms, forKey: .agreedToTerms)
-		
-		try container.encodeIfSet(suspended, forKey: .suspended)
-		try container.encodeIfSet(hashFunction, forKey: .hashFunction)
-		try container.encodeIfSet(password, forKey: .password)
-		try container.encodeIfSet(changePasswordAtNextLogin, forKey: .changePasswordAtNextLogin)
-	}
-	
 	public var kind: Kind = .user
-	public var etag: RemoteProperty<String?> = .unset
+	@RemoteProperty
+	public var etag: String??
 	
-	public var id: RemoteProperty<String> = .unset
-	public var customerId: RemoteProperty<String> = .unset
+	@RemoteProperty
+	public var id: String?
+	@RemoteProperty
+	public var customerID: String?
 	
-	public var name: RemoteProperty<Name> = .unset
+	@RemoteProperty
+	public var name: Name?
 	
 	public var primaryEmail: Email
-	public var aliases: RemoteProperty<[Email]?> = .unset
-	public var nonEditableAliases: RemoteProperty<[Email]?> = .unset
-	public var includeInGlobalAddressList: RemoteProperty<Bool> = .unset
+	@RemoteProperty
+	public var aliases: [Email]??
+	@RemoteProperty
+	public var nonEditableAliases: [Email]??
+	@RemoteProperty
+	public var includeInGlobalAddressList: Bool?
 	
-	public var isAdmin: RemoteProperty<Bool> = .unset
-	public var isDelegatedAdmin: RemoteProperty<Bool> = .unset
+	@RemoteProperty
+	public var isAdmin: Bool?
+	@RemoteProperty
+	public var isDelegatedAdmin: Bool?
 	
-	public var lastLoginTime: RemoteProperty<Date?> = .unset
-	public var creationTime: RemoteProperty<Date> = .unset
-	public var agreedToTerms: RemoteProperty<Bool> = .unset
+	@RemoteProperty
+	public var lastLoginTime: Date??
+	@RemoteProperty
+	public var creationTime: Date?
+	@RemoteProperty
+	public var agreedToTerms: Bool?
 	
-	public var suspended: RemoteProperty<Bool> = .unset
-	public var hashFunction: RemoteProperty<PasswordHashFunction?> = .unset
-	public var password: RemoteProperty<String?> = .unset
-	public var changePasswordAtNextLogin: RemoteProperty<Bool> = .unset
+	@RemoteProperty
+	public var suspended: Bool?
+	@RemoteProperty
+	public var hashFunction: PasswordHashFunction??
+	@RemoteProperty
+	public var password: String??
+	@RemoteProperty
+	public var changePasswordAtNextLogin: Bool?
 	
 	public init(email: Email) {
 		primaryEmail = email
@@ -147,7 +99,7 @@ public struct GoogleUser : Hashable, Codable {
 	
 	private enum CodingKeys : String, CodingKey {
 		case kind, etag
-		case id, customerId
+		case id, customerID = "customerId"
 		case name
 		case primaryEmail, aliases, nonEditableAliases, includeInGlobalAddressList
 		case isAdmin, isDelegatedAdmin
@@ -159,34 +111,34 @@ public struct GoogleUser : Hashable, Codable {
 
 extension GoogleUser : DirectoryUser {
 	
-	public typealias IdType = Email
-	public typealias PersistentIdType = String
+	public typealias IDType = Email
+	public typealias PersistentIDType = String
 	
-	public var userId: Email {
+	public var userID: Email {
 		return primaryEmail
 	}
 	
-	public var persistentId: RemoteProperty<String> {
-		return id
+	public var remotePersistentID: RemoteProperty<String> {
+		return _id
 	}
 	
-	public var identifyingEmail: RemoteProperty<Email?> {
+	public var remoteIdentifyingEmail: RemoteProperty<Email?> {
 		return .set(primaryEmail)
 	}
 	
-	public var otherEmails: RemoteProperty<[Email]> {
-		return aliases.map{ $0 ?? [] }
+	public var remoteOtherEmails: RemoteProperty<[Email]> {
+		return _aliases.map{ $0 ?? [] }
 	}
 	
-	public var firstName: RemoteProperty<String?> {
-		return name.map{ $0.givenName }
+	public var remoteFirstName: RemoteProperty<String?> {
+		return _name.map{ $0.givenName }
 	}
 	
-	public var lastName: RemoteProperty<String?> {
-		return name.map{ $0.familyName }
+	public var remoteLastName: RemoteProperty<String?> {
+		return _name.map{ $0.familyName }
 	}
 	
-	public var nickname: RemoteProperty<String?> {
+	public var remoteNickname: RemoteProperty<String?> {
 		return .unsupported
 	}
 	

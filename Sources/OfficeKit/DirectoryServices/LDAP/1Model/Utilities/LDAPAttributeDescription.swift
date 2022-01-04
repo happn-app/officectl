@@ -27,8 +27,8 @@ public struct LDAPAttributeDescription : Hashable {
 		return oid.stringValue + options.reduce("", { $0 + ";" + $1 })
 	}
 	
-	public init?(stringOid: String, options opts: [String] = []) {
-		guard let o = LDAPObjectID(oid: stringOid) else {
+	public init?(stringOID: String, options opts: [String] = []) {
+		guard let o = LDAPObjectID(oid: stringOID) else {
 			return nil
 		}
 		oid = o
@@ -42,7 +42,7 @@ public struct LDAPAttributeDescription : Hashable {
 	
 	public init?(string: String) {
 		let split = string.split(separator: ";").map(String.init)
-		self.init(stringOid: split[0], options: Array(split.dropFirst()))
+		self.init(stringOID: split[0], options: Array(split.dropFirst()))
 	}
 	
 	/** Set new options in the attribute description. */

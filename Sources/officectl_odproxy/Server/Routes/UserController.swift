@@ -7,8 +7,10 @@
 
 import Foundation
 
-import OfficeKit
 import Vapor
+
+import OfficeKit
+import OfficeModel
 
 
 
@@ -55,13 +57,13 @@ final class UserController {
 	func changePassword(_ req: Request) async throws -> ApiResponse<String> {
 		/* The data we should have in input. */
 		struct Request : Decodable {
-			var userId: TaggedId
+			var userID: TaggedID
 			var newPassword: String
 		}
 		let input = try req.content.decode(Request.self)
 		
 		let odService = req.application.openDirectoryService
-		let user = try odService.logicalUser(fromWrappedUser: DirectoryUserWrapper(userId: input.userId))
+		let user = try odService.logicalUser(fromWrappedUser: DirectoryUserWrapper(userID: input.userID))
 		
 		let resetPasswordAction = try odService.changePasswordAction(for: user, using: req.services)
 		try await withCheckedThrowingContinuation{ continuation in

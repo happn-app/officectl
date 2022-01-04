@@ -44,7 +44,7 @@ func configure(_ app: Application, forcedConfigPath: String?, verbose: Bool) thr
 	
 	/* Register the OpenDirectory config */
 	let openDirectoryServiceConfigYaml = try conf.storage(forKey: "open_directory_config", currentKeyPath: ["Global config"])
-	app.openDirectoryServiceConfig = try OpenDirectoryServiceConfig(providerId: OpenDirectoryService.providerId, serviceId: "_internal_od_", serviceName: "Internal Open Directory Service", mergePriority: nil, keyedConfig: openDirectoryServiceConfigYaml, pathsRelativeTo: url)
+	app.openDirectoryServiceConfig = try OpenDirectoryServiceConfig(providerID: OpenDirectoryService.providerID, serviceID: "_internal_od_", serviceName: "Internal Open Directory Service", mergePriority: nil, keyedConfig: openDirectoryServiceConfigYaml, pathsRelativeTo: url)
 	
 	try routes_and_middlewares(app, serverConfigYaml)
 }

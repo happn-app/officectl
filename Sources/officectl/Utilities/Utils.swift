@@ -16,8 +16,8 @@ func generateRandomPassword(length: Int = 13) -> String {
 	return String((0..<length).map{ _ in chars.randomElement()! })
 }
 
-func groupUsersById<S : Sequence>(from users: S) throws -> [AnyId: AnyDirectoryUser] where S.Element == AnyDirectoryUser {
-	return try users.group(by: { $0.userId })
+func groupUsersByID<S : Sequence>(from users: S) throws -> [AnyID: AnyDirectoryUser] where S.Element == AnyDirectoryUser {
+	return try users.group(by: { $0.userID })
 }
 
 extension Dictionary {

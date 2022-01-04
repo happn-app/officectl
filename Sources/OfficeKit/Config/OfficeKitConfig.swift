@@ -19,15 +19,15 @@ public struct OfficeKitConfig {
 	/* TODO: Allow clients of OfficeKit to register their own services! */
 	static public private(set) var registeredServices: [String : OfficeKitServiceInit.Type] = {
 		var res: [String : OfficeKitServiceInit.Type] = [
-			EmailService.providerId:               EmailService.self,
-			ExternalDirectoryServiceV1.providerId: ExternalDirectoryServiceV1.self,
-			GitHubService.providerId:              GitHubService.self,
-			GoogleService.providerId:              GoogleService.self,
-			LDAPService.providerId:                LDAPService.self,
-			HappnService.providerId:               HappnService.self
+			EmailService.providerID:               EmailService.self,
+			ExternalDirectoryServiceV1.providerID: ExternalDirectoryServiceV1.self,
+			GitHubService.providerID:              GitHubService.self,
+			GoogleService.providerID:              GoogleService.self,
+			LDAPService.providerID:                LDAPService.self,
+			HappnService.providerID:               HappnService.self
 		]
 #if canImport(DirectoryService) && canImport(OpenDirectory)
-		res[OpenDirectoryService.providerId] = OpenDirectoryService.self
+		res[OpenDirectoryService.providerID] = OpenDirectoryService.self
 #endif
 		return res
 	}()
@@ -40,7 +40,7 @@ public struct OfficeKitConfig {
 	public var orderedServiceConfigs: [AnyOfficeKitServiceConfig] {
 		return serviceConfigs.values.sorted(by: { s1, s2 in
 			switch (s1.mergePriority, s2.mergePriority) {
-				case let (p1, p2) where p1 == p2: return s1.serviceId < s2.serviceId
+				case let (p1, p2) where p1 == p2: return s1.serviceID < s2.serviceID
 					
 				case let (.some(p1), .some(p2)): return p1 > p2
 					
@@ -63,19 +63,19 @@ public struct OfficeKitConfig {
 		
 		let gConfig = try GlobalConfig(genericConfig: genericConfig, pathsRelativeTo: baseURL)
 		
-		let authServiceId = try genericConfig.string(forKey: "auth_service_id", currentKeyPath: domain)
+		let authServiceID = try genericConfig.string(forKey: "auth_service_id", currentKeyPath: domain)
 		let genericConfigServices = try genericConfig.dictionary(forKey: "services", currentKeyPath: domain)
 		
 		var serviceConfigsBuilding = [AnyOfficeKitServiceConfig]()
-		for (serviceId, serviceInfo) in genericConfigServices {
-			guard !serviceId.contains(":") else {
-				throw InvalidArgumentError(message: "The id of a service cannot contain a colon.")
+		for (serviceID, serviceInfo) in genericConfigServices {
+			guard !serviceID.contains(":") else {
+				throw InvalidArgumentError(message: "The ID of a service cannot contain a colon.")
 			}
-			guard serviceId != "invalid" else {
-				throw InvalidArgumentError(message: #"The id of a service cannot be equal to "invalid"."#)
+			guard serviceID != "invalid" else {
+				throw InvalidArgumentError(message: #"The ID of a service cannot be equal to "invalid"."#)
 			}
 			
-			let keyPath = domain + ["services", serviceId]
+			let keyPath = domain + ["services", serviceID]
 			let serviceName = try serviceInfo.string(forKey: "name", currentKeyPath: keyPath)
 			let provider = try serviceInfo.string(forKey: "provider", currentKeyPath: keyPath)
 			let priority = try serviceInfo.optionalInt(forKey: "merge_priority", errorOnMissingKey: false, currentKeyPath: keyPath)
@@ -85,8 +85,8 @@ public struct OfficeKitConfig {
 				throw InvalidArgumentError(message: "Unregistered service provider \(provider)")
 			}
 			let config = try providerType.configType.erasedConfig(
-				providerId: provider,
-				serviceId: serviceId,
+				providerID: provider,
+				serviceID: serviceID,
 				serviceName: serviceName,
 				mergePriority: priority,
 				keyedConfig: providerConfig,
@@ -95,17 +95,17 @@ public struct OfficeKitConfig {
 			serviceConfigsBuilding.append(config)
 		}
 		
-		try self.init(globalConfig: gConfig, serviceConfigs: serviceConfigsBuilding, authServiceId: authServiceId)
+		try self.init(globalConfig: gConfig, serviceConfigs: serviceConfigsBuilding, authServiceID: authServiceID)
 	}
 	
 	/**
 	 It is a programmer error to give an array of services containing two or more services with the same id. */
-	public init(globalConfig gConfig: GlobalConfig, serviceConfigs s: [AnyOfficeKitServiceConfig], authServiceId: String) throws {
+	public init(globalConfig gConfig: GlobalConfig, serviceConfigs s: [AnyOfficeKitServiceConfig], authServiceID: String) throws {
 		globalConfig = gConfig
-		serviceConfigs = [String: AnyOfficeKitServiceConfig](uniqueKeysWithValues: zip(s.map{ $0.serviceId }, s))
+		serviceConfigs = [String: AnyOfficeKitServiceConfig](uniqueKeysWithValues: zip(s.map{ $0.serviceID }, s))
 		
-		guard let c = serviceConfigs[authServiceId] else {
-			throw InvalidArgumentError(message: "The auth service id does not correspond to a config")
+		guard let c = serviceConfigs[authServiceID] else {
+			throw InvalidArgumentError(message: "The auth service ID does not correspond to a config")
 		}
 		authServiceConfig = c
 	}
@@ -113,13 +113,13 @@ public struct OfficeKitConfig {
 	public func getServiceConfig(id: String?) throws -> AnyOfficeKitServiceConfig {
 		if let id = id {
 			guard let config = serviceConfigs[id] else {
-				throw InvalidArgumentError(message: "No service config with id \(id)")
+				throw InvalidArgumentError(message: "No service config with ID \(id)")
 			}
 			return config
 			
 		} else {
 			guard let config = serviceConfigs.values.onlyElement else {
-				throw InvalidArgumentError(message: "Asked to retrieve a service config with no id specified, but there are no or more than one service configs in OfficeKit configs.")
+				throw InvalidArgumentError(message: "Asked to retrieve a service config with no ID specified, but there are no or more than one service configs in OfficeKit configs.")
 			}
 			return config
 		}
@@ -135,14 +135,14 @@ public struct OfficeKitConfig {
 		if let id = id {
 			let untypedConfig = try getServiceConfig(id: id)
 			guard let config: ConfigType = untypedConfig.unbox() else {
-				throw InvalidArgumentError(message: "Service config with id \(id) does not have expected type \(ConfigType.self).")
+				throw InvalidArgumentError(message: "Service config with ID \(id) does not have expected type \(ConfigType.self).")
 			}
 			return config
 			
 		} else {
 			let configs = serviceConfigs.values.compactMap{ $0.unbox() as ConfigType? }
 			guard let config = configs.onlyElement else {
-				throw InvalidArgumentError(message: "Asked to retrieve a service config of type \(ConfigType.self) with no id specified, but no or more service configs are present for this type.")
+				throw InvalidArgumentError(message: "Asked to retrieve a service config of type \(ConfigType.self) with no ID specified, but no or more service configs are present for this type.")
 			}
 			return config
 		}

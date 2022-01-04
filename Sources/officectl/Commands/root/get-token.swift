@@ -25,8 +25,8 @@ struct GetTokenCommand : ParsableCommand {
 	@ArgumentParser.Option(help: "A comma-separated list of scopes.")
 	var scopes: String?
 	
-	@ArgumentParser.Option(help: "The id of the service from which to retrieve the token.")
-	var serviceId: String?
+	@ArgumentParser.Option(help: "The ID of the service from which to retrieve the token.")
+	var serviceID: String?
 	
 	@ArgumentParser.Option(help: "The user as whom to login as.")
 	var userBehalf: String?
@@ -43,9 +43,9 @@ struct GetTokenCommand : ParsableCommand {
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
-		let serviceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
+		let serviceConfig = try officeKitConfig.getServiceConfig(id: serviceID)
 		
-		try app.auditLogger.log(action: "Getting token for service \(serviceId ?? "<inferred service>") with scope \(scopes ?? "<no scope defined>").", source: .cli)
+		try app.auditLogger.log(action: "Getting token for service \(serviceID ?? "<inferred service>") with scope \(scopes ?? "<no scope defined>").", source: .cli)
 		
 		let token: String
 		if let googleConfig: GoogleServiceConfig = serviceConfig.unbox() {

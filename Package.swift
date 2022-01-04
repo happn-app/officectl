@@ -15,6 +15,7 @@ platformDependentTargets.append(.executableTarget(name: "officectl_odproxy", dep
 	.product(name: "GenericJSON",  package: "generic-json-swift"),
 	.product(name: "JWT",          package: "jwt"),
 	.product(name: "LegibleError", package: "LegibleError"),
+	.product(name: "OfficeModel",  package: "officectl-model"),
 	.product(name: "Vapor",        package: "vapor"),
 	.product(name: "Yaml",         package: "YamlSwift"),
 	"OfficeKit"

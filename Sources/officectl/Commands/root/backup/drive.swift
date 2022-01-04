@@ -50,8 +50,8 @@ struct BackupDriveCommand : ParsableCommand {
 	@OptionGroup()
 	var backupOptions: BackupCommand.Options
 	
-	@ArgumentParser.Option(help: "The id of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.")
-	var serviceId: String?
+	@ArgumentParser.Option(help: "The ID of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.")
+	var serviceID: String?
 	
 	@ArgumentParser.Option(help: "When downloading the drive, if the username of the email has the given suffix, the resulting destination will be the same email without the suffix in the username. The drives to backup given will be searched with and without the suffix.")
 	var disabledEmailSuffix: String?
@@ -94,7 +94,7 @@ struct BackupDriveCommand : ParsableCommand {
 		
 		let disableConsole = !globalOptions.interactiveConsole
 		
-		let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
+		let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceID)
 		_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
 		
 		let downloadsDestinationFolder = URL(fileURLWithPath: backupOptions.downloadsDestinationFolder, isDirectory: true)
@@ -107,7 +107,7 @@ struct BackupDriveCommand : ParsableCommand {
 		let archivesDestinationFolderStr = (archive ? try nil2throw(archivesDestinationFolder) : nil)
 		let archivesDestinationFolderURL = archivesDestinationFolderStr.flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
 		
-		try app.auditLogger.log(action: "Backing up mails w/ service \(serviceId ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(archivesDestinationFolderURL != nil ? "w/": "w/o") archiving.", source: .cli)
+		try app.auditLogger.log(action: "Backing up mails w/ service \(serviceID ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(archivesDestinationFolderURL != nil ? "w/": "w/o") archiving.", source: .cli)
 		
 		let previousOfficeKitLogger = OfficeKitConfig.logger
 		let downloadDriveStatus = DownloadDrivesStatusActivity()

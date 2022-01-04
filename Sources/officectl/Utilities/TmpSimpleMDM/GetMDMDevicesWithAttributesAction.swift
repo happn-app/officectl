@@ -31,13 +31,13 @@ final class GetMDMDevicesWithAttributesAction : Action<String, Void, [(SimpleMDM
 	override func unsafeStart(parameters: Void, handler: @escaping (Result<[(SimpleMDMDevice, [String: String])], Error>) -> Void) throws {
 		Task{await handler(Result{
 			return try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful })
-				.concurrentMap{ device in try await (device, self.getDeviceAttributes(token: self.subject, deviceId: device.id)) }
+				.concurrentMap{ device in try await (device, self.getDeviceAttributes(token: self.subject, deviceID: device.id)) }
 		})}
 	}
 	
 	private let getDevicesAction: GetMDMDevicesAction
 	
-	private func getDeviceAttributes(token: String, deviceId: Int) async throws -> [String: String] {
+	private func getDeviceAttributes(token: String, deviceID: Int) async throws -> [String: String] {
 		struct Response : Decodable {
 			var data: [AttributesResponse]
 			
@@ -66,7 +66,7 @@ final class GetMDMDevicesWithAttributesAction : Action<String, Void, [(SimpleMDM
 		decoder.dateDecodingStrategy = .iso8601
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
 		let op = URLRequestDataOperation<Response>.forAPIRequest(
-			url: try URL(string: "https://a.simplemdm.com/api/v1/devices")!.appending(String(deviceId), "custom_attribute_values"),
+			url: try URL(string: "https://a.simplemdm.com/api/v1/devices")!.appending(String(deviceID), "custom_attribute_values"),
 			requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
 		)
 		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */

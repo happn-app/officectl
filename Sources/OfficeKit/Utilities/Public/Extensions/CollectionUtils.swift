@@ -31,7 +31,7 @@ extension Sequence {
 		let grouped = Dictionary(grouping: self, by: keyForValue)
 		return try grouped.mapValues{ groupedElement in
 			guard let element = groupedElement.onlyElement else {
-				throw InternalError(message: "Invalid sequence which contains at least two elements with the same id.")
+				throw InternalError(message: "Invalid sequence which contains at least two elements with the same ID.")
 			}
 			return valueMapper(element)
 		}

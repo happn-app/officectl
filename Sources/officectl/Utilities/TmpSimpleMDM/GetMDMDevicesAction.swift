@@ -33,7 +33,7 @@ final class GetMDMDevicesAction : Action<String, Void, [SimpleMDMDevice]>, SemiS
 		})}
 	}
 	
-	private func getAllDevices(startingAfter previousMaxDeviceId: Int? = nil, token: String) async throws -> [SimpleMDMDevice] {
+	private func getAllDevices(startingAfter previousMaxDeviceID: Int? = nil, token: String) async throws -> [SimpleMDMDevice] {
 		func authenticate(_ request: URLRequest) -> URLRequest {
 			var request = request
 			request.addValue("Basic " + Data((token + ":").utf8).base64EncodedString(), forHTTPHeaderField: "Authorization")
@@ -44,7 +44,7 @@ final class GetMDMDevicesAction : Action<String, Void, [SimpleMDMDevice]>, SemiS
 		decoder.dateDecodingStrategy = .iso8601
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
 		let op = try URLRequestDataOperation<Response>.forAPIRequest(
-			url: URL(string: "https://a.simplemdm.com/api/v1/devices")!, urlParameters: Parameters(limit: 100/*max*/, startingAfter: previousMaxDeviceId),
+			url: URL(string: "https://a.simplemdm.com/api/v1/devices")!, urlParameters: Parameters(limit: 100/*max*/, startingAfter: previousMaxDeviceID),
 			decoders: [decoder], requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
 		)
 		/* Operation is async, we can launch it without a queue (though having a queue would be better…) */

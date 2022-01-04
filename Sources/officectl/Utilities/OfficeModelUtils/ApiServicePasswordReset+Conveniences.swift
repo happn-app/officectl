@@ -18,7 +18,7 @@ extension ApiServicePasswordReset {
 	
 	init(passwordResetPair: AnyDSPasswordResetPair, environment: Environment) {
 		self.init(
-			userId: passwordResetPair.dsuPair.taggedId.id,
+			userID: passwordResetPair.dsuPair.taggedID.id,
 			hasRun: !passwordResetPair.passwordReset.isWeak,
 			isExecuting: passwordResetPair.passwordReset.isExecuting,
 			error: passwordResetPair.passwordReset.result?.failureValue.flatMap{ ApiError(error: $0, environment: environment) }

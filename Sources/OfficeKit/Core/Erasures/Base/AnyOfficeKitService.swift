@@ -55,8 +55,8 @@ private struct ConcreteOfficeKitBox<Base : OfficeKitService> : OfficeKitServiceB
 
 public class AnyOfficeKitService : OfficeKitService {
 	
-	public static var providerId: String {
-		assertionFailure("Please do not use providerId on AnyOfficeKitService. This is an erasure for a concrete OfficeKitService type.")
+	public static var providerID: String {
+		assertionFailure("Please do not use providerID on AnyOfficeKitService. This is an erasure for a concrete OfficeKitService type.")
 		return "__OfficeKitInternal_OfficeKitServiceConfig_Erasure__"
 	}
 	

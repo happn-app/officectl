@@ -19,7 +19,7 @@ import URLRequestOperation
 
 public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	
-	public static let nullLoginUserId = "244"
+	public static let nullLoginUserID = "244"
 	
 	public enum AuthMode : Hashable {
 		
@@ -34,7 +34,7 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	
 	public let baseURL: URL
 	
-	public let clientId: String
+	public let clientID: String
 	public let clientSecret: String
 	
 	public let authMode: AuthMode
@@ -54,18 +54,18 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "HappnConnector Connection Queue")
 	
-	public convenience init(baseURL url: URL, clientId id: String, clientSecret s: String, username u: String, password p: String) {
-		self.init(baseURL: url, clientId: id, clientSecret: s, authMode: .userPass(username: u, password: p))
+	public convenience init(baseURL url: URL, clientID id: String, clientSecret s: String, username u: String, password p: String) {
+		self.init(baseURL: url, clientID: id, clientSecret: s, authMode: .userPass(username: u, password: p))
 	}
 	
-	public convenience init(baseURL url: URL, clientId id: String, clientSecret s: String, refreshToken t: String) {
-		self.init(baseURL: url, clientId: id, clientSecret: s, authMode: .refreshToken(t))
+	public convenience init(baseURL url: URL, clientID id: String, clientSecret s: String, refreshToken t: String) {
+		self.init(baseURL: url, clientID: id, clientSecret: s, authMode: .refreshToken(t))
 	}
 	
-	public init(baseURL url: URL, clientId id: String, clientSecret s: String, authMode a: AuthMode) {
+	public init(baseURL url: URL, clientID id: String, clientSecret s: String, authMode a: AuthMode) {
 		baseURL = url
 		
-		clientId = id
+		clientID = id
 		clientSecret = s
 		
 		authMode = a
@@ -78,11 +78,11 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	public func unqueuedConnect(scope: Set<String>, auth _: Void) async throws -> Set<String> {
 		try await unqueuedDisconnect()
 		
-		let request = TokenRequestBody(scope: scope.joined(separator: " "), clientId: clientId, clientSecret: clientSecret, grant: authMode)
+		let request = TokenRequestBody(scope: scope.joined(separator: " "), clientID: clientID, clientSecret: clientSecret, grant: authMode)
 		let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(url: baseURL.appending("connect", "oauth", "token"), httpBody: request, retryProviders: [])
 		let response = try await op.startAndGetResult().result
 		let a = Auth(
-			scope: Set(response.scope.components(separatedBy: " ")), userId: response.userId,
+			scope: Set(response.scope.components(separatedBy: " ")), userID: response.userID,
 			accessToken: response.accessToken, refreshToken: response.refreshToken,
 			expirationDate: Date() + TimeInterval(response.expiresIn)
 		)
@@ -94,7 +94,7 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 		struct TokenRequestBody : Encodable {
 			
 			var scope: String
-			var clientId: String
+			var clientID: String
 			var clientSecret: String?
 			
 			var grant: AuthMode
@@ -102,7 +102,7 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 			func encode(to encoder: Encoder) throws {
 				var container = encoder.container(keyedBy: CodingKeys.self)
 				try container.encode(scope, forKey: .scope)
-				try container.encode(clientId, forKey: .clientId)
+				try container.encode(clientID, forKey: .clientID)
 				try container.encode(clientSecret, forKey: .clientSecret)
 				switch grant {
 					case let .userPass(username: username, password: password):
@@ -117,7 +117,7 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 			}
 			
 			private enum CodingKeys : String, CodingKey {
-				case scope, clientId = "client_id", clientSecret = "client_secret"
+				case scope, clientID = "client_id", clientSecret = "client_secret"
 				case grantType = "grant_type"
 				case username, password
 				case refreshToken = "refresh_token"
@@ -128,7 +128,7 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 		struct TokenResponseBody : Decodable {
 			
 			let scope: String
-			let userId: String
+			let userID: String
 			
 			let accessToken: String
 			let refreshToken: String
@@ -137,7 +137,7 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 			let errorCode: Int
 			
 			private enum CodingKeys : String, CodingKey {
-				case scope, userId = "user_id"
+				case scope, userID = "user_id"
 				case accessToken = "access_token", refreshToken = "refresh_token"
 				case expiresIn = "expires_in"
 				case errorCode = "error_code"
@@ -187,16 +187,16 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 		let bodyDataLength = request.httpBody?.count ?? 0
 		if
 			let clientSecretData = clientSecret.data(using: .ascii),
-			let clientIdData = clientId.data(using: .ascii),
+			let clientIDData = clientID.data(using: .ascii),
 			let pathData = request.url?.path.data(using: .ascii),
 			let httpMethodData = request.httpMethod?.data(using: .ascii),
 			let backslashData = "\\".data(using: .ascii),
 			let semiColonData = ";".data(using: .ascii)
 		{
-			var key = Data(capacity: clientSecretData.count + clientIdData.count + 1)
+			var key = Data(capacity: clientSecretData.count + clientIDData.count + 1)
 			key.append(clientSecretData)
 			key.append(backslashData)
-			key.append(clientIdData)
+			key.append(clientIDData)
 			/* key is: "client_secret\client_id" */
 			
 			var content = Data(capacity: pathData.count + 1 + queryDataLength + 1 + bodyDataLength + 1 + httpMethodData.count)
@@ -230,7 +230,7 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	private struct Auth {
 		
 		let scope: Set<String>
-		let userId: String
+		let userID: String
 		
 		let accessToken: String
 		let refreshToken: String

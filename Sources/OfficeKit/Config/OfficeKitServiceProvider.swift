@@ -39,14 +39,14 @@ public class OfficeKitServiceProvider {
 	public func getService<ServiceType : OfficeKitService>(id: String?) throws -> ServiceType {
 		if let id = id {
 			guard let service: ServiceType = try getService(id: id).unbox() else {
-				throw InvalidArgumentError(message: "Service with id \(id) does not have the correct type")
+				throw InvalidArgumentError(message: "Service with ID \(id) does not have the correct type")
 			}
 			return service
 			
 		} else {
-			let configs = officeKitConfig.serviceConfigs.values.filter{ $0.providerId == ServiceType.providerId }
+			let configs = officeKitConfig.serviceConfigs.values.filter{ $0.providerID == ServiceType.providerID }
 			guard let config = configs.onlyElement else {
-				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerId)")
+				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerID)")
 			}
 			return try queue.sync{ try service(with: config) }.unbox()!
 		}
@@ -54,7 +54,7 @@ public class OfficeKitServiceProvider {
 	
 	public func getServices(ids: Set<String>?) throws -> Set<AnyOfficeKitService> {
 		guard let ids = ids else {return try getAllServices()}
-		/* Note: Not ideal, we lock the queue for each service id (in the getService(id:) method)… */
+		/* Note: Not ideal, we lock the queue for each service ID (in the getService(id:) method)… */
 		return try Set(ids.map{ try getService(id: $0) })
 	}
 	
@@ -64,7 +64,7 @@ public class OfficeKitServiceProvider {
 	
 	public func getAllUserDirectoryServices() throws -> Set<AnyUserDirectoryService> {
 		return try queue.sync{
-			for config in officeKitConfig.serviceConfigs.values where OfficeKitConfig.registeredServices[config.providerId] is UserDirectoryServiceInit.Type {
+			for config in officeKitConfig.serviceConfigs.values where OfficeKitConfig.registeredServices[config.providerID] is UserDirectoryServiceInit.Type {
 				_ = try userDirectoryService(with: config)
 			}
 			return Set(userDirectoryServicesCache.values.filter{ !$0.config.isHelperService })
@@ -79,14 +79,14 @@ public class OfficeKitServiceProvider {
 	public func getUserDirectoryService<ServiceType : UserDirectoryService>(id: String?) throws -> ServiceType {
 		if let id = id {
 			guard let service: ServiceType = try getUserDirectoryService(id: id).unbox() else {
-				throw InvalidArgumentError(message: "Service with id \(id) does not have the correct type")
+				throw InvalidArgumentError(message: "Service with ID \(id) does not have the correct type")
 			}
 			return service
 			
 		} else {
-			let configs = officeKitConfig.serviceConfigs.values.filter{ $0.providerId == ServiceType.providerId }
+			let configs = officeKitConfig.serviceConfigs.values.filter{ $0.providerID == ServiceType.providerID }
 			guard let config = configs.onlyElement else {
-				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerId)")
+				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerID)")
 			}
 			return try queue.sync{ try userDirectoryService(with: config) }.unbox()!
 		}
@@ -103,7 +103,7 @@ public class OfficeKitServiceProvider {
 	
 	public func getAllGroupOfUsersDirectoryServices() throws -> Set<AnyGroupOfUsersDirectoryService> {
 		return try queue.sync{
-			for config in officeKitConfig.serviceConfigs.values where OfficeKitConfig.registeredServices[config.providerId] is GroupOfUsersDirectoryServiceInit.Type {
+			for config in officeKitConfig.serviceConfigs.values where OfficeKitConfig.registeredServices[config.providerID] is GroupOfUsersDirectoryServiceInit.Type {
 				_ = try groupOfUsersDirectoryService(with: config)
 			}
 			return Set(groupOfUsersDirectoryServicesCache.values.filter{ !$0.config.isHelperService })
@@ -118,14 +118,14 @@ public class OfficeKitServiceProvider {
 	public func getGroupOfUsersDirectoryService<ServiceType : GroupOfUsersDirectoryService>(id: String?) throws -> ServiceType {
 		if let id = id {
 			guard let service: ServiceType = try getGroupOfUsersDirectoryService(id: id).unbox() else {
-				throw InvalidArgumentError(message: "Service with id \(id) does not have the correct type")
+				throw InvalidArgumentError(message: "Service with ID \(id) does not have the correct type")
 			}
 			return service
 			
 		} else {
-			let configs = officeKitConfig.serviceConfigs.values.filter{ $0.providerId == ServiceType.providerId }
+			let configs = officeKitConfig.serviceConfigs.values.filter{ $0.providerID == ServiceType.providerID }
 			guard let config = configs.onlyElement else {
-				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerId)")
+				throw InvalidArgumentError(message: "No or too many directory services found for type \(ServiceType.providerID)")
 			}
 			return try queue.sync{ try groupOfUsersDirectoryService(with: config) }.unbox()!
 		}
@@ -169,18 +169,18 @@ public class OfficeKitServiceProvider {
 	   **************************************** */
 	
 	private func service(with config: AnyOfficeKitServiceConfig) throws -> AnyOfficeKitService {
-		if let service = servicesCache[config.serviceId] {
+		if let service = servicesCache[config.serviceID] {
 			return service
 		}
 		
 		let service = try createService(with: config)
-		servicesCache[config.serviceId] = service
+		servicesCache[config.serviceID] = service
 		return service
 	}
 	
 	private func createService(with config: AnyOfficeKitServiceConfig) throws -> AnyOfficeKitService {
-		guard let providerType = OfficeKitConfig.registeredServices[config.providerId] else {
-			throw InvalidArgumentError(message: "Unregistered service provider \(config.providerId)")
+		guard let providerType = OfficeKitConfig.registeredServices[config.providerID] else {
+			throw InvalidArgumentError(message: "Unregistered service provider \(config.providerID)")
 		}
 		
 		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, cachedServices: Array(servicesCache.values)) else {
@@ -194,19 +194,19 @@ public class OfficeKitServiceProvider {
 	   ************************************* */
 	
 	private func userDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyUserDirectoryService {
-		if let service = userDirectoryServicesCache[config.serviceId] {
+		if let service = userDirectoryServicesCache[config.serviceID] {
 			return service
 		}
 		
 		let service = try createUserDirectoryService(with: config)
-		userDirectoryServicesCache[config.serviceId] = service
-		servicesCache[config.serviceId] = service /* We might rewrite an already existing erasure in the cache, but it’s not a problem. */
+		userDirectoryServicesCache[config.serviceID] = service
+		servicesCache[config.serviceID] = service /* We might rewrite an already existing erasure in the cache, but it’s not a problem. */
 		return service
 	}
 	
 	private func createUserDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyUserDirectoryService {
-		guard let providerType = OfficeKitConfig.registeredServices[config.providerId] as? UserDirectoryServiceInit.Type else {
-			throw InvalidArgumentError(message: "Unregistered or invalid type for service provider \(config.providerId)")
+		guard let providerType = OfficeKitConfig.registeredServices[config.providerID] as? UserDirectoryServiceInit.Type else {
+			throw InvalidArgumentError(message: "Unregistered or invalid type for service provider \(config.providerID)")
 		}
 		
 		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, cachedServices: Array(servicesCache.values)) else {
@@ -220,20 +220,20 @@ public class OfficeKitServiceProvider {
 	   *********************************************** */
 	
 	private func groupOfUsersDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyGroupOfUsersDirectoryService {
-		if let service = groupOfUsersDirectoryServicesCache[config.serviceId] {
+		if let service = groupOfUsersDirectoryServicesCache[config.serviceID] {
 			return service
 		}
 		
 		let service = try createGroupOfUsersDirectoryService(with: config)
-		groupOfUsersDirectoryServicesCache[config.serviceId] = service
-		userDirectoryServicesCache[config.serviceId] = service
-		servicesCache[config.serviceId] = service /* We might rewrite an already existing erasure in the cache, but it’s not a problem. */
+		groupOfUsersDirectoryServicesCache[config.serviceID] = service
+		userDirectoryServicesCache[config.serviceID] = service
+		servicesCache[config.serviceID] = service /* We might rewrite an already existing erasure in the cache, but it’s not a problem. */
 		return service
 	}
 	
 	private func createGroupOfUsersDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyGroupOfUsersDirectoryService {
-		guard let providerType = OfficeKitConfig.registeredServices[config.providerId] as? GroupOfUsersDirectoryServiceInit.Type else {
-			throw InvalidArgumentError(message: "Unregistered or invalid type for service provider \(config.providerId)")
+		guard let providerType = OfficeKitConfig.registeredServices[config.providerID] as? GroupOfUsersDirectoryServiceInit.Type else {
+			throw InvalidArgumentError(message: "Unregistered or invalid type for service provider \(config.providerID)")
 		}
 		
 		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, cachedServices: Array(servicesCache.values)) else {
@@ -253,14 +253,14 @@ public class OfficeKitServiceProvider {
 		
 		let service = try createDirectoryAuthenticatorService(with: config)
 		directoryAuthenticatorServiceCache = service
-		userDirectoryServicesCache[config.serviceId] = service
-		servicesCache[config.serviceId] = service /* We might rewrite an already existing erasure in the cache, but it’s not a problem. */
+		userDirectoryServicesCache[config.serviceID] = service
+		servicesCache[config.serviceID] = service /* We might rewrite an already existing erasure in the cache, but it’s not a problem. */
 		return service
 	}
 	
 	private func createDirectoryAuthenticatorService(with config: AnyOfficeKitServiceConfig) throws -> AnyDirectoryAuthenticatorService {
-		guard let providerType = OfficeKitConfig.registeredServices[config.providerId] as? DirectoryAuthenticatorServiceInit.Type else {
-			throw InvalidArgumentError(message: "Unregistered or invalid type for service provider \(config.providerId)")
+		guard let providerType = OfficeKitConfig.registeredServices[config.providerID] as? DirectoryAuthenticatorServiceInit.Type else {
+			throw InvalidArgumentError(message: "Unregistered or invalid type for service provider \(config.providerID)")
 		}
 		
 		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, cachedServices: Array(servicesCache.values)) else {

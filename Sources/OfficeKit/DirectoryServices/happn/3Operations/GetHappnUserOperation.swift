@@ -25,7 +25,7 @@ public final class GetHappnUserOperation : RetryingOperation, HasResult {
 	
 	public private(set) var result = Result<HappnUser, Error>.failure(OperationIsNotFinishedError())
 	
-	/** `userKey` is the persistent id of the user. */
+	/** `userKey` is the persistent ID of the user. */
 	public init(userKey k: String, connector c: HappnConnector) {
 		userKey = k
 		connector = c

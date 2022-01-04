@@ -17,21 +17,21 @@ extension HappnConnector : SemiSingleton {
 		
 		public let baseURL: URL
 		
-		public let clientId: String
+		public let clientID: String
 		public let clientSecret: String
 		
 		public let authMode: AuthMode
 		
-		public init(baseURL url: URL, clientId id: String, clientSecret s: String, username u: String, password p: String) {
+		public init(baseURL url: URL, clientID id: String, clientSecret s: String, username u: String, password p: String) {
 			baseURL = url
-			clientId = id
+			clientID = id
 			clientSecret = s
 			authMode = .userPass(username: u, password: p)
 		}
 		
-		public init(baseURL url: URL, clientId id: String, clientSecret s: String, refreshToken t: String) {
+		public init(baseURL url: URL, clientID id: String, clientSecret s: String, refreshToken t: String) {
 			baseURL = url
-			clientId = id
+			clientID = id
 			clientSecret = s
 			authMode = .refreshToken(t)
 		}
@@ -46,7 +46,7 @@ extension HappnConnector : SemiSingleton {
 	}
 	
 	public convenience init(key s: Settings) {
-		self.init(baseURL: s.baseURL, clientId: s.clientId, clientSecret: s.clientSecret, authMode: s.authMode)
+		self.init(baseURL: s.baseURL, clientID: s.clientID, clientSecret: s.clientSecret, authMode: s.authMode)
 	}
 	
 }

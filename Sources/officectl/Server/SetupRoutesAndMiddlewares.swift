@@ -61,7 +61,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 		req.application.officeKitConfig.serviceConfigs
 			.map{ kv -> ApiService in
 				let (_, config) = kv
-				return ApiService(providerId: config.providerId, serviceId: config.serviceId, serviceFullName: config.serviceName, isHelperService: config.isHelperService)
+				return ApiService(providerID: config.providerID, serviceID: config.serviceID, serviceFullName: config.serviceName, isHelperService: config.isHelperService)
 			}
 			.sorted(by: { $0.serviceFullName.localizedCompare($1.serviceFullName) != .orderedDescending })
 	})

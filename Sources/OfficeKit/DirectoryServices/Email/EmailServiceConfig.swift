@@ -13,18 +13,18 @@ import GenericStorage
 
 public struct EmailServiceConfig : OfficeKitServiceConfig {
 	
-	public var providerId: String
+	public var providerID: String
 	public let isHelperService = true
 	
-	public var serviceId: String
+	public var serviceID: String
 	public var serviceName: String
 	
 	public var mergePriority: Int?
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+	public init(providerID pID: String, serviceID id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		precondition(id != "invalid" && !id.contains(":"))
-		providerId = pId
-		serviceId = id
+		providerID = pID
+		serviceID = id
 		serviceName = name
 		
 		mergePriority = p

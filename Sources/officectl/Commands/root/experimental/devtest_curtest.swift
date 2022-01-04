@@ -46,13 +46,13 @@ struct CurrentDevTestCommand : ParsableCommand {
 		/* List users by creation date decreasing */
 		let gougleService: GoogleService = try app.officeKitServiceProvider.getService(id: nil)
 		let users = try await gougleService.listAllUsers(using: app.services)
-		for user in users.sorted(by: { $0.creationTime.value ?? .distantFuture < $1.creationTime.value ?? .distantFuture }) {
-			print("\(user.creationTime.value ?? .distantFuture) - \(user.primaryEmail)")
+		for user in users.sorted(by: { $0.creationTime ?? .distantFuture < $1.creationTime ?? .distantFuture }) {
+			print("\(user.creationTime ?? .distantFuture) - \(user.primaryEmail)")
 		}
 		
 		/* Delete happn console user */
 //		let consoleService: HappnService = try sProvider.getService(id: nil)
-//		guard let user = try await consoleService.existingUser(fromUserId: "sebastien.gadalla@happn.fr", propertiesToFetch: [], using: app.services) else {
+//		guard let user = try await consoleService.existingUser(fromUserID: "sebastien.gadalla@happn.fr", propertiesToFetch: [], using: app.services) else {
 //			throw "Cannot get user"
 //		}
 //		try await consoleService.deleteUser(user, using: app.services)
@@ -67,7 +67,7 @@ struct CurrentDevTestCommand : ParsableCommand {
 //			.flatMap{ $0 }
 //			.flatMap{ users in
 //				let uidAndFutures = users
-//					.compactMap{ $0.id.value }
+//					.compactMap{ $0.id }
 //					.map{ uid -> (String, EventLoopFuture<JSON>) in
 //						let url = consoleService.config.connectorSettings.baseURL.appendingPathComponent("api").appendingPathComponent("user-acls").appendingPathComponent(uid)
 //						let op = AuthenticatedJSONOperation<JSON>(url: url, authenticator: hConnector.authenticate)

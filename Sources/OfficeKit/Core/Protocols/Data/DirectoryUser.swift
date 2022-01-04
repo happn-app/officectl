@@ -9,30 +9,42 @@ import Foundation
 
 import Email
 
+import OfficeModel
+
 
 
 public protocol DirectoryUser {
 	
-	associatedtype IdType : Hashable
-	associatedtype PersistentIdType : Hashable
+	associatedtype IDType : Hashable
+	associatedtype PersistentIDType : Hashable
 	
-	var userId: IdType {get}
-	var persistentId: RemoteProperty<PersistentIdType> {get}
+	var userID: IDType {get}
+	var remotePersistentID: RemoteProperty<PersistentIDType> {get}
 	
-	var identifyingEmail: RemoteProperty<Email?> {get}
-	var otherEmails: RemoteProperty<[Email]> {get}
+	var remoteIdentifyingEmail: RemoteProperty<Email?> {get}
+	var remoteOtherEmails: RemoteProperty<[Email]> {get}
 	
-//	var fullName: RemoteProperty<String?> {get}
-	var firstName: RemoteProperty<String?> {get}
-	var lastName: RemoteProperty<String?> {get}
-	var nickname: RemoteProperty<String?> {get}
+//	var remoteFullName: RemoteProperty<String?> {get}
+	var remoteFirstName: RemoteProperty<String?> {get}
+	var remoteLastName: RemoteProperty<String?> {get}
+	var remoteNickname: RemoteProperty<String?> {get}
 	
 }
 
+
 extension DirectoryUser {
 	
+	public var persistentID: PersistentIDType? {remotePersistentID.wrappedValue}
+	
+	public var identifyingEmail: Email?? {remoteIdentifyingEmail.wrappedValue}
+	public var otherEmails: [Email]? {remoteOtherEmails.wrappedValue}
+	
+	public var firstName: String?? {remoteFirstName.wrappedValue}
+	public var lastName: String?? {remoteLastName.wrappedValue}
+	public var nickname: String?? {remoteNickname.wrappedValue}
+	
 	public var emails: [Email] {
-		return (identifyingEmail.map{ $0.flatMap{ [$0] } ?? [] }.value ?? []) + (otherEmails.value ?? [])
+		return (remoteIdentifyingEmail.wrappedValue?.flatMap{ [$0] } ?? []) + (remoteOtherEmails.wrappedValue ?? [])
 	}
 	
 }
@@ -43,8 +55,8 @@ extension DirectoryUser {
  
  Tested:
  ```
- let a = DirectoryUserProperty.userId
- let b = DirectoryUserProperty.custom("userId")
+ let a = DirectoryUserProperty.userID
+ let b = DirectoryUserProperty.custom("userID")
  a           == b           /* <-- This is true. */
  a.hashValue == b.hashValue /* <-- This is true. */
  ``` */
@@ -53,8 +65,8 @@ public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStr
 	public typealias RawValue = String
 	public typealias StringLiteralType = String
 	
-	case userId
-	case persistentId
+	case userID
+	case persistentID
 	
 	case identifyingEmail
 	case otherEmails
@@ -69,8 +81,8 @@ public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStr
 	
 	public init(stringLiteral value: String) {
 		switch value {
-			case "userId":           self = .userId
-			case "persistentId":     self = .persistentId
+			case "userID":           self = .userID
+			case "persistentID":     self = .persistentID
 			case "identifyingEmail": self = .identifyingEmail
 			case "otherEmails":      self = .otherEmails
 			case "firstName":        self = .firstName
@@ -87,8 +99,8 @@ public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStr
 	
 	public var rawValue: String {
 		switch self {
-			case .userId:           return "userId"
-			case .persistentId:     return "persistentId"
+			case .userID:           return "userID"
+			case .persistentID:     return "persistentID"
 			case .identifyingEmail: return "identifyingEmail"
 			case .otherEmails:      return "otherEmails"
 			case .firstName:        return "firstName"
@@ -100,9 +112,9 @@ public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStr
 	}
 	
 	/**
-	 Even though `.userId == .custom("userId")` (and the same applies for hash values),
-	 when switching on a value from this enum, we should prefer switching on the normalized value as
-	 the case `.userId` and `.custom("userId")` are indeed different. */
+	 Even though `.userID == .custom("userID")` (and the same applies for hash values),
+	 when switching on a value from this enum,
+	 we should prefer switching on the normalized value as the case `.userID` and `.custom("userID")` are indeed different. */
 	public func normalized() -> DirectoryUserProperty {
 		if case .custom(let v) = self {
 			return DirectoryUserProperty(stringLiteral: v)

@@ -68,7 +68,7 @@ class DownloadDriveOperation : RetryingOperation {
 				
 				let foundDownloadError = operations.contains(where: { $0.result.failureValue != nil })
 				guard !foundDownloadError else {
-					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "At least one file was not successfully downloaded from drive \(state.userAndDest.user.userId.rawValue); see the log file for more info."])
+					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "At least one file was not successfully downloaded from drive \(state.userAndDest.user.userID.rawValue); see the log file for more info."])
 				}
 				
 				/* Archive backup if applicable. */

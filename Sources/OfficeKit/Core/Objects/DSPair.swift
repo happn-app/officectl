@@ -20,18 +20,18 @@ public struct DSUPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 	public let service: DirectoryServiceType
 	public let user: DirectoryServiceType.UserType
 	
-	public let serviceId: String
-	public let taggedId: TaggedId
+	public let serviceID: String
+	public let taggedID: TaggedID
 	
-	public var dsuIdPair: DSUIdPair<DirectoryServiceType> {
-		return DSUIdPair(service: service, userId: user.userId)
+	public var dsuIDPair: DSUIDPair<DirectoryServiceType> {
+		return DSUIDPair(service: service, userID: user.userID)
 	}
 	
 	public init(service s: DirectoryServiceType, user u: DirectoryServiceType.UserType) {
 		service = s
 		user = u
-		serviceId = service.config.serviceId
-		taggedId = TaggedId(tag: serviceId, id: service.string(fromUserId: user.userId))
+		serviceID = service.config.serviceID
+		taggedID = TaggedID(tag: serviceID, id: service.string(fromUserID: user.userID))
 	}
 	
 	public init?<SourceServiceType : UserDirectoryService>(service s: SourceServiceType, user u: SourceServiceType.UserType) {
@@ -62,11 +62,11 @@ public struct DSUPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 	}
 	
 	public func hash(into hasher: inout Hasher) {
-		hasher.combine(taggedId)
+		hasher.combine(taggedID)
 	}
 	
 	public static func ==(_ lhs: DSUPair<DirectoryServiceType>, _ rhs: DSUPair<DirectoryServiceType>) -> Bool {
-		return lhs.taggedId == rhs.taggedId
+		return lhs.taggedID == rhs.taggedID
 	}
 	
 }
@@ -103,21 +103,21 @@ extension AnyDSUPair {
 }
 
 
-public typealias AnyDSUIdPair = DSUIdPair<AnyUserDirectoryService>
-public struct DSUIdPair<DirectoryServiceType : UserDirectoryService> : Hashable {
+public typealias AnyDSUIDPair = DSUIDPair<AnyUserDirectoryService>
+public struct DSUIDPair<DirectoryServiceType : UserDirectoryService> : Hashable {
 	
 	public let service: DirectoryServiceType
-	public let userId: DirectoryServiceType.UserType.IdType
+	public let userID: DirectoryServiceType.UserType.IDType
 	
-	public let serviceId: String
-	public let taggedId: TaggedId
+	public let serviceID: String
+	public let taggedID: TaggedID
 	
-	public init(service s: DirectoryServiceType, userId u: DirectoryServiceType.UserType.IdType) {
+	public init(service s: DirectoryServiceType, userID u: DirectoryServiceType.UserType.IDType) {
 		service = s
-		userId = u
+		userID = u
 		
-		serviceId = service.config.serviceId
-		taggedId = TaggedId(tag: serviceId, id: service.string(fromUserId: userId))
+		serviceID = service.config.serviceID
+		taggedID = TaggedID(tag: serviceID, id: service.string(fromUserID: userID))
 	}
 	
 	public init?<SourceServiceType : UserDirectoryService>(service s: SourceServiceType, user u: SourceServiceType.UserType) {
@@ -126,42 +126,42 @@ public struct DSUIdPair<DirectoryServiceType : UserDirectoryService> : Hashable 
 		}
 		
 		service = dsu.service
-		userId = dsu.user.userId
+		userID = dsu.user.userID
 		
-		serviceId = dsu.serviceId
-		taggedId = dsu.taggedId
+		serviceID = dsu.serviceID
+		taggedID = dsu.taggedID
 	}
 	
-	public init(taggedId tid: TaggedId, servicesProvider: OfficeKitServiceProvider) throws {
+	public init(taggedID tid: TaggedID, servicesProvider: OfficeKitServiceProvider) throws {
 		service = try servicesProvider.getUserDirectoryService(id: tid.tag)
-		userId = try service.userId(fromString: tid.id)
+		userID = try service.userID(fromString: tid.id)
 		
-		serviceId = service.config.serviceId
-		taggedId = tid
+		serviceID = service.config.serviceID
+		taggedID = tid
 		
 		if let logger = OfficeKitConfig.logger {
-			let newTid = TaggedId(tag: service.config.serviceId, id: service.string(fromUserId: userId))
+			let newTid = TaggedID(tag: service.config.serviceID, id: service.string(fromUserID: userID))
 			if tid != newTid {
-				logger.error("Got a tagged it whose service/userId conversion does not convert back to itself. Source = \(tid), New = \(newTid)")
+				logger.error("Got a tagged it whose service/userID conversion does not convert back to itself. Source = \(tid), New = \(newTid)")
 			}
 		}
 	}
 	
 	public init(string: String, servicesProvider: OfficeKitServiceProvider) throws {
-		let tid = TaggedId(string: string)
-		try self.init(taggedId: tid, servicesProvider: servicesProvider)
+		let tid = TaggedID(string: string)
+		try self.init(taggedID: tid, servicesProvider: servicesProvider)
 	}
 	
 	public func dsuPair() throws -> DSUPair<DirectoryServiceType> {
-		return try DSUPair(service: service, user: service.logicalUser(fromUserId: userId))
+		return try DSUPair(service: service, user: service.logicalUser(fromUserID: userID))
 	}
 	
 	public func hash(into hasher: inout Hasher) {
-		hasher.combine(taggedId)
+		hasher.combine(taggedID)
 	}
 	
-	public static func ==(_ lhs: DSUIdPair<DirectoryServiceType>, _ rhs: DSUIdPair<DirectoryServiceType>) -> Bool {
-		return lhs.taggedId == rhs.taggedId
+	public static func ==(_ lhs: DSUIDPair<DirectoryServiceType>, _ rhs: DSUIDPair<DirectoryServiceType>) -> Bool {
+		return lhs.taggedID == rhs.taggedID
 	}
 	
 }

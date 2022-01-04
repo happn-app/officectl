@@ -46,22 +46,22 @@ actor DownloadDriveState {
 	}
 	
 	/* This shouldn’t be in a “state” object… */
-	func getPaths(objectId: String, objectName: String, parentIds: [String]?) async throws -> [String] {
-		guard let parentIds = parentIds, !parentIds.isEmpty else {
-			return [deduplicatePath(originalPath: objectName, for: objectId)]
+	func getPaths(objectID: String, objectName: String, parentIDs: [String]?) async throws -> [String] {
+		guard let parentIDs = parentIDs, !parentIDs.isEmpty else {
+			return [deduplicatePath(originalPath: objectName, for: objectID)]
 		}
 		
 		/* Not sure of the performance implications of using a task group instead of this directly.
 		 * Anyway I don’t think doing this exactly is possible with a task group. */
-		let tasks = parentIds.map{ parentId -> Task<[String], Error> in
-			let task = pathsCache[parentId] ?? Task{
+		let tasks = parentIDs.map{ parentID -> Task<[String], Error> in
+			let task = pathsCache[parentID] ?? Task{
 				try await connector.connect(scope: driveROScope)
 				
 				let decoder = JSONDecoder()
 				decoder.dateDecodingStrategy = .customISO8601
 				let op = DriveUtils.rateLimitGoogleDriveAPIOperation(
 					try URLRequestDataOperation<GoogleDriveDoc>.forAPIRequest(
-						url: driveApiBaseURL.appending("files", parentId), urlParameters: ["fields": "id,name,parents,ownedByMe"],
+						url: driveApiBaseURL.appending("files", parentID), urlParameters: ["fields": "id,name,parents,ownedByMe"],
 						requestProcessors: [AuthRequestProcessor(connector)],
 						retryableStatusCodes: [403],
 						retryProviders: [RateLimitRetryProvider()]
@@ -69,12 +69,12 @@ actor DownloadDriveState {
 				)
 				
 				let doc = try await op.startAndGetResult().result
-				return try await getPaths(objectId: doc.id, objectName: (doc.name ?? doc.id), parentIds: doc.parents)
+				return try await getPaths(objectID: doc.id, objectName: (doc.name ?? doc.id), parentIDs: doc.parents)
 			}
 			
-			pathsCache[parentId] = task
+			pathsCache[parentID] = task
 			return Task{
-				try await task.value.map{ self.deduplicatePath(originalPath: ($0 as NSString).appendingPathComponent(objectName), for: objectId) }
+				try await task.value.map{ self.deduplicatePath(originalPath: ($0 as NSString).appendingPathComponent(objectName), for: objectID) }
 			}
 		}
 		var res = [String]()
@@ -85,7 +85,7 @@ actor DownloadDriveState {
 	private var pathsCache = [String: Task<[String], Error>]()
 	private var knownPaths = Set<String>()
 	
-	private func deduplicatePath(originalPath: String, for objectId: String) -> String {
+	private func deduplicatePath(originalPath: String, for objectID: String) -> String {
 		var i = 2
 		var newPath = originalPath
 		let pathExt = (originalPath as NSString).pathExtension
@@ -96,7 +96,7 @@ actor DownloadDriveState {
 			i += 1
 		}
 		if i > 2 {
-			_ = try? logFile.logCSVLine([objectId, "duplicate_path_warning", "Path “\(originalPath)” already exist; renamed to “\(newPath)”"])
+			_ = try? logFile.logCSVLine([objectID, "duplicate_path_warning", "Path “\(originalPath)” already exist; renamed to “\(newPath)”"])
 		}
 		return newPath
 	}

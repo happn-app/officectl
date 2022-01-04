@@ -23,8 +23,8 @@ public final actor GitHubJWTConnector : Connector, Authenticator, HasTaskQueue {
 	public typealias Request = URLRequest
 	public typealias Authentication = Void
 	
-	public let appId: String
-	public let installationId: String
+	public let appID: String
+	public let installationID: String
 	public let privateKey: RSAKey
 	
 	public var currentScope: Void? {
@@ -39,9 +39,9 @@ public final actor GitHubJWTConnector : Connector, Authenticator, HasTaskQueue {
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "GitHubJWTConnector Connection Queue")
 	
-	public init(appId a: String, installationId i: String, privateKeyURL: URL) throws {
-		appId = a
-		installationId = i
+	public init(appID a: String, installationID i: String, privateKeyURL: URL) throws {
+		appID = a
+		installationID = i
 		privateKey = try RSAKey.private(pem: Data(contentsOf: privateKeyURL))
 	}
 	
@@ -60,14 +60,14 @@ public final actor GitHubJWTConnector : Connector, Authenticator, HasTaskQueue {
 		}
 		/* GitHub does not support non-int exp or iat. */
 		let roundedNow = Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded())
-		let jwtPayload = GitHubJWTPayload(iss: .init(value: appId), iat: .init(value: roundedNow), exp: .init(value: roundedNow + 30))
+		let jwtPayload = GitHubJWTPayload(iss: .init(value: appID), iat: .init(value: roundedNow), exp: .init(value: roundedNow + 30))
 		let jwtToken = try JWTSigner.rs256(key: privateKey).sign(jwtPayload)
 		
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .iso8601
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
 		let op = URLRequestDataOperation<Auth>.forAPIRequest(
-			url: try URL(string: "https://api.github.com")!.appending("app", "installations", installationId, "access_tokens"),
+			url: try URL(string: "https://api.github.com")!.appending("app", "installations", installationID, "access_tokens"),
 			method: "POST", headers: ["authorization": "Bearer \(jwtToken)"],
 			decoders: [decoder], retryProviders: []
 		)

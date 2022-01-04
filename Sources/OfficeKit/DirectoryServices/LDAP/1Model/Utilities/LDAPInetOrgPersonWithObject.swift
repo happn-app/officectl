@@ -9,6 +9,8 @@ import Foundation
 
 import Email
 
+import OfficeModel
+
 
 
 /* inetOrgPerson and object are immutable in order to make sure that both are representing the same thing, and
@@ -40,44 +42,44 @@ public struct LDAPInetOrgPersonWithObject {
 
 extension LDAPInetOrgPersonWithObject : DirectoryUser {
 	
-	public typealias IdType = LDAPDistinguishedName
-	public typealias PersistentIdType = LDAPDistinguishedName
+	public typealias IDType = LDAPDistinguishedName
+	public typealias PersistentIDType = LDAPDistinguishedName
 	
-	public var userId: LDAPDistinguishedName {
+	public var userID: LDAPDistinguishedName {
 		return inetOrgPerson.dn
 	}
 	
-	public var persistentId: RemoteProperty<LDAPDistinguishedName> {
-		/* TODO: LDAP does not have a built-in persistent id. We must define the property that is used for this in the config. */
+	public var remotePersistentID: RemoteProperty<LDAPDistinguishedName> {
+		/* TODO: LDAP does not have a built-in persistent ID. We must define the property that is used for this in the config. */
 		return .unsupported
 	}
 	
-	public var identifyingEmail: RemoteProperty<Email?> {
+	public var remoteIdentifyingEmail: RemoteProperty<Email?> {
 		if let e = inetOrgPerson.mail {
 			return .set(e.first)
 		}
 		return .unset
 	}
 	
-	public var otherEmails: RemoteProperty<[Email]> {
+	public var remoteOtherEmails: RemoteProperty<[Email]> {
 		if let e = inetOrgPerson.mail {
 			return .set(Array(e.dropFirst()))
 		}
 		return .unset
 	}
 	
-	public var firstName: RemoteProperty<String?> {
+	public var remoteFirstName: RemoteProperty<String?> {
 		if let e = inetOrgPerson.givenName {
 			return .set(e.first)
 		}
 		return .unset
 	}
 	
-	public var lastName: RemoteProperty<String?> {
+	public var remoteLastName: RemoteProperty<String?> {
 		return .set(inetOrgPerson.sn.first)
 	}
 	
-	public var nickname: RemoteProperty<String?> {
+	public var remoteNickname: RemoteProperty<String?> {
 		return .unsupported
 	}
 	

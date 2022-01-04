@@ -27,11 +27,11 @@ class RateLimiterOperation : RetryingOperation {
 		
 	}
 	
-	let rateLimitId: String
+	let rateLimitID: String
 	let limits: [Limit]
 	
 	init(id: String, limits l: [Limit]) {
-		rateLimitId = id
+		rateLimitID = id
 		limits = l
 	}
 	
@@ -48,7 +48,7 @@ class RateLimiterOperation : RetryingOperation {
 				guard let previousResetDate = previousResetDateO else {return nil}
 				
 				let nHits: Int
-				let counts = RateLimiterOperation.counts[rateLimitId, default: []]
+				let counts = RateLimiterOperation.counts[rateLimitID, default: []]
 				/* TODO: Optimize this search (reverse search). Currently, the more dates are registered, the longer the search! */
 				let dateAndOffset = counts.enumerated().first{ $0.element >= previousResetDate } /* The last date that was rate-limited */
 				if let dateAndOffset = dateAndOffset {
@@ -72,7 +72,7 @@ class RateLimiterOperation : RetryingOperation {
 				if t >= 0 {return t}
 			}
 			/* If we don’t wait, we register the call in the counts variable. */
-			RateLimiterOperation.counts[rateLimitId, default: []].append(Date())
+			RateLimiterOperation.counts[rateLimitID, default: []].append(Date())
 			return nil
 		}
 		

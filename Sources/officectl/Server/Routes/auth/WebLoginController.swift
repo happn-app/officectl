@@ -29,7 +29,7 @@ class WebLoginController {
 		}
 		
 		let context = LoginContext(
-			username: req.auth.get(LoggedInUser.self)?.user.taggedId.id,
+			username: req.auth.get(LoggedInUser.self)?.user.taggedID.id,
 			nextURLPath: req.headers["Officectl-Login-Next-Page"].last ?? req.query["next"]
 		)
 		return try await req.view.render("Login", context)
@@ -48,10 +48,10 @@ class WebLoginController {
 		
 		let userPair = try AnyDSUPair(service: authService, user: authService.logicalUser(fromEmail: Email(rawValue: loginData.username) ?! "Invalid email", servicesProvider: sProvider))
 		
-		guard try await authService.authenticate(userId: userPair.user.userId, challenge: loginData.password, using: req.services) else {
+		guard try await authService.authenticate(userID: userPair.user.userID, challenge: loginData.password, using: req.services) else {
 			throw Abort(.forbidden, reason: "Invalid credentials. Please check your username and password.")
 		}
-		let isAdmin = try await authService.validateAdminStatus(userId: userPair.user.userId, using: req.services)
+		let isAdmin = try await authService.validateAdminStatus(userID: userPair.user.userID, using: req.services)
 		/* The password of the user is verified and we have its admin status.
 		 * Let’s log it in. */
 		req.auth.login(LoggedInUser(user: userPair, scopes: isAdmin ? [.admin] : []))

@@ -20,8 +20,8 @@ struct BackupMailsCommand : ParsableCommand {
 	
 	struct Options : ParsableArguments {
 		
-		@ArgumentParser.Option(help: "The id of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.")
-		var serviceId: String?
+		@ArgumentParser.Option(help: "The ID of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.")
+		var serviceID: String?
 		
 		@ArgumentParser.Option(help: "The path to the config file to use (WILL BE OVERWRITTEN) for offlineimap.")
 		var offlineimapConfigFile: String
@@ -89,7 +89,7 @@ struct BackupMailsCommand : ParsableCommand {
 		let officeKitConfig = app.officeKitConfig
 		let opQ = try app.services.make(OperationQueue.self)
 		
-		let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: backupMailOptions.serviceId)
+		let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: backupMailOptions.serviceID)
 		_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
 		
 		let downloadsDestinationFolder = URL(fileURLWithPath: backupOptions.downloadsDestinationFolder, isDirectory: true)
@@ -100,7 +100,7 @@ struct BackupMailsCommand : ParsableCommand {
 		let archivesDestinationFolderStr = (backupMailOptions.archive ? try nil2throw(archivesDestinationFolder) : nil)
 		let archivesDestinationFolderURL = archivesDestinationFolderStr.flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
 		
-		try app.auditLogger.log(action: "Backing up mails w/ service \(backupMailOptions.serviceId ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(backupMailOptions.linkify ? "w/": "w/o") linkification, \(archivesDestinationFolder != nil ? "w/": "w/o") archiving.", source: .cli)
+		try app.auditLogger.log(action: "Backing up mails w/ service \(backupMailOptions.serviceID ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(backupMailOptions.linkify ? "w/": "w/o") linkification, \(archivesDestinationFolder != nil ? "w/": "w/o") archiving.", source: .cli)
 		
 		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
@@ -430,19 +430,19 @@ struct BackupMailsCommand : ParsableCommand {
 				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "No access tokens…"])
 			}
 			
-			guard userInfos.keys.first(where: { $0.id.value == nil }) == nil else {
-				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Got a user with no id fetched!"])
+			guard userInfos.keys.first(where: { $0.id == nil }) == nil else {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Got a user with no ID fetched!"])
 			}
 			
 			/* About maxsyncaccounts:
 			 *    We default arbitrarily to 4 (ncores/2 would probably be better).
 			 *    Even on an 8-core machine, offlineimap seems greedy, and I got a “pthread_cond_wait: Resource busy” error with maxsyncaccounts = 8.
-			 * About the forced unwrapped below, we know the id is fetched on all the users (checked above). */
+			 * About the forced unwrapped below, we know the ID is fetched on all the users (checked above). */
 			let config = """
 			[general]
 			ui = MachineUI
 			maxsyncaccounts = \(maxConcurrentOfflineimapSyncTasks ?? 4)
-			accounts = \(userInfos.keys.map{ "AccountUserID_" + $0.id.value! }.joined(separator: ","))
+			accounts = \(userInfos.keys.map{ "AccountUserID_" + $0.id! }.joined(separator: ","))
 			
 			
 			
@@ -455,15 +455,15 @@ struct BackupMailsCommand : ParsableCommand {
 				 *    - When using Python2 w/ OpenSSL 1.1.1, offlineimap cannot validate Gougle’s certificate.
 				 *      We can fix that by forcing using the TLS 1.2 protocol. (youhou) */
 				return """
-					[Account AccountUserID_\(user.id.value!)]
-					localrepository = LocalRepoID_\(user.id.value!)
-					remoterepository = RemoteRepoID_\(user.id.value!)
+					[Account AccountUserID_\(user.id!)]
+					localrepository = LocalRepoID_\(user.id!)
+					remoterepository = RemoteRepoID_\(user.id!)
 					
-					[Repository LocalRepoID_\(user.id.value!)]
+					[Repository LocalRepoID_\(user.id!)]
 					type = Maildir
 					localfolders = \(destinationURL.path)
 					
-					[Repository RemoteRepoID_\(user.id.value!)]
+					[Repository RemoteRepoID_\(user.id!)]
 					type = Gmail
 					readonly = True
 					remoteuser = \(user.primaryEmail.rawValue)

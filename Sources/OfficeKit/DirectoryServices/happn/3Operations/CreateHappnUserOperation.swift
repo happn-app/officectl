@@ -44,7 +44,7 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 					throw InvalidArgumentError(message: "Cannot create an admin user without the password of the admin creating the account (non user/pass connectors are not supported)")
 				}
 				
-				guard user.password.value != nil else {
+				guard user.password != nil else {
 					throw InvalidArgumentError(message: "A user must be created w/ a password (or we get a weird error when creating the account, and the account is unusable though it appear to exist)")
 				}
 				
@@ -61,7 +61,7 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 				]
 				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
 				let apiUserResult = try await createUserOperation.startAndGetResult().result
-				guard apiUserResult.success, let user = apiUserResult.data, let userId = user.id.value else {
+				guard apiUserResult.success, let user = apiUserResult.data, let userID = user.id else {
 					throw NSError(domain: "com.happn.officectl.happn", code: apiUserResult.error_code, userInfo: [NSLocalizedDescriptionKey: apiUserResult.error ?? "Unknown error while creating the user"])
 				}
 				
@@ -70,7 +70,7 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 				/* We declare a decoded type HappnApiResult<Int8>.
 				 * We chose Int8, but could have taken anything that’s decodable: the API returns null all the time… */
 				let makeUserAdminOperation = try URLRequestDataOperation<HappnApiResult<Int8>>.forAPIRequest(
-					url: connector.baseURL.appending("api", "administrators"), httpBody: GrantRequestBody(userId: userId, adminPassword: adminPass),
+					url: connector.baseURL.appending("api", "administrators"), httpBody: GrantRequestBody(userID: userID, adminPassword: adminPass),
 					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 				)
 				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
@@ -95,10 +95,10 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 		
 		struct GrantRequestBody : Encodable {
 			var action = "grant"
-			var userId: String
+			var userID: String
 			var adminPassword: String
 			private enum CodingKeys : String, CodingKey {
-				case action = "_action", userId = "user_id", adminPassword = "password"
+				case action = "_action", userID = "user_id", adminPassword = "password"
 			}
 		}
 	}

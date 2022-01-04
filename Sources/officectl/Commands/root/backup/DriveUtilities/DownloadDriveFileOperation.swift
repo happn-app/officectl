@@ -61,7 +61,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				
 				try await state.connector.connect(scope: driveROScope)
 				
-				let paths = try await state.getPaths(objectId: doc.id, objectName: doc.name ?? doc.id, parentIds: doc.parents)
+				let paths = try await state.getPaths(objectID: doc.id, objectName: doc.name ?? doc.id, parentIDs: doc.parents)
 				
 				/* First let’s make sure the paths match the given filters. */
 				if let filters = state.filters {

@@ -49,7 +49,7 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 					curOffset += limit
 				} while nUsersAtCurPage >= limit/2
 				if let email = email {
-					/* Get users from ids search */
+					/* Get users from IDs search */
 					curOffset = 0
 					repeat {
 						let usersAtPage = try await searchResults(for: Request(offset: curOffset, limit: limit, ids: [email]))

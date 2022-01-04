@@ -22,10 +22,10 @@ private protocol OfficeKitServiceConfigBox {
 	
 	/* *** OfficeKitServiceConfig *** */
 	
-	var providerId: String {get}
+	var providerID: String {get}
 	var isHelperService: Bool {get}
 	
-	var serviceId: String {get}
+	var serviceID: String {get}
 	var serviceName: String {get}
 	
 	var mergePriority: Int? {get}
@@ -49,16 +49,16 @@ private struct ConcreteOfficeKitServiceConfigBox<Base : OfficeKitServiceConfig> 
 		return otherAsBase == originalConfig
 	}
 	
-	var providerId: String {
-		return originalConfig.providerId
+	var providerID: String {
+		return originalConfig.providerID
 	}
 	
 	var isHelperService: Bool {
 		return originalConfig.isHelperService
 	}
 	
-	var serviceId: String {
-		return originalConfig.serviceId
+	var serviceID: String {
+		return originalConfig.serviceID
 	}
 	
 	var serviceName: String {
@@ -81,7 +81,7 @@ public struct AnyOfficeKitServiceConfig : OfficeKitServiceConfig {
 		box = ConcreteOfficeKitServiceConfigBox(originalConfig: object)
 	}
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+	public init(providerID pID: String, serviceID id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		throw InternalError(message: "AnyOfficeKitServiceConfig cannot be instantiated with a generic config…")
 	}
 	
@@ -93,16 +93,16 @@ public struct AnyOfficeKitServiceConfig : OfficeKitServiceConfig {
 		return lhs.box.isEqual(rhs.box)
 	}
 	
-	public var providerId: String {
-		return box.providerId
+	public var providerID: String {
+		return box.providerID
 	}
 	
 	public var isHelperService: Bool {
 		return box.isHelperService
 	}
 	
-	public var serviceId: String {
-		return box.serviceId
+	public var serviceID: String {
+		return box.serviceID
 	}
 	
 	public var serviceName: String {

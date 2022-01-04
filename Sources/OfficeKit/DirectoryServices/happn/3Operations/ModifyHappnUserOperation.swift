@@ -42,9 +42,9 @@ public final class ModifyHappnUserOperation : RetryingOperation, HasResult {
 				let decoder = JSONDecoder()
 				decoder.dateDecodingStrategy = .customISO8601
 				decoder.keyDecodingStrategy = .useDefaultKeys
-				let userId = user.persistentId.value ?? user.userId ?? HappnConnector.nullLoginUserId
+				let userID = user.persistentID ?? user.userID ?? HappnConnector.nullLoginUserID
 				let op = try URLRequestDataOperation<HappnApiResult<HappnUser>>.forAPIRequest(
-					url: connector.baseURL.appending("api", "users", userId), method: "PUT",
+					url: connector.baseURL.appending("api", "users", userID), method: "PUT",
 					urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname"], httpBody: user,
 					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 				)

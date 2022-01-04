@@ -24,7 +24,7 @@ import ServiceKit
  - Semi-singleton store. */
 public final class HappnService : UserDirectoryService {
 	
-	public static var providerId = "internal_happn"
+	public static var providerID = "internal_happn"
 	
 	public typealias ConfigType = HappnServiceConfig
 	public typealias UserType = HappnUser
@@ -41,22 +41,22 @@ public final class HappnService : UserDirectoryService {
 		return user.login ?? "<null user id>"
 	}
 	
-	public func string(fromUserId userId: String?) -> String {
-		return userId ?? "__officectl_internal__null_happn_id__"
+	public func string(fromUserID userID: String?) -> String {
+		return userID ?? "__officectl_internal__null_happn_id__"
 	}
 	
-	public func userId(fromString string: String) throws -> String? {
+	public func userID(fromString string: String) throws -> String? {
 		guard string != "__officectl_internal__null_happn_id__" else {
 			return nil
 		}
 		return string
 	}
 	
-	public func string(fromPersistentUserId pId: String) -> String {
-		return pId
+	public func string(fromPersistentUserID pID: String) -> String {
+		return pID
 	}
 	
-	public func persistentUserId(fromString string: String) throws -> String {
+	public func persistentUserID(fromString string: String) throws -> String {
 		return string
 	}
 	
@@ -72,48 +72,48 @@ public final class HappnService : UserDirectoryService {
 	}
 	
 	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> HappnUser {
-		if userWrapper.sourceServiceId == config.serviceId, let underlyingUser = userWrapper.underlyingUser {
+		if userWrapper.sourceServiceID == config.serviceID, let underlyingUser = userWrapper.underlyingUser {
 			return try logicalUser(fromJSON: underlyingUser)
 		}
 		
 		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
 		
-		let inferredUserId: String?
-		if userWrapper.sourceServiceId == config.serviceId {
-			/* The underlying user (though absent) is from our service; the original id can be decoded as a valid id for our service. */
-			inferredUserId = userWrapper.userId.id
+		let inferredUserID: String?
+		if userWrapper.sourceServiceID == config.serviceID {
+			/* The underlying user (though absent) is from our service; the original ID can be decoded as a valid ID for our service. */
+			inferredUserID = userWrapper.userID.id
 		} else {
 			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create a HappnUser")
 			}
-			inferredUserId = email.rawValue
+			inferredUserID = email.rawValue
 		}
 		
-		var res = HappnUser(login: inferredUserId)
-		if userWrapper.firstName != .unsupported {res.firstName = userWrapper.firstName}
-		if userWrapper.lastName  != .unsupported {res.lastName  = userWrapper.lastName}
-		if userWrapper.nickname  != .unsupported {res.nickname  = userWrapper.nickname}
+		var res = HappnUser(login: inferredUserID)
+		if userWrapper.remoteFirstName != .unsupported {res.firstName = userWrapper.firstName ?? ""}
+		if userWrapper.remoteLastName  != .unsupported {res.lastName  = userWrapper.lastName ?? ""}
+		if userWrapper.remoteNickname  != .unsupported {res.nickname  = userWrapper.nickname ?? ""}
 		return res
 	}
 	
-	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout HappnUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout HappnUser, allowUserIDChange: Bool) -> Set<DirectoryUserProperty> {
 		var res = Set<DirectoryUserProperty>()
 		/* For all changes below we nullify the record because changing the record is not something that is possible and
 		 * we want the record wrapper and its underlying record to be in sync.
 		 * So all changes to the wrapper must be done with a nullification of the underlying record. */
 		for (property, value) in hints {
 			switch property {
-				case .userId:
-					guard allowUserIdChange else {continue}
+				case .userID:
+					guard allowUserIDChange else {continue}
 					user.login = value
 					res.insert(.identifyingEmail)
-					res.insert(.userId)
+					res.insert(.userID)
 					
 				case .identifyingEmail:
-					guard allowUserIdChange else {continue}
-					guard hints[.userId] == nil else {
-						if hints[.userId] != value {
-							OfficeKitConfig.logger?.warning("Invalid hints given for a HappnUser: both userId and identifyingEmail are defined with different values. Only userId will be used.")
+					guard allowUserIDChange else {continue}
+					guard hints[.userID] == nil else {
+						if hints[.userID] != value {
+							OfficeKitConfig.logger?.warning("Invalid hints given for a HappnUser: both userID and identifyingEmail are defined with different values. Only userID will be used.")
 						}
 						continue
 					}
@@ -123,26 +123,26 @@ public final class HappnService : UserDirectoryService {
 					}
 					user.login = email.rawValue
 					res.insert(.identifyingEmail)
-					res.insert(.userId)
+					res.insert(.userID)
 					
-				case .persistentId:
+				case .persistentID:
 					guard let id = value else {
-						OfficeKitConfig.logger?.warning("Invalid value for a persistent id of a happn user.")
+						OfficeKitConfig.logger?.warning("Invalid value for a persistent ID of a happn user.")
 						continue
 					}
-					user.id = .set(id)
-					res.insert(.persistentId)
+					user.id = id
+					res.insert(.persistentID)
 					
 				case .firstName:
-					user.firstName = .set(value)
+					user.firstName = value ?? ""
 					res.insert(.firstName)
 					
 				case .lastName:
-					user.lastName = .set(value)
+					user.lastName = value ?? ""
 					res.insert(.lastName)
 					
 				case .nickname:
-					user.nickname = .set(value)
+					user.nickname = value ?? ""
 					res.insert(.nickname)
 					
 				case .password:
@@ -151,7 +151,7 @@ public final class HappnService : UserDirectoryService {
 						continue
 					}
 					OfficeKitConfig.logger?.warning("Setting the password of a happn user via hints can lead to unexpected results (including security flaws for this user). Please use the dedicated method to set the password in the service.")
-					user.password = .set(pass)
+					user.password = pass
 					res.insert(.password)
 					
 				case .custom("gender"):
@@ -159,14 +159,14 @@ public final class HappnService : UserDirectoryService {
 						OfficeKitConfig.logger?.warning("Invalid gender for a happn user.")
 						continue
 					}
-					user.gender = .set(gender)
+					user.gender = gender
 					
 				case .custom("birthdate"):
 					guard let birthdate = value.flatMap({ HappnUser.birthDateFormatter.date(from: $0) }) else {
 						OfficeKitConfig.logger?.warning("Invalid gender for a happn user.")
 						continue
 					}
-					user.birthDate = .set(birthdate)
+					user.birthDate = birthdate
 					
 				case .otherEmails, .custom:
 					(/*nop (not supported)*/)
@@ -175,12 +175,12 @@ public final class HappnService : UserDirectoryService {
 		return res
 	}
 	
-	public func existingUser(fromPersistentId pId: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> HappnUser? {
+	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> HappnUser? {
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		try await happnConnector.connect(scope: GetHappnUserOperation.scopes)
 		
 		/* TODO: Properties to fetch. */
-		let op = GetHappnUserOperation(userKey: pId, connector: happnConnector)
+		let op = GetHappnUserOperation(userKey: pID, connector: happnConnector)
 		do {
 			return try await services.opQ.addOperationAndGetResult(op)
 		} catch let error as NSError where error.domain == "com.happn.officectl.happn" && error.code == 25002 {
@@ -188,22 +188,22 @@ public final class HappnService : UserDirectoryService {
 		}
 	}
 	
-	public func existingUser(fromUserId uId: String?, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> HappnUser? {
-		guard let uId = uId else {
+	public func existingUser(fromUserID uID: String?, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> HappnUser? {
+		guard let uID = uID else {
 			/* Yes.
 			 * It’s ugly.
 			 * But the only admin user with a nil login is 244. */
-			return try await existingUser(fromPersistentId: HappnConnector.nullLoginUserId, propertiesToFetch: propertiesToFetch, using: services)
+			return try await existingUser(fromPersistentID: HappnConnector.nullLoginUserID, propertiesToFetch: propertiesToFetch, using: services)
 		}
 		
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
 		try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes)
 		
-		let ids = Set(Email(rawValue: uId)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.rawValue } ?? [uId])
+		let ids = Set(Email(rawValue: uID)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.rawValue } ?? [uID])
 		let ops = ids.map{ SearchHappnUsersOperation(email: $0, happnConnector: happnConnector) } /* TODO: Properties to fetch. */
 		let users = try await services.opQ.addOperationsAndGetResults(ops).map{ try $0.get() }.flatMap{ $0 }
 		guard users.count <= 1 else {
-			throw InvalidArgumentError(message: "Given user id has more than one user found")
+			throw InvalidArgumentError(message: "Given user ID has more than one user found")
 		}
 		return users.first
 	}
@@ -222,13 +222,13 @@ public final class HappnService : UserDirectoryService {
 		try await happnConnector.connect(scope: CreateHappnUserOperation.scopes)
 		
 		var user = user
-		if user.password.value == nil {
+		if user.password == nil {
 			/* Creating a user without a password is not possible.
 			 * Let’s generate a password!
 			 * A long and complex one. */
 			OfficeKitConfig.logger?.warning("Auto-generating a random password for happn user creation: creating a happn user w/o a password is not supported.")
 			let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789=+_-$!@#%^&*(){}[]'\\\";:/?.>,<§"
-			user.password = .set(String((0..<64).map{ _ in chars.randomElement()! }))
+			user.password = String((0..<64).map{ _ in chars.randomElement()! })
 		}
 		
 		let op = CreateHappnUserOperation(user: user, connector: happnConnector)

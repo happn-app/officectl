@@ -9,21 +9,23 @@ import Foundation
 
 import Email
 
+import OfficeModel
+
 
 
 public struct EmailUser : DirectoryUser {
 	
-	public typealias IdType = Email
-	public typealias PersistentIdType = Email
+	public typealias IDType = Email
+	public typealias PersistentIDType = Email
 	
-	public var userId: Email
-	public var persistentId: RemoteProperty<Email> {return .set(userId)}
+	public var userID: Email
+	public var remotePersistentID: RemoteProperty<Email> {return .set(userID)}
 	
-	public var identifyingEmail: RemoteProperty<Email?> {return .set(userId)}
-	public var otherEmails: RemoteProperty<[Email]> {return .unsupported}
+	public var remoteIdentifyingEmail: RemoteProperty<Email?> {return .set(userID)}
+	public var remoteOtherEmails: RemoteProperty<[Email]> {return .unsupported}
 	
-	public var firstName: RemoteProperty<String?> {return .unsupported}
-	public var lastName:  RemoteProperty<String?> {return .unsupported}
-	public var nickname:  RemoteProperty<String?> {return .unsupported}
+	public var remoteFirstName: RemoteProperty<String?> {return .unsupported}
+	public var remoteLastName:  RemoteProperty<String?> {return .unsupported}
+	public var remoteNickname:  RemoteProperty<String?> {return .unsupported}
 	
 }

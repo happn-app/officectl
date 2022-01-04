@@ -18,6 +18,8 @@ import Email
 import GenericJSON
 import NIO
 import SemiSingleton
+import UnwrapOrThrow
+
 import ServiceKit
 
 
@@ -30,19 +32,19 @@ import ServiceKit
  - Semi-singleton store. */
 public final class OpenDirectoryService : UserDirectoryService {
 	
-	public static let providerId = "internal_opendirectory"
+	public static let providerID = "internal_opendirectory"
 	
 	public enum ODError : Error {
 		
 		case uidMissingInDN
 		case tooManyUsersFound
 		case noRecordInRecordWrapper
-		case unsupportedServiceUserIdConversion
+		case unsupportedServiceUserIDConversion
 		
 	}
 	
 	public typealias ConfigType = OpenDirectoryServiceConfig
-	public typealias IdType = ODRecordOKWrapper
+	public typealias IDType = ODRecordOKWrapper
 	public typealias AuthenticationChallenge = String
 	
 	public let config: OpenDirectoryServiceConfig
@@ -57,24 +59,24 @@ public final class OpenDirectoryService : UserDirectoryService {
 	}
 	
 	public func shortDescription(fromUser user: ODRecordOKWrapper) -> String {
-		return user.userId.stringValue
+		return user.userID.stringValue
 	}
 	
-	public func string(fromUserId userId: LDAPDistinguishedName) -> String {
-		return userId.stringValue
+	public func string(fromUserID userID: LDAPDistinguishedName) -> String {
+		return userID.stringValue
 	}
 	
-	public func userId(fromString string: String) throws -> LDAPDistinguishedName {
+	public func userID(fromString string: String) throws -> LDAPDistinguishedName {
 		return try LDAPDistinguishedName(string: string)
 	}
 	
-	public func string(fromPersistentUserId pId: UUID) -> String {
-		return pId.uuidString
+	public func string(fromPersistentUserID pID: UUID) -> String {
+		return pID.uuidString
 	}
 	
-	public func persistentUserId(fromString string: String) throws -> UUID {
+	public func persistentUserID(fromString string: String) throws -> UUID {
 		guard let uuid = UUID(uuidString: string) else {
-			throw InvalidArgumentError(message: "Invalid persistent id \(string)")
+			throw InvalidArgumentError(message: "Invalid persistent ID \(string)")
 		}
 		return uuid
 	}
@@ -130,66 +132,66 @@ public final class OpenDirectoryService : UserDirectoryService {
 	}
 	
 	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> ODRecordOKWrapper {
-		if userWrapper.sourceServiceId == config.serviceId, let underlyingUser = userWrapper.underlyingUser {
+		if userWrapper.sourceServiceID == config.serviceID, let underlyingUser = userWrapper.underlyingUser {
 			return try logicalUser(fromJSON: underlyingUser)
 		}
 		
 		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
 		
-		let inferredUserId: LDAPDistinguishedName
-		if userWrapper.sourceServiceId == config.serviceId {
-			/* The underlying user (though absent) is from our service; the original id can be decoded as a valid id for our service. */
-			guard let dn = try? LDAPDistinguishedName(string: userWrapper.userId.id) else {
-				throw InvalidArgumentError(message: "Got a generic user whose id comes from our service, but which does not have a valid dn.")
+		let inferredUserID: LDAPDistinguishedName
+		if userWrapper.sourceServiceID == config.serviceID {
+			/* The underlying user (though absent) is from our service; the original ID can be decoded as a valid ID for our service. */
+			guard let dn = try? LDAPDistinguishedName(string: userWrapper.userID.id) else {
+				throw InvalidArgumentError(message: "Got a generic user whose ID comes from our service, but which does not have a valid dn.")
 			}
-			inferredUserId = dn
+			inferredUserID = dn
 		} else {
 			/* The given user comes from another service.
-			 * Let’s try and infer an id from this user, using its email. */
+			 * Let’s try and infer an ID from this user, using its email. */
 			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
 				throw InvalidArgumentError(message: "Cannot get an email from the user to create an ODRecordOKWrapper")
 			}
 			guard let dn = config.baseDNs.dn(fromEmail: email) else {
 				throw InvalidArgumentError(message: "Cannot get dn from \(email).")
 			}
-			inferredUserId = dn
+			inferredUserID = dn
 		}
 		
-		let lastName = userWrapper.lastName.value?.flatMap{ $0 }
-		let firstName = userWrapper.firstName.value?.flatMap{ $0 }
-		return ODRecordOKWrapper(id: inferredUserId, identifyingEmail: userWrapper.identifyingEmail.value?.flatMap{ $0 }, otherEmails: userWrapper.otherEmails.value ?? [], firstName: firstName, lastName: lastName)
+		let lastName = userWrapper.lastName ?? nil
+		let firstName = userWrapper.firstName ?? nil
+		return ODRecordOKWrapper(id: inferredUserID, identifyingEmail: userWrapper.identifyingEmail ?? nil, otherEmails: userWrapper.otherEmails ?? [], firstName: firstName, lastName: lastName)
 	}
 	
-	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout ODRecordOKWrapper, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout ODRecordOKWrapper, allowUserIDChange: Bool) -> Set<DirectoryUserProperty> {
 		var res = Set<DirectoryUserProperty>()
 		/* For all changes below we nullify the record because changing the record is not something that is possible and
 		 * we want the record wrapper and its underlying record to be in sync.
 		 * So all changes to the wrapper must be done with a nullification of the underlying record. */
 		for (property, value) in hints {
 			switch property {
-				case .userId:
-					guard allowUserIdChange else {continue}
+				case .userID:
+					guard allowUserIDChange else {continue}
 					guard let dn = value.flatMap({ try? LDAPDistinguishedName(string: $0) }) else {
-						OfficeKitConfig.logger?.warning("Invalid value for the user id of an OD user; not applying hint: \(value ?? "<null>")")
+						OfficeKitConfig.logger?.warning("Invalid value for the user ID of an OD user; not applying hint: \(value ?? "<null>")")
 						continue
 					}
 					user.record = nil
-					user.userId = dn
-					res.insert(.userId)
+					user.userID = dn
+					res.insert(.userID)
 					
-				case .persistentId:
+				case .persistentID:
 					guard let uuid = value.flatMap({ UUID(uuidString: $0) }) else {
-						OfficeKitConfig.logger?.warning("Invalid value for the persistent id of an OD user; not applying hint: \(value ?? "<null>")")
+						OfficeKitConfig.logger?.warning("Invalid value for the persistent ID of an OD user; not applying hint: \(value ?? "<null>")")
 						continue
 					}
 					user.record = nil
-					user.persistentId = .set(uuid)
-					res.insert(.persistentId)
+					user.persistentID = uuid
+					res.insert(.persistentID)
 					
 				case .identifyingEmail:
 					guard let emailStr = value else {
 						user.record = nil
-						user.identifyingEmail = .set(nil)
+						user.identifyingEmail = .some(nil)
 						res.insert(.identifyingEmail)
 						continue
 					}
@@ -198,13 +200,13 @@ public final class OpenDirectoryService : UserDirectoryService {
 						continue
 					}
 					user.record = nil
-					user.identifyingEmail = .set(email)
+					user.identifyingEmail = email
 					res.insert(.identifyingEmail)
 					
 				case .otherEmails:
 					guard let emailsStr = value else {
 						user.record = nil
-						user.otherEmails = .set([])
+						user.otherEmails = []
 						res.insert(.otherEmails)
 						continue
 					}
@@ -212,22 +214,22 @@ public final class OpenDirectoryService : UserDirectoryService {
 					 * We cannot represent an element in the list which contains a comma.
 					 * Maybe one day we’ll do the generic thing… */
 					let emailsArrayStr = emailsStr.split(separator: ",")
-					guard let emails = try? emailsArrayStr.map({ try nil2throw(Email(rawValue: String($0))) }) else {
+					guard let emails = try? emailsArrayStr.map({ try Email(rawValue: String($0)) ?! Err.genericError("Invalid email \($0)") }) else {
 						OfficeKitConfig.logger?.warning("Invalid value for the other emails of an OD user; not applying hint: \(value ?? "<null>")")
 						continue
 					}
 					user.record = nil
-					user.otherEmails = .set(emails)
+					user.otherEmails = emails
 					res.insert(.otherEmails)
 					
 				case .firstName:
 					user.record = nil
-					user.firstName = .set(value)
+					user.firstName = value
 					res.insert(.firstName)
 					
 				case .lastName:
 					user.record = nil
-					user.lastName = .set(value)
+					user.lastName = value
 					res.insert(.lastName)
 					
 				case .password:
@@ -240,11 +242,11 @@ public final class OpenDirectoryService : UserDirectoryService {
 		return res
 	}
 	
-	public func existingUser(fromPersistentId pId: UUID, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> ODRecordOKWrapper? {
+	public func existingUser(fromPersistentID pID: UUID, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> ODRecordOKWrapper? {
 		throw NotImplementedError()
 	}
 	
-	public func existingUser(fromUserId dn: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> ODRecordOKWrapper? {
+	public func existingUser(fromUserID dn: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> ODRecordOKWrapper? {
 		/* Note: I’d very much like to search the whole DN instead of the UID only, but I was not able to make it work. */
 		guard let uid = dn.uid else {throw ODError.uidMissingInDN}
 		let request = OpenDirectorySearchRequest(uid: uid)
@@ -276,7 +278,7 @@ public final class OpenDirectoryService : UserDirectoryService {
 	
 	public let supportsUserDeletion = true
 	public func deleteUser(_ user: ODRecordOKWrapper, using services: Services) async throws {
-		let u = try await self.existingUser(fromUserId: user.userId, propertiesToFetch: [], using: services)
+		let u = try await self.existingUser(fromUserID: user.userID, propertiesToFetch: [], using: services)
 		guard let r = u?.record else {
 			/* TODO: Error is not correct. */
 			throw ODError.noRecordInRecordWrapper
@@ -289,7 +291,7 @@ public final class OpenDirectoryService : UserDirectoryService {
 	public func changePasswordAction(for user: ODRecordOKWrapper, using services: Services) throws -> ResetPasswordAction {
 		let semiSingletonStore = try services.semiSingletonStore()
 		let openDirectoryConnector: OpenDirectoryConnector = try semiSingletonStore.semiSingleton(forKey: config.connectorSettings)
-		return semiSingletonStore.semiSingleton(forKey: user.userId, additionalInitInfo: openDirectoryConnector) as ResetOpenDirectoryPasswordAction
+		return semiSingletonStore.semiSingleton(forKey: user.userID, additionalInitInfo: openDirectoryConnector) as ResetOpenDirectoryPasswordAction
 	}
 	
 	/* ***************

@@ -24,11 +24,11 @@ struct UserChangePasswordCommand : ParsableCommand {
 	@OptionGroup()
 	var globalOptions: OfficectlRootCommand.Options
 	
-	@ArgumentParser.Option(help: "The tagged user id of the user whose password needs to be reset.")
-	var userId: String
+	@ArgumentParser.Option(help: "The tagged user ID of the user whose password needs to be reset.")
+	var userID: String
 	
-	@ArgumentParser.Option(help: "The service ids on which to reset the password. If unset, the password will be reset on all the services configured.")
-	var serviceIds: String?
+	@ArgumentParser.Option(help: "The service IDs on which to reset the password. If unset, the password will be reset on all the services configured.")
+	var serviceIDs: String?
 	
 	func run() throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
@@ -39,11 +39,11 @@ struct UserChangePasswordCommand : ParsableCommand {
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		
-		let userIdStr = userId
-		let serviceIds = self.serviceIds?.split(separator: ",").map(String.init)
+		let userIDStr = userID
+		let serviceIDs = self.serviceIDs?.split(separator: ",").map(String.init)
 		
 		let sProvider = app.officeKitServiceProvider
-		let services = try sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsPasswordChange }
+		let services = try sProvider.getUserDirectoryServices(ids: serviceIDs.flatMap(Set.init)).filter{ $0.supportsPasswordChange }
 		guard !services.isEmpty else {
 			context.console.warning("Nothing to do.")
 			return
@@ -54,20 +54,20 @@ struct UserChangePasswordCommand : ParsableCommand {
 		let newPassConfirmation = context.console.ask("New password (again): ", isSecure: true)
 		guard newPass == newPassConfirmation else {throw InvalidArgumentError(message: "Try again")}
 		
-		let dsuIdPair = try AnyDSUIdPair(string: userIdStr, servicesProvider: sProvider)
-		let resets = try await MultiServicesPasswordReset.fetch(from: dsuIdPair, in: services, using: app.services)
+		let dsuIDPair = try AnyDSUIDPair(string: userIDStr, servicesProvider: sProvider)
+		let resets = try await MultiServicesPasswordReset.fetch(from: dsuIDPair, in: services, using: app.services)
 		
-		try app.auditLogger.log(action: "Changing password of \(dsuIdPair.taggedId) on services ids \(serviceIds?.joined(separator: ",") ?? "<all services>").", source: .cli)
+		try app.auditLogger.log(action: "Changing password of \(dsuIDPair.taggedID) on services IDs \(serviceIDs?.joined(separator: ",") ?? "<all services>").", source: .cli)
 		let results = try await resets.start(newPass: newPass, weakeningMode: .alwaysInstantly)
 		
 		context.console.info()
 		context.console.info("********* PASSWORD CHANGES RESULTS *********")
 		for (service, result) in results {
-			let serviceId = service.config.serviceId
+			let serviceID = service.config.serviceID
 			let serviceName = service.config.serviceName
 			switch result {
-				case .success:            context.console.info("✅ \(serviceId) (\(serviceName))")
-				case .failure(let error): context.console.info("🛑 \(serviceId) (\(serviceName): \(error)")
+				case .success:            context.console.info("✅ \(serviceID) (\(serviceName))")
+				case .failure(let error): context.console.info("🛑 \(serviceID) (\(serviceName): \(error)")
 			}
 		}
 	}

@@ -29,7 +29,7 @@ class WebCertificateRenewController {
 		}
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
-		let email = try loggedInUser.user.hop(to: emailService).user.userId
+		let email = try loggedInUser.user.hop(to: emailService).user.userID
 		return try await req.view.render("CertificateRenewHome", CertifRenewContext(isAdmin: loggedInUser.isAdmin, userEmail: email.rawValue))
 	}
 	
@@ -40,7 +40,7 @@ class WebCertificateRenewController {
 		let renewedCommonName = certRenewData.userEmail.localPart
 		
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
-		let loggedInEmail = try loggedInUser.user.hop(to: emailService).user.userId
+		let loggedInEmail = try loggedInUser.user.hop(to: emailService).user.userID
 		
 		guard loggedInUser.isAdmin || loggedInEmail == certRenewData.userEmail else {
 			throw Abort(.forbidden, reason: "Non-admin users can only get a certificate for themselves.")
@@ -99,7 +99,7 @@ class WebCertificateRenewController {
 			
 			/* Get the list of certificates to revoke. */
 			return try await certificatesList.keys.concurrentCompactMap{ id in
-				guard !crl.revokedCertificateIds.contains(normalizeCertificateId(id)) else {
+				guard !crl.revokedCertificateIDs.contains(normalizeCertificateID(id)) else {
 					/* If the certificate is already revoked, we don’t have to do anything w/ it. */
 					return nil
 				}
@@ -190,8 +190,8 @@ class WebCertificateRenewController {
 			}
 		})
 		
-		let randomId = UUID().uuidString
-		let baseURL = FileManager.default.temporaryDirectory.appendingPathComponent(randomId, isDirectory: true)
+		let randomID = UUID().uuidString
+		let baseURL = FileManager.default.temporaryDirectory.appendingPathComponent(randomID, isDirectory: true)
 		
 		let caURL = URL(fileURLWithPath: "ca.pem", relativeTo: baseURL)
 		let keyURL = URL(fileURLWithPath: renewedCommonName + ".key", relativeTo: baseURL)
@@ -213,7 +213,7 @@ class WebCertificateRenewController {
 			}
 		}
 		
-		let tarURL = baseURL.appendingPathComponent(randomId).appendingPathExtension("tar.bz2")
+		let tarURL = baseURL.appendingPathComponent(randomID).appendingPathExtension("tar.bz2")
 		let tarOp = TarOperation(sources: [keyURL.relativePath, certifURL.relativePath, caURL.relativePath], relativeTo: baseURL, destination: tarURL, compress: true, deleteSourcesOnSuccess: true)
 		tarOp.addDependency(opWriteCertif)
 		
@@ -292,7 +292,7 @@ class WebCertificateRenewController {
 		let der: Data
 		
 		/* Computed from the pem. */
-		let revokedCertificateIds: Set<String>
+		let revokedCertificateIDs: Set<String>
 		
 		init(der d: Data) throws {
 			let crlASN1Objects = try ASN1DERDecoder.decode(data: d)
@@ -335,7 +335,7 @@ class WebCertificateRenewController {
 				delta += 1
 			}
 			
-			var revokedIds = Set<String>()
+			var revokedIDs = Set<String>()
 			/* The revoked certificates list is optional */
 			if let revokedCertificates = tbsCertList.sub(5 - delta), revokedCertificates.identifier?.tagNumber() == .sequence {
 				let now = Date()
@@ -356,7 +356,7 @@ class WebCertificateRenewController {
 					guard
 						let certificateSerialNumberASN1 = revokedCertificate.sub(0),
 						certificateSerialNumberASN1.identifier?.tagNumber() == .integer,
-						let certificateSerialNumber = (certificateSerialNumberASN1.value as? Data).flatMap({ normalizeCertificateId($0.map{ String(format: "%02x", $0) }.joined(separator: "-")) })
+						let certificateSerialNumber = (certificateSerialNumberASN1.value as? Data).flatMap({ normalizeCertificateID($0.map{ String(format: "%02x", $0) }.joined(separator: "-")) })
 					else {
 						throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot parse CRL: unexpected first element type in a revoked certificate sequence. CRL is \(crlASN1)"])
 					}
@@ -376,7 +376,7 @@ class WebCertificateRenewController {
 						OfficeKitConfig.logger?.warning("Found certif \(certificateSerialNumber) in CRL which is not _yet_ revoked! Still considering as revoked.")
 					}
 					
-					revokedIds.insert(certificateSerialNumber)
+					revokedIDs.insert(certificateSerialNumber)
 				}
 			} else {
 				delta += 1
@@ -385,7 +385,7 @@ class WebCertificateRenewController {
 			/* We ignore extensions */
 			
 			der = d
-			revokedCertificateIds = revokedIds
+			revokedCertificateIDs = revokedIDs
 		}
 		
 	}
@@ -393,7 +393,7 @@ class WebCertificateRenewController {
 }
 
 
-private func normalizeCertificateId(_ id: String) -> String {
+private func normalizeCertificateID(_ id: String) -> String {
 	let characterSet = CharacterSet(charactersIn: "0123456789abcdef")
 	var preresult = id.lowercased().drop{ $0 == "0" }
 	preresult.removeAll{

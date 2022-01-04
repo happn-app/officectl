@@ -28,31 +28,31 @@ public final class CreateOpenDirectoryRecordOperation : RetryingOperation, HasRe
 	public private(set) var result = Result<ODRecord, Error>.failure(OperationIsNotFinishedError())
 	
 	public convenience init(user: ODRecordOKWrapper, connector: OpenDirectoryConnector) throws {
-		guard let userId = user.userId.uid else {
+		guard let userID = user.userID.uid else {
 			throw InvalidArgumentError(message: "No uid in user asked to be created.")
 		}
-		guard let firstNameValue = user.firstName.value, let firstName = firstNameValue else {
+		guard let firstName = user.firstName ?? nil else {
 			throw InvalidArgumentError(message: "No firstName in user asked to be created.")
 		}
-		guard let lastNameValue = user.lastName.value, let lastName = lastNameValue else {
+		guard let lastName = user.lastName ?? nil else {
 			throw InvalidArgumentError(message: "No lastName in user asked to be created.")
 		}
-		self.init(userId: userId, firstName: firstName, lastName: lastName, fullName: nil, emails: user.emails, connector: connector)
+		self.init(userID: userID, firstName: firstName, lastName: lastName, fullName: nil, emails: user.emails, connector: connector)
 	}
 	
 	/**
 	 If fullName is `nil`, it’ll be inferred by concatenating the first and last name, separated by a space. */
-	public convenience init(userId: String, firstName: String, lastName: String, fullName: String? = nil, emails: [Email] = [], groupId: String = "20", nfsHomeDirectory: String? = "/dev/null", shell: String? = "/usr/bin/false", connector: OpenDirectoryConnector) {
+	public convenience init(userID: String, firstName: String, lastName: String, fullName: String? = nil, emails: [Email] = [], groupID: String = "20", nfsHomeDirectory: String? = "/dev/null", shell: String? = "/usr/bin/false", connector: OpenDirectoryConnector) {
 		var attributes = [
 			kODAttributeTypeFirstName: [firstName],
 			kODAttributeTypeLastName: [lastName],
 			kODAttributeTypeFullName: [fullName ?? firstName + " " + lastName],
 			kODAttributeTypeEMailAddress: emails.map{ $0.rawValue },
-			kODAttributeTypePrimaryGroupID: [groupId]
+			kODAttributeTypePrimaryGroupID: [groupID]
 		]
 		if let shell = shell           {attributes[kODAttributeTypeUserShell]        = [shell]}
 		if let home = nfsHomeDirectory {attributes[kODAttributeTypeNFSHomeDirectory] = [home]}
-		self.init(recordType: kODRecordTypeUsers, recordName: userId, recordAttributes: attributes, connector: connector)
+		self.init(recordType: kODRecordTypeUsers, recordName: userID, recordAttributes: attributes, connector: connector)
 	}
 	
 	public init(recordType t: String, recordName n: String, recordAttributes attrs: [AnyHashable: Any], connector: OpenDirectoryConnector) {

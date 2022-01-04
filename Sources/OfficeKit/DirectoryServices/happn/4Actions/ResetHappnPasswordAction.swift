@@ -33,7 +33,7 @@ public final class ResetHappnPasswordAction : Action<HappnUser, String, Void>, R
 			try await deps.connector.connect(scope: ModifyHappnUserOperation.scopes)
 			
 			var happnUser = self.subject.cloneForPatching()
-			happnUser.password = .set(newPassword)
+			happnUser.password = newPassword
 			
 			let modifyUserOperation = ModifyHappnUserOperation(user: happnUser, connector: self.deps.connector)
 			/* Operation is async, we can launch it without a queue (though having a queue would be better…) */

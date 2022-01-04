@@ -32,8 +32,8 @@ struct UserListCommand : ParsableCommand {
 	@ArgumentParser.Flag(help: "For the directory services that supports it, do we filter out the suspended users?")
 	var includeSuspendedUsers = false
 	
-	@ArgumentParser.Option(help: "The service id from which to retrieve the users.")
-	var serviceId: String?
+	@ArgumentParser.Option(help: "The service ID from which to retrieve the users.")
+	var serviceID: String?
 	
 	@OptionGroup
 	var globalOptions: OfficectlRootCommand.Options
@@ -51,9 +51,9 @@ struct UserListCommand : ParsableCommand {
 		let app = context.application
 		
 		let serviceProvider = app.officeKitServiceProvider
-		let service = try serviceProvider.getUserDirectoryService(id: serviceId)
+		let service = try serviceProvider.getUserDirectoryService(id: serviceID)
 		
-		try app.auditLogger.log(action: "List all users for service \(serviceId ?? "<inferred service>"), \(includeSuspendedUsers ? "" : "not ")including inactive users.", source: .cli)
+		try app.auditLogger.log(action: "List all users for service \(serviceID ?? "<inferred service>"), \(includeSuspendedUsers ? "" : "not ")including inactive users.", source: .cli)
 		
 		let users: [String]
 		if let googleService: GoogleService = service.unbox() {

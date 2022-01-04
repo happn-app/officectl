@@ -13,10 +13,10 @@ import GenericStorage
 
 public struct LDAPServiceConfig : OfficeKitServiceConfig {
 	
-	public var providerId: String
+	public var providerID: String
 	public let isHelperService = false
 	
-	public var serviceId: String
+	public var serviceID: String
 	public var serviceName: String
 	
 	public var mergePriority: Int?
@@ -28,17 +28,17 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 	/**
 	 - parameter peopleDNString: The DN for the people, **relative to the base DN**.
 	 This is a different than the `peopleBaseDN` var in this struct, as the var contains the full people DN. */
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: LDAPConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?, adminGroupsDNString: [String]) throws {
+	public init(providerID pID: String, serviceID id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: LDAPConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?, adminGroupsDNString: [String]) throws {
 		let adn = try adminGroupsDNString.map{ try LDAPDistinguishedName(string: $0) }
 		let bdn = try LDAPBaseDNs(baseDNPerDomainString: baseDNPerDomainString, peopleDNString: peopleDNString)
 		
-		self.init(providerId: pId, serviceId: id, serviceName: name, mergePriority: p, connectorSettings: c, baseDNs: bdn, adminGroupsDN: adn)
+		self.init(providerID: pID, serviceID: id, serviceName: name, mergePriority: p, connectorSettings: c, baseDNs: bdn, adminGroupsDN: adn)
 	}
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: LDAPConnector.Settings, baseDNs bdn: LDAPBaseDNs, adminGroupsDN agdn: [LDAPDistinguishedName]) {
+	public init(providerID pID: String, serviceID id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: LDAPConnector.Settings, baseDNs bdn: LDAPBaseDNs, adminGroupsDN agdn: [LDAPDistinguishedName]) {
 		precondition(id != "invalid" && !id.contains(":"))
-		providerId = pId
-		serviceId = id
+		providerID = pID
+		serviceID = id
 		serviceName = name
 		mergePriority = p
 		
@@ -47,7 +47,7 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 		baseDNs = bdn
 	}
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+	public init(providerID pID: String, serviceID id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		let domain = [id]
 		
 		let url = try keyedConfig.url(forKey: "url", currentKeyPath: domain)
@@ -67,7 +67,7 @@ public struct LDAPServiceConfig : OfficeKitServiceConfig {
 				throw InvalidArgumentError(message: "Invalid config in yaml: neither both or none of admin_username & admin_password defined in an LDAP config")
 		}
 		
-		try self.init(providerId: pId, serviceId: id, serviceName: name, mergePriority: p, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)
+		try self.init(providerID: pID, serviceID: id, serviceName: name, mergePriority: p, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString, adminGroupsDNString: adnString)
 	}
 	
 }

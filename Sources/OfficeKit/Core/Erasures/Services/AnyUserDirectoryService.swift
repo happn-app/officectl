@@ -19,19 +19,19 @@ private protocol UserDirectoryServiceBox {
 	
 	func shortDescription(fromUser user: AnyDirectoryUser) -> String
 	
-	func string(fromUserId userId: AnyId) -> String
-	func userId(fromString string: String) throws -> AnyId
+	func string(fromUserID userID: AnyID) -> String
+	func userID(fromString string: String) throws -> AnyID
 	
-	func string(fromPersistentUserId pId: AnyId) -> String
-	func persistentUserId(fromString string: String) throws -> AnyId
+	func string(fromPersistentUserID pID: AnyID) -> String
+	func persistentUserID(fromString string: String) throws -> AnyID
 	
 	func json(fromUser user: AnyDirectoryUser) throws -> JSON
 	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> AnyDirectoryUser
 	
-	func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout AnyDirectoryUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty>
+	func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout AnyDirectoryUser, allowUserIDChange: Bool) -> Set<DirectoryUserProperty>
 	
-	func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> AnyDirectoryUser?
-	func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> AnyDirectoryUser?
+	func existingUser(fromPersistentID pID: AnyID, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> AnyDirectoryUser?
+	func existingUser(fromUserID uID: AnyID, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> AnyDirectoryUser?
 	
 	func listAllUsers(using services: Services) async throws -> [AnyDirectoryUser]
 	
@@ -64,32 +64,32 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 		return originalDirectory.shortDescription(fromUser: u)
 	}
 	
-	func string(fromUserId userId: AnyId) -> String {
-		guard let typedId: Base.UserType.IdType = userId.unbox() else {
-			OfficeKitConfig.logger?.error("Asked to convert a user id to a string for a user id of unknown type in erasure: \(userId)")
-			/* The source user type is unknown, so we return a purposefully invalid id.
+	func string(fromUserID userID: AnyID) -> String {
+		guard let typedID: Base.UserType.IDType = userID.unbox() else {
+			OfficeKitConfig.logger?.error("Asked to convert a user ID to a string for a user ID of unknown type in erasure: \(userID)")
+			/* The source user type is unknown, so we return a purposefully invalid ID.
 			 * This is not ideal… */
 			return ""
 		}
-		return originalDirectory.string(fromUserId: typedId)
+		return originalDirectory.string(fromUserID: typedID)
 	}
 	
-	func userId(fromString string: String) throws -> AnyId {
-		return try AnyId(originalDirectory.userId(fromString: string))
+	func userID(fromString string: String) throws -> AnyID {
+		return try AnyID(originalDirectory.userID(fromString: string))
 	}
 	
-	func string(fromPersistentUserId pId: AnyId) -> String {
-		guard let typedId: Base.UserType.PersistentIdType = pId.unbox() else {
-			OfficeKitConfig.logger?.error("Asked to convert a persistend id to a string for a persistent id of unknown type in erasure: \(pId)")
-			/* The source user type is unknown, so we return a purposefully invalid id.
+	func string(fromPersistentUserID pID: AnyID) -> String {
+		guard let typedID: Base.UserType.PersistentIDType = pID.unbox() else {
+			OfficeKitConfig.logger?.error("Asked to convert a persistend ID to a string for a persistent ID of unknown type in erasure: \(pID)")
+			/* The source user type is unknown, so we return a purposefully invalid ID.
 			 * This is not ideal… */
 			return ""
 		}
-		return originalDirectory.string(fromPersistentUserId: typedId)
+		return originalDirectory.string(fromPersistentUserID: typedID)
 	}
 	
-	func persistentUserId(fromString string: String) throws -> AnyId {
-		return try AnyId(originalDirectory.persistentUserId(fromString: string))
+	func persistentUserID(fromString string: String) throws -> AnyID {
+		return try AnyID(originalDirectory.persistentUserID(fromString: string))
 	}
 	
 	func json(fromUser user: AnyDirectoryUser) throws -> JSON {
@@ -103,29 +103,29 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 		return try originalDirectory.logicalUser(fromWrappedUser: userWrapper).erase()
 	}
 	
-	func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout AnyDirectoryUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+	func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout AnyDirectoryUser, allowUserIDChange: Bool) -> Set<DirectoryUserProperty> {
 		guard var u: Base.UserType = user.unbox() else {
 			OfficeKitConfig.logger?.error("Asked to apply hints to a user of unknown type in erasure: \(user)")
 			/* The source user type is unknown, so we do nothing. */
 			return []
 		}
-		let ret = originalDirectory.applyHints(hints, toUser: &u, allowUserIdChange: allowUserIdChange)
+		let ret = originalDirectory.applyHints(hints, toUser: &u, allowUserIDChange: allowUserIDChange)
 		user = u.erase()
 		return ret
 	}
 	
-	func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> AnyDirectoryUser? {
-		guard let typedId: Base.UserType.PersistentIdType = pId.unbox() else {
-			throw InvalidArgumentError(message: "Got invalid persistent user id (\(pId)) for fetching user with directory service of type \(Base.self)")
+	func existingUser(fromPersistentID pID: AnyID, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> AnyDirectoryUser? {
+		guard let typedID: Base.UserType.PersistentIDType = pID.unbox() else {
+			throw InvalidArgumentError(message: "Got invalid persistent user ID (\(pID)) for fetching user with directory service of type \(Base.self)")
 		}
-		return try await originalDirectory.existingUser(fromPersistentId: typedId, propertiesToFetch: propertiesToFetch, using: services)?.erase()
+		return try await originalDirectory.existingUser(fromPersistentID: typedID, propertiesToFetch: propertiesToFetch, using: services)?.erase()
 	}
 	
-	func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> AnyDirectoryUser? {
-		guard let typedId: Base.UserType.IdType = uId.unbox() else {
-			throw InvalidArgumentError(message: "Got invalid user id (\(uId)) for fetching user with directory service of type \(Base.self)")
+	func existingUser(fromUserID uID: AnyID, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> AnyDirectoryUser? {
+		guard let typedID: Base.UserType.IDType = uID.unbox() else {
+			throw InvalidArgumentError(message: "Got invalid user ID (\(uID)) for fetching user with directory service of type \(Base.self)")
 		}
-		return try await originalDirectory.existingUser(fromUserId: typedId, propertiesToFetch: propertiesToFetch, using: services)?.erase()
+		return try await originalDirectory.existingUser(fromUserID: typedID, propertiesToFetch: propertiesToFetch, using: services)?.erase()
 	}
 	
 	func listAllUsers(using services: Services) async throws -> [AnyDirectoryUser] {
@@ -187,20 +187,20 @@ public class AnyUserDirectoryService : AnyOfficeKitService, UserDirectoryService
 		return box.shortDescription(fromUser: user)
 	}
 	
-	public func string(fromUserId userId: AnyId) -> String {
-		return box.string(fromUserId: userId)
+	public func string(fromUserID userID: AnyID) -> String {
+		return box.string(fromUserID: userID)
 	}
 	
-	public func userId(fromString string: String) throws -> AnyId {
-		return try box.userId(fromString: string)
+	public func userID(fromString string: String) throws -> AnyID {
+		return try box.userID(fromString: string)
 	}
 	
-	public func string(fromPersistentUserId pId: AnyId) -> String {
-		return box.string(fromPersistentUserId: pId)
+	public func string(fromPersistentUserID pID: AnyID) -> String {
+		return box.string(fromPersistentUserID: pID)
 	}
 	
-	public func persistentUserId(fromString string: String) throws -> AnyId {
-		return try box.persistentUserId(fromString: string)
+	public func persistentUserID(fromString string: String) throws -> AnyID {
+		return try box.persistentUserID(fromString: string)
 	}
 	
 	public func json(fromUser user: AnyDirectoryUser) throws -> JSON {
@@ -211,16 +211,16 @@ public class AnyUserDirectoryService : AnyOfficeKitService, UserDirectoryService
 		return try box.logicalUser(fromWrappedUser: userWrapper)
 	}
 	
-	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout AnyDirectoryUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
-		return box.applyHints(hints, toUser: &user, allowUserIdChange: allowUserIdChange)
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout AnyDirectoryUser, allowUserIDChange: Bool) -> Set<DirectoryUserProperty> {
+		return box.applyHints(hints, toUser: &user, allowUserIDChange: allowUserIDChange)
 	}
 	
-	public func existingUser(fromPersistentId pId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> AnyDirectoryUser? {
-		return try await box.existingUser(fromPersistentId: pId, propertiesToFetch: propertiesToFetch, using: services)
+	public func existingUser(fromPersistentID pID: AnyID, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> AnyDirectoryUser? {
+		return try await box.existingUser(fromPersistentID: pID, propertiesToFetch: propertiesToFetch, using: services)
 	}
 	
-	public func existingUser(fromUserId uId: AnyId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> AnyDirectoryUser? {
-		return try await box.existingUser(fromUserId: uId, propertiesToFetch: propertiesToFetch, using: services)
+	public func existingUser(fromUserID uid: AnyID, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> AnyDirectoryUser? {
+		return try await box.existingUser(fromUserID: uid, propertiesToFetch: propertiesToFetch, using: services)
 	}
 	
 	public func listAllUsers(using services: Services) async throws -> [AnyDirectoryUser] {

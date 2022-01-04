@@ -20,10 +20,10 @@ import GenericStorage
 
 public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 	
-	public var providerId: String
+	public var providerID: String
 	public let isHelperService = false
 	
-	public var serviceId: String
+	public var serviceID: String
 	public var serviceName: String
 	
 	public var mergePriority: Int?
@@ -31,10 +31,10 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 	public var connectorSettings: OpenDirectoryConnector.Settings
 	public var baseDNs: LDAPBaseDNs
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: OpenDirectoryConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
+	public init(providerID pID: String, serviceID id: String, serviceName name: String, mergePriority p: Int?, connectorSettings c: OpenDirectoryConnector.Settings, baseDNPerDomainString: [String: String], peopleDNString: String?) throws {
 		precondition(id != "invalid" && !id.contains(":"))
-		providerId = pId
-		serviceId = id
+		providerID = pID
+		serviceID = id
 		serviceName = name
 		mergePriority = p
 		
@@ -42,7 +42,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		baseDNs = try LDAPBaseDNs(baseDNPerDomainString: baseDNPerDomainString, peopleDNString: peopleDNString)
 	}
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+	public init(providerID pID: String, serviceID id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		let domain = [id]
 		
 		let proxySettings = try keyedConfig.optionalNonNullStorage(forKey: "proxy", currentKeyPath: domain).flatMap{ proxyKeyedConfig -> OpenDirectoryConnector.ProxySettings in
@@ -62,7 +62,7 @@ public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
 		let pdnString = try keyedConfig.optionalString(forKey: "people_dn", currentKeyPath: domain)
 		
 		let connectorSettings = OpenDirectoryConnector.Settings(proxySettings: proxySettings, nodeName: nodeName, nodeCredentials: (recordType: kODRecordTypeUsers, username: username, password: password))
-		try self.init(providerId: pId, serviceId: id, serviceName: name, mergePriority: p, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString)
+		try self.init(providerID: pID, serviceID: id, serviceName: name, mergePriority: p, connectorSettings: connectorSettings, baseDNPerDomainString: bdnDic, peopleDNString: pdnString)
 	}
 	
 }

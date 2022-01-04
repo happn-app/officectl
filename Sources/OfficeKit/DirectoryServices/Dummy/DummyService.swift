@@ -9,23 +9,25 @@ import Foundation
 
 import Email
 import GenericJSON
-import GenericStorage
 import NIO
+
+import GenericStorage
+import OfficeModel
 import ServiceKit
 
 
 
 public struct DummyServiceConfig : OfficeKitServiceConfig {
 	
-	public var providerId: String
+	public var providerID: String
 	public let isHelperService = true
 	
-	public var serviceId: String
+	public var serviceID: String
 	public var serviceName: String
 	
 	public var mergePriority: Int?
 	
-	public init(providerId pId: String, serviceId id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
+	public init(providerID pID: String, serviceID id: String, serviceName name: String, mergePriority p: Int?, keyedConfig: GenericStorage, pathsRelativeTo baseURL: URL?) throws {
 		throw InternalError(message: "The DummyServiceConfig cannot be instantiated")
 	}
 	
@@ -37,16 +39,16 @@ public struct DummyServiceConfig : OfficeKitServiceConfig {
 
 public struct DummyServiceUser : DirectoryUser {
 	
-	public typealias IdType = Never
-	public typealias PersistentIdType = Never
+	public typealias IDType = Never
+	public typealias PersistentIDType = Never
 	
-	public var userId: Never
-	public var persistentId: RemoteProperty<Never>
-	public var identifyingEmail: RemoteProperty<Email?>
-	public var otherEmails: RemoteProperty<[Email]>
-	public var firstName: RemoteProperty<String?>
-	public var lastName: RemoteProperty<String?>
-	public var nickname: RemoteProperty<String?>
+	public var userID: Never
+	public var remotePersistentID: RemoteProperty<Never>
+	public var remoteIdentifyingEmail: RemoteProperty<Email?>
+	public var remoteOtherEmails: RemoteProperty<[Email]>
+	public var remoteFirstName: RemoteProperty<String?>
+	public var remoteLastName: RemoteProperty<String?>
+	public var remoteNickname: RemoteProperty<String?>
 	
 	private init() {
 		fatalError()
@@ -56,10 +58,10 @@ public struct DummyServiceUser : DirectoryUser {
 
 public final class DummyService : UserDirectoryService {
 	
-	public static let providerId = "dummy"
+	public static let providerID = "dummy"
 	
 	public typealias ConfigType = DummyServiceConfig
-	public typealias UserIdType = DummyServiceUser
+	public typealias UserIDType = DummyServiceUser
 	
 	public let config: DummyServiceConfig
 	public let globalConfig: GlobalConfig
@@ -73,17 +75,17 @@ public final class DummyService : UserDirectoryService {
 		return "<ERROR>"
 	}
 	
-	public func string(fromUserId userId: Never) -> String {
+	public func string(fromUserID userID: Never) -> String {
 	}
 	
-	public func userId(fromString string: String) throws -> Never {
+	public func userID(fromString string: String) throws -> Never {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
-	public func string(fromPersistentUserId pId: Never) -> String {
+	public func string(fromPersistentUserID pID: Never) -> String {
 	}
 	
-	public func persistentUserId(fromString string: String) throws -> Never {
+	public func persistentUserID(fromString string: String) throws -> Never {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
@@ -95,14 +97,14 @@ public final class DummyService : UserDirectoryService {
 		throw NotAvailableOnThisPlatformError()
 	}
 	
-	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout DummyServiceUser, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout DummyServiceUser, allowUserIDChange: Bool) -> Set<DirectoryUserProperty> {
 		return []
 	}
 	
-	public func existingUser(fromPersistentId pId: Never, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DummyServiceUser? {
+	public func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DummyServiceUser? {
 	}
 	
-	public func existingUser(fromUserId dn: Never, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DummyServiceUser? {
+	public func existingUser(fromUserID dn: Never, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DummyServiceUser? {
 	}
 	
 	public func listAllUsers(using services: Services) async throws -> [DummyServiceUser] {

@@ -14,8 +14,8 @@ import ServiceKit
 
 private protocol DirectoryAuthenticatorServiceBox {
 	
-	func authenticate(userId: AnyId, challenge: Any, using services: Services) async throws -> Bool
-	func validateAdminStatus(userId: AnyId, using services: Services) async throws -> Bool
+	func authenticate(userID: AnyID, challenge: Any, using services: Services) async throws -> Bool
+	func validateAdminStatus(userID: AnyID, using services: Services) async throws -> Bool
 	
 }
 
@@ -23,18 +23,18 @@ private struct ConcreteDirectoryAuthenticatorBox<Base : DirectoryAuthenticatorSe
 	
 	let originalAuthenticator: Base
 	
-	func authenticate(userId: AnyId, challenge: Any, using services: Services) async throws -> Bool {
-		guard let uid: Base.UserType.IdType = userId.unbox(), let c = challenge as? Base.AuthenticationChallenge else {
-			throw InvalidArgumentError(message: "Got invalid user id (\(userId)) or auth challenge (\(challenge)) to authenticate with a directory service authenticator of type \(Base.self)")
+	func authenticate(userID: AnyID, challenge: Any, using services: Services) async throws -> Bool {
+		guard let uid: Base.UserType.IDType = userID.unbox(), let c = challenge as? Base.AuthenticationChallenge else {
+			throw InvalidArgumentError(message: "Got invalid user ID (\(userID)) or auth challenge (\(challenge)) to authenticate with a directory service authenticator of type \(Base.self)")
 		}
-		return try await originalAuthenticator.authenticate(userId: uid, challenge: c, using: services)
+		return try await originalAuthenticator.authenticate(userID: uid, challenge: c, using: services)
 	}
 	
-	func validateAdminStatus(userId: AnyId, using services: Services) async throws -> Bool {
-		guard let uid: Base.UserType.IdType = userId.unbox() else {
-			throw InvalidArgumentError(message: "Got invalid user id type (\(userId)) to check if user is admin with a directory service authenticator of type \(Base.self)")
+	func validateAdminStatus(userID: AnyID, using services: Services) async throws -> Bool {
+		guard let uid: Base.UserType.IDType = userID.unbox() else {
+			throw InvalidArgumentError(message: "Got invalid user ID type (\(userID)) to check if user is admin with a directory service authenticator of type \(Base.self)")
 		}
-		return try await originalAuthenticator.validateAdminStatus(userId: uid, using: services)
+		return try await originalAuthenticator.validateAdminStatus(userID: uid, using: services)
 	}
 	
 }
@@ -71,12 +71,12 @@ public class AnyDirectoryAuthenticatorService : AnyUserDirectoryService, Directo
 		fatalError("init(config:globalConfig:) unavailable for a directory authenticator service erasure")
 	}
 	
-	public func authenticate(userId: AnyId, challenge: Any, using services: Services) async throws -> Bool {
-		return try await box.authenticate(userId: userId, challenge: challenge, using: services)
+	public func authenticate(userID: AnyID, challenge: Any, using services: Services) async throws -> Bool {
+		return try await box.authenticate(userID: userID, challenge: challenge, using: services)
 	}
 	
-	public func validateAdminStatus(userId: AnyId, using services: Services) async throws -> Bool {
-		return try await box.validateAdminStatus(userId: userId, using: services)
+	public func validateAdminStatus(userID: AnyID, using services: Services) async throws -> Bool {
+		return try await box.validateAdminStatus(userID: userID, using: services)
 	}
 	
 	fileprivate let box: DirectoryAuthenticatorServiceBox

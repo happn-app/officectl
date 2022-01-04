@@ -34,8 +34,8 @@ struct AuthToken : JWTPayload, Authenticatable {
 	 use a single element instead of an array. */
 	var aud: AudienceClaim = "https://office.happn.io"
 	
-	/** The id of the user represented by the token. */
-	var sub: TaggedId
+	/** The ID of the user represented by the token. */
+	var sub: TaggedID
 	
 	/** The expiration date of the token. */
 	var exp: ExpirationClaim
@@ -43,7 +43,7 @@ struct AuthToken : JWTPayload, Authenticatable {
 	/** The date at which the access token was issued. */
 	var iat: IssuedAtClaim
 	
-	/** The client id that was used when generating the token. */
+	/** The client ID that was used when generating the token. */
 	var clientID: String
 	
 	var scope: String
@@ -53,8 +53,8 @@ struct AuthToken : JWTPayload, Authenticatable {
 		case clientID = "client_id"
 	}
 	
-	init(dsuIdPair: AnyDSUIdPair, clientID: String, expirationTime: TimeInterval = .init(15 * 60), scope: Set<AuthScope> = []) {
-		self.sub = dsuIdPair.taggedId
+	init(dsuIDPair: AnyDSUIDPair, clientID: String, expirationTime: TimeInterval = .init(15 * 60), scope: Set<AuthScope> = []) {
+		self.sub = dsuIDPair.taggedID
 		self.clientID = clientID
 		
 		self.iat = IssuedAtClaim(value: Date())

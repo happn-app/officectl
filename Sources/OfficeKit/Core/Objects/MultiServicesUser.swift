@@ -15,15 +15,15 @@ import ServiceKit
 public typealias MultiServicesUser = MultiServicesItem<AnyDSUPair?>
 extension MultiServicesUser {
 	
-	public static func fetch(from dsuIdPair: AnyDSUIdPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) async throws -> MultiServicesUser {
-		return try await fetch(from: dsuIdPair.dsuPair(), in: services, using: depServices)
+	public static func fetch(from dsuIDPair: AnyDSUIDPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) async throws -> MultiServicesUser {
+		return try await fetch(from: dsuIDPair.dsuPair(), in: services, using: depServices)
 	}
 	
 	public static func fetch(from dsuPair: AnyDSUPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) async -> MultiServicesUser {
 		/* TODO: Properties to fetch. */
 		var allFetchedUsers = [AnyUserDirectoryService: AnyDSUPair?]()
 		var allFetchedErrors = [AnyUserDirectoryService: [Error]]()
-		var triedServiceIdSource = Set<AnyUserDirectoryService>()
+		var triedServiceIDSource = Set<AnyUserDirectoryService>()
 		
 		func getUsers(from dsuPair: AnyDSUPair, in services: Set<AnyUserDirectoryService>) async -> [AnyUserDirectoryService: Result<AnyDSUPair?, Error>] {
 			return await withTaskGroup(
@@ -51,24 +51,24 @@ extension MultiServicesUser {
 		func fetchStep(fetchedUsersAndErrors: [AnyUserDirectoryService: Result<AnyDSUPair?, Error>]) async -> MultiServicesUser {
 			/* Try and fetch the users that were not successfully fetched. */
 			allFetchedUsers = allFetchedUsers.merging(fetchedUsersAndErrors.compactMapValues{ $0.successValue }, uniquingKeysWith: { old, new in
-				OfficeKitConfig.logger?.error("Got a user fetched twice for id \(String(describing: old?.user.userId ?? new?.user.userId)). old user = \(String(describing: old)), new user = \(String(describing: new))")
+				OfficeKitConfig.logger?.error("Got a user fetched twice for ID \(String(describing: old?.user.userID ?? new?.user.userID)). old user = \(String(describing: old)), new user = \(String(describing: new))")
 				return new
 			})
 			allFetchedErrors = allFetchedErrors.merging(fetchedUsersAndErrors.compactMapValues{ $0.failureValue.flatMap{ [$0] } }, uniquingKeysWith: { old, new in old + new })
 			
 			/* TODO: Only try and re-fetched users whose fetch error was a “I don’t have enough info to fetch” error. */
-			/* Line below: All the service ids for which we haven’t already successfully fetched a user (or its absence from the service). */
+			/* Line below: All the service IDs for which we haven’t already successfully fetched a user (or its absence from the service). */
 			let servicesToFetch = services.filter{ !allFetchedUsers.keys.contains($0) }
-			/* Line below: All the service ids for which we have a user that we do not already have tried fetching from. */
-			let serviceIdsToTry = Set(allFetchedUsers.compactMap{ $0.value != nil ? $0.key : nil }).subtracting(triedServiceIdSource)
+			/* Line below: All the service IDs for which we have a user that we do not already have tried fetching from. */
+			let serviceIDsToTry = Set(allFetchedUsers.compactMap{ $0.value != nil ? $0.key : nil }).subtracting(triedServiceIDSource)
 			
-			guard let serviceIdToTry = serviceIdsToTry.first, servicesToFetch.count > 0 else {
+			guard let serviceIDToTry = serviceIDsToTry.first, servicesToFetch.count > 0 else {
 				/* We have finished. Let’s return the results. */
 				return MultiServicesUser(itemsByService: allFetchedUsers, errorsByService: allFetchedErrors.mapValues{ ErrorCollection($0) })
 			}
 			
-			triedServiceIdSource.insert(serviceIdToTry)
-			return await fetchStep(fetchedUsersAndErrors: getUsers(from: allFetchedUsers[serviceIdToTry]!!, in: servicesToFetch))
+			triedServiceIDSource.insert(serviceIDToTry)
+			return await fetchStep(fetchedUsersAndErrors: getUsers(from: allFetchedUsers[serviceIDToTry]!!, in: servicesToFetch))
 		}
 		
 		return await fetchStep(fetchedUsersAndErrors: getUsers(from: dsuPair, in: services))
@@ -83,9 +83,9 @@ extension MultiServicesUser {
 	/**
 	 Try and merge all the given users in a collection of multi-services users.
 	 
-	 All the returned users will have a DSU pair for all the valid services ids
+	 All the returned users will have a DSU pair for all the valid services IDs
 	 (the value being `nil` if a linked user was not found for a given user for the given service).
-	 If the valid services ids are set to `nil`, they are inferred from the set of DSU pairs.
+	 If the valid services IDs are set to `nil`, they are inferred from the set of DSU pairs.
 	 
 	 If the `allowNonValidServices` arg is set to `true`, the returned users might contain a DSU pair for a service that has not been declared valid.
 	 (The argument is only useful when `validServices` is set to a non-`nil` value.) */
@@ -111,16 +111,16 @@ extension MultiServicesUser {
 					
 					/* Compute relations between the users. */
 					for (_, linkedUser) in linkedUsersByDSUPair {
-						let currentUserServiceId = linkedUser.dsuPair.serviceId
+						let currentUserServiceID = linkedUser.dsuPair.serviceID
 						for service in services {
-							let serviceId = service.config.serviceId
-							guard serviceId != currentUserServiceId else {continue}
+							let serviceID = service.config.serviceID
+							guard serviceID != currentUserServiceID else {continue}
 							guard let logicallyLinkedPair = try? linkedUser.dsuPair.hop(to: service) else {
-//								OfficeKitConfig.logger?.debug("Error finding logically linked user with: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user pair: \(linkedUser.dsuPair)\n}")
+//								OfficeKitConfig.logger?.debug("Error finding logically linked user with: {\n  source service ID: \(currentUserServiceID)\n  dest service ID:\(serviceID)\n  source user pair: \(linkedUser.dsuPair)\n}")
 								continue
 							}
 							guard let logicallyLinkedLinkedUser = linkedUsersByDSUPair[logicallyLinkedPair] else {
-//								OfficeKitConfig.logger?.debug("Found logically linked user, but user does not exist: {\n  source service id: \(currentUserServiceId)\n  dest service id:\(serviceId)\n  source user pair: \(linkedUser.dsuPair)\n  dest user pair: \(logicallyLinkedPair.dsuIdPair)\n}")
+//								OfficeKitConfig.logger?.debug("Found logically linked user, but user does not exist: {\n  source service ID: \(currentUserServiceID)\n  dest service ID:\(serviceID)\n  source user pair: \(linkedUser.dsuPair)\n  dest user pair: \(logicallyLinkedPair.dsuIDPair)\n}")
 								continue
 							}
 							try linkedUser.link(to: logicallyLinkedLinkedUser)
@@ -141,17 +141,17 @@ extension MultiServicesUser {
 						}
 						
 						var res: [AnyUserDirectoryService: AnyDSUPair?] = [linkedUser.dsuPair.service: linkedUser.dsuPair]
-						for subLinkedUser in linkedUser.linkedUserByServiceId.values {
+						for subLinkedUser in linkedUser.linkedUserByServiceID.values {
 							guard !treatedDSUPairs.contains(subLinkedUser.dsuPair) else {
 								throw InternalError(message: "Got already treated linked user! \(subLinkedUser.dsuPair) for \(dsuPair)")
 							}
 							guard res[subLinkedUser.dsuPair.service] == nil else {
-								throw InternalError(message: "Got two users for service id \(subLinkedUser.dsuPair.service): \(res[subLinkedUser.dsuPair.service]!!) and \(subLinkedUser.dsuPair)")
+								throw InternalError(message: "Got two users for service ID \(subLinkedUser.dsuPair.service): \(res[subLinkedUser.dsuPair.service]!!) and \(subLinkedUser.dsuPair)")
 							}
 							res[subLinkedUser.dsuPair.service] = subLinkedUser.dsuPair
 							treatedDSUPairs.insert(subLinkedUser.dsuPair)
 						}
-						/* Setting a value for all valid services ids */
+						/* Setting a value for all valid services IDs */
 						for s in validServices {
 							guard res[s] == nil else {continue}
 							res[s] = .some(nil)
@@ -173,10 +173,10 @@ extension MultiServicesUser {
 private class LinkedUser : CustomStringConvertible {
 	
 	let dsuPair: AnyDSUPair
-	var linkedUserByServiceId: [AnyUserDirectoryService: LinkedUser] = [:]
+	var linkedUserByServiceID: [AnyUserDirectoryService: LinkedUser] = [:]
 	
 	var description: String {
-		return "LinkedUser<\("service.config.serviceId") - \("user")>; linkedUsers: \("linkedUserByServiceId.keys")"
+		return "LinkedUser<\("service.config.serviceID") - \("user")>; linkedUsers: \("linkedUserByServiceID.keys")"
 	}
 	
 	init(dsuPair p: AnyDSUPair) {
@@ -198,18 +198,18 @@ private class LinkedUser : CustomStringConvertible {
 		}
 		
 		/* Make the actual link. */
-		if let currentlyLinkedUser = linkedUserByServiceId[linkedUser.dsuPair.service] {
+		if let currentlyLinkedUser = linkedUserByServiceID[linkedUser.dsuPair.service] {
 			guard currentlyLinkedUser.dsuPair == linkedUser.dsuPair else {
 				throw InvalidArgumentError(message: "DSUPair \(dsuPair) is asked to be linked to \(linkedUser.dsuPair), but is also already linked to \(currentlyLinkedUser.dsuPair)")
 			}
 		} else {
-			linkedUserByServiceId[linkedUser.dsuPair.service] = linkedUser
+			linkedUserByServiceID[linkedUser.dsuPair.service] = linkedUser
 		}
 		/* Make the reverse link. */
 		try linkedUser.link(to: self, visited: &visited)
 		/* Link related users. */
-		for toLink in linkedUserByServiceId.values {
-			assert(toLink.linkedUserByServiceId.values.contains(where: { $0.dsuPair == dsuPair }))
+		for toLink in linkedUserByServiceID.values {
+			assert(toLink.linkedUserByServiceID.values.contains(where: { $0.dsuPair == dsuPair }))
 			try toLink.link(to: linkedUser, visited: &visited)
 		}
 	}

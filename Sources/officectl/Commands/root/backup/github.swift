@@ -27,8 +27,8 @@ struct BackupGitHubCommand : ParsableCommand {
 	@OptionGroup()
 	var backupOptions: BackupCommand.Options
 	
-	@ArgumentParser.Option(help: "The id of the GitHub service to use to do the backup. Required if there are more than one GitHub service in officectl conf, otherwise the only GitHub service is used.")
-	var serviceId: String?
+	@ArgumentParser.Option(help: "The ID of the GitHub service to use to do the backup. Required if there are more than one GitHub service in officectl conf, otherwise the only GitHub service is used.")
+	var serviceID: String?
 	
 	@ArgumentParser.Option(help: "The organisation names for which to backup the repositories from.")
 	var orgnames: [String]
@@ -42,13 +42,13 @@ struct BackupGitHubCommand : ParsableCommand {
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		let officeKitConfig = app.officeKitConfig
-		let gitHubConfig: GitHubServiceConfig = try officeKitConfig.getServiceConfig(id: serviceId)
+		let gitHubConfig: GitHubServiceConfig = try officeKitConfig.getServiceConfig(id: serviceID)
 		
 		let destinationFolderURL = URL(fileURLWithPath: backupOptions.downloadsDestinationFolder, isDirectory: true)
 		
 		var errors = [Error]()
 		for orgname in Set(orgnames) {
-			try app.auditLogger.log(action: "Backing up GitHub w/ service \(serviceId ?? "<inferred service>"), organization name \(orgname) to \(destinationFolderURL).", source: .cli)
+			try app.auditLogger.log(action: "Backing up GitHub w/ service \(serviceID ?? "<inferred service>"), organization name \(orgname) to \(destinationFolderURL).", source: .cli)
 			
 			let gitHubConnector = try GitHubJWTConnector(key: gitHubConfig.connectorSettings)
 			try await gitHubConnector.connect(scope: ())

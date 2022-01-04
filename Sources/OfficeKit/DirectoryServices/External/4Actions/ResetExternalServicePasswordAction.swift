@@ -17,12 +17,12 @@ import OfficeModel
 
 
 
-public final class ResetExternalServicePasswordAction : Action<TaggedId, String, Void>, ResetPasswordAction, SemiSingleton {
+public final class ResetExternalServicePasswordAction : Action<TaggedID, String, Void>, ResetPasswordAction, SemiSingleton {
 	
-	public typealias SemiSingletonKey = TaggedId
+	public typealias SemiSingletonKey = TaggedID
 	public typealias SemiSingletonAdditionalInitInfo = (URL, ExternalServiceAuthenticator, JSONEncoder, JSONDecoder)
 	
-	public required init(key id: TaggedId, additionalInfo: SemiSingletonAdditionalInitInfo, store: SemiSingletonStore) {
+	public required init(key id: TaggedID, additionalInfo: SemiSingletonAdditionalInitInfo, store: SemiSingletonStore) {
 		deps = Dependencies(serviceURL: additionalInfo.0, authenticator: additionalInfo.1, jsonEncoder: additionalInfo.2, jsonDecoder: additionalInfo.3)
 		
 		super.init(subject: id)
@@ -31,14 +31,14 @@ public final class ResetExternalServicePasswordAction : Action<TaggedId, String,
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
 		Task{await handler(Result{
 			let op = try URLRequestDataOperation<ExternalServiceResponse<String>>.forAPIRequest(
-				url: deps.serviceURL.appending("change-password"), httpBody: RequestBody(userId: subject, newPassword: newPassword),
+				url: deps.serviceURL.appending("change-password"), httpBody: RequestBody(userID: subject, newPassword: newPassword),
 				requestProcessors: [AuthRequestProcessor(deps.authenticator)], retryProviders: []
 			)
 			_ = try await op.startAndGetResult().result.asResult().get()
 		})}
 		
 		struct RequestBody : Encodable {
-			var userId: TaggedId
+			var userID: TaggedID
 			var newPassword: String
 		}
 	}

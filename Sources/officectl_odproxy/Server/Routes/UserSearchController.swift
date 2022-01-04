@@ -8,43 +8,45 @@
 import Foundation
 
 import GenericJSON
-import OfficeKit
 import Vapor
+
+import OfficeKit
+import OfficeModel
 
 
 
 final class UserSearchController {
 	
-	func fromPersistentId(_ req: Request) async throws -> ApiResponse<DirectoryUserWrapper?> {
+	func fromPersistentID(_ req: Request) async throws -> ApiResponse<DirectoryUserWrapper?> {
 		/* The data we should have in input. */
 		struct Request : Decodable {
-			var persistentId: TaggedId
+			var persistentID: TaggedID
 			var propertiesToFetch: Set<String>
 		}
 		let input = try req.content.decode(Request.self)
 		let propertiesToFetch = Set(input.propertiesToFetch.map{ DirectoryUserProperty(stringLiteral: $0) })
-		guard let pId = UUID(uuidString: input.persistentId.id) else {
-			throw InvalidArgumentError(message: "Invalid persistend id \(input.persistentId)")
+		guard let pID = UUID(uuidString: input.persistentID.id) else {
+			throw InvalidArgumentError(message: "Invalid persistend ID \(input.persistentID)")
 		}
 		
 		let odService = req.application.openDirectoryService
-		let user = try await odService.existingUser(fromPersistentId: pId, propertiesToFetch: propertiesToFetch, using: req.services)
+		let user = try await odService.existingUser(fromPersistentID: pID, propertiesToFetch: propertiesToFetch, using: req.services)
 		/* Let’s convert the OpenDirectory user to a GenericDirectoryUser */
 		return try ApiResponse.data(user.flatMap{ try odService.wrappedUser(fromUser: $0) })
 	}
 	
-	func fromUserId(_ req: Request) async throws -> ApiResponse<DirectoryUserWrapper?> {
+	func fromUserID(_ req: Request) async throws -> ApiResponse<DirectoryUserWrapper?> {
 		/* The data we should have in input. */
 		struct Request : Decodable {
-			var userId: TaggedId
+			var userID: TaggedID
 			var propertiesToFetch: Set<String>
 		}
 		let input = try req.content.decode(Request.self)
 		let propertiesToFetch = Set(input.propertiesToFetch.map{ DirectoryUserProperty(stringLiteral: $0) })
-		let uId = try LDAPDistinguishedName(string: input.userId.id)
+		let uID = try LDAPDistinguishedName(string: input.userID.id)
 		
 		let odService = req.application.openDirectoryService
-		let user = try await odService.existingUser(fromUserId: uId, propertiesToFetch: propertiesToFetch, using: req.services)
+		let user = try await odService.existingUser(fromUserID: uID, propertiesToFetch: propertiesToFetch, using: req.services)
 		/* Let’s convert the OpenDirectory user to a GenericDirectoryUser */
 		return try ApiResponse.data(user.flatMap{ try odService.wrappedUser(fromUser: $0) })
 	}

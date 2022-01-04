@@ -34,9 +34,9 @@ public final class ResetGooglePasswordAction : Action<GoogleUser, String, Void>,
 			try await deps.connector.connect(scope: ModifyGoogleUserOperation.scopes)
 			
 			var googleUser = self.subject.cloneForPatching()
-			googleUser.password = .set(Insecure.SHA1.hash(data: Data(newPassword.utf8)).reduce("", { $0 + String(format: "%02x", $1) }))
-			googleUser.hashFunction = .set(.sha1)
-			googleUser.changePasswordAtNextLogin = .set(false)
+			googleUser.password = Insecure.SHA1.hash(data: Data(newPassword.utf8)).reduce("", { $0 + String(format: "%02x", $1) })
+			googleUser.hashFunction = .sha1
+			googleUser.changePasswordAtNextLogin = false
 			
 			let modifyUserOperation = ModifyGoogleUserOperation(user: googleUser, connector: self.deps.connector)
 			/* Operation is async, we can launch it without a queue (though having a queue would be better…) */

@@ -9,19 +9,53 @@ import Foundation
 
 import Email
 
+import OfficeModel
+
 
 
 public protocol DirectoryGroup {
 	
-	associatedtype IdType : Hashable
-	associatedtype PersistentIdType : Hashable
+	associatedtype IDType : Hashable
+	associatedtype PersistentIDType : Hashable
 	
-	var groupId: IdType {get}
-	var persistentId: RemoteProperty<PersistentIdType> {get}
+	var groupID: IDType {get}
+	var remotePersistentID: RemoteProperty<PersistentIDType> {get}
 	
-	var identifyingEmail: RemoteProperty<Email?> {get}
+	var remoteIdentifyingEmail: RemoteProperty<Email?> {get}
 	
-	var name: RemoteProperty<String> {get}
-	var description: RemoteProperty<String> {get}
+	var remoteName: RemoteProperty<String> {get}
+	var remoteDescription: RemoteProperty<String> {get}
 	
 }
+
+
+extension DirectoryGroup {
+	
+	var persistentID: PersistentIDType? {remotePersistentID.wrappedValue}
+	
+	var identifyingEmail: Email?? {remoteIdentifyingEmail.wrappedValue}
+	
+	var name: String? {remoteName.wrappedValue}
+	var description: String? {remoteDescription.wrappedValue}
+	
+}
+
+
+
+/* Note: Very sadly, the following piece of code do not compile because the wrapper (underscored variable) visibility cannot be changed.
+ 
+ ----
+ @propertyWrapper
+ struct Wrapper<T> {var wrappedValue: T}
+ 
+ /* Protocols cannot contain wrapped variables. */
+ protocol WrapProtocol {
+ 	var _wrapped: Bob<Int> {get}
+ }
+ 
+ struct Wrap : WrapProtocol {
+ 	@Bob var wrapped: Int /* <- This declares _wrapped w/ private visibility; we need internal. */
+ }
+ ----
+ 
+ If this code did work, the DirectoryUser and DirectoryGroup protocols would have underscore-prefixed remote properties, instead of remote-prefixed ones, and things would be easier… */

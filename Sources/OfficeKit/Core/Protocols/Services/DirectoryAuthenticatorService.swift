@@ -16,8 +16,8 @@ public protocol DirectoryAuthenticatorService : UserDirectoryService, DirectoryA
 	
 	associatedtype AuthenticationChallenge
 	
-	func authenticate(userId: UserType.IdType, challenge: AuthenticationChallenge, using services: Services) async throws -> Bool
-	func validateAdminStatus(userId: UserType.IdType, using services: Services) async throws -> Bool
+	func authenticate(userID: UserType.IDType, challenge: AuthenticationChallenge, using services: Services) async throws -> Bool
+	func validateAdminStatus(userID: UserType.IDType, using services: Services) async throws -> Bool
 	
 }
 
@@ -43,7 +43,7 @@ public extension DirectoryAuthenticatorService {
 	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyDirectoryAuthenticatorService? {
 		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unbox() else {return nil}
 		
-		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unbox() as Self? }).first(where: { $0.config.serviceId == c.serviceId }) {
+		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unbox() as Self? }).first(where: { $0.config.serviceID == c.serviceID }) {
 			return alreadyInstantiated.erase()
 		}
 		

@@ -15,13 +15,13 @@ extension GitHubJWTConnector : SemiSingletonWithFallibleInit {
 	
 	public struct Settings : Hashable {
 		
-		public var appId: String
-		public var installationId: String
+		public var appID: String
+		public var installationID: String
 		public var privateKeyURL: URL
 		
-		public init(appId a: String, installationId i: String, privateKeyURL url: URL) {
-			appId = a
-			installationId = i
+		public init(appID a: String, installationID i: String, privateKeyURL url: URL) {
+			appID = a
+			installationID = i
 			privateKeyURL = url
 		}
 		
@@ -35,7 +35,7 @@ extension GitHubJWTConnector : SemiSingletonWithFallibleInit {
 	}
 	
 	public convenience init(key s: Settings) throws {
-		try self.init(appId: s.appId, installationId: s.installationId, privateKeyURL: s.privateKeyURL)
+		try self.init(appID: s.appID, installationID: s.installationID, privateKeyURL: s.privateKeyURL)
 	}
 	
 }

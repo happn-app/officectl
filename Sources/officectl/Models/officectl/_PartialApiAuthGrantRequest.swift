@@ -17,7 +17,7 @@ struct _PartialApiAuthGrantRequest : Decodable {
 	var scope: String?
 	
 	/* Unless I’m mistaken all OAuth2 grant requests can have a client id/client secret. */
-	var clientId: String?
+	var clientID: String?
 	var clientSecret: String?
 	
 	private enum CodingKeys : String, CodingKey {
@@ -25,7 +25,7 @@ struct _PartialApiAuthGrantRequest : Decodable {
 		
 		case scope
 		
-		case clientId = "client_id"
+		case clientID = "client_id"
 		case clientSecret = "client_secret"
 	}
 	

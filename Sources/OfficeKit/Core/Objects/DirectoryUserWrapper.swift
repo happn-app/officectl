@@ -10,6 +10,7 @@ import Foundation
 import Email
 import GenericJSON
 import Logging
+import UnwrapOrThrow
 
 import OfficeModel
 
@@ -17,18 +18,30 @@ import OfficeModel
 
 public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	
-	public typealias IdType = TaggedId
-	public typealias PersistentIdType = TaggedId
+	public typealias IDType = TaggedID
+	public typealias PersistentIDType = TaggedID
 	
-	public var userId: TaggedId
-	public var persistentId: RemoteProperty<TaggedId> = .unsupported
+	public var userID: TaggedID
+	@RemoteProperty
+	public var persistentID: TaggedID?
+	public var remotePersistentID: RemoteProperty<TaggedID> {_persistentID}
 	
-	public var identifyingEmail: RemoteProperty<Email?> = .unsupported
-	public var otherEmails: RemoteProperty<[Email]> = .unsupported
+	@RemoteProperty
+	public var identifyingEmail: Email??
+	public var remoteIdentifyingEmail: RemoteProperty<Email?> {_identifyingEmail}
+	@RemoteProperty
+	public var otherEmails: [Email]?
+	public var remoteOtherEmails: RemoteProperty<[Email]> {_otherEmails}
 	
-	public var firstName: RemoteProperty<String?> = .unsupported
-	public var lastName: RemoteProperty<String?> = .unsupported
-	public var nickname: RemoteProperty<String?> = .unsupported
+	@RemoteProperty
+	public var firstName: String??
+	public var remoteFirstName: RemoteProperty<String?> {_firstName}
+	@RemoteProperty
+	public var lastName: String??
+	public var remoteLastName: RemoteProperty<String?> {_lastName}
+	@RemoteProperty
+	public var nickname: String??
+	public var remoteNickname: RemoteProperty<String?> {_nickname}
 	
 	/* Note: We could use GenericStorage, but this would complexify conformance to Codable so we’ll keep JSON, at least for now. */
 	public var underlyingUser: JSON?
@@ -38,129 +51,93 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	 Can probably be removed (set to private in the mean time). */
 	private var savedHints = [DirectoryUserProperty: String?]()
 	
-	public var sourceServiceId: String {
-		return userId.tag
+	public var sourceServiceID: String {
+		return userID.tag
 	}
 	
-	public init(userId uid: TaggedId, persistentId pId: TaggedId? = nil, underlyingUser u: JSON? = nil, hints: [DirectoryUserProperty: String?] = [:]) {
-		if TaggedId(string: uid.rawValue) != uid {
-			OfficeKitConfig.logger?.error("Initing a DirectoryUserWrapper with a TaggedId whose string representation does not converts back to itself: \(uid)")
+	public init(userID uid: TaggedID, persistentID pId: TaggedID? = nil, underlyingUser u: JSON? = nil, hints: [DirectoryUserProperty: String?] = [:]) {
+		if TaggedID(string: uid.rawValue) != uid {
+			OfficeKitConfig.logger?.error("Initing a DirectoryUserWrapper with a TaggedID whose string representation does not converts back to itself: \(uid)")
 		}
-		userId = uid
-		persistentId = pId.map{ .set($0) } ?? .unsupported
+		userID = uid
+		_persistentID = pId.map{ .set($0) } ?? .unsupported
 		
 		underlyingUser = u
 		savedHints = hints
 	}
 	
 	public init(copying other: DirectoryUserWrapper) {
-		userId = other.userId
-		persistentId = other.persistentId
+		userID = other.userID
+		_persistentID = other._persistentID
 		
-		identifyingEmail = other.identifyingEmail
-		otherEmails = other.otherEmails
+		_identifyingEmail = other._identifyingEmail
+		_otherEmails = other._otherEmails
 		
-		firstName = other.firstName
-		lastName = other.lastName
-		nickname = other.nickname
+		_firstName = other._firstName
+		_lastName = other._lastName
+		_nickname = other._nickname
 		
 		underlyingUser = other.underlyingUser
-		
-		savedHints = other.savedHints
 	}
 	
-	public init(json: JSON, forcedUserId: TaggedId?) throws {
+	public init(json: JSON, forcedUserID: TaggedID?) throws {
 		underlyingUser = json[CodingKeys.underlyingUser.rawValue]
 		savedHints = json[CodingKeys.savedHints.rawValue]?.objectValue?.mapKeys{ DirectoryUserProperty(stringLiteral: $0) }.compactMapValues{ $0.stringValue } ?? [:]
 		
-		userId = try forcedUserId ?? TaggedId(string: json.string(forKey: CodingKeys.userId.rawValue))
-		persistentId = try json.optionalString(forKey: CodingKeys.persistentId.rawValue, errorOnMissingKey: false).flatMap{ .set(TaggedId(string: $0)) } ?? .unsupported
+		userID = try forcedUserID ?? TaggedID(string: json.string(forKey: CodingKeys.userID.rawValue))
+		_persistentID = try json.optionalString(forKey: CodingKeys.persistentID.rawValue, errorOnMissingKey: false).flatMap{ .set(TaggedID(string: $0)) } ?? .unsupported
 		
-		identifyingEmail = try json.optionalString(forKey: CodingKeys.identifyingEmail.rawValue, errorOnMissingKey: false).flatMap{ try .set(nil2throw(Email(rawValue: $0))) } ?? .unsupported
-		otherEmails = (try json.optionalArrayOfStrings(forKey: CodingKeys.otherEmails.rawValue, errorOnMissingKey: false)?.map{ try nil2throw(Email(rawValue: $0)) }).flatMap{ .set($0) } ?? .unsupported
+		_identifyingEmail = try json.optionalString(forKey: CodingKeys.identifyingEmail.rawValue, errorOnMissingKey: false).flatMap{ try .set(Email(rawValue: $0) ?! Err.genericError("Invalid email \($0) when initializing a DirectoryUserWrapper from JSON")) } ?? .unsupported
+		_otherEmails = (try json.optionalArrayOfStrings(forKey: CodingKeys.otherEmails.rawValue, errorOnMissingKey: false)?.map{ try Email(rawValue: $0) ?! Err.genericError("Invalid email \($0) when initializing a DirectoryUserWrapper from JSON") }).flatMap{ .set($0) } ?? .unsupported
 		
 		if (try? json.null(forKey: CodingKeys.firstName.rawValue)) != nil {
-			firstName = .set(nil)
+			_firstName = .set(nil)
 		} else {
-			firstName = try json.optionalString(forKey: CodingKeys.firstName.rawValue, errorOnMissingKey: false).flatMap{ .set($0) } ?? .unsupported
+			_firstName = try json.optionalString(forKey: CodingKeys.firstName.rawValue, errorOnMissingKey: false).flatMap{ .set($0) } ?? .unsupported
 		}
 		if (try? json.null(forKey: CodingKeys.lastName.rawValue)) != nil {
-			lastName = .set(nil)
+			_lastName = .set(nil)
 		} else {
-			lastName = try json.optionalString(forKey: CodingKeys.lastName.rawValue, errorOnMissingKey: false).flatMap{ .set($0) } ?? .unsupported
+			_lastName = try json.optionalString(forKey: CodingKeys.lastName.rawValue, errorOnMissingKey: false).flatMap{ .set($0) } ?? .unsupported
 		}
 		if (try? json.null(forKey: CodingKeys.nickname.rawValue)) != nil {
-			nickname = .set(nil)
+			_nickname = .set(nil)
 		} else {
-			nickname = try json.optionalString(forKey: CodingKeys.nickname.rawValue, errorOnMissingKey: false).flatMap{ .set($0) } ?? .unsupported
+			_nickname = try json.optionalString(forKey: CodingKeys.nickname.rawValue, errorOnMissingKey: false).flatMap{ .set($0) } ?? .unsupported
 		}
-	}
-	
-	public init(from decoder: Decoder) throws {
-		let container = try decoder.container(keyedBy: CodingKeys.self)
-		
-		underlyingUser = try container.decodeIfPresent(JSON.self, forKey: .underlyingUser)
-		savedHints = try container.decodeIfPresent([DirectoryUserProperty: String?].self, forKey: .savedHints) ?? [:]
-		
-		userId = try container.decode(TaggedId.self, forKey: .userId)
-		persistentId = try container.decodeIfPresent(RemoteProperty<TaggedId>.self, forKey: .persistentId) ?? .unsupported
-		
-		identifyingEmail = try container.decodeIfPresent(RemoteProperty<Email?>.self, forKey: .identifyingEmail) ?? .unsupported
-		otherEmails = try container.decodeIfPresent(RemoteProperty<[Email]>.self, forKey: .otherEmails) ?? .unsupported
-		
-		firstName = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .firstName) ?? .unsupported
-		lastName = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .lastName) ?? .unsupported
-		nickname = try container.decodeIfPresent(RemoteProperty<String?>.self, forKey: .nickname) ?? .unsupported
-	}
-	
-	public func encode(to encoder: Encoder) throws {
-		var container = encoder.container(keyedBy: CodingKeys.self)
-		
-		try container.encode(underlyingUser, forKey: .underlyingUser)
-		try container.encode(savedHints, forKey: .savedHints)
-		
-		try container.encode(userId, forKey: .userId)
-		try container.encodeIfSet(persistentId, forKey: .persistentId)
-		
-		try container.encodeIfSet(identifyingEmail, forKey: .identifyingEmail)
-		try container.encodeIfSet(otherEmails, forKey: .otherEmails)
-		
-		try container.encodeIfSet(firstName, forKey: .firstName)
-		try container.encodeIfSet(lastName, forKey: .lastName)
-		try container.encodeIfSet(nickname, forKey: .nickname)
 	}
 	
 	public func json(includeSavedHints: Bool = false) -> JSON {
 		var res: [String: JSON] = [
-			CodingKeys.userId.rawValue: .string(userId.stringValue)
+			CodingKeys.userID.rawValue: .string(userID.stringValue)
 		]
 		
 		if let u = underlyingUser {res[CodingKeys.underlyingUser.rawValue] = u}
 		if includeSavedHints {res[CodingKeys.savedHints.rawValue] = .object(savedHints.mapKeys{ $0.rawValue }.mapValues{ $0.flatMap{ .string($0) } ?? .null })}
 		
 		/* userId added above. */
-		if let pId = persistentId.value {res[CodingKeys.persistentId.rawValue] = .string(pId.stringValue)}
+		if let pId = persistentID {res[CodingKeys.persistentID.rawValue] = .string(pId.stringValue)}
 		
-		if let e = identifyingEmail.value {res[CodingKeys.identifyingEmail.rawValue] = e.flatMap{ .string($0.rawValue) } ?? .null}
-		if let e = otherEmails.value      {res[CodingKeys.otherEmails.rawValue]      = .array(e.map{ .string($0.rawValue) })}
+		if let e = identifyingEmail {res[CodingKeys.identifyingEmail.rawValue] = e.flatMap{ .string($0.rawValue) } ?? .null}
+		if let e = otherEmails      {res[CodingKeys.otherEmails.rawValue]      = .array(e.map{ .string($0.rawValue) })}
 		
-		if let fn = firstName.value {res[CodingKeys.firstName.rawValue] = fn.flatMap{ .string($0) } ?? .null}
-		if let ln = lastName.value  {res[CodingKeys.lastName.rawValue]  = ln.flatMap{ .string($0) } ?? .null}
-		if let nn = nickname.value  {res[CodingKeys.nickname.rawValue]  = nn.flatMap{ .string($0) } ?? .null}
+		if let fn = firstName {res[CodingKeys.firstName.rawValue] = fn.flatMap{ .string($0) } ?? .null}
+		if let ln = lastName  {res[CodingKeys.lastName.rawValue]  = ln.flatMap{ .string($0) } ?? .null}
+		if let nn = nickname  {res[CodingKeys.nickname.rawValue]  = nn.flatMap{ .string($0) } ?? .null}
 		
 		return .object(res)
 	}
 	
-	public mutating func copyStandardNonIdProperties<U : DirectoryUser>(fromUser user: U) {
-		identifyingEmail = user.identifyingEmail
-		otherEmails = user.otherEmails
+	public mutating func copyStandardNonIDProperties<U : DirectoryUser>(fromUser user: U) {
+		_identifyingEmail = user.remoteIdentifyingEmail
+		_otherEmails = user.remoteOtherEmails
 		
-		firstName = user.firstName
-		lastName = user.lastName
-		nickname = user.nickname
+		_firstName = user.remoteFirstName
+		_lastName = user.remoteLastName
+		_nickname = user.remoteNickname
 	}
 	
-	public func applyingAndSavingHints(_ hints: [DirectoryUserProperty: String?], blacklistedKeys: Set<DirectoryUserProperty> = [.userId], replaceAllPreviouslySavedHints: Bool = false) -> DirectoryUserWrapper {
+	public func applyingAndSavingHints(_ hints: [DirectoryUserProperty: String?], blacklistedKeys: Set<DirectoryUserProperty> = [.userID], replaceAllPreviouslySavedHints: Bool = false) -> DirectoryUserWrapper {
 		var ret = DirectoryUserWrapper(copying: self)
 		ret.applyAndSaveHints(hints, blacklistedKeys: blacklistedKeys, replaceAllPreviouslySavedHints: replaceAllPreviouslySavedHints)
 		return ret
@@ -173,7 +150,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	 
 	 - Returns: The keys that have been modified. */
 	@discardableResult
-	public mutating func applyAndSaveHints(_ hints: [DirectoryUserProperty: String?], blacklistedKeys: Set<DirectoryUserProperty> = [.userId], replaceAllPreviouslySavedHints: Bool = false) -> Set<DirectoryUserProperty> {
+	public mutating func applyAndSaveHints(_ hints: [DirectoryUserProperty: String?], blacklistedKeys: Set<DirectoryUserProperty> = [.userID], replaceAllPreviouslySavedHints: Bool = false) -> Set<DirectoryUserProperty> {
 		if replaceAllPreviouslySavedHints {
 			savedHints = [:]
 		}
@@ -185,40 +162,35 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 			savedHints[k] = v
 			
 			var touchedKey = true
-			switch (k, v) {
-				case (.userId, let s?): userId = TaggedId(string: s)
+			switch k {
+				case .userID:       if let v = v {userID = TaggedID(string: v)}
+				case .persistentID: persistentID = v.flatMap{ TaggedID(string: $0) }
 					
-				case (.persistentId, nil):    persistentId = .unset
-				case (.persistentId, let s?): persistentId = .set(TaggedId(string: s))
-					
-				case (.identifyingEmail, nil): identifyingEmail = .unset
-				case (.identifyingEmail, let s?):
-					guard let e = Email(rawValue: s) else {
+				case .identifyingEmail:
+					let e = v.flatMap{ Email(rawValue: $0) }
+					guard e != nil || v == nil else {
 						OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value is an invalid email: \(String(describing: v))")
 						continue
 					}
-					identifyingEmail = .set(e)
+					identifyingEmail = e
 					
-				case (.otherEmails, nil): otherEmails = .unset
-				case (.otherEmails, let s?):
+				case .otherEmails:
 					/* Yes.
 					 * We cannot represent an element in the list which contains a comma.
 					 * Maybe one day we’ll do the generic thing… */
-					let l = s.split(separator: ",")
-					guard let e = try? l.map({ try nil2throw(Email(rawValue: String($0))) }) else {
+					let e = try? v.flatMap{ v -> [Email] in
+						let l = v.split(separator: ",")
+						return try l.map{ try Email(rawValue: String($0)) ?! Err.genericError("Invalid error. If you see this, see the dev; it should not happen.") }
+					}
+					guard e != nil || v == nil else {
 						OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value has invalid email(s): \(String(describing: v))")
 						continue
 					}
-					otherEmails = .set(e)
+					otherEmails = e
 					
-				case (.firstName, nil):    firstName = .unset
-				case (.firstName, let s?): firstName = .set(s)
-					
-				case (.lastName, nil):    lastName = .unset
-				case (.lastName, let s?): lastName = .set(s)
-					
-				case (.nickname, nil):    nickname = .unset
-				case (.nickname, let s?): nickname = .set(s)
+				case .firstName: firstName = v
+				case .lastName:  lastName = v
+				case .nickname:  nickname = v
 					
 				default:
 					OfficeKitConfig.logger?.warning("Cannot apply hint for key \(k): value has not a compatible type or key is unknown: \(String(describing: v))")
@@ -230,7 +202,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	}
 	
 	public func mainEmail(domainMap: [String: String] = [:]) -> Email? {
-		return identifyingEmail.map{ $0?.primaryDomainVariant(aliasMap: domainMap) }.value ?? nil
+		return identifyingEmail?.flatMap{ $0.primaryDomainVariant(aliasMap: domainMap) }
 	}
 	
 	/* ***************
@@ -241,7 +213,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		case underlyingUser
 		case savedHints
 		
-		case userId, persistentId
+		case userID, persistentID
 		case identifyingEmail, otherEmails
 		case firstName, lastName, nickname
 	}

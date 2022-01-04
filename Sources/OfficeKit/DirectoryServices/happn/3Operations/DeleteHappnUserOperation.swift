@@ -42,7 +42,7 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 	public override func startBaseOperation(isRetry: Bool) {
 		Task{
 			error = await Result<Void, Error>{
-				let userId = user.persistentId.value ?? user.userId ?? HappnConnector.nullLoginUserId
+				let userID = user.persistentID ?? user.userID ?? HappnConnector.nullLoginUserID
 				let decoder = JSONDecoder()
 				decoder.dateDecodingStrategy = .customISO8601
 				
@@ -55,7 +55,7 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 				/* We declare a decoded type HappnApiResult<Int8>.
 				 * We chose Int8, but could have taken anything that’s decodable: the API returns null all the time… */
 				let revokeOp = try URLRequestDataOperation<HappnApiResult<Int8>>.forAPIRequest(
-					url: connector.baseURL.appending("api", "administrators"), httpBody: RevokeRequestBody(userId: userId, adminPassword: adminPass),
+					url: connector.baseURL.appending("api", "administrators"), httpBody: RevokeRequestBody(userID: userID, adminPassword: adminPass),
 					bodyEncoder: FormURLEncodedEncoder(), decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 				)
 				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
@@ -64,7 +64,7 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 				/* 2. Delete the user. */
 				
 				let deleteOp = try URLRequestDataOperation<HappnApiResult<Int8>>.forAPIRequest(
-					url: connector.baseURL.appending("api", "users", userId), method: "DELETE", urlParameters: DeleteRequestQuery(),
+					url: connector.baseURL.appending("api", "users", userID), method: "DELETE", urlParameters: DeleteRequestQuery(),
 					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 				)
 				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
@@ -77,10 +77,10 @@ public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 		
 		struct RevokeRequestBody : Encodable {
 			var action = "revoke"
-			var userId: String
+			var userID: String
 			var adminPassword: String
 			private enum CodingKeys : String, CodingKey {
-				case action = "_action", userId = "user_id", adminPassword = "password"
+				case action = "_action", userID = "user_id", adminPassword = "password"
 			}
 		}
 		

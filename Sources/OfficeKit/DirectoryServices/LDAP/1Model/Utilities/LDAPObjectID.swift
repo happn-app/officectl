@@ -15,7 +15,7 @@ public struct LDAPObjectID : Hashable {
 	public let numericoidValues: [UInt]?
 	
 	/**
-	 Init the object id with an OID string.
+	 Init the object ID with an OID string.
 	 
 	 An OID must be a “numericoid” or a “description”. Where:
 	 - “description” is a keystring (an alphanumeric string that can contain hyphens and starts with a letter);

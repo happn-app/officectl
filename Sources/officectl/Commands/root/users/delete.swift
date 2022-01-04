@@ -28,11 +28,11 @@ struct UserDeleteCommand : ParsableCommand {
 	@ArgumentParser.Flag(help: "If set, this the users will be deleted without confirmation.")
 	var yes = false
 	
-	@ArgumentParser.Option(help: "The tagged user id of the user to delete.")
-	var userId: String
+	@ArgumentParser.Option(help: "The tagged user ID of the user to delete.")
+	var userID: String
 	
-	@ArgumentParser.Option(help: "The service ids on which to delete the user, comma-separated. If unset, the user will be deleted on all the services configured.")
-	var serviceIds: String?
+	@ArgumentParser.Option(help: "The service IDs on which to delete the user, comma-separated. If unset, the user will be deleted on all the services configured.")
+	var serviceIDs: String?
 	
 	func run() throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
@@ -42,18 +42,18 @@ struct UserDeleteCommand : ParsableCommand {
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
 		
-		let serviceIds = self.serviceIds?.split(separator: ",").map(String.init)
+		let serviceIDs = self.serviceIDs?.split(separator: ",").map(String.init)
 		
 		let sProvider = app.officeKitServiceProvider
-		let services = try Array(sProvider.getUserDirectoryServices(ids: serviceIds.flatMap(Set.init)).filter{ $0.supportsUserDeletion })
+		let services = try Array(sProvider.getUserDirectoryServices(ids: serviceIDs.flatMap(Set.init)).filter{ $0.supportsUserDeletion })
 		guard !services.isEmpty else {
 			context.console.warning("Nothing to do.")
 			return
 		}
 		
-		let msu = try await MultiServicesUser.fetch(from: AnyDSUIdPair(taggedId: TaggedId(string: userId), servicesProvider: sProvider), in: Set(services), using: app.services)
-		for (id, error) in msu.errorsByServiceId {
-			app.console.warning("⚠️ Skipping service id \(id) because I cannot get the user from this service. Error is \(error)")
+		let msu = try await MultiServicesUser.fetch(from: AnyDSUIDPair(taggedID: TaggedID(string: userID), servicesProvider: sProvider), in: Set(services), using: app.services)
+		for (id, error) in msu.errorsByServiceID {
+			app.console.warning("⚠️ Skipping service ID \(id) because I cannot get the user from this service. Error is \(error)")
 		}
 		guard msu.itemsByService.values.contains(where: { $0 != nil }) else {
 			context.console.info("Nothing to do.")
@@ -63,15 +63,15 @@ struct UserDeleteCommand : ParsableCommand {
 		if !yes {
 			let confirmationPrompt: ConsoleText = (
 				ConsoleText(stringLiteral: "Will try and delete the user on these services:") + ConsoleText.newLine +
-				(msu.itemsByService.sorted(by: { $0.key.config.serviceId < $1.key.config.serviceId })
-					.map{ serviceAndUserIdPair in
-						let (service, optionalUserIdPair) = serviceAndUserIdPair
-						guard let uidPair = optionalUserIdPair else {
+				(msu.itemsByService.sorted(by: { $0.key.config.serviceID < $1.key.config.serviceID })
+					.map{ serviceAndUserIDPair in
+						let (service, optionalUserIDPair) = serviceAndUserIDPair
+						guard let uidPair = optionalUserIDPair else {
 							return ConsoleText()
 						}
 						return (
 							ConsoleText.newLine +
-							ConsoleText(stringLiteral: "   - \(service.config.serviceId) (\(service.config.serviceName)): ") +
+							ConsoleText(stringLiteral: "   - \(service.config.serviceID) (\(service.config.serviceName)): ") +
 							ConsoleText(stringLiteral: service.shortDescription(fromUser: uidPair.user))
 						)
 					}
@@ -98,8 +98,8 @@ struct UserDeleteCommand : ParsableCommand {
 		context.console.info("********* DELETION RESULTS *********")
 		for (service, result) in deletionResults {
 			switch result {
-				case .success:            context.console.info("✅ \(service.config.serviceId): deleted")
-				case .failure(let error): context.console.info("🛑 \(service.config.serviceId): \(error)")
+				case .success:            context.console.info("✅ \(service.config.serviceID): deleted")
+				case .failure(let error): context.console.info("🛑 \(service.config.serviceID): \(error)")
 			}
 		}
 	}

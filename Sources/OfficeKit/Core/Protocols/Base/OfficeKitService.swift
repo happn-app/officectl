@@ -35,10 +35,10 @@ import Foundation
 public protocol OfficeKitService : AnyObject, Hashable, OfficeKitServiceInit {
 	
 	/**
-	 The id of the linked provider, e.g. `internal_openldap`.
+	 The ID of the linked provider, e.g. `internal_openldap`.
 	 
-	 External provider ids (not builtin to OfficeKit) must not have the `internal_` prefix. */
-	static var providerId: String {get}
+	 External provider IDs (not builtin to OfficeKit) must not have the `internal_` prefix. */
+	static var providerID: String {get}
 	
 	associatedtype ConfigType : OfficeKitServiceConfig
 	
@@ -53,11 +53,11 @@ public protocol OfficeKitService : AnyObject, Hashable, OfficeKitServiceInit {
 extension OfficeKitService {
 	
 	public static func ==(_ lhs: Self, _ rhs: Self) -> Bool {
-		return lhs.config.serviceId == rhs.config.serviceId
+		return lhs.config.serviceID == rhs.config.serviceID
 	}
 	
 	public func hash(into hasher: inout Hasher) {
-		hasher.combine(config.serviceId)
+		hasher.combine(config.serviceID)
 	}
 	
 }
@@ -88,7 +88,7 @@ public extension OfficeKitService {
 	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyOfficeKitService? {
 		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unbox() else {return nil}
 		
-		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unbox() as Self? }).first(where: { $0.config.serviceId == c.serviceId }) {
+		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unbox() as Self? }).first(where: { $0.config.serviceID == c.serviceID }) {
 			return alreadyInstantiated.erase()
 		}
 		

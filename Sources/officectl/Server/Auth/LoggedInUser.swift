@@ -16,7 +16,7 @@ import OfficeModel
 
 struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 	
-	typealias SessionID = TaggedId
+	typealias SessionID = TaggedID
 	
 	/** A simple guard auth middleware for admin users */
 	static func guardAdminMiddleware() -> AsyncMiddleware {
@@ -90,14 +90,14 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 		return scopes.contains(.admin)
 	}
 	
-	var sessionID: TaggedId {
-		return user.taggedId
+	var sessionID: TaggedID {
+		return user.taggedID
 	}
 	
-	func representsSameUserAs(dsuIdPair: AnyDSUIdPair, request: Request) throws -> Bool {
+	func representsSameUserAs(dsuIDPair: AnyDSUIDPair, request: Request) throws -> Bool {
 		let sProvider = request.application.officeKitServiceProvider
 		let authService = try sProvider.getDirectoryAuthenticatorService()
-		return try user.taggedId == dsuIdPair.dsuPair().hop(to: authService).taggedId
+		return try user.taggedID == dsuIDPair.dsuPair().hop(to: authService).taggedID
 	}
 	
 }

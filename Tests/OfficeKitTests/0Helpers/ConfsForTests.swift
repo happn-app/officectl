@@ -15,8 +15,8 @@ let globalConf = GlobalConfig()
 
 let ldapBaseDNForTests = try! LDAPDistinguishedName(string: "dc=happn,dc=test")
 let ldapConfForTests = LDAPServiceConfig(
-	providerId: LDAPService.providerId,
-	serviceId: "ldap", serviceName: "LDAP", mergePriority: nil,
+	providerID: LDAPService.providerID,
+	serviceID: "ldap", serviceName: "LDAP", mergePriority: nil,
 	connectorSettings: LDAPConnector.Settings(
 		ldapURL: URL(string: "ldap://localhost:8389")!,
 		protocolVersion: .v3,

@@ -9,18 +9,20 @@ import Foundation
 
 import Email
 
+import OfficeModel
+
 
 
 /* Note: Cannot erase with this erasure type
  *
  * public struct AnyDirectoryUser : DirectoryUser {
  *    public init<U : DirectoryUser>(_ user: U) {
- *       erasureForId = { AnyId(user.id) }
+ *       erasureForID = { AnyID(user.id) }
  *       erasureForEmail = { user.email }
  *       ...
  *    }
- *    public var id: AnyId {
- *       return erasureForId()
+ *    public var id: AnyID {
+ *       return erasureForID()
  *    }
  *    public var email: RemoteProperty<Email?> {
  *       return erasureForEmail()
@@ -32,15 +34,15 @@ import Email
 
 private protocol DirectoryUserBox {
 	
-	var userId: AnyId {get}
-	var persistentId: RemoteProperty<AnyId> {get}
+	var userID: AnyID {get}
+	var remotePersistentID: RemoteProperty<AnyID> {get}
 	
-	var identifyingEmail: RemoteProperty<Email?> {get}
-	var otherEmails: RemoteProperty<[Email]> {get}
+	var remoteIdentifyingEmail: RemoteProperty<Email?> {get}
+	var remoteOtherEmails: RemoteProperty<[Email]> {get}
 	
-	var firstName: RemoteProperty<String?> {get}
-	var lastName: RemoteProperty<String?> {get}
-	var nickname: RemoteProperty<String?> {get}
+	var remoteFirstName: RemoteProperty<String?> {get}
+	var remoteLastName: RemoteProperty<String?> {get}
+	var remoteNickname: RemoteProperty<String?> {get}
 	
 }
 
@@ -48,67 +50,67 @@ private struct ConcreteUserBox<Base : DirectoryUser> : DirectoryUserBox {
 	
 	let originalUser: Base
 	
-	var userId: AnyId {
-		return AnyId(originalUser.userId)
+	var userID: AnyID {
+		return AnyID(originalUser.userID)
 	}
 	
-	var persistentId: RemoteProperty<AnyId> {
-		return originalUser.persistentId.map{ AnyId($0) }
+	var remotePersistentID: RemoteProperty<AnyID> {
+		return originalUser.remotePersistentID.map{ AnyID($0) }
 	}
 	
-	var identifyingEmail: RemoteProperty<Email?> {
-		return originalUser.identifyingEmail
+	var remoteIdentifyingEmail: RemoteProperty<Email?> {
+		return originalUser.remoteIdentifyingEmail
 	}
 	
-	var otherEmails: RemoteProperty<[Email]> {
-		return originalUser.otherEmails
+	var remoteOtherEmails: RemoteProperty<[Email]> {
+		return originalUser.remoteOtherEmails
 	}
 	
-	var firstName: RemoteProperty<String?> {
-		return originalUser.firstName
+	var remoteFirstName: RemoteProperty<String?> {
+		return originalUser.remoteFirstName
 	}
-	var lastName: RemoteProperty<String?> {
-		return originalUser.lastName
+	var remoteLastName: RemoteProperty<String?> {
+		return originalUser.remoteLastName
 	}
-	var nickname: RemoteProperty<String?> {
-		return originalUser.nickname
+	var remoteNickname: RemoteProperty<String?> {
+		return originalUser.remoteNickname
 	}
 	
 }
 
 public struct AnyDirectoryUser : DirectoryUser {
 	
-	public typealias IdType = AnyId
-	public typealias PersistentIdType = AnyId
+	public typealias IDType = AnyID
+	public typealias PersistentIDType = AnyID
 	
 	public init<U : DirectoryUser>(_ user: U) {
 		box = ConcreteUserBox(originalUser: user)
 	}
 	
-	public var userId: AnyId {
-		return box.userId
+	public var userID: AnyID {
+		return box.userID
 	}
 	
-	public var persistentId: RemoteProperty<AnyId> {
-		return box.persistentId
+	public var remotePersistentID: RemoteProperty<AnyID> {
+		return box.remotePersistentID
 	}
 	
-	public var identifyingEmail: RemoteProperty<Email?> {
-		return box.identifyingEmail
+	public var remoteIdentifyingEmail: RemoteProperty<Email?> {
+		return box.remoteIdentifyingEmail
 	}
 	
-	public var otherEmails: RemoteProperty<[Email]> {
-		return box.otherEmails
+	public var remoteOtherEmails: RemoteProperty<[Email]> {
+		return box.remoteOtherEmails
 	}
 	
-	public var firstName: RemoteProperty<String?> {
-		return box.firstName
+	public var remoteFirstName: RemoteProperty<String?> {
+		return box.remoteFirstName
 	}
-	public var lastName: RemoteProperty<String?> {
-		return box.lastName
+	public var remoteLastName: RemoteProperty<String?> {
+		return box.remoteLastName
 	}
-	public var nickname: RemoteProperty<String?> {
-		return box.nickname
+	public var remoteNickname: RemoteProperty<String?> {
+		return box.remoteNickname
 	}
 	
 	fileprivate let box: DirectoryUserBox

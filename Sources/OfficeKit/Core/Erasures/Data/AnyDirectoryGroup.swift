@@ -9,73 +9,76 @@ import Foundation
 
 import Email
 
+import OfficeModel
+
 
 
 private protocol DirectoryGroupBox {
 	
-	var groupId: AnyId {get}
-	var persistentId: RemoteProperty<AnyId> {get}
+	var groupID: AnyID {get}
+	var remotePersistentID: RemoteProperty<AnyID> {get}
 	
-	var identifyingEmail: RemoteProperty<Email?> {get}
+	var remoteIdentifyingEmail: RemoteProperty<Email?> {get}
 	
-	var name: RemoteProperty<String> {get}
-	var description: RemoteProperty<String> {get}
+	var remoteName: RemoteProperty<String> {get}
+	var remoteDescription: RemoteProperty<String> {get}
 	
 }
+
 
 private struct ConcreteDirectoryBox<Base : DirectoryGroup> : DirectoryGroupBox {
 	
 	let originalGroup: Base
 	
-	var groupId: AnyId {
-		return AnyId(originalGroup.groupId)
+	var groupID: AnyID {
+		return AnyID(originalGroup.groupID)
 	}
 	
-	var persistentId: RemoteProperty<AnyId> {
-		return originalGroup.persistentId.map{ AnyId($0) }
+	var remotePersistentID: RemoteProperty<AnyID> {
+		return originalGroup.remotePersistentID.map{ AnyID($0) }
 	}
 	
-	var identifyingEmail: RemoteProperty<Email?> {
-		return originalGroup.identifyingEmail
+	var remoteIdentifyingEmail: RemoteProperty<Email?> {
+		return originalGroup.remoteIdentifyingEmail
 	}
 	
-	var name: RemoteProperty<String> {
-		return originalGroup.name
+	var remoteName: RemoteProperty<String> {
+		return originalGroup.remoteName
 	}
 	
-	var description: RemoteProperty<String> {
-		return originalGroup.description
+	var remoteDescription: RemoteProperty<String> {
+		return originalGroup.remoteDescription
 	}
 	
 }
 
 public struct AnyDirectoryGroup : DirectoryGroup {
 	
-	public typealias IdType = AnyId
-	public typealias PersistentIdType = AnyId
+	public typealias IDType = AnyID
+	public typealias PersistentIDType = AnyID
 	
 	public init<G : DirectoryGroup>(_ group: G) {
 		box = ConcreteDirectoryBox(originalGroup: group)
 	}
 	
-	public var groupId: AnyId {
-		return box.groupId
+	public var groupID: AnyID {
+		return box.groupID
 	}
 	
-	public var persistentId: RemoteProperty<AnyId> {
-		return box.persistentId
+	public var remotePersistentID: RemoteProperty<AnyID> {
+		return box.remotePersistentID
 	}
 	
-	public var identifyingEmail: RemoteProperty<Email?> {
-		return box.identifyingEmail
+	public var remoteIdentifyingEmail: RemoteProperty<Email?> {
+		return box.remoteIdentifyingEmail
 	}
 	
-	public var name: RemoteProperty<String> {
-		return box.name
+	public var remoteName: RemoteProperty<String> {
+		return box.remoteName
 	}
 	
-	public var description: RemoteProperty<String> {
-		return box.description
+	public var remoteDescription: RemoteProperty<String> {
+		return box.remoteDescription
 	}
 	
 	fileprivate let box: DirectoryGroupBox

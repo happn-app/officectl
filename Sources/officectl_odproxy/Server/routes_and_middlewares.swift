@@ -33,8 +33,8 @@ func routes_and_middlewares(_ app: Application, _ serverConfig: GenericStorage) 
 	/* ********* Register routes ********* */
 	
 	let userSearchController = UserSearchController()
-	app.post("existing-user-from", "persistent-id", use: userSearchController.fromPersistentId)
-	app.post("existing-user-from", "user-id",       use: userSearchController.fromUserId)
+	app.post("existing-user-from", "persistent-id", use: userSearchController.fromPersistentID)
+	app.post("existing-user-from", "user-id",       use: userSearchController.fromUserID)
 	app.get("list-all-users",                       use: userSearchController.listAllUsers)
 	
 	let userController = UserController()

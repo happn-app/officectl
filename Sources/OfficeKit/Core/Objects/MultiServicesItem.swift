@@ -16,12 +16,12 @@ public struct MultiServicesItem<ItemType> {
 	public var itemsByService:  [AnyUserDirectoryService: ItemType] {return errorsAndItemsByService.compactMapValues{ $0.successValue }}
 	public var errorsByService: [AnyUserDirectoryService: Error]    {return errorsAndItemsByService.compactMapValues{ $0.failureValue }}
 	
-	public var errorsAndItemsByServiceId: [String: Result<ItemType, Error>] {
-		return errorsAndItemsByService.mapKeys{ $0.config.serviceId }
+	public var errorsAndItemsByServiceID: [String: Result<ItemType, Error>] {
+		return errorsAndItemsByService.mapKeys{ $0.config.serviceID }
 	}
 	
-	public var itemsByServiceId:  [String: ItemType] {return itemsByService.mapKeys{  $0.config.serviceId }}
-	public var errorsByServiceId: [String: Error]    {return errorsByService.mapKeys{ $0.config.serviceId }}
+	public var itemsByServiceID:  [String: ItemType] {return itemsByService.mapKeys{  $0.config.serviceID }}
+	public var errorsByServiceID: [String: Error]    {return errorsByService.mapKeys{ $0.config.serviceID }}
 	
 	public var services: Set<AnyUserDirectoryService> {
 		return Set(errorsAndItemsByService.keys)

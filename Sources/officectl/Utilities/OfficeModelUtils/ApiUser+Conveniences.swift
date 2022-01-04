@@ -15,7 +15,7 @@ import OfficeModel
 extension ApiUser {
 	
 	init(multiUsers: MultiServicesUser, orderedServices: [AnyUserDirectoryService]) throws {
-#warning("TODO: Note that we ignore the errors by service ids. Is this what we really want?")
+#warning("TODO: Note that we ignore the errors by service IDs. Is this what we really want?")
 		try self.init(usersByService: multiUsers.itemsByService.mapValues{ try $0?.userWrapper() }, orderedServices: orderedServices)
 	}
 	
@@ -29,10 +29,10 @@ extension ApiUser {
 				guard let newEmails = user?.emails else {return currentEmails}
 				return ApiUser.addMissingElements(from: newEmails, to: currentEmails ?? [])
 			}),
-			firstName: sortedUserWrappers.lazy.compactMap{ $0?.firstName.value }.first ?? nil,
-			lastName:  sortedUserWrappers.lazy.compactMap{ $0?.lastName.value  }.first ?? nil,
-			nickname:  sortedUserWrappers.lazy.compactMap{ $0?.nickname.value  }.first ?? nil,
-			usersByServiceId: users.mapKeys{ $0.config.serviceId }.mapValues{ $0.flatMap{ ApiDirectoryUser(directoryUserWrapper: $0) } }
+			firstName: sortedUserWrappers.lazy.compactMap{ $0?.firstName }.first ?? nil,
+			lastName:  sortedUserWrappers.lazy.compactMap{ $0?.lastName  }.first ?? nil,
+			nickname:  sortedUserWrappers.lazy.compactMap{ $0?.nickname  }.first ?? nil,
+			usersByServiceID: users.mapKeys{ $0.config.serviceID }.mapValues{ $0.flatMap{ ApiDirectoryUser(directoryUserWrapper: $0) } }
 		)
 	}
 	

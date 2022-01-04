@@ -23,12 +23,12 @@ public protocol UserDirectoryService : OfficeKitService, UserDirectoryServiceIni
 	/** Convert the user to a user printable string. Mostly used for logging. */
 	func shortDescription(fromUser user: UserType) -> String
 	
-	/** Empty ids are **not supported**. There are no other restrictions. */
-	func string(fromUserId userId: UserType.IdType) -> String
-	func userId(fromString string: String) throws -> UserType.IdType
+	/** Empty IDs are **not supported**. There are no other restrictions. */
+	func string(fromUserID userID: UserType.IDType) -> String
+	func userID(fromString string: String) throws -> UserType.IDType
 	
-	func string(fromPersistentUserId pId: UserType.PersistentIdType) -> String
-	func persistentUserId(fromString string: String) throws -> UserType.PersistentIdType
+	func string(fromPersistentUserID pID: UserType.PersistentIDType) -> String
+	func persistentUserID(fromString string: String) throws -> UserType.PersistentIDType
 	
 	/**
 	 Converts the given user to a JSON (generic codable storage representation).
@@ -41,11 +41,11 @@ public protocol UserDirectoryService : OfficeKitService, UserDirectoryServiceIni
 	 If possible, converts the given generic user to a user for the service with as much information as possible.
 	 
 	 The conversion should not fetch anything from the directory.
-	 It is simply a representation of how the given id _should_ be created in the directory if it were to be created in it.
+	 It is simply a representation of how the given ID _should_ be created in the directory if it were to be created in it.
 	 
-	 Generally, the method implementation should first check the source service id of the given user
-	 (which is actually the tag of the tagged id of the wrapped user).
-	 If the user comes from your own service (the source service id of the user and your service id are equal),
+	 Generally, the method implementation should first check the source service ID of the given user
+	 (which is actually the tag of the tagged ID of the wrapped user).
+	 If the user comes from your own service (the source service ID of the user and your service ID are equal),
 	 you should directly convert the underlying user of the given user (this is the equivalent of doing the reverse of `json(fromUser:)`).
 	 Otherwise (the user comes from an unknown service), you should apply custom rules to create a user from the generic properties available in the wrapped user.
 	 
@@ -55,20 +55,20 @@ public protocol UserDirectoryService : OfficeKitService, UserDirectoryServiceIni
 	
 	/** Returns the properties that were successfully applied to the user. */
 	@discardableResult
-	func applyHints(_ hints: [DirectoryUserProperty: String?], toUser user: inout UserType, allowUserIdChange: Bool) -> Set<DirectoryUserProperty>
+	func applyHints(_ hints: [DirectoryUserProperty: String?], toUser user: inout UserType, allowUserIDChange: Bool) -> Set<DirectoryUserProperty>
 	
 	/**
-	 Fetch and return the _only_ user matching the given id.
+	 Fetch and return the _only_ user matching the given ID.
 	 
-	 If _more than one_ user matches the given id, the function should return a **failed** future.
-	 If _no_ users match the given id, the method should return a succeeded future with a `nil` user. */
-	func existingUser(fromPersistentId pId: UserType.PersistentIdType, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> UserType?
+	 If _more than one_ user matches the given ID, the function should return a **failed** future.
+	 If _no_ users match the given ID, the method should return a succeeded future with a `nil` user. */
+	func existingUser(fromPersistentID pID: UserType.PersistentIDType, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> UserType?
 	/**
-	 Fetch and return the _only_ user matching the given id.
+	 Fetch and return the _only_ user matching the given ID.
 	 
-	 If _more than one_ user matches the given id, the function should return a **failed** future.
-	 If _no_ users match the given id, the method should return a succeeded future with a `nil` user. */
-	func existingUser(fromUserId uId: UserType.IdType, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> UserType?
+	 If _more than one_ user matches the given ID, the function should return a **failed** future.
+	 If _no_ users match the given ID, the method should return a succeeded future with a `nil` user. */
+	func existingUser(fromUserID uID: UserType.IDType, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> UserType?
 	
 	func listAllUsers(using services: Services) async throws -> [UserType]
 	
@@ -89,27 +89,27 @@ public protocol UserDirectoryService : OfficeKitService, UserDirectoryServiceIni
 
 extension UserDirectoryService {
 	
-	public func taggedId(fromUserId userId: UserType.IdType) -> TaggedId {
-		return TaggedId(tag: config.serviceId, id: string(fromUserId: userId))
+	public func taggedID(fromUserID userID: UserType.IDType) -> TaggedID {
+		return TaggedID(tag: config.serviceID, id: string(fromUserID: userID))
 	}
 	
-	public func taggedId(fromPersistentUserId pId: UserType.PersistentIdType) -> TaggedId {
-		return TaggedId(tag: config.serviceId, id: string(fromPersistentUserId: pId))
+	public func taggedID(fromPersistentUserID pID: UserType.PersistentIDType) -> TaggedID {
+		return TaggedID(tag: config.serviceID, id: string(fromPersistentUserID: pID))
 	}
 	
 	public func wrappedUser(fromUser user: UserType) throws -> DirectoryUserWrapper {
 		var ret = DirectoryUserWrapper(
-			userId: taggedId(fromUserId: user.userId),
-			persistentId: user.persistentId.value.flatMap{ taggedId(fromPersistentUserId: $0) },
+			userID: taggedID(fromUserID: user.userID),
+			persistentID: user.persistentID.flatMap{ taggedID(fromPersistentUserID: $0) },
 			underlyingUser: try json(fromUser: user)
 		)
-		ret.copyStandardNonIdProperties(fromUser: user)
+		ret.copyStandardNonIDProperties(fromUser: user)
 		return ret
 	}
 	
 	public func logicalUser(fromWrappedUser user: DirectoryUserWrapper, hints: [DirectoryUserProperty: String?]) throws -> UserType {
 		var ret = try logicalUser(fromWrappedUser: user)
-		applyHints(hints, toUser: &ret, allowUserIdChange: false)
+		applyHints(hints, toUser: &ret, allowUserIDChange: false)
 		return ret
 	}
 	
@@ -118,12 +118,12 @@ extension UserDirectoryService {
 	}
 	
 	public func logicalUser(fromEmail email: Email, hints: [DirectoryUserProperty: String?] = [:], emailService: EmailService) throws -> UserType {
-		let genericUser = try emailService.wrappedUser(fromUser: emailService.logicalUser(fromUserId: email))
+		let genericUser = try emailService.wrappedUser(fromUser: emailService.logicalUser(fromUserID: email))
 		return try logicalUser(fromWrappedUser: genericUser, hints: hints)
 	}
 	
-	public func logicalUser(fromUserId userId: UserType.IdType, hints: [DirectoryUserProperty: String?] = [:]) throws -> UserType {
-		let user = DirectoryUserWrapper(userId: taggedId(fromUserId: userId))
+	public func logicalUser(fromUserID userID: UserType.IDType, hints: [DirectoryUserProperty: String?] = [:]) throws -> UserType {
+		let user = DirectoryUserWrapper(userID: taggedID(fromUserID: userID))
 		return try logicalUser(fromWrappedUser: user, hints: hints)
 	}
 	
@@ -134,7 +134,7 @@ extension UserDirectoryService {
 	public func existingUser<OtherServiceType : UserDirectoryService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> UserType? {
 		let foreignGenericUser = try service.wrappedUser(fromUser: user)
 		let nativeLogicalUser = try logicalUser(fromWrappedUser: foreignGenericUser, hints: [:])
-		return try await existingUser(fromUserId: nativeLogicalUser.userId, propertiesToFetch: propertiesToFetch, using: services)
+		return try await existingUser(fromUserID: nativeLogicalUser.userID, propertiesToFetch: propertiesToFetch, using: services)
 	}
 	
 }
@@ -161,7 +161,7 @@ public extension UserDirectoryService {
 	static func erasedService(anyConfig c: Any, globalConfig gc: GlobalConfig, cachedServices: [AnyOfficeKitService]?) -> AnyUserDirectoryService? {
 		guard let c: ConfigType = c as? ConfigType ?? (c as? AnyOfficeKitServiceConfig)?.unbox() else {return nil}
 		
-		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unbox() as Self? }).first(where: { $0.config.serviceId == c.serviceId }) {
+		if let alreadyInstantiated = cachedServices?.compactMap({ $0.unbox() as Self? }).first(where: { $0.config.serviceID == c.serviceID }) {
 			return alreadyInstantiated.erase()
 		}
 		

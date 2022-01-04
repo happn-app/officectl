@@ -28,7 +28,7 @@ import OfficeModel
  - Semi-singleton store */
 public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	
-	public static let providerId = "http_service_v1"
+	public static let providerID = "http_service_v1"
 	
 	public typealias ConfigType = ExternalDirectoryServiceV1Config
 	public typealias UserType = DirectoryUserWrapper
@@ -53,23 +53,23 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	}
 	
 	public func shortDescription(fromUser user: DirectoryUserWrapper) -> String {
-		return "\(user.userId)"
+		return "\(user.userID)"
 	}
 	
-	public func string(fromUserId userId: TaggedId) -> String {
-		return userId.stringValue
+	public func string(fromUserID userID: TaggedID) -> String {
+		return userID.stringValue
 	}
 	
-	public func userId(fromString string: String) throws -> TaggedId {
-		return TaggedId(string: string)
+	public func userID(fromString string: String) throws -> TaggedID {
+		return TaggedID(string: string)
 	}
 	
-	public func string(fromPersistentUserId pId: TaggedId) -> String {
-		return pId.stringValue
+	public func string(fromPersistentUserID pID: TaggedID) -> String {
+		return pID.stringValue
 	}
 	
-	public func persistentUserId(fromString string: String) throws -> TaggedId {
-		return TaggedId(string: string)
+	public func persistentUserID(fromString string: String) throws -> TaggedID {
+		return TaggedID(string: string)
 	}
 	
 	public func json(fromUser user: DirectoryUserWrapper) throws -> JSON {
@@ -77,32 +77,32 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	}
 	
 	public func logicalUser(fromJSON json: JSON) throws -> DirectoryUserWrapper {
-		return try DirectoryUserWrapper(json: json, forcedUserId: nil)
+		return try DirectoryUserWrapper(json: json, forcedUserID: nil)
 	}
 	
 	public func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> DirectoryUserWrapper {
-		if userWrapper.sourceServiceId == config.serviceId, let underlyingUser = userWrapper.underlyingUser {
+		if userWrapper.sourceServiceID == config.serviceID, let underlyingUser = userWrapper.underlyingUser {
 			return try logicalUser(fromJSON: underlyingUser)
 		}
 		
 		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
 		
-		let inferredUserId: TaggedId
-		if userWrapper.sourceServiceId == config.serviceId {
-			/* The underlying user (though absent) is from our service; the original id can be decoded as a valid id for our service. */
-			inferredUserId = TaggedId(string: userWrapper.userId.id)
+		let inferredUserID: TaggedID
+		if userWrapper.sourceServiceID == config.serviceID {
+			/* The underlying user (though absent) is from our service; the original ID can be decoded as a valid ID for our service. */
+			inferredUserID = TaggedID(string: userWrapper.userID.id)
 		} else {
 			var idStr: String?
-			for s in config.wrappedUserToUserIdConversionStrategies where idStr == nil {
-				idStr = try? s.convertUserToId(userWrapper, globalConfig: globalConfig)
+			for s in config.wrappedUserToUserIDConversionStrategies where idStr == nil {
+				idStr = try? s.convertUserToID(userWrapper, globalConfig: globalConfig)
 			}
-			guard let foundIdStr = idStr else {
+			guard let foundIDStr = idStr else {
 				throw InvalidArgumentError(message: "No conversion strategy matches user \(userWrapper)")
 			}
-			inferredUserId = TaggedId(string: foundIdStr)
+			inferredUserID = TaggedID(string: foundIDStr)
 		}
 		
-		var ret = DirectoryUserWrapper(userId: inferredUserId)
+		var ret = DirectoryUserWrapper(userID: inferredUserID)
 		ret.identifyingEmail = userWrapper.identifyingEmail
 		ret.otherEmails = userWrapper.otherEmails
 		ret.firstName = userWrapper.firstName
@@ -111,34 +111,34 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		return ret
 	}
 	
-	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout DirectoryUserWrapper, allowUserIdChange: Bool) -> Set<DirectoryUserProperty> {
-		return user.applyAndSaveHints(hints, blacklistedKeys: (allowUserIdChange ? [] : [.userId]))
+	public func applyHints(_ hints: [DirectoryUserProperty : String?], toUser user: inout DirectoryUserWrapper, allowUserIDChange: Bool) -> Set<DirectoryUserProperty> {
+		return user.applyAndSaveHints(hints, blacklistedKeys: (allowUserIDChange ? [] : [.userID]))
 	}
 	
-	public func existingUser(fromPersistentId pId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper? {
+	public func existingUser(fromPersistentID pID: TaggedID, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper? {
 		let operation = try ApiRequestOperation<DirectoryUserWrapper?>.forAPIRequest(
 			url: config.url.appending("existing-user-from", "persistent-id"), method: "POST",
-			httpBody: Request(persistentId: pId, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue })),
+			httpBody: Request(persistentID: pID, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue })),
 			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
 		)
 		return try await services.opQ.addOperationAndGetResult(operation).result.getData()
 		
 		struct Request : Encodable {
-			var persistentId: TaggedId
+			var persistentID: TaggedID
 			var propertiesToFetch: Set<String>
 		}
 	}
 	
-	public func existingUser(fromUserId uId: TaggedId, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper? {
+	public func existingUser(fromUserID uID: TaggedID, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> DirectoryUserWrapper? {
 		let operation = try ApiRequestOperation<DirectoryUserWrapper?>.forAPIRequest(
 			url: config.url.appending("existing-user-from", "user-id"), method: "POST",
-			httpBody: Request(userId: uId, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue })),
+			httpBody: Request(userID: uID, propertiesToFetch: Set(propertiesToFetch.map{ $0.rawValue })),
 			decoders: [jsonDecoder], requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
 		)
 		return try await services.opQ.addOperationAndGetResult(operation).result.getData()
 		
 		struct Request : Encodable {
-			var userId: TaggedId
+			var userID: TaggedID
 			var propertiesToFetch: Set<String>
 		}
 	}
@@ -195,7 +195,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	public var supportsPasswordChange: Bool {return config.supportsPasswordChange}
 	public func changePasswordAction(for user: DirectoryUserWrapper, using services: Services) throws -> ResetPasswordAction {
 		let semiSingletonStore = try services.semiSingletonStore()
-		return semiSingletonStore.semiSingleton(forKey: user.userId, additionalInitInfo: (config.url, authenticator, jsonEncoder, jsonDecoder)) as ResetExternalServicePasswordAction
+		return semiSingletonStore.semiSingleton(forKey: user.userID, additionalInitInfo: (config.url, authenticator, jsonEncoder, jsonDecoder)) as ResetExternalServicePasswordAction
 	}
 	
 	private typealias ApiRequestOperation<T : Decodable> = URLRequestDataOperation<ExternalServiceResponse<T>>
