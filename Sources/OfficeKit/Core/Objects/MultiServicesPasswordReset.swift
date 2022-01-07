@@ -18,7 +18,7 @@ extension MultiServicesPasswordReset {
 	
 	public static func fetch(from dsuIDPair: AnyDSUIDPair, in services: Set<AnyUserDirectoryService>, using depServices: Services) async throws -> MultiServicesPasswordReset {
 		let user = try await MultiServicesUser.fetch(from: dsuIDPair, in: services, using: depServices)
-		return user.mapItems{ try $0.flatMap{ try $0.service.supportsPasswordChange ? AnyDSPasswordResetPair(dsuPair: $0, using: depServices) : nil } }
+		return user.mapItems{ try $0.flatMap{ try AnyDSPasswordResetPair(dsuPair: $0, using: depServices) } }
 	}
 	
 	public var isExecuting: Bool {

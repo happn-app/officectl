@@ -19,10 +19,13 @@ extension ApiPasswordReset {
 	init(requestedUserID uid: TaggedID, multiPasswordResets: MultiServicesPasswordReset, environment: Environment) {
 		self.init(
 			requestedUserID: uid,
-			fetchErrorsByServiceID: multiPasswordResets.errorsByServiceID.mapValues{ ApiError(error: $0, environment: environment) },
 			isExecuting: multiPasswordResets.isExecuting,
-			serviceResets: multiPasswordResets.itemsByServiceID.mapValues{ resetPair in
-				resetPair.flatMap{ ApiServicePasswordReset(passwordResetPair: $0, environment: environment) }
+			serviceResets: multiPasswordResets.errorsAndItemsByServiceID.compactMapValues{ resetPairResult in
+				switch resetPairResult {
+					case .success(let resetPair): return resetPair.flatMap{ .success(ApiServicePasswordReset(passwordResetPair: $0, environment: environment)) }
+					case .failure(let error):     return .failure(ApiError(error: error, environment: environment))
+				}
+				
 			}
 		)
 	}
