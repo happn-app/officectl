@@ -18,15 +18,8 @@ extension ApiPasswordReset {
 	
 	init(requestedUserID uid: TaggedID, multiPasswordResets: MultiServicesPasswordReset, environment: Environment) {
 		self.init(
-			requestedUserID: uid,
-			isExecuting: multiPasswordResets.isExecuting,
-			serviceResets: multiPasswordResets.errorsAndItemsByServiceID.compactMapValues{ resetPairResult in
-				switch resetPairResult {
-					case .success(let resetPair): return resetPair.flatMap{ .success(ApiServicePasswordReset(passwordResetPair: $0, environment: environment)) }
-					case .failure(let error):     return .failure(ApiError(error: error, environment: environment))
-				}
-				
-			}
+			results: multiPasswordResets.errorsAndItemsByServiceID.mapValues{ ApiResult(result: $0.map{ $0.flatMap{ ApiDirectoryPasswordReset(passwordResetPair: $0, environment: environment) } }, environment: environment) },
+			mergedResults: ApiMergedPasswordReset(isExecuting: multiPasswordResets.isExecuting)
 		)
 	}
 	

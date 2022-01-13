@@ -1,5 +1,5 @@
 /*
- * ApiServicePasswordReset+Conveniences.swift
+ * ApiDirectoryPasswordReset+Conveniences.swift
  * officectl
  *
  * Created by François Lamboley on 2021/12/30.
@@ -14,7 +14,7 @@ import OfficeModel
 
 
 
-extension ApiServicePasswordReset {
+extension ApiDirectoryPasswordReset {
 	
 	init(passwordResetPair: AnyDSPasswordResetPair, environment: Environment) {
 		let status: Status

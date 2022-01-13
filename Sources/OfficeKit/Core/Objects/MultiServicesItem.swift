@@ -27,6 +27,10 @@ public struct MultiServicesItem<ItemType> {
 		return Set(errorsAndItemsByService.keys)
 	}
 	
+	public var serviceIDs: Set<String> {
+		return Set(errorsAndItemsByService.keys.map{ $0.config.serviceID })
+	}
+	
 	/**
 	 Creates the MultiServicesUser with the given pairs and errors.
 	 If, for a given service there is a user and some errors, the user will be chosen. */

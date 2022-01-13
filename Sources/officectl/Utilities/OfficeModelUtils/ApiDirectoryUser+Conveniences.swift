@@ -14,18 +14,22 @@ import OfficeModel
 
 extension ApiDirectoryUser {
 	
-	init(directoryUserWrapper w: DirectoryUserWrapper) {
+	init(directoryUserWrapper: DirectoryUserWrapper) {
 		self.init(
-			serviceID: w.sourceServiceID,
-			userID: w.userID.id,
-			remotePersistentID: w.remotePersistentID.map{ $0.id },
-			remoteIdentifyingEmail: w.remoteIdentifyingEmail,
-			remoteOtherEmails: w.remoteOtherEmails,
-			remoteFirstName: w.remoteFirstName,
-			remoteLastName: w.remoteLastName,
-			remoteNickname: w.remoteNickname,
-			underlyingUser: w.underlyingUser
+			serviceID:              directoryUserWrapper.sourceServiceID,
+			userID:                 directoryUserWrapper.userID.id,
+			remotePersistentID:     directoryUserWrapper.remotePersistentID.map{ $0.id },
+			remoteIdentifyingEmail: directoryUserWrapper.remoteIdentifyingEmail,
+			remoteOtherEmails:      directoryUserWrapper.remoteOtherEmails,
+			remoteFirstName:        directoryUserWrapper.remoteFirstName,
+			remoteLastName:         directoryUserWrapper.remoteLastName,
+			remoteNickname:         directoryUserWrapper.remoteNickname,
+			underlyingUser:         directoryUserWrapper.underlyingUser
 		)
+	}
+	
+	init(user: AnyDSUPair) throws {
+		try self.init(directoryUserWrapper: user.userWrapper())
 	}
 	
 }
