@@ -45,7 +45,7 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 				repeat {
 					let usersAtPage = try await searchResults(for: Request(offset: curOffset, limit: limit, fullTextSearchWithAllTerms: email))
 					nUsersAtCurPage = usersAtPage.count
-					users += usersAtPage
+					addNonAddedUsers(from: usersAtPage, to: &users)
 					curOffset += limit
 				} while nUsersAtCurPage >= limit/2
 				if let email = email {
@@ -54,7 +54,7 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 					repeat {
 						let usersAtPage = try await searchResults(for: Request(offset: curOffset, limit: limit, ids: [email]))
 						nUsersAtCurPage = usersAtPage.count
-						users += usersAtPage
+						addNonAddedUsers(from: usersAtPage, to: &users)
 						curOffset += limit
 					} while nUsersAtCurPage >= limit/2
 				}
@@ -79,6 +79,15 @@ public final class SearchHappnUsersOperation : RetryingOperation, HasResult {
 			httpBody: request,
 			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 		).startAndGetResult().result.data ?? []
+	}
+	
+	private func addNonAddedUsers(from addedUsers: [HappnUser], to addedTo: inout [HappnUser]) {
+		for addedUser in addedUsers {
+			guard !addedTo.contains(where: { $0.id == addedUser.id }) else {
+				continue
+			}
+			addedTo.append(addedUser)
+		}
 	}
 	
 	private struct Request : Encodable {
