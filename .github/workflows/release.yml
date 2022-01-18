@@ -23,8 +23,8 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
           version: '326.0.0'
-          service_account_email: ${{ secrets.GCP_GITHUB_SA_EMAIL }}
-          service_account_key: ${{ secrets.GCP_GITHUB_SA_CREDENTIALS }}
+          service_account_email: ${{ secrets.GCP_GITHUB_SA_EMAIL_FOR_PUBLIC_REPOS }}
+          service_account_key: ${{ secrets.GCP_GITHUB_SA_CREDENTIALS_FOR_PUBLIC_REPOS }}
           project_id: ${{ secrets.GCP_PROJECT }}
 
       # Configure Docker to use the gcloud command-line tool as a credential
