@@ -35,7 +35,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	/* Register global middlewares */
 	/* Note: This middleware setup is the default. We simply make it explict. */
 	app.middleware = Middlewares() /* Drop all default middlewares */
-	app.middleware.use(ErrorMiddleware.default(environment: app.environment)) /* Catches errors and converts them to HTTP response (suitable for API) */
+	app.middleware.use(ErrorMiddleware(handleGenericError)) /* Catches errors and converts them to HTTP response (suitable for API) */
 	
 	let jwtAuth = UserJWTAuthenticator()
 	let sessionAuth = UserSessionAuthenticator()
@@ -46,7 +46,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	let loginGuardRedirect = LoggedInUser.redirectMiddlewareWithNextParam(baseURL: URL(string: "/login")!, nextParamName: "next")
 	
 	let fileMiddleware = FileMiddleware(publicDirectory: app.directory.publicDirectory) /* Serves files from the “Public” directory */
-	let asyncErrorMiddleware = AsyncErrorMiddleware(processErrorHandler: handleWebError) /* Catches errors and converts them to HTTP response (suitable for web) */
+	let webErrorMiddleware = AsyncErrorMiddleware(processErrorHandler: handleWebError) /* Catches errors and converts them to HTTP response (suitable for web) */
 	
 	/* **************************** */
 	/* ******** API Routes ******** */
@@ -87,7 +87,7 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	/* ******** Web Routes ******** */
 	/* **************************** */
 	
-	let webRoutesBuilder = app.grouped(asyncErrorMiddleware, fileMiddleware, app.sessions.middleware)
+	let webRoutesBuilder = app.grouped(webErrorMiddleware, fileMiddleware, app.sessions.middleware)
 	let authedWebRoutesBuilder = webRoutesBuilder.grouped(sessionAuth)
 	let authedWebRoutesBuilderGuard = authedWebRoutesBuilder.grouped(loginGuard)
 	let authedWebRoutesBuilderRedir = authedWebRoutesBuilder.grouped(loginGuardRedirect)
@@ -138,6 +138,47 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	
 	let listUsersController = ListUsersController()
 	authedWebRoutesBuilderRedir.get("list-users", use: listUsersController.showUsersList)
+}
+
+
+/* From Vapor’s default ErrorMiddleware. */
+private func handleGenericError(request req: Request, error: Error) -> Response {
+	/* Variables to determine. */
+	let status: HTTPResponseStatus
+	let reason: String
+	let headers: HTTPHeaders
+	
+	/* Inspect the error type. */
+	switch error {
+		case let abort as AbortError:
+			/* This is an abort error, we should use its status, reason, and headers. */
+			reason = abort.reason
+			status = abort.status
+			headers = abort.headers
+		default:
+			/* If not release mode, and error is debuggable, provide debug info;
+			 * otherwise, deliver a generic 500 to avoid exposing any sensitive error info. */
+			reason = req.application.environment.isRelease ? "Something went wrong." : String(describing: error)
+			status = .internalServerError
+			headers = [:]
+	}
+	
+	/* Report the error to logger. */
+	req.logger.report(error: error)
+	
+	/* Create a Response with appropriate status. */
+	let response = Response(status: status, headers: headers)
+	
+	/* Attempt to serialize the error to json. */
+	do {
+		let errorResponse = ApiError(code: (error as NSError).code, domain: (error as NSError).domain, message: reason)
+		response.body = try .init(data: JSONEncoder().encode(errorResponse))
+		response.headers.replaceOrAdd(name: .contentType, value: "application/json; charset=utf-8")
+	} catch {
+		response.body = .init(string: "Oops: \(error)")
+		response.headers.replaceOrAdd(name: .contentType, value: "text/plain; charset=utf-8")
+	}
+	return response
 }
 
 
