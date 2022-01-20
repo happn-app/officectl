@@ -31,11 +31,11 @@ struct UserCreateCommand : ParsableCommand {
 	@ArgumentParser.Option(help: "The email of the new user (we require the full email to infer the domain for the new user).")
 	var email: Email
 	
-	@ArgumentParser.Option(help: "The firstname of the new user.")
-	var firstname: String
+	@ArgumentParser.Option(help: "The firstName of the new user.")
+	var firstName: String
 	
-	@ArgumentParser.Option(help: "The lastname of the new user.")
-	var lastname: String
+	@ArgumentParser.Option(help: "The lastName of the new user.")
+	var lastName: String
 	
 	@ArgumentParser.Option(help: "The password of the new user. If not set, an auto-generated pass will be used.")
 	var password: String?
@@ -62,7 +62,7 @@ struct UserCreateCommand : ParsableCommand {
 			return
 		}
 		
-		let users = services.map{ s in Result{ try s.logicalUser(fromEmail: email, hints: [.firstName: firstname, .lastName: lastname, .password: password], servicesProvider: sProvider) } }
+		let users = services.map{ s in Result{ try s.logicalUser(fromEmail: email, hints: [.firstName: firstName, .lastName: lastName, .password: password], servicesProvider: sProvider) } }
 		
 		var skippedSomeUsers = false
 		for (idx, user) in users.enumerated() {
@@ -81,8 +81,8 @@ struct UserCreateCommand : ParsableCommand {
 			let confirmationPrompt: ConsoleText = (
 				ConsoleText(stringLiteral: "Will try and create user with these info:") + ConsoleText.newLine +
 				ConsoleText(stringLiteral: "   - email:      \(email.rawValue)") + ConsoleText.newLine +
-				ConsoleText(stringLiteral: "   - first name: \(firstname)") + ConsoleText.newLine +
-				ConsoleText(stringLiteral: "   - last name:  \(lastname)") + ConsoleText.newLine +
+				ConsoleText(stringLiteral: "   - first name: \(firstName)") + ConsoleText.newLine +
+				ConsoleText(stringLiteral: "   - last name:  \(lastName)") + ConsoleText.newLine +
 				ConsoleText(stringLiteral: "   - password:   \(password)") + ConsoleText.newLine +
 				ConsoleText.newLine +
 				ConsoleText(stringLiteral: "Resolved to:") +
@@ -106,7 +106,7 @@ struct UserCreateCommand : ParsableCommand {
 			}
 		}
 		
-		try app.auditLogger.log(action: "Creating user with email “\(email.rawValue)”, first name “\(firstname)”, last name “\(lastname)” on services IDs \(serviceIDs?.joined(separator: ",") ?? "<all services>").", source: .cli)
+		try app.auditLogger.log(action: "Creating user with email “\(email.rawValue)”, first name “\(firstName)”, last name “\(lastName)” on services IDs \(serviceIDs?.joined(separator: ",") ?? "<all services>").", source: .cli)
 		
 		let results = await users
 			.compactMap{ $0.successValue /* Failure case already handled */ }
