@@ -22,13 +22,18 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 	
 	public let ldapConnector: LDAPConnector
 	public let request: LDAPSearchRequest
+	/**
+	 When the base of your request is a non-existing object, you get a “no such object error”.
+	 You can hide this error and have the operation return an empty array instead. */
+	public let hideNoSuchObjectError: Bool
 	
 	public private(set) var results = Result<ResultType, Error>.failure(OperationIsNotFinishedError())
 	public var result: Result<ResultType, Error> {return results}
 	
-	public init(ldapConnector c: LDAPConnector, request r: LDAPSearchRequest) {
-		ldapConnector = c
-		request = r
+	public init(ldapConnector c: LDAPConnector, request r: LDAPSearchRequest, hideNoSuchObjectError: Bool = false) {
+		self.hideNoSuchObjectError = hideNoSuchObjectError
+		self.ldapConnector = c
+		self.request = r
 	}
 	
 	public override func startBaseOperation(isRetry: Bool) {
@@ -57,6 +62,13 @@ public final class SearchLDAPOperation : RetryingOperation, HasResult {
 					}
 					defer {_ = ldap_msgfree(searchResultMessagePtr)}
 					
+					guard !hideNoSuchObjectError || searchResultError != LDAP_NO_SUCH_OBJECT else {
+						/* Indicates the target object cannot be found.
+						 * This code is not returned on following operations:
+						 *   Search operations that find the search base but cannot find any entries that match the search filter.
+						 *   Bind operations. */
+						return (results: [], references: [])
+					}
 					guard searchResultError == LDAP_SUCCESS else {
 						OfficeKitConfig.logger?.info("Cannot search LDAP: \(String(cString: ldap_err2string(searchResultError)))")
 						throw NSError(domain: "com.happn.officectl.openldap", code: Int(searchResultError), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(searchResultError))])
@@ -151,9 +163,13 @@ public struct LDAPSearchRequest {
 	
 	public enum Scope : ber_int_t {
 		
+		/** https://ldapwiki.com/wiki/BaseObject */
 		case base = 0
+		/** https://ldapwiki.com/wiki/SingleLevel */
 		case singleLevel = 1
+		/** https://ldapwiki.com/wiki/WholeSubtree */
 		case subtree = 2
+		/** https://ldapwiki.com/wiki/SubordinateSubtree */
 		case children = 3 /* OpenLDAP Extension */
 		case `default` = -1 /* OpenLDAP Extension */
 		

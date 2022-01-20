@@ -239,12 +239,14 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		try await ldapConnector.connect(scope: ())
 		
 		/* TODO: Implement properties to fetch. */
-		let searchOp = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .base, base: uID, searchQuery: nil, attributesToFetch: nil))
+		let searchOp = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .base, base: uID, searchQuery: nil, attributesToFetch: nil), hideNoSuchObjectError: true)
 		let searchResults = try await services.opQ.addOperationAndGetResult(searchOp)
 		
-		let c = searchResults.results.count
-		guard let object = searchResults.results.first, c == 1 else {
-			throw c == 0 ? Error.userNotFound : Error.tooManyUsersFound
+		guard let object = searchResults.results.first else {
+			return nil
+		}
+		guard searchResults.results.count == 1 else {
+			throw Error.tooManyUsersFound
 		}
 		guard let ret = LDAPInetOrgPersonWithObject(object: object) else {
 			throw Error.internalError
@@ -344,7 +346,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		try await ldapConnector.connect(scope: ())
 		
 		let searchRequest = LDAPSearchRequest(scope: .base, base: dn, searchQuery: nil, attributesToFetch: properties)
-		let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: searchRequest)
+		let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: searchRequest, hideNoSuchObjectError: true)
 		
 		let ldapObjects = try await services.opQ.addOperationAndGetResult(op).results
 		guard ldapObjects.count <= 1             else {throw Error.tooManyUsersFound}
