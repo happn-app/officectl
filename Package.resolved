@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/swift-server/async-http-client.git",
         "state": {
           "branch": null,
-          "revision": "70826d038d5bdc3142a386b735792d87ef7a5dfc",
-          "version": "1.8.1"
+          "revision": "cbf533073d9a5edfb16c266d14151f69137ba7c9",
+          "version": "1.8.2"
         }
       },
       {
@@ -123,8 +123,8 @@
         "repositoryURL": "https://github.com/vapor/leaf.git",
         "state": {
           "branch": null,
-          "revision": "ffff1a882ab880e2c4f919a82cd60518912e6499",
-          "version": "4.1.4"
+          "revision": "41741b782ac49959af2f7612661154326ac24d00",
+          "version": "4.1.5"
         }
       },
       {
@@ -366,8 +366,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "88901368be090e69077418c36d17552e145ddd6e",
-          "version": "4.54.1"
+          "revision": "18e9419cae5049e43ca1e8002ca3cf0449f2c8ed",
+          "version": "4.55.0"
         }
       },
       {
