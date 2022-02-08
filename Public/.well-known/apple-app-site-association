@@ -12,6 +12,11 @@
             "comment": "Matches any URL whose fragment equals no_universal_links and instructs the system not to open it as a universal link. This is a rule we find in Apple’s doc and I like it, so I’ve kept it. See doc for more examples: https://developer.apple.com/documentation/xcode/supporting-associated-domains."
           },
           {
+            "/": "/oauth2/callback",
+            "exclude": true,
+            "comment": "Exclude oauth2 callback."
+          },
+          {
             "/": "/api/*",
             "exclude": true,
             "comment": "Matches any URL whose path starts with /api/ and instructs the system not to open it as a universal link. We do not really need it, but why not 🤷‍♂️"
