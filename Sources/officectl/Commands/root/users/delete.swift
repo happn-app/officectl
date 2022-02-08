@@ -28,10 +28,10 @@ struct UserDeleteCommand : ParsableCommand {
 	@ArgumentParser.Flag(help: "If set, this the users will be deleted without confirmation.")
 	var yes = false
 	
-	@ArgumentParser.Option(help: "The tagged user ID of the user to delete.")
+	@ArgumentParser.Option(name: .customLong("user-id"), help: "The tagged user ID of the user to delete.")
 	var userID: String
 	
-	@ArgumentParser.Option(help: "The service IDs on which to delete the user, comma-separated. If unset, the user will be deleted on all the services configured.")
+	@ArgumentParser.Option(name: .customLong("service-ids"), help: "The service IDs on which to delete the user, comma-separated. If unset, the user will be deleted on all the services configured.")
 	var serviceIDs: String?
 	
 	func run() throws {

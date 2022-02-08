@@ -20,7 +20,7 @@ struct BackupMailsCommand : ParsableCommand {
 	
 	struct Options : ParsableArguments {
 		
-		@ArgumentParser.Option(help: "The ID of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.")
+		@ArgumentParser.Option(name: .customLong("service-id"), help: "The ID of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.")
 		var serviceID: String?
 		
 		@ArgumentParser.Option(help: "The path to the config file to use (WILL BE OVERWRITTEN) for offlineimap.")

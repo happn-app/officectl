@@ -25,7 +25,7 @@ struct GetTokenCommand : ParsableCommand {
 	@ArgumentParser.Option(help: "A comma-separated list of scopes.")
 	var scopes: String?
 	
-	@ArgumentParser.Option(help: "The ID of the service from which to retrieve the token.")
+	@ArgumentParser.Option(name: .customLong("service-id"), help: "The ID of the service from which to retrieve the token.")
 	var serviceID: String?
 	
 	@ArgumentParser.Option(help: "The user as whom to login as.")

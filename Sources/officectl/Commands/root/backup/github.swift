@@ -27,7 +27,7 @@ struct BackupGitHubCommand : ParsableCommand {
 	@OptionGroup()
 	var backupOptions: BackupCommand.Options
 	
-	@ArgumentParser.Option(help: "The ID of the GitHub service to use to do the backup. Required if there are more than one GitHub service in officectl conf, otherwise the only GitHub service is used.")
+	@ArgumentParser.Option(name: .customLong("service-id"), help: "The ID of the GitHub service to use to do the backup. Required if there are more than one GitHub service in officectl conf, otherwise the only GitHub service is used.")
 	var serviceID: String?
 	
 	@ArgumentParser.Option(help: "The organisation names for which to backup the repositories from.")

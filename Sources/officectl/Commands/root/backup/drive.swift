@@ -50,7 +50,7 @@ struct BackupDriveCommand : ParsableCommand {
 	@OptionGroup()
 	var backupOptions: BackupCommand.Options
 	
-	@ArgumentParser.Option(help: "The ID of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.")
+	@ArgumentParser.Option(name: .customLong("service-id"), help: "The ID of the Google service to use to do the backup. Required if there are more than one Google service in officectl conf, otherwise the only Google service is used.")
 	var serviceID: String?
 	
 	@ArgumentParser.Option(help: "When downloading the drive, if the username of the email has the given suffix, the resulting destination will be the same email without the suffix in the username. The drives to backup given will be searched with and without the suffix.")

@@ -24,10 +24,10 @@ struct UserChangePasswordCommand : ParsableCommand {
 	@OptionGroup()
 	var globalOptions: OfficectlRootCommand.Options
 	
-	@ArgumentParser.Option(help: "The tagged user ID of the user whose password needs to be reset.")
+	@ArgumentParser.Option(name: .customLong("user-id"), help: "The tagged user ID of the user whose password needs to be reset.")
 	var userID: String
 	
-	@ArgumentParser.Option(help: "The service IDs on which to reset the password. If unset, the password will be reset on all the services configured.")
+	@ArgumentParser.Option(name: .customLong("service-ids"), help: "The service IDs on which to reset the password. If unset, the password will be reset on all the services configured.")
 	var serviceIDs: String?
 	
 	func run() throws {

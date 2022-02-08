@@ -40,7 +40,7 @@ struct UserCreateCommand : ParsableCommand {
 	@ArgumentParser.Option(help: "The password of the new user. If not set, an auto-generated pass will be used.")
 	var password: String?
 	
-	@ArgumentParser.Option(help: "The service IDs on which to create the user, comma-separated. If unset, the user will be created on all the services configured.")
+	@ArgumentParser.Option(name: .customLong("service-ids"), help: "The service IDs on which to create the user, comma-separated. If unset, the user will be created on all the services configured.")
 	var serviceIDs: String?
 	
 	func run() throws {
