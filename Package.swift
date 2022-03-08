@@ -106,6 +106,7 @@ let package = Package(
 				.product(name: "JWT",                      package: "jwt"),
 				.product(name: "Logging",                  package: "swift-log"),
 				.product(name: "NIO",                      package: "swift-nio"),
+				.product(name: "OfficeModel",              package: "officectl-model"), /* We should try and get rid of this dep from there. */
 				.product(name: "OperationAwaiting",        package: "OperationAwaiting"),
 				.product(name: "RetryingOperation",        package: "RetryingOperation"),
 				.product(name: "SemiSingleton",            package: "SemiSingleton"),
