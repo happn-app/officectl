@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/swift-server/async-http-client.git",
         "state": {
           "branch": null,
-          "revision": "cbf533073d9a5edfb16c266d14151f69137ba7c9",
-          "version": "1.8.2"
+          "revision": "7a4dfe026f6ee0f8ad741b58df74c60af296365d",
+          "version": "1.9.0"
         }
       },
       {
@@ -174,7 +174,7 @@
       },
       {
         "package": "RecursiveSyncDispatch",
-        "repositoryURL": "https://github.com/happn-tech/RecursiveSyncDispatch.git",
+        "repositoryURL": "https://github.com/happn-app/RecursiveSyncDispatch.git",
         "state": {
           "branch": null,
           "revision": "04936f64e00d898006fc97b5ec938d8ce1fa14ea",
@@ -183,7 +183,7 @@
       },
       {
         "package": "RetryingOperation",
-        "repositoryURL": "https://github.com/happn-tech/RetryingOperation.git",
+        "repositoryURL": "https://github.com/happn-app/RetryingOperation.git",
         "state": {
           "branch": null,
           "revision": "4d69ec3aa4cb5d33e973fcfe01378a1d49e351f2",
@@ -201,10 +201,10 @@
       },
       {
         "package": "SemiSingleton",
-        "repositoryURL": "https://github.com/happn-tech/SemiSingleton.git",
+        "repositoryURL": "https://github.com/happn-app/SemiSingleton.git",
         "state": {
           "branch": "workaround_swift_crash",
-          "revision": "7668338a8950e568011b1e2686fc33dcab7e97b0",
+          "revision": "187ad3df8a68c05f5b55f4090e7c02ccabc1bbca",
           "version": null
         }
       },
@@ -249,8 +249,8 @@
         "repositoryURL": "https://github.com/apple/swift-crypto.git",
         "state": {
           "branch": null,
-          "revision": "3bea268b223651c4ab7b7b9ad62ef9b2d4143eb6",
-          "version": "1.1.6"
+          "revision": "ddb07e896a2a8af79512543b1c7eb9797f8898a5",
+          "version": "1.1.7"
         }
       },
       {
@@ -258,8 +258,8 @@
         "repositoryURL": "https://github.com/Frizlab/swift-email.git",
         "state": {
           "branch": null,
-          "revision": "f73b72d8e2b15034e31381490c49d281b3b5acde",
-          "version": "0.2.2"
+          "revision": "3bfbfda40f5cfb99a43467a48cf8c53a9ab317ce",
+          "version": "0.2.3"
         }
       },
       {
@@ -285,8 +285,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "51c3fc2e4a0fcdf4a25089b288dd65b73df1b0ef",
-          "version": "2.37.0"
+          "revision": "154f1d32366449dcccf6375a173adf4ed2a74429",
+          "version": "2.38.0"
         }
       },
       {
@@ -303,8 +303,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio-http2.git",
         "state": {
           "branch": null,
-          "revision": "6e94a7be32891d1b303a3fcfde8b5bf64d162e74",
-          "version": "1.19.1"
+          "revision": "ac2a5afce3dbb6795b4f78ec3f19726dc28f5617",
+          "version": "1.20.0"
         }
       },
       {
@@ -354,11 +354,11 @@
       },
       {
         "package": "URLRequestOperation",
-        "repositoryURL": "https://github.com/happn-tech/URLRequestOperation.git",
+        "repositoryURL": "https://github.com/happn-app/URLRequestOperation.git",
         "state": {
           "branch": null,
-          "revision": "a9c79c2606d982726e469fe1a48d81903f2bbb76",
-          "version": "2.0.0-alpha.13.1"
+          "revision": "04fd7a21f9f7afb4b89094dad3bf7d5e29c4e46f",
+          "version": "2.0.0-alpha.13.2.1"
         }
       },
       {
@@ -366,8 +366,8 @@
         "repositoryURL": "https://github.com/vapor/vapor.git",
         "state": {
           "branch": null,
-          "revision": "18e9419cae5049e43ca1e8002ca3cf0449f2c8ed",
-          "version": "4.55.0"
+          "revision": "e0fd4f3d76469dd6a0efb2be5c0b2f96b7581187",
+          "version": "4.55.1"
         }
       },
       {
