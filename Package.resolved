@@ -1,394 +1,392 @@
 {
-  "object": {
-    "pins": [
-      {
-        "package": "APIConnectionProtocols",
-        "repositoryURL": "https://github.com/Frizlab/APIConnectionProtocols.git",
-        "state": {
-          "branch": null,
-          "revision": "683bd9332769dfca2761129202e0275da5f61f55",
-          "version": "1.0.0-beta.4"
-        }
-      },
-      {
-        "package": "ASN1Decoder",
-        "repositoryURL": "https://github.com/filom/ASN1Decoder.git",
-        "state": {
-          "branch": null,
-          "revision": "65953a42a0f039f53c73e48fd88c02809f7db607",
-          "version": "1.8.0"
-        }
-      },
-      {
-        "package": "async-http-client",
-        "repositoryURL": "https://github.com/swift-server/async-http-client.git",
-        "state": {
-          "branch": null,
-          "revision": "7a4dfe026f6ee0f8ad741b58df74c60af296365d",
-          "version": "1.9.0"
-        }
-      },
-      {
-        "package": "async-kit",
-        "repositoryURL": "https://github.com/vapor/async-kit.git",
-        "state": {
-          "branch": null,
-          "revision": "e2f741640364c1d271405da637029ea6a33f754e",
-          "version": "1.11.1"
-        }
-      },
-      {
-        "package": "clt-logger",
-        "repositoryURL": "https://github.com/xcode-actions/clt-logger.git",
-        "state": {
-          "branch": null,
-          "revision": "5d3db055e9db2827136c1acf335e136fe759917e",
-          "version": "0.3.6"
-        }
-      },
-      {
-        "package": "CollectionConcurrencyKit",
-        "repositoryURL": "https://github.com/happn-app/CollectionConcurrencyKit.git",
-        "state": {
-          "branch": null,
-          "revision": "903a94af1104ccf907982dd35f980b60d95025a3",
-          "version": "0.2.0"
-        }
-      },
-      {
-        "package": "console-kit",
-        "repositoryURL": "https://github.com/vapor/console-kit.git",
-        "state": {
-          "branch": null,
-          "revision": "75ea3b627d88221440b878e5dfccc73fd06842ed",
-          "version": "4.2.7"
-        }
-      },
-      {
-        "package": "COpenLDAP",
-        "repositoryURL": "https://github.com/xcode-actions/COpenLDAP.git",
-        "state": {
-          "branch": null,
-          "revision": "de03652d04927ee4649e0b4d5c2be72be339327d",
-          "version": "2.5.5"
-        }
-      },
-      {
-        "package": "COpenSSL",
-        "repositoryURL": "https://github.com/xcode-actions/COpenSSL.git",
-        "state": {
-          "branch": null,
-          "revision": "468c0c03b9d22467784e957017f4677361221b43",
-          "version": "1.1.111"
-        }
-      },
-      {
-        "package": "GenericJSON",
-        "repositoryURL": "https://github.com/zoul/generic-json-swift.git",
-        "state": {
-          "branch": null,
-          "revision": "a137894b2a217abe489cdf1ea287e6f7819b1051",
-          "version": "2.0.1"
-        }
-      },
-      {
-        "package": "HasResult",
-        "repositoryURL": "https://github.com/Frizlab/HasResult.git",
-        "state": {
-          "branch": null,
-          "revision": "a6eb60f65e33f9fb3ad425fea0838a05e298f270",
-          "version": "1.0.0"
-        }
-      },
-      {
-        "package": "jwt",
-        "repositoryURL": "https://github.com/vapor/jwt.git",
-        "state": {
-          "branch": null,
-          "revision": "f18aa4f69d9ec781d79b7b89352de326f82e17a9",
-          "version": "4.1.0"
-        }
-      },
-      {
-        "package": "jwt-kit",
-        "repositoryURL": "https://github.com/vapor/jwt-kit.git",
-        "state": {
-          "branch": null,
-          "revision": "1822bb0abf0a31a4b5078ec19061c548835253b5",
-          "version": "4.3.0"
-        }
-      },
-      {
-        "package": "leaf",
-        "repositoryURL": "https://github.com/vapor/leaf.git",
-        "state": {
-          "branch": null,
-          "revision": "41741b782ac49959af2f7612661154326ac24d00",
-          "version": "4.1.5"
-        }
-      },
-      {
-        "package": "leaf-kit",
-        "repositoryURL": "https://github.com/vapor/leaf-kit.git",
-        "state": {
-          "branch": null,
-          "revision": "983fcbe89e7153c4d5870bdc76bf57a56817225f",
-          "version": "1.4.0"
-        }
-      },
-      {
-        "package": "LegibleError",
-        "repositoryURL": "https://github.com/mxcl/LegibleError.git",
-        "state": {
-          "branch": null,
-          "revision": "bc596702d7ff618c3f90ba480eeb48b3e83a2fbe",
-          "version": "1.0.6"
-        }
-      },
-      {
-        "package": "multipart-kit",
-        "repositoryURL": "https://github.com/vapor/multipart-kit.git",
-        "state": {
-          "branch": null,
-          "revision": "2dd9368a3c9580792b77c7ef364f3735909d9996",
-          "version": "4.5.1"
-        }
-      },
-      {
-        "package": "OfficeModel",
-        "repositoryURL": "https://github.com/happn-app/officectl-model.git",
-        "state": {
-          "branch": "main",
-          "revision": "a56082d7a99c1204df393f04bca568ef0d51b75a",
-          "version": null
-        }
-      },
-      {
-        "package": "OperationAwaiting",
-        "repositoryURL": "https://github.com/Frizlab/OperationAwaiting.git",
-        "state": {
-          "branch": null,
-          "revision": "a1c40b3e1fc6d837adee76d4fb924e27441151a3",
-          "version": "1.2.0-beta.2"
-        }
-      },
-      {
-        "package": "RecursiveSyncDispatch",
-        "repositoryURL": "https://github.com/happn-app/RecursiveSyncDispatch.git",
-        "state": {
-          "branch": null,
-          "revision": "04936f64e00d898006fc97b5ec938d8ce1fa14ea",
-          "version": "1.0.1"
-        }
-      },
-      {
-        "package": "RetryingOperation",
-        "repositoryURL": "https://github.com/happn-app/RetryingOperation.git",
-        "state": {
-          "branch": null,
-          "revision": "4d69ec3aa4cb5d33e973fcfe01378a1d49e351f2",
-          "version": "1.1.7"
-        }
-      },
-      {
-        "package": "routing-kit",
-        "repositoryURL": "https://github.com/vapor/routing-kit.git",
-        "state": {
-          "branch": null,
-          "revision": "5603b81ceb744b8318feab1e60943704977a866b",
-          "version": "4.3.1"
-        }
-      },
-      {
-        "package": "SemiSingleton",
-        "repositoryURL": "https://github.com/happn-app/SemiSingleton.git",
-        "state": {
-          "branch": "workaround_swift_crash",
-          "revision": "187ad3df8a68c05f5b55f4090e7c02ccabc1bbca",
-          "version": null
-        }
-      },
-      {
-        "package": "stream-reader",
-        "repositoryURL": "https://github.com/Frizlab/stream-reader.git",
-        "state": {
-          "branch": null,
-          "revision": "09104092cb7e87dc6d1086d40c06d7606fc6cb94",
-          "version": "3.2.3"
-        }
-      },
-      {
-        "package": "swift-argument-parser",
-        "repositoryURL": "https://github.com/apple/swift-argument-parser.git",
-        "state": {
-          "branch": null,
-          "revision": "6b2aa2748a7881eebb9f84fb10c01293e15b52ca",
-          "version": "0.5.0"
-        }
-      },
-      {
-        "package": "swift-backtrace",
-        "repositoryURL": "https://github.com/swift-server/swift-backtrace.git",
-        "state": {
-          "branch": null,
-          "revision": "d3e04a9d4b3833363fb6192065b763310b156d54",
-          "version": "1.3.1"
-        }
-      },
-      {
-        "package": "swift-collections",
-        "repositoryURL": "https://github.com/apple/swift-collections",
-        "state": {
-          "branch": null,
-          "revision": "48254824bb4248676bf7ce56014ff57b142b77eb",
-          "version": "1.0.2"
-        }
-      },
-      {
-        "package": "swift-crypto",
-        "repositoryURL": "https://github.com/apple/swift-crypto.git",
-        "state": {
-          "branch": null,
-          "revision": "ddb07e896a2a8af79512543b1c7eb9797f8898a5",
-          "version": "1.1.7"
-        }
-      },
-      {
-        "package": "swift-email",
-        "repositoryURL": "https://github.com/Frizlab/swift-email.git",
-        "state": {
-          "branch": null,
-          "revision": "3bfbfda40f5cfb99a43467a48cf8c53a9ab317ce",
-          "version": "0.2.3"
-        }
-      },
-      {
-        "package": "swift-log",
-        "repositoryURL": "https://github.com/apple/swift-log.git",
-        "state": {
-          "branch": null,
-          "revision": "5d66f7ba25daf4f94100e7022febf3c75e37a6c7",
-          "version": "1.4.2"
-        }
-      },
-      {
-        "package": "swift-metrics",
-        "repositoryURL": "https://github.com/apple/swift-metrics.git",
-        "state": {
-          "branch": null,
-          "revision": "3edd2f57afc4e68e23c3e4956bc8b65ca6b5b2ff",
-          "version": "2.2.0"
-        }
-      },
-      {
-        "package": "swift-nio",
-        "repositoryURL": "https://github.com/apple/swift-nio.git",
-        "state": {
-          "branch": null,
-          "revision": "154f1d32366449dcccf6375a173adf4ed2a74429",
-          "version": "2.38.0"
-        }
-      },
-      {
-        "package": "swift-nio-extras",
-        "repositoryURL": "https://github.com/apple/swift-nio-extras.git",
-        "state": {
-          "branch": null,
-          "revision": "f73ca5ee9c6806800243f1ac415fcf82de9a4c91",
-          "version": "1.10.2"
-        }
-      },
-      {
-        "package": "swift-nio-http2",
-        "repositoryURL": "https://github.com/apple/swift-nio-http2.git",
-        "state": {
-          "branch": null,
-          "revision": "ac2a5afce3dbb6795b4f78ec3f19726dc28f5617",
-          "version": "1.20.0"
-        }
-      },
-      {
-        "package": "swift-nio-ssl",
-        "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
-        "state": {
-          "branch": null,
-          "revision": "52a486ff6de9bc3e26bf634c5413c41c5fa89ca5",
-          "version": "2.17.2"
-        }
-      },
-      {
-        "package": "swift-nio-transport-services",
-        "repositoryURL": "https://github.com/apple/swift-nio-transport-services.git",
-        "state": {
-          "branch": null,
-          "revision": "8ab824b140d0ebcd87e9149266ddc353e3705a3e",
-          "version": "1.11.4"
-        }
-      },
-      {
-        "package": "swift-system",
-        "repositoryURL": "https://github.com/apple/swift-system.git",
-        "state": {
-          "branch": null,
-          "revision": "836bc4557b74fe6d2660218d56e3ce96aff76574",
-          "version": "1.1.1"
-        }
-      },
-      {
-        "package": "swift-task-queue",
-        "repositoryURL": "https://github.com/Frizlab/swift-task-queue.git",
-        "state": {
-          "branch": null,
-          "revision": "4f59fb8c9f02247f58fa48d9bfa55186a164c6da",
-          "version": "1.0.1"
-        }
-      },
-      {
-        "package": "UnwrapOrThrow",
-        "repositoryURL": "https://github.com/Frizlab/UnwrapOrThrow.git",
-        "state": {
-          "branch": null,
-          "revision": "b7a5ead174096f816030508f223a4f7030970299",
-          "version": "1.0.0-beta.1"
-        }
-      },
-      {
-        "package": "URLRequestOperation",
-        "repositoryURL": "https://github.com/happn-app/URLRequestOperation.git",
-        "state": {
-          "branch": null,
-          "revision": "04fd7a21f9f7afb4b89094dad3bf7d5e29c4e46f",
-          "version": "2.0.0-alpha.13.2.1"
-        }
-      },
-      {
-        "package": "vapor",
-        "repositoryURL": "https://github.com/vapor/vapor.git",
-        "state": {
-          "branch": null,
-          "revision": "e0fd4f3d76469dd6a0efb2be5c0b2f96b7581187",
-          "version": "4.55.1"
-        }
-      },
-      {
-        "package": "websocket-kit",
-        "repositoryURL": "https://github.com/vapor/websocket-kit.git",
-        "state": {
-          "branch": null,
-          "revision": "ff8fbce837ef01a93d49c6fb49a72be0f150dac7",
-          "version": "2.3.0"
-        }
-      },
-      {
-        "package": "Yaml",
-        "repositoryURL": "https://github.com/behrang/YamlSwift.git",
-        "state": {
-          "branch": null,
-          "revision": "287f5cab7da0d92eb947b5fd8151b203ae04a9a3",
-          "version": "3.4.4"
-        }
+  "pins" : [
+    {
+      "identity" : "apiconnectionprotocols",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Frizlab/APIConnectionProtocols.git",
+      "state" : {
+        "revision" : "683bd9332769dfca2761129202e0275da5f61f55",
+        "version" : "1.0.0-beta.4"
       }
-    ]
-  },
-  "version": 1
+    },
+    {
+      "identity" : "asn1decoder",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/filom/ASN1Decoder.git",
+      "state" : {
+        "revision" : "65953a42a0f039f53c73e48fd88c02809f7db607",
+        "version" : "1.8.0"
+      }
+    },
+    {
+      "identity" : "async-http-client",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swift-server/async-http-client.git",
+      "state" : {
+        "revision" : "7a4dfe026f6ee0f8ad741b58df74c60af296365d",
+        "version" : "1.9.0"
+      }
+    },
+    {
+      "identity" : "async-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/async-kit.git",
+      "state" : {
+        "revision" : "e2f741640364c1d271405da637029ea6a33f754e",
+        "version" : "1.11.1"
+      }
+    },
+    {
+      "identity" : "clt-logger",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/xcode-actions/clt-logger.git",
+      "state" : {
+        "revision" : "5d3db055e9db2827136c1acf335e136fe759917e",
+        "version" : "0.3.6"
+      }
+    },
+    {
+      "identity" : "collectionconcurrencykit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/happn-app/CollectionConcurrencyKit.git",
+      "state" : {
+        "revision" : "903a94af1104ccf907982dd35f980b60d95025a3",
+        "version" : "0.2.0"
+      }
+    },
+    {
+      "identity" : "console-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/console-kit.git",
+      "state" : {
+        "revision" : "75ea3b627d88221440b878e5dfccc73fd06842ed",
+        "version" : "4.2.7"
+      }
+    },
+    {
+      "identity" : "copenldap",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/xcode-actions/COpenLDAP.git",
+      "state" : {
+        "revision" : "de03652d04927ee4649e0b4d5c2be72be339327d",
+        "version" : "2.5.5"
+      }
+    },
+    {
+      "identity" : "copenssl",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/xcode-actions/COpenSSL.git",
+      "state" : {
+        "revision" : "468c0c03b9d22467784e957017f4677361221b43",
+        "version" : "1.1.111"
+      }
+    },
+    {
+      "identity" : "generic-json-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/zoul/generic-json-swift.git",
+      "state" : {
+        "revision" : "a137894b2a217abe489cdf1ea287e6f7819b1051",
+        "version" : "2.0.1"
+      }
+    },
+    {
+      "identity" : "hasresult",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Frizlab/HasResult.git",
+      "state" : {
+        "revision" : "a6eb60f65e33f9fb3ad425fea0838a05e298f270",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "jwt",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/jwt.git",
+      "state" : {
+        "revision" : "f18aa4f69d9ec781d79b7b89352de326f82e17a9",
+        "version" : "4.1.0"
+      }
+    },
+    {
+      "identity" : "jwt-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/jwt-kit.git",
+      "state" : {
+        "revision" : "1822bb0abf0a31a4b5078ec19061c548835253b5",
+        "version" : "4.3.0"
+      }
+    },
+    {
+      "identity" : "leaf",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/leaf.git",
+      "state" : {
+        "revision" : "41741b782ac49959af2f7612661154326ac24d00",
+        "version" : "4.1.5"
+      }
+    },
+    {
+      "identity" : "leaf-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/leaf-kit.git",
+      "state" : {
+        "revision" : "983fcbe89e7153c4d5870bdc76bf57a56817225f",
+        "version" : "1.4.0"
+      }
+    },
+    {
+      "identity" : "legibleerror",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mxcl/LegibleError.git",
+      "state" : {
+        "revision" : "bc596702d7ff618c3f90ba480eeb48b3e83a2fbe",
+        "version" : "1.0.6"
+      }
+    },
+    {
+      "identity" : "multipart-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/multipart-kit.git",
+      "state" : {
+        "revision" : "2dd9368a3c9580792b77c7ef364f3735909d9996",
+        "version" : "4.5.1"
+      }
+    },
+    {
+      "identity" : "officectl-model",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/happn-app/officectl-model.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a56082d7a99c1204df393f04bca568ef0d51b75a"
+      }
+    },
+    {
+      "identity" : "operationawaiting",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Frizlab/OperationAwaiting.git",
+      "state" : {
+        "revision" : "a1c40b3e1fc6d837adee76d4fb924e27441151a3",
+        "version" : "1.2.0-beta.2"
+      }
+    },
+    {
+      "identity" : "recursivesyncdispatch",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/happn-app/RecursiveSyncDispatch.git",
+      "state" : {
+        "revision" : "04936f64e00d898006fc97b5ec938d8ce1fa14ea",
+        "version" : "1.0.1"
+      }
+    },
+    {
+      "identity" : "retryingoperation",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/happn-app/RetryingOperation.git",
+      "state" : {
+        "revision" : "4d69ec3aa4cb5d33e973fcfe01378a1d49e351f2",
+        "version" : "1.1.7"
+      }
+    },
+    {
+      "identity" : "routing-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/routing-kit.git",
+      "state" : {
+        "revision" : "5603b81ceb744b8318feab1e60943704977a866b",
+        "version" : "4.3.1"
+      }
+    },
+    {
+      "identity" : "semisingleton",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/happn-app/SemiSingleton.git",
+      "state" : {
+        "branch" : "workaround_swift_crash",
+        "revision" : "187ad3df8a68c05f5b55f4090e7c02ccabc1bbca"
+      }
+    },
+    {
+      "identity" : "stream-reader",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Frizlab/stream-reader.git",
+      "state" : {
+        "revision" : "09104092cb7e87dc6d1086d40c06d7606fc6cb94",
+        "version" : "3.2.3"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser.git",
+      "state" : {
+        "revision" : "554e7659eb5b4dff97158d531aabecf11d546e2d",
+        "version" : "1.1.0"
+      }
+    },
+    {
+      "identity" : "swift-backtrace",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swift-server/swift-backtrace.git",
+      "state" : {
+        "revision" : "d3e04a9d4b3833363fb6192065b763310b156d54",
+        "version" : "1.3.1"
+      }
+    },
+    {
+      "identity" : "swift-collections",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-collections",
+      "state" : {
+        "revision" : "48254824bb4248676bf7ce56014ff57b142b77eb",
+        "version" : "1.0.2"
+      }
+    },
+    {
+      "identity" : "swift-crypto",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-crypto.git",
+      "state" : {
+        "revision" : "ddb07e896a2a8af79512543b1c7eb9797f8898a5",
+        "version" : "1.1.7"
+      }
+    },
+    {
+      "identity" : "swift-email",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Frizlab/swift-email.git",
+      "state" : {
+        "revision" : "3bfbfda40f5cfb99a43467a48cf8c53a9ab317ce",
+        "version" : "0.2.3"
+      }
+    },
+    {
+      "identity" : "swift-log",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-log.git",
+      "state" : {
+        "revision" : "5d66f7ba25daf4f94100e7022febf3c75e37a6c7",
+        "version" : "1.4.2"
+      }
+    },
+    {
+      "identity" : "swift-metrics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-metrics.git",
+      "state" : {
+        "revision" : "3edd2f57afc4e68e23c3e4956bc8b65ca6b5b2ff",
+        "version" : "2.2.0"
+      }
+    },
+    {
+      "identity" : "swift-nio",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-nio.git",
+      "state" : {
+        "revision" : "154f1d32366449dcccf6375a173adf4ed2a74429",
+        "version" : "2.38.0"
+      }
+    },
+    {
+      "identity" : "swift-nio-extras",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-nio-extras.git",
+      "state" : {
+        "revision" : "f73ca5ee9c6806800243f1ac415fcf82de9a4c91",
+        "version" : "1.10.2"
+      }
+    },
+    {
+      "identity" : "swift-nio-http2",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-nio-http2.git",
+      "state" : {
+        "revision" : "ac2a5afce3dbb6795b4f78ec3f19726dc28f5617",
+        "version" : "1.20.0"
+      }
+    },
+    {
+      "identity" : "swift-nio-ssl",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-nio-ssl.git",
+      "state" : {
+        "revision" : "52a486ff6de9bc3e26bf634c5413c41c5fa89ca5",
+        "version" : "2.17.2"
+      }
+    },
+    {
+      "identity" : "swift-nio-transport-services",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-nio-transport-services.git",
+      "state" : {
+        "revision" : "8ab824b140d0ebcd87e9149266ddc353e3705a3e",
+        "version" : "1.11.4"
+      }
+    },
+    {
+      "identity" : "swift-system",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-system.git",
+      "state" : {
+        "revision" : "836bc4557b74fe6d2660218d56e3ce96aff76574",
+        "version" : "1.1.1"
+      }
+    },
+    {
+      "identity" : "swift-task-queue",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Frizlab/swift-task-queue.git",
+      "state" : {
+        "revision" : "4f59fb8c9f02247f58fa48d9bfa55186a164c6da",
+        "version" : "1.0.1"
+      }
+    },
+    {
+      "identity" : "unwraporthrow",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Frizlab/UnwrapOrThrow.git",
+      "state" : {
+        "revision" : "b7a5ead174096f816030508f223a4f7030970299",
+        "version" : "1.0.0-beta.1"
+      }
+    },
+    {
+      "identity" : "urlrequestoperation",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/happn-app/URLRequestOperation.git",
+      "state" : {
+        "revision" : "04fd7a21f9f7afb4b89094dad3bf7d5e29c4e46f",
+        "version" : "2.0.0-alpha.13.2.1"
+      }
+    },
+    {
+      "identity" : "vapor",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/vapor.git",
+      "state" : {
+        "revision" : "e0fd4f3d76469dd6a0efb2be5c0b2f96b7581187",
+        "version" : "4.55.1"
+      }
+    },
+    {
+      "identity" : "websocket-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/websocket-kit.git",
+      "state" : {
+        "revision" : "ff8fbce837ef01a93d49c6fb49a72be0f150dac7",
+        "version" : "2.3.0"
+      }
+    },
+    {
+      "identity" : "yamlswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/behrang/YamlSwift.git",
+      "state" : {
+        "revision" : "287f5cab7da0d92eb947b5fd8151b203ae04a9a3",
+        "version" : "3.4.4"
+      }
+    }
+  ],
+  "version" : 2
 }
