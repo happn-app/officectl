@@ -15,7 +15,7 @@ import OfficeModel
 
 
 
-struct UserDeleteCommand : ParsableCommand {
+struct UserDeleteCommand : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "delete",
@@ -34,7 +34,7 @@ struct UserDeleteCommand : ParsableCommand {
 	@ArgumentParser.Option(name: .customLong("service-ids"), help: "The service IDs on which to delete the user, comma-separated. If unset, the user will be deleted on all the services configured.")
 	var serviceIDs: String?
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}

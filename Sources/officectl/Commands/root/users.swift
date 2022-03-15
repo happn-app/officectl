@@ -11,7 +11,7 @@ import ArgumentParser
 
 
 
-struct UserCommand : ParsableCommand {
+struct UserCommand : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "users",

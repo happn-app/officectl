@@ -15,7 +15,7 @@ import ServiceKit
 
 
 
-struct GetTokenCommand : ParsableCommand {
+struct GetTokenCommand : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "get-token",
@@ -34,7 +34,7 @@ struct GetTokenCommand : ParsableCommand {
 	@OptionGroup()
 	var globalOptions: OfficectlRootCommand.Options
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}

@@ -11,7 +11,7 @@ import ArgumentParser
 
 
 
-struct BackupCommand : ParsableCommand {
+struct BackupCommand : AsyncParsableCommand {
 	
 	struct Options : ParsableArguments {
 		

@@ -14,7 +14,7 @@ import OfficeKit
 
 
 
-struct ServerRoutesCommand : ParsableCommand {
+struct ServerRoutesCommand : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "routes",
@@ -24,7 +24,7 @@ struct ServerRoutesCommand : ParsableCommand {
 	@OptionGroup()
 	var globalOptions: OfficectlRootCommand.Options
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
 		try Application.runSync(officectlConfig: config, configureHandler: setup_routes_and_middlewares, vaporRun)
 	}

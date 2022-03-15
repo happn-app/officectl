@@ -14,7 +14,7 @@ import OfficeKit
 
 
 
-struct ServerServeCommand : ParsableCommand {
+struct ServerServeCommand : AsyncParsableCommand {
 	
 	struct Options : ParsableArguments {
 		
@@ -46,7 +46,7 @@ struct ServerServeCommand : ParsableCommand {
 	@OptionGroup()
 	var serverOptions: Options
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: serverOptions)
 		try Application.runSync(officectlConfig: config, configureHandler: setup_routes_and_middlewares, vaporRun)
 	}

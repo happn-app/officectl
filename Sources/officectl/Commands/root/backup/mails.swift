@@ -16,7 +16,7 @@ import OfficeKit
 
 
 
-struct BackupMailsCommand : ParsableCommand {
+struct BackupMailsCommand : AsyncParsableCommand {
 	
 	struct Options : ParsableArguments {
 		
@@ -78,7 +78,7 @@ struct BackupMailsCommand : ParsableCommand {
 	@ArgumentParser.Argument()
 	var arguments: [String]
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}

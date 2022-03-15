@@ -17,7 +17,7 @@ import URLRequestOperation
 
 
 
-struct CurrentDevTestCommand : ParsableCommand {
+struct CurrentDevTestCommand : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "curtest",
@@ -28,7 +28,7 @@ struct CurrentDevTestCommand : ParsableCommand {
 	@OptionGroup()
 	var globalOptions: OfficectlRootCommand.Options
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}

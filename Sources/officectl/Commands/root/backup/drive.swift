@@ -30,7 +30,7 @@ let driveROScope = Set(arrayLiteral: "https://www.googleapis.com/auth/drive.read
 let driveApiBaseURL = URL(string: "https://www.googleapis.com/drive/v3/")!
 
 
-struct BackupDriveCommand : ParsableCommand {
+struct BackupDriveCommand : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "drive",
@@ -80,7 +80,7 @@ struct BackupDriveCommand : ParsableCommand {
 	@ArgumentParser.Argument()
 	var arguments: [String]
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}

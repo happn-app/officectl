@@ -15,7 +15,7 @@ import ServiceKit
 
 
 
-struct UserListCommand : ParsableCommand {
+struct UserListCommand : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "list",
@@ -41,7 +41,7 @@ struct UserListCommand : ParsableCommand {
 	@ArgumentParser.Option
 	var format: Format = .email
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}

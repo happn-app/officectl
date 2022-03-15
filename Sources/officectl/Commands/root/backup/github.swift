@@ -14,7 +14,7 @@ import OfficeKit
 
 
 
-struct BackupGitHubCommand : ParsableCommand {
+struct BackupGitHubCommand : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "github",
@@ -33,7 +33,7 @@ struct BackupGitHubCommand : ParsableCommand {
 	@ArgumentParser.Option(help: "The organisation names for which to backup the repositories from.")
 	var orgnames: [String]
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}

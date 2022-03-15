@@ -20,7 +20,7 @@ import URLRequestOperation
 
 
 
-struct ConsolepermCommand : ParsableCommand {
+struct ConsolepermCommand : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "consoleperm",
@@ -36,7 +36,7 @@ struct ConsolepermCommand : ParsableCommand {
 	@ArgumentParser.Argument
 	var group: String
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}

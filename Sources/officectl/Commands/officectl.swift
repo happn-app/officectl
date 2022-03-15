@@ -12,7 +12,7 @@ import ArgumentParser
 
 
 @main
-struct OfficectlRootCommand : ParsableCommand {
+struct OfficectlRootCommand : AsyncParsableCommand {
 	
 	struct Options : ParsableArguments {
 		

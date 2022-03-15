@@ -18,7 +18,7 @@ import URLRequestOperation
 
 
 
-struct FindInDrivesCommand : ParsableCommand {
+struct FindInDrivesCommand : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "find-in-drives",
@@ -34,7 +34,7 @@ struct FindInDrivesCommand : ParsableCommand {
 	@ArgumentParser.Argument()
 	var filename: String
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}

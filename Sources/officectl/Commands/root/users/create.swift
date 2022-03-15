@@ -15,7 +15,7 @@ import OfficeKit
 
 
 
-struct UserCreateCommand : ParsableCommand {
+struct UserCreateCommand : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "create",
@@ -43,7 +43,7 @@ struct UserCreateCommand : ParsableCommand {
 	@ArgumentParser.Option(name: .customLong("service-ids"), help: "The service IDs on which to create the user, comma-separated. If unset, the user will be created on all the services configured.")
 	var serviceIDs: String?
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}

@@ -14,7 +14,7 @@ import OfficeKit
 
 
 
-struct UserChangePasswordCommand : ParsableCommand {
+struct UserChangePasswordCommand : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		commandName: "change-password",
@@ -30,7 +30,7 @@ struct UserChangePasswordCommand : ParsableCommand {
 	@ArgumentParser.Option(name: .customLong("service-ids"), help: "The service IDs on which to reset the password. If unset, the password will be reset on all the services configured.")
 	var serviceIDs: String?
 	
-	func run() throws {
+	func run() async throws {
 		let config = try OfficectlConfig(globalOptions: globalOptions, serverOptions: nil)
 		try Application.runSync(officectlConfig: config, configureHandler: { _ in }, vaporRun)
 	}
