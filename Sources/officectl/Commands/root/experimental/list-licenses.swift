@@ -12,6 +12,7 @@ import Vapor
 
 import OfficeKit
 import SemiSingleton
+import UnwrapOrThrow
 import URLRequestOperation
 
 
@@ -37,7 +38,7 @@ struct ListLicensesCommand : AsyncParsableCommand {
 		let app = context.application
 		let officectlConfig = app.officectlConfig
 		let semiSingletonStore = app.semiSingletonStore
-		let simpleMDMToken = try nil2throw(officectlConfig.tmpSimpleMDMToken)
+		let simpleMDMToken = try officectlConfig.tmpSimpleMDMToken ?! MissingFieldError("tmpSimpleMDMToken")
 		
 		/* Get all licenses in SimpleMDM */
 		let getDevicesAction: GetMDMDevicesWithAttributesAction = semiSingletonStore.semiSingleton(forKey: simpleMDMToken)

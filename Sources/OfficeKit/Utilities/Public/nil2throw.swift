@@ -9,12 +9,6 @@ import Foundation
 
 
 
-@available(*, deprecated, message: "Use ?! instead.")
-public func nil2throw<T>(_ v: T?, _ fieldName: String = "Unknown") throws -> T {
-	guard let v = v else {throw MissingFieldError(fieldName)}
-	return v
-}
-
 public func throwIfError(_ e: Error?) throws {
 	if let e = e {throw e}
 }

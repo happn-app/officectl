@@ -8,6 +8,7 @@
 import Foundation
 
 import OfficeKit
+import UnwrapOrThrow
 import Vapor
 
 
@@ -15,7 +16,7 @@ import Vapor
 extension AnyDSUIDPair {
 	
 	public static func getAsParameter(named parameterName: String, from request: Request) throws -> AnyDSUIDPair {
-		let str = try nil2throw(request.parameters.get(parameterName))
+		let str = try request.parameters.get(parameterName) ?! MissingFieldError(parameterName)
 		return try AnyDSUIDPair(string: str, servicesProvider: request.application.officeKitServiceProvider)
 	}
 	

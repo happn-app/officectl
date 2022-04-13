@@ -19,6 +19,7 @@ import GenericJSON
 import NIO
 import OfficeKit
 import RetryingOperation
+import UnwrapOrThrow
 import URLRequestOperation
 import Vapor
 
@@ -95,7 +96,7 @@ struct BackupDriveCommand : AsyncParsableCommand {
 		let disableConsole = !globalOptions.interactiveConsole
 		
 		let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceID)
-		_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
+		_ = try googleConfig.connectorSettings.userBehalf ?! MissingFieldError("Google User Behalf")
 		
 		let downloadsDestinationFolder = URL(fileURLWithPath: backupOptions.downloadsDestinationFolder, isDirectory: true)
 		
@@ -104,7 +105,7 @@ struct BackupDriveCommand : AsyncParsableCommand {
 		let filters = pathFilters.map{ $0.lowercased() }
 		
 		let archivesDestinationFolder = archivesDestinationFolder
-		let archivesDestinationFolderStr = (archive ? try nil2throw(archivesDestinationFolder) : nil)
+		let archivesDestinationFolderStr = (archive ? (try archivesDestinationFolder ?! MissingFieldError("archivesDestinationFolder")) : nil)
 		let archivesDestinationFolderURL = archivesDestinationFolderStr.flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
 		
 		try app.auditLogger.log(action: "Backing up mails w/ service \(serviceID ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(archivesDestinationFolderURL != nil ? "w/": "w/o") archiving.", source: .cli)

@@ -11,6 +11,7 @@ import FoundationNetworking
 #endif
 
 import OfficeKit
+import UnwrapOrThrow
 import URLRequestOperation
 import Vapor
 
@@ -26,7 +27,7 @@ class GetLicensesController {
 		
 		let officectlConfig = req.application.officectlConfig
 		let semiSingletonStore = req.application.semiSingletonStore
-		let token = try nil2throw(officectlConfig.tmpSimpleMDMToken)
+		let token = try officectlConfig.tmpSimpleMDMToken ?! MissingFieldError("tmpSimpleMDMToken")
 		
 		let getDevicesAction: GetMDMDevicesWithAttributesAction = semiSingletonStore.semiSingleton(forKey: token)
 		let devicesAndAttributes = try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful })

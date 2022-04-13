@@ -10,6 +10,7 @@ import Foundation
 import ArgumentParser
 import Email
 import RetryingOperation
+import UnwrapOrThrow
 import Vapor
 
 import OfficeKit
@@ -90,14 +91,14 @@ struct BackupMailsCommand : AsyncParsableCommand {
 		let opQ = try app.services.make(OperationQueue.self)
 		
 		let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: backupMailOptions.serviceID)
-		_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
+		_ = try googleConfig.connectorSettings.userBehalf ?! MissingFieldError("Google User Behalf")
 		
 		let downloadsDestinationFolder = URL(fileURLWithPath: backupOptions.downloadsDestinationFolder, isDirectory: true)
 		
 		let usersFilter = (arguments.isEmpty ? nil : arguments)?.map{ EmailSrcAndDst(emailStr: $0, disabledUserSuffix: backupMailOptions.disabledEmailSuffix, logger: app.logger) }
 		
 		let archivesDestinationFolder = backupMailOptions.archivesDestinationFolder
-		let archivesDestinationFolderStr = (backupMailOptions.archive ? try nil2throw(archivesDestinationFolder) : nil)
+		let archivesDestinationFolderStr = (backupMailOptions.archive ? (try archivesDestinationFolder ?! MissingFieldError("archivesDestinationFolder")) : nil)
 		let archivesDestinationFolderURL = archivesDestinationFolderStr.flatMap{ URL(fileURLWithPath: $0, isDirectory: true) }
 		
 		try app.auditLogger.log(action: "Backing up mails w/ service \(backupMailOptions.serviceID ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(backupMailOptions.linkify ? "w/": "w/o") linkification, \(archivesDestinationFolder != nil ? "w/": "w/o") archiving.", source: .cli)

@@ -15,6 +15,7 @@ import CollectionConcurrencyKit
 import Email
 import GenericJSON
 import OfficeKit
+import UnwrapOrThrow
 import URLRequestOperation
 import Vapor
 
@@ -47,14 +48,14 @@ class WebCertificateRenewController {
 		}
 		
 		let officectlConfig = req.application.officectlConfig
-		let vaultBaseURL = try nil2throw(officectlConfig.tmpVaultBaseURL).appendingPathComponent("v1")
-		let issuerName = try nil2throw(officectlConfig.tmpVaultIssuerName)
+		let vaultBaseURL = try officectlConfig.tmpVaultBaseURL?.appendingPathComponent("v1") ?! MissingFieldError("tmpVaultBaseURL")
+		let issuerName = try officectlConfig.tmpVaultIssuerName ?! MissingFieldError("tmpVaultIssuerName")
 		let additionalActiveIssuers = officectlConfig.tmpVaultAdditionalActiveIssuers ?? []
 		let additionalPassiveIssuers = officectlConfig.tmpVaultAdditionalPassiveIssuers ?? []
 		let additionalCertificates = officectlConfig.tmpVaultAdditionalCertificates ?? []
-		let token = try nil2throw(officectlConfig.tmpVaultToken)
-		let ttl = try nil2throw(officectlConfig.tmpVaultTTL)
-		let expirationLeeway = try nil2throw(officectlConfig.tmpVaultExpirationLeeway)
+		let token = try officectlConfig.tmpVaultToken ?! MissingFieldError("tmpVaultToken")
+		let ttl = try officectlConfig.tmpVaultTTL ?! MissingFieldError("tmpVaultTTL")
+		let expirationLeeway = try officectlConfig.tmpVaultExpirationLeeway ?! MissingFieldError("tmpVaultExpirationLeeway")
 		let expectedExpiration = Date() + expirationLeeway
 		
 		@Sendable

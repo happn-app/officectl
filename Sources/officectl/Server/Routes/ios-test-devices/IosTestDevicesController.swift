@@ -11,6 +11,7 @@ import FoundationNetworking
 #endif
 
 import SemiSingleton
+import UnwrapOrThrow
 import Vapor
 
 import OfficeKit
@@ -37,7 +38,7 @@ final class IosTestDevicesController {
 		
 		let officectlConfig = req.application.officectlConfig
 		let semiSingletonStore = req.application.semiSingletonStore
-		let token = try nil2throw(officectlConfig.tmpSimpleMDMToken)
+		let token = try officectlConfig.tmpSimpleMDMToken ?! MissingFieldError("tmpSimpleMDMToken")
 		
 		let getDevicesAction: GetMDMDevicesAction = semiSingletonStore.semiSingleton(forKey: token)
 		let devices = try await getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful })

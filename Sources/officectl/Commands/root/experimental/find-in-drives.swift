@@ -14,6 +14,7 @@ import Vapor
 
 import OfficeKit
 import SemiSingleton
+import UnwrapOrThrow
 import URLRequestOperation
 
 
@@ -46,7 +47,7 @@ struct FindInDrivesCommand : AsyncParsableCommand {
 		let opQ = try app.services.make(OperationQueue.self)
 		
 		let googleConfig: GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: serviceID)
-		_ = try nil2throw(googleConfig.connectorSettings.userBehalf, "Google User Behalf")
+		_ = try googleConfig.connectorSettings.userBehalf ?! MissingFieldError("Google User Behalf")
 		
 		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
 		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)

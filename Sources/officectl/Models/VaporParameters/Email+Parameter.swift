@@ -9,6 +9,7 @@ import Foundation
 
 import Email
 import OfficeKit
+import UnwrapOrThrow
 import Vapor
 
 
@@ -16,7 +17,7 @@ import Vapor
 extension Email {
 	
 	public static func getAsParameter(named parameterName: String, from request: Request) throws -> Email {
-		let str = try nil2throw(request.parameters.get(parameterName))
+		let str = try request.parameters.get(parameterName) ?! MissingFieldError(parameterName)
 		guard let email = Email(rawValue: str) else {
 			throw InvalidArgumentError(message: "Invalid email")
 		}
