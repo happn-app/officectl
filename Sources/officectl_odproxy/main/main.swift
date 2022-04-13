@@ -19,7 +19,15 @@ do {
 	try application.run()
 }
 catch {
-	print("Error creating or running the App.", to: &stderrStream)
-	print("   error \(error.legibleLocalizedDescription)", to: &stderrStream)
+	let errorMsg = """
+		Error creating or running the App.
+		   error \(error.legibleLocalizedDescription)
+		"""
+	if #available(macOS 10.15.4, *),
+		(try? FileHandle.standardError.write(contentsOf: Data(errorMsg.utf8))) != nil {
+	} else {
+		/* Either OS too old, or write failed; we print. */
+		print(errorMsg)
+	}
 	exit(Int32((error as NSError).code))
 }
