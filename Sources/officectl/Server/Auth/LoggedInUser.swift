@@ -85,11 +85,6 @@ struct LoggedInUser : Authenticatable, SessionAuthenticatable {
 	var user: AnyDSUPair
 	var scopes: Set<AuthScope>
 	
-	@available(*, deprecated, message: "Use scopes instead.")
-	var isAdmin: Bool {
-		return scopes.contains(.admin)
-	}
-	
 	var sessionID: TaggedID {
 		return user.taggedID
 	}

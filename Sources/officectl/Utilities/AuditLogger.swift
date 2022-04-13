@@ -67,7 +67,7 @@ class AuditLogger {
 			case .api(user: let loggedInUser):
 				loggedDict["source"] = "api"
 				loggedDict["api_user"] = JSON.string(loggedInUser.user.taggedID.stringValue)
-				loggedDict["api_user_is_admin"] = JSON.bool(loggedInUser.isAdmin)
+				loggedDict["api_user_is_admin"] = JSON.bool(loggedInUser.scopes.contains(.admin))
 		}
 		let loggedData = try jsonEncoder.encode(JSON.object(loggedDict)) + Data("\n".utf8)
 		

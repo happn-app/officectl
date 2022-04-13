@@ -20,7 +20,7 @@ class PasswordResetController {
 	func getReset(_ req: Request) async throws -> ApiPasswordReset {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let fetchedUserID = try AnyDSUIDPair.getAsParameter(named: "dsuid-pair", from: req)
-		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIDPair: fetchedUserID, request: req) else {
+		guard try loggedInUser.scopes.contains(.admin) || loggedInUser.representsSameUserAs(dsuIDPair: fetchedUserID, request: req) else {
 			throw Abort(.forbidden, reason: "Non-admin users can only see their own password resets.")
 		}
 		
@@ -37,7 +37,7 @@ class PasswordResetController {
 		let passChangeData = try req.content.decode(PassChangeData.self)
 		
 		/* Only admins are allowed to create a password reset for someone else than themselves. */
-		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIDPair: dsuIDPair, request: req) else {
+		guard try loggedInUser.scopes.contains(.admin) || loggedInUser.representsSameUserAs(dsuIDPair: dsuIDPair, request: req) else {
 			throw Abort(.forbidden, reason: "Non-admin users can only reset their own password.")
 		}
 		
@@ -53,7 +53,7 @@ class PasswordResetController {
 			}
 		} else {
 			/* Only admins are allowed to change the pass of someone without specifying the old password. */
-			guard loggedInUser.isAdmin else {
+			guard loggedInUser.scopes.contains(.admin) else {
 				throw Abort(.forbidden, reason: "Old password is required for non-admin users")
 			}
 		}

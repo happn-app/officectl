@@ -30,7 +30,7 @@ class WebCertificateRenewController {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
 		let email = try loggedInUser.user.hop(to: emailService).user.userID
-		return try await req.view.render("CertificateRenewHome", CertifRenewContext(isAdmin: loggedInUser.isAdmin, userEmail: email.rawValue))
+		return try await req.view.render("CertificateRenewHome", CertifRenewContext(isAdmin: loggedInUser.scopes.contains(.admin), userEmail: email.rawValue))
 	}
 	
 	func renewCertificate(_ req: Request) async throws -> Response {
@@ -42,7 +42,7 @@ class WebCertificateRenewController {
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
 		let loggedInEmail = try loggedInUser.user.hop(to: emailService).user.userID
 		
-		guard loggedInUser.isAdmin || loggedInEmail == certRenewData.userEmail else {
+		guard loggedInUser.scopes.contains(.admin) || loggedInEmail == certRenewData.userEmail else {
 			throw Abort(.forbidden, reason: "Non-admin users can only get a certificate for themselves.")
 		}
 		
@@ -122,7 +122,7 @@ class WebCertificateRenewController {
 		
 		/* We check if all of the certificates to revoke will expire in less than n seconds (where n is defined in the conf).
 		 * If the user is admin we don’t do this check (admin can renew any certif they want whenever they want). */
-		if !loggedInUser.isAdmin {
+		if !loggedInUser.scopes.contains(.admin) {
 			try certificatesToRevoke.forEach{ idAndCertif in
 				let certif = idAndCertif.certif
 				guard !certif.checkValidity(expectedExpiration) else {

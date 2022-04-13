@@ -26,7 +26,7 @@ final class WebPasswordResetController {
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
 		let email = try loggedInUser.user.hop(to: emailService).user.userID
-		return try await req.view.render("PasswordResetHome", PasswordResetContext(isAdmin: loggedInUser.isAdmin, userEmail: email.rawValue))
+		return try await req.view.render("PasswordResetHome", PasswordResetContext(isAdmin: loggedInUser.scopes.contains(.admin), userEmail: email.rawValue))
 	}
 	
 	func showResetPage(_ req: Request) async throws -> View {
@@ -34,7 +34,7 @@ final class WebPasswordResetController {
 		
 		let loggedInUser = try req.auth.require(LoggedInUser.self)
 		let emailService: EmailService = try req.application.officeKitServiceProvider.getService(id: nil)
-		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIDPair: AnyDSUIDPair(service: emailService.erase(), userID: email.erase()), request: req) else {
+		guard try loggedInUser.scopes.contains(.admin) || loggedInUser.representsSameUserAs(dsuIDPair: AnyDSUIDPair(service: emailService.erase(), userID: email.erase()), request: req) else {
 			throw Abort(.forbidden, reason: "Non-admin users can only see their own password reset status.")
 		}
 		
@@ -54,7 +54,7 @@ final class WebPasswordResetController {
 		let officeKitServiceProvider = req.application.officeKitServiceProvider
 		let emailService: EmailService = try officeKitServiceProvider.getService(id: nil)
 		
-		guard try loggedInUser.isAdmin || loggedInUser.representsSameUserAs(dsuIDPair: AnyDSUIDPair(service: emailService.erase(), userID: email.erase()), request: req) else {
+		guard try loggedInUser.scopes.contains(.admin) || loggedInUser.representsSameUserAs(dsuIDPair: AnyDSUIDPair(service: emailService.erase(), userID: email.erase()), request: req) else {
 			throw Abort(.forbidden, reason: "Non-admin users can only reset their own password.")
 		}
 		
@@ -66,7 +66,7 @@ final class WebPasswordResetController {
 			}
 		} else {
 			/* Only admins are allowed to change the pass of someone without specifying the old password. */
-			guard loggedInUser.isAdmin else {throw Abort(.forbidden, reason: "Old password is required for non-admin users")}
+			guard loggedInUser.scopes.contains(.admin) else {throw Abort(.forbidden, reason: "Old password is required for non-admin users")}
 		}
 		
 		try req.application.auditLogger.log(action: "Resetting password for user email: \(email).", source: .web)
