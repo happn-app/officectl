@@ -6,6 +6,8 @@ import OfficeModel
 
 
 
+extension None : Content {}
+
 extension ApiService : Content {}
 extension ApiTokenResponse : Content {}
 extension ApiMultiServicesResults : Content {}

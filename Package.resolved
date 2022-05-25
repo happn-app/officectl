@@ -32,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/async-kit.git",
       "state" : {
-        "revision" : "e2f741640364c1d271405da637029ea6a33f754e",
-        "version" : "1.11.1"
+        "revision" : "017dc7da68c1ec9f0f46fcd1a8002d14a5662732",
+        "version" : "1.12.0"
       }
     },
     {
@@ -59,8 +59,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/console-kit.git",
       "state" : {
-        "revision" : "75ea3b627d88221440b878e5dfccc73fd06842ed",
-        "version" : "4.2.7"
+        "revision" : "bd25f0f29620eb3aad4d7d21c08a10d5324d4894",
+        "version" : "4.4.0"
       }
     },
     {
@@ -77,8 +77,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/xcode-actions/COpenSSL.git",
       "state" : {
-        "revision" : "bf65dc8a34c521fe92753828469458cd6424a0f9",
-        "version" : "1.1.114"
+        "revision" : "47a2954ae824b7ce22beecf8afb73ac56dc708f4",
+        "version" : "1.1.115"
       }
     },
     {
@@ -104,8 +104,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/jwt.git",
       "state" : {
-        "revision" : "f18aa4f69d9ec781d79b7b89352de326f82e17a9",
-        "version" : "4.1.0"
+        "revision" : "f9dc4cb5c49e120dd73b740a571cfd289ac30cb8",
+        "version" : "4.2.0"
       }
     },
     {
@@ -113,8 +113,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/jwt-kit.git",
       "state" : {
-        "revision" : "5f9c44d4c196cc06c3fc601f279169f121d6f62d",
-        "version" : "4.4.0"
+        "revision" : "3537dd319dfbcc403a5165d8c19c4834e8e64730",
+        "version" : "4.5.0"
       }
     },
     {
@@ -122,8 +122,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/leaf.git",
       "state" : {
-        "revision" : "41741b782ac49959af2f7612661154326ac24d00",
-        "version" : "4.1.5"
+        "revision" : "804f2720e1efbda1cc4d64b97476b140d06afef1",
+        "version" : "4.2.0"
       }
     },
     {
@@ -131,8 +131,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/leaf-kit.git",
       "state" : {
-        "revision" : "949270ec003d34c72a592817d0c1dcdfc05726ae",
-        "version" : "1.5.0"
+        "revision" : "bbdbdb9e9a856a7232c0e8c4d7290bb414c02d88",
+        "version" : "1.6.0"
       }
     },
     {
@@ -149,8 +149,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/multipart-kit.git",
       "state" : {
-        "revision" : "2dd9368a3c9580792b77c7ef364f3735909d9996",
-        "version" : "4.5.1"
+        "revision" : "0d55c35e788451ee27222783c7d363cb88092fab",
+        "version" : "4.5.2"
       }
     },
     {
@@ -159,7 +159,7 @@
       "location" : "https://github.com/happn-app/officectl-model.git",
       "state" : {
         "branch" : "main",
-        "revision" : "a56082d7a99c1204df393f04bca568ef0d51b75a"
+        "revision" : "f073fd1455887a0579304de7c639871a2a711df3"
       }
     },
     {
@@ -194,8 +194,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/routing-kit.git",
       "state" : {
-        "revision" : "5603b81ceb744b8318feab1e60943704977a866b",
-        "version" : "4.3.1"
+        "revision" : "9e181d685a3dec1eef1fc6dacf606af364f86d68",
+        "version" : "4.5.0"
       }
     },
     {
@@ -275,8 +275,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-metrics.git",
       "state" : {
-        "revision" : "eadb828f878fed144387e3845866225bb7082c56",
-        "version" : "2.3.0"
+        "revision" : "1c1408bf8fc21be93713e897d2badf500ea38419",
+        "version" : "2.3.1"
       }
     },
     {
@@ -356,8 +356,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/happn-app/URLRequestOperation.git",
       "state" : {
-        "revision" : "04fd7a21f9f7afb4b89094dad3bf7d5e29c4e46f",
-        "version" : "2.0.0-alpha.13.2.1"
+        "revision" : "25bbbb0532f4a35aa8c6c2685e2a14b666ae8e83",
+        "version" : "2.0.0-alpha.13.2.2"
       }
     },
     {
@@ -365,8 +365,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/vapor.git",
       "state" : {
-        "revision" : "b05266f863ee93eeff4b6d075364ccc8f81bbc1e",
-        "version" : "4.57.0"
+        "revision" : "50599e242043edcc2ed79b2b067233efef65dbd3",
+        "version" : "4.60.1"
       }
     },
     {
