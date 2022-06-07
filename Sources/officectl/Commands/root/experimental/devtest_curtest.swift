@@ -40,7 +40,7 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 //		let officectlConfig = app.officectlConfig
 //		let sProvider = app.officeKitServiceProvider
 //		let semiSingletonStore = app.semiSingletonStore
-//		let eventLoop: EventLoop = try app.services.make()
+//		let opQ: OperationQueue = try app.services.make()
 //		let simpleMDMToken = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		/* List users by creation date decreasing */
@@ -59,29 +59,21 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 		
 		/* List all admins and their permissions */
 //		let consoleService: HappnService = try sProvider.getService(id: nil)
-//		let hConnector: HappnConnector = app.semiSingletonStore.semiSingleton(forKey: consoleService.config.connectorSettings)
-//		return try await hConnector.connect(scope: Set(arrayLiteral: "acl_update", "acl_read"), eventLoop: eventLoop)
-//			.flatMapThrowing{ _ in
-//				try consoleService.listAllUsers(using: app.services)
+//		let hConnector: HappnConnector = HappnConnector(key: consoleService.config.connectorSettings)
+//		try await hConnector.connect(scope: Set(arrayLiteral: "acl_read"))
+//		let userIDs = try await consoleService.listAllUsers(using: app.services).compactMap{ $0.id }
+//		let operations = userIDs
+//			.map{ uid -> URLRequestDataOperation<JSON> in
+//				let url = consoleService.config.connectorSettings.baseURL.appendingPathComponent("api").appendingPathComponent("user-acls").appendingPathComponent(uid)
+//				return URLRequestDataOperation<JSON>.forAPIRequest(url: url, requestProcessors: [AuthRequestProcessor(hConnector)], retryProviders: [])
 //			}
-//			.flatMap{ $0 }
-//			.flatMap{ users in
-//				let uidAndFutures = users
-//					.compactMap{ $0.id }
-//					.map{ uid -> (String, EventLoopFuture<JSON>) in
-//						let url = consoleService.config.connectorSettings.baseURL.appendingPathComponent("api").appendingPathComponent("user-acls").appendingPathComponent(uid)
-//						let op = AuthenticatedJSONOperation<JSON>(url: url, authenticator: hConnector.authenticate)
-//						return (uid, EventLoopFuture<JSON>.future(from: op, on: eventLoop))
-//					}
-//				return EventLoopFuture.waitAll(uidAndFutures, eventLoop: eventLoop)
+//		for (uid, fetchedUser) in await zip(userIDs, opQ.addOperationsAndGetResults(operations)) {
+//			let fetchedUser = fetchedUser.map{ $0.result }
+//			switch fetchedUser {
+//				case .failure(let e): print("\(uid) - Failed to fetch user: \(e)")
+//				case .success(let u): print("\(uid) - \(u["data"]?["login"] ?? "no email"): \(u["data"]?["acl"]?.arrayValue?.compactMap{ $0["id"] } ?? [.string("error")])")
 //			}
-//			.map{ (requestsAndUserInfo: [(String, Result<JSON, Error>)]) in
-//				for (uid, res) in requestsAndUserInfo {
-//					print("\(uid) - \(res.successValue?["data"]?["login"] ?? "no email"): \(res.successValue?["data"]?["acl"]?.arrayValue?.compactMap{ $0["id"] } ?? [.string("error")])")
-//				}
-//				return ()
-//			}
-//			.get()
+//		}
 		
 		/* Search for LDAP users without an mail */
 //		let ldapConfig: LDAPServiceConfig = try app.officeKitConfig.getServiceConfig(id: nil)
