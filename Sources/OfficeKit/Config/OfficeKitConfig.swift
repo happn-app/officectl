@@ -38,20 +38,21 @@ public struct OfficeKitConfig {
 	public let serviceConfigs: [String: AnyOfficeKitServiceConfig]
 	
 	public var orderedServiceConfigs: [AnyOfficeKitServiceConfig] {
-		return serviceConfigs.values.sorted(by: { s1, s2 in
-			switch (s1.mergePriority, s2.mergePriority) {
-				case let (p1, p2) where p1 == p2: return s1.serviceID < s2.serviceID
-					
-				case let (.some(p1), .some(p2)): return p1 > p2
-					
-				case (.some, .none): return true
-				case (.none, .some): return false
-					
-				default:
-					OfficeKitConfig.logger?.warning("Internal logic error: Going in a case that shouldn’t be possible when sorting the service configs.")
-					return true
-			}
-		})
+		return []
+//		return serviceConfigs.values.sorted(by: { s1, s2 in
+//			switch (s1.mergePriority, s2.mergePriority) {
+//				case let (p1, p2) where p1 == p2: return s1.serviceID < s2.serviceID
+//					
+//				case let (.some(p1), .some(p2)): return p1 > p2
+//					
+//				case (.some, .none): return true
+//				case (.none, .some): return false
+//					
+//				default:
+//					OfficeKitConfig.logger?.warning("Internal logic error: Going in a case that shouldn’t be possible when sorting the service configs.")
+//					return true
+//			}
+//		})
 	}
 	
 	/* ************
