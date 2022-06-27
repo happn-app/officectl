@@ -7,7 +7,7 @@
 
 #if !canImport(DirectoryService) || !canImport(OpenDirectory)
 
-public typealias OpenDirectoryServiceConfig = DummyServiceConfig
+public typealias OpenDirectoryServiceConfig = LDAPServiceConfig
 
 #else
 

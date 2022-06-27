@@ -7,7 +7,7 @@
 
 #if !canImport(DirectoryService) || !canImport(OpenDirectory)
 
-public typealias ODRecordOKWrapper = DummyServiceUser
+public typealias ODRecordOKWrapper = LDAPInetOrgPersonWithObject
 
 #else
 
