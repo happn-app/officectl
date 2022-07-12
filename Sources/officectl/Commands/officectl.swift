@@ -25,7 +25,7 @@ struct OfficectlRootCommand : AsyncParsableCommand {
 			
 			init?(argument: String) {
 				switch argument {
-					case "dev", "development", nil: self = .development
+					case "dev", "development": self = .development
 					case "prod", "production": self = .production
 					case "test", "testing": self = .testing
 					default: return nil
