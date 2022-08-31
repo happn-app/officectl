@@ -100,9 +100,9 @@ public struct OfficeKitConfig {
 	
 	/**
 	 It is a programmer error to give an array of services containing two or more services with the same id. */
-	public init(globalConfig gConfig: GlobalConfig, serviceConfigs s: [AnyOfficeKitServiceConfig], authServiceID: String) throws {
+	public init(globalConfig gConfig: GlobalConfig, serviceConfigs s: [any OfficeKitServiceConfig], authServiceID: String) throws {
 		globalConfig = gConfig
-		serviceConfigs = [String: AnyOfficeKitServiceConfig](uniqueKeysWithValues: zip(s.map{ $0.serviceID }, s))
+		serviceConfigs = [String: any OfficeKitServiceConfig](uniqueKeysWithValues: zip(s.map{ $0.serviceID }, s))
 		
 		guard let c = serviceConfigs[authServiceID] else {
 			throw InvalidArgumentError(message: "The auth service ID does not correspond to a config")
