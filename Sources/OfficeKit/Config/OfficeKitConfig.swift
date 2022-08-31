@@ -17,8 +17,8 @@ public struct OfficeKitConfig {
 	static public var logger: Logger?
 	
 	/* TODO: Allow clients of OfficeKit to register their own services! */
-	static public private(set) var registeredServices: [String : OfficeKitServiceInit.Type] = {
-		var res: [String : OfficeKitServiceInit.Type] = [
+	static public private(set) var registeredServices: [String: OfficeKitServiceInit.Type] = {
+		var res: [String: OfficeKitServiceInit.Type] = [
 			EmailService.providerID:               EmailService.self,
 			ExternalDirectoryServiceV1.providerID: ExternalDirectoryServiceV1.self,
 			GitHubService.providerID:              GitHubService.self,
@@ -34,7 +34,7 @@ public struct OfficeKitConfig {
 	
 	public let globalConfig: GlobalConfig
 	
-	public let authServiceConfig: AnyOfficeKitServiceConfig
+	public let authServiceConfig: any OfficeKitServiceConfig
 	public let serviceConfigs: [String: AnyOfficeKitServiceConfig]
 	
 	public var orderedServiceConfigs: [AnyOfficeKitServiceConfig] {

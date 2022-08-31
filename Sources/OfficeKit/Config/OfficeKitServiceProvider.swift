@@ -246,7 +246,7 @@ public class OfficeKitServiceProvider {
 	   MARK: Directory Authenticator Service Creation
 	   ********************************************** */
 	
-	private func directoryAuthenticatorService(with config: AnyOfficeKitServiceConfig) throws -> AnyDirectoryAuthenticatorService {
+	private func directoryAuthenticatorService(with config: any OfficeKitServiceConfig) throws -> AnyDirectoryAuthenticatorService {
 		if let service = directoryAuthenticatorServiceCache {
 			return service
 		}
@@ -258,7 +258,7 @@ public class OfficeKitServiceProvider {
 		return service
 	}
 	
-	private func createDirectoryAuthenticatorService(with config: AnyOfficeKitServiceConfig) throws -> AnyDirectoryAuthenticatorService {
+	private func createDirectoryAuthenticatorService(with config: any OfficeKitServiceConfig) throws -> AnyDirectoryAuthenticatorService {
 		guard let providerType = OfficeKitConfig.registeredServices[config.providerID] as? DirectoryAuthenticatorServiceInit.Type else {
 			throw InvalidArgumentError(message: "Unregistered or invalid type for service provider \(config.providerID)")
 		}
