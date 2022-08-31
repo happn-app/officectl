@@ -30,8 +30,7 @@ public class OfficeKitServiceProvider {
 		}
 	}
 	
-	/* Convenience that avoids having to explicitly give the AnyOfficeKitService type to the compiler when using get Service for AnyOfficeKitService. */
-	public func getService(id: String?) throws -> AnyOfficeKitService {
+	public func getService(id: String?) throws -> any OfficeKitService {
 		let config = try officeKitConfig.getServiceConfig(id: id)
 		return try queue.sync{ try service(with: config) }
 	}
