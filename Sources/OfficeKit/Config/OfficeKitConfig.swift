@@ -35,9 +35,9 @@ public struct OfficeKitConfig {
 	public let globalConfig: GlobalConfig
 	
 	public let authServiceConfig: any OfficeKitServiceConfig
-	public let serviceConfigs: [String: AnyOfficeKitServiceConfig]
+	public let serviceConfigs: [String: any OfficeKitServiceConfig]
 	
-	public var orderedServiceConfigs: [AnyOfficeKitServiceConfig] {
+	public var orderedServiceConfigs: [any OfficeKitServiceConfig] {
 		return serviceConfigs.values.sorted(by: { s1, s2 in
 			switch (s1.mergePriority, s2.mergePriority) {
 				case let (p1, p2) where p1 == p2: return s1.serviceID < s2.serviceID
@@ -110,7 +110,7 @@ public struct OfficeKitConfig {
 		authServiceConfig = c
 	}
 	
-	public func getServiceConfig(id: String?) throws -> AnyOfficeKitServiceConfig {
+	public func getServiceConfig(id: String?) throws -> any OfficeKitServiceConfig {
 		if let id = id {
 			guard let config = serviceConfigs[id] else {
 				throw InvalidArgumentError(message: "No service config with ID \(id)")

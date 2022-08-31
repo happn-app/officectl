@@ -168,7 +168,7 @@ public class OfficeKitServiceProvider {
 	   MARK: Generic OfficeKit Service Creation
 	   **************************************** */
 	
-	private func service(with config: AnyOfficeKitServiceConfig) throws -> AnyOfficeKitService {
+	private func service(with config: any OfficeKitServiceConfig) throws -> AnyOfficeKitService {
 		if let service = servicesCache[config.serviceID] {
 			return service
 		}
@@ -178,7 +178,7 @@ public class OfficeKitServiceProvider {
 		return service
 	}
 	
-	private func createService(with config: AnyOfficeKitServiceConfig) throws -> AnyOfficeKitService {
+	private func createService(with config: any OfficeKitServiceConfig) throws -> AnyOfficeKitService {
 		guard let providerType = OfficeKitConfig.registeredServices[config.providerID] else {
 			throw InvalidArgumentError(message: "Unregistered service provider \(config.providerID)")
 		}
@@ -186,6 +186,7 @@ public class OfficeKitServiceProvider {
 		guard let service = providerType.erasedService(anyConfig: config, globalConfig: officeKitConfig.globalConfig, cachedServices: Array(servicesCache.values)) else {
 			throw InternalError(message: "Cannot init service with given config")
 		}
+		
 		return service
 	}
 	
@@ -193,7 +194,7 @@ public class OfficeKitServiceProvider {
 	   MARK: User Directory Service Creation
 	   ************************************* */
 	
-	private func userDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyUserDirectoryService {
+	private func userDirectoryService(with config: any OfficeKitServiceConfig) throws -> AnyUserDirectoryService {
 		if let service = userDirectoryServicesCache[config.serviceID] {
 			return service
 		}
@@ -204,7 +205,7 @@ public class OfficeKitServiceProvider {
 		return service
 	}
 	
-	private func createUserDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyUserDirectoryService {
+	private func createUserDirectoryService(with config: any OfficeKitServiceConfig) throws -> AnyUserDirectoryService {
 		guard let providerType = OfficeKitConfig.registeredServices[config.providerID] as? UserDirectoryServiceInit.Type else {
 			throw InvalidArgumentError(message: "Unregistered or invalid type for service provider \(config.providerID)")
 		}
@@ -219,7 +220,7 @@ public class OfficeKitServiceProvider {
 	   MARK: Group of Users Directory Service Creation
 	   *********************************************** */
 	
-	private func groupOfUsersDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyGroupOfUsersDirectoryService {
+	private func groupOfUsersDirectoryService(with config: any OfficeKitServiceConfig) throws -> AnyGroupOfUsersDirectoryService {
 		if let service = groupOfUsersDirectoryServicesCache[config.serviceID] {
 			return service
 		}
@@ -231,7 +232,7 @@ public class OfficeKitServiceProvider {
 		return service
 	}
 	
-	private func createGroupOfUsersDirectoryService(with config: AnyOfficeKitServiceConfig) throws -> AnyGroupOfUsersDirectoryService {
+	private func createGroupOfUsersDirectoryService(with config: any OfficeKitServiceConfig) throws -> AnyGroupOfUsersDirectoryService {
 		guard let providerType = OfficeKitConfig.registeredServices[config.providerID] as? GroupOfUsersDirectoryServiceInit.Type else {
 			throw InvalidArgumentError(message: "Unregistered or invalid type for service provider \(config.providerID)")
 		}
