@@ -32,7 +32,7 @@ import Foundation
  * Instead of passing the generic Services argument, we’d pass this type.
  * If Swift simplifies type erasure someday, we might do this; for now erasing is too complex. */
 
-public protocol OfficeKitService : AnyObject, Hashable, OfficeKitServiceInit {
+public protocol OfficeKitService : AnyObject, OfficeKitServiceInit {
 	
 	/**
 	 The ID of the linked provider, e.g. `internal_openldap`.

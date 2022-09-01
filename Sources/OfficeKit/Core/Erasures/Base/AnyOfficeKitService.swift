@@ -53,7 +53,7 @@ private struct ConcreteOfficeKitBox<Base : OfficeKitService> : OfficeKitServiceB
 	
 }
 
-public class AnyOfficeKitService : OfficeKitService {
+public class AnyOfficeKitService : OfficeKitService, Hashable {
 	
 	public static var providerID: String {
 		assertionFailure("Please do not use providerID on AnyOfficeKitService. This is an erasure for a concrete OfficeKitService type.")

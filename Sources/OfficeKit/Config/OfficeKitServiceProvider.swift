@@ -270,3 +270,23 @@ public class OfficeKitServiceProvider {
 	}
 	
 }
+
+
+@propertyWrapper
+public struct OfficeServiceWrapper : Hashable {
+	
+	public var wrappedValue: any OfficeKitService
+	
+	public init(wrappedValue: any OfficeKitService) {
+		self.wrappedValue = wrappedValue
+	}
+	
+	public static func == (lhs: OfficeServiceWrapper, rhs: OfficeServiceWrapper) -> Bool {
+		return lhs.wrappedValue.config.serviceID == rhs.wrappedValue.config.serviceID
+	}
+	
+	public func hash(into hasher: inout Hasher) {
+		hasher.combine(wrappedValue.config.serviceID)
+	}
+	
+}
