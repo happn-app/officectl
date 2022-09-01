@@ -21,12 +21,12 @@ public class OfficeKitServiceProvider {
 	   MARK: Generic OfficeKit Services Retrieval
 	   ****************************************** */
 	
-	public func getAllServices() throws -> Set<AnyOfficeKitService> {
+	public func getAllServices() throws -> [any OfficeKitService] {
 		return try queue.sync{
 			for config in officeKitConfig.serviceConfigs.values {
 				_ = try service(with: config)
 			}
-			return Set(servicesCache.values.filter{ !$0.config.isHelperService })
+			return servicesCache.values.filter{ !$0.config.isHelperService }
 		}
 	}
 	
@@ -51,10 +51,10 @@ public class OfficeKitServiceProvider {
 		}
 	}
 	
-	public func getServices(ids: Set<String>?) throws -> Set<AnyOfficeKitService> {
+	public func getServices(ids: Set<String>?) throws -> [any OfficeKitService] {
 		guard let ids = ids else {return try getAllServices()}
 		/* Note: Not ideal, we lock the queue for each service ID (in the getService(id:) method)… */
-		return try Set(ids.map{ try getService(id: $0) })
+		return try ids.map{ try getService(id: $0) }
 	}
 	
 	/* ***************************************
@@ -267,26 +267,6 @@ public class OfficeKitServiceProvider {
 			throw InternalError(message: "Cannot init service with given config")
 		}
 		return service
-	}
-	
-}
-
-
-@propertyWrapper
-public struct OfficeServiceWrapper : Hashable {
-	
-	public var wrappedValue: any OfficeKitService
-	
-	public init(wrappedValue: any OfficeKitService) {
-		self.wrappedValue = wrappedValue
-	}
-	
-	public static func == (lhs: OfficeServiceWrapper, rhs: OfficeServiceWrapper) -> Bool {
-		return lhs.wrappedValue.config.serviceID == rhs.wrappedValue.config.serviceID
-	}
-	
-	public func hash(into hasher: inout Hasher) {
-		hasher.combine(wrappedValue.config.serviceID)
 	}
 	
 }
