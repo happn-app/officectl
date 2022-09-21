@@ -1,4 +1,4 @@
-// swift-tools-version:5.6
+// swift-tools-version:5.7
 import PackageDescription
 
 
@@ -60,28 +60,28 @@ let package = Package(
 	] + platformDependentProducts,
 	dependencies: [
 		.package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.1.0"),
-		.package(url: "https://github.com/apple/swift-crypto.git", from: "1.0.0"),
-		.package(url: "https://github.com/apple/swift-log.git", from: "1.2.0"),
-		.package(url: "https://github.com/apple/swift-nio.git", from: "2.6.0"),
-		.package(url: "https://github.com/behrang/YamlSwift.git", from: "3.0.0"),
-		.package(url: "https://github.com/filom/ASN1Decoder.git", from: "1.3.3"),
-		.package(url: "https://github.com/Frizlab/APIConnectionProtocols.git", from: "1.0.0-beta.3"),
+		.package(url: "https://github.com/apple/swift-crypto.git", from: "2.1.0"),
+		.package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
+		.package(url: "https://github.com/apple/swift-nio.git", from: "2.41.0"),
+		.package(url: "https://github.com/behrang/YamlSwift.git", from: "3.4.0"),
+		.package(url: "https://github.com/filom/ASN1Decoder.git", from: "1.8.0"),
+		.package(url: "https://github.com/Frizlab/APIConnectionProtocols.git", from: "1.0.0-beta.4"),
 		.package(url: "https://github.com/Frizlab/HasResult.git", from: "1.0.0"),
-		.package(url: "https://github.com/Frizlab/OperationAwaiting.git", from: "1.2.0-beta.1"),
-		.package(url: "https://github.com/Frizlab/swift-email.git", from: "0.2.2"),
+		.package(url: "https://github.com/Frizlab/OperationAwaiting.git", from: "1.2.0-beta.2"),
+		.package(url: "https://github.com/Frizlab/swift-email.git", from: "0.2.3"),
 		.package(url: "https://github.com/happn-app/CollectionConcurrencyKit.git", from: "0.2.0"),
 		.package(url: "https://github.com/happn-app/officectl-model.git", branch: "main"),
-		.package(url: "https://github.com/happn-app/RetryingOperation.git", from: "1.1.4"),
-		.package(url: "https://github.com/happn-app/SemiSingleton.git", branch: "workaround_swift_crash"),
-		.package(url: "https://github.com/happn-app/URLRequestOperation.git", from: "2.0.0-alpha.13.1"),
+		.package(url: "https://github.com/happn-app/RetryingOperation.git", from: "1.1.7"),
+		.package(url: "https://github.com/happn-app/SemiSingleton.git", from: "2.0.5"),
+		.package(url: "https://github.com/happn-app/URLRequestOperation.git", from: "2.0.0-alpha.13.2"),
+		.package(url: "https://github.com/iwill/generic-json-swift.git", from: "2.0.1"),
 		.package(url: "https://github.com/mxcl/LegibleError.git", from: "1.0.0"),
-		.package(url: "https://github.com/vapor/leaf.git", from: "4.0.0"),
-		.package(url: "https://github.com/vapor/vapor.git", from: "4.50.0"),
+		.package(url: "https://github.com/vapor/leaf.git", from: "4.2.0"),
+		.package(url: "https://github.com/vapor/vapor.git", from: "4.65.0"),
 //		.package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
-		.package(url: "https://github.com/vapor/jwt.git", from: "4.1.0"),
-		.package(url: "https://github.com/vapor/console-kit.git", from: "4.0.0"),
-		.package(url: "https://github.com/xcode-actions/clt-logger.git", from: "0.3.4"),
-		.package(url: "https://github.com/zoul/generic-json-swift.git", from: "2.0.1")
+		.package(url: "https://github.com/vapor/jwt.git", from: "4.2.0"),
+		.package(url: "https://github.com/vapor/console-kit.git", from: "4.5.0"),
+		.package(url: "https://github.com/xcode-actions/clt-logger.git", from: "0.3.4")
 	] + platformDependentDependencies,
 	targets: [
 		.target(name: "GenericStorage", swiftSettings: [
