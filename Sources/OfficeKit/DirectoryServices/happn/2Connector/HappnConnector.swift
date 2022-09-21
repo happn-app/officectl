@@ -54,11 +54,11 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "HappnConnector Connection Queue")
 	
-	public convenience init(baseURL url: URL, clientID id: String, clientSecret s: String, username u: String, password p: String) {
+	public init(baseURL url: URL, clientID id: String, clientSecret s: String, username u: String, password p: String) {
 		self.init(baseURL: url, clientID: id, clientSecret: s, authMode: .userPass(username: u, password: p))
 	}
 	
-	public convenience init(baseURL url: URL, clientID id: String, clientSecret s: String, refreshToken t: String) {
+	public init(baseURL url: URL, clientID id: String, clientSecret s: String, refreshToken t: String) {
 		self.init(baseURL: url, clientID: id, clientSecret: s, authMode: .refreshToken(t))
 	}
 	

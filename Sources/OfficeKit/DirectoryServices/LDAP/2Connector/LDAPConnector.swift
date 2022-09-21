@@ -68,11 +68,11 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "LDAPConnector")
 	
-	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool) throws {
+	public init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool) throws {
 		try self.init(ldapURL: u, protocolVersion: protocolVersion, startTLS: startTLS, authMode: .none)
 	}
 	
-	public convenience init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool, username: String, password: String) throws {
+	public init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool, username: String, password: String) throws {
 		try self.init(ldapURL: u, protocolVersion: protocolVersion, startTLS: startTLS, authMode: .userPass(username: username, password: password))
 	}
 	

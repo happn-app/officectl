@@ -41,11 +41,11 @@ extension HappnConnector : SemiSingleton {
 	public typealias SemiSingletonKey = Settings
 	public typealias SemiSingletonAdditionalInitInfo = Void
 	
-	public convenience init(key s: Settings, additionalInfo: Void, store: SemiSingletonStore) {
+	public init(key s: Settings, additionalInfo: Void, store: SemiSingletonStore) {
 		self.init(key: s)
 	}
 	
-	public convenience init(key s: Settings) {
+	public init(key s: Settings) {
 		self.init(baseURL: s.baseURL, clientID: s.clientID, clientSecret: s.clientSecret, authMode: s.authMode)
 	}
 	

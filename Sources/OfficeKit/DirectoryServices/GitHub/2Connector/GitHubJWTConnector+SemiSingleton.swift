@@ -30,11 +30,11 @@ extension GitHubJWTConnector : SemiSingletonWithFallibleInit {
 	public typealias SemiSingletonKey = Settings
 	public typealias SemiSingletonAdditionalInitInfo = Void
 	
-	public convenience init(key s: Settings, additionalInfo: Void, store: SemiSingletonStore) throws {
+	public init(key s: Settings, additionalInfo: Void, store: SemiSingletonStore) throws {
 		try self.init(key: s)
 	}
 	
-	public convenience init(key s: Settings) throws {
+	public init(key s: Settings) throws {
 		try self.init(appID: s.appID, installationID: s.installationID, privateKeyURL: s.privateKeyURL)
 	}
 	
