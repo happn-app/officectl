@@ -12,7 +12,7 @@ import Foundation
 /**
  A generic LDAP object.
  Contains the dn and the attributes/values of the object. */
-public struct LDAPObject {
+public struct LDAPObject : Sendable {
 	
 	public var distinguishedName: LDAPDistinguishedName
 	public var attributes: [String: [Data]]

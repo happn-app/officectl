@@ -13,7 +13,7 @@ import Foundation
  * The RFC is not fully followed…
  * I know Multi-valued RDN are not supported.
  * There are probably other cases that do not correctly implement the RFC. */
-public struct LDAPDistinguishedName {
+public struct LDAPDistinguishedName : Sendable {
 	
 	public static func +(_ left: LDAPDistinguishedName, _ right: LDAPDistinguishedName) -> LDAPDistinguishedName {
 		return LDAPDistinguishedName(values: left.values + right.values)
@@ -204,7 +204,7 @@ public struct LDAPDistinguishedName {
 extension LDAPDistinguishedName : Hashable {
 	
 	public static func ==(lhs: LDAPDistinguishedName, rhs: LDAPDistinguishedName) -> Bool {
-		/* Apparently “(key: String, value: String)” does not conform to equatable :( */
+		/* Apparently “(key: String, value: String)” does not (cannot!) conform to equatable :( */
 //		return lhs.values == rhs.values
 		guard lhs.values.count == rhs.values.count else {return false}
 		for (l, r) in zip(lhs.values, rhs.values) {

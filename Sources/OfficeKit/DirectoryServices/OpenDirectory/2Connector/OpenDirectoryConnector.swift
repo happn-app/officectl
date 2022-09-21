@@ -60,9 +60,9 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	 - Parameter communicationBlock: The block to execute.
 	 - Parameter node: The OpenDirectory node.
 	 If the connector is not connected, will be `nil`. */
-	public func performOpenDirectoryCommunication<T>(_ communicationBlock: (_ node: ODNode?) throws -> T) rethrows -> T {
+	public func performOpenDirectoryCommunication<T>(_ communicationBlock: @Sendable (_ node: ODNode?) throws -> T) rethrows -> T {
 		/* If I understand the actor principle correctly, it is not possible this function is called twice in parallel,
-		 * so there should not be any need for a synchronization queue. */
+		 *  so there should not be any need for a synchronization queue. */
 		return try communicationBlock(node)
 	}
 	

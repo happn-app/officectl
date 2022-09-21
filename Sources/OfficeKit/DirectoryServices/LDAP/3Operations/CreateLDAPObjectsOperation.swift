@@ -60,13 +60,17 @@ public final class CreateLDAPObjectsOperation : RetryingOperation, HasResult {
 		
 		Task{
 			for (idx, object) in objects.enumerated() {
-				/* TODO: Check we do not leak. We should not, though. */
-				var ldapModifsRequest = object.attributes.map{ v -> UnsafeMutablePointer<LDAPMod>? in ldapModAlloc(method: LDAP_MOD_ADD | LDAP_MOD_BVALUES, key: v.key, values: v.value) } + [nil]
-				defer {ldap_mods_free(&ldapModifsRequest, 0)}
-				
-				/* We use the synchronous version of the function.
-				 * See long comment in search operation for details. */
-				let r = await connector.performLDAPCommunication{ ldap_add_ext_s($0, object.distinguishedName.stringValue, &ldapModifsRequest, nil /* Server controls */, nil /* Client controls */) }
+				let r = await connector.performLDAPCommunication{
+					/* We are not required to do the allocation in the LDAP communication block per se, but mutating a variable between concurrency domains is not allowed.
+					 * Technically ldap_add_ext_s should not modify the given LDAPMod objects, but the compiler does not know that.
+					 * TODO: Check we do not leak. We should not, though. */
+					var ldapModifsRequest = object.attributes.map{ v -> UnsafeMutablePointer<LDAPMod>? in ldapModAlloc(method: LDAP_MOD_ADD | LDAP_MOD_BVALUES, key: v.key, values: v.value) } + [nil]
+					defer {ldap_mods_free(&ldapModifsRequest, 0)}
+					
+					/* We use the synchronous version of the function.
+					 * See long comment in search operation for details. */
+					return ldap_add_ext_s($0, object.distinguishedName.stringValue, &ldapModifsRequest, nil /* Server controls */, nil /* Client controls */)
+				}
 				if r == LDAP_SUCCESS {errors[idx] = nil}
 				else                 {errors[idx] = NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])}
 			}
