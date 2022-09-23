@@ -203,8 +203,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/happn-app/SemiSingleton.git",
       "state" : {
-        "revision" : "9459d45f4d4719c306b5e0534438eeaa18fad27e",
-        "version" : "2.0.5"
+        "revision" : "a2bbad008641318f3f7faf2ec53e3bb8f0e080ff",
+        "version" : "2.1.0-beta.1"
       }
     },
     {
@@ -383,8 +383,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/happn-app/URLRequestOperation.git",
       "state" : {
-        "revision" : "7e4017fe77c4bfa0d3a652990df8a14177a00c95",
-        "version" : "2.0.0-alpha.13.2.3"
+        "revision" : "334de2fa75374f17f5262f3aa83d34f774d68058",
+        "version" : "2.0.0-alpha.13.3.0"
       }
     },
     {
