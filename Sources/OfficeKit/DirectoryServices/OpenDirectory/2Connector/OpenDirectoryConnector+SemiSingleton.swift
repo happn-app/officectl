@@ -16,7 +16,7 @@ import SemiSingleton
 
 extension OpenDirectoryConnector : SemiSingletonWithFallibleInit {
 	
-	public struct Settings : Hashable {
+	public struct Settings : Sendable, Hashable {
 		
 		public let proxySettings: ProxySettings?
 		

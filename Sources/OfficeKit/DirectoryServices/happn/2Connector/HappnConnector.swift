@@ -21,7 +21,7 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	
 	public static let nullLoginUserID = "244"
 	
-	public enum AuthMode : Hashable {
+	public enum AuthMode : Sendable, Hashable {
 		
 		case userPass(username: String, password: String)
 		case refreshToken(String)

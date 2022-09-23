@@ -13,7 +13,7 @@ import SemiSingleton
 
 extension LDAPConnector : SemiSingletonWithFallibleInit {
 	
-	public struct Settings : Hashable {
+	public struct Settings : Sendable, Hashable {
 		
 		public var ldapURL: URL
 		public var protocolVersion: LDAPProtocolVersion

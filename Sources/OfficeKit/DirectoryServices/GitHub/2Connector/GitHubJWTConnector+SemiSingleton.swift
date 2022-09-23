@@ -13,7 +13,7 @@ import SemiSingleton
 
 extension GitHubJWTConnector : SemiSingletonWithFallibleInit {
 	
-	public struct Settings : Hashable {
+	public struct Settings : Sendable, Hashable {
 		
 		public var appID: String
 		public var installationID: String

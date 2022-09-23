@@ -13,7 +13,7 @@ import SemiSingleton
 
 extension HappnConnector : SemiSingleton {
 	
-	public struct Settings : Hashable {
+	public struct Settings : Sendable, Hashable {
 		
 		public let baseURL: URL
 		

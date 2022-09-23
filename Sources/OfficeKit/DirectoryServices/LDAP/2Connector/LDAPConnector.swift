@@ -37,7 +37,7 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 		}
 	}
 	
-	public enum LDAPProtocolVersion : Hashable {
+	public enum LDAPProtocolVersion : Sendable, Hashable {
 		
 		case v1, v2, v3
 		
@@ -51,7 +51,7 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 		
 	}
 	
-	public enum AuthMode : Hashable {
+	public enum AuthMode : Sendable, Hashable {
 		
 		case none
 		case userPass(username: String, password: String)
