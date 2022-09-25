@@ -91,7 +91,7 @@ let package = Package(
 		
 		.target(name: "ServiceKit", swiftSettings: [
 			.unsafeFlags(["-cross-module-optimization"], .when(configuration: .release)),
-//			.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+			.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
 		]),
 		
 		.target(

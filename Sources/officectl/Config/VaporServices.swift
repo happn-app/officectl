@@ -93,7 +93,7 @@ extension Application {
 		if let existing = storage[ServicesKey.self] {
 			return existing
 		} else {
-			let new = Services()
+			var new = Services()
 			let queue = OperationQueue()
 			new.register{ queue } /* We always want to return the same queue */
 			new.register{ self.logger }
@@ -113,7 +113,7 @@ extension Application {
 extension Request {
 	
 	var services: Services {
-		let ret = Services(duplicating: application.services)
+		var ret = Services(duplicating: application.services)
 		ret.register{ self.logger }
 		return ret
 	}

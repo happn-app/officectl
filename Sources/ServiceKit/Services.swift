@@ -9,7 +9,7 @@ import Foundation
 
 
 
-public class Services {
+public struct Services : Sendable {
 	
 	public enum Error : Swift.Error {
 		
@@ -25,11 +25,11 @@ public class Services {
 		factories = services.factories
 	}
 	
-	public func register<T>(factory: @escaping () -> T) {
+	public mutating func register<T>(factory: @Sendable @escaping () -> T) {
 		try! register(factory: factory, allowOverride: true)
 	}
 	
-	public func register<T>(factory: @escaping () -> T, allowOverride: Bool) throws {
+	public mutating func register<T>(factory: @Sendable @escaping () -> T, allowOverride: Bool) throws {
 		guard allowOverride || factories[ObjectIdentifier(T.self)] == nil else {
 			throw Error.factoryAlreadyRegistered(for: T.self)
 		}
@@ -43,6 +43,6 @@ public class Services {
 		return factory()
 	}
 	
-	private var factories = [ObjectIdentifier: Any]()
+	private var factories = [ObjectIdentifier: any Sendable]()
 	
 }
