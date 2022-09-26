@@ -37,7 +37,7 @@ public struct Services : Sendable {
 	}
 	
 	public func make<T>(_ serviceType: T.Type = T.self) throws -> T {
-		guard let factory = factories[ObjectIdentifier(serviceType)] as! (() -> T)? else {
+		guard let factory = factories[ObjectIdentifier(serviceType)] as! (@Sendable () -> T)? else {
 			throw Error.noFactory(for: serviceType)
 		}
 		return factory()
