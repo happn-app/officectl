@@ -7,8 +7,10 @@
 
 import Foundation
 
+import Metrics
 import OfficeKit
 import OfficeModel
+import Prometheus
 import Vapor
 
 
@@ -36,6 +38,10 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	/* Note: This middleware setup is the default. We simply make it explict. */
 	app.middleware = Middlewares() /* Drop all default middlewares */
 	app.middleware.use(ErrorMiddleware(handleGenericError)) /* Catches errors and converts them to HTTP response (suitable for API) */
+	
+	/* Register Prom metrics handler.
+	 * Should probably not be done here per se, but not needed elsewhere so we do not do it in global conf, so here stays the best. */
+	MetricsSystem.bootstrap(PrometheusMetricsFactory(client: PrometheusClient()))
 	
 	let jwtAuth = UserJWTAuthenticator()
 	let sessionAuth = UserSessionAuthenticator()
@@ -110,6 +116,10 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	/* ******** Home page ******** */
 	
 	authedWebRoutesBuilderRedir.get(use: WebHomeController().showHome)
+	
+	/* ******** Semi-private routes ******** */
+	
+	webRoutesBuilder.get("_", "metrics", use: MetricsController().get)
 	
 	/* ******** Temporary password reset page ******** */
 	
