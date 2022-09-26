@@ -8,7 +8,7 @@
 import Foundation
 
 import Email
-import GenericJSON
+@preconcurrency import GenericJSON
 import Logging
 import UnwrapOrThrow
 

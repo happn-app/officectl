@@ -13,7 +13,7 @@ import OfficeModel
 
 
 
-public protocol DirectoryUser {
+public protocol DirectoryUser : Sendable {
 	
 	associatedtype IDType : Hashable
 	associatedtype PersistentIDType : Hashable
@@ -60,7 +60,7 @@ extension DirectoryUser {
  a           == b           /* <-- This is true. */
  a.hashValue == b.hashValue /* <-- This is true. */
  ``` */
-public enum DirectoryUserProperty : Hashable, RawRepresentable, ExpressibleByStringLiteral, Codable {
+public enum DirectoryUserProperty : Sendable, Hashable, RawRepresentable, ExpressibleByStringLiteral, Codable {
 	
 	public typealias RawValue = String
 	public typealias StringLiteralType = String

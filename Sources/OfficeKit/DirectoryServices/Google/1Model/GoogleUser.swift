@@ -13,15 +13,15 @@ import OfficeModel
 
 
 
-public struct GoogleUser : Hashable, Codable {
+public struct GoogleUser : Sendable, Hashable, Codable {
 	
-	public enum Kind : String, Codable {
+	public enum Kind : String, Sendable, Codable {
 		
 		case user = "admin#directory#user"
 		
 	}
 	
-	public enum PasswordHashFunction : String, Codable {
+	public enum PasswordHashFunction : String, Sendable, Codable {
 		
 		case sha1 = "SHA-1"
 		case md5 = "MD5"
@@ -29,7 +29,7 @@ public struct GoogleUser : Hashable, Codable {
 		
 	}
 	
-	public struct Name : Codable {
+	public struct Name : Sendable, Codable {
 		
 		public var givenName: String
 		public var familyName: String

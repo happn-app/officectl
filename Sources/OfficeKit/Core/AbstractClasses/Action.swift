@@ -14,7 +14,7 @@ import Foundation
  
  When the `TimeInterval` is `nil`, the action is weakened before the handler is called, otherwise,
  whatever the time interval value, the weakening is done asynchronously after the handler is called, on an internal queue. */
-public enum WeakeningMode {
+public enum WeakeningMode : Sendable {
 	
 	case never
 	case onError(delay: TimeInterval?)
@@ -80,16 +80,16 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	 If you decide _not_ to join the action (the default), your end handler will be called w/ an `OperationAlreadyInProgressError` error.
 	 
 	 If you try to start an action that has a result (the action is finished & strong),
-	 the `shouldRetrievePreviousRun` handler will be called, with the previous known parameters w/ which the action was run
-	 (might be `nil` because the client can clear the latest parameters to free up some memory),
-	 and a boolean set to whether the run was successful (`result.isSuccessful`).
+	  the `shouldRetrievePreviousRun` handler will be called, with the previous known parameters w/ which the action was run
+	  (might be `nil` because the client can clear the latest parameters to free up some memory),
+	  and a boolean set to whether the run was successful (`result.isSuccessful`).
 	 
 	 If you decide _not_ to retrieve the previous results, the action will be run again normally.
 	 Otherwise your end handler will be called w/ the current result of the action.
 	 
 	 This is the preferred method to run the action depending on the previous result.
 	 Not doing that and instead checking the `result` value before starting the action for instance,
-	 won’t be thread-safe and someone might start the action before you.
+	  won’t be thread-safe and someone might start the action before you.
 	 
 	 Or the action might get a result before you can start it!
 	 
@@ -98,7 +98,7 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	 When the end handler is called, the state of the action will either be `idleWeak` or `idleStrong` (you decide with the `weakeningMode` parameter).
 	 
 	 - Important: If you weaken the action instantly (`nil` delay, which is the default),
-	 the only way to retrieve the result of the action is through the handler given as argument of this method.
+	  the only way to retrieve the result of the action is through the handler given as argument of this method.
 	 A weak action always have a `nil` result. */
 	public final func start(
 		parameters: ParametersType,
@@ -214,7 +214,7 @@ open class Action<SubjectType, ParametersType, ResultType> : AnyAction {
 	/**
 	 This method is reserved for subclasses; do **not** call it directly.
 	 
-	 Start the action here. You do not need to call `super`, though you can.
+	 Start the action here. You do not need to call `super`, though you can (it does nothing).
 	 
 	 Call the handler when the action is done.
 	 You can call the handler synchronously or asynchronously. */

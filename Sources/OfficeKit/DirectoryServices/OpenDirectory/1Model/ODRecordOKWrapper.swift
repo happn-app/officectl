@@ -12,7 +12,7 @@ public typealias ODRecordOKWrapper = DummyServiceUser
 #else
 
 import Foundation
-import OpenDirectory
+@preconcurrency import OpenDirectory
 
 import Email
 

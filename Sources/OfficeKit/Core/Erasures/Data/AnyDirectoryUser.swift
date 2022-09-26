@@ -32,7 +32,7 @@ import OfficeModel
  *
  * because if we do, we cannot unbox to the original user… */
 
-private protocol DirectoryUserBox {
+private protocol DirectoryUserBox : Sendable {
 	
 	var userID: AnyID {get}
 	var remotePersistentID: RemoteProperty<AnyID> {get}

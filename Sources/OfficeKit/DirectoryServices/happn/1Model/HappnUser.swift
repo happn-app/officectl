@@ -15,13 +15,13 @@ import OfficeModel
 
 public struct HappnUser : Hashable, Codable {
 	
-	public enum HappnType : String, Codable {
+	public enum HappnType : String, Sendable, Codable {
 		
 		case client
 		
 	}
 	
-	public enum Gender : String, Codable {
+	public enum Gender : String, Sendable, Codable {
 		
 		case male
 		case female

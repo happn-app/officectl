@@ -13,6 +13,10 @@ import URLRequestOperation
 
 
 
+/* See https://github.com/happn-app/RetryingOperation/blob/123eafbc84db6b1bbcab6849882de2ccd1f6e60e/Sources/RetryingOperation/WrappedRetryingOperation.swift#L36
+ *  for more info about the unchecked Sendable conformance. */
+extension SearchGoogleUsersOperation : @unchecked Sendable {}
+
 /* https://developers.google.com/admin-sdk/directory/v1/reference/users/list */
 public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 	
@@ -77,7 +81,7 @@ public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 }
 
 
-public struct GoogleUserSearchRequest {
+public struct GoogleUserSearchRequest : Sendable {
 	
 	let domain: String
 	/**

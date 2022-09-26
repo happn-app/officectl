@@ -12,7 +12,7 @@ import FoundationNetworking
 
 import APIConnectionProtocols
 import FormURLEncodedEncoding
-import JWT
+@preconcurrency import JWT
 import OperationAwaiting
 import TaskQueue
 import URLRequestOperation

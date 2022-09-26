@@ -11,7 +11,7 @@ import Email
 
 
 
-public struct LDAPBaseDNs : Hashable {
+public struct LDAPBaseDNs : Sendable, Hashable {
 	
 	public var baseDNPerDomain: [String: LDAPDistinguishedName]
 	public var peopleBaseDNPerDomain: [String: LDAPDistinguishedName]?

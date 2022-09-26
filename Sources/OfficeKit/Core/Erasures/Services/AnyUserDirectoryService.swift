@@ -166,7 +166,7 @@ private struct ConcreteUserDirectoryBox<Base : UserDirectoryService> : UserDirec
 	
 }
 
-public class AnyUserDirectoryService : AnyOfficeKitService, UserDirectoryService {
+public class AnyUserDirectoryService : AnyOfficeKitService, UserDirectoryService, @unchecked Sendable {
 	
 	public typealias UserType = AnyDirectoryUser
 	

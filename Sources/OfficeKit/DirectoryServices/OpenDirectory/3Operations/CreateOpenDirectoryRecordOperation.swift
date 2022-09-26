@@ -8,13 +8,17 @@
 #if canImport(DirectoryService) && canImport(OpenDirectory)
 
 import Foundation
-import OpenDirectory
+@preconcurrency import OpenDirectory
 
 import Email
 import HasResult
 import RetryingOperation
 
 
+
+/* See https://github.com/happn-app/RetryingOperation/blob/123eafbc84db6b1bbcab6849882de2ccd1f6e60e/Sources/RetryingOperation/WrappedRetryingOperation.swift#L36
+ *  for more info about the unchecked Sendable conformance. */
+extension CreateOpenDirectoryRecordOperation : @unchecked Sendable {}
 
 public final class CreateOpenDirectoryRecordOperation : RetryingOperation, HasResult {
 	

@@ -15,6 +15,10 @@ import RetryingOperation
 
 
 
+/* See https://github.com/happn-app/RetryingOperation/blob/123eafbc84db6b1bbcab6849882de2ccd1f6e60e/Sources/RetryingOperation/WrappedRetryingOperation.swift#L36
+ *  for more info about the unchecked Sendable conformance. */
+extension ModifyOpenDirectoryPasswordOperation : @unchecked Sendable {}
+
 public final class ModifyOpenDirectoryPasswordOperation : RetryingOperation, HasResult {
 	
 	public let record: ODRecord

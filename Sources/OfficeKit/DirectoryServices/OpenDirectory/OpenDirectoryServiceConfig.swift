@@ -18,7 +18,7 @@ import GenericStorage
 
 
 
-public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig {
+public struct OpenDirectoryServiceConfig : OfficeKitServiceConfig, Sendable {
 	
 	public var providerID: String
 	public let isHelperService = false

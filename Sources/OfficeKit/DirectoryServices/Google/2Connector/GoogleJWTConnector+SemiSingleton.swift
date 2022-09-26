@@ -13,7 +13,7 @@ import SemiSingleton
 
 extension GoogleJWTConnector : SemiSingletonWithFallibleInit {
 	
-	public struct Settings : Hashable {
+	public struct Settings : Sendable, Hashable {
 		
 		public var jsonCredentialsURL: URL
 		public var userBehalf: String?

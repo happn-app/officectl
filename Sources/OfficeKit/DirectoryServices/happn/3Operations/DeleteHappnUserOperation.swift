@@ -19,6 +19,10 @@ import URLRequestOperation
 
 
 
+/* See https://github.com/happn-app/RetryingOperation/blob/123eafbc84db6b1bbcab6849882de2ccd1f6e60e/Sources/RetryingOperation/WrappedRetryingOperation.swift#L36
+ *  for more info about the unchecked Sendable conformance. */
+extension DeleteHappnUserOperation : @unchecked Sendable {}
+
 public final class DeleteHappnUserOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = Void

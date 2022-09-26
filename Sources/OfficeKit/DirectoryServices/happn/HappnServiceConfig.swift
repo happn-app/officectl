@@ -11,7 +11,7 @@ import GenericStorage
 
 
 
-public struct HappnServiceConfig : OfficeKitServiceConfig {
+public struct HappnServiceConfig : OfficeKitServiceConfig, Sendable {
 	
 	public var providerID: String
 	public let isHelperService = false

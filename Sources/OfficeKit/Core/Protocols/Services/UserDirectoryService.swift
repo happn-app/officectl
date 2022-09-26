@@ -16,7 +16,7 @@ import OfficeModel
 
 
 
-public protocol UserDirectoryService : OfficeKitService, UserDirectoryServiceInit {
+public protocol UserDirectoryService : OfficeKitService, UserDirectoryServiceInit, Sendable {
 	
 	associatedtype UserType : DirectoryUser
 	

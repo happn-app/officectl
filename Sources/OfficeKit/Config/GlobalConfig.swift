@@ -11,7 +11,7 @@ import GenericStorage
 
 
 
-public struct GlobalConfig : Hashable {
+public struct GlobalConfig : Sendable, Hashable {
 	
 	public var verbose = false
 	
