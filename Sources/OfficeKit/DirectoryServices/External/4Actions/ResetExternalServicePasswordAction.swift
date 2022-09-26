@@ -17,13 +17,16 @@ import OfficeModel
 
 
 
+/* The action is thread-safe as long as unsafeStart is not called manually. */
+extension ResetExternalServicePasswordAction : @unchecked Sendable {}
+
 public final class ResetExternalServicePasswordAction : Action<TaggedID, String, Void>, ResetPasswordAction, SemiSingleton {
 	
 	public typealias SemiSingletonKey = TaggedID
-	public typealias SemiSingletonAdditionalInitInfo = (URL, ExternalServiceAuthenticator, JSONEncoder, JSONDecoder)
+	public typealias SemiSingletonAdditionalInitInfo = (URL, ExternalServiceAuthenticator)
 	
 	public required init(key id: TaggedID, additionalInfo: SemiSingletonAdditionalInitInfo, store: SemiSingletonStore) {
-		deps = Dependencies(serviceURL: additionalInfo.0, authenticator: additionalInfo.1, jsonEncoder: additionalInfo.2, jsonDecoder: additionalInfo.3)
+		deps = Dependencies(serviceURL: additionalInfo.0, authenticator: additionalInfo.1)
 		
 		super.init(subject: id)
 	}
@@ -47,9 +50,6 @@ public final class ResetExternalServicePasswordAction : Action<TaggedID, String,
 		
 		let serviceURL: URL
 		let authenticator: ExternalServiceAuthenticator
-		
-		let jsonEncoder: JSONEncoder
-		let jsonDecoder: JSONDecoder
 		
 	}
 	

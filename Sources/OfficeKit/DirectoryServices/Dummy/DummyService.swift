@@ -17,7 +17,7 @@ import ServiceKit
 
 
 
-public struct DummyServiceConfig : OfficeKitServiceConfig {
+public struct DummyServiceConfig : OfficeKitServiceConfig, Sendable {
 	
 	public var providerID: String
 	public let isHelperService = true

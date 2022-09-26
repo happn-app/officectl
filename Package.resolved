@@ -122,8 +122,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/leaf.git",
       "state" : {
-        "revision" : "04f262edbee143cdfefc5b26cef704913712e16c",
-        "version" : "4.2.1"
+        "revision" : "bf1c27928c3f7f93fcdca570d7514727fa23e14e",
+        "version" : "4.2.2"
       }
     },
     {
@@ -275,8 +275,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Frizlab/swift-email.git",
       "state" : {
-        "revision" : "3bfbfda40f5cfb99a43467a48cf8c53a9ab317ce",
-        "version" : "0.2.3"
+        "revision" : "4e52c6ccf638fa31e0475379a1aa1ae82890f854",
+        "version" : "0.2.4"
       }
     },
     {

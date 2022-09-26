@@ -42,6 +42,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		
 		authenticator = ExternalServiceAuthenticator(secret: c.secret)
 		
+#warning("TODO: JSON encoder/decoder are thread-safe on macOS 13, not before apparently (conformance to Sendable is only starting at macOS 13)")
 		/* Note: We assume JSON encoder/decoder are thread-safe.
 		 *       https://stackoverflow.com/a/52183880 */
 		
@@ -195,7 +196,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 	public var supportsPasswordChange: Bool {return config.supportsPasswordChange}
 	public func changePasswordAction(for user: DirectoryUserWrapper, using services: Services) throws -> ResetPasswordAction {
 		let semiSingletonStore = try services.semiSingletonStore()
-		return semiSingletonStore.semiSingleton(forKey: user.userID, additionalInitInfo: (config.url, authenticator, jsonEncoder, jsonDecoder)) as ResetExternalServicePasswordAction
+		return semiSingletonStore.semiSingleton(forKey: user.userID, additionalInitInfo: (config.url, authenticator)) as ResetExternalServicePasswordAction
 	}
 	
 	private typealias ApiRequestOperation<T : Decodable> = URLRequestDataOperation<ExternalServiceResponse<T>>

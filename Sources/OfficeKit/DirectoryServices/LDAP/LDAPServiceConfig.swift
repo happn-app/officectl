@@ -11,7 +11,7 @@ import GenericStorage
 
 
 
-public struct LDAPServiceConfig : OfficeKitServiceConfig {
+public struct LDAPServiceConfig : OfficeKitServiceConfig, Sendable {
 	
 	public var providerID: String
 	public let isHelperService = false

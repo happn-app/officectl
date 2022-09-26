@@ -28,7 +28,7 @@ public final class GoogleService : UserDirectoryService {
 	
 	public static let providerID = "internal_google"
 	
-	public enum UserIDConversionError : Error {
+	public enum UserIDConversionError : Error, Sendable {
 		
 		case noEmailInLDAP
 		case multipleEmailInLDAP

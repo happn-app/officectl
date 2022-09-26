@@ -11,7 +11,7 @@ import GenericStorage
 
 
 
-public struct EmailServiceConfig : OfficeKitServiceConfig {
+public struct EmailServiceConfig : OfficeKitServiceConfig, Sendable {
 	
 	public var providerID: String
 	public let isHelperService = true

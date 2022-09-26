@@ -11,7 +11,7 @@ import GenericStorage
 
 
 
-public enum WrappedUserToUserIDConversionStrategy : Hashable {
+public enum WrappedUserToUserIDConversionStrategy : Sendable, Hashable {
 	
 	case emailToTaggedDN(baseDNs: LDAPBaseDNs, tag: String?)
 	
