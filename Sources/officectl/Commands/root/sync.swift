@@ -8,7 +8,7 @@
 import Foundation
 
 import ArgumentParser
-import Vapor
+@preconcurrency import Vapor
 
 import OfficeKit
 
