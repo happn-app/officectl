@@ -65,61 +65,14 @@ class WebCertificateRenewController {
 			return request
 		}
 		
-		let certificatesToRevoke = try await ([issuerName] + additionalActiveIssuers).concurrentFlatMap{ issuerName -> [(id: String, issuerName: String, certif: X509Certificate)] in
-			/* Let’s get the CRL */
-			let opCRL = try URLRequestDataOperation.forData(url: vaultBaseURL.appending(issuerName, "crl"), requestProcessors: [AuthRequestProcessor(authHandler: authenticate)])
-			let crl = try await VaultCRL(der: opCRL.startAndGetResult().result)
-			
-			/* Let’s fetch the list of current certificates in the vault */
-			let opListCurrentCertifs = URLRequestDataOperation<VaultResponse<VaultCertificateSerialsList>>.forAPIRequest(
-				url: try vaultBaseURL.appending(issuerName, "certs"), method: "LIST",
-				errorType: VaultError.self, requestProcessors: [AuthRequestProcessor(authHandler: authenticate)],
-				resultProcessorModifier: { rp in
-					rp.flatMapError{ (error, response) in
-						/* When there are no certificates in the PKI, vault returns a fucking 404!
-						 * With a response like so '{"errors":[]}'. */
-						if (response as? HTTPURLResponse)?.statusCode == 404,
-							let e = error as? URLRequestOperationError.APIResultErrorWrapper<VaultError>,
-							e.error.errors.isEmpty
-						{
-							return VaultResponse(data: VaultCertificateSerialsList(keys: []))
-						}
-						throw error
-					}
-				}, retryProviders: []
+		let certificatesToRevoke = try await ([issuerName] + additionalActiveIssuers).concurrentFlatMap{ issuerName -> [Certificate] in
+			return try await Certificate.getAll(
+				from: issuerName,
+				includeRevoked: false,
+				vaultBaseURL: vaultBaseURL,
+				vaultAuthenticator: AuthRequestProcessor(authHandler: authenticate)
 			)
-			let certificatesList = try await opListCurrentCertifs.startAndGetResult().result.data
-			/* Note: An alternative to the flatMapError in the resultProcessorModifier in the operation above would be no modifier and catching the error.
-			 * An example of implementation:
-			 * 	let certificatesList: CertificateSerialsList
-			 * 	do {
-			 * 		certificatesList = try await opListCurrentCertifs.startAndGetResult().result.data
-			 * 	} catch where URLRequestOperationError.APIResultErrorWrapper<VaultError>.get(from: error)?.error.errors.isEmpty ?? false {
-			 * 		certificatesList = .init(keys: [])
-			 * 	} */
-			
-			/* Get the list of certificates to revoke. */
-			return try await certificatesList.keys.concurrentCompactMap{ id in
-				guard !crl.revokedCertificateIDs.contains(normalizeCertificateID(id)) else {
-					/* If the certificate is already revoked, we don’t have to do anything w/ it. */
-					return nil
-				}
-				let certificateResponse = try await URLRequestDataOperation<VaultResponse<VaultCertificateContainer>>.forAPIRequest(
-					url: try vaultBaseURL.appending(issuerName, "cert", id),
-					requestProcessors: [AuthRequestProcessor(authHandler: authenticate)], retryProviders: []
-				).startAndGetResult().result
-				guard let subjectDNStr = certificateResponse.data.certificate.subjectDistinguishedName else {
-					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN for\n\(certificateResponse.data.pem)"])
-				}
-				let subjectDN = try LDAPDistinguishedName(string: subjectDNStr)
-				guard let dnValue = subjectDN.values.onlyElement, dnValue.key == "CN" else {
-					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN certificate DN \(subjectDN)"])
-				}
-				let subjectCN = dnValue.value
-				guard subjectCN == renewedCommonName else {return nil}
-				return (id: id, issuerName: issuerName, certif: certificateResponse.data.certificate)
-			}
-		}
+		}.filter{ $0.commonName == renewedCommonName }
 		
 		/* We check if all of the certificates to revoke will expire in less than n seconds (where n is defined in the conf).
 		 * If the user is admin we don’t do this check (admin can renew any certif they want whenever they want). */
@@ -135,7 +88,7 @@ class WebCertificateRenewController {
 		/* Revoke the certificates to revoke */
 		try req.application.auditLogger.log(action: "Revoking \(certificatesToRevoke.count) certificate(s): \(certificatesToRevoke.map{ $0.issuerName + ":" + $0.id }.joined(separator: " ")).", source: .web)
 		try await certificatesToRevoke.concurrentForEach{ certificateToRevoke in
-			let (id, issuerName, _) = certificateToRevoke
+			let (id, issuerName) = (certificateToRevoke.id, certificateToRevoke.issuerName)
 			let op = try URLRequestDataOperation<VaultResponse<VaultRevocationResult?>>.forAPIRequest(
 				url: vaultBaseURL.appending(issuerName, "revoke"), httpBody: ["serial_number": id],
 				requestProcessors: [AuthRequestProcessor(authHandler: authenticate)],
