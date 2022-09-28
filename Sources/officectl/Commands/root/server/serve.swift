@@ -8,6 +8,7 @@
 import Foundation
 
 import ArgumentParser
+import Metrics
 import Vapor
 
 import OfficeKit
@@ -61,6 +62,53 @@ struct ServerServeCommand : AsyncParsableCommand {
 		
 		guard let serveCommand = app.commands.commands["serve"] else {
 			throw "Cannot find the serve command"
+		}
+		
+		/* Before launching the server, we launch a background task to update the certificates expiration dates metric. */
+		if let vaultBaseURL = config.tmpVaultBaseURL?.appendingPathComponent("v1"),
+			let issuerName = config.tmpVaultIssuerName,
+			let token = config.tmpVaultToken
+		{
+			let additionalActiveIssuers = config.tmpVaultAdditionalActiveIssuers ?? []
+			let additionalPassiveIssuers = config.tmpVaultAdditionalPassiveIssuers ?? []
+			let additionalCertificates = config.tmpVaultAdditionalCertificates ?? []
+			
+			@Sendable
+			func authenticate(_ request: URLRequest) -> URLRequest {
+				var request = request
+				request.addValue(token, forHTTPHeaderField: "X-Vault-Token")
+				return request
+			}
+			let queue = DispatchQueue(label: "com.happn.cronjob")
+			var updateCertifExpiryDate: (() -> Void)?
+			updateCertifExpiryDate = {
+				app.logger.info("Launching certificate expiry computation.")
+				let updateCertifExpiryDate = updateCertifExpiryDate!
+				Task{
+					let certificates = try await ([issuerName] + additionalActiveIssuers).concurrentFlatMap{ issuerName -> [Certificate] in
+						return try await Certificate.getAll(
+							from: issuerName,
+							includeRevoked: true,
+							vaultBaseURL: vaultBaseURL,
+							vaultAuthenticator: AuthRequestProcessor(authHandler: authenticate)
+						)
+					}
+					for certificate in certificates {
+						let dimensions = [
+							("id", normalizeCertificateID(certificate.id)),
+							("common-name", certificate.commonName),
+							("issuer-name", certificate.issuerName),
+							("revoked", certificate.isRevoked ? "true" : "false")
+						]
+						let gauge = Gauge(label: "com.happn.officectl.vault-certs.expiration", dimensions: dimensions)
+						if let notAfter = certificate.certif.notAfter {
+							gauge.record(notAfter.timeIntervalSinceNow)
+						}
+					}
+					queue.asyncAfter(deadline: .now() + .seconds(12 * 60 * 60), execute: updateCertifExpiryDate)
+				}
+			}
+			updateCertifExpiryDate!()
 		}
 		
 		var context = context
