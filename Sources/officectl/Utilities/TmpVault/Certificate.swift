@@ -20,11 +20,7 @@ struct Certificate {
 	static func getAll(from issuerName: String, includeRevoked: Bool = false, vaultBaseURL: URL, vaultAuthenticator: AuthRequestProcessor) async throws -> [Certificate] {
 		/* Let’s get the CRL */
 		let opCRL = try URLRequestDataOperation.forData(url: vaultBaseURL.appending(issuerName, "crl"), requestProcessors: [vaultAuthenticator])
-		let revokedCertificateIDs = (
-			!includeRevoked ?
-				try await VaultCRL(der: opCRL.startAndGetResult().result).revokedCertificateIDs :
-				[]
-		)
+		let revokedCertificateIDs = try await VaultCRL(der: opCRL.startAndGetResult().result).revokedCertificateIDs
 		
 		/* Let’s fetch the list of current certificates in the vault */
 		let opListCurrentCertifs = URLRequestDataOperation<VaultResponse<VaultCertificateSerialsList>>.forAPIRequest(
@@ -56,8 +52,8 @@ struct Certificate {
 		
 		/* Get the list of certificates to revoke. */
 		return try await certificatesList.keys.concurrentCompactMap{ id in
-			guard !revokedCertificateIDs.contains(normalizeCertificateID(id)) else {
-				/* If the certificate is already revoked, we don’t have to do anything w/ it. */
+			let isRevoked = revokedCertificateIDs.contains(normalizeCertificateID(id))
+			guard includeRevoked || !isRevoked else {
 				return nil
 			}
 			let certificateResponse = try await URLRequestDataOperation<VaultResponse<VaultCertificateContainer>>.forAPIRequest(
@@ -72,13 +68,16 @@ struct Certificate {
 				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN certificate DN \(subjectDN)"])
 			}
 			let subjectCN = dnValue.value
-			return Certificate(id: id, commonName: subjectCN, issuerName: issuerName, certif: certificateResponse.data.certificate)
+			return Certificate(id: id, commonName: subjectCN, issuerName: issuerName, certif: certificateResponse.data.certificate, isRevoked: isRevoked)
 		}
 	}
 	
 	var id: String
 	var commonName: String
+	
 	var issuerName: String
 	var certif: X509Certificate
+	
+	var isRevoked: Bool
 	
 }
