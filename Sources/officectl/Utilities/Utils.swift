@@ -20,6 +20,17 @@ func groupUsersByID<S : Sequence>(from users: S) throws -> [AnyID: AnyDirectoryU
 	return try users.group(by: { $0.userID })
 }
 
+func normalizeCertificateID(_ id: String) -> String {
+	let characterSet = CharacterSet(charactersIn: "0123456789abcdef")
+	var preresult = id.lowercased().drop{ $0 == "0" }
+	preresult.removeAll{
+		let scalars = $0.unicodeScalars
+		guard let scalar = scalars.onlyElement else {return true}
+		return !characterSet.contains(scalar)
+	}
+	return String(preresult)
+}
+
 extension Dictionary {
 	
 	func mapKeys<T : Hashable>(_ transform: (Key) throws -> T) rethrows -> [T: Value] {
