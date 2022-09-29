@@ -71,7 +71,6 @@ struct ServerServeCommand : AsyncParsableCommand {
 		{
 			let additionalActiveIssuers = config.tmpVaultAdditionalActiveIssuers ?? []
 			let additionalPassiveIssuers = config.tmpVaultAdditionalPassiveIssuers ?? []
-			let additionalCertificates = config.tmpVaultAdditionalCertificates ?? []
 			
 			@Sendable
 			func authenticate(_ request: URLRequest) -> URLRequest {
@@ -85,25 +84,31 @@ struct ServerServeCommand : AsyncParsableCommand {
 				app.logger.info("Launching certificate expiry computation.")
 				let updateCertifExpiryDate = updateCertifExpiryDate!
 				Task{
-					let certificates = try await ([issuerName] + additionalActiveIssuers).concurrentFlatMap{ issuerName -> [Certificate] in
-						return try await Certificate.getAll(
-							from: issuerName,
-							includeRevoked: true,
-							vaultBaseURL: vaultBaseURL,
-							vaultAuthenticator: AuthRequestProcessor(authHandler: authenticate)
-						)
-					}
-					for certificate in certificates {
-						let dimensions = [
-							("id", normalizeCertificateID(certificate.id)),
-							("common-name", certificate.commonName),
-							("issuer-name", certificate.issuerName),
-							("revoked", certificate.isRevoked ? "true" : "false")
-						]
-						let gauge = Gauge(label: "com.happn.officectl.vault-certs.expiration", dimensions: dimensions)
-						if let notAfter = certificate.certif.notAfter {
-							gauge.record(notAfter.timeIntervalSinceNow)
+					do {
+						let certificates = try await ([issuerName] + additionalActiveIssuers + additionalPassiveIssuers).concurrentFlatMap{ issuerName -> [Certificate] in
+							return try await Certificate.getAll(
+								from: issuerName,
+								includeRevoked: true,
+								vaultBaseURL: vaultBaseURL,
+								vaultAuthenticator: AuthRequestProcessor(authHandler: authenticate)
+							)
 						}
+						for certificate in certificates {
+							let dimensions = [
+								("id", normalizeCertificateID(certificate.id)),
+								("common-name", certificate.commonName),
+								("issuer-name", certificate.issuerName),
+								("revoked", certificate.isRevoked ? "true" : "false"),
+								certificate.certif.issuerDistinguishedName.flatMap{ ("issuer-dn", $0) },
+								certificate.certif.subjectDistinguishedName.flatMap{ ("subject-dn", $0) }
+							].compactMap{ $0 }
+							let gauge = Gauge(label: "com.happn.officectl.vault-certs.expiration", dimensions: dimensions)
+							if let notAfter = certificate.certif.notAfter {
+								gauge.record(notAfter.timeIntervalSinceNow)
+							}
+						}
+					} catch {
+						app.logger.error("Failed updating certificate expiration date metrics.", metadata: ["error": "\(error)"])
 					}
 					queue.asyncAfter(deadline: .now() + .seconds(12 * 60 * 60), execute: updateCertifExpiryDate)
 				}
