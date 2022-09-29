@@ -61,11 +61,11 @@ struct Certificate {
 				requestProcessors: [vaultAuthenticator], retryProviders: []
 			).startAndGetResult().result
 			guard let subjectDNStr = certificateResponse.data.certificate.subjectDistinguishedName else {
-				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN for\n\(certificateResponse.data.pem)"])
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate DN for\n\(certificateResponse.data.pem)"])
 			}
 			let subjectDN = try LDAPDistinguishedName(string: subjectDNStr)
-			guard let dnValue = subjectDN.values.onlyElement, dnValue.key == "CN" else {
-				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN certificate DN \(subjectDN)"])
+			guard let dnValue = (subjectDN.values.filter{ $0.key == "CN" }.onlyElement) else {
+				throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot get certificate CN from DN “\(subjectDN)”"])
 			}
 			let subjectCN = dnValue.value
 			return Certificate(id: id, commonName: subjectCN, issuerName: issuerName, certif: certificateResponse.data.certificate, isRevoked: isRevoked)
