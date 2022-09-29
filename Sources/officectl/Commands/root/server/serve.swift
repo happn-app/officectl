@@ -9,7 +9,7 @@ import Foundation
 
 import ArgumentParser
 import Metrics
-import Vapor
+@preconcurrency import Vapor
 
 import OfficeKit
 
