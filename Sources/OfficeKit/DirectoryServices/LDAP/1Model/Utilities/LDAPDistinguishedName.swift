@@ -61,9 +61,17 @@ public struct LDAPDistinguishedName : Sendable {
 				switch self {
 					case .waitEndKey:
 						switch c {
-							case "="?:         return .waitEndValue
-							case "\\"?:        return .waitEndKeyBackslash
-							case .some(let c): currentKey.append(c); return .waitEndKey
+							case "="?:
+								/* TODO: Better than this. I’m not sure this is RFC compliant. Probably not rfc4514 compliant (I think parsing should fail in case of trailing or leading whitespaces); maybe rfc1779 compliant. */
+								currentKey = currentKey.trimmingCharacters(in: .whitespaces);
+								return .waitEndValue
+								
+							case "\\"?:
+								return .waitEndKeyBackslash
+								
+							case .some(let c):
+								currentKey.append(c); return .waitEndKey
+								
 							case nil:
 								throw NSError(domain: "com.happn.officectl.ldapDNParser", code: 2, userInfo: [NSLocalizedDescriptionKey: "Got EOF, expected more key characters"])
 						}
