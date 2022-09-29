@@ -1,7 +1,7 @@
 # ================================
 # Build image
 # ================================
-FROM swift:5.6-focal as build
+FROM swiftlang/swift@sha256:f96dc42d419213a0dc041a6fd4d132ab82755d07c1642e060a5f4882ccce396a as build
 
 # Install OS updates and required packages
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -40,13 +40,13 @@ RUN [ -d /build/Resources ] && { mv /build/Resources ./Resources && chmod -R a-w
 # ================================
 # Run image
 # ================================
-FROM swift:5.6-focal-slim
+FROM swift:5.7-jammy-slim
 
 # Make sure all system packages are up to date and install required libs
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
     && apt-get -q update \
     && apt-get -q dist-upgrade -y \
-    && apt-get install -y libldap-2.4-2 libncurses6 libncursesw6 libssl1.1 zlib1g \
+    && apt-get install -y libldap-2.5-0 libncurses6 libncursesw6 libssl3 zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
 # TODO: Find how to do this properly!

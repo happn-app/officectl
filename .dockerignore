@@ -1,2 +1,3 @@
 # The SwiftPM build folder
+/Dockerfile
 /.build/
