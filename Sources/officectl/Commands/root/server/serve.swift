@@ -105,7 +105,7 @@ struct ServerServeCommand : AsyncParsableCommand {
 								certificate.certif.issuerDistinguishedName.flatMap{ ("issuer-dn", $0) },
 								certificate.certif.subjectDistinguishedName.flatMap{ ("subject-dn", $0) }
 							].compactMap{ $0 }
-							let gauge = Gauge(label: "com.happn.officectl.vault-certs.expiration", dimensions: dimensions)
+							let gauge = Gauge(label: "happn_vault_certs_expiration", dimensions: dimensions)
 							if let notAfter = certificate.certif.notAfter {
 								gauge.record(notAfter.timeIntervalSinceNow)
 							}
