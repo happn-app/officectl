@@ -97,6 +97,24 @@ let package = Package(
 		))
 		ret.append(.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit", .product(name: "OfficeModel", package: "officectl-model")]))
 		
+		ret.append(.target(
+			name: "OfficeKit2",
+			dependencies: {
+				var ret = [Target.Dependency]()
+				ret.append(.product(name: "Logging", package: "swift-log"))
+#if !os(Linux)
+				/* On macOS we use xcframework dependencies for OpenSSL and OpenLDAP. */
+				ret.append(.product(name: "COpenSSL-dynamic",  package: "COpenSSL"))
+				ret.append(.product(name: "COpenLDAP-dynamic", package: "COpenLDAP"))
+#else
+				/* On Linux we use the standard OpenLDAP package. */
+				ret.append(.target(name: "COpenLDAP"))
+#endif
+				return ret
+			}(),
+			swiftSettings: commonSwiftSettings
+		))
+		
 		ret.append(.executableTarget(
 			name: "officectl",
 			dependencies: {
