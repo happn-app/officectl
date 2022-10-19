@@ -8,7 +8,7 @@
 import Foundation
 
 import Email
-import ModelCore
+import OfficeModelCore
 
 
 

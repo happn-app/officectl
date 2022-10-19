@@ -104,7 +104,7 @@ let package = Package(
 				ret.append(.product(name: "Email",           package: "swift-email"))
 				ret.append(.product(name: "GenericJSON",     package: "generic-json-swift"))
 				ret.append(.product(name: "Logging",         package: "swift-log"))
-				ret.append(.product(name: "OfficeModelCore", package: "officectl-model", moduleAliases: ["OfficeModelCore": "ModelCore"]))
+				ret.append(.product(name: "OfficeModelCore", package: "officectl-model"/*Xcode is not read for this:, moduleAliases: ["OfficeModelCore": "ModelCore"]*/))
 #if !os(Linux)
 				/* On macOS we use xcframework dependencies for OpenSSL and OpenLDAP. */
 				ret.append(.product(name: "COpenSSL-dynamic",  package: "COpenSSL"))
