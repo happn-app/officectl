@@ -32,7 +32,7 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/apple/swift-nio.git",                        from: "2.41.0"))
 		ret.append(.package(url: "https://github.com/behrang/YamlSwift.git",                      from: "3.4.0"))
 		ret.append(.package(url: "https://github.com/filom/ASN1Decoder.git",                      from: "1.8.0"))
-		ret.append(.package(url: "https://github.com/Frizlab/APIConnectionProtocols.git",         from: "1.0.0-beta.4"))
+		ret.append(.package(url: "https://github.com/Frizlab/APIConnectionProtocols.git",         from: "1.0.0-beta.5"))
 		ret.append(.package(url: "https://github.com/Frizlab/HasResult.git",                      from: "1.0.0"))
 		ret.append(.package(url: "https://github.com/Frizlab/OperationAwaiting.git",              from: "1.2.0-beta.2"))
 		ret.append(.package(url: "https://github.com/Frizlab/swift-email.git",                    from: "0.2.3"))
@@ -41,7 +41,7 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/happn-app/RetryingOperation.git",            from: "1.1.7"))
 		ret.append(.package(url: "https://github.com/happn-app/SemiSingleton.git",                from: "2.1.0-beta.1"))
 		ret.append(.package(url: "https://github.com/happn-app/URLRequestOperation.git",          from: "2.0.0-alpha.13.3"))
-		ret.append(.package(url: "https://github.com/iwill/generic-json-swift.git",               from: "2.0.1"))
+		ret.append(.package(url: "https://github.com/iwill/generic-json-swift.git",               from: "2.0.2"))
 		ret.append(.package(url: "https://github.com/mxcl/LegibleError.git",                      from: "1.0.0"))
 		ret.append(.package(url: "https://github.com/swift-server-community/SwiftPrometheus.git", from: "1.0.0"))
 		ret.append(.package(url: "https://github.com/vapor/leaf.git",                             from: "4.2.0"))
@@ -101,7 +101,10 @@ let package = Package(
 			name: "OfficeKit2",
 			dependencies: {
 				var ret = [Target.Dependency]()
-				ret.append(.product(name: "Logging", package: "swift-log"))
+				ret.append(.product(name: "Email",           package: "swift-email"))
+				ret.append(.product(name: "GenericJSON",     package: "generic-json-swift"))
+				ret.append(.product(name: "Logging",         package: "swift-log"))
+				ret.append(.product(name: "OfficeModelCore", package: "officectl-model", moduleAliases: ["OfficeModelCore": "ModelCore"]))
 #if !os(Linux)
 				/* On macOS we use xcframework dependencies for OpenSSL and OpenLDAP. */
 				ret.append(.product(name: "COpenSSL-dynamic",  package: "COpenSSL"))
