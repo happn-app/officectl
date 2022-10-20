@@ -8,12 +8,18 @@
 import Foundation
 
 import GenericJSON
+import ServiceKit
 
 
 
 public protocol UserDirectoryService<UserType> {
 	
 	associatedtype UserType : DirectoryUser
+	
+	/** This is the ID a newly locally created user should have. */
+	static var invalidUserID: UserType.IDType {get}
+	/** These are the properties the user service supports. */
+	static var supportedUserProperties: Set<DirectoryUserProperty> {get}
 	
 	/** Convert the user to a user printable string. Mostly used for logging. */
 	func shortDescription(fromUser user: UserType) -> String
@@ -55,14 +61,14 @@ public protocol UserDirectoryService<UserType> {
 	/**
 	 Fetch and return the _only_ user matching the given ID.
 	 
-	 If _more than one_ user matches the given ID, the function should return a **failed** future.
-	 If _no_ users match the given ID, the method should return a succeeded future with a `nil` user. */
+	 If _more than one_ user matches the given ID, the function should **throw an error**.
+	 If _no_ users match the given ID, the method should return `nil`. */
 	func existingUser(fromPersistentID pID: UserType.PersistentIDType, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> UserType?
 	/**
 	 Fetch and return the _only_ user matching the given ID.
 	 
-	 If _more than one_ user matches the given ID, the function should return a **failed** future.
-	 If _no_ users match the given ID, the method should return a succeeded future with a `nil` user. */
+	 If _more than one_ user matches the given ID, the function should **throw an error**.
+	 If _no_ users match the given ID, the method should return `nil`. */
 	func existingUser(fromUserID uID: UserType.IDType, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> UserType?
 	
 	func listAllUsers(using services: Services) async throws -> [UserType]
@@ -77,6 +83,6 @@ public protocol UserDirectoryService<UserType> {
 	func deleteUser(_ user: UserType, using services: Services) async throws
 	
 	var supportsPasswordChange: Bool {get}
-	func changePasswordAction(for user: UserType, using services: Services) throws -> ResetPasswordAction
+	func changePassword(of user: UserType, to newPassword: String, using services: Services) throws
 	
 }

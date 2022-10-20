@@ -9,7 +9,10 @@ import Foundation
 
 
 
-public enum OfficeKitError : Sendable {
+public enum OfficeKitError : Error, Sendable {
+	
+	case invalidJSONUserWrapper
+	
 }
 
 typealias Err = OfficeKitError

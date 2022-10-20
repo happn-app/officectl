@@ -17,15 +17,24 @@ public protocol DirectoryUser<IDType> : Sendable {
 	associatedtype IDType : Hashable & Sendable
 	associatedtype PersistentIDType : Hashable & Sendable
 	
-	var userID: IDType {get}
-	var remotePersistentID: RemoteProperty<PersistentIDType> {get}
+	var id: IDType {get}
+	var persistentID: PersistentIDType? {get}
 	
-	var remoteIdentifyingEmail: RemoteProperty<Email?> {get}
-	var remoteOtherEmails: RemoteProperty<[Email]> {get}
+	var identifyingEmails: [Email]? {get}
+	var otherEmails: [Email]? {get}
 	
-//	var remoteFullName: RemoteProperty<String?> {get}
-	var remoteFirstName: RemoteProperty<String?> {get}
-	var remoteLastName: RemoteProperty<String?> {get}
-	var remoteNickname: RemoteProperty<String?> {get}
+//	var fullName: String? {get}
+	var firstName: String? {get}
+	var lastName: String? {get}
+	var nickname: String? {get}
+	
+}
+
+
+public extension DirectoryUser {
+	
+	var emails: [Email] {
+		(identifyingEmails ?? []) + (otherEmails ?? [])
+	}
 	
 }

@@ -7,9 +7,14 @@
 
 import Foundation
 
+import Logging
+
 
 
 public enum OfficeKitConfig : Sendable {
+	
+	static public var logger: Logger?
+	
 }
 
 typealias Conf = OfficeKitConfig
