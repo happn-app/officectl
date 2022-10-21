@@ -12,7 +12,7 @@ import OfficeModelCore
 
 
 
-public protocol DirectoryUser<IDType> : Sendable {
+public protocol User<IDType> : Sendable {
 	
 	associatedtype IDType : Hashable & Sendable
 	associatedtype PersistentIDType : Hashable & Sendable
@@ -31,7 +31,7 @@ public protocol DirectoryUser<IDType> : Sendable {
 }
 
 
-public extension DirectoryUser {
+public extension User {
 	
 	var emails: [Email] {
 		(identifyingEmails ?? []) + (otherEmails ?? [])

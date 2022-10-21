@@ -1,5 +1,5 @@
 /*
- * UserDirectoryService.swift
+ * UserService.swift
  * OfficeKit
  *
  * Created by François Lamboley on 2022/10/12.
@@ -12,19 +12,21 @@ import ServiceKit
 
 
 
-public protocol UserDirectoryService<UserType> {
+public protocol UserService<UserType> {
 	
-	associatedtype UserType : DirectoryUser
+	associatedtype UserType : User
 	
-	/** This is the ID a newly locally created user should have. */
+	/**
+	 A known invalid user ID.
+	 This is the ID a newly locally created user should have. */
 	static var invalidUserID: UserType.IDType {get}
 	/** These are the properties the user service supports. */
-	static var supportedUserProperties: Set<DirectoryUserProperty> {get}
+	static var supportedUserProperties: Set<UserProperty> {get}
 	
 	/** Convert the user to a user printable string. Mostly used for logging. */
 	func shortDescription(fromUser user: UserType) -> String
 	
-	/** Empty IDs are **not supported**. There are no other restrictions. */
+	/** The empty ID is reserved for the representation of the invalid user ID. */
 	func string(fromUserID userID: UserType.IDType) -> String
 	func userID(fromString string: String) throws -> UserType.IDType
 	
@@ -34,7 +36,7 @@ public protocol UserDirectoryService<UserType> {
 	/**
 	 Converts the given user to a JSON (generic codable storage representation).
 	 
-	 The representation is usually used to store as an underlying user in a DirectoryUserWrapper.
+	 The representation is usually used to be stored as an underlying user in a ``UserWrapper``.
 	 It should contain as much as possible from the original user. */
 	func json(fromUser user: UserType) throws -> JSON
 	
@@ -52,24 +54,24 @@ public protocol UserDirectoryService<UserType> {
 	 
 	 If the user wrapper has data that is inconsistent with the underlying user, the result of the method is undefined.
 	 Implementations can, but are not required to validate the user wrapper for consistency with its underlying user. */
-	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> UserType
+	func logicalUser(fromWrappedUser userWrapper: UserWrapper) throws -> UserType
 	
 	/** Returns the properties that were successfully applied to the user. */
 	@discardableResult
-	func applyHints(_ hints: [DirectoryUserProperty: String?], toUser user: inout UserType, allowUserIDChange: Bool) -> Set<DirectoryUserProperty>
+	func applyHints(_ hints: [UserProperty: String?], toUser user: inout UserType, allowUserIDChange: Bool) -> Set<UserProperty>
 	
 	/**
 	 Fetch and return the _only_ user matching the given ID.
 	 
 	 If _more than one_ user matches the given ID, the function should **throw an error**.
 	 If _no_ users match the given ID, the method should return `nil`. */
-	func existingUser(fromPersistentID pID: UserType.PersistentIDType, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> UserType?
+	func existingUser(fromPersistentID pID: UserType.PersistentIDType, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType?
 	/**
 	 Fetch and return the _only_ user matching the given ID.
 	 
 	 If _more than one_ user matches the given ID, the function should **throw an error**.
 	 If _no_ users match the given ID, the method should return `nil`. */
-	func existingUser(fromUserID uID: UserType.IDType, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> UserType?
+	func existingUser(fromUserID uID: UserType.IDType, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType?
 	
 	func listAllUsers(using services: Services) async throws -> [UserType]
 	
@@ -77,7 +79,7 @@ public protocol UserDirectoryService<UserType> {
 	func createUser(_ user: UserType, using services: Services) async throws -> UserType
 	
 	var supportsUserUpdate: Bool {get}
-	func updateUser(_ user: UserType, propertiesToUpdate: Set<DirectoryUserProperty>, using services: Services) async throws -> UserType
+	func updateUser(_ user: UserType, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> UserType
 	
 	var supportsUserDeletion: Bool {get}
 	func deleteUser(_ user: UserType, using services: Services) async throws

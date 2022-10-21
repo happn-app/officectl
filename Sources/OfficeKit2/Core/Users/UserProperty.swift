@@ -1,5 +1,5 @@
 /*
- * DirectoryUserProperty.swift
+ * UserProperty.swift
  * OfficeKit
  *
  * Created by François Lamboley on 2022/10/19.
@@ -14,12 +14,12 @@ import Foundation
  
  Tested:
  ```
- let a = DirectoryUserProperty.id
- let b = DirectoryUserProperty.custom("id")
+ let a = UserProperty.id
+ let b = UserProperty.custom("id")
  a           == b           /* <-- This is true. */
  a.hashValue == b.hashValue /* <-- This is true. */
  ``` */
-public enum DirectoryUserProperty : Sendable, Hashable, RawRepresentable, ExpressibleByStringLiteral, Codable {
+public enum UserProperty : Sendable, Hashable, RawRepresentable, ExpressibleByStringLiteral, Codable {
 	
 	public typealias RawValue = String
 	public typealias StringLiteralType = String
@@ -74,9 +74,9 @@ public enum DirectoryUserProperty : Sendable, Hashable, RawRepresentable, Expres
 	 Even though `.id == .custom("id")` (and the same applies for hash values),
 	  when switching on a value from this enum,
 	  we should prefer switching on the normalized value as the case `.id` and `.custom("id")` are indeed different. */
-	public func normalized() -> DirectoryUserProperty {
+	public func normalized() -> UserProperty {
 		if case .custom(let v) = self {
-			return DirectoryUserProperty(stringLiteral: v)
+			return UserProperty(stringLiteral: v)
 		}
 		return self
 	}

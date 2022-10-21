@@ -1,5 +1,5 @@
 /*
- * DirectoryUserWrapper.swift
+ * UserWrapper.swift
  * OfficeKit
  *
  * Created by François Lamboley on 2019/07/09.
@@ -16,7 +16,7 @@ import OfficeModelCore
 
 
 
-public struct DirectoryUserWrapper : DirectoryUser, Codable {
+public struct UserWrapper : User, Codable {
 	
 	public typealias IDType = TaggedID
 	public typealias PersistentIDType = TaggedID
@@ -36,15 +36,15 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	/**
 	 An attempt at something at some point.
 	 Can probably be removed (set to private in the mean time). */
-	private var savedHints = [DirectoryUserProperty: String?]()
+	private var savedHints = [UserProperty: String?]()
 	
 	public var sourceServiceID: String {
 		return id.tag
 	}
 	
-	public init(userID uid: TaggedID, persistentID pId: TaggedID? = nil, underlyingUser u: JSON? = nil, hints: [DirectoryUserProperty: String?] = [:]) {
+	public init(userID uid: TaggedID, persistentID pId: TaggedID? = nil, underlyingUser u: JSON? = nil, hints: [UserProperty: String?] = [:]) {
 		if TaggedID(string: uid.rawValue) != uid {
-			Conf.logger?.error("Initing a DirectoryUserWrapper with a TaggedID whose string representation does not converts back to itself: \(uid)")
+			Conf.logger?.error("Initing a UserWrapper with a TaggedID whose string representation does not converts back to itself: \(uid)")
 		}
 		id = uid
 		persistentID = pId
@@ -53,7 +53,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		savedHints = hints
 	}
 	
-	public init(copying other: DirectoryUserWrapper) {
+	public init(copying other: UserWrapper) {
 		id = other.id
 		persistentID = other.persistentID
 		
@@ -69,7 +69,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	
 	public init(json: JSON, forcedUserID: TaggedID?) throws {
 		underlyingUser = json[CodingKeys.underlyingUser.rawValue]
-		savedHints = json[CodingKeys.savedHints.rawValue]?.objectValue?.mapKeys{ DirectoryUserProperty(stringLiteral: $0) }.compactMapValues{ $0.stringValue } ?? [:]
+		savedHints = json[CodingKeys.savedHints.rawValue]?.objectValue?.mapKeys{ UserProperty(stringLiteral: $0) }.compactMapValues{ $0.stringValue } ?? [:]
 		
 		id = try forcedUserID ?? TaggedID(string: json[CodingKeys.id.rawValue]?.stringValue ?! Err.invalidJSONUserWrapper)
 		persistentID = try json[CodingKeys.persistentID.rawValue].flatMap{ try TaggedID(string: $0.stringValue ?! Err.invalidJSONUserWrapper) }
@@ -103,7 +103,7 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		return .object(res)
 	}
 	
-	public mutating func copyStandardNonIDProperties<U : DirectoryUser>(fromUser user: U) {
+	public mutating func copyStandardNonIDProperties<U : User>(fromUser user: U) {
 		identifyingEmails = user.identifyingEmails
 		otherEmails = user.otherEmails
 		
@@ -112,8 +112,8 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 		nickname = user.nickname
 	}
 	
-	public func applyingAndSavingHints(_ hints: [DirectoryUserProperty: String?], blacklistedKeys: Set<DirectoryUserProperty> = [.id], replaceAllPreviouslySavedHints: Bool = false) -> DirectoryUserWrapper {
-		var ret = DirectoryUserWrapper(copying: self)
+	public func applyingAndSavingHints(_ hints: [UserProperty: String?], blacklistedKeys: Set<UserProperty> = [.id], replaceAllPreviouslySavedHints: Bool = false) -> UserWrapper {
+		var ret = UserWrapper(copying: self)
 		ret.applyAndSaveHints(hints, blacklistedKeys: blacklistedKeys, replaceAllPreviouslySavedHints: replaceAllPreviouslySavedHints)
 		return ret
 	}
@@ -125,14 +125,14 @@ public struct DirectoryUserWrapper : DirectoryUser, Codable {
 	 
 	 - Returns: The keys that have been modified. */
 	@discardableResult
-	public mutating func applyAndSaveHints(_ hints: [DirectoryUserProperty: String?], blacklistedKeys: Set<DirectoryUserProperty> = [.id], replaceAllPreviouslySavedHints: Bool = false) -> Set<DirectoryUserProperty> {
+	public mutating func applyAndSaveHints(_ hints: [UserProperty: String?], blacklistedKeys: Set<UserProperty> = [.id], replaceAllPreviouslySavedHints: Bool = false) -> Set<UserProperty> {
 		struct Internal__InvalidEmailErrorMarker : Error {} /* An error we only use internally. */
 		
 		if replaceAllPreviouslySavedHints {
 			savedHints = [:]
 		}
 		
-		var modifiedKeys = Set<DirectoryUserProperty>()
+		var modifiedKeys = Set<UserProperty>()
 		for (k, v) in hints {
 			guard !blacklistedKeys.contains(k) else {continue}
 			
