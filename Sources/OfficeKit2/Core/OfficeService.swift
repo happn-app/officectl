@@ -19,6 +19,7 @@ public protocol OfficeService : AnyObject {
 	 External provider IDs (not builtin to OfficeKit) must not have the `internal_` prefix. */
 	static var providerID: String {get}
 	
-	init(jsonConfig: JSON) throws
+	init(id: String, jsonConfig: JSON) throws
+	var id: String {get}
 	
 }
