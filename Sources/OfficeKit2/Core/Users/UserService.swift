@@ -12,6 +12,8 @@ import ServiceKit
 
 
 
+public typealias HashableUserService = DeportedHashability<any UserService>
+
 public protocol UserService<UserType> : OfficeService {
 	
 	associatedtype UserType : User

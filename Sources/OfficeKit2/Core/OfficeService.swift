@@ -23,3 +23,12 @@ public protocol OfficeService : AnyObject, Sendable {
 	var id: String {get}
 	
 }
+
+
+public extension DeportedHashability where ValueType : OfficeService {
+	
+	init(_ val: ValueType) {
+		self.init(id: val.id, value: val)
+	}
+	
+}

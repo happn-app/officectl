@@ -11,6 +11,8 @@ import ServiceKit
 
 
 
+public typealias HashableGroupOfUsersService = DeportedHashability<any GroupOfUsersService>
+
 public protocol GroupOfUsersService<UserType> : OfficeService {
 	
 	associatedtype UserType : User
