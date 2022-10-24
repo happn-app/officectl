@@ -11,7 +11,7 @@ import Foundation
 
 public enum OfficeKitError : Error, Sendable {
 	
-	case invalidJSONUserWrapper
+	case invalidJSONEncodedUserWrapper
 	
 }
 

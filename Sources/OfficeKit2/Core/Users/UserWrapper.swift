@@ -71,15 +71,15 @@ public struct UserWrapper : User, Codable {
 		underlyingUser = json[CodingKeys.underlyingUser.rawValue]
 		savedHints = json[CodingKeys.savedHints.rawValue]?.objectValue?.mapKeys{ UserProperty(stringLiteral: $0) }.compactMapValues{ $0.stringValue } ?? [:]
 		
-		id = try forcedUserID ?? TaggedID(string: json[CodingKeys.id.rawValue]?.stringValue ?! Err.invalidJSONUserWrapper)
-		persistentID = try json[CodingKeys.persistentID.rawValue].flatMap{ try TaggedID(string: $0.stringValue ?! Err.invalidJSONUserWrapper) }
+		id = try forcedUserID ?? TaggedID(string: json[CodingKeys.id.rawValue]?.stringValue ?! Err.invalidJSONEncodedUserWrapper)
+		persistentID = try json[CodingKeys.persistentID.rawValue].flatMap{ try TaggedID(string: $0.stringValue ?! Err.invalidJSONEncodedUserWrapper) }
 		
-		identifyingEmails = try json[CodingKeys.identifyingEmails.rawValue].flatMap{ try ($0.arrayValue ?! Err.invalidJSONUserWrapper).map{ try Email(rawValue: $0.stringValue ?! Err.invalidJSONUserWrapper) ?! Err.invalidJSONUserWrapper } }
-		otherEmails       = try json[CodingKeys.otherEmails.rawValue      ].flatMap{ try ($0.arrayValue ?! Err.invalidJSONUserWrapper).map{ try Email(rawValue: $0.stringValue ?! Err.invalidJSONUserWrapper) ?! Err.invalidJSONUserWrapper } }
+		identifyingEmails = try json[CodingKeys.identifyingEmails.rawValue].flatMap{ try ($0.arrayValue ?! Err.invalidJSONEncodedUserWrapper).map{ try Email(rawValue: $0.stringValue ?! Err.invalidJSONEncodedUserWrapper) ?! Err.invalidJSONEncodedUserWrapper } }
+		otherEmails       = try json[CodingKeys.otherEmails.rawValue      ].flatMap{ try ($0.arrayValue ?! Err.invalidJSONEncodedUserWrapper).map{ try Email(rawValue: $0.stringValue ?! Err.invalidJSONEncodedUserWrapper) ?! Err.invalidJSONEncodedUserWrapper } }
 		
-		firstName = try json[CodingKeys.firstName.rawValue].flatMap{ try $0.stringValue ?! Err.invalidJSONUserWrapper }
-		lastName  = try json[CodingKeys.lastName.rawValue ].flatMap{ try $0.stringValue ?! Err.invalidJSONUserWrapper }
-		nickname  = try json[CodingKeys.nickname.rawValue ].flatMap{ try $0.stringValue ?! Err.invalidJSONUserWrapper }
+		firstName = try json[CodingKeys.firstName.rawValue].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
+		lastName  = try json[CodingKeys.lastName.rawValue ].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
+		nickname  = try json[CodingKeys.nickname.rawValue ].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
 	}
 	
 	public func json(includeSavedHints: Bool = false) -> JSON {
