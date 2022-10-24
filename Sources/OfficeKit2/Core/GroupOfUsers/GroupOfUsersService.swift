@@ -11,7 +11,7 @@ import ServiceKit
 
 
 
-public protocol GroupOfUsersService<UserType> {
+public protocol GroupOfUsersService<UserType> : OfficeService {
 	
 	associatedtype UserType : User
 	associatedtype GroupOfUsersType : GroupOfUsers

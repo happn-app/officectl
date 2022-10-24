@@ -11,7 +11,7 @@ import ServiceKit
 
 
 
-public protocol AuthenticatorService<UserType, AuthenticationChallenge> {
+public protocol AuthenticatorService<UserType, AuthenticationChallenge> : OfficeService {
 	
 	associatedtype UserType : User
 	associatedtype AuthenticationChallenge

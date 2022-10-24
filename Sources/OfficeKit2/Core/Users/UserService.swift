@@ -12,7 +12,7 @@ import ServiceKit
 
 
 
-public protocol UserService<UserType> {
+public protocol UserService<UserType> : OfficeService {
 	
 	associatedtype UserType : User
 	
