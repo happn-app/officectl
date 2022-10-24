@@ -28,7 +28,7 @@ public protocol OfficeService : AnyObject, Sendable {
 public extension DeportedHashability where ValueType : OfficeService {
 	
 	init(_ val: ValueType) {
-		self.init(id: val.id, value: val)
+		self.init(value: val, valueID: val.id)
 	}
 	
 }
