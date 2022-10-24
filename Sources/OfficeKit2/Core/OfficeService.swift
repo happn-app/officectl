@@ -11,7 +11,7 @@ import GenericJSON
 
 
 
-public protocol OfficeService {
+public protocol OfficeService : AnyObject {
 	
 	/**
 	 The ID of the linked provider, e.g. `internal_openldap`.
