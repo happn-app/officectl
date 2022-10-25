@@ -25,10 +25,6 @@ final class DummyService : UserService, GroupOfUsersService, AuthenticatorServic
 	typealias GroupOfUsersType = DummyGroupOfUsers
 	typealias AuthenticationChallenge = Never
 	
-	static var invalidUserID: Never {fatalError()}
-	static var invalidGroupOfUsersID: Never {fatalError()}
-	static let supportedUserProperties: Set<UserProperty> = []
-	
 	let id: String
 	
 	init(id: String, jsonConfig: JSON) throws {
@@ -38,6 +34,8 @@ final class DummyService : UserService, GroupOfUsersService, AuthenticatorServic
 	/* ******************
 	   MARK: User Service
 	   ****************** */
+	
+	static let supportedUserProperties: Set<UserProperty> = []
 	
 	func shortDescription(fromUser user: DummyUser) -> String {
 		return "<ERROR>"

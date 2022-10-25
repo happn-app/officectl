@@ -19,7 +19,7 @@ public struct DummyGroupOfUsers : GroupOfUsers {
 	public typealias IDType = Never
 	public typealias PersistentIDType = Never
 	
-	public var groupID: Never
+	public var groupID: Never?
 	public var persistentID: Never?
 	
 	public var identifyingEmails: [Email]?

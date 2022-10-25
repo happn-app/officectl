@@ -17,7 +17,8 @@ public protocol User<IDType> : Sendable {
 	associatedtype IDType : Hashable & Sendable
 	associatedtype PersistentIDType : Hashable & Sendable
 	
-	var id: IDType {get}
+	/** Optional because we cannot know the id of locally created users. */
+	var id: IDType? {get}
 	var persistentID: PersistentIDType? {get}
 	
 	var identifyingEmails: [Email]? {get}

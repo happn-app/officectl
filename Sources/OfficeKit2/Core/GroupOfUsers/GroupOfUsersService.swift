@@ -18,11 +18,6 @@ public protocol GroupOfUsersService<UserType> : OfficeService {
 	associatedtype UserType : User
 	associatedtype GroupOfUsersType : GroupOfUsers
 	
-	/**
-	 A known invalid group of users ID.
-	 This is the ID a newly locally created group should have. */
-	static var invalidGroupOfUsersID: GroupOfUsersType.IDType {get}
-	
 	func shortDescription(fromGroupOfUsers groupOfUsers: GroupOfUsersType) -> String
 	
 	func listUsers(inGroupOfUsers groupOfUsers: GroupOfUsersType, using services: Services) async throws -> [UserType]

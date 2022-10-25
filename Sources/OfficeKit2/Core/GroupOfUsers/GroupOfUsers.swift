@@ -16,7 +16,8 @@ public protocol GroupOfUsers : Sendable {
 	associatedtype IDType : Hashable & Sendable
 	associatedtype PersistentIDType : Hashable & Sendable
 	
-	var groupID: IDType {get}
+	/** Optional because we cannot know the id of locally created group of users. */
+	var groupID: IDType? {get}
 	var persistentID: PersistentIDType? {get}
 	
 	var identifyingEmails: [Email]? {get}

@@ -21,7 +21,7 @@ public struct UserWrapper : User, Codable {
 	public typealias IDType = TaggedID
 	public typealias PersistentIDType = TaggedID
 	
-	public var id: TaggedID
+	public var id: TaggedID?
 	public var persistentID: TaggedID?
 	
 	public var identifyingEmails: [Email]?
@@ -38,8 +38,8 @@ public struct UserWrapper : User, Codable {
 	 Can probably be removed (set to private in the mean time). */
 	private var savedHints = [UserProperty: String?]()
 	
-	public var sourceServiceID: String {
-		return id.tag
+	public var sourceServiceID: String? {
+		return id?.tag
 	}
 	
 	public init(userID uid: TaggedID, persistentID pId: TaggedID? = nil, underlyingUser u: JSON? = nil, hints: [UserProperty: String?] = [:]) {
@@ -83,14 +83,12 @@ public struct UserWrapper : User, Codable {
 	}
 	
 	public func json(includeSavedHints: Bool = false) -> JSON {
-		var res: [String: JSON] = [
-			CodingKeys.id.rawValue: .string(id.stringValue)
-		]
+		var res = [String: JSON]()
 		
 		if let u = underlyingUser {res[CodingKeys.underlyingUser.rawValue] = u}
 		if includeSavedHints {res[CodingKeys.savedHints.rawValue] = .object(savedHints.mapKeys{ $0.rawValue }.mapValues{ $0.flatMap{ .string($0) } ?? .null })}
 		
-		/* id added above. */
+		if let sID = id           {res[CodingKeys.id.rawValue]           = .string(sID.stringValue)}
 		if let pID = persistentID {res[CodingKeys.persistentID.rawValue] = .string(pID.stringValue)}
 		
 		if let e = identifyingEmails {res[CodingKeys.identifyingEmails.rawValue] = .array(e.map{ .string($0.rawValue) })}

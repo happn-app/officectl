@@ -18,10 +18,6 @@ public protocol UserService<UserType> : OfficeService {
 	
 	associatedtype UserType : User
 	
-	/**
-	 A known invalid user ID.
-	 This is the ID a newly locally created user should have. */
-	static var invalidUserID: UserType.IDType {get}
 	/** These are the properties the user service supports. */
 	static var supportedUserProperties: Set<UserProperty> {get}
 	
