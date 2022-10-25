@@ -21,3 +21,13 @@ public protocol AuthenticatorService<UserType, AuthenticationChallenge> : Office
 	func authenticate(with challenge: AuthenticationChallenge, using services: Services) async throws -> UserType.IDType
 	
 }
+
+
+public extension Dictionary where Key == DeportedHashability<any AuthenticatorService> {
+	
+	subscript(_ service: any AuthenticatorService) -> Value? {
+		get {self[.init(value: service, valueID: service.id)]}
+		set {self[.init(value: service, valueID: service.id)] = newValue}
+	}
+	
+}

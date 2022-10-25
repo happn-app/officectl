@@ -36,6 +36,7 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/Frizlab/HasResult.git",                      from: "1.0.0"))
 		ret.append(.package(url: "https://github.com/Frizlab/OperationAwaiting.git",              from: "1.2.0-beta.2"))
 		ret.append(.package(url: "https://github.com/Frizlab/swift-email.git",                    from: "0.2.3"))
+		ret.append(.package(url: "https://github.com/Frizlab/UnwrapOrThrow.git",                  from: "1.0.0-beta.1"))
 		ret.append(.package(url: "https://github.com/happn-app/CollectionConcurrencyKit.git",     from: "0.2.0"))
 		ret.append(.package(url: "https://github.com/happn-app/officectl-model.git",              branch: "main"))
 		ret.append(.package(url: "https://github.com/happn-app/RetryingOperation.git",            from: "1.1.7"))
@@ -105,6 +106,7 @@ let package = Package(
 				ret.append(.product(name: "GenericJSON",     package: "generic-json-swift"))
 				ret.append(.product(name: "Logging",         package: "swift-log"))
 				ret.append(.product(name: "OfficeModelCore", package: "officectl-model"/*Xcode is not read for this:, moduleAliases: ["OfficeModelCore": "ModelCore"]*/))
+				ret.append(.product(name: "UnwrapOrThrow",   package: "UnwrapOrThrow"))
 				ret.append(.target(name: "ServiceKit"))
 #if !os(Linux)
 				/* On macOS we use xcframework dependencies for OpenSSL and OpenLDAP. */
@@ -118,6 +120,16 @@ let package = Package(
 			}(),
 			swiftSettings: commonSwiftSettings
 		))
+		ret.append(.testTarget(name: "OfficeKit2Tests", dependencies: {
+			var ret = [Target.Dependency]()
+			/* The tested lib. */
+			ret.append(.target(name: "OfficeKit2"))
+			/* Dependencies for helpers and co. */
+			ret.append(.product(name: "Email",       package: "swift-email"))
+			ret.append(.product(name: "GenericJSON", package: "generic-json-swift"))
+			ret.append(.target(name: "ServiceKit"))
+			return ret
+		}()))
 		
 		ret.append(.executableTarget(
 			name: "officectl",

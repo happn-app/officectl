@@ -90,3 +90,13 @@ public protocol UserService<UserType> : OfficeService {
 	func changePassword(of user: UserType, to newPassword: String, using services: Services) throws
 	
 }
+
+
+public extension Dictionary where Key == DeportedHashability<any UserService> {
+	
+	subscript(_ service: any UserService) -> Value? {
+		get {self[.init(value: service, valueID: service.id)]}
+		set {self[.init(value: service, valueID: service.id)] = newValue}
+	}
+	
+}

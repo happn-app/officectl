@@ -32,3 +32,13 @@ public protocol GroupOfUsersService<UserType> : OfficeService {
 	func listGroupsOfUsers(inGroupOfUser groupOfUser: GroupOfUsersType, using services: Services) async throws -> [GroupOfUsersType]
 	
 }
+
+
+public extension Dictionary where Key == DeportedHashability<any GroupOfUsersService> {
+	
+	subscript(_ service: any GroupOfUsersService) -> Value? {
+		get {self[.init(value: service, valueID: service.id)]}
+		set {self[.init(value: service, valueID: service.id)] = newValue}
+	}
+	
+}
