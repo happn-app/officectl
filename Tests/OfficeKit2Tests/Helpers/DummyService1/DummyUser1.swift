@@ -19,7 +19,7 @@ struct DummyUser1 : User {
 	typealias IDType = Never
 	typealias PersistentIDType = Never
 	
-	var id: Never?
+	var id: Never
 	var persistentID: Never?
 	
 	var identifyingEmails: [Email]?

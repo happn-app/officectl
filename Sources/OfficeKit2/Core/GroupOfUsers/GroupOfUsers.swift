@@ -16,8 +16,12 @@ public protocol GroupOfUsers : Sendable {
 	associatedtype IDType : Hashable & Sendable
 	associatedtype PersistentIDType : Hashable & Sendable
 	
-	/** Optional because we cannot know the id of locally created group of users. */
-	var groupID: IDType? {get}
+	/**
+	 NON-Optional because even for locally creted user, the ID must be _decided_.
+	 This property does not represent an arbitrary db primary key, it is the ID given to the user.
+	 For instance, for an LDAP directory, this would be the distinguished name, which is _not_ random.
+	 The db primary key (if any, LDAP does not have one by default) would be stored in the persistentID property. */
+	var groupID: IDType {get}
 	var persistentID: PersistentIDType? {get}
 	
 	var identifyingEmails: [Email]? {get}

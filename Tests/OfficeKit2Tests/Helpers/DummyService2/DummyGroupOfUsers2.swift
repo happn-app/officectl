@@ -19,7 +19,7 @@ struct DummyGroupOfUsers2 : GroupOfUsers {
 	typealias IDType = Never
 	typealias PersistentIDType = Never
 	
-	var groupID: Never?
+	var groupID: Never
 	var persistentID: Never?
 	
 	var identifyingEmails: [Email]?
