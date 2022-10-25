@@ -12,7 +12,7 @@ import ServiceKit
 
 
 
-public typealias HashableUserService = DeportedHashability<any UserService>
+public typealias HashableUserService = DeportedHashability<any UserService, String>
 
 public protocol UserService<UserType> : OfficeService {
 	
@@ -88,7 +88,7 @@ public protocol UserService<UserType> : OfficeService {
 }
 
 
-public extension Dictionary where Key == DeportedHashability<any UserService> {
+public extension Dictionary where Key == HashableUserService {
 	
 	subscript(_ service: any UserService) -> Value? {
 		get {self[.init(value: service, valueID: service.id)]}

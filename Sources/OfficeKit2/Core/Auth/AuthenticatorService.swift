@@ -11,7 +11,7 @@ import ServiceKit
 
 
 
-public typealias HashableAuthenticatorService = DeportedHashability<any AuthenticatorService>
+public typealias HashableAuthenticatorService = DeportedHashability<any AuthenticatorService, String>
 
 public protocol AuthenticatorService<UserType, AuthenticationChallenge> : OfficeService {
 	
@@ -23,7 +23,7 @@ public protocol AuthenticatorService<UserType, AuthenticationChallenge> : Office
 }
 
 
-public extension Dictionary where Key == DeportedHashability<any AuthenticatorService> {
+public extension Dictionary where Key == HashableAuthenticatorService {
 	
 	subscript(_ service: any AuthenticatorService) -> Value? {
 		get {self[.init(value: service, valueID: service.id)]}

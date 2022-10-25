@@ -11,7 +11,7 @@ import ServiceKit
 
 
 
-public typealias HashableGroupOfUsersService = DeportedHashability<any GroupOfUsersService>
+public typealias HashableGroupOfUsersService = DeportedHashability<any GroupOfUsersService, String>
 
 public protocol GroupOfUsersService<UserType> : OfficeService {
 	
@@ -29,7 +29,7 @@ public protocol GroupOfUsersService<UserType> : OfficeService {
 }
 
 
-public extension Dictionary where Key == DeportedHashability<any GroupOfUsersService> {
+public extension Dictionary where Key == HashableGroupOfUsersService {
 	
 	subscript(_ service: any GroupOfUsersService) -> Value? {
 		get {self[.init(value: service, valueID: service.id)]}
