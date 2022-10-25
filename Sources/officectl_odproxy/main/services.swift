@@ -100,7 +100,7 @@ extension Application {
 				if let existing = storage[ServicesKey.self] {
 					return existing
 				} else {
-					let new = Services()
+					var new = Services()
 					let queue = OperationQueue()
 					new.register{ queue } /* We always want to return the same queue */
 					new.register{ self.semiSingletonStore }
