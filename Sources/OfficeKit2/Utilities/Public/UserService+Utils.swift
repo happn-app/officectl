@@ -27,7 +27,7 @@ extension UserService {
 	public func wrappedUser(fromUser user: UserType) throws -> UserWrapper {
 		var ret = UserWrapper(
 			id: taggedID(fromUserID: user.id),
-			persistentID: user.persistentID.flatMap{ taggedID(fromPersistentUserID: $0) },
+			persistentID: user.persistentID.flatMap(taggedID(fromPersistentUserID:)),
 			underlyingUser: try json(fromUser: user)
 		)
 		ret.copyStandardNonIDProperties(fromUser: user)
@@ -58,9 +58,9 @@ extension UserService {
 		return try logicalUser(fromWrappedUser: service.wrappedUser(fromUser: user), hints: hints)
 	}
 	
-	public func existingUser<OtherServiceType : UserService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType? {
+	public func existingUser<OtherServiceType : UserService>(fromUser user: OtherServiceType.UserType, in service: OtherServiceType, hints: [UserProperty: String?] = [:], propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType? {
 		let foreignGenericUser = try service.wrappedUser(fromUser: user)
-		let nativeLogicalUser = try logicalUser(fromWrappedUser: foreignGenericUser, hints: [:])
+		let nativeLogicalUser = try logicalUser(fromWrappedUser: foreignGenericUser, hints: hints)
 		return try await existingUser(fromUserID: nativeLogicalUser.id, propertiesToFetch: propertiesToFetch, using: services)
 	}
 	

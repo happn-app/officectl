@@ -42,4 +42,8 @@ public extension User {
 		(identifyingEmails ?? []) + (otherEmails ?? [])
 	}
 	
+	func mainEmail(domainMap: [String: String] = [:]) -> Email? {
+		return identifyingEmails?.first?.primaryDomainVariant(aliasMap: domainMap)
+	}
+	
 }

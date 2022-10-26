@@ -22,11 +22,11 @@ public struct UserAndService<ServiceType : UserService> : Sendable {
 	public var service: ServiceType
 	
 	public var taggedID: TaggedID {
-		return TaggedID(tag: service.id, id: service.string(fromUserID: user.id))
+		return service.taggedID(fromUserID: user.id)
 	}
 	
 	public var taggedPersistentID: TaggedID? {
-		return user.persistentID.flatMap{ TaggedID(tag: service.id, id: service.string(fromPersistentUserID: $0)) }
+		return user.persistentID.flatMap(service.taggedID(fromPersistentUserID:))
 	}
 	
 	public init(user: ServiceType.UserType, service: ServiceType) {
@@ -34,9 +34,14 @@ public struct UserAndService<ServiceType : UserService> : Sendable {
 		self.service = service
 	}
 	
-	public func hop<NewUserService : UserService>(to newService: NewUserService, hints: [UserProperty: String?] = [:]) throws -> UserAndService<NewUserService> {
-		return try UserAndService<NewUserService>(user: newService.logicalUser(fromUser: user, in: service, hints: hints), service: newService)
-	}
+	/* Does not seem to work, sadly. */
+//	public init?<UserType : User>(anyUser: UserType, service: ServiceType) {
+//		guard let user = anyUser as? ServiceType.UserType else {
+//			return nil
+//		}
+//		self.user = user
+//		self.service = service
+//	}
 	
 }
 
