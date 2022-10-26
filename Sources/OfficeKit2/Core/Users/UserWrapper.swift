@@ -32,20 +32,13 @@ public struct UserWrapper : User, Codable {
 	public var nickname: String?
 	
 	public var underlyingUser: JSON?
-	
-	/**
-	 An attempt at something at some point.
-	 Can probably be removed (set to private in the mean time). */
-	private var savedHints = [UserProperty: String?]()
+	public var savedHints = [UserProperty: String?]()
 	
 	public var sourceServiceID: String {
 		return id.tag
 	}
 	
 	public init(id uid: TaggedID, persistentID pId: TaggedID? = nil, underlyingUser u: JSON? = nil, hints: [UserProperty: String?] = [:]) {
-		if TaggedID(string: uid.rawValue) != uid {
-			Conf.logger?.error("Initing a UserWrapper with a TaggedID whose string representation does not converts back to itself: \(uid)")
-		}
 		id = uid
 		persistentID = pId
 		
@@ -65,12 +58,10 @@ public struct UserWrapper : User, Codable {
 		nickname = other.nickname
 		
 		underlyingUser = other.underlyingUser
+		savedHints = other.savedHints
 	}
 	
 	public init(json: JSON, forcedUserID: TaggedID?) throws {
-		underlyingUser = json[CodingKeys.underlyingUser.rawValue]
-		savedHints = json[CodingKeys.savedHints.rawValue]?.objectValue?.mapKeys{ UserProperty(stringLiteral: $0) }.compactMapValues{ $0.stringValue } ?? [:]
-		
 		id = try forcedUserID ?? TaggedID(string: json[CodingKeys.id.rawValue]?.stringValue ?! Err.invalidJSONEncodedUserWrapper)
 		persistentID = try json[CodingKeys.persistentID.rawValue].flatMap{ try TaggedID(string: $0.stringValue ?! Err.invalidJSONEncodedUserWrapper) }
 		
@@ -80,6 +71,9 @@ public struct UserWrapper : User, Codable {
 		firstName = try json[CodingKeys.firstName.rawValue].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
 		lastName  = try json[CodingKeys.lastName.rawValue ].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
 		nickname  = try json[CodingKeys.nickname.rawValue ].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
+		
+		underlyingUser = json[CodingKeys.underlyingUser.rawValue]
+		savedHints = json[CodingKeys.savedHints.rawValue]?.objectValue?.mapKeys{ UserProperty(stringLiteral: $0).normalized() }.compactMapValues{ $0.stringValue } ?? [:]
 	}
 	
 	public func json(includeSavedHints: Bool = false) -> JSON {
@@ -124,62 +118,59 @@ public struct UserWrapper : User, Codable {
 	 - Returns: The keys that have been modified. */
 	@discardableResult
 	public mutating func applyAndSaveHints(_ hints: [UserProperty: String?], blacklistedKeys: Set<UserProperty> = [.id], replaceAllPreviouslySavedHints: Bool = false) -> Set<UserProperty> {
-		struct Internal__InvalidEmailErrorMarker : Error {} /* An error we only use internally. */
-		
 		if replaceAllPreviouslySavedHints {
 			savedHints = [:]
 		}
 		
 		var modifiedKeys = Set<UserProperty>()
-		for (k, v) in hints {
-			guard !blacklistedKeys.contains(k) else {continue}
+		for (hintKey, hintValue) in hints {
+			guard !blacklistedKeys.contains(hintKey) else {
+				continue
+			}
 			
-			savedHints[k] = v
+			savedHints[hintKey] = hintValue
 			
-			var touchedKey = true
-			switch k {
-				case .id:           if let v = v {id = TaggedID(string: v)}
-				case .persistentID: persistentID = v.flatMap{ TaggedID(string: $0) }
+			let touchedKey: Bool
+			switch hintKey {
+				case .id:
+					guard let hintValue else {
+						Conf.logger?.error("Asked to remove the id of a wrapped user (nil value for id in hints). This is illegal, I’m not doing it.")
+						continue
+					}
+					touchedKey = Self.setValueIfNeeded(TaggedID(string: hintValue), in: &id)
+					
+				case .persistentID:
+					touchedKey = Self.setValueIfNeeded(hintValue.flatMap{ TaggedID(string: $0) }, in: &persistentID)
 					
 				case .identifyingEmails:
-					/* We split the emails around the newline: AFAICT a newline is always invalid in an email adresse, whatever RFC you use to parse them.
-					 * Usually emails are separated by a comma, but a comma _can_ be in a valid email and we’d have to properly parse stuff to extract the different email addresses. */
-					let e = try? v.flatMap{ v -> [Email] in
-						let l = v.split(separator: "\n")
-						return try l.map{ try Email(rawValue: String($0)) ?! Internal__InvalidEmailErrorMarker() }
-					}
-					guard e != nil || v == nil else {
-						Conf.logger?.warning("Cannot apply hint for key \(k): value has invalid email(s): \(String(describing: v))")
+					guard let parsedHint = Self.convertEmailsHintToEmails(hintValue) else {
+						Conf.logger?.warning("Cannot apply hint for key \(hintKey): value has invalid email(s): \(String(describing: hintValue))")
 						continue
 					}
-					identifyingEmails = e
+					touchedKey = Self.setValueIfNeeded(parsedHint, in: &identifyingEmails)
 					
 				case .otherEmails:
-					let e = try? v.flatMap{ v -> [Email] in
-						let l = v.split(separator: "\n")
-						return try l.map{ try Email(rawValue: String($0)) ?! Internal__InvalidEmailErrorMarker() }
-					}
-					guard e != nil || v == nil else {
-						Conf.logger?.warning("Cannot apply hint for key \(k): value has invalid email(s): \(String(describing: v))")
+					guard let parsedHint = Self.convertEmailsHintToEmails(hintValue) else {
+						Conf.logger?.warning("Cannot apply hint for key \(hintKey): value has invalid email(s): \(String(describing: hintValue))")
 						continue
 					}
-					otherEmails = e
+					touchedKey = Self.setValueIfNeeded(parsedHint, in: &otherEmails)
 					
-				case .firstName: firstName = v
-				case .lastName:  lastName = v
-				case .nickname:  nickname = v
+				case .firstName: touchedKey = Self.setValueIfNeeded(hintValue, in: &firstName)
+				case .lastName:  touchedKey = Self.setValueIfNeeded(hintValue, in: &lastName)
+				case .nickname:  touchedKey = Self.setValueIfNeeded(hintValue, in: &nickname)
 					
 				default:
-					Conf.logger?.warning("Cannot apply hint for key \(k): value has not a compatible type or key is unknown: \(String(describing: v))")
+					Conf.logger?.warning("Cannot apply hint for key \(hintKey): key is unknown: \(String(describing: hintValue))")
 					touchedKey = false
 			}
-			if touchedKey {modifiedKeys.insert(k)}
+			
+			if touchedKey {
+				modifiedKeys.insert(hintKey)
+			}
 		}
+		
 		return modifiedKeys
-	}
-	
-	public func mainEmail(domainMap: [String: String] = [:]) -> Email? {
-		return identifyingEmails?.first?.primaryDomainVariant(aliasMap: domainMap)
 	}
 	
 	/* ***************
@@ -193,6 +184,32 @@ public struct UserWrapper : User, Codable {
 		case id, persistentID
 		case identifyingEmails, otherEmails
 		case firstName, lastName, nickname
+	}
+	
+	/**
+	 Returns `.none` iif the conversion failed, `.some(.none)` iif the hint was `nil` and the emails if the conversion succeeds. */
+	private static func convertEmailsHintToEmails(_ hint: String?) -> [Email]?? {
+		guard let hint = hint else {
+			return .some(.none)
+		}
+		
+		/* We split the emails around the newline: AFAICT a newline is always invalid in an email adresse, whatever RFC you use to parse them.
+		 * Usually emails are separated by a comma, but a comma _can_ be in a valid email and we’d have to properly parse stuff to extract the different email addresses. */
+		let splitHint = hint.split(separator: "\n")
+		
+		struct Internal__InvalidEmailErrorMarker : Error {} /* Used as a marker if we encounter an invalid email. */
+		let emails = try? splitHint.map{ try Email(rawValue: String($0)) ?! Internal__InvalidEmailErrorMarker() }
+		
+		if let emails {return emails}
+		else          {return .none}
+	}
+	
+	private static func setValueIfNeeded<T : Equatable>(_ val: T, in dest: inout T) -> Bool {
+		guard val != dest else {
+			return false
+		}
+		dest = val
+		return true
 	}
 	
 }
