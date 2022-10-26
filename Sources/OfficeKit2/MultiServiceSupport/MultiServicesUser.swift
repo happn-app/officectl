@@ -16,8 +16,7 @@ public typealias MultiServicesUser = [HashableUserService: Result<(any User)?, E
 public extension MultiServicesUser {
 	
 	static func fetch<Service : UserService>(from userAndService: UserAndService<Service>, in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty> = [], using depServices: Services) async throws -> MultiServicesUser {
-		var allFetchedUsers = [HashableUserService: (any User)?]()
-		var allFetchedErrors = [HashableUserService: [Error]]()
+		var res = [HashableUserService: Result<(any User)?, ErrorCollection>]()
 		var triedServiceIDSource = Set<HashableUserService>()
 		
 		func getUsers<ServiceType : UserService, UserType : User>(fromSourceUser sourceUser: UserType, sourceService: ServiceType, in services: Set<HashableUserService>) async -> [HashableUserService: Result<(any User)?, Error>] {
@@ -46,29 +45,56 @@ public extension MultiServicesUser {
 		}
 		
 		func fetchStep(fetchedUsersAndErrors: [HashableUserService: Result<(any User)?, Error>]) async -> MultiServicesUser {
-			/* Try and fetch the users that were not successfully fetched. */
-			allFetchedUsers = allFetchedUsers.merging(fetchedUsersAndErrors.compactMapValues{ $0.successValue }, uniquingKeysWith: { old, new in
-				OfficeKitConfig.logger?.error("Internal error: Got a user fetched twice for ID \(String(describing: old?.id ?? new?.id)). old user = \(String(describing: old)), new user = \(String(describing: new))")
-				return new
+			/* Wrap the new results (fetchedUsersAndErrors) error in an ErrorCollection for easier merging with the current results (res). */
+			let fetchedUsersAndErrors = fetchedUsersAndErrors.mapValues{ $0.mapError{ ErrorCollection([$0]) } }
+			/* Merge the new results (fetchedUsersAndErrors) with our current results (res). */
+			res.merge(fetchedUsersAndErrors, uniquingKeysWith: { currentResult, newResult in
+				switch (currentResult, newResult) {
+					case (.success, .success):
+						OfficeKitConfig.logger?.error("Internal error: Got a user fetched twice. current result = \(currentResult), new result = \(newResult)")
+						return newResult
+						
+					case (.success, .failure):
+						OfficeKitConfig.logger?.error("Internal error: Got new failure for a result that was successfully fetched. current result = \(currentResult), new result = \(newResult)")
+						return currentResult /* We keep the success… */
+						
+					case (.failure, .success):
+						return newResult
+						
+					case let (.failure(currentFailure), .failure(newFailure)):
+						return .failure(ErrorCollection(currentFailure.errors + newFailure.errors))
+				}
 			})
-			allFetchedErrors = allFetchedErrors.merging(fetchedUsersAndErrors.compactMapValues{ $0.failureValue.flatMap{ [$0] } }, uniquingKeysWith: { old, new in old + new })
 			
-			/* Line below:
-			 * All the service for which we haven’t already successfully fetched a user (or its absence from the service),
+			/* Compute all the service for which we haven’t already successfully fetched a user (or its absence from the service),
 			 *  and whose last fetch error was an inability to create a logical user from the source user.
 			 * We estimate that if there was a connection failure for a given service, there is no need to try again. */
-			let servicesToFetch = services.filter{ !allFetchedUsers.keys.contains($0) && ((allFetchedErrors[$0]!.last as? Err)?.isCannotCreateLogicalUserFromWrappedUser ?? false) }
-			/* Line below: All the service for which we have a user that we do not already have tried fetching from. */
-			let servicesToTry = Set(allFetchedUsers.compactMap{ $0.value != nil ? $0.key : nil }).subtracting(triedServiceIDSource)
+			let servicesToFetch = services.filter{ service in
+				guard let result = res[service] else {
+					OfficeKitConfig.logger?.error("Internal error: Got a service which has no result, that should not be possible. service = \(service)")
+					return true
+				}
+				return (result.failureValue?.errors.last as? Err)?.isCannotCreateLogicalUserFromWrappedUser ?? false
+			}
+			/* Compute all the service for which we have a user that we do not already have tried fetching from. */
+			let servicesWithAUser = res.compactMap{
+				let (key, value) = $0
+				let hasUser: Bool
+				switch value {
+					case let .success(val): hasUser = (val != nil)
+					case .failure:          hasUser = false
+				}
+				return hasUser ? key : nil
+			}
+			let servicesToTry = Set(servicesWithAUser).subtracting(triedServiceIDSource)
 			
 			guard let serviceToTry = servicesToTry.first, servicesToFetch.count > 0 else {
 				/* We have finished. Let’s return the results. */
-				return allFetchedUsers.mapValues{ Result<(any User)?, Error>.success($0) }
-					.merging(allFetchedErrors.mapValues{ .failure(Err.errorCollection($0)) }, uniquingKeysWith: { _, _ in fatalError("Internal error.") })
+				return res.mapValues{ $0.mapError{ $0 as Error } }
 			}
 			
 			triedServiceIDSource.insert(serviceToTry)
-			return await fetchStep(fetchedUsersAndErrors: getUsers(fromSourceUser: allFetchedUsers[serviceToTry]!!, sourceService: serviceToTry.value, in: servicesToFetch))
+			return await fetchStep(fetchedUsersAndErrors: getUsers(fromSourceUser: res[serviceToTry]!.successValue!!, sourceService: serviceToTry.value, in: servicesToFetch))
 		}
 		
 		return await fetchStep(fetchedUsersAndErrors: getUsers(fromSourceUser: userAndService.user, sourceService: userAndService.service, in: services))
