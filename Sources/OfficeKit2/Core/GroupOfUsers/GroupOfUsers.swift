@@ -21,7 +21,7 @@ public protocol GroupOfUsers : Sendable {
 	 This property does not represent an arbitrary db primary key, it is the ID given to the user.
 	 For instance, for an LDAP directory, this would be the distinguished name, which is _not_ random.
 	 The db primary key (if any, LDAP does not have one by default) would be stored in the persistentID property. */
-	var groupID: IDType {get}
+	var id: IDType {get}
 	var persistentID: PersistentIDType? {get}
 	
 	var identifyingEmails: [Email]? {get}

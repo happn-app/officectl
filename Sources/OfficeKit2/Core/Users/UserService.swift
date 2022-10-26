@@ -24,7 +24,6 @@ public protocol UserService<UserType> : OfficeService {
 	/** Convert the user to a user printable string. Mostly used for logging. */
 	func shortDescription(fromUser user: UserType) -> String
 	
-	/** The empty ID is reserved for the representation of the invalid user ID. */
 	func string(fromUserID userID: UserType.IDType) -> String
 	func userID(fromString string: String) throws -> UserType.IDType
 	
