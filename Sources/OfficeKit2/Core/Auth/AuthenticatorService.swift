@@ -11,7 +11,7 @@ import ServiceKit
 
 
 
-public typealias HashableAuthenticatorService = DeportedHashability<any AuthenticatorService, String>
+public typealias HashableAuthenticatorService = DeportedHashability<any AuthenticatorService>
 
 public protocol AuthenticatorService<UserType, AuthenticationChallenge> : OfficeService {
 	

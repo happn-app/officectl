@@ -32,6 +32,22 @@ public protocol UserAndService<ServiceType> : Sendable, Hashable {
 	
 }
 
+public typealias HashableUserAndService = DeportedHashability<any UserAndService>
+public extension DeportedHashability where ValueType == any UserAndService {
+	
+	init(_ val: ValueType) {
+		self.init(value: val, valueID: val.taggedID)
+	}
+	
+}
+public extension DeportedHashability where ValueType : UserAndService {
+	
+	init(_ val: ValueType) {
+		self.init(value: val, valueID: val.taggedID)
+	}
+	
+}
+
 
 /**
  Retrieve an erased ``UserAndService`` from the given user and services.

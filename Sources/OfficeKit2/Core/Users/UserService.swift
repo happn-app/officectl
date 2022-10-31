@@ -12,8 +12,6 @@ import ServiceKit
 
 
 
-public typealias HashableUserService = DeportedHashability<any UserService, String>
-
 public protocol UserService<UserType> : OfficeService {
 	
 	associatedtype UserType : User
@@ -86,6 +84,15 @@ public protocol UserService<UserType> : OfficeService {
 	
 }
 
+
+public typealias HashableUserService = DeportedHashability<any UserService>
+public extension DeportedHashability where ValueType == any UserService {
+	
+	init(_ val: ValueType) {
+		self.init(value: val, valueID: val.id)
+	}
+	
+}
 
 public extension Dictionary where Key == HashableUserService {
 	

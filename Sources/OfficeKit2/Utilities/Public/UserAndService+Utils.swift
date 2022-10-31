@@ -16,6 +16,10 @@ import ServiceKit
 
 public extension UserAndService {
 	
+	var serviceID: String {
+		return service.id
+	}
+	
 	var taggedID: TaggedID {
 		return TaggedID(tag: service.id, id: service.string(fromUserID: user.id))
 	}

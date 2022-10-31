@@ -34,7 +34,7 @@ public protocol OfficeService : AnyObject, Sendable {
 //	}
 //
 //}
-public extension Dictionary where Key == DeportedHashability<any OfficeService, String> {
+public extension Dictionary where Key == DeportedHashability<any OfficeService> {
 	
 	subscript(_ service: any OfficeService) -> Value? {
 		get {self[.init(value: service, valueID: service.id)]}
@@ -44,7 +44,15 @@ public extension Dictionary where Key == DeportedHashability<any OfficeService, 
 }
 
 
-public extension DeportedHashability where ValueType : OfficeService, IDType == String {
+public extension DeportedHashability where ValueType == any OfficeService {
+	
+	init(_ val: ValueType) {
+		self.init(value: val, valueID: val.id)
+	}
+	
+}
+
+public extension DeportedHashability where ValueType : OfficeService {
 	
 	init(_ val: ValueType) {
 		self.init(value: val, valueID: val.id)
