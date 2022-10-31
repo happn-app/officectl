@@ -210,8 +210,7 @@ private class LinkedUser : CustomStringConvertible {
 	}
 	
 	private func link(to linkedUser: LinkedUser, visited: inout Set<[HashableUserAndService]>) throws {
-		guard !visited.contains([userAndService, linkedUser.userAndService]) else {return}
-		visited.insert([userAndService, linkedUser.userAndService])
+		guard visited.insert([userAndService, linkedUser.userAndService]).inserted else {return}
 		
 		guard userAndService != linkedUser.userAndService else {
 			/* Not linking myself to myself… */
