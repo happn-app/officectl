@@ -46,7 +46,7 @@ public protocol UserService<UserType> : OfficeService {
 	 Generally, the method implementation should first check the source service ID of the given user
 	  (which is actually the tag of the tagged ID of the wrapped user).
 	 If the user comes from your own service (the source service ID of the user and your service ID are equal),
-	  you should directly convert the underlying user of the given user (this is the equivalent of doing the reverse of `json(fromUser:)`).
+	  you should directly convert the underlying user of the given user (this is the equivalent of doing the reverse of ``UserService/json(fromUser:)``).
 	 Otherwise (the user comes from an unknown service), you should apply custom rules to create a user from the generic properties available in the wrapped user.
 	 
 	 If the user wrapper has data that is inconsistent with the underlying user, the result of the method is undefined.

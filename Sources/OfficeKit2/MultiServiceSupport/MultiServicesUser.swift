@@ -15,11 +15,20 @@ public typealias MultiServicesUser = [HashableUserService: Result<(any User)?, E
 
 public extension MultiServicesUser {
 	
-	static func fetch<Service : UserService>(from userAndService: UserAndServiceImpl<Service>, in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty> = [], using depServices: Services) async throws -> MultiServicesUser {
+	/**
+	 Tries and fetch the given user from all of the given services.
+	 For all of the services, a “logical” user is inferred from the original user and service.
+	 If a logical user can be created, it is then fetched as an _existing_ user from the service.
+	 If a logical user cannot be created, once we have a fetched other users from other services, we try again with another user and service.
+	 In the end, the resulting MultiServicesUser is guaranteed to have one result per service. */
+	static func fetch(from userAndService: any UserAndService, in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty> = [], using depServices: Services) async throws -> MultiServicesUser {
 		var res = [HashableUserService: Result<(any User)?, ErrorCollection>]()
 		var triedServiceIDSource = Set<HashableUserService>()
 		
-		func getUsers<UserAndServiceType : UserAndService>(from source: UserAndServiceType, in services: Set<HashableUserService>) async -> [HashableUserService: Result<(any User)?, Error>] {
+		/**
+		 This method will fetch the given user
+		 Not public because it not interesting. */
+		func getUsers(from source: any UserAndService, in services: Set<HashableUserService>) async -> [HashableUserService: Result<(any User)?, Error>] {
 			return await withTaskGroup(
 				of: (service: HashableUserService, users: Result<(any User)?, Error>).self,
 				returning: [HashableUserService: Result<(any User)?, Error>].self,
