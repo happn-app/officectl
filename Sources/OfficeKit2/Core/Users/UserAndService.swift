@@ -13,10 +13,20 @@ import ServiceKit
 
 
 
+public protocol UserAndService<ServiceType> : Sendable, Hashable {
+	
+	associatedtype ServiceType : UserService
+	
+	var user: ServiceType.UserType {get}
+	var service: ServiceType {get}
+	
+}
+
+
 /**
  A simple pair of a user and its service.
  The pair is hashable, with the tagged id of the user being the hash key, and equatable reference. */
-public struct UserAndService<ServiceType : UserService> : Sendable {
+public struct UserAndServiceImpl<ServiceType : UserService> : UserAndService {
 	
 	public var user: ServiceType.UserType
 	public var service: ServiceType
@@ -46,7 +56,7 @@ public struct UserAndService<ServiceType : UserService> : Sendable {
 }
 
 
-extension UserAndService : Hashable {
+extension UserAndServiceImpl : Hashable {
 	
 	public static func ==(_ lhs: Self, _ rhs: Self) -> Bool {
 		return lhs.taggedID == rhs.taggedID

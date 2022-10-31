@@ -15,7 +15,7 @@ public typealias MultiServicesUser = [HashableUserService: Result<(any User)?, E
 
 public extension MultiServicesUser {
 	
-	static func fetch<Service : UserService>(from userAndService: UserAndService<Service>, in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty> = [], using depServices: Services) async throws -> MultiServicesUser {
+	static func fetch<Service : UserService>(from userAndService: any UserAndService<Service>, in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty> = [], using depServices: Services) async throws -> MultiServicesUser {
 		var res = [HashableUserService: Result<(any User)?, ErrorCollection>]()
 		var triedServiceIDSource = Set<HashableUserService>()
 		
