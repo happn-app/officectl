@@ -25,13 +25,12 @@ public extension MultiServicesUser {
 		var res = [HashableUserService: Result<(any User)?, ErrorCollection>]()
 		var triedServiceIDSource = Set<HashableUserService>()
 		
-		/**
-		 This method will fetch the given user
-		 Not public because it not interesting. */
-		func getUsers(from source: any UserAndService, in services: Set<HashableUserService>) async -> [HashableUserService: Result<(any User)?, Error>] {
-			return await withTaskGroup(
+		/** The recursive function that fetches the MultiServicesUser. */
+		func fetchStep(from source: any UserAndService, in services: Set<HashableUserService>) async -> MultiServicesUser {
+			/* First retrieve the users and errors for the given source. */
+			let fetchedUsersAndErrors: [HashableUserService: Result<(any User)?, ErrorCollection>] = await withTaskGroup(
 				of: (service: HashableUserService, users: Result<(any User)?, Error>).self,
-				returning: [HashableUserService: Result<(any User)?, Error>].self,
+				returning: [HashableUserService: Result<(any User)?, ErrorCollection>].self,
 				body: { group in
 					for service in services {
 						group.addTask{
@@ -40,20 +39,16 @@ public extension MultiServicesUser {
 						}
 					}
 					
-					var users = [HashableUserService: Result<(any User)?, Error>]()
+					var users = [HashableUserService: Result<(any User)?, ErrorCollection>]()
 //					for await (service, userResult) in group { /* Crashes w/ Xcode 13.1 (13A1030d) */
 					while let (service, userResult) = await group.next() {
 						assert(users[service] == nil)
-						users[service] = userResult
+						users[service] = userResult.mapError{ ErrorCollection([$0]) }
 					}
 					return users
 				}
 			)
-		}
-		
-		func fetchStep(fetchedUsersAndErrors: [HashableUserService: Result<(any User)?, Error>]) async -> MultiServicesUser {
-			/* Wrap the new results (fetchedUsersAndErrors) error in an ErrorCollection for easier merging with the current results (res). */
-			let fetchedUsersAndErrors = fetchedUsersAndErrors.mapValues{ $0.mapError{ ErrorCollection([$0]) } }
+			
 			/* Merge the new results (fetchedUsersAndErrors) with our current results (res). */
 			res.merge(fetchedUsersAndErrors, uniquingKeysWith: { currentResult, newResult in
 				switch (currentResult, newResult) {
@@ -102,10 +97,10 @@ public extension MultiServicesUser {
 			let userAndServiceToTry = UserAndServiceFrom(user: res[serviceToTry]!.successValue!!, service: serviceToTry.value)!
 			
 			triedServiceIDSource.insert(serviceToTry)
-			return await fetchStep(fetchedUsersAndErrors: getUsers(from: userAndServiceToTry, in: servicesToFetch))
+			return await fetchStep(from: userAndServiceToTry, in: servicesToFetch)
 		}
 		
-		return await fetchStep(fetchedUsersAndErrors: getUsers(from: userAndService, in: services))
+		return await fetchStep(from: userAndService, in: services)
 	}
 	
 }
