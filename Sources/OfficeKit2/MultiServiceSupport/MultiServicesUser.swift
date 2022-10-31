@@ -15,20 +15,18 @@ public typealias MultiServicesUser = [HashableUserService: Result<(any User)?, E
 
 public extension MultiServicesUser {
 	
-	static func fetch<Service : UserService>(from userAndService: UserAndService<Service>, in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty> = [], using depServices: Services) async throws -> MultiServicesUser {
+	static func fetch<Service : UserService>(from userAndService: UserAndServiceImpl<Service>, in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty> = [], using depServices: Services) async throws -> MultiServicesUser {
 		var res = [HashableUserService: Result<(any User)?, ErrorCollection>]()
 		var triedServiceIDSource = Set<HashableUserService>()
 		
-		func getUsers<ServiceType : UserService, UserType : User>(fromSourceUser sourceUser: UserType, sourceService: ServiceType, in services: Set<HashableUserService>) async -> [HashableUserService: Result<(any User)?, Error>] {
-			/* We make sure this forced cast is valid when we call the function. */
-			let sourceUser = sourceUser as! ServiceType.UserType
+		func getUsers<UserAndServiceType : UserAndService>(from source: UserAndServiceType, in services: Set<HashableUserService>) async -> [HashableUserService: Result<(any User)?, Error>] {
 			return await withTaskGroup(
 				of: (service: HashableUserService, users: Result<(any User)?, Error>).self,
 				returning: [HashableUserService: Result<(any User)?, Error>].self,
 				body: { group in
 					for service in services {
 						group.addTask{
-							let userResult = await Result{ try await service.value.existingUser(fromUser: sourceUser, in: sourceService, propertiesToFetch: propertiesToFetch, using: depServices) }
+							let userResult = await Result{ try await service.value.existingUser(fromUserAndService: source, propertiesToFetch: propertiesToFetch, using: depServices) }
 							return (service, userResult)
 						}
 					}
@@ -92,12 +90,13 @@ public extension MultiServicesUser {
 				/* We have finished. Let’s return the results. */
 				return res.mapValues{ $0.mapError{ $0 as Error } }
 			}
+			let userAndServiceToTry = UserAndServiceFrom(user: res[serviceToTry]!.successValue!!, service: serviceToTry.value)!
 			
 			triedServiceIDSource.insert(serviceToTry)
-			return await fetchStep(fetchedUsersAndErrors: getUsers(fromSourceUser: res[serviceToTry]!.successValue!!, sourceService: serviceToTry.value, in: servicesToFetch))
+			return await fetchStep(fetchedUsersAndErrors: getUsers(from: userAndServiceToTry, in: servicesToFetch))
 		}
 		
-		return await fetchStep(fetchedUsersAndErrors: getUsers(fromSourceUser: userAndService.user, sourceService: userAndService.service, in: services))
+		return await fetchStep(fetchedUsersAndErrors: getUsers(from: userAndService, in: services))
 	}
 	
 }

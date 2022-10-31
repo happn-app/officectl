@@ -64,4 +64,10 @@ extension UserService {
 		return try await existingUser(fromUserID: nativeLogicalUser.id, propertiesToFetch: propertiesToFetch, using: services)
 	}
 	
+	public func existingUser<UserAndServiceType : UserAndService>(fromUserAndService userAndService: UserAndServiceType, hints: [UserProperty: String?] = [:], propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType? {
+		let foreignGenericUser = try userAndService.service.wrappedUser(fromUser: userAndService.user)
+		let nativeLogicalUser = try logicalUser(fromWrappedUser: foreignGenericUser, hints: hints)
+		return try await existingUser(fromUserID: nativeLogicalUser.id, propertiesToFetch: propertiesToFetch, using: services)
+	}
+	
 }
