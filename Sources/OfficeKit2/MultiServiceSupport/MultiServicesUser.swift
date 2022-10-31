@@ -26,7 +26,7 @@ public extension MultiServicesUser {
 				body: { group in
 					for service in services {
 						group.addTask{
-							let userResult = await Result{ try await service.value.existingUser(fromUserAndService: source, propertiesToFetch: propertiesToFetch, using: depServices) }
+							let userResult = await Result{ try await source.fetch(in: service.value, propertiesToFetch: propertiesToFetch, using: depServices) }
 							return (service, userResult)
 						}
 					}

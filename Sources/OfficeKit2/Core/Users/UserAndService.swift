@@ -33,19 +33,6 @@ public protocol UserAndService<ServiceType> : Sendable, Hashable {
 }
 
 
-public extension UserAndService {
-	
-	var taggedID: TaggedID {
-		return service.taggedID(fromUserID: user.id)
-	}
-	
-	var taggedPersistentID: TaggedID? {
-		return user.persistentID.flatMap(service.taggedID(fromPersistentUserID:))
-	}
-	
-}
-
-
 /**
  Retrieve an erased ``UserAndService`` from the given user and services.
  If the user does not come from the given service, returns `nil`.
