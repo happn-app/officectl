@@ -68,7 +68,7 @@ public extension MultiServicesUser {
 			
 			/* Compute all the service for which we haven’t already successfully fetched a user (or its absence from the service),
 			 *  and whose last fetch error was an inability to create a logical user from the source user.
-			 * We estimate that if there was a connection failure for a given service, there is no need to try again. */
+			 * We estimate that if there was a fetch failure for a given service, there is no need to try again. */
 			let servicesToFetch = services.filter{ service in
 				guard let result = res[service] else {
 					OfficeKitConfig.logger?.error("Internal error: Got a service which has no result, that should not be possible. service = \(service)")
