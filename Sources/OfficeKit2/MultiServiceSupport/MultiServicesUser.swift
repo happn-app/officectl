@@ -105,11 +105,35 @@ public extension MultiServicesUser {
 		return await fetchStep(from: userAndService, in: services)
 	}
 	
-//	static func fetchAll(in services: Set<HashableUserService>, using depServices: Services) async throws -> (users: [MultiServicesUser], fetchErrorsByServices: [HashableUserService: Error]) {
-//		let (pairs, fetchErrorsByService) = await HashableUserAndService.fetchAll(in: services, using: depServices)
-//		let validServices = services.subtracting(fetchErrorsByService.keys)
-//		return try await (MultiServicesUser.merge(dsuPairs: Set(pairs), validServices: validServices), fetchErrorsByService)
-//	}
+	static func fetchAll(in services: Set<HashableUserService>, using depServices: Services) async throws -> (users: [MultiServicesUser], fetchErrorsByServices: [HashableUserService: Error]) {
+		let (usersAndServices, fetchErrorsByService) = await withTaskGroup(
+			of: (service: HashableUserService, users: Result<[any User], Error>).self,
+			returning: (usersAndServices: [any UserAndService], fetchErrorsByServices: [HashableUserService: Error]).self,
+			body: { group in
+				for service in services {
+					group.addTask{
+						let usersResult = await Result{ try await service.value.listAllUsers(using: depServices) }
+						return (service, usersResult)
+					}
+				}
+				
+				var usersAndServices = [any UserAndService]()
+				var fetchErrorsByServices = [HashableUserService: Error]()
+				while let (service, usersResult) = await group.next() {
+					assert(fetchErrorsByServices[service] == nil)
+					assert(!usersAndServices.contains{ $0.service.id == service.value.id })
+					switch usersResult {
+						case .success(let users): usersAndServices.append(contentsOf: users.map{ UserAndServiceFrom(user: $0, service: service.value)! })
+						case .failure(let error): fetchErrorsByServices[service] = error
+					}
+				}
+				return (usersAndServices, fetchErrorsByServices)
+			}
+		)
+		
+		let validServices = services.subtracting(fetchErrorsByService.keys)
+		return try await (MultiServicesUser.merge(usersAndServices: usersAndServices, validServices: validServices), fetchErrorsByService)
+	}
 	
 	/**
 	 Try and merge all the given users in a collection of multi-services users.
