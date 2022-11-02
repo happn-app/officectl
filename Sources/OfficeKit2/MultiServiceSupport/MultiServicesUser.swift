@@ -122,17 +122,21 @@ public extension MultiServicesUser {
 	 
 	 - Note: The method is async though everything in it is synchronous because the computation can be long and we want not to block everything while the computation is going on.
 	 Maybe we should check with absolute certainty the function will actually be called in the bg, but from my limited testing it seems it should be. */
-	static func merge(userAndServices: Set<HashableUserAndService>, validServices: Set<HashableUserService>? = nil, allowNonValidServices: Bool = false) async throws -> [MultiServicesUser] {
-		/* Transform the input to get something we can use (DSUPairs to LinkedUsers + extracting the list of services). */
+	static func merge(usersAndServices: [any UserAndService], validServices: Set<HashableUserService>? = nil, allowNonValidServices: Bool = false) async throws -> [MultiServicesUser] {
+		/* Transform the input to get something we can use (UserAndService to LinkedUsers + extracting the list of services). */
 		let services: Set<HashableUserService>
 		let linkedUsersByUserAndService: [HashableUserAndService: LinkedUser]
 		do {
 			var servicesBuilding = Set<HashableUserService>()
-			var linkedUsersByUserAndServiceBuilding = [HashableUserAndService: LinkedUser](minimumCapacity: userAndServices.count)
-			for userAndService in userAndServices {
-				assert(linkedUsersByUserAndServiceBuilding[userAndService] == nil)
-				linkedUsersByUserAndServiceBuilding[userAndService] = LinkedUser(userAndService: userAndService.value)
-				servicesBuilding.insert(.init(userAndService.value.service))
+			var linkedUsersByUserAndServiceBuilding = [HashableUserAndService: LinkedUser](minimumCapacity: usersAndServices.count)
+			for userAndService in usersAndServices {
+				let hashableUserAndService = HashableUserAndService(userAndService)
+				guard linkedUsersByUserAndServiceBuilding[hashableUserAndService] == nil else {
+					OfficeKitConfig.logger?.warning("UserAndService \(userAndService) found more than once in merge request; ignoring...")
+					continue
+				}
+				linkedUsersByUserAndServiceBuilding[hashableUserAndService] = LinkedUser(userAndService: userAndService)
+				servicesBuilding.insert(.init(userAndService.service))
 			}
 			linkedUsersByUserAndService = linkedUsersByUserAndServiceBuilding
 			services = servicesBuilding
@@ -158,11 +162,11 @@ public extension MultiServicesUser {
 		}
 		
 		/* Merge the linked users in MultiServicesUsers. */
-		var treatedUserAndServices = Set<TaggedID>()
+		var treatedUsersAndServices = Set<TaggedID>()
 		return try linkedUsersByUserAndService.compactMap{ kv -> MultiServicesUser? in
 			let (userAndService, linkedUser) = kv
 			
-			guard treatedUserAndServices.insert(userAndService.value.taggedID).inserted else {return nil}
+			guard treatedUsersAndServices.insert(userAndService.value.taggedID).inserted else {return nil}
 			
 			guard allowNonValidServices || validServices.contains(.init(userAndService.value.service)) else {
 				OfficeKitConfig.logger?.info("Not adding UserAndService \(userAndService) in multi-user because it doesn’t have an explicitly-declared-valid service")
@@ -171,14 +175,14 @@ public extension MultiServicesUser {
 			
 			var res: [HashableUserService: (any User)?] = [.init(linkedUser.userAndService.service): linkedUser.userAndService.user]
 			for subLinkedUser in linkedUser.linkedUserByService.values {
-				guard !treatedUserAndServices.contains(subLinkedUser.userAndService.taggedID) else {
+				guard !treatedUsersAndServices.contains(subLinkedUser.userAndService.taggedID) else {
 					throw InternalError(message: "Got already treated linked user! \(subLinkedUser.userAndService) for \(userAndService)")
 				}
 				guard res[subLinkedUser.userAndService.service] == nil else {
 					throw InternalError(message: "Got two users for service ID \(subLinkedUser.userAndService.serviceID): \(res[subLinkedUser.userAndService.service]!!) and \(subLinkedUser.userAndService)")
 				}
 				res[subLinkedUser.userAndService.service] = subLinkedUser.userAndService.user
-				treatedUserAndServices.insert(subLinkedUser.userAndService.taggedID)
+				treatedUsersAndServices.insert(subLinkedUser.userAndService.taggedID)
 			}
 			/* Setting a value for all valid services IDs */
 			for s in validServices {
