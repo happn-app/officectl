@@ -10,6 +10,8 @@ import Foundation
 import GenericJSON
 import ServiceKit
 
+import OfficeModelCore
+
 
 
 public protocol UserService<UserType> : OfficeService {
@@ -81,6 +83,31 @@ public protocol UserService<UserType> : OfficeService {
 	
 	var supportsPasswordChange: Bool {get}
 	func changePassword(of user: UserType, to newPassword: String, using services: Services) throws
+	
+}
+
+
+extension UserService {
+	
+	/**
+	 Returns the value for the property.
+	 Always return either a `set` or `unsupported` property; never an `unset` one.
+	 (I’m not sure we’ll keep the concept of an `unset` property…) */
+	func valueForProperty(_ property: UserProperty, inUser user: UserType) -> RemoteProperty<Any?> {
+		guard Self.supportedUserProperties.contains(property) else {
+			return .unsupported
+		}
+		
+		switch property {
+			case .id:        return .set(user.id)
+			case .firstName: return .set(user.firstName)
+			case .lastName:  return .set(user.lastName)
+			case .nickname:  return .set(user.nickname)
+			case .emails:    return .set(user.emails)
+			case .password:  return .set(user.password)
+			case let .custom(propertyName): return .set(user.valueForNonStandardProperty(propertyName))
+		}
+	}
 	
 }
 

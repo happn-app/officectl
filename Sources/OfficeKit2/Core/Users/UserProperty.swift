@@ -25,10 +25,8 @@ public enum UserProperty : Sendable, Hashable, RawRepresentable, ExpressibleBySt
 	public typealias StringLiteralType = String
 	
 	case id
-	case persistentID
 	
-	case identifyingEmails
-	case otherEmails
+	case emails
 	
 	case firstName
 	case lastName
@@ -40,15 +38,13 @@ public enum UserProperty : Sendable, Hashable, RawRepresentable, ExpressibleBySt
 	
 	public init(stringLiteral value: String) {
 		switch value {
-			case "id":                self = .id
-			case "persistentID":      self = .persistentID
-			case "identifyingEmails": self = .identifyingEmails
-			case "otherEmails":       self = .otherEmails
-			case "firstName":         self = .firstName
-			case "lastName":          self = .lastName
-			case "nickname":          self = .nickname
-			case "password":          self = .password
-			default:                  self = .custom(value)
+			case "id":        self = .id
+			case "emails":    self = .emails
+			case "firstName": self = .firstName
+			case "lastName":  self = .lastName
+			case "nickname":  self = .nickname
+			case "password":  self = .password
+			default:          self = .custom(value)
 		}
 	}
 	
@@ -58,15 +54,13 @@ public enum UserProperty : Sendable, Hashable, RawRepresentable, ExpressibleBySt
 	
 	public var rawValue: String {
 		switch self {
-			case .id:                return "id"
-			case .persistentID:      return "persistentID"
-			case .identifyingEmails: return "identifyingEmails"
-			case .otherEmails:       return "otherEmails"
-			case .firstName:         return "firstName"
-			case .lastName:          return "lastName"
-			case .nickname:          return "nickname"
-			case .password:          return "password"
-			case .custom(let v):     return v
+			case .id:            return "id"
+			case .emails:        return "emails"
+			case .firstName:     return "firstName"
+			case .lastName:      return "lastName"
+			case .nickname:      return "nickname"
+			case .password:      return "password"
+			case .custom(let v): return v
 		}
 	}
 	
