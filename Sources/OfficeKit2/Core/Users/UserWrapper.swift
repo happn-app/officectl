@@ -30,6 +30,8 @@ public struct UserWrapper : User, Codable {
 	
 	public var emails: [Email]?
 	
+	public var password: String?
+	
 	public var underlyingUser: JSON?
 	public var savedHints = [UserProperty: String?]()
 	
@@ -71,6 +73,10 @@ public struct UserWrapper : User, Codable {
 		
 		underlyingUser = json[CodingKeys.underlyingUser.rawValue]
 		savedHints = json[CodingKeys.savedHints.rawValue]?.objectValue?.mapKeys{ UserProperty(stringLiteral: $0).normalized() }.compactMapValues{ $0.stringValue } ?? [:]
+	}
+	
+	public func valueForNonStandardProperty(_ property: String) -> Any? {
+		return nil
 	}
 	
 	public func json(includeSavedHints: Bool = false) -> JSON {
