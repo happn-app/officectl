@@ -8,6 +8,15 @@ let commonSwiftSettings: [SwiftSetting] = [
 //	.unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
 ]
 
+let coreDependencies: [Target.Dependency] = [
+	.product(name: "Email",           package: "swift-email"),
+	.product(name: "GenericJSON",     package: "generic-json-swift"),
+	.product(name: "Logging",         package: "swift-log"),
+	.product(name: "OfficeModelCore", package: "officectl-model"/*Xcode is not read for this:, moduleAliases: ["OfficeModelCore": "ModelCore"]*/),
+	.product(name: "UnwrapOrThrow",   package: "UnwrapOrThrow"),
+	.target(name: "ServiceKit")
+]
+
 
 let package = Package(
 	name: "officectl",
@@ -42,6 +51,7 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/happn-app/RetryingOperation.git",            from: "1.1.7"))
 		ret.append(.package(url: "https://github.com/happn-app/SemiSingleton.git",                from: "2.1.0-beta.1"))
 		ret.append(.package(url: "https://github.com/happn-app/URLRequestOperation.git",          from: "2.0.0-alpha.13.3"))
+		ret.append(.package(url: "https://github.com/happn-app/XibLoc.git",                       from: "1.2.2"))
 		ret.append(.package(url: "https://github.com/iwill/generic-json-swift.git",               from: "2.0.2"))
 		ret.append(.package(url: "https://github.com/mxcl/LegibleError.git",                      from: "1.0.0"))
 		ret.append(.package(url: "https://github.com/swift-server-community/SwiftPrometheus.git", from: "1.0.0"))
@@ -62,6 +72,10 @@ let package = Package(
 		var ret = [Target]()
 		ret.append(.target(name: "ServiceKit",     swiftSettings: commonSwiftSettings))
 		ret.append(.target(name: "GenericStorage", swiftSettings: commonSwiftSettings))
+		
+		/* ***************
+		   MARK: OfficeKit
+		   *************** */
 		
 		ret.append(.target(
 			name: "OfficeKit",
@@ -102,20 +116,8 @@ let package = Package(
 			name: "OfficeKit2",
 			dependencies: {
 				var ret = [Target.Dependency]()
-				ret.append(.product(name: "Email",           package: "swift-email"))
-				ret.append(.product(name: "GenericJSON",     package: "generic-json-swift"))
-				ret.append(.product(name: "Logging",         package: "swift-log"))
-				ret.append(.product(name: "OfficeModelCore", package: "officectl-model"/*Xcode is not read for this:, moduleAliases: ["OfficeModelCore": "ModelCore"]*/))
-				ret.append(.product(name: "UnwrapOrThrow",   package: "UnwrapOrThrow"))
-				ret.append(.target(name: "ServiceKit"))
-#if !os(Linux)
-				/* On macOS we use xcframework dependencies for OpenSSL and OpenLDAP. */
-				ret.append(.product(name: "COpenSSL-dynamic",  package: "COpenSSL"))
-				ret.append(.product(name: "COpenLDAP-dynamic", package: "COpenLDAP"))
-#else
-				/* On Linux we use the standard OpenLDAP package. */
-				ret.append(.target(name: "COpenLDAP"))
-#endif
+				ret.append(contentsOf: coreDependencies)
+				ret.append(.product(name: "XibLoc", package: "XibLoc"))
 				return ret
 			}(),
 			swiftSettings: commonSwiftSettings
@@ -130,6 +132,21 @@ let package = Package(
 			ret.append(.target(name: "ServiceKit"))
 			return ret
 		}()))
+		
+		/* *********************
+		   MARK: Office Services
+		   ********************* */
+		ret.append(.target(
+			name: "EmailOfficeService",
+			dependencies: {
+				var ret = [Target.Dependency]()
+				ret.append(contentsOf: coreDependencies)
+				ret.append(.target(name: "OfficeKit2"))
+				return ret
+			}(),
+			path: "Sources/OfficeServices/Email",
+			swiftSettings: commonSwiftSettings
+		))
 		
 		ret.append(.executableTarget(
 			name: "officectl",
@@ -150,6 +167,8 @@ let package = Package(
 				ret.append(.product(name: "Vapor",                    package: "vapor"))
 				ret.append(.product(name: "Yaml",                     package: "YamlSwift"))
 				ret.append(.target(name: "OfficeKit"))
+				ret.append(.target(name: "OfficeKit2"))
+				ret.append(.target(name: "EmailOfficeService"))
 #if !canImport(Darwin)
 				ret.append(.target(name: "CNCurses"))
 #endif

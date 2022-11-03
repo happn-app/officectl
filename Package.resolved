@@ -415,6 +415,15 @@
       }
     },
     {
+      "identity" : "xibloc",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/happn-app/XibLoc.git",
+      "state" : {
+        "revision" : "dfde5bb8cc25e9d1f76acc53c71829c945fa2f06",
+        "version" : "1.2.2"
+      }
+    },
+    {
       "identity" : "yamlswift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/behrang/YamlSwift.git",
