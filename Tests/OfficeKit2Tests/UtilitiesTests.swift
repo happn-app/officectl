@@ -37,11 +37,23 @@ class UtilitiesTests : XCTestCase {
 		XCTAssertEqual(dictionaryOfServices[dummyService], value2)
 	}
 	
-	func testUserIDBuilder() throws {
+	func testUserIDBuilder1() throws {
 		let user = SimpleUser1(id: "francois.lamboley@happn.fr", firstName: "François", lastName: "Lamboley")
 		let builder = UserIDBuilder(format: "*|firstName|*.*|lastName|*@|domain|")
 		XCTAssertThrowsError(try builder.inferID(fromUser: user))
 		XCTAssertEqual(try builder.inferID(fromUser: user, additionalVariables: ["domain": "happn.fr"]), user.id)
+	}
+	
+	func testUserIDBuilder2() throws {
+		let user = SimpleUser1(id: "ipek.kucuk@happn.fr", firstName: "İpek", lastName: "Küçük")
+		let builder = UserIDBuilder(format: "*|firstName|.|lastName|*@happn.fr")
+		XCTAssertEqual(try builder.inferID(fromUser: user), user.id)
+	}
+	
+	func testUserIDBuilder3() throws {
+		let user = SimpleUser1(id: "thibault.le-cornec@happn.fr", firstName: "Thibault", lastName: "Le Cornec")
+		let builder = UserIDBuilder(format: "*|firstName|.|lastName|*@happn.fr")
+		XCTAssertEqual(try builder.inferID(fromUser: user), user.id)
 	}
 	
 }

@@ -34,7 +34,7 @@ public struct UserIDBuilder {
 					hasMissingValue = true
 					return "TRANSFORM_FAILED"
 				}
-				return transformed
+				return transformed.replacingOccurrences(of: " ", with: "-")
 			})!
 		
 		let ret = format.applying(xibLocInfo: resolvingInfo)
