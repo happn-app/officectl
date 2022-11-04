@@ -47,6 +47,11 @@ public struct UserWrapper : User, Codable {
 		savedHints = hints
 	}
 	
+	public init(hints: [UserProperty: String?]) {
+		self.id = TaggedID(tag: "", id: UUID().uuidString)
+		applyAndSaveHints(hints, blacklistedKeys: [.id])
+	}
+	
 	public init(copying other: UserWrapper) {
 		id = other.id
 		persistentID = other.persistentID
@@ -76,7 +81,7 @@ public struct UserWrapper : User, Codable {
 	}
 	
 	public func valueForNonStandardProperty(_ property: String) -> Any? {
-		return nil
+		return savedHints[.init(stringLiteral: property)].flatMap{ $0 }
 	}
 	
 	public func json(includeSavedHints: Bool = false) -> JSON {

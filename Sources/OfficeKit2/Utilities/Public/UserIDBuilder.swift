@@ -7,6 +7,7 @@
 
 import Foundation
 
+import Email
 import XibLoc
 
 
@@ -20,27 +21,32 @@ public struct UserIDBuilder {
 	}
 	
 	public func inferID(fromUser user: any User, additionalVariables: [String: String] = [:]) throws -> String {
-		var hasMissingValue = false
+		var transformError: Error?
 		let resolvingInfo = Str2StrXibLocInfo()
 			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "|"), replacement: { variable in
 				guard let v = (user.valueForProperty(.init(stringLiteral: variable)) as? String) ?? additionalVariables[variable] else {
-					hasMissingValue = true
+					transformError = Err.cannotCreateLogicalUserFromWrappedUser
 					return "MISSING_VALUE"
 				}
 				return v
 			})!
 			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "*"), replacement: { text in
 				guard let transformed = text.lowercased().applyingTransform(.stripDiacritics, reverse: false) else {
-					hasMissingValue = true
+					transformError = Err.cannotCreateLogicalUserFromWrappedUser
 					return "TRANSFORM_FAILED"
 				}
 				return transformed.replacingOccurrences(of: " ", with: "-")
 			})!
+			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "#"), replacement: { text in
+				guard let email = Email(rawValue: text) else {
+					transformError = Err.cannotCreateLogicalUserFromWrappedUser
+					return "INVALID_EMAIL"
+				}
+				return email.localPart
+			})!
 		
 		let ret = format.applying(xibLocInfo: resolvingInfo)
-		guard !hasMissingValue else {
-			throw Err.cannotCreateLogicalUserFromWrappedUser
-		}
+		try transformError?.throwSelf()
 		return ret
 	}
 	

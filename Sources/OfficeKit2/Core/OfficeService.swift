@@ -15,9 +15,10 @@ public protocol OfficeService : AnyObject, Sendable {
 	
 	/**
 	 The ID of the linked provider, e.g. `OpenLDAP`.
-	 This ID cannot be empty (reserved for the dummy provider). */
+	 This ID should not be empty. */
 	static var providerID: String {get}
 	
+	/** The id should not be empty (an empty ID is used for the tag of a user wrapper created from hints only). */
 	init(id: String, jsonConfig: JSON) throws
 	var id: String {get}
 	
