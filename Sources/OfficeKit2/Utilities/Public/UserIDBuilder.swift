@@ -14,6 +14,7 @@ import XibLoc
 
 public struct UserIDBuilder {
 	
+	/* We’re currently using XibLoc for simpler dev, but we should have a structured format. */
 	public var format: String
 	
 	public init(format: String) {
@@ -43,6 +44,27 @@ public struct UserIDBuilder {
 					return "INVALID_EMAIL"
 				}
 				return email.localPart
+			})!
+			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "?"), replacement: { text in
+				let parts = text.split(separator: ":", maxSplits: 2, omittingEmptySubsequences: false)
+				guard parts.count == 2 else {
+					transformError = Err.cannotCreateLogicalUserFromWrappedUser
+					return "INVALID_DN_SPLIT_FORMAT"
+				}
+				
+				let dnString = String(parts[1])
+				guard let dn = try? DistinguishedName(string: dnString) else {
+					transformError = Err.cannotCreateLogicalUserFromWrappedUser
+					return "INVALID_DISTINGUISHED_NAME"
+				}
+				
+				let dnValue = String(parts[0])
+				guard let extractedValue = dn.relativeDistinguishedNameValues(for: dnValue).onlyElement else {
+					transformError = Err.cannotCreateLogicalUserFromWrappedUser
+					return "MORE_THAN_ONE_VALUE_FOR_DN_EXTRACTION"
+				}
+				
+				return extractedValue
 			})!
 		
 		let ret = format.applying(xibLocInfo: resolvingInfo)
