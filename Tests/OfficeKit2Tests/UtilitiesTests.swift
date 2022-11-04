@@ -37,15 +37,11 @@ class UtilitiesTests : XCTestCase {
 		XCTAssertEqual(dictionaryOfServices[dummyService], value2)
 	}
 	
-//	func testUsageMultiServicesItemUsage() throws {
-//		let dummyUser1 = DummyUser1()
-//		let dummyUser2 = DummyUser2()
-//		let dummyService1 = try DummyService1(id: "dummy1", jsonConfig: .null)
-//		let dummyService2 = try DummyService2(id: "dummy2", jsonConfig: .null)
-//		let multiServiceItem = MultiServicesItem(errorsAndItemsByService: [
-//			.init(dummyService1): .success(dummyUser1),
-//			.init(dummyService2): .success(dummyUser2)
-//		])
-//	}
+	func testUserIDBuilder() throws {
+		let user = SimpleUser1(id: "francois.lamboley@happn.fr", firstName: "François", lastName: "Lamboley")
+		let builder = UserIDBuilder(format: "*|firstName|*.*|lastName|*@|domain|")
+		XCTAssertThrowsError(try builder.inferID(fromUser: user))
+		XCTAssertEqual(try builder.inferID(fromUser: user, additionalVariables: ["domain": "happn.fr"]), user.id)
+	}
 	
 }

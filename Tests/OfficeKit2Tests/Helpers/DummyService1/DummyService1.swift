@@ -1,6 +1,6 @@
 /*
  * DummyService.swift
- * OfficeKit
+ * OfficeKitTests
  *
  * Created by François Lamboley on 2022/10/25.
  */
@@ -103,6 +103,20 @@ final class DummyService1 : UserService, GroupOfUsersService, AuthenticatorServi
 	
 	func shortDescription(fromGroupOfUsers groupOfUsers: DummyGroupOfUsers1) -> String {
 		return "<ERROR>"
+	}
+	
+	func string(fromGroupOfUsersID groupOfUsersID: Never) -> String {
+	}
+	
+	func groupOfUsersID(fromString string: String) throws -> Never {
+		throw TheDummyServiceCannotBeUsed()
+	}
+	
+	func string(fromPersistentGroupOfUsersID pID: Never) -> String {
+	}
+	
+	func persistentGroupOfUsersID(fromString string: String) throws -> Never {
+		throw TheDummyServiceCannotBeUsed()
 	}
 	
 	func listUsers(inGroupOfUsers groupOfUsers: DummyGroupOfUsers1, using services: Services) async throws -> [DummyUser1] {

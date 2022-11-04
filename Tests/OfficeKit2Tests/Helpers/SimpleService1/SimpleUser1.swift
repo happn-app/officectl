@@ -1,8 +1,8 @@
 /*
- * DummyUser.swift
+ * SimpleUser1.swift
  * OfficeKitTests
  *
- * Created by François Lamboley on 2022/10/25.
+ * Created by François Lamboley on 2022/11/04.
  */
 
 import Foundation
@@ -13,12 +13,12 @@ import OfficeKit2
 
 
 
-struct DummyUser1 : User {
+struct SimpleUser1 : User {
 	
-	typealias IDType = Never
+	typealias IDType = String
 	typealias PersistentIDType = Never
 	
-	var id: Never
+	var id: String
 	var persistentID: Never?
 	
 	var firstName: String?

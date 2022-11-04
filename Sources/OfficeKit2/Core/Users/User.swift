@@ -43,3 +43,20 @@ public protocol User<IDType> : Sendable {
 	func valueForNonStandardProperty(_ property: String) -> Any?
 	
 }
+
+
+public extension User {
+	
+	func valueForProperty(_ property: UserProperty) -> Any? {
+		switch property {
+			case .id:        return id
+			case .firstName: return firstName
+			case .lastName:  return lastName
+			case .nickname:  return nickname
+			case .emails:    return emails
+			case .password:  return password
+			case let .custom(propertyName): return valueForNonStandardProperty(propertyName)
+		}
+	}
+	
+}

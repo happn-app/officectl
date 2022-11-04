@@ -1,6 +1,6 @@
 /*
  * DummyGroupOfUsers.swift
- * OfficeKit
+ * OfficeKitTests
  *
  * Created by François Lamboley on 2022/10/25.
  */
@@ -15,11 +15,10 @@ import OfficeKit2
 
 struct DummyGroupOfUsers1 : GroupOfUsers {
 	
-	
 	typealias IDType = Never
 	typealias PersistentIDType = Never
 	
-	var groupID: Never
+	var id: Never
 	var persistentID: Never?
 	
 	var identifyingEmails: [Email]?
