@@ -51,7 +51,7 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/happn-app/RetryingOperation.git",            from: "1.1.7"))
 		ret.append(.package(url: "https://github.com/happn-app/SemiSingleton.git",                from: "2.1.0-beta.1"))
 		ret.append(.package(url: "https://github.com/happn-app/URLRequestOperation.git",          from: "2.0.0-alpha.13.3"))
-		ret.append(.package(url: "https://github.com/happn-app/XibLoc.git",                       from: "1.2.2"))
+		ret.append(.package(url: "https://github.com/happn-app/XibLoc.git",                       from: "1.2.3"))
 		ret.append(.package(url: "https://github.com/iwill/generic-json-swift.git",               from: "2.0.2"))
 		ret.append(.package(url: "https://github.com/mxcl/LegibleError.git",                      from: "1.0.0"))
 		ret.append(.package(url: "https://github.com/swift-server-community/SwiftPrometheus.git", from: "1.0.0"))
