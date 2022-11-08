@@ -21,11 +21,11 @@ public struct UserIDBuilder {
 		self.format = format
 	}
 	
-	public func inferID(fromUser user: any User, additionalVariables: [String: String] = [:]) throws -> String {
+	public func inferID(fromUser user: any User, additionalVariables: [String: Any] = [:]) throws -> String {
 		var transformError: Error?
 		let resolvingInfo = Str2StrXibLocInfo()
 			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "|"), replacement: { variable in
-				guard let v = (user.valueForProperty(.init(stringLiteral: variable)) as? String) ?? additionalVariables[variable] else {
+				guard let v = (user.valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? String else {
 					transformError = Err.cannotCreateLogicalUserFromWrappedUser
 					return "MISSING_VALUE"
 				}
@@ -38,10 +38,10 @@ public struct UserIDBuilder {
 				}
 				return transformed.replacingOccurrences(of: " ", with: "-")
 			})!
-			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "#"), replacement: { text in
-				guard let email = Email(rawValue: text) else {
+			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "#"), replacement: { variable in
+				guard let email = (user.valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? Email else {
 					transformError = Err.cannotCreateLogicalUserFromWrappedUser
-					return "INVALID_EMAIL"
+					return "MISSING_VALUE_OR_INVALID_EMAIL"
 				}
 				return email.localPart
 			})!
@@ -52,13 +52,13 @@ public struct UserIDBuilder {
 					return "INVALID_DN_SPLIT_FORMAT"
 				}
 				
-				let dnString = String(parts[1])
-				guard let dn = try? DistinguishedName(string: dnString) else {
+				let variable = String(parts[0])
+				guard let dn = (user.valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? DistinguishedName else {
 					transformError = Err.cannotCreateLogicalUserFromWrappedUser
-					return "INVALID_DISTINGUISHED_NAME"
+					return "MISSING_VALUE_OR_INVALID_DISTINGUISHED_NAME"
 				}
 				
-				let dnValue = String(parts[0])
+				let dnValue = String(parts[1])
 				guard let extractedValue = dn.relativeDistinguishedNameValues(for: dnValue).onlyElement else {
 					transformError = Err.cannotCreateLogicalUserFromWrappedUser
 					return "MORE_THAN_ONE_VALUE_FOR_DN_EXTRACTION"
