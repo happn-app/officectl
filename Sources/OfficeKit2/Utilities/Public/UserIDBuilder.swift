@@ -46,7 +46,7 @@ public struct UserIDBuilder {
 				return email.localPart
 			})!
 			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "?"), replacement: { text in
-				let parts = text.split(separator: ":", maxSplits: 2, omittingEmptySubsequences: false)
+				let parts = text.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
 				guard parts.count == 2 else {
 					transformError = Err.cannotCreateLogicalUserFromWrappedUser
 					return "INVALID_DN_SPLIT_FORMAT"
