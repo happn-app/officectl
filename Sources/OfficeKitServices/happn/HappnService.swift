@@ -1,36 +1,40 @@
 /*
- * EmailService.swift
- * EmailOfficeService
+ * HappnService.swift
+ * HappnOffice
  *
- * Created by François Lamboley on 2022/11/02.
+ * Created by François Lamboley on 2022/11/15.
  */
 
 import Foundation
 
 import Email
 import GenericJSON
-import OfficeKit2
 import ServiceKit
 
+import CommonOfficePropertiesFromHappn
+import OfficeKit2
 
 
-public final class EmailService : UserService {
+
+public final class HappnService : UserService {
 	
-	public static var providerID: String = "happn:email"
+	public static var providerID: String = "happn:happn"
 	
 	public static var supportedUserProperties: Set<UserProperty> {
-		return [.id, .emails]
+		return [.id, .emails, .firstName, .lastName, .nickname, .password, .gender, .birthdate]
 	}
 	
-	public typealias UserType = EmailUser
+	public typealias UserType = HappnUser
 	
 	public let id: String
+	public let config: HappnServiceConfig
 	
 	public init(id: String, jsonConfig: JSON) throws {
 		self.id = id
+		self.config = try HappnServiceConfig(json: jsonConfig)
 	}
 	
-	public func shortDescription(fromUser user: EmailUser) -> String {
+	public func shortDescription(fromUser user: HappnUser) -> String {
 		return user.id.rawValue
 	}
 	
@@ -52,18 +56,18 @@ public final class EmailService : UserService {
 		throw Err.unsupportedOperation
 	}
 	
-	public func json(fromUser user: EmailUser) throws -> JSON {
+	public func json(fromUser user: HappnUser) throws -> JSON {
 		return .string(user.id.rawValue)
 	}
 	
-	public func logicalUser(fromJSON json: JSON) throws -> EmailUser {
+	public func logicalUser(fromJSON json: JSON) throws -> HappnUser {
 		guard let emailStr = json.stringValue, let email = Email(rawValue: emailStr) else {
 			throw Err.invalidJSONRepresentation(json)
 		}
-		return EmailUser(id: email)
+		return HappnUser(id: email)
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: UserWrapper) throws -> EmailUser {
+	public func logicalUser(fromWrappedUser userWrapper: UserWrapper) throws -> HappnUser {
 		if userWrapper.sourceServiceID == id, let underlyingUser = userWrapper.underlyingUser {
 			/* If the underlying user is invalid, we fail the conversion altogether.
 			 * We could try and continue with the other properties of the wrapped user, but failing seems more appropriate (the wrapped user is effectively invalid). */
@@ -80,17 +84,17 @@ public final class EmailService : UserService {
 			}
 			inferredUserID = email
 		} else {
-//			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
+			//			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
 			guard let email = userWrapper.emails?.onlyElement else {
 				throw Err.invalidWrappedUser(userWrapper)
 			}
 			inferredUserID = email
 		}
 		
-		return EmailUser(id: inferredUserID)
+		return HappnUser(id: inferredUserID)
 	}
 	
-	public func applyHints(_ hints: [UserProperty : String?], toUser user: inout EmailUser, allowUserIDChange: Bool) -> Set<UserProperty> {
+	public func applyHints(_ hints: [UserProperty : String?], toUser user: inout HappnUser, allowUserIDChange: Bool) -> Set<UserProperty> {
 		guard allowUserIDChange else {return []}
 		
 #warning("TODO: .emails hint is improperly handled.")
@@ -101,34 +105,34 @@ public final class EmailService : UserService {
 		return [.id, .emails]
 	}
 	
-	public func existingUser(fromUserID uID: Email, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> EmailUser? {
-		return EmailUser(id: uID)
+	public func existingUser(fromUserID uID: Email, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> HappnUser? {
+		return HappnUser(id: uID)
 	}
 	
-	public func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> EmailUser? {
+	public func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> HappnUser? {
 	}
 	
-	public func listAllUsers(using services: Services) async throws -> [EmailUser] {
+	public func listAllUsers(using services: Services) async throws -> [HappnUser] {
 		throw Err.unsupportedOperation
 	}
 	
 	public let supportsUserCreation: Bool = false
-	public func createUser(_ user: EmailUser, using services: Services) async throws -> EmailUser {
+	public func createUser(_ user: HappnUser, using services: Services) async throws -> HappnUser {
 		throw Err.unsupportedOperation
 	}
 	
 	public let supportsUserUpdate: Bool = false
-	public func updateUser(_ user: EmailUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> EmailUser {
+	public func updateUser(_ user: HappnUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> HappnUser {
 		throw Err.unsupportedOperation
 	}
 	
 	public let supportsUserDeletion: Bool = false
-	public func deleteUser(_ user: EmailUser, using services: Services) async throws {
+	public func deleteUser(_ user: HappnUser, using services: Services) async throws {
 		throw Err.unsupportedOperation
 	}
 	
 	public let supportsPasswordChange: Bool = false
-	public func changePassword(of user: EmailUser, to newPassword: String, using services: Services) throws {
+	public func changePassword(of user: HappnUser, to newPassword: String, using services: Services) throws {
 		throw Err.unsupportedOperation
 	}
 	

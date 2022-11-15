@@ -136,17 +136,8 @@ let package = Package(
 		/* *********************
 		   MARK: Office Services
 		   ********************* */
-		ret.append(.target(
-			name: "EmailOfficeService",
-			dependencies: {
-				var ret = [Target.Dependency]()
-				ret.append(contentsOf: coreDependencies)
-				ret.append(.target(name: "OfficeKit2"))
-				return ret
-			}(),
-			path: "Sources/OfficeServices/Email",
-			swiftSettings: commonSwiftSettings
-		))
+		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")], path: "Sources/OfficeKitServices", sources: ["CommonProperties.swift"], swiftSettings: commonSwiftSettings))
+		ret.append(targetForService(named: "HappnOffice", folderName: "happn"))
 		
 		ret.append(.executableTarget(
 			name: "officectl",
@@ -168,7 +159,7 @@ let package = Package(
 				ret.append(.product(name: "Yaml",                     package: "YamlSwift"))
 				ret.append(.target(name: "OfficeKit"))
 				ret.append(.target(name: "OfficeKit2"))
-				ret.append(.target(name: "EmailOfficeService"))
+				ret.append(.target(name: "HappnOffice"))
 #if !canImport(Darwin)
 				ret.append(.target(name: "CNCurses"))
 #endif
@@ -200,3 +191,17 @@ let package = Package(
 		return ret
 	}()
 )
+
+
+func targetForService(named name: String, folderName: String, additionalDependencies: [Target.Dependency] = [], additionalSwiftSettings: [SwiftSetting] = []) -> Target {
+	let commonServiceDependencies: [Target.Dependency] = [
+		.target(name: "CommonOfficePropertiesFromHappn"),
+		.target(name: "OfficeKit2")
+	]
+	return .target(
+		name: name,
+		dependencies: coreDependencies + commonServiceDependencies + additionalDependencies,
+		path: "Sources/OfficeKitServices/" + folderName,
+		swiftSettings: commonSwiftSettings + additionalSwiftSettings
+	)
+}

@@ -1,8 +1,8 @@
 /*
- * EmailUser.swift
- * EmailOfficeService
+ * HappnUser.swift
+ * HappnOffice
  *
- * Created by François Lamboley on 2022/11/02.
+ * Created by François Lamboley on 2022/11/15.
  */
 
 import Foundation
@@ -12,7 +12,7 @@ import OfficeKit2
 
 
 
-public struct EmailUser : User {
+public struct HappnUser : User {
 	
 	public typealias IDType = Email
 	public typealias PersistentIDType = Never
