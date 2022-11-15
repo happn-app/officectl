@@ -55,7 +55,9 @@ public extension User {
 			case .nickname:  return nickname
 			case .emails:    return emails
 			case .password:  return password
-			default: return valueForNonStandardProperty(property.rawValue)
+			default:
+				assert(!property.isStandard)
+				return valueForNonStandardProperty(property.rawValue)
 		}
 	}
 	

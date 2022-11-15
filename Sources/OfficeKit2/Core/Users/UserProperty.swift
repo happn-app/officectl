@@ -11,6 +11,14 @@ import Foundation
 
 public struct UserProperty : RawRepresentable, ExpressibleByStringLiteral, Sendable, Codable, Hashable, Equatable {
 	
+	/** The properties that are defined directly on the ``User`` protocol. */
+	public static let standardProperties: Set<UserProperty> = [
+		.id,
+		.emails,
+		.firstName, .lastName, .nickname,
+		.password
+	]
+	
 	public static let id = UserProperty(rawValue: "id")
 	
 	public static let emails = UserProperty(rawValue: "emails")
@@ -22,6 +30,10 @@ public struct UserProperty : RawRepresentable, ExpressibleByStringLiteral, Senda
 	public static let password = UserProperty(rawValue: "password")
 	
 	public var rawValue: String
+	
+	public var isStandard: Bool {
+		return Self.standardProperties.contains(self)
+	}
 	
 	public init(stringLiteral: String) {
 		self.init(stringLiteral)
