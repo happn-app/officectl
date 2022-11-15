@@ -40,12 +40,8 @@ public extension UserAndService {
 		}
 	}
 	
-	func logicalID<OtherServiceType : UserService>(in otherService: OtherServiceType) throws -> OtherServiceType.UserType.IDType {
-		return try otherService.logicalUser(fromWrappedUser: wrappedUser).id
-	}
-	
 	func fetch<OtherServiceType : UserService>(in otherService: OtherServiceType, propertiesToFetch: Set<UserProperty> = [], using depServices: Services) async throws -> OtherServiceType.UserType? {
-		let otherID = try logicalID(in: otherService)
+		let otherID = try otherService.logicalUser(fromWrappedUser: wrappedUser).id
 		return try await otherService.existingUser(fromUserID: otherID, propertiesToFetch: propertiesToFetch, using: depServices)
 	}
 	
