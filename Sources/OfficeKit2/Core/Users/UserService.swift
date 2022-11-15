@@ -98,15 +98,7 @@ extension UserService {
 			return .unsupported
 		}
 		
-		switch property {
-			case .id:        return .set(user.id)
-			case .firstName: return .set(user.firstName)
-			case .lastName:  return .set(user.lastName)
-			case .nickname:  return .set(user.nickname)
-			case .emails:    return .set(user.emails)
-			case .password:  return .set(user.password)
-			case let .custom(propertyName): return .set(user.valueForNonStandardProperty(propertyName))
-		}
+		return .set(user.valueForProperty(property))
 	}
 	
 }

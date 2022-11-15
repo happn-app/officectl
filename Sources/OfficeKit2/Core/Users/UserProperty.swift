@@ -9,70 +9,30 @@ import Foundation
 
 
 
-/**
- A directory user property.
- 
- Tested:
- ```
- let a = UserProperty.id
- let b = UserProperty.custom("id")
- a           == b           /* <-- This is true. */
- a.hashValue == b.hashValue /* <-- This is true. */
- ``` */
-public enum UserProperty : Sendable, Hashable, RawRepresentable, ExpressibleByStringLiteral, Codable {
+public struct UserProperty : RawRepresentable, ExpressibleByStringLiteral, Sendable, Codable, Hashable, Equatable {
 	
-	public typealias RawValue = String
-	public typealias StringLiteralType = String
+	public static let id = UserProperty(rawValue: "id")
 	
-	case id
+	public static let emails = UserProperty(rawValue: "emails")
 	
-	case emails
+	public static let firstName = UserProperty(rawValue: "firstName")
+	public static let lastName = UserProperty(rawValue: "lastName")
+	public static let nickname = UserProperty(rawValue: "nickname")
 	
-	case firstName
-	case lastName
-	case nickname
+	public static let password = UserProperty(rawValue: "password")
 	
-	case password
+	public var rawValue: String
 	
-	case custom(String)
-	
-	public init(stringLiteral value: String) {
-		switch value {
-			case "id":        self = .id
-			case "emails":    self = .emails
-			case "firstName": self = .firstName
-			case "lastName":  self = .lastName
-			case "nickname":  self = .nickname
-			case "password":  self = .password
-			default:          self = .custom(value)
-		}
+	public init(stringLiteral: String) {
+		self.init(stringLiteral)
 	}
 	
-	public init?(rawValue: String) {
-		self.init(stringLiteral: rawValue)
+	public init(rawValue: String) {
+		self.init(rawValue)
 	}
 	
-	public var rawValue: String {
-		switch self {
-			case .id:            return "id"
-			case .emails:        return "emails"
-			case .firstName:     return "firstName"
-			case .lastName:      return "lastName"
-			case .nickname:      return "nickname"
-			case .password:      return "password"
-			case .custom(let v): return v
-		}
-	}
-	
-	/**
-	 Even though `.id == .custom("id")` (and the same applies for hash values),
-	  when switching on a value from this enum,
-	  we should prefer switching on the normalized value as the case `.id` and `.custom("id")` are indeed different. */
-	public func normalized() -> UserProperty {
-		if case .custom(let v) = self {
-			return UserProperty(stringLiteral: v)
-		}
-		return self
+	public init(_ string: String) {
+		self.rawValue = string
 	}
 	
 }

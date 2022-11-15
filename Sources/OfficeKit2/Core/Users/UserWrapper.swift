@@ -77,7 +77,7 @@ public struct UserWrapper : User, Codable {
 		emails = try json[CodingKeys.emails.rawValue].flatMap{ try ($0.arrayValue ?! Err.invalidJSONEncodedUserWrapper).map{ try Email(rawValue: $0.stringValue ?! Err.invalidJSONEncodedUserWrapper) ?! Err.invalidJSONEncodedUserWrapper } }
 		
 		underlyingUser = json[CodingKeys.underlyingUser.rawValue]
-		savedHints = json[CodingKeys.savedHints.rawValue]?.objectValue?.mapKeys{ UserProperty(stringLiteral: $0).normalized() }.compactMapValues{ $0.stringValue } ?? [:]
+		savedHints = json[CodingKeys.savedHints.rawValue]?.objectValue?.mapKeys{ UserProperty(rawValue: $0) }.compactMapValues{ $0.stringValue } ?? [:]
 	}
 	
 	public func valueForNonStandardProperty(_ property: String) -> Any? {

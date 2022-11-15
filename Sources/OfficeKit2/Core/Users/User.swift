@@ -55,7 +55,7 @@ public extension User {
 			case .nickname:  return nickname
 			case .emails:    return emails
 			case .password:  return password
-			case let .custom(propertyName): return valueForNonStandardProperty(propertyName)
+			default: return valueForNonStandardProperty(property.rawValue)
 		}
 	}
 	
