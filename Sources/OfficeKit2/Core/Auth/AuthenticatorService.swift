@@ -13,12 +13,12 @@ import ServiceKit
 
 public typealias HashableAuthenticatorService = DeportedHashability<any AuthenticatorService>
 
-public protocol AuthenticatorService<UserType, AuthenticationChallenge> : OfficeService {
+public protocol AuthenticatorService<AuthenticatedUserType, AuthenticationChallenge> : OfficeService {
 	
-	associatedtype UserType : User
+	associatedtype AuthenticatedUserType : User
 	associatedtype AuthenticationChallenge
 	
-	func authenticate(with challenge: AuthenticationChallenge, using services: Services) async throws -> UserType.UserIDType
+	func oA_authenticate(with challenge: AuthenticationChallenge, using services: Services) async throws -> AuthenticatedUserType.UserIDType
 	
 }
 

@@ -18,9 +18,6 @@ import OfficeModelCore
 
 public struct UserWrapper : User, Codable {
 	
-	public typealias IDType = TaggedID
-	public typealias PersistentIDType = TaggedID
-	
 	public var oU_id: TaggedID
 	public var oU_persistentID: TaggedID?
 	
