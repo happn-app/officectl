@@ -20,11 +20,11 @@ public protocol GroupOfUsersService<UserType> : OfficeService {
 	
 	func shortDescription(fromGroupOfUsers groupOfUsers: GroupOfUsersType) -> String
 	
-	func string(fromGroupOfUsersID groupOfUsersID: GroupOfUsersType.IDType) -> String
-	func groupOfUsersID(fromString string: String) throws -> GroupOfUsersType.IDType
+	func string(fromGroupOfUsersID groupOfUsersID: GroupOfUsersType.GroupOfUsersIDType) -> String
+	func groupOfUsersID(fromString string: String) throws -> GroupOfUsersType.GroupOfUsersIDType
 	
-	func string(fromPersistentGroupOfUsersID pID: GroupOfUsersType.PersistentIDType) -> String
-	func persistentGroupOfUsersID(fromString string: String) throws -> GroupOfUsersType.PersistentIDType
+	func string(fromPersistentGroupOfUsersID pID: GroupOfUsersType.PersistentGroupOfUsersIDType) -> String
+	func persistentGroupOfUsersID(fromString string: String) throws -> GroupOfUsersType.PersistentGroupOfUsersIDType
 	
 	func listUsers(inGroupOfUsers groupOfUsers: GroupOfUsersType, using services: Services) async throws -> [UserType]
 	func listGroupsOfUsers(containingUser user: UserType, using services: Services) async throws -> [GroupOfUsersType]

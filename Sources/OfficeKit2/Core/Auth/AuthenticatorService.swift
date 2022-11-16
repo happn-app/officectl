@@ -18,7 +18,7 @@ public protocol AuthenticatorService<UserType, AuthenticationChallenge> : Office
 	associatedtype UserType : User
 	associatedtype AuthenticationChallenge
 	
-	func authenticate(with challenge: AuthenticationChallenge, using services: Services) async throws -> UserType.IDType
+	func authenticate(with challenge: AuthenticationChallenge, using services: Services) async throws -> UserType.UserIDType
 	
 }
 

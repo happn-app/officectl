@@ -21,11 +21,11 @@ public extension UserAndService {
 	}
 	
 	var taggedID: TaggedID {
-		return TaggedID(tag: service.id, id: service.string(fromUserID: user.id))
+		return TaggedID(tag: service.id, id: service.string(fromUserID: user.oU_id))
 	}
 	
 	var taggedPersistentID: TaggedID? {
-		return user.persistentID.flatMap{ TaggedID(tag: service.id, id: service.string(fromPersistentUserID: $0)) }
+		return user.oU_persistentID.flatMap{ TaggedID(tag: service.id, id: service.string(fromPersistentUserID: $0)) }
 	}
 	
 	var wrappedUser: UserWrapper {
@@ -41,7 +41,7 @@ public extension UserAndService {
 	}
 	
 	func fetch<OtherServiceType : UserService>(in otherService: OtherServiceType, propertiesToFetch: Set<UserProperty> = [], using depServices: Services) async throws -> OtherServiceType.UserType? {
-		let otherID = try otherService.logicalUser(fromWrappedUser: wrappedUser).id
+		let otherID = try otherService.logicalUser(fromWrappedUser: wrappedUser).oU_id
 		return try await otherService.existingUser(fromUserID: otherID, propertiesToFetch: propertiesToFetch, using: depServices)
 	}
 	

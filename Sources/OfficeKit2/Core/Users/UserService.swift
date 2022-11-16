@@ -24,11 +24,11 @@ public protocol UserService<UserType> : OfficeService {
 	/** Convert the user to a user printable string. Mostly used for logging. */
 	func shortDescription(fromUser user: UserType) -> String
 	
-	func string(fromUserID userID: UserType.IDType) -> String
-	func userID(fromString string: String) throws -> UserType.IDType
+	func string(fromUserID userID: UserType.UserIDType) -> String
+	func userID(fromString string: String) throws -> UserType.UserIDType
 	
-	func string(fromPersistentUserID pID: UserType.PersistentIDType) -> String
-	func persistentUserID(fromString string: String) throws -> UserType.PersistentIDType
+	func string(fromPersistentUserID pID: UserType.PersistentUserIDType) -> String
+	func persistentUserID(fromString string: String) throws -> UserType.PersistentUserIDType
 	
 	/**
 	 Converts the given user to a JSON (generic codable storage representation).
@@ -62,13 +62,13 @@ public protocol UserService<UserType> : OfficeService {
 	 
 	 If _more than one_ user matches the given ID, the function should **throw an error**.
 	 If _no_ users match the given ID, the method should return `nil`. */
-	func existingUser(fromPersistentID pID: UserType.PersistentIDType, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType?
+	func existingUser(fromPersistentID pID: UserType.PersistentUserIDType, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType?
 	/**
 	 Fetch and return the _only_ user matching the given ID.
 	 
 	 If _more than one_ user matches the given ID, the function should **throw an error**.
 	 If _no_ users match the given ID, the method should return `nil`. */
-	func existingUser(fromUserID uID: UserType.IDType, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType?
+	func existingUser(fromUserID uID: UserType.UserIDType, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType?
 	
 	func listAllUsers(using services: Services) async throws -> [UserType]
 	

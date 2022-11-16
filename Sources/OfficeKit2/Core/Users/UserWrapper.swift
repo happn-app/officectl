@@ -21,66 +21,66 @@ public struct UserWrapper : User, Codable {
 	public typealias IDType = TaggedID
 	public typealias PersistentIDType = TaggedID
 	
-	public var id: TaggedID
-	public var persistentID: TaggedID?
+	public var oU_id: TaggedID
+	public var oU_persistentID: TaggedID?
 	
-	public var firstName: String?
-	public var lastName: String?
-	public var nickname: String?
+	public var oU_firstName: String?
+	public var oU_lastName: String?
+	public var oU_nickname: String?
 	
-	public var emails: [Email]?
+	public var oU_emails: [Email]?
 	
-	public var password: String?
+	public var oU_password: String?
 	
 	public var underlyingUser: JSON?
 	public var savedHints = [UserProperty: String?]()
 	
 	public var sourceServiceID: String {
-		return id.tag
+		return oU_id.tag
 	}
 	
 	public init(id uid: TaggedID, persistentID pId: TaggedID? = nil, underlyingUser u: JSON? = nil, hints: [UserProperty: String?] = [:]) {
-		id = uid
-		persistentID = pId
+		oU_id = uid
+		oU_persistentID = pId
 		
 		underlyingUser = u
 		savedHints = hints
 	}
 	
 	public init(hints: [UserProperty: String?]) {
-		self.id = TaggedID(tag: "", id: UUID().uuidString)
+		self.oU_id = TaggedID(tag: "", id: UUID().uuidString)
 		applyAndSaveHints(hints, blacklistedKeys: [.id])
 	}
 	
 	public init(copying other: UserWrapper) {
-		id = other.id
-		persistentID = other.persistentID
+		oU_id = other.oU_id
+		oU_persistentID = other.oU_persistentID
 		
-		firstName = other.firstName
-		lastName = other.lastName
-		nickname = other.nickname
+		oU_firstName = other.oU_firstName
+		oU_lastName = other.oU_lastName
+		oU_nickname = other.oU_nickname
 		
-		emails = other.emails
+		oU_emails = other.oU_emails
 		
 		underlyingUser = other.underlyingUser
 		savedHints = other.savedHints
 	}
 	
 	public init(json: JSON, forcedUserID: TaggedID?) throws {
-		id = try forcedUserID ?? TaggedID(string: json[CodingKeys.id.rawValue]?.stringValue ?! Err.invalidJSONEncodedUserWrapper)
-		persistentID = try json[CodingKeys.persistentID.rawValue].flatMap{ try TaggedID(string: $0.stringValue ?! Err.invalidJSONEncodedUserWrapper) }
+		oU_id = try forcedUserID ?? TaggedID(string: json[CodingKeys.oU_id.rawValue]?.stringValue ?! Err.invalidJSONEncodedUserWrapper)
+		oU_persistentID = try json[CodingKeys.oU_persistentID.rawValue].flatMap{ try TaggedID(string: $0.stringValue ?! Err.invalidJSONEncodedUserWrapper) }
 		
-		firstName = try json[CodingKeys.firstName.rawValue].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
-		lastName  = try json[CodingKeys.lastName.rawValue ].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
-		nickname  = try json[CodingKeys.nickname.rawValue ].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
+		oU_firstName = try json[CodingKeys.oU_firstName.rawValue].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
+		oU_lastName  = try json[CodingKeys.oU_lastName.rawValue ].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
+		oU_nickname  = try json[CodingKeys.oU_nickname.rawValue ].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
 		
-		emails = try json[CodingKeys.emails.rawValue].flatMap{ try ($0.arrayValue ?! Err.invalidJSONEncodedUserWrapper).map{ try Email(rawValue: $0.stringValue ?! Err.invalidJSONEncodedUserWrapper) ?! Err.invalidJSONEncodedUserWrapper } }
+		oU_emails = try json[CodingKeys.oU_emails.rawValue].flatMap{ try ($0.arrayValue ?! Err.invalidJSONEncodedUserWrapper).map{ try Email(rawValue: $0.stringValue ?! Err.invalidJSONEncodedUserWrapper) ?! Err.invalidJSONEncodedUserWrapper } }
 		
 		underlyingUser = json[CodingKeys.underlyingUser.rawValue]
 		savedHints = json[CodingKeys.savedHints.rawValue]?.objectValue?.mapKeys{ UserProperty(rawValue: $0) }.compactMapValues{ $0.stringValue } ?? [:]
 	}
 	
-	public func valueForNonStandardProperty(_ property: String) -> Any? {
+	public func oU_valueForNonStandardProperty(_ property: String) -> Any? {
 		return savedHints[.init(stringLiteral: property)].flatMap{ $0 }
 	}
 	
@@ -90,24 +90,24 @@ public struct UserWrapper : User, Codable {
 		if let u = underlyingUser {res[CodingKeys.underlyingUser.rawValue] = u}
 		if includeSavedHints {res[CodingKeys.savedHints.rawValue] = .object(savedHints.mapKeys{ $0.rawValue }.mapValues{ $0.flatMap{ .string($0) } ?? .null })}
 		
-		res[CodingKeys.id.rawValue] = .string(id.stringValue)
-		if let pID = persistentID {res[CodingKeys.persistentID.rawValue] = .string(pID.stringValue)}
+		res[CodingKeys.oU_id.rawValue] = .string(oU_id.stringValue)
+		if let pID = oU_persistentID {res[CodingKeys.oU_persistentID.rawValue] = .string(pID.stringValue)}
 		
-		if let fn = firstName {res[CodingKeys.firstName.rawValue] = .string(fn)}
-		if let ln = lastName  {res[CodingKeys.lastName.rawValue]  = .string(ln)}
-		if let nn = nickname  {res[CodingKeys.nickname.rawValue]  = .string(nn)}
+		if let fn = oU_firstName {res[CodingKeys.oU_firstName.rawValue] = .string(fn)}
+		if let ln = oU_lastName  {res[CodingKeys.oU_lastName.rawValue]  = .string(ln)}
+		if let nn = oU_nickname  {res[CodingKeys.oU_nickname.rawValue]  = .string(nn)}
 		
-		if let e = emails {res[CodingKeys.emails.rawValue] = .array(e.map{ .string($0.rawValue) })}
+		if let e = oU_emails {res[CodingKeys.oU_emails.rawValue] = .array(e.map{ .string($0.rawValue) })}
 		
 		return .object(res)
 	}
 	
 	public mutating func copyStandardNonIDProperties<U : User>(fromUser user: U) {
-		firstName = user.firstName
-		lastName = user.lastName
-		nickname = user.nickname
+		oU_firstName = user.oU_firstName
+		oU_lastName = user.oU_lastName
+		oU_nickname = user.oU_nickname
 		
-		emails = user.emails
+		oU_emails = user.oU_emails
 	}
 	
 	public func applyingAndSavingHints(_ hints: [UserProperty: String?], blacklistedKeys: Set<UserProperty> = [.id], replaceAllPreviouslySavedHints: Bool = false) -> UserWrapper {
@@ -143,18 +143,18 @@ public struct UserWrapper : User, Codable {
 						Conf.logger?.error("Asked to remove the id of a wrapped user (nil value for id in hints). This is illegal, I’m not doing it.")
 						continue
 					}
-					touchedKey = Self.setValueIfNeeded(TaggedID(string: hintValue), in: &id)
+					touchedKey = Self.setValueIfNeeded(TaggedID(string: hintValue), in: &oU_id)
 					
-				case .firstName: touchedKey = Self.setValueIfNeeded(hintValue, in: &firstName)
-				case .lastName:  touchedKey = Self.setValueIfNeeded(hintValue, in: &lastName)
-				case .nickname:  touchedKey = Self.setValueIfNeeded(hintValue, in: &nickname)
+				case .firstName: touchedKey = Self.setValueIfNeeded(hintValue, in: &oU_firstName)
+				case .lastName:  touchedKey = Self.setValueIfNeeded(hintValue, in: &oU_lastName)
+				case .nickname:  touchedKey = Self.setValueIfNeeded(hintValue, in: &oU_nickname)
 					
 				case .emails:
 					guard let parsedHint = Self.convertEmailsHintToEmails(hintValue) else {
 						Conf.logger?.warning("Cannot apply hint for key \(hintKey): value has invalid email(s): \(String(describing: hintValue))")
 						continue
 					}
-					touchedKey = Self.setValueIfNeeded(parsedHint, in: &emails)
+					touchedKey = Self.setValueIfNeeded(parsedHint, in: &oU_emails)
 					
 				default:
 					Conf.logger?.warning("Cannot apply hint for key \(hintKey): key is unknown: \(String(describing: hintValue))")
@@ -177,9 +177,9 @@ public struct UserWrapper : User, Codable {
 		case underlyingUser
 		case savedHints
 		
-		case id, persistentID
-		case firstName, lastName, nickname
-		case emails
+		case oU_id = "id", oU_persistentID = "persistentID"
+		case oU_firstName = "firstName", oU_lastName = "lastName", oU_nickname = "nickname"
+		case oU_emails = "emails"
 	}
 	
 	/**

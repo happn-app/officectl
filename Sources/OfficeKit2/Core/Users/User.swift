@@ -12,24 +12,24 @@ import OfficeModelCore
 
 
 
-public protocol User<IDType> : Sendable {
+public protocol User<UserIDType> : Sendable {
 	
-	associatedtype IDType : Hashable & Sendable
-	associatedtype PersistentIDType : Hashable & Sendable
+	associatedtype UserIDType : Hashable & Sendable
+	associatedtype PersistentUserIDType : Hashable & Sendable
 	
 	/**
 	 NON-Optional because even for locally created user, the ID must be _decided_.
 	 This property does not represent an arbitrary db primary key, it is the ID given to the user.
 	 For instance, for an LDAP directory, this would be the distinguished name, which is _not_ random.
 	 The db primary key (if any, LDAP does not have one by default) would be stored in the persistentID property. */
-	var id: IDType {get}
-	var persistentID: PersistentIDType? {get}
+	var oU_id: UserIDType {get}
+	var oU_persistentID: PersistentUserIDType? {get}
 	
-	var firstName: String? {get}
-	var lastName: String? {get}
-	var nickname: String? {get}
+	var oU_firstName: String? {get}
+	var oU_lastName: String? {get}
+	var oU_nickname: String? {get}
 	
-	var emails: [Email]? {get}
+	var oU_emails: [Email]? {get}
 	
 	/**
 	 The password of the user.
@@ -38,9 +38,9 @@ public protocol User<IDType> : Sendable {
 	 
 	 - Important: This property should not be retrieved for an existing user!
 	 In theory, for a proper directory, it should not even be possible to retrieve it. */
-	var password: String? {get}
+	var oU_password: String? {get}
 	
-	func valueForNonStandardProperty(_ property: String) -> Any?
+	func oU_valueForNonStandardProperty(_ property: String) -> Any?
 	
 }
 
@@ -49,15 +49,15 @@ public extension User {
 	
 	func valueForProperty(_ property: UserProperty) -> Any? {
 		switch property {
-			case .id:        return id
-			case .firstName: return firstName
-			case .lastName:  return lastName
-			case .nickname:  return nickname
-			case .emails:    return emails
-			case .password:  return password
+			case .id:        return oU_id
+			case .firstName: return oU_firstName
+			case .lastName:  return oU_lastName
+			case .nickname:  return oU_nickname
+			case .emails:    return oU_emails
+			case .password:  return oU_password
 			default:
 				assert(!property.isStandard)
-				return valueForNonStandardProperty(property.rawValue)
+				return oU_valueForNonStandardProperty(property.rawValue)
 		}
 	}
 	

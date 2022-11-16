@@ -22,11 +22,11 @@ public struct GroupOfUsersAndService<ServiceType : GroupOfUsersService> : Sendab
 	public var service: ServiceType
 	
 	public var taggedID: TaggedID {
-		return TaggedID(tag: service.id, id: service.string(fromGroupOfUsersID: groupOfUsers.id))
+		return TaggedID(tag: service.id, id: service.string(fromGroupOfUsersID: groupOfUsers.oGOU_id))
 	}
 	
 	public var taggedPersistentID: TaggedID? {
-		return groupOfUsers.persistentID.flatMap{ TaggedID(tag: service.id, id: service.string(fromPersistentGroupOfUsersID: $0)) }
+		return groupOfUsers.oGOU_persistentID.flatMap{ TaggedID(tag: service.id, id: service.string(fromPersistentGroupOfUsersID: $0)) }
 	}
 	
 	public init(groupOfUsers: ServiceType.GroupOfUsersType, service: ServiceType) {
