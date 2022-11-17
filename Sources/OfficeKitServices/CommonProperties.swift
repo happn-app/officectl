@@ -19,3 +19,11 @@ public extension UserProperty {
 	static let birthdate = UserProperty(rawValue: "birthdate")
 	
 }
+
+
+public enum Gender : String, Sendable, Codable, RawRepresentable {
+	
+	case male
+	case female
+	
+}

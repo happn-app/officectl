@@ -14,7 +14,7 @@ import GenericJSON
 
 public struct HappnServiceConfig : Sendable {
 	
-	public var connectorSettings: HappnConnector.Settings
+//	public var connectorSettings: HappnConnector.Settings
 	
 	init(json: JSON) throws {
 	}

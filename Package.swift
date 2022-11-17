@@ -17,6 +17,13 @@ let coreDependencies: [Target.Dependency] = [
 	.target(name: "ServiceKit")
 ]
 
+/* We do not use NIO http client. We probably should… */
+let networkDependencies: [Target.Dependency] = [
+	.product(name: "HasResult",           package: "HasResult"),
+	.product(name: "OperationAwaiting",   package: "OperationAwaiting"),
+	.product(name: "URLRequestOperation", package: "URLRequestOperation")
+]
+
 
 let package = Package(
 	name: "officectl",
@@ -81,20 +88,18 @@ let package = Package(
 			name: "OfficeKit",
 			dependencies: {
 				var ret = [Target.Dependency]()
+				ret.append(contentsOf: networkDependencies)
 				ret.append(.product(name: "APIConnectionProtocols",   package: "APIConnectionProtocols"))
 				ret.append(.product(name: "CollectionConcurrencyKit", package: "CollectionConcurrencyKit"))
 				ret.append(.product(name: "Crypto",                   package: "swift-crypto"))
 				ret.append(.product(name: "Email",                    package: "swift-email"))
 				ret.append(.product(name: "GenericJSON",              package: "generic-json-swift"))
-				ret.append(.product(name: "HasResult",                package: "HasResult"))
 				ret.append(.product(name: "JWT",                      package: "jwt"))
 				ret.append(.product(name: "Logging",                  package: "swift-log"))
 				ret.append(.product(name: "NIO",                      package: "swift-nio"))
 				ret.append(.product(name: "OfficeModel",              package: "officectl-model")) /* We should try and get rid of this dep from there. */
-				ret.append(.product(name: "OperationAwaiting",        package: "OperationAwaiting"))
 				ret.append(.product(name: "RetryingOperation",        package: "RetryingOperation"))
 				ret.append(.product(name: "SemiSingleton",            package: "SemiSingleton"))
-				ret.append(.product(name: "URLRequestOperation",      package: "URLRequestOperation"))
 				ret.append(.product(name: "Yaml",                     package: "YamlSwift"))
 				ret.append(.target(name: "GenericStorage"))
 				ret.append(.target(name: "ServiceKit"))
@@ -137,7 +142,7 @@ let package = Package(
 		   MARK: Office Services
 		   ********************* */
 		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")], path: "Sources/OfficeKitServices", sources: ["CommonProperties.swift"], swiftSettings: commonSwiftSettings))
-		ret.append(targetForService(named: "HappnOffice", folderName: "happn"))
+		ret.append(targetForService(named: "HappnOffice", folderName: "happn", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
 		
 		ret.append(.executableTarget(
 			name: "officectl",
@@ -195,6 +200,7 @@ let package = Package(
 
 func targetForService(named name: String, folderName: String, additionalDependencies: [Target.Dependency] = [], additionalSwiftSettings: [SwiftSetting] = []) -> Target {
 	let commonServiceDependencies: [Target.Dependency] = [
+		.product(name: "APIConnectionProtocols", package: "APIConnectionProtocols"),
 		.target(name: "CommonOfficePropertiesFromHappn"),
 		.target(name: "OfficeKit2")
 	]

@@ -197,12 +197,4 @@ public struct UserWrapper : User, Codable {
 		else          {return .none}
 	}
 	
-	private static func setValueIfNeeded<T : Equatable>(_ val: T, in dest: inout T) -> Bool {
-		guard val != dest else {
-			return false
-		}
-		dest = val
-		return true
-	}
-	
 }
