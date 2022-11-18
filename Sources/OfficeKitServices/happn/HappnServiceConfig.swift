@@ -28,16 +28,19 @@ public struct HappnServiceConfig : Sendable, Codable {
 	
 	public struct ConnectorSettings : Sendable, Codable {
 		
+		public var baseURL: URL
+		
 		public var clientID: String
 		public var clientSecret: String
 		
-		public var username: String
-		public var password: String
+		public var adminUsername: String
+		public var adminPassword: String
 		
 		private enum CodingKeys : String, CodingKey {
 			
+			case baseURL = "base_url"
 			case clientID = "client_id", clientSecret = "client_secret"
-			case username, password
+			case adminUsername = "admin_username", adminPassword = "admin_password"
 			
 		}
 		
