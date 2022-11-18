@@ -9,6 +9,6 @@ import Foundation
 
 
 
-internal struct RevokeResponseBody : Decodable {
+internal struct RevokeResponseBody : Sendable, Decodable {
 	/* I don’t know! */
 }

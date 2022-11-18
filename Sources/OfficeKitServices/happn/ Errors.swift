@@ -7,12 +7,16 @@
 
 import Foundation
 
+import Email
+
 
 
 public enum HappnOfficeError : Error, Sendable {
 	
 	case invalidEmail(String)
 	case notConnected
+	
+	case tooManyUsersFromAPI(id: Email)
 	
 	/* TODO: Delete this. */
 	case unsupportedOperation

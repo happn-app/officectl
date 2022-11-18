@@ -10,7 +10,7 @@ import Foundation
 
 
 
-internal struct TokenResponseBody : Decodable {
+internal struct TokenResponseBody : Sendable, Decodable {
 	
 	let scope: String
 	let userID: String

@@ -46,6 +46,17 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 		self.password = password
 	}
 	
+	public func increaseScopeIfNeeded(_ scope: String...) async throws {
+		guard currentScope?.isSubset(of: scope) ?? false else {
+			/* The current scope contains the scope we want, we have nothing to do. */
+			return
+		}
+		
+		let scope = Set(scope).union(currentScope ?? [])
+		try await unqueuedDisconnect()
+		try await unqueuedConnect(scope)
+	}
+	
 	/* ********************************
 	   MARK: - Connector Implementation
 	   ******************************** */

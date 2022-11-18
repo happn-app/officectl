@@ -48,7 +48,7 @@ public struct HappnUser : Sendable, Hashable, Codable {
 		return dateFormatter
 	}()
 	
-	private enum CodingKeys : String, CodingKey {
+	internal enum CodingKeys : String, CodingKey {
 		case type
 		case login, id
 		case firstName = "first_name", lastName = "last_name", nickname

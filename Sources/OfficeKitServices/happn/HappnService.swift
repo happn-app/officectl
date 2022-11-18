@@ -11,6 +11,7 @@ import Email
 import GenericJSON
 import ServiceKit
 
+import CollectionConcurrencyKit
 import CommonOfficePropertiesFromHappn
 import OfficeKit2
 
@@ -29,9 +30,19 @@ public final class HappnService : UserService {
 	public let id: String
 	public let config: HappnServiceConfig
 	
+	public let connector: HappnConnector
+	
 	public init(id: String, jsonConfig: JSON) throws {
 		self.id = id
 		self.config = try HappnServiceConfig(json: jsonConfig)
+		
+		self.connector = HappnConnector(
+			baseURL: config.connectorSettings.baseURL,
+			clientID: config.connectorSettings.clientID,
+			clientSecret: config.connectorSettings.clientSecret,
+			username: config.connectorSettings.adminUsername,
+			password: config.connectorSettings.adminPassword
+		)
 	}
 	
 	public func shortDescription(fromUser user: HappnUser) -> String {
@@ -127,7 +138,17 @@ public final class HappnService : UserService {
 	}
 	
 	public func existingUser(fromUserID uID: Email, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> HappnUser? {
-		throw Err.unsupportedOperation
+		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
+		
+#warning("TODO: domain variants")
+		let ids = /*Set(*/[uID]/*.allDomainVariants(aliasMap: self.globalConfig.domainAliases))*/
+#warning("TODO: properties to fetch")
+		let users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: [], connector: connector) }
+		guard users.count <= 1 else {
+			throw Err.tooManyUsersFromAPI(id: uID)
+		}
+		
+		return users.first
 	}
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> HappnUser? {
