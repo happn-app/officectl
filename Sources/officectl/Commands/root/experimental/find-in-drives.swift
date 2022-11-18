@@ -50,7 +50,7 @@ struct FindInDrivesCommand : AsyncParsableCommand {
 		_ = try googleConfig.connectorSettings.userBehalf ?! MissingFieldError("Google User Behalf")
 		
 		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
+		try await googleConnector.connect(SearchGoogleUsersOperation.scopes)
 		
 		let usersAndDest = try await GoogleUserAndDest.fetchListToBackup(
 			googleConfig: googleConfig, googleConnector: googleConnector,
@@ -68,7 +68,7 @@ struct FindInDrivesCommand : AsyncParsableCommand {
 	
 	private func searchResults(for userAndDest: GoogleUserAndDest, searchedString: String, mainConnector: GoogleJWTConnector, opQ: OperationQueue) async throws -> String? {
 		let connector = GoogleJWTConnector(from: mainConnector, userBehalf: userAndDest.user.primaryEmail.rawValue)
-		try await connector.connect(scope: driveROScope)
+		try await connector.connect(driveROScope)
 		
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .customISO8601

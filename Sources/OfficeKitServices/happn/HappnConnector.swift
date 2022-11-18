@@ -20,14 +20,11 @@ import URLRequestOperation
 
 public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	
-	/* Connector types. */
-	public typealias Scope = Set<String>
 	public typealias Request = URLRequest
-	/* Authenticator types. */
 	public enum Authentication : Sendable, Hashable {
 		
-		case userPass(username: String, password: String)
-		case refreshToken(String)
+		case userPass(username: String, password: String, scope: Set<String>)
+		case refreshToken(String, scope: Set<String>)
 		
 	}
 	
@@ -35,6 +32,10 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	
 	public let clientID: String
 	public let clientSecret: String
+	
+	public var isConnected: Bool {
+		currentScope != nil
+	}
 	
 	public var currentScope: Set<String>? {
 		guard let tokenInfo else {return nil}
@@ -60,19 +61,17 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unqueuedConnect(scope: Set<String>, auth: Authentication) async throws -> Set<String> {
+	public func unqueuedConnect(_ auth: Authentication) async throws {
 		try await unqueuedDisconnect()
 		
-		let request = TokenRequestBody(scope: scope.joined(separator: " "), clientID: clientID, clientSecret: clientSecret, grant: auth)
+		let request = TokenRequestBody(clientID: clientID, clientSecret: clientSecret, grant: auth)
 		let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(url: baseURL.appending("connect", "oauth", "token"), httpBody: request, retryProviders: [])
 		let response = try await op.startAndGetResult().result
-		let ti = TokenInfo(
+		tokenInfo = TokenInfo(
 			scope: Set(response.scope.components(separatedBy: " ")), userID: response.userID,
 			accessToken: response.accessToken, refreshToken: response.refreshToken,
 			expirationDate: Date() + TimeInterval(response.expiresIn)
 		)
-		tokenInfo = ti
-		return ti.scope
 	}
 	
 	public func unqueuedDisconnect() async throws {

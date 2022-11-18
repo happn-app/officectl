@@ -51,7 +51,7 @@ struct BackupGitHubCommand : AsyncParsableCommand {
 			try app.auditLogger.log(action: "Backing up GitHub w/ service \(serviceID ?? "<inferred service>"), organization name \(orgname) to \(destinationFolderURL).", source: .cli)
 			
 			let gitHubConnector = try GitHubJWTConnector(key: gitHubConfig.connectorSettings)
-			try await gitHubConnector.connect(scope: ())
+			try await gitHubConnector.connect()
 			
 			context.console.info("Fetching repositories list from GitHub...")
 			let searchOp = GitHubRepositorySearchOperation(searchedOrganisation: orgname, gitHubConnector: gitHubConnector)

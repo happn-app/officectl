@@ -55,7 +55,7 @@ actor DownloadDriveState {
 		 * Anyway I don’t think doing this exactly is possible with a task group. */
 		let tasks = parentIDs.map{ parentID -> Task<[String], Error> in
 			let task = pathsCache[parentID] ?? Task{
-				try await connector.connect(scope: driveROScope)
+				try await connector.connect(driveROScope)
 				
 				let decoder = JSONDecoder()
 				decoder.dateDecodingStrategy = .customISO8601

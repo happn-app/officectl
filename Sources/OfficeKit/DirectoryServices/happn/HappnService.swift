@@ -177,7 +177,7 @@ public final class HappnService : UserDirectoryService {
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> HappnUser? {
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await happnConnector.connect(scope: GetHappnUserOperation.scopes)
+		try await happnConnector.connect(GetHappnUserOperation.scopes)
 		
 		/* TODO: Properties to fetch. */
 		let op = GetHappnUserOperation(userKey: pID, connector: happnConnector)
@@ -197,7 +197,7 @@ public final class HappnService : UserDirectoryService {
 		}
 		
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes)
+		try await happnConnector.connect(SearchHappnUsersOperation.scopes)
 		
 		let ids = Set(Email(rawValue: uID)?.allDomainVariants(aliasMap: self.globalConfig.domainAliases).map{ $0.rawValue } ?? [uID])
 		let ops = ids.map{ SearchHappnUsersOperation(email: $0, happnConnector: happnConnector) } /* TODO: Properties to fetch. */
@@ -210,7 +210,7 @@ public final class HappnService : UserDirectoryService {
 	
 	public func listAllUsers(using services: Services) async throws -> [HappnUser] {
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await happnConnector.connect(scope: SearchHappnUsersOperation.scopes)
+		try await happnConnector.connect(SearchHappnUsersOperation.scopes)
 		
 		let searchOp = SearchHappnUsersOperation(email: nil, happnConnector: happnConnector)
 		return try await services.opQ.addOperationAndGetResult(searchOp)
@@ -219,7 +219,7 @@ public final class HappnService : UserDirectoryService {
 	public let supportsUserCreation = true
 	public func createUser(_ user: HappnUser, using services: Services) async throws -> HappnUser {
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await happnConnector.connect(scope: CreateHappnUserOperation.scopes)
+		try await happnConnector.connect(CreateHappnUserOperation.scopes)
 		
 		var user = user
 		if user.password == nil {
@@ -243,7 +243,7 @@ public final class HappnService : UserDirectoryService {
 	public let supportsUserDeletion = true
 	public func deleteUser(_ user: HappnUser, using services: Services) async throws {
 		let happnConnector: HappnConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await happnConnector.connect(scope: DeleteHappnUserOperation.scopes)
+		try await happnConnector.connect(DeleteHappnUserOperation.scopes)
 		
 		let op = DeleteHappnUserOperation(user: user, connector: happnConnector)
 		return try await services.opQ.addOperationAndGetResult(op)

@@ -21,15 +21,18 @@ import URLRequestOperation
 
 public final actor GoogleJWTConnector : Connector, Authenticator, HasTaskQueue {
 	
-	public typealias Scope = Set<String>
 	public typealias Request = URLRequest
-	public typealias Authentication = Void
+	public typealias Authentication = Set<String>
 	
 	public let userBehalf: String?
 	public let privateKey: RSAKey
 	public let superuserEmail: String
 	
-	public var currentScope: Scope? {
+	public var isConnected: Bool {
+		currentScope != nil
+	}
+	
+	public var currentScope: Set<String>? {
 		guard let auth = auth else {return nil}
 		/* We let a 21 secs leeway in which we consider we’re not connected to mitigate the potential time difference between the server and our local time. */
 		guard auth.expirationDate.timeIntervalSinceNow > 21 else {return nil}
@@ -70,7 +73,7 @@ public final actor GoogleJWTConnector : Connector, Authenticator, HasTaskQueue {
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unqueuedConnect(scope: Set<String>, auth _: Void) async throws -> Set<String> {
+	public func unqueuedConnect(_ scope: Set<String>) async throws {
 		try await unqueuedDisconnect()
 		
 		let authURL = URL(string: "https://www.googleapis.com/oauth2/v4/token")!
@@ -90,9 +93,7 @@ public final actor GoogleJWTConnector : Connector, Authenticator, HasTaskQueue {
 			throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unexpected token type \(res.tokenType)"])
 		}
 		
-		let a = Auth(token: res.accessToken, expirationDate: Date(timeIntervalSinceNow: TimeInterval(res.expiresIn)), scope: scope)
-		auth = a
-		return a.scope
+		auth = Auth(token: res.accessToken, expirationDate: Date(timeIntervalSinceNow: TimeInterval(res.expiresIn)), scope: scope)
 		
 		/* ***** STRUCTS ***** */
 		

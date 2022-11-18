@@ -37,7 +37,7 @@ public final class ResetOpenDirectoryPasswordAction : Action<LDAPDistinguishedNa
 				throw InvalidArgumentError(message: "Did not get a UID in the given DN.")
 			}
 			
-			try await deps.connector.connect(scope: ())
+			try await deps.connector.connect()
 			
 			/* Ideally I’d like to search for the DN directly, but for the life of me, I cannot find a way to do this!
 			 * OpenDirectory is awesome. */

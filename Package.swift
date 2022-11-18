@@ -48,7 +48,7 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/apple/swift-nio.git",                        from: "2.41.0"))
 		ret.append(.package(url: "https://github.com/behrang/YamlSwift.git",                      from: "3.4.0"))
 		ret.append(.package(url: "https://github.com/filom/ASN1Decoder.git",                      from: "1.8.0"))
-		ret.append(.package(url: "https://github.com/Frizlab/APIConnectionProtocols.git",         from: "1.0.0-beta.5"))
+		ret.append(.package(url: "https://github.com/Frizlab/APIConnectionProtocols.git",         from: "1.0.0-beta.6"))
 		ret.append(.package(url: "https://github.com/Frizlab/HasResult.git",                      from: "1.0.0"))
 		ret.append(.package(url: "https://github.com/Frizlab/OperationAwaiting.git",              from: "1.2.0-beta.2"))
 		ret.append(.package(url: "https://github.com/Frizlab/swift-email.git",                    from: "0.2.3"))

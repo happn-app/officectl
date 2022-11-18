@@ -73,7 +73,7 @@ struct ConsolepermCommand : AsyncParsableCommand {
 			throw InternalError(message: "no userID… (should not happen!)")
 		}
 		
-		try await hConnector.connect(scope: Set(arrayLiteral: "acl_create", "acl_update", "acl_read"))
+		try await hConnector.connect(Set(arrayLiteral: "acl_create", "acl_update", "acl_read"))
 		
 		let operation = try URLRequestDataOperation<JSON>.forAPIRequest(
 			url: hService.config.connectorSettings.baseURL.appending("api", "user-acls", userID),

@@ -58,13 +58,12 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 		
 	}
 	
-	public typealias Scope = Void
 	public typealias Authentication = Void
 	
 	public let ldapURL: URL
 	public let authMode: AuthMode
 	
-	public var currentScope: Void?
+	public var isConnected: Bool = false
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "LDAPConnector")
 	
@@ -131,17 +130,17 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unqueuedConnect(scope: Void, auth: Void) async throws -> Void {
+	public func unqueuedConnect(_: Void) async throws {
 		switch authMode {
 			case .none:
-				self.currentScope = scope
+				isConnected = true
 				return
 				
 			case .userPass(username: let username, password: let password):
 				guard let cStringPass = password.cString(using: .ascii) else {
 					throw NSError(domain: "com.happn.officectl", code: 1, userInfo: [NSLocalizedDescriptionKey: "Password cannot be converted to C String using ascii encoding"])
 				}
-				currentScope = try await withCheckedThrowingContinuation{ continuation in
+				try await withCheckedThrowingContinuation{ continuation in
 					DispatchQueue(label: "LDAP Connector Connect Queue").async{continuation.resume(with: Result{
 						var cred = berval(bv_len: ber_len_t(strlen(cStringPass)), bv_val: ber_strdup(cStringPass))
 						defer {ber_memfree(cred.bv_val)}
@@ -151,10 +150,9 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 						guard r == LDAP_SUCCESS else {
 							throw NSError(domain: "com.happn.officectl.openldap", code: Int(r), userInfo: [NSLocalizedDescriptionKey: String(cString: ldap_err2string(r))])
 						}
-						
-						return scope
 					})}
 				}
+				isConnected = true
 		}
 	}
 	

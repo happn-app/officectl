@@ -126,7 +126,7 @@ struct BackupDriveCommand : AsyncParsableCommand {
 			let downloadFilesQueue = OperationQueue(name_OperationQueue: "Files Download Queue")
 			
 			let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-			try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
+			try await googleConnector.connect(SearchGoogleUsersOperation.scopes)
 			
 			let filteredUsers = try await GoogleUserAndDest.fetchListToBackup(
 				googleConfig: googleConfig, googleConnector: googleConnector,

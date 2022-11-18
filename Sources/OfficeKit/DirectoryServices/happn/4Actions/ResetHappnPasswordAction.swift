@@ -30,7 +30,7 @@ public final class ResetHappnPasswordAction : Action<HappnUser, String, Void>, R
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
 		Task{await handler(Result{
-			try await deps.connector.connect(scope: ModifyHappnUserOperation.scopes)
+			try await deps.connector.connect(ModifyHappnUserOperation.scopes)
 			
 			var happnUser = self.subject.cloneForPatching()
 			happnUser.password = newPassword

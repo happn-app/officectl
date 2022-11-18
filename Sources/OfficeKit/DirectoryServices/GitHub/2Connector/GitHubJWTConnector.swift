@@ -19,13 +19,16 @@ import URLRequestOperation
 
 public final actor GitHubJWTConnector : Connector, Authenticator, HasTaskQueue {
 	
-	public typealias Scope = Void
 	public typealias Request = URLRequest
 	public typealias Authentication = Void
 	
 	public let appID: String
 	public let installationID: String
 	public let privateKey: RSAKey
+	
+	public var isConnected: Bool {
+		currentScope != nil
+	}
 	
 	public var currentScope: Void? {
 		guard let auth = auth else {return nil}
@@ -49,7 +52,7 @@ public final actor GitHubJWTConnector : Connector, Authenticator, HasTaskQueue {
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unqueuedConnect(scope _: Void, auth _: Void) async throws -> Void {
+	public func unqueuedConnect(_: Void) async throws {
 		struct GitHubJWTPayload : JWTPayload {
 			var iss: IssuerClaim
 			var iat: IssuedAtClaim
@@ -66,12 +69,11 @@ public final actor GitHubJWTConnector : Connector, Authenticator, HasTaskQueue {
 		let decoder = JSONDecoder()
 		decoder.dateDecodingStrategy = .iso8601
 		decoder.keyDecodingStrategy = .convertFromSnakeCase
-		let op = URLRequestDataOperation<Auth>.forAPIRequest(
+		auth = try await URLRequestDataOperation<Auth>.forAPIRequest(
 			url: try URL(string: "https://api.github.com")!.appending("app", "installations", installationID, "access_tokens"),
 			method: "POST", headers: ["authorization": "Bearer \(jwtToken)"],
 			decoders: [decoder], retryProviders: []
-		)
-		auth = try await op.startAndGetResult().result
+		).startAndGetResult().result
 	}
 	
 	public func unqueuedDisconnect() async throws {

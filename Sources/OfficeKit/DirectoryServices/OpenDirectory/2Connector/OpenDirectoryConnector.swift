@@ -31,7 +31,6 @@ import TaskQueue
 /* This helps: https://github.com/aosm/OpenDirectory/blob/master/Tests/TestApp.m */
 public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	
-	public typealias Scope = Void
 	public typealias Authentication = Void
 	
 	public typealias ProxySettings = (hostname: String, username: String, password: String)
@@ -43,7 +42,7 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	public let nodeName: String
 	public let nodeCredentials: CredentialsSettings?
 	
-	public var currentScope: Void?
+	public var isConnected: Bool = false
 	
 	public let connectorOperationQueue = SyncOperationQueue(name: "OpenDirectoryConnector")
 	
@@ -70,7 +69,7 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unqueuedConnect(scope: Void, auth: Void) async throws {
+	public func unqueuedConnect(_: Void) async throws {
 		try await unqueuedDisconnect()
 		
 		node = try await withCheckedThrowingContinuation{ continuation in
@@ -83,11 +82,11 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 				return node
 			})}
 		}
-		currentScope = scope
+		isConnected = true
 	}
 	
 	public func unqueuedDisconnect() async throws {
-		currentScope = nil
+		isConnected = false
 		node = nil
 	}
 	

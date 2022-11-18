@@ -255,7 +255,7 @@ public final class OpenDirectoryService : UserDirectoryService {
 	
 	public func listAllUsers(using services: Services) async throws -> [ODRecordOKWrapper] {
 		let openDirectoryConnector: OpenDirectoryConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await openDirectoryConnector.connect(scope: ())
+		try await openDirectoryConnector.connect()
 		
 		let searchQuery = OpenDirectorySearchRequest(recordTypes: [kODRecordTypeUsers], attribute: kODAttributeTypeMetaRecordName, matchType: ODMatchType(kODMatchAny), queryValues: nil, returnAttributes: [kODAttributeTypeEMailAddress, kODAttributeTypeFullName], maximumResults: nil)
 		let op = SearchOpenDirectoryOperation(request: searchQuery, openDirectoryConnector: openDirectoryConnector)
@@ -265,7 +265,7 @@ public final class OpenDirectoryService : UserDirectoryService {
 	public let supportsUserCreation = true
 	public func createUser(_ user: ODRecordOKWrapper, using services: Services) async throws -> ODRecordOKWrapper {
 		let openDirectoryConnector: OpenDirectoryConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await openDirectoryConnector.connect(scope: ())
+		try await openDirectoryConnector.connect()
 		
 		let op = try CreateOpenDirectoryRecordOperation(user: user, connector: openDirectoryConnector)
 		return try await ODRecordOKWrapper(record: services.opQ.addOperationAndGetResult(op))
@@ -305,7 +305,7 @@ public final class OpenDirectoryService : UserDirectoryService {
 		request.maximumResults = 2
 		
 		let openDirectoryConnector: OpenDirectoryConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await openDirectoryConnector.connect(scope: ())
+		try await openDirectoryConnector.connect()
 		
 		let op = SearchOpenDirectoryOperation(request: request, openDirectoryConnector: openDirectoryConnector)
 		let objects = try await services.opQ.addOperationAndGetResult(op)

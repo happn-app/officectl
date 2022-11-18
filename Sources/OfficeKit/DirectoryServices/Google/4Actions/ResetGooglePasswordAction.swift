@@ -31,7 +31,7 @@ public final class ResetGooglePasswordAction : Action<GoogleUser, String, Void>,
 	
 	public override func unsafeStart(parameters newPassword: String, handler: @escaping (Result<Void, Swift.Error>) -> Void) throws {
 		Task{await handler(Result{
-			try await deps.connector.connect(scope: ModifyGoogleUserOperation.scopes)
+			try await deps.connector.connect(ModifyGoogleUserOperation.scopes)
 			
 			var googleUser = self.subject.cloneForPatching()
 			googleUser.password = Insecure.SHA1.hash(data: Data(newPassword.utf8)).reduce("", { $0 + String(format: "%02x", $1) })

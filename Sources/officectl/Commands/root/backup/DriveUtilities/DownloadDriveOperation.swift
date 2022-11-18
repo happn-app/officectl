@@ -51,7 +51,7 @@ class DownloadDriveOperation : RetryingOperation {
 	override func startBaseOperation(isRetry: Bool) {
 		Task{
 			error = await Result{
-				try await state.connector.connect(scope: driveROScope)
+				try await state.connector.connect(driveROScope)
 				
 				/* Get all download files operations. */
 				let (operations, gotErrorRetrievingFilesList) = await fetchAndDownloadDriveDocs(currentListOfFiles: [], nextPageToken: nil)
@@ -101,7 +101,7 @@ class DownloadDriveOperation : RetryingOperation {
 	
 	private func fetchAndDownloadDriveDocs(currentListOfFiles: [DownloadDriveFileOperation], nextPageToken: String?) async -> (operations: [DownloadDriveFileOperation], gotError: Bool) {
 		do {
-			try await state.connector.connect(scope: driveROScope)
+			try await state.connector.connect(driveROScope)
 			
 			struct RequestParams : Encodable {
 				var fields: String = "nextPageToken,files/*,files/permissions/*,files/permissions/permissionDetails/*,kind,incompleteSearch"

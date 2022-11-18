@@ -164,7 +164,7 @@ public final class GoogleService : UserDirectoryService {
 	public func existingUser(fromUserID email: Email, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> GoogleUser? {
 		/* Note: We do **NOT** map the email to the main domain. Maybe we should? */
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
+		try await googleConnector.connect(SearchGoogleUsersOperation.scopes)
 		
 		/* TODO: Implement propertiesToFetch. */
 		let op = SearchGoogleUsersOperation(searchedDomain: email.domainPart, query: #"email="\#(email.rawValue)""#, googleConnector: googleConnector)
@@ -178,7 +178,7 @@ public final class GoogleService : UserDirectoryService {
 	
 	public func listAllUsers(using services: Services) async throws -> [GoogleUser] {
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
+		try await googleConnector.connect(SearchGoogleUsersOperation.scopes)
 		
 		let ops = config.primaryDomains.map{ SearchGoogleUsersOperation(searchedDomain: $0, query: "isSuspended=false", googleConnector: googleConnector) }
 		return try await services.opQ.addOperationsAndGetResults(ops).map{ try $0.get() }.flatMap{ $0 }
@@ -187,7 +187,7 @@ public final class GoogleService : UserDirectoryService {
 	public let supportsUserCreation = true
 	public func createUser(_ user: GoogleUser, using services: Services) async throws -> GoogleUser {
 		let googleConnector: GoogleJWTConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await googleConnector.connect(scope: CreateGoogleUserOperation.scopes)
+		try await googleConnector.connect(CreateGoogleUserOperation.scopes)
 		
 		let op = CreateGoogleUserOperation(user: user, connector: googleConnector)
 		return try await services.opQ.addOperationAndGetResult(op)

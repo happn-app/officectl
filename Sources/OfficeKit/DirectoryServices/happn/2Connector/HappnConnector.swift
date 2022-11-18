@@ -28,9 +28,8 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 		
 	}
 	
-	public typealias Scope = Set<String>
 	public typealias Request = URLRequest
-	public typealias Authentication = Void
+	public typealias Authentication = Set<String>
 	
 	public let baseURL: URL
 	
@@ -38,6 +37,10 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	public let clientSecret: String
 	
 	public let authMode: AuthMode
+	
+	public var isConnected: Bool {
+		currentScope != nil
+	}
 	
 	public var currentScope: Set<String>? {
 		guard let auth = auth else {return nil}
@@ -75,19 +78,17 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unqueuedConnect(scope: Set<String>, auth _: Void) async throws -> Set<String> {
+	public func unqueuedConnect(_ scope: Set<String>) async throws {
 		try await unqueuedDisconnect()
 		
 		let request = TokenRequestBody(scope: scope.joined(separator: " "), clientID: clientID, clientSecret: clientSecret, grant: authMode)
 		let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(url: baseURL.appending("connect", "oauth", "token"), httpBody: request, retryProviders: [])
 		let response = try await op.startAndGetResult().result
-		let a = Auth(
+		auth = Auth(
 			scope: Set(response.scope.components(separatedBy: " ")), userID: response.userID,
 			accessToken: response.accessToken, refreshToken: response.refreshToken,
 			expirationDate: Date() + TimeInterval(response.expiresIn)
 		)
-		auth = a
-		return a.scope
 		
 		/* ***** STRUCTS ***** */
 		

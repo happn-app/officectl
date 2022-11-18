@@ -59,7 +59,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 				let fileDownloadDestinationURL = state.allFilesDestinationBaseURL.appendingPathComponent(doc.id, isDirectory: false)
 				let fileObjectURL = driveApiBaseURL.appendingPathComponent("files", isDirectory: true).appendingPathComponent(doc.id)
 				
-				try await state.connector.connect(scope: driveROScope)
+				try await state.connector.connect(driveROScope)
 				
 				let paths = try await state.getPaths(objectID: doc.id, objectName: doc.name ?? doc.id, parentIDs: doc.parents)
 				
@@ -127,7 +127,7 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 					return
 				}
 				
-				try await state.connector.connect(scope: driveScope)
+				try await state.connector.connect(driveScope)
 				
 				var request = URLRequest(url: fileObjectURL)
 				request.httpMethod = "DELETE"

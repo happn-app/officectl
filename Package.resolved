@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Frizlab/APIConnectionProtocols.git",
       "state" : {
-        "revision" : "4c7ac63ee126f1f3ac9ccef0e690ddfd36a52e4c",
-        "version" : "1.0.0-beta.5"
+        "revision" : "8d2b42c0127d60772756dcfeb0120ec1cd23d466",
+        "version" : "1.0.0-beta.6"
       }
     },
     {

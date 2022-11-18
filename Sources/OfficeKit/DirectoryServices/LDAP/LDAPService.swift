@@ -236,7 +236,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 	
 	public func existingUser(fromUserID uID: LDAPDistinguishedName, propertiesToFetch: Set<DirectoryUserProperty>, using services: Services) async throws -> LDAPInetOrgPersonWithObject? {
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await ldapConnector.connect(scope: ())
+		try await ldapConnector.connect()
 		
 		/* TODO: Implement properties to fetch. */
 		let searchOp = SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .base, base: uID, searchQuery: nil, attributesToFetch: nil), hideNoSuchObjectError: true)
@@ -256,7 +256,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 	
 	public func listAllUsers(using services: Services) async throws -> [LDAPInetOrgPersonWithObject] {
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await ldapConnector.connect(scope: ())
+		try await ldapConnector.connect()
 		
 		let ops = config.baseDNs.allBaseDNs.map{ SearchLDAPOperation(ldapConnector: ldapConnector, request: LDAPSearchRequest(scope: .children, base: $0, searchQuery: nil, attributesToFetch: nil)) }
 		return try await services.opQ.addOperationsAndGetResults(ops)
@@ -268,7 +268,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 	public let supportsUserCreation = true
 	public func createUser(_ user: LDAPInetOrgPersonWithObject, using services: Services) async throws -> LDAPInetOrgPersonWithObject {
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await ldapConnector.connect(scope: ())
+		try await ldapConnector.connect()
 		
 		let op = CreateLDAPObjectsOperation(objects: [user.object], connector: ldapConnector)
 		let results = try await services.opQ.addOperationAndGetResult(op)
@@ -291,7 +291,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 	public let supportsUserDeletion = true
 	public func deleteUser(_ user: LDAPInetOrgPersonWithObject, using services: Services) async throws {
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await ldapConnector.connect(scope: ())
+		try await ldapConnector.connect()
 		
 		let op = DeleteLDAPObjectsOperation(users: [user.inetOrgPerson], connector: ldapConnector)
 		try await services.opQ.addOperationAndWait(op)
@@ -325,7 +325,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 		guard adminGroupsDN.count > 0 else {return false}
 		
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await ldapConnector.connect(scope: ())
+		try await ldapConnector.connect()
 		
 		let searchQuery = LDAPSearchQuery.or(adminGroupsDN.map{
 			LDAPSearchQuery.simple(attribute: .memberof, filtertype: .equal, value: Data($0.stringValue.utf8))
@@ -343,7 +343,7 @@ public final class LDAPService : UserDirectoryService, DirectoryAuthenticatorSer
 	
 	public func fetchProperties(_ properties: Set<String>?, from dn: LDAPDistinguishedName, using services: Services) async throws -> [String: [Data]] {
 		let ldapConnector: LDAPConnector = try services.semiSingleton(forKey: config.connectorSettings)
-		try await ldapConnector.connect(scope: ())
+		try await ldapConnector.connect()
 		
 		let searchRequest = LDAPSearchRequest(scope: .base, base: dn, searchQuery: nil, attributesToFetch: properties)
 		let op = SearchLDAPOperation(ldapConnector: ldapConnector, request: searchRequest, hideNoSuchObjectError: true)

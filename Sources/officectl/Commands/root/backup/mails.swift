@@ -104,7 +104,7 @@ struct BackupMailsCommand : AsyncParsableCommand {
 		try app.auditLogger.log(action: "Backing up mails w/ service \(backupMailOptions.serviceID ?? "<inferred service>"), users filter \(usersFilter?.map{ $0.debugDescription }.joined(separator: ",") ?? "<no filter>"), \(backupMailOptions.linkify ? "w/": "w/o") linkification, \(archivesDestinationFolder != nil ? "w/": "w/o") archiving.", source: .cli)
 		
 		let googleConnector = try GoogleJWTConnector(key: googleConfig.connectorSettings)
-		try await googleConnector.connect(scope: SearchGoogleUsersOperation.scopes)
+		try await googleConnector.connect(SearchGoogleUsersOperation.scopes)
 		
 		let filteredUsers = try await GoogleUserAndDest.fetchListToBackup(
 			googleConfig: googleConfig, googleConnector: googleConnector,
@@ -246,7 +246,7 @@ struct BackupMailsCommand : AsyncParsableCommand {
 			let scope = Set(arrayLiteral: "https://mail.google.com/")
 			let connector = GoogleJWTConnector(from: context.mainConnector, userBehalf: userAndDest.user.primaryEmail.rawValue)
 			
-			try await connector.connect(scope: scope)
+			try await connector.connect(scope)
 			
 			if let token = await connector.token, let expirationDate = await connector.expirationDate {
 				return (userAndDest, token, expirationDate)
