@@ -100,7 +100,7 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 			throw Err.notConnected
 		}
 		
-		if tokenInfo.expirationDate >= Date() - TimeInterval(9 * 60) {
+		if tokenInfo.expirationDate >= Date() - TimeInterval(30) {
 			/* If the token expires soon, we reauth it.
 			 * Clients should retry requests failing for expired token reasons, but let’s be proactive and allow a useless call. */
 			try await unqueuedConnect(tokenInfo.scope)
