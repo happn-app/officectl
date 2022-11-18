@@ -103,6 +103,7 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 		if tokenInfo.expirationDate >= Date() - TimeInterval(30) {
 			/* If the token expires soon, we reauth it.
 			 * Clients should retry requests failing for expired token reasons, but let’s be proactive and allow a useless call. */
+#warning("TODO: Mechanism to avoid double-token refresh when it’s not needed (a request waiting for a response, another one is launched in parallel, both get a token expired, both will refresh, but second refresh is useless).")
 			try await unqueuedConnect(tokenInfo.scope)
 		}
 		
