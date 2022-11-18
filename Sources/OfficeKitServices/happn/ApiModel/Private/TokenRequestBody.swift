@@ -9,29 +9,36 @@ import Foundation
 
 
 
-internal struct TokenRequestBody : Encodable {
+internal struct TokenRequestBody : Sendable, Encodable {
+	
+	enum Grant : Sendable, Encodable {
+		
+		case password(username: String, password: String)
+		case refreshToken(String)
+		
+	}
 	
 	var clientID: String
 	var clientSecret: String?
 	
-	var grant: HappnConnector.Authentication
+	var grant: Grant
+	var scope: Set<String>
 	
 	func encode(to encoder: Encoder) throws {
 		var container = encoder.container(keyedBy: CodingKeys.self)
 		
+		try container.encode(scope, forKey: .scope)
 		try container.encode(clientID, forKey: .clientID)
 		try container.encode(clientSecret, forKey: .clientSecret)
 		switch grant {
-			case let .userPass(username: username, password: password, scope: scope):
+			case let .password(username: username, password: password):
 				try container.encode("password", forKey: .grantType)
 				try container.encode(username, forKey: .username)
 				try container.encode(password, forKey: .password)
-				try container.encode(scope, forKey: .scope)
 				
-			case let .refreshToken(refreshToken, scope: scope):
+			case let .refreshToken(token):
 				try container.encode("refresh_token", forKey: .grantType)
-				try container.encode(refreshToken, forKey: .refreshToken)
-				try container.encode(scope, forKey: .scope)
+				try container.encode(token, forKey: .refreshToken)
 		}
 	}
 	

@@ -21,57 +21,59 @@ import URLRequestOperation
 public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	
 	public typealias Request = URLRequest
-	public enum Authentication : Sendable, Hashable {
-		
-		case userPass(username: String, password: String, scope: Set<String>)
-		case refreshToken(String, scope: Set<String>)
-		
-	}
+	public typealias Authentication = Set<String>
 	
 	public let baseURL: URL
 	
 	public let clientID: String
 	public let clientSecret: String
 	
-	public var isConnected: Bool {
-		currentScope != nil
-	}
+	public let username: String
+	public let password: String
 	
-	public var currentScope: Set<String>? {
-		guard let tokenInfo else {return nil}
-		/* We let a 21 secs leeway in which we consider we’re not connected to mitigate time difference between the server and our local time. */
-		guard tokenInfo.expirationDate.timeIntervalSinceNow > 21 else {return nil}
-		return tokenInfo.scope
-	}
-	public var accessToken: String? {
-		return tokenInfo?.accessToken
-	}
-	public var refreshToken: String? {
-		return tokenInfo?.refreshToken
-	}
+	public var isConnected:  Bool         {tokenInfo != nil}
+	public var accessToken:  String?      {tokenInfo?.accessToken}
+	public var refreshToken: String?      {tokenInfo?.refreshToken}
+	public var currentScope: Set<String>? {tokenInfo?.scope}
 	
-	public init(baseURL url: URL, clientID id: String, clientSecret s: String) {
-		baseURL = url
+	public init(baseURL: URL, clientID: String, clientSecret: String, username: String, password: String) {
+		self.baseURL = baseURL
 		
-		clientID = id
-		clientSecret = s
+		self.clientID = clientID
+		self.clientSecret = clientSecret
+		
+		self.username = username
+		self.password = password
 	}
 	
 	/* ********************************
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unqueuedConnect(_ auth: Authentication) async throws {
-		try await unqueuedDisconnect()
+	public func unqueuedConnect(_ scope: Authentication) async throws {
+		let requestToken = { (grant: TokenRequestBody.Grant) async throws -> TokenInfo in
+			let request = TokenRequestBody(clientID: self.clientID, clientSecret: self.clientSecret, grant: grant, scope: scope)
+			let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(url: self.baseURL.appending("connect", "oauth", "token"), httpBody: request, retryProviders: [])
+			let response = try await op.startAndGetResult().result
+			return TokenInfo(
+				scope: Set(response.scope.components(separatedBy: " ")), userID: response.userID,
+				accessToken: response.accessToken, refreshToken: response.refreshToken,
+				expirationDate: Date() + TimeInterval(response.expiresIn)
+			)
+		}
 		
-		let request = TokenRequestBody(clientID: clientID, clientSecret: clientSecret, grant: auth)
-		let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(url: baseURL.appending("connect", "oauth", "token"), httpBody: request, retryProviders: [])
-		let response = try await op.startAndGetResult().result
-		tokenInfo = TokenInfo(
-			scope: Set(response.scope.components(separatedBy: " ")), userID: response.userID,
-			accessToken: response.accessToken, refreshToken: response.refreshToken,
-			expirationDate: Date() + TimeInterval(response.expiresIn)
-		)
+		if let refreshToken {
+			/* If we have a refresh token we try to refresh the session first because it’s good practice to keep the same session instead of re-auth’ing w/ a password. */
+			if let token = try? await requestToken(.refreshToken(refreshToken)) {
+				return tokenInfo = token
+			}
+			/* We should check the error and abort the connection depending on it.
+			 * For now (and probably forever), we do not care. */
+		}
+		
+		/* Either we do not have a refresh token or the refresh of the token failed.
+		 * Whatever the failure reason we retry with a password grant. */
+		tokenInfo = try await requestToken(.password(username: username, password: password))
 	}
 	
 	public func unqueuedDisconnect() async throws {
@@ -96,6 +98,12 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 		/* Make sure we're connected */
 		guard let tokenInfo else {
 			throw Err.notConnected
+		}
+		
+		if tokenInfo.expirationDate >= Date() - TimeInterval(9 * 60) {
+			/* If the token expires soon, we reauth it.
+			 * Clients should retry requests failing for expired token reasons, but let’s be proactive and allow a useless call. */
+			try await unqueuedConnect(tokenInfo.scope)
 		}
 		
 		var request = request
