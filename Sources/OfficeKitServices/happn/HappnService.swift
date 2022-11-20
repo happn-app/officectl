@@ -126,7 +126,7 @@ public final class HappnService : UserService {
 				case .lastName:  touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.lastName)
 				case .nickname:  touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.nickname)
 				case .gender:    touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.gender)
-				case .birthdate: touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.birthDate, converter: { HappnUser.birthDateFormatter.date(from: $0) })
+				case .birthdate: touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.birthDate, converter: { HappnBirthDateWrapper.birthDateFormatter.date(from: $0) })
 				case .password:  touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.password)
 				default:         touchedKey = false
 			}

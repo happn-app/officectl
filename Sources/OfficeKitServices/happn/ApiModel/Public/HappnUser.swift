@@ -30,30 +30,28 @@ public struct HappnUser : Sendable, Hashable, Codable {
 	public var nickname: String?
 	
 	public var gender: Gender?
-	public var birthDate: Date?
+	public var birthDate: Date? {
+		get {_birthDate}
+		set {_birthDate = newValue}
+	}
 	
 	public var password: String?
 	
 	public init(login l: Email) {
 		login = l
 		gender = .male /* Male users by default. I’m crazy like that. */
-		birthDate = Date(timeIntervalSinceNow: -21*366*24*60*60) /* ~21 yo by default */
+		_birthDate = Date(timeIntervalSinceNow: -21*366*24*60*60) /* ~21 yo by default */
 	}
-	
-	internal static let birthDateFormatter: DateFormatter = {
-		let dateFormatter = DateFormatter()
-		dateFormatter.dateFormat = "yyyy-MM-dd"
-		dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
-		dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-		return dateFormatter
-	}()
 	
 	internal enum CodingKeys : String, CodingKey {
 		case type
 		case login, id
 		case firstName = "first_name", lastName = "last_name", nickname
-		case gender, birthDate = "birth_date"
+		case gender, _birthDate = "birth_date"
 		case password
 	}
+	
+	@HappnBirthDateWrapper
+	internal var _birthDate: Date?
 	
 }
