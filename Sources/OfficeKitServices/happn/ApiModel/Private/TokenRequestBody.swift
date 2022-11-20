@@ -27,7 +27,7 @@ internal struct TokenRequestBody : Sendable, Encodable {
 	func encode(to encoder: Encoder) throws {
 		var container = encoder.container(keyedBy: CodingKeys.self)
 		
-		try container.encode(scope, forKey: .scope)
+		try container.encode(scope.joined(separator: " "), forKey: .scope)
 		try container.encode(clientID, forKey: .clientID)
 		try container.encode(clientSecret, forKey: .clientSecret)
 		switch grant {
