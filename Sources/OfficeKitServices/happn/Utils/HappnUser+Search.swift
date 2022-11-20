@@ -59,7 +59,7 @@ internal extension HappnUser {
 #warning("TODO: fields")
 		return try await URLRequestDataOperation<ApiResult<[HappnUser]>>.forAPIRequest(
 			url: connector.baseURL.appending("api", "v1", "users-search"),
-			urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname,type"],
+			urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname,type,birth_date"],
 			httpBody: request,
 			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 		).startAndGetResult().result.data ?? []
