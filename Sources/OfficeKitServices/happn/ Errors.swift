@@ -17,6 +17,7 @@ public enum HappnOfficeError : Error, Sendable {
 	case notConnected
 	
 	case tooManyUsersFromAPI(id: Email)
+	case apiError
 	
 	/* TODO: Delete this. */
 	case unsupportedOperation

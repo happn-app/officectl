@@ -152,7 +152,10 @@ public final class HappnService : UserService {
 	}
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> HappnUser? {
-		throw Err.unsupportedOperation
+		try await connector.increaseScopeIfNeeded("admin_read")
+		
+#warning("TODO: properties to fetch")
+		return try await HappnUser.get(id: pID, propertiesToFetch: [], connector: connector)
 	}
 	
 	public func listAllUsers(using services: Services) async throws -> [HappnUser] {
