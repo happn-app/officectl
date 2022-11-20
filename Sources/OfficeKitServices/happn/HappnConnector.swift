@@ -47,7 +47,7 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	}
 	
 	public func increaseScopeIfNeeded(_ scope: String...) async throws {
-		guard currentScope?.isSubset(of: scope) ?? false else {
+		guard currentScope?.isSubset(of: scope) ?? true else {
 			/* The current scope contains the scope we want, we have nothing to do. */
 			return
 		}
