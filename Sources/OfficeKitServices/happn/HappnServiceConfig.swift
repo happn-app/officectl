@@ -44,7 +44,7 @@ public struct HappnServiceConfig : Sendable, Codable {
 	
 	private enum CodingKeys : String, CodingKey {
 		
-		case serviceName = "service_id"
+		case serviceName = "service_name"
 		case connectorSettings = "connector_settings"
 		
 	}
