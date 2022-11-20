@@ -8,10 +8,13 @@
 import Foundation
 
 import ArgumentParser
+import Email
 import GenericJSON
 import Vapor
 
+import HappnOffice
 import OfficeKit
+import OfficeKit2
 import SemiSingleton
 import URLRequestOperation
 
@@ -36,19 +39,38 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 	/* We don’t technically require Vapor, but it’s convenient. */
 	func vaporRun(_ context: CommandContext) async throws {
 		let app = context.application
-//		let officeKitConfig = app.officeKitConfig
+		let officeKitConfig = app.officeKitConfig
 //		let officectlConfig = app.officectlConfig
 //		let sProvider = app.officeKitServiceProvider
 //		let semiSingletonStore = app.semiSingletonStore
 //		let opQ: OperationQueue = try app.services.make()
 //		let simpleMDMToken = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
-		/* List users by creation date decreasing */
-		let gougleService: GoogleService = try app.officeKitServiceProvider.getService(id: nil)
-		let users = try await gougleService.listAllUsers(using: app.services)
-		for user in users.sorted(by: { $0.creationTime ?? .distantFuture < $1.creationTime ?? .distantFuture }) {
-			print("\(user.creationTime ?? .distantFuture) - \(user.primaryEmail)")
+		/* OfficeKit2 tests. */
+		let oldConf: OfficeKit.HappnServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
+		let happnService = try HappnService(id: "hppn", jsonConfig: .object([
+			"service_name": .string("happn"),
+			"connector_settings": .object([
+				"base_url": .string(oldConf.connectorSettings.baseURL.absoluteString),
+				"client_id": .string(oldConf.connectorSettings.clientID),
+				"client_secret": .string(oldConf.connectorSettings.clientSecret),
+				"admin_username": .string(oldConf.connectorSettings.authMode.username!),
+				"admin_password": .string(oldConf.connectorSettings.authMode.password!),
+			])
+		]))
+		do {
+			try await print(happnService.existingUser(fromUserID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: [], using: app.services))
+			try await print(happnService.existingUser(fromPersistentID: "243", propertiesToFetch: [], using: app.services))
+		} catch let error as URLRequestOperationError {
+			print(error)
 		}
+		
+		/* List users by creation date decreasing */
+//		let gougleService: GoogleService = try app.officeKitServiceProvider.getService(id: nil)
+//		let users = try await gougleService.listAllUsers(using: app.services)
+//		for user in users.sorted(by: { $0.creationTime ?? .distantFuture < $1.creationTime ?? .distantFuture }) {
+//			print("\(user.creationTime ?? .distantFuture) - \(user.primaryEmail)")
+//		}
 		
 		/* Delete happn console user */
 //		let consoleService: HappnService = try sProvider.getService(id: nil)

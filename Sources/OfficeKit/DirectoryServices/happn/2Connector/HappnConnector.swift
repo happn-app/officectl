@@ -26,6 +26,20 @@ public final actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 		case userPass(username: String, password: String)
 		case refreshToken(String)
 		
+		public var username: String? {
+			if case let .userPass(username, _) = self {
+				return username
+			}
+			return nil
+		}
+		
+		public var password: String? {
+			if case let .userPass(_, password) = self {
+				return password
+			}
+			return nil
+		}
+		
 	}
 	
 	public typealias Request = URLRequest
