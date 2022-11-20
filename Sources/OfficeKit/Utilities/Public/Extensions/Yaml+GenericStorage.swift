@@ -15,7 +15,9 @@ import Yaml
 extension Yaml : GenericStorage {
 	
 	public func storage(forKey key: String) -> GenericStorage? {
-		return self[.string(key)]
+		let v = self[.string(key)]
+		if v.isNull {return nil}
+		return v
 	}
 	
 	public var isNull: Bool {
