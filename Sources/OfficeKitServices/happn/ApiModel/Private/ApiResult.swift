@@ -18,7 +18,7 @@ internal struct ApiResult<DataType : Sendable & Decodable> : Sendable, Decodable
 	var error: String?
 	var errorCode: Int
 	
-	private enum CodingKeys : String, CodingKey {
+	internal enum CodingKeys : String, CodingKey {
 		
 		case success, data
 		case status, error, errorCode = "error_code"

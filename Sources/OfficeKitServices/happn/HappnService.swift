@@ -7,13 +7,14 @@
 
 import Foundation
 
+import CollectionConcurrencyKit
 import Email
 import GenericJSON
-import ServiceKit
+import URLRequestOperation
 
-import CollectionConcurrencyKit
 import CommonOfficePropertiesFromHappn
 import OfficeKit2
+import ServiceKit
 
 
 
@@ -154,8 +155,29 @@ public final class HappnService : UserService {
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read")
 		
+		do {
 #warning("TODO: properties to fetch")
-		return try await HappnUser.get(id: pID, propertiesToFetch: [], connector: connector)
+			return try await HappnUser.get(id: pID, propertiesToFetch: [], connector: connector)
+		} catch let error as URLRequestOperationError {
+			/* happn’s API happily returns a user for a non-existing ID!
+			 * Except all the fields (apart from id) are nil.
+			 * We’ll detect if the error was a decoding error for the path data.login because a nil login is not possible,
+			 *  so the user does not exist if we get this error. */
+			guard
+				let decodeError = error.postProcessError as? DecodeHTTPContentResultProcessorError,
+				case let .dataConversionFailed(_, decodeError as DecodingError) = decodeError,
+				case let .valueNotFound(type, context) = decodeError
+			else {
+				throw error
+			}
+			let codingPathStr = context.codingPath.map{ $0.stringValue }
+			let expectedCodingPathStr = [ApiResult<HappnUser>.CodingKeys.data.stringValue, HappnUser.CodingKeys.login.stringValue]
+			/* Note: We also check the expected type was a String though it’s most like not useful. */
+			guard type == String.self, codingPathStr == expectedCodingPathStr else {
+				throw error
+			}
+			return nil
+		}
 	}
 	
 	public func listAllUsers(using services: Services) async throws -> [HappnUser] {
