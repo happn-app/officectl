@@ -21,7 +21,7 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 	
 	static let providerID: String = ""
 	
-	typealias UserType = DummyUser2
+	typealias AuthenticatedUserType = DummyUser2
 	typealias GroupOfUsersType = DummyGroupOfUsers2
 	typealias AuthenticationChallenge = Never
 	
@@ -70,7 +70,7 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 	func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> DummyUser2? {
 	}
 	
-	func existingUser(fromUserID uID: Never, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> DummyUser2? {
+	func existingUser(fromID uID: Never, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> DummyUser2? {
 	}
 	
 	func listAllUsers(using services: Services) async throws -> [DummyUser2] {

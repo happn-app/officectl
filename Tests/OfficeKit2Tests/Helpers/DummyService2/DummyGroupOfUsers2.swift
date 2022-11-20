@@ -15,16 +15,14 @@ import OfficeKit2
 
 struct DummyGroupOfUsers2 : GroupOfUsers {
 	
+	typealias GroupOfUsersIDType = Never
+	typealias PersistentGroupOfUsersIDType = Never
 	
-	typealias IDType = Never
-	typealias PersistentIDType = Never
+	var oGOU_id: Never
+	var oGOU_persistentID: Never?
 	
-	var id: Never
-	var persistentID: Never?
-	
-	var identifyingEmails: [Email]?
-	var otherEmails: [Email]?
-	var name: String?
-	var description: String?
+	var oGOU_emails: [Email]
+	var oGOU_name: String?
+	var oGOU_description: String?
 	
 }

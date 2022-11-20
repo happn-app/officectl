@@ -138,7 +138,7 @@ public final class HappnService : UserService {
 		return ret
 	}
 	
-	public func existingUser(fromUserID uID: Email, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> HappnUser? {
+	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
 		
 #warning("TODO: domain variants")

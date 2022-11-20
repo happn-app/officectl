@@ -18,7 +18,7 @@ public protocol AuthenticatorService<AuthenticatedUserType, AuthenticationChalle
 	associatedtype AuthenticatedUserType : User
 	associatedtype AuthenticationChallenge
 	
-	func oA_authenticate(with challenge: AuthenticationChallenge, using services: Services) async throws -> AuthenticatedUserType.UserIDType
+	func authenticate(with challenge: AuthenticationChallenge, using services: Services) async throws -> AuthenticatedUserType.UserIDType
 	
 }
 

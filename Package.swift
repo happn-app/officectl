@@ -124,6 +124,7 @@ let package = Package(
 				var ret = [Target.Dependency]()
 				ret.append(contentsOf: coreDependencies)
 				ret.append(.product(name: "APIConnectionProtocols",   package: "APIConnectionProtocols"))
+				ret.append(.product(name: "URLRequestOperation", package: "URLRequestOperation"))
 				ret.append(.product(name: "XibLoc", package: "XibLoc"))
 				return ret
 			}(),

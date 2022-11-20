@@ -68,7 +68,7 @@ public protocol UserService<UserType> : OfficeService {
 	 
 	 If _more than one_ user matches the given ID, the function should **throw an error**.
 	 If _no_ users match the given ID, the method should return `nil`. */
-	func existingUser(fromUserID uID: UserType.UserIDType, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType?
+	func existingUser(fromID uID: UserType.UserIDType, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType?
 	
 	func listAllUsers(using services: Services) async throws -> [UserType]
 	

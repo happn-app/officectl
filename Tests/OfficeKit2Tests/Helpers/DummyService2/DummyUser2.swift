@@ -15,21 +15,21 @@ import OfficeKit2
 
 struct DummyUser2 : User {
 	
-	typealias IDType = Never
-	typealias PersistentIDType = Never
+	typealias UserIDType = Never
+	typealias PersistentUserIDType = Never
 	
-	var id: Never
-	var persistentID: Never?
+	var oU_id: Never
+	var oU_persistentID: Never?
 	
-	var firstName: String?
-	var lastName: String?
-	var nickname: String?
+	var oU_firstName: String?
+	var oU_lastName: String?
+	var oU_nickname: String?
 	
-	var emails: [Email]?
+	var oU_emails: [Email]?
 	
-	var password: String?
+	var oU_password: String?
 	
-	func valueForNonStandardProperty(_ property: String) -> Any? {
+	func oU_valueForNonStandardProperty(_ property: String) -> Any? {
 		return nil
 	}
 	
