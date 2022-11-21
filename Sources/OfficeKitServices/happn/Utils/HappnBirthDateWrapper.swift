@@ -42,3 +42,12 @@ internal struct HappnBirthDateWrapper : Sendable, Hashable, Equatable, Codable {
 	}
 	
 }
+
+
+extension KeyedDecodingContainer {
+	
+	func decode(_ type: HappnBirthDateWrapper.Type, forKey key: Key) throws -> HappnBirthDateWrapper {
+		return try decodeIfPresent(HappnBirthDateWrapper.self, forKey: key) ?? HappnBirthDateWrapper(wrappedValue: nil)
+	}
+	
+}
