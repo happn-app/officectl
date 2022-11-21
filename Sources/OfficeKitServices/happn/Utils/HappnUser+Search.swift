@@ -19,7 +19,7 @@ internal extension HappnUser {
 	 Search for the users matching the given text (if text is `nil`, all the users are retrieved).
 	 
 	 Note: The only way to find a user by his login on happn’s API is to do a full-text search on all fields and filter later. */
-	static func search(text: String?, admins: Bool = true, propertiesToFetch: [HappnUser.CodingKeys], connector: HappnConnector) async throws -> [HappnUser] {
+	static func search(text: String?, admins: Bool = true, propertiesToFetch: Set<HappnUser.CodingKeys>, connector: HappnConnector) async throws -> [HappnUser] {
 		/* Key is the user ID. */
 		var res = [Email: HappnUser]()
 		
@@ -55,7 +55,7 @@ internal extension HappnUser {
 		return Array(res.values)
 	}
 	
-	private static func searchResults(for request: SearchRequest, fields: [HappnUser.CodingKeys], connector: HappnConnector) async throws -> [HappnUser] {
+	private static func searchResults(for request: SearchRequest, fields: Set<HappnUser.CodingKeys>, connector: HappnConnector) async throws -> [HappnUser] {
 		return try await URLRequestDataOperation<ApiResult<[HappnUser]>>.forAPIRequest(
 			url: connector.baseURL.appending("api", "v1", "users-search"),
 			urlParameters: ["fields": Set(fields + [.login, .id, .type]).map{ $0.stringValue }.joined(separator: ",")],

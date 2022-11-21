@@ -143,8 +143,7 @@ public final class HappnService : UserService {
 		
 #warning("TODO: domain variants")
 		let ids = /*Set(*/[uID]/*.allDomainVariants(aliasMap: self.globalConfig.domainAliases))*/
-#warning("TODO: properties to fetch")
-		let users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: [], connector: connector) }
+		let users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: Self.keysFromProperties(propertiesToFetch), connector: connector) }
 		guard users.count <= 1 else {
 			throw Err.tooManyUsersFromAPI(id: uID)
 		}
@@ -156,8 +155,7 @@ public final class HappnService : UserService {
 		try await connector.increaseScopeIfNeeded("admin_read")
 		
 		do {
-#warning("TODO: properties to fetch")
-			return try await HappnUser.get(id: pID, propertiesToFetch: [], connector: connector)
+			return try await HappnUser.get(id: pID, propertiesToFetch: Self.keysFromProperties(propertiesToFetch), connector: connector)
 		} catch let error as URLRequestOperationError {
 			/* happn’s API happily returns a user for a non-existing ID!
 			 * Except all the fields (apart from id) are nil.
@@ -202,6 +200,31 @@ public final class HappnService : UserService {
 	public let supportsPasswordChange: Bool = true
 	public func changePassword(of user: HappnUser, to newPassword: String, using services: Services) throws {
 		throw Err.unsupportedOperation
+	}
+	
+	/* ***************
+	   MARK: - Private
+	   *************** */
+	
+	private static var propertyToKeys: [UserProperty: [HappnUser.CodingKeys]] {
+		[
+			.id: [.login],
+			.persistentID: [.id],
+			.firstName: [.firstName],
+			.lastName: [.lastName],
+			.nickname: [.nickname],
+			.emails: [.login],
+			.password: [],
+			.gender: [.gender],
+			.birthdate: [._birthDate]
+		]
+	}
+	
+	private static func keysFromProperties(_ properties: Set<UserProperty>) -> Set<HappnUser.CodingKeys> {
+		let keys = properties
+			.compactMap{ propertyToKeys[$0] }
+			.flatMap{ $0 }
+		return Set(keys)
 	}
 	
 }

@@ -20,12 +20,13 @@ public struct UserProperty : RawRepresentable, ExpressibleByStringLiteral, Senda
 	]
 	
 	public static let id = UserProperty(rawValue: "id")
-	
-	public static let emails = UserProperty(rawValue: "emails")
+	public static let persistentID = UserProperty(rawValue: "persistentID")
 	
 	public static let firstName = UserProperty(rawValue: "firstName")
 	public static let lastName = UserProperty(rawValue: "lastName")
 	public static let nickname = UserProperty(rawValue: "nickname")
+	
+	public static let emails = UserProperty(rawValue: "emails")
 	
 	public static let password = UserProperty(rawValue: "password")
 	

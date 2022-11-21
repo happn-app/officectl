@@ -49,12 +49,13 @@ public extension User {
 	
 	func valueForProperty(_ property: UserProperty) -> Any? {
 		switch property {
-			case .id:        return oU_id
-			case .firstName: return oU_firstName
-			case .lastName:  return oU_lastName
-			case .nickname:  return oU_nickname
-			case .emails:    return oU_emails
-			case .password:  return oU_password
+			case .id:           return oU_id
+			case .persistentID: return oU_persistentID
+			case .firstName:    return oU_firstName
+			case .lastName:     return oU_lastName
+			case .nickname:     return oU_nickname
+			case .emails:       return oU_emails
+			case .password:     return oU_password
 			default:
 				assert(!property.isStandard)
 				return oU_valueForNonStandardProperty(property.rawValue)
