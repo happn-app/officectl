@@ -17,6 +17,11 @@ public struct HappnServiceConfig : Sendable, Codable {
 	public var serviceName: String
 	public var connectorSettings: ConnectorSettings
 	
+	/* A map of domain aliases to actual domain.
+	 * E.g. for map ["happn.fr": "happn.com"], the "happn.fr" domain will be considered an alias of the "happn.com" domain.
+	 * This means a user can be found whether it is searched using the happn.fr or happn.com domain. */
+	public var domainsMap: [String: String]?
+	
 	init(json: JSON) throws {
 		let data = try JSONEncoder().encode(json)
 		self = try JSONDecoder().decode(Self.self, from: data)
@@ -46,6 +51,8 @@ public struct HappnServiceConfig : Sendable, Codable {
 		
 		case serviceName = "service_name"
 		case connectorSettings = "connector_settings"
+		
+		case domainsMap = "domains_map"
 		
 	}
 	
