@@ -13,7 +13,7 @@ public struct UserProperty : RawRepresentable, ExpressibleByStringLiteral, Senda
 	
 	/** The properties that are defined directly on the ``User`` protocol. */
 	public static let standardProperties: Set<UserProperty> = [
-		.id,
+		.id, .persistentID,
 		.emails,
 		.firstName, .lastName, .nickname,
 		.password
