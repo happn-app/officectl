@@ -26,7 +26,7 @@ internal extension HappnUser {
 		)
 		let res = try await op.startAndGetResult().result
 		guard res.success, let user = res.data else {
-			throw Err.apiError
+			throw Err.apiError(code: res.errorCode, message: res.error ?? "Unknown API error fetching the user.")
 		}
 		return user
 	}
