@@ -28,7 +28,7 @@ internal extension HappnUser {
 		var nUsersAtCurPage = 0
 		repeat {
 			let usersAtPage = try await searchResults(
-				for: SearchRequest(offset: curOffset, limit: limit, fullTextSearchWithAllTerms: text),
+				for: SearchRequest(offset: curOffset, limit: limit, isAdmin: admins, fullTextSearchWithAllTerms: text),
 				fields: propertiesToFetch,
 				connector: connector
 			)
@@ -42,7 +42,7 @@ internal extension HappnUser {
 			curOffset = 0
 			repeat {
 				let usersAtPage = try await searchResults(
-					for: SearchRequest(offset: curOffset, limit: limit, ids: [text]),
+					for: SearchRequest(offset: curOffset, limit: limit, isAdmin: admins, ids: [text]),
 					fields: propertiesToFetch,
 					connector: connector
 				)
