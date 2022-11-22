@@ -34,4 +34,30 @@ extension HappnUser : User {
 		}
 	}
 	
+	/* ***************
+	   MARK: - Private
+	   *************** */
+	
+	internal static var propertyToKeys: [UserProperty: [HappnUser.CodingKeys]] {
+		[
+			.id: [.login],
+			.persistentID: [.id],
+			.firstName: [.firstName],
+			.lastName: [.lastName],
+			.nickname: [.nickname],
+			.emails: [.login],
+			.password: [],
+			.gender: [.gender],
+			.birthdate: [._birthDate]
+		]
+	}
+	
+	internal static func keysFromProperties(_ properties: Set<UserProperty>?) -> Set<HappnUser.CodingKeys> {
+		let properties = properties ?? Set(UserProperty.standardProperties + [.gender, .birthdate])
+		let keys = properties
+			.compactMap{ propertyToKeys[$0] }
+			.flatMap{ $0 }
+		return Set(keys)
+	}
+	
 }

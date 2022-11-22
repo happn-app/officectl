@@ -141,7 +141,7 @@ public final class HappnService : UserService {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
 		
 		let ids = Set(uID.allDomainVariants(aliasMap: config.domainAliases))
-		let users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: Self.keysFromProperties(propertiesToFetch), connector: connector) }
+		let users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector) }
 		guard users.count <= 1 else {
 			throw Err.tooManyUsersFromAPI(id: uID)
 		}
@@ -153,7 +153,7 @@ public final class HappnService : UserService {
 		try await connector.increaseScopeIfNeeded("admin_read")
 		
 		do {
-			return try await HappnUser.get(id: pID, propertiesToFetch: Self.keysFromProperties(propertiesToFetch), connector: connector)
+			return try await HappnUser.get(id: pID, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector)
 		} catch let error as URLRequestOperationError {
 			/* happn’s API happily returns a user for a non-existing ID!
 			 * Except all the fields (apart from id) are nil.
@@ -178,12 +178,24 @@ public final class HappnService : UserService {
 	
 	public func listAllUsers(propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [HappnUser] {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
-		return try await HappnUser.search(text: nil, propertiesToFetch: Self.keysFromProperties(propertiesToFetch), connector: connector)
+		return try await HappnUser.search(text: nil, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector)
 	}
 	
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: HappnUser, using services: Services) async throws -> HappnUser {
-		throw Err.unsupportedOperation
+		try await connector.increaseScopeIfNeeded("admin_create", "user_create")
+		
+		var user = user
+		if user.password == nil {
+			/* Creating a user without a password is not possible.
+			 * Let’s generate a password!
+			 * A long and complex one. */
+			OfficeKitConfig.logger?.warning("Auto-generating a random password for happn user creation: creating a happn user w/o a password is not supported.")
+			let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789=+_-$!@#%^&*(){}[]'\\\";:/?.>,<§"
+			user.password = String((0..<64).map{ _ in chars.randomElement()! })
+		}
+		
+		return try await user.create(connector: connector)
 	}
 	
 	public let supportsUserUpdate: Bool = true
@@ -199,32 +211,6 @@ public final class HappnService : UserService {
 	public let supportsPasswordChange: Bool = true
 	public func changePassword(of user: HappnUser, to newPassword: String, using services: Services) throws {
 		throw Err.unsupportedOperation
-	}
-	
-	/* ***************
-	   MARK: - Private
-	   *************** */
-	
-	private static var propertyToKeys: [UserProperty: [HappnUser.CodingKeys]] {
-		[
-			.id: [.login],
-			.persistentID: [.id],
-			.firstName: [.firstName],
-			.lastName: [.lastName],
-			.nickname: [.nickname],
-			.emails: [.login],
-			.password: [],
-			.gender: [.gender],
-			.birthdate: [._birthDate]
-		]
-	}
-	
-	private static func keysFromProperties(_ properties: Set<UserProperty>?) -> Set<HappnUser.CodingKeys> {
-		let properties = properties ?? Set(UserProperty.standardProperties + [.gender, .birthdate])
-		let keys = properties
-			.compactMap{ propertyToKeys[$0] }
-			.flatMap{ $0 }
-		return Set(keys)
 	}
 	
 }

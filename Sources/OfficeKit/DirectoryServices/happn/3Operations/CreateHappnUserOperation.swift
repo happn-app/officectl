@@ -59,10 +59,6 @@ public final class CreateHappnUserOperation : RetryingOperation, HasResult {
 					urlParameters: ["fields": "id,first_name,last_name,acl,login,nickname"], httpBody: user,
 					decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 				)
-				var urlComponentsUserCreation = URLComponents(url: URL(string: "api/users/", relativeTo: connector.baseURL)!, resolvingAgainstBaseURL: true)!
-				urlComponentsUserCreation.queryItems = [
-					URLQueryItem(name: "fields", value: "id,first_name,last_name,acl,login,nickname")
-				]
 				/* Operation is async, we can launch it without a queue (though having a queue would be better…) */
 				let apiUserResult = try await createUserOperation.startAndGetResult().result
 				guard apiUserResult.success, let user = apiUserResult.data, let userID = user.id else {
