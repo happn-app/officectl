@@ -38,20 +38,20 @@ internal extension HappnUser {
 			curOffset += limit
 		} while nUsersAtCurPage >= limit/2
 		
-		/* Get users from IDs search */
-		if let text {
-			curOffset = 0
-			repeat {
-				let usersAtPage = try await searchResults(
-					for: SearchRequest(offset: curOffset, limit: limit, isAdmin: admins, ids: [text]),
-					fields: propertiesToFetch,
-					connector: connector
-				)
-				nUsersAtCurPage = usersAtPage.count
-				usersAtPage.forEach{ res[$0.login] = $0 }
-				curOffset += limit
-			} while nUsersAtCurPage >= limit/2
-		}
+		/* Get users from IDs search. Searches for specific _persistent_ ids; this is not what we want. */
+//		if let text {
+//			curOffset = 0
+//			repeat {
+//				let usersAtPage = try await searchResults(
+//					for: SearchRequest(offset: curOffset, limit: limit, isAdmin: admins, ids: [text]),
+//					fields: propertiesToFetch,
+//					connector: connector
+//				)
+//				nUsersAtCurPage = usersAtPage.count
+//				usersAtPage.forEach{ res[$0.login] = $0 }
+//				curOffset += limit
+//			} while nUsersAtCurPage >= limit/2
+//		}
 		
 		return Array(res.values)
 	}

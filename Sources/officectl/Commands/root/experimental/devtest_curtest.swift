@@ -69,6 +69,7 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			print("Deleting test admin")
 			try await happnService.deleteUser(newAdmin, using: app.services)
 			
+			try await print(happnService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: nil, using: app.services))
 //			try await print(happnService.existingUser(fromPersistentID: "243", propertiesToFetch: nil, using: app.services))
 //			try await print(happnService.listAllUsers(propertiesToFetch: nil, using: app.services))
 		} catch let error as URLRequestOperationError {
