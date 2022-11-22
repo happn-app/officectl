@@ -59,18 +59,23 @@ public protocol UserService<UserType> : OfficeService {
 	
 	/**
 	 Fetch and return the _only_ user matching the given ID.
+	 If `propertiesToFetch` is `nil`, **all** the properties supported should be fetched.
 	 
 	 If _more than one_ user matches the given ID, the function should **throw an error**.
 	 If _no_ users match the given ID, the method should return `nil`. */
-	func existingUser(fromPersistentID pID: UserType.PersistentUserIDType, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType?
+	func existingUser(fromPersistentID pID: UserType.PersistentUserIDType, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> UserType?
 	/**
 	 Fetch and return the _only_ user matching the given ID.
+	 If `propertiesToFetch` is `nil`, **all** the properties supported should be fetched.
 	 
 	 If _more than one_ user matches the given ID, the function should **throw an error**.
 	 If _no_ users match the given ID, the method should return `nil`. */
-	func existingUser(fromID uID: UserType.UserIDType, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> UserType?
+	func existingUser(fromID uID: UserType.UserIDType, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> UserType?
 	
-	func listAllUsers(using services: Services) async throws -> [UserType]
+	/**
+	 List all of the users in the service.
+	 If `propertiesToFetch` is `nil`, **all** the properties supported should be fetched. */
+	func listAllUsers(propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [UserType]
 	
 	var supportsUserCreation: Bool {get}
 	func createUser(_ user: UserType, using services: Services) async throws -> UserType

@@ -60,8 +60,9 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			])
 		]))
 		do {
-			try await print(happnService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.com")!, propertiesToFetch: [.birthdate], using: app.services))
-			try await print(happnService.existingUser(fromPersistentID: "243", propertiesToFetch: [], using: app.services))
+			try await print(happnService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: [.birthdate], using: app.services))
+			try await print(happnService.existingUser(fromPersistentID: "243", propertiesToFetch: nil, using: app.services))
+			try await print(happnService.listAllUsers(propertiesToFetch: nil, using: app.services))
 		} catch let error as URLRequestOperationError {
 			print(error)
 		}

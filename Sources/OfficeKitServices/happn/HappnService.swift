@@ -137,7 +137,7 @@ public final class HappnService : UserService {
 		return ret
 	}
 	
-	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> HappnUser? {
+	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
 		
 		let ids = Set(uID.allDomainVariants(aliasMap: config.domainAliases))
@@ -149,7 +149,7 @@ public final class HappnService : UserService {
 		return users.first
 	}
 	
-	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> HappnUser? {
+	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read")
 		
 		do {
@@ -176,7 +176,7 @@ public final class HappnService : UserService {
 		}
 	}
 	
-	public func listAllUsers(using services: Services) async throws -> [HappnUser] {
+	public func listAllUsers(propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [HappnUser] {
 		throw Err.unsupportedOperation
 	}
 	
@@ -218,7 +218,8 @@ public final class HappnService : UserService {
 		]
 	}
 	
-	private static func keysFromProperties(_ properties: Set<UserProperty>) -> Set<HappnUser.CodingKeys> {
+	private static func keysFromProperties(_ properties: Set<UserProperty>?) -> Set<HappnUser.CodingKeys> {
+		let properties = properties ?? Set(UserProperty.standardProperties + [.gender, .birthdate])
 		let keys = properties
 			.compactMap{ propertyToKeys[$0] }
 			.flatMap{ $0 }

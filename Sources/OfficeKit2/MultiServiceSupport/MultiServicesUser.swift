@@ -23,7 +23,7 @@ public extension MultiServicesUser {
 	 If a logical user can be created, it is then fetched as an _existing_ user from the service.
 	 If a logical user cannot be created, once we have a fetched other users from other services, we try again with another user and service.
 	 In the end, the resulting MultiServicesUser is guaranteed to have one result per service. */
-	static func fetch(from userAndService: any UserAndService, in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty> = [], using depServices: Services) async throws -> MultiServicesUser {
+	static func fetch(from userAndService: any UserAndService, in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty>? = [], using depServices: Services) async throws -> MultiServicesUser {
 		var res = [HashableUserService: Result<(any User)?, ErrorCollection>]()
 		var triedServiceIDSource = Set<HashableUserService>()
 		
@@ -105,14 +105,14 @@ public extension MultiServicesUser {
 		return await fetchStep(from: userAndService, in: services)
 	}
 	
-	static func fetchAll(in services: Set<HashableUserService>, using depServices: Services) async throws -> (users: [MultiServicesUser], fetchErrorsByServices: [HashableUserService: Error]) {
+	static func fetchAll(in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty>? = nil, using depServices: Services) async throws -> (users: [MultiServicesUser], fetchErrorsByServices: [HashableUserService: Error]) {
 		let (usersAndServices, fetchErrorsByService) = await withTaskGroup(
 			of: (service: HashableUserService, users: Result<[any User], Error>).self,
 			returning: (usersAndServices: [any UserAndService], fetchErrorsByServices: [HashableUserService: Error]).self,
 			body: { group in
 				for service in services {
 					group.addTask{
-						let usersResult = await Result{ try await service.value.listAllUsers(using: depServices) }
+						let usersResult = await Result{ try await service.value.listAllUsers(propertiesToFetch: propertiesToFetch, using: depServices) }
 						return (service, usersResult)
 					}
 				}

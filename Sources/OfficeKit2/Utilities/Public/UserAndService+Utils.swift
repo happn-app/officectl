@@ -40,7 +40,7 @@ public extension UserAndService {
 		}
 	}
 	
-	func fetch<OtherServiceType : UserService>(in otherService: OtherServiceType, propertiesToFetch: Set<UserProperty> = [], using depServices: Services) async throws -> OtherServiceType.UserType? {
+	func fetch<OtherServiceType : UserService>(in otherService: OtherServiceType, propertiesToFetch: Set<UserProperty>? = [], using depServices: Services) async throws -> OtherServiceType.UserType? {
 		let otherID = try otherService.logicalUser(fromUser: user).oU_id
 		return try await otherService.existingUser(fromID: otherID, propertiesToFetch: propertiesToFetch, using: depServices)
 	}
