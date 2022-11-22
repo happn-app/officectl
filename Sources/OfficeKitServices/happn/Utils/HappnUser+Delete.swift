@@ -18,7 +18,9 @@ import OfficeKit2
 internal extension HappnUser {
 	
 	func delete(connector: HappnConnector) async throws {
-		let userID = id ?? login.rawValue
+		guard let userID = id else {
+			throw Err.noPersistentID
+		}
 		
 		/* 1. Revoke user admin privileges. */
 		

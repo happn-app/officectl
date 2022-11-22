@@ -14,6 +14,7 @@ import Email
 public enum HappnOfficeError : Error, Sendable {
 	
 	case invalidEmail(String)
+	case noPersistentID
 	case notConnected
 	
 	case tooManyUsersFromAPI(id: Email)
