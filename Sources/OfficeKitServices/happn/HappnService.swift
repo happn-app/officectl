@@ -140,8 +140,7 @@ public final class HappnService : UserService {
 	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
 		
-#warning("TODO: domain variants")
-		let ids = /*Set(*/[uID]/*.allDomainVariants(aliasMap: self.globalConfig.domainAliases))*/
+		let ids = Set(uID.allDomainVariants(aliasMap: config.domainAliases))
 		let users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: Self.keysFromProperties(propertiesToFetch), connector: connector) }
 		guard users.count <= 1 else {
 			throw Err.tooManyUsersFromAPI(id: uID)

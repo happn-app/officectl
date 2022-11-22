@@ -11,7 +11,7 @@ import Email
 
 
 
-internal extension Email {
+public extension Email {
 	
 	init(_ e: Email, newLocalPart: String? = nil, newDomainPart: String? = nil) {
 		/* While Email does not support something better, we do this. */
@@ -27,7 +27,8 @@ internal extension Email {
 	}
 	
 	/** Key of the alias map is a domain alias, value is the actual domain. */
-	func allDomainVariants(aliasMap: [String: String]) -> Set<Email> {
+	func allDomainVariants(aliasMap: [String: String]?) -> Set<Email> {
+		guard let aliasMap else {return [self]}
 		let primaryDomain = aliasMap[domainPart] ?? domainPart
 		let variants = aliasMap.filter{ $0.value == primaryDomain }.keys
 		return Set(variants.map{ Email(self, newDomainPart: $0) }).union([Email(self, newDomainPart: primaryDomain)])

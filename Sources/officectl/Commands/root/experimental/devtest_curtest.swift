@@ -50,6 +50,7 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 		let oldConf: OfficeKit.HappnServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
 		let happnService = try HappnService(id: "hppn", jsonConfig: .object([
 			"service_name": .string("happn"),
+			"domain_aliases": .object(officeKitConfig.globalConfig.domainAliases.mapValues{ .string($0) }),
 			"connector_settings": .object([
 				"base_url": .string(oldConf.connectorSettings.baseURL.absoluteString),
 				"client_id": .string(oldConf.connectorSettings.clientID),
@@ -59,7 +60,7 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			])
 		]))
 		do {
-			try await print(happnService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: [.birthdate], using: app.services))
+			try await print(happnService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.com")!, propertiesToFetch: [.birthdate], using: app.services))
 			try await print(happnService.existingUser(fromPersistentID: "243", propertiesToFetch: [], using: app.services))
 		} catch let error as URLRequestOperationError {
 			print(error)
