@@ -20,10 +20,10 @@ public struct UserProperty : RawRepresentable, ExpressibleByStringLiteral, Senda
 	]
 	
 	public static let id = UserProperty(rawValue: "id")
-	public static let persistentID = UserProperty(rawValue: "persistentID")
+	public static let persistentID = UserProperty(rawValue: "persistent_id")
 	
-	public static let firstName = UserProperty(rawValue: "firstName")
-	public static let lastName = UserProperty(rawValue: "lastName")
+	public static let firstName = UserProperty(rawValue: "first_name")
+	public static let lastName = UserProperty(rawValue: "last_name")
 	public static let nickname = UserProperty(rawValue: "nickname")
 	
 	public static let emails = UserProperty(rawValue: "emails")

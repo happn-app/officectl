@@ -174,8 +174,8 @@ public struct UserWrapper : User, Codable {
 		case underlyingUser
 		case savedHints
 		
-		case oU_id = "id", oU_persistentID = "persistentID"
-		case oU_firstName = "firstName", oU_lastName = "lastName", oU_nickname = "nickname"
+		case oU_id = "id", oU_persistentID = "persistent_id"
+		case oU_firstName = "first_name", oU_lastName = "last_name", oU_nickname = "nickname"
 		case oU_emails = "emails"
 	}
 	
