@@ -73,9 +73,8 @@ public final class HappnService : UserService {
 		return try JSON(encodable: user)
 	}
 	
-	public func logicalUser(fromWrappedUser userWrapper: UserWrapper) throws -> HappnUser {
-		struct NotImplemented : Error {}
-		throw NotImplemented()
+	public func logicalUser<OtherUserType>(fromUser user: OtherUserType) throws -> HappnUser where OtherUserType : User {
+		throw Err.unsupportedOperation
 //		if userWrapper.sourceServiceID == id, let underlyingUser = userWrapper.underlyingUser {
 //			/* If the underlying user is invalid, we fail the conversion altogether.
 //			 * We could try and continue with the other properties of the wrapped user, but failing seems more appropriate (the wrapped user is effectively invalid). */

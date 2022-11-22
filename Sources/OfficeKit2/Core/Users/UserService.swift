@@ -33,7 +33,7 @@ public protocol UserService<UserType> : OfficeService {
 	/**
 	 Converts the given user to a JSON (generic codable storage representation).
 	 
-	 The representation is usually used to be stored as an underlying user in a ``UserWrapper``.
+	 The representation is usually stored as an underlying user in a ``UserWrapper``.
 	 It should contain as much as possible from the original user. */
 	func json(fromUser user: UserType) throws -> JSON
 	
@@ -51,7 +51,7 @@ public protocol UserService<UserType> : OfficeService {
 	 
 	 If the user wrapper has data that is inconsistent with the underlying user, the result of the method is undefined.
 	 Implementations can, but are not required to validate the user wrapper for consistency with its underlying user. */
-	func logicalUser(fromWrappedUser userWrapper: UserWrapper) throws -> UserType
+	func logicalUser<OtherUserType : User>(fromUser user: OtherUserType) throws -> UserType
 	
 	/** Returns the properties that were successfully applied to the user. */
 	@discardableResult

@@ -173,7 +173,7 @@ public extension MultiServicesUser {
 			for service in services {
 				let serviceID = service.value.id
 				guard serviceID != currentUserServiceID else {continue}
-				guard let logicallyLinkedPair = try? UserAndServiceFrom(user: service.value.logicalUser(fromWrappedUser: linkedUser.userAndService.wrappedUser), service: service.value)!  else {
+				guard let logicallyLinkedPair = try? UserAndServiceFrom(user: service.value.logicalUser(fromUser: linkedUser.userAndService.user), service: service.value)! else {
 //					OfficeKitConfig.logger?.debug("Error finding logically linked user with: {\n  source service ID: \(currentUserServiceID)\n  dest service ID:\(serviceID)\n  source user pair: \(linkedUser.userAndService)\n}")
 					continue
 				}
