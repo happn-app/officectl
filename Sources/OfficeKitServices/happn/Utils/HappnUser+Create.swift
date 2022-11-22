@@ -44,7 +44,7 @@ internal extension HappnUser {
 		/* We declare a decoded type HappnApiResult<Int8>.
 		 * We chose Int8, but could have taken anything that’s decodable: the API returns null all the time… */
 		let makeUserAdminOperation = try URLRequestDataOperation<ApiResult<Int8>>.forAPIRequest(
-			url: connector.baseURL.appending("api", "administrators"), httpBody: GrantRequestBody(userID: userID, adminPassword: connector.password),
+			url: connector.baseURL.appending("api", "administrators"), httpBody: AdminActionRequestBody(action: "grant", userID: userID, adminPassword: connector.password),
 			bodyEncoder: FormURLEncodedEncoder(), decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 		)
 		let apiGrantResult = try await makeUserAdminOperation.startAndGetResult().result

@@ -60,13 +60,17 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			])
 		]))
 		do {
-			var françois = try await happnService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: nil, using: app.services)
-			print("François: \(françois)")
+			var newAdmin = HappnUser(login: Email(rawValue: "officectl__test_user@happn.fr")!)
+			newAdmin.firstName = "officectl"
+			
+			print("Creating new test admin")
+			newAdmin = try await happnService.createUser(newAdmin, using: app.services)
+			
+			print("Deleting test admin")
+			try await happnService.deleteUser(newAdmin, using: app.services)
+			
 //			try await print(happnService.existingUser(fromPersistentID: "243", propertiesToFetch: nil, using: app.services))
 //			try await print(happnService.listAllUsers(propertiesToFetch: nil, using: app.services))
-			françois?.login = Email(rawValue: "francois.lamboley@happn.com")!
-			françois?.id = nil
-			try await happnService.createUser(françois!, using: app.services)
 		} catch let error as URLRequestOperationError {
 			print(error)
 			print((error.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.httpBody?.reduce("", { $0 + String(format: "%02x", $1) }))

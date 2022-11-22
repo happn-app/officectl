@@ -1,5 +1,5 @@
 /*
- * GrantRequestBody.swift
+ * AdminActionRequestBody.swift
  * HappnOffice
  *
  * Created by François Lamboley on 2022/11/22.
@@ -9,9 +9,9 @@ import Foundation
 
 
 
-internal struct GrantRequestBody : Encodable {
+internal struct AdminActionRequestBody : Encodable {
 	
-	var action = "grant"
+	var action: String
 	var userID: String
 	var adminPassword: String
 	

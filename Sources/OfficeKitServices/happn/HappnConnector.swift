@@ -92,7 +92,7 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 		
 		/* Code before URLRequestOperation v2 migration was making a GET.
 		 * I find it weird but have not verified if it’s correct or not. */
-		let op = URLRequestDataOperation<RevokeResponseBody>.forAPIRequest(url: baseURL.appendingPathComponents("connect", "oauth", "revoke-token"), headers: ["authorization": #"OAuth="\#(tokenInfo.accessToken)""#], retryProviders: [])
+		let op = URLRequestDataOperation<TokenRevokeResponseBody>.forAPIRequest(url: baseURL.appendingPathComponents("connect", "oauth", "revoke-token"), headers: ["authorization": #"OAuth="\#(tokenInfo.accessToken)""#], retryProviders: [])
 		do {
 			_ = try await op.startAndGetResult()
 			self.tokenInfo = nil

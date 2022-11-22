@@ -205,7 +205,8 @@ public final class HappnService : UserService {
 	
 	public let supportsUserDeletion: Bool = true
 	public func deleteUser(_ user: HappnUser, using services: Services) async throws {
-		throw Err.unsupportedOperation
+		try await connector.increaseScopeIfNeeded("admin_create"/* 😱🤷‍♂️ */, "admin_delete", "all_user_delete")
+		return try await user.delete(connector: connector)
 	}
 	
 	public let supportsPasswordChange: Bool = true
