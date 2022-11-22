@@ -56,12 +56,16 @@ internal extension HappnUser {
 	}
 	
 	private static func searchResults(for request: SearchRequest, fields: Set<HappnUser.CodingKeys>, connector: HappnConnector) async throws -> [HappnUser] {
-		return try await URLRequestDataOperation<ApiResult<[HappnUser]>>.forAPIRequest(
+		let res = try await URLRequestDataOperation<ApiResult<[HappnUser]>>.forAPIRequest(
 			url: connector.baseURL.appending("api", "v1", "users-search"),
 			urlParameters: ["fields": Set(fields + [.login, .id, .type]).map{ $0.stringValue }.joined(separator: ",")],
 			httpBody: request,
 			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
-		).startAndGetResult().result.data ?? []
+		).startAndGetResult().result
+		guard res.success, let users = res.data else {
+			throw Err.apiError(code: res.errorCode, message: res.error ?? "Unknown API error fetching the users.")
+		}
+		return users
 	}
 	
 }
