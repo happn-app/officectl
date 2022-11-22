@@ -177,7 +177,8 @@ public final class HappnService : UserService {
 	}
 	
 	public func listAllUsers(propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [HappnUser] {
-		throw Err.unsupportedOperation
+		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
+		return try await HappnUser.search(text: nil, propertiesToFetch: Self.keysFromProperties(propertiesToFetch), connector: connector)
 	}
 	
 	public let supportsUserCreation: Bool = true
