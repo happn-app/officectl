@@ -43,6 +43,24 @@ public struct HappnUser : Sendable, Hashable, Codable {
 		_birthDate = Date(timeIntervalSinceNow: -21*366*24*60*60) /* ~21 yo by default */
 	}
 	
+	internal func forPatching(properties: Set<CodingKeys>) -> HappnUser {
+		var ret = HappnUser(login: login)
+		for property in properties {
+			switch property {
+				case .type, .login, .id:
+					(/*nop*/)
+					
+				case .firstName:  ret.firstName = firstName
+				case .lastName:   ret.lastName  = lastName
+				case .nickname:   ret.nickname  = nickname
+				case .gender:     ret.gender    = gender
+				case ._birthDate: ret.birthDate = birthDate
+				case .password:   ret.password  = password
+			}
+		}
+		return ret
+	}
+	
 	internal enum CodingKeys : String, CodingKey {
 		case type
 		case login, id

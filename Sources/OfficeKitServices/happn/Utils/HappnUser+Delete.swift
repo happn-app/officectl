@@ -1,5 +1,5 @@
 /*
- * HappnUser+Search.swift
+ * HappnUser+Delete.swift
  * HappnOffice
  *
  * Created by François Lamboley on 2022/11/18.

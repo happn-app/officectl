@@ -200,7 +200,8 @@ public final class HappnService : UserService {
 	
 	public let supportsUserUpdate: Bool = true
 	public func updateUser(_ user: HappnUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> HappnUser {
-		throw Err.unsupportedOperation
+		try await connector.increaseScopeIfNeeded("admin_read", "all_user_update")
+		return try await user.update(properties: HappnUser.keysFromProperties(propertiesToUpdate), connector: connector)
 	}
 	
 	public let supportsUserDeletion: Bool = true
