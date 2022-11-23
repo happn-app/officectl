@@ -64,39 +64,3 @@ extension GoogleUser : User {
 	}
 	
 }
-/*
-extension GoogleUser : DirectoryUser {
-	
-	public typealias IDType = Email
-	public typealias PersistentIDType = String
-	
-	public var userID: Email {
-		return primaryEmail
-	}
-	
-	public var remotePersistentID: RemoteProperty<String> {
-		return _id
-	}
-	
-	public var remoteIdentifyingEmail: RemoteProperty<Email?> {
-		return .set(primaryEmail)
-	}
-	
-	public var remoteOtherEmails: RemoteProperty<[Email]> {
-		return _aliases.map{ $0 ?? [] }
-	}
-	
-	public var remoteFirstName: RemoteProperty<String?> {
-		return _name.map{ $0.givenName }
-	}
-	
-	public var remoteLastName: RemoteProperty<String?> {
-		return _name.map{ $0.familyName }
-	}
-	
-	public var remoteNickname: RemoteProperty<String?> {
-		return .unsupported
-	}
-	
-}
-*/
