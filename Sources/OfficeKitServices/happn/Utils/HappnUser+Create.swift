@@ -22,7 +22,7 @@ internal extension HappnUser {
 		decoder.dateDecodingStrategy = .iso8601
 		decoder.keyDecodingStrategy = .useDefaultKeys
 		
-		guard oU_password != nil else {
+		guard password != nil else {
 			/* A user must be created w/ a password (or we get a weird error when creating the account, and the account is unusable though it appear to exist). */
 			throw Err.unsupportedOperation
 		}

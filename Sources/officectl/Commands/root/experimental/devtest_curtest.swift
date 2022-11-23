@@ -82,7 +82,7 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			
 			
 			print("Waiting again")
-			try await Task.sleep(nanoseconds: 3_000_000_000)
+			try await Task.sleep(nanoseconds: 7_000_000_000)
 			
 			print("Deleting test admin")
 			try await happnService.deleteUser(newAdmin, using: app.services)

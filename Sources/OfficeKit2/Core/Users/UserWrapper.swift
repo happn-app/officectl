@@ -27,8 +27,6 @@ public struct UserWrapper : User, Codable {
 	
 	public var oU_emails: [Email]?
 	
-	public var oU_password: String?
-	
 	public var underlyingUser: JSON?
 	public var savedHints = [UserProperty: String?]()
 	

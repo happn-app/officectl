@@ -24,8 +24,6 @@ extension HappnUser : User {
 	
 	public var oU_emails: [Email]? {[login]}
 	
-	public var oU_password: String? {password}
-	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Any? {
 		switch UserProperty(rawValue: property) {
 			case .gender:    return gender

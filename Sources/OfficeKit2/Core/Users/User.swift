@@ -31,15 +31,6 @@ public protocol User<UserIDType> : Sendable {
 	
 	var oU_emails: [Email]? {get}
 	
-	/**
-	 The password of the user.
-	 
-	 You can use this property as a hint when creating a user for his new password.
-	 
-	 - Important: This property should not be retrieved for an existing user!
-	 In theory, for a proper directory, it should not even be possible to retrieve it. */
-	var oU_password: String? {get}
-	
 	func oU_valueForNonStandardProperty(_ property: String) -> Any?
 	
 }
@@ -55,7 +46,6 @@ public extension User {
 			case .lastName:     return oU_lastName
 			case .nickname:     return oU_nickname
 			case .emails:       return oU_emails
-			case .password:     return oU_password
 			default:
 				assert(!property.isStandard)
 				return oU_valueForNonStandardProperty(property.rawValue)

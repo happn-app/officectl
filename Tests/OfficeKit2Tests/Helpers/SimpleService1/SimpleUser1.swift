@@ -27,8 +27,6 @@ struct SimpleUser1 : User {
 	
 	var oU_emails: [Email]?
 	
-	var oU_password: String?
-	
 	func oU_valueForNonStandardProperty(_ property: String) -> Any? {
 		return nil
 	}
