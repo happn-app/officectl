@@ -145,7 +145,8 @@ let package = Package(
 		   MARK: Office Services
 		   ********************* */
 		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")], path: "Sources/OfficeKitServices", sources: ["CommonProperties.swift"], swiftSettings: commonSwiftSettings))
-		ret.append(targetForService(named: "HappnOffice", folderName: "happn", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
+		ret.append(targetForService(named: "HappnOffice",  folderName: "happn",  additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
+		ret.append(targetForService(named: "GoogleOffice", folderName: "Google", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
 		
 		ret.append(.executableTarget(
 			name: "officectl",
@@ -168,6 +169,7 @@ let package = Package(
 				ret.append(.target(name: "OfficeKit"))
 				ret.append(.target(name: "OfficeKit2"))
 				ret.append(.target(name: "HappnOffice"))
+				ret.append(.target(name: "GoogleOffice"))
 #if !canImport(Darwin)
 				ret.append(.target(name: "CNCurses"))
 #endif
