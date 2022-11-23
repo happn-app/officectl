@@ -211,8 +211,10 @@ public final class HappnService : UserService {
 	}
 	
 	public let supportsPasswordChange: Bool = true
-	public func changePassword(of user: HappnUser, to newPassword: String, using services: Services) throws {
-		throw Err.unsupportedOperation
+	public func changePassword(of user: HappnUser, to newPassword: String, using services: Services) async throws {
+		var user = user
+		user.password = newPassword
+		_ = try await updateUser(user, propertiesToUpdate: [.id, .password], using: services)
 	}
 	
 }

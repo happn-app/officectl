@@ -87,7 +87,7 @@ public protocol UserService<UserType> : OfficeService {
 	func deleteUser(_ user: UserType, using services: Services) async throws
 	
 	var supportsPasswordChange: Bool {get}
-	func changePassword(of user: UserType, to newPassword: String, using services: Services) throws
+	func changePassword(of user: UserType, to newPassword: String, using services: Services) async throws
 	
 }
 
