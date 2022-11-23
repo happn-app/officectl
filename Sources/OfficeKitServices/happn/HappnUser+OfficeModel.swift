@@ -46,7 +46,7 @@ extension HappnUser : User {
 			.lastName: [.lastName],
 			.nickname: [.nickname],
 			.emails: [.login],
-			.password: [],
+			.password: [.password],
 			.gender: [.gender],
 			.birthdate: [._birthDate]
 		]
@@ -58,6 +58,12 @@ extension HappnUser : User {
 			.compactMap{ propertyToKeys[$0] }
 			.flatMap{ $0 }
 		return Set(keys)
+	}
+	
+	internal static func validFieldsParameter(from keys: Set<CodingKeys>) -> String {
+		/* Retrieving the password is not possible, of course.
+		 * The login, id and type are mandatory for the happn service to work properly (type not really, but whatever). */
+		return (keys.subtracting([.password]) + [.login, .id, .type]).map{ $0.stringValue }.joined(separator: ",")
 	}
 	
 }

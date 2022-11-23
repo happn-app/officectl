@@ -59,7 +59,7 @@ internal extension HappnUser {
 	private static func searchResults(for request: SearchRequest, fields: Set<HappnUser.CodingKeys>, connector: HappnConnector) async throws -> [HappnUser] {
 		let res = try await URLRequestDataOperation<ApiResult<[HappnUser]>>.forAPIRequest(
 			url: connector.baseURL.appending("api", "v1", "users-search"),
-			urlParameters: ["fields": Set(fields + [.login, .id, .type]).map{ $0.stringValue }.joined(separator: ",")],
+			urlParameters: ["fields": Self.validFieldsParameter(from: fields)],
 			httpBody: request,
 			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 		).startAndGetResult().result

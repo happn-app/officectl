@@ -31,7 +31,7 @@ internal extension HappnUser {
 		
 		let createUserOperation = try URLRequestDataOperation<ApiResult<HappnUser>>.forAPIRequest(
 			url: connector.baseURL.appending("api", "users"),
-			urlParameters: ["fields": HappnUser.keysFromProperties(nil).map{ $0.stringValue }.joined(separator: ",")], httpBody: self,
+			urlParameters: ["fields": Self.validFieldsParameter(from: Self.keysFromProperties(nil))], httpBody: self,
 			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 		)
 		let apiUserResult = try await createUserOperation.startAndGetResult().result

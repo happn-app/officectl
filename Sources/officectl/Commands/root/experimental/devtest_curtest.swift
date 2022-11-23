@@ -75,13 +75,15 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			newAdmin.gender = .female
 			do {
 				let updatedAdmin = try await happnService.updateUser(newAdmin, propertiesToUpdate: [.id, .lastName], using: app.services)
+				try await happnService.changePassword(of: updatedAdmin, to: "toto", using: app.services)
 				print(updatedAdmin)
 			} catch {
 				print(error)
 			}
 			
+			
 			print("Waiting again")
-			try await Task.sleep(nanoseconds: 3_000_000_000)
+			try await Task.sleep(nanoseconds: 60_000_000_000)
 			
 			print("Deleting test admin")
 			try await happnService.deleteUser(newAdmin, using: app.services)
