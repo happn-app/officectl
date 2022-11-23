@@ -22,7 +22,8 @@ public struct HappnUser : Sendable, Hashable, Codable {
 	
 	public var type: UserType = .client
 	
-	public var login: Email
+	/* Updating the login is not possible, so this is a `let`, not a `var`. */
+	public let login: Email
 	public var id: String?
 	
 	public var firstName: String?

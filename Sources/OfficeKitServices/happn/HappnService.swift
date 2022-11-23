@@ -102,25 +102,14 @@ public final class HappnService : UserService {
 	}
 	
 	public func applyHints(_ hints: [UserProperty : String?], toUser user: inout HappnUser, allowUserIDChange: Bool) -> Set<UserProperty> {
-		let loginProperty = UserProperty("login")
-		
 		var ret = Set<UserProperty>()
 		for (property, newValue) in hints {
 			let touchedKey: Bool
 			switch property {
-				case .id, loginProperty:
+				case .id, UserProperty("login"):
 					guard allowUserIDChange else {continue}
-					guard let newValue else {
-						Conf.logger?.error("Asked to remove the id of a user (nil value for id in hints). This is illegal, I’m not doing it.")
-						continue
-					}
-					touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.login)
-					if touchedKey {
-						/* We add both.
-						 * `property` will be added twice, but that’s not a problem. */
-						ret.insert(.id)
-						ret.insert(loginProperty)
-					}
+					Conf.logger?.error("Changing the id of a happn user is not supported by the happn API.")
+					touchedKey = false
 					
 				case .firstName: touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.firstName)
 				case .lastName:  touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.lastName)

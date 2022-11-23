@@ -69,7 +69,6 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			print("Waiting a bit")
 			try await Task.sleep(nanoseconds: 3_000_000_000)
 			
-			newAdmin.login = Email(rawValue: "officectl__test_user_modified@happn.fr")!
 			newAdmin.firstName = "officectl (modified)"
 			newAdmin.lastName = "Test"
 			newAdmin.gender = .female
@@ -83,7 +82,7 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			
 			
 			print("Waiting again")
-			try await Task.sleep(nanoseconds: 60_000_000_000)
+			try await Task.sleep(nanoseconds: 3_000_000_000)
 			
 			print("Deleting test admin")
 			try await happnService.deleteUser(newAdmin, using: app.services)
