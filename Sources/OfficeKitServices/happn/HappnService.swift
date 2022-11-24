@@ -20,10 +20,10 @@ import ServiceKit
 
 public final class HappnService : UserService {
 	
-	public static var providerID: String = "happn/happn"
+	public static let providerID: String = "happn/happn"
 	
 	public static var supportedUserProperties: Set<UserProperty> {
-		return [.id, .emails, .firstName, .lastName, .nickname, .password, .gender, .birthdate]
+		return Set(HappnUser.propertyToKeys.filter{ !$0.value.isEmpty }.map{ $0.key })
 	}
 	
 	public typealias UserType = HappnUser
