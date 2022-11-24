@@ -22,7 +22,7 @@ public struct HappnServiceConfig : Sendable, Codable {
 	 * This means a user can be found whether it is searched using the happn.fr or happn.com domain. */
 	public var domainAliases: [String: String]?
 	
-	init(json: JSON) throws {
+	public init(json: JSON) throws {
 		let data = try JSONEncoder().encode(json)
 		self = try JSONDecoder().decode(Self.self, from: data)
 	}
