@@ -11,6 +11,8 @@ import Foundation
 
 public enum GoogleOfficeError : Error, Sendable {
 	
+	case invalidEmail(String)
+	
 	case invalidConnectorCredentials
 	case unsupportedTokenType(String)
 	case unsupportedOperation
