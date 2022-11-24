@@ -9,7 +9,7 @@ import Foundation
 
 
 
-internal struct AdminActionRequestBody : Encodable {
+internal struct AdminActionRequestBody : Sendable, Encodable {
 	
 	var action: String
 	var userID: String

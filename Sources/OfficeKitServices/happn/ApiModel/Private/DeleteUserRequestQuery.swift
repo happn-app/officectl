@@ -10,7 +10,7 @@ import Foundation
 
 
 
-internal struct DeleteUserRequestQuery : Encodable {
+internal struct DeleteUserRequestQuery : Sendable, Encodable {
 	
 	var toDelete = "true"
 	

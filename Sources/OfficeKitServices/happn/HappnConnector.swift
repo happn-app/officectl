@@ -82,7 +82,8 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 				return tokenInfo = token
 			} else {
 				/* We should check the error and abort the connection depending on it.
-				 * For now (and probably forever), we do not care. */
+				 * For now (and probably forever), we do not care.
+				 * We do revoke the token if the refresh failed. */
 				try await unqueuedDisconnect()
 			}
 		}
@@ -174,7 +175,7 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 	
 	private var tokenInfo: TokenInfo?
 	
-	private struct TokenInfo {
+	private struct TokenInfo : Sendable {
 		
 		let scope: Set<String>
 		let userID: String

@@ -1,6 +1,6 @@
 /*
  * URLRequestOperation+HasResult.swift
- * HappnOffice
+ * GoogleOffice
  *
  * Created by François Lamboley on 2022/11/17.
  */
