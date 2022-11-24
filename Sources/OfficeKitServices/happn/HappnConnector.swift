@@ -76,12 +76,15 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 		}
 		
 		if let refreshToken {
-			/* If we have a refresh token we try to refresh the session first because it’s good practice to keep the same session instead of re-auth’ing w/ a password. */
+			/* If we have a refresh token we try to refresh the session first because it’s good practice to keep the same session instead of re-auth’ing w/ a password.
+			 * Note: Currently in the happn API, refreshing a token w/ more scope than the refresh token was created with does work. It should not. */
 			if let token = try? await requestToken(.refreshToken(refreshToken)) {
 				return tokenInfo = token
+			} else {
+				/* We should check the error and abort the connection depending on it.
+				 * For now (and probably forever), we do not care. */
+				try await unqueuedDisconnect()
 			}
-			/* We should check the error and abort the connection depending on it.
-			 * For now (and probably forever), we do not care. */
 		}
 		
 		/* Either we do not have a refresh token or the refresh of the token failed.
