@@ -53,8 +53,10 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 		}
 		
 		let scope = Set(scope).union(currentScope ?? [])
-		try await unqueuedDisconnect()
-		try await unqueuedConnect(scope)
+		try await executeOnTaskQueue{
+			try await self.unqueuedDisconnect()
+			try await self.unqueuedConnect(scope)
+		}
 	}
 	
 	/* ********************************
