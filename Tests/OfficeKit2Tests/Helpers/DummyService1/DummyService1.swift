@@ -59,7 +59,7 @@ final class DummyService1 : UserService, GroupOfUsersService, AuthenticatorServi
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
-	func logicalUser(fromWrappedUser userWrapper: UserWrapper) throws -> DummyUser1 {
+	func logicalUser<OtherUserType>(fromUser user: OtherUserType) throws -> DummyUser1 where OtherUserType : OfficeKit2.User {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
@@ -67,13 +67,13 @@ final class DummyService1 : UserService, GroupOfUsersService, AuthenticatorServi
 		return []
 	}
 	
-	func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> DummyUser1? {
+	func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser1? {
 	}
 	
-	func existingUser(fromID uID: Never, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> DummyUser1? {
+	func existingUser(fromID uID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser1? {
 	}
 	
-	func listAllUsers(using services: Services) async throws -> [DummyUser1] {
+	func listAllUsers(propertiesToFetch: Set<OfficeKit2.UserProperty>?, using services: Services) async throws -> [DummyUser1] {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	

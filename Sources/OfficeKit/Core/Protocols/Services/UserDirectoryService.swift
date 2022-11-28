@@ -52,7 +52,7 @@ public protocol UserDirectoryService : OfficeKitService, UserDirectoryServiceIni
 	 If the user wrapper has data that is inconsistent with the underlying user, the result of the method is undefined.
 	 Implementations can, but are not required to validate the user wrapper for consistency with its underlying user.
 	 
-	 This method should throw ``Err.cannotCreateLogicalUserFromWrappedUser`` if the conversion is not possible for the given wrapped user (e.g. missing info to compute the id of the user). */
+	 This method should throw ``Err.cannotCreateLogicalUserFromOtherUser`` if the conversion is not possible for the given wrapped user (e.g. missing info to compute the id of the user). */
 	func logicalUser(fromWrappedUser userWrapper: DirectoryUserWrapper) throws -> UserType
 	
 	/** Returns the properties that were successfully applied to the user. */

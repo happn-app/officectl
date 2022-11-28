@@ -59,7 +59,7 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
-	func logicalUser(fromWrappedUser userWrapper: UserWrapper) throws -> DummyUser2 {
+	func logicalUser<OtherUserType>(fromUser user: OtherUserType) throws -> DummyUser2 where OtherUserType : User {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
@@ -67,13 +67,13 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 		return []
 	}
 	
-	func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> DummyUser2? {
+	func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser2? {
 	}
 	
-	func existingUser(fromID uID: Never, propertiesToFetch: Set<UserProperty>, using services: Services) async throws -> DummyUser2? {
+	func existingUser(fromID uID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser2? {
 	}
 	
-	func listAllUsers(using services: Services) async throws -> [DummyUser2] {
+	func listAllUsers(propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [DummyUser2] {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	

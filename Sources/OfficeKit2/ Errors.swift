@@ -14,11 +14,11 @@ public enum OfficeKitError : Error, Sendable {
 	case invalidJSONEncodedUserWrapper
 	
 	/** Error thrown by `logicalUser(fromWrappedUser:, hints:)` when the the conversion is not possible (missing info to compute id of user, for instance). */
-	case cannotCreateLogicalUserFromWrappedUser
-	var isCannotCreateLogicalUserFromWrappedUser: Bool {
+	case cannotCreateLogicalUserFromOtherUser
+	var isCannotCreateLogicalUserFromOtherUser: Bool {
 		/* We create a special computed var because I’m pretty sure we’ll have cases with arguments some day… */
-		if case .cannotCreateLogicalUserFromWrappedUser = self {return true}
-		else                                                   {return false}
+		if case .cannotCreateLogicalUserFromOtherUser = self {return true}
+		else                                                 {return false}
 	}
 	
 }

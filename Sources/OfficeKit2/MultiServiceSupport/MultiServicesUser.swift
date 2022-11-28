@@ -78,7 +78,7 @@ public extension MultiServicesUser {
 					OfficeKitConfig.logger?.error("Internal error: Got a service which has no result, that should not be possible. service = \(service)")
 					return true
 				}
-				return (result.failureValue?.errors.last as? Err)?.isCannotCreateLogicalUserFromWrappedUser ?? false
+				return (result.failureValue?.errors.last as? Err)?.isCannotCreateLogicalUserFromOtherUser ?? false
 			}
 			/* Compute all the service for which we have a user that we do not already have tried fetching from. */
 			let servicesWithAUser = res.compactMap{

@@ -74,31 +74,21 @@ public final class HappnService : UserService {
 	}
 	
 	public func logicalUser<OtherUserType>(fromUser user: OtherUserType) throws -> HappnUser where OtherUserType : User {
-		throw Err.unsupportedOperation
-//		if userWrapper.sourceServiceID == id, let underlyingUser = userWrapper.underlyingUser {
-//			/* If the underlying user is invalid, we fail the conversion altogether.
-//			 * We could try and continue with the other properties of the wrapped user, but failing seems more appropriate (the wrapped user is effectively invalid). */
-//			return try Result{ try logicalUser(fromJSON: underlyingUser) }.mapError{ _ in Err.invalidWrappedUser(userWrapper) }.get()
-//		}
-//
-//		/* *** No underlying user from our service. We infer the user from the generic properties of the wrapped user. *** */
-//
-//		let inferredUserID: Email
-//		if userWrapper.sourceServiceID == id {
-//			/* The underlying user (though absent) is from our service; the original ID can be decoded as a valid ID for our service. */
-//			guard let email = Email(rawValue: userWrapper.id.id) else {
-//				throw Err.invalidWrappedUser(userWrapper)
-//			}
-//			inferredUserID = email
-//		} else {
-//			//			guard let email = userWrapper.mainEmail(domainMap: globalConfig.domainAliases) else {
-//			guard let email = userWrapper.emails?.onlyElement else {
-//				throw Err.invalidWrappedUser(userWrapper)
-//			}
-//			inferredUserID = email
-//		}
-//
-//		return HappnUser(id: inferredUserID)
+		let id = config.userIDBuilders.lazy
+			.compactMap{ $0.inferID(fromUser: user) }
+			.compactMap{ Email(rawValue: $0) }
+			.first{ _ in true } /* Not a simple `.first` because of https://stackoverflow.com/a/71778190 (avoid the handler(s) to be called more than once). */
+		guard let id else {
+			throw OfficeKitError.cannotCreateLogicalUserFromOtherUser
+		}
+		
+		var ret = HappnUser(login: id)
+		ret.firstName = user.oU_firstName
+		ret.lastName = user.oU_lastName
+		ret.nickname = user.oU_nickname
+		ret.gender = user.valueForProperty(.gender) as? Gender
+		ret.birthDate = user.valueForProperty(.birthdate) as? Date
+		return ret
 	}
 	
 	public func applyHints(_ hints: [UserProperty : String?], toUser user: inout HappnUser, allowUserIDChange: Bool) -> Set<UserProperty> {

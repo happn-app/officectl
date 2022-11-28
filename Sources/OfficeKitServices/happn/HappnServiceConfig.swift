@@ -10,12 +10,16 @@ import Foundation
 
 import GenericJSON
 
+import OfficeKit2
+
 
 
 public struct HappnServiceConfig : Sendable, Codable {
 	
 	public var serviceName: String
 	public var connectorSettings: ConnectorSettings
+	
+	public var userIDBuilders: [UserIDBuilder]
 	
 	/* A map of domain aliases to actual domain.
 	 * E.g. for map ["happn.fr": "happn.com"], the "happn.fr" domain will be considered an alias of the "happn.com" domain.
@@ -51,6 +55,8 @@ public struct HappnServiceConfig : Sendable, Codable {
 		
 		case serviceName = "service_name"
 		case connectorSettings = "connector_settings"
+		
+		case userIDBuilders = "user_id_builders"
 		
 		case domainAliases = "domain_aliases"
 		
