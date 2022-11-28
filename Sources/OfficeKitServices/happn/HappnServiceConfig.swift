@@ -17,8 +17,8 @@ import OfficeKit2
 public struct HappnServiceConfig : Sendable, Codable {
 	
 	public var serviceName: String
-	public var connectorSettings: ConnectorSettings
 	
+	public var connectorSettings: ConnectorSettings
 	public var userIDBuilders: [UserIDBuilder]
 	
 	/* A map of domain aliases to actual domain.
@@ -54,8 +54,8 @@ public struct HappnServiceConfig : Sendable, Codable {
 	private enum CodingKeys : String, CodingKey {
 		
 		case serviceName = "service_name"
-		case connectorSettings = "connector_settings"
 		
+		case connectorSettings = "connector_settings"
 		case userIDBuilders = "user_id_builders"
 		
 		case domainAliases = "domain_aliases"

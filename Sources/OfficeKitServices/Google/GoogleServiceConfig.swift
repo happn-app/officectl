@@ -10,12 +10,16 @@ import Foundation
 import Email
 import GenericJSON
 
+import OfficeKit2
+
 
 
 public struct GoogleServiceConfig : Sendable, Codable {
 	
 	public var serviceName: String
+	
 	public var connectorSettings: ConnectorSettings
+	public var userIDBuilders: [UserIDBuilder]
 	
 	public init(json: JSON) throws {
 		let data = try JSONEncoder().encode(json)
@@ -39,7 +43,9 @@ public struct GoogleServiceConfig : Sendable, Codable {
 	private enum CodingKeys : String, CodingKey {
 		
 		case serviceName = "service_name"
+		
 		case connectorSettings = "connector_settings"
+		case userIDBuilders = "user_id_builders"
 		
 	}
 	

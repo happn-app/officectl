@@ -7,6 +7,7 @@
 
 import Foundation
 
+import Crypto
 import Email
 import GenericJSON
 import OfficeKit2
@@ -67,11 +68,62 @@ public final class GoogleService : UserService {
 	}
 	
 	public func logicalUser<OtherUserType>(fromUser user: OtherUserType) throws -> GoogleUser where OtherUserType : User {
-		throw Err.unsupportedOperation
+		let id = config.userIDBuilders.lazy
+			.compactMap{ $0.inferID(fromUser: user) }
+			.compactMap{ Email(rawValue: $0) }
+			.first{ _ in true } /* Not a simple `.first` because of https://stackoverflow.com/a/71778190 (avoid the handler(s) to be called more than once). */
+		guard let id else {
+			throw OfficeKitError.cannotCreateLogicalUserFromOtherUser
+		}
+		
+		var ret = GoogleUser(email: id)
+		ret.name = GoogleUser.Name(givenName: user.oU_firstName, familyName: user.oU_lastName)
+		/* TODO: Other properties. */
+		return ret
 	}
 	
 	public func applyHints(_ hints: [UserProperty : String?], toUser user: inout GoogleUser, allowUserIDChange: Bool) -> Set<UserProperty> {
-		return []
+		let primaryEmailProperty = UserProperty("primaryEmail")
+		
+		var ret = Set<UserProperty>()
+		for (property, newValue) in hints {
+			let touchedKey: Bool
+			switch property {
+				case .id, primaryEmailProperty:
+					guard allowUserIDChange else {continue}
+					guard let newValue else {
+						Conf.logger?.error("Asked to remove the id of a user (nil value for id in hints). This is illegal, I’m not doing it.")
+						continue
+					}
+					touchedKey = GoogleUser.setValueIfNeeded(newValue, in: &user.primaryEmail)
+					if touchedKey {
+						/* We add both.
+						 * `property` will be added twice, but that’s not a problem. */
+						ret.insert(.id)
+						ret.insert(primaryEmailProperty)
+					}
+					
+				case .firstName: touchedKey = GoogleUser.setValueIfNeeded(GoogleUser.Name(givenName: newValue,             familyName: user.name?.familyName), in: &user.name)
+				case .lastName:  touchedKey = GoogleUser.setValueIfNeeded(GoogleUser.Name(givenName: user.name?.givenName, familyName: newValue),              in: &user.name)
+				case .password:
+					if let newValue {
+						let hashed = Insecure.SHA1.hash(data: Data(newValue.utf8)).reduce("", { $0 + String(format: "%02x", $1) })
+						touchedKey = (user.password != hashed || user.passwordHashFunction != .sha1)
+						user.password = hashed
+						user.passwordHashFunction = .sha1
+					} else {
+						touchedKey = (user.password != nil || user.passwordHashFunction != nil)
+						user.password = nil
+						user.passwordHashFunction = nil
+					}
+				/* TODO: Other properties. */
+				default:         touchedKey = false
+			}
+			if touchedKey {
+				ret.insert(property)
+			}
+		}
+		return ret
 	}
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GoogleUser? {
