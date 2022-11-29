@@ -49,8 +49,8 @@ extension GoogleUser : User {
 		]
 	}
 	
-	internal static func keysFromProperties(_ properties: Set<UserProperty>?) -> Set<GoogleUser.CodingKeys> {
-		let properties = properties ?? Set(UserProperty.standardProperties)
+	internal static func keysFromProperties(_ properties: Set<UserProperty>?) -> Set<GoogleUser.CodingKeys>? {
+		guard let properties else {return nil}
 		let keys = properties
 			.compactMap{ propertyToKeys[$0] }
 			.flatMap{ $0 }

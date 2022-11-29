@@ -58,8 +58,8 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			])
 		]))
 		do {
-//			let user = try await googleService.existingUser(fromPersistentID: "103126761345692481320", propertiesToFetch: nil, using: app.services)
-			let user = try await googleService.existingUser(fromID: Email(rawValue: "formind.dev@happn.fr")!, propertiesToFetch: nil, using: app.services)
+			let user = try await googleService.existingUser(fromPersistentID: "103126761345692481320", propertiesToFetch: [.firstName, .id], using: app.services)
+//			let user = try await googleService.existingUser(fromID: Email(rawValue: "formind.dev@happn.fr")!, propertiesToFetch: nil, using: app.services)
 			print(user)
 		} catch let error as URLRequestOperationError {
 			print(error)
