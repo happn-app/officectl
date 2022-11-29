@@ -8,12 +8,24 @@
 import Foundation
 
 import Logging
+import UnwrapOrThrow
 
 
 
 public enum GoogleOfficeConfig : Sendable {
 	
 	static public var logger: Logger?
+	
+	/* Let’s use the config as a “globals container…” */
+	static let dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = {
+		return .custom{ decoder in
+			let container = try decoder.singleValueContainer()
+			let str = try container.decode(String.self)
+			let formatter = ISO8601DateFormatter()
+			formatter.formatOptions = formatter.formatOptions.union(.withFractionalSeconds)
+			return try formatter.date(from: str) ?! Err.cannotParseDateFromGoogle(str)
+		}
+	}()
 	
 }
 

@@ -68,7 +68,7 @@ public final class GoogleService : UserService {
 	}
 	
 	public func logicalUser<OtherUserType>(fromUser user: OtherUserType) throws -> GoogleUser where OtherUserType : User {
-		let id = config.userIDBuilders.lazy
+		let id = config.userIDBuilders?.lazy
 			.compactMap{ $0.inferID(fromUser: user) }
 			.compactMap{ Email(rawValue: $0) }
 			.first{ _ in true } /* Not a simple `.first` because of https://stackoverflow.com/a/71778190 (avoid the handler(s) to be called more than once). */
@@ -111,10 +111,12 @@ public final class GoogleService : UserService {
 						touchedKey = (user.password != hashed || user.passwordHashFunction != .sha1)
 						user.password = hashed
 						user.passwordHashFunction = .sha1
+						user.changePasswordAtNextLogin = false
 					} else {
 						touchedKey = (user.password != nil || user.passwordHashFunction != nil)
 						user.password = nil
 						user.passwordHashFunction = nil
+						user.changePasswordAtNextLogin = nil
 					}
 				/* TODO: Other properties. */
 				default:         touchedKey = false
@@ -127,7 +129,9 @@ public final class GoogleService : UserService {
 	}
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GoogleUser? {
-		throw Err.unsupportedOperation
+		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
+		
+		return try await GoogleUser.get(id: pID, propertiesToFetch: GoogleUser.keysFromProperties(propertiesToFetch), connector: connector)
 	}
 	
 	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GoogleUser? {

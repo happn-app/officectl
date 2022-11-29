@@ -19,7 +19,7 @@ public struct GoogleServiceConfig : Sendable, Codable {
 	public var serviceName: String
 	
 	public var connectorSettings: ConnectorSettings
-	public var userIDBuilders: [UserIDBuilder]
+	public var userIDBuilders: [UserIDBuilder]?
 	
 	public init(json: JSON) throws {
 		let data = try JSONEncoder().encode(json)

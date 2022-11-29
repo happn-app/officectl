@@ -49,22 +49,17 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 //		let simpleMDMToken = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		/* OfficeKit2 tests. */
-		let oldConf: OfficeKit.HappnServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
-//		let googleService = try GoogleService(id: "ggl", jsonConfig: .object([
-//			"service_name": .string("happn"),
-//			"domain_aliases": .object(officeKitConfig.globalConfig.domainAliases.mapValues{ .string($0) }),
-//			"connector_settings": .object([
-//				"base_url": .string(oldConf.connectorSettings.baseURL.absoluteString),
-//				"client_id": .string(oldConf.connectorSettings.clientID),
-//				"client_secret": .string(oldConf.connectorSettings.clientSecret),
-//				"admin_username": .string(oldConf.connectorSettings.authMode.username!),
-//				"admin_password": .string(oldConf.connectorSettings.authMode.password!),
-//			])
-//		]))
+		let oldConf: OfficeKit.GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
+		let googleService = try GoogleService(id: "ggl", jsonConfig: .object([
+			"service_name": .string("gougle"),
+			"connector_settings": .object([
+				"admin_email": .string(oldConf.connectorSettings.userBehalf!),
+				"superuser_json_creds_path": .string(oldConf.connectorSettings.jsonCredentialsURL.path)
+			])
+		]))
 		do {
-			let connector = try GoogleConnector(jsonCredentialsURL: URL(fileURLWithPath: "/Users/frizlab/.config/officectl/google_auth_file.json"), userBehalf: "google-apps@happn.fr")
-			try await connector.connect(["https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly"])
-			print(await connector.accessToken)
+			let user = try await googleService.existingUser(fromPersistentID: "103126761345692481320", propertiesToFetch: nil, using: app.services)
+			print(user)
 		} catch let error as URLRequestOperationError {
 			print(error)
 			print((error.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.httpBody?.reduce("", { $0 + String(format: "%02x", $1) }))

@@ -74,7 +74,7 @@ public final class HappnService : UserService {
 	}
 	
 	public func logicalUser<OtherUserType>(fromUser user: OtherUserType) throws -> HappnUser where OtherUserType : User {
-		let id = config.userIDBuilders.lazy
+		let id = config.userIDBuilders?.lazy
 			.compactMap{ $0.inferID(fromUser: user) }
 			.compactMap{ Email(rawValue: $0) }
 			.first{ _ in true } /* Not a simple `.first` because of https://stackoverflow.com/a/71778190 (avoid the handler(s) to be called more than once). */

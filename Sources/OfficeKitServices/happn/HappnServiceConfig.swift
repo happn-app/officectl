@@ -19,7 +19,7 @@ public struct HappnServiceConfig : Sendable, Codable {
 	public var serviceName: String
 	
 	public var connectorSettings: ConnectorSettings
-	public var userIDBuilders: [UserIDBuilder]
+	public var userIDBuilders: [UserIDBuilder]?
 	
 	/* A map of domain aliases to actual domain.
 	 * E.g. for map ["happn.fr": "happn.com"], the "happn.fr" domain will be considered an alias of the "happn.com" domain.

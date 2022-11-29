@@ -52,6 +52,19 @@ public actor GoogleConnector : Connector, Authenticator, HasTaskQueue {
 		superuserEmail = connector.superuserEmail
 	}
 	
+	public func increaseScopeIfNeeded(_ scope: String...) async throws {
+		guard !(currentScope?.isSubset(of: scope) ?? false) else {
+			/* The current scope contains the scope we want, we have nothing to do. */
+			return
+		}
+		
+		let scope = Set(scope).union(currentScope ?? [])
+		try await executeOnTaskQueue{
+			try await self.unqueuedDisconnect()
+			try await self.unqueuedConnect(scope)
+		}
+	}
+	
 	/* ********************************
 	   MARK: - Connector Implementation
 	   ******************************** */

@@ -17,6 +17,8 @@ public enum GoogleOfficeError : Error, Sendable {
 	case unsupportedTokenType(String)
 	case unsupportedOperation
 	
+	case cannotParseDateFromGoogle(String)
+	
 	case notConnected
 	
 }
