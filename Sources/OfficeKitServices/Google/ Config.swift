@@ -23,7 +23,7 @@ public enum GoogleOfficeConfig : Sendable {
 			let str = try container.decode(String.self)
 			let formatter = ISO8601DateFormatter()
 			formatter.formatOptions = formatter.formatOptions.union(.withFractionalSeconds)
-			return try formatter.date(from: str) ?! Err.cannotParseDateFromGoogle(str)
+			return try formatter.date(from: str) ?! DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date: \(str)")
 		}
 	}()
 	

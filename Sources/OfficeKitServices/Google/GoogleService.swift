@@ -10,6 +10,7 @@ import Foundation
 import Crypto
 import Email
 import GenericJSON
+import Logging
 import OfficeKit2
 import ServiceKit
 
@@ -129,16 +130,23 @@ public final class GoogleService : UserService {
 	}
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GoogleUser? {
-		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
+		logSuspensionWarning(using: services)
 		
-		return try await GoogleUser.get(id: pID, propertiesToFetch: GoogleUser.keysFromProperties(propertiesToFetch), connector: connector)
+		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
+		let ret = try await GoogleUser.get(id: pID, propertiesToFetch: GoogleUser.keysFromProperties(propertiesToFetch), connector: connector)
+		if ret?.isSuspended ?? true {
+			return nil
+		}
+		return ret
 	}
 	
 	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GoogleUser? {
-		throw Err.unsupportedOperation
+		/* Gougle returns the user whether from persistent or standard id. */
+		return try await existingUser(fromPersistentID: uID.rawValue, propertiesToFetch: propertiesToFetch, using: services)
 	}
 	
 	public func listAllUsers(propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [GoogleUser] {
+		logSuspensionWarning(using: services)
 		throw Err.unsupportedOperation
 	}
 	
@@ -161,4 +169,14 @@ public final class GoogleService : UserService {
 	public func changePassword(of user: GoogleUser, to newPassword: String, using services: Services) async throws {
 		throw Err.unsupportedOperation
 	}
+	
+	private static var hasLoggedSuspensionWarning = false
+	private func logSuspensionWarning(using services: Services) {
+		guard !Self.hasLoggedSuspensionWarning else {
+			return
+		}
+		(try? services.make(Logger.self))?.warning("Note: Only non-suspended users are returned from the google service. This will be logged only once.")
+		Self.hasLoggedSuspensionWarning = true
+	}
+	
 }

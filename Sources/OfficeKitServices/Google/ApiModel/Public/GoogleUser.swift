@@ -61,7 +61,7 @@ public struct GoogleUser : Sendable, Hashable, Codable {
 	public var creationTime: Date?
 	public var agreedToTerms: Bool?
 	
-	public var suspended: Bool?
+	public var isSuspended: Bool?
 	public var passwordHashFunction: PasswordHashFunction?
 	public var password: String?
 	public var changePasswordAtNextLogin: Bool?
@@ -89,7 +89,7 @@ public struct GoogleUser : Sendable, Hashable, Codable {
 		case primaryEmail, aliases, nonEditableAliases, includeInGlobalAddressList
 		case isAdmin, isDelegatedAdmin
 		case lastLoginTime, creationTime, agreedToTerms
-		case suspended, passwordHashFunction = "hashFunction", password, changePasswordAtNextLogin, isEnrolledIn2Sv, isEnforcedIn2Sv
+		case isSuspended = "suspended", passwordHashFunction = "hashFunction", password, changePasswordAtNextLogin, isEnrolledIn2Sv, isEnforcedIn2Sv
 		case recoveryEmail, recoveryPhone
 	}
 	
