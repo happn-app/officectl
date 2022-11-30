@@ -22,12 +22,15 @@ public struct UserProperty : RawRepresentable, ExpressibleByStringLiteral, Senda
 	 - generally speaking setting the password should be done using a dedicated method. */
 	public static let standardProperties: Set<UserProperty> = [
 		.id, .persistentID,
+		.isSuspended,
 		.emails,
 		.firstName, .lastName, .nickname
 	]
 	
 	public static let id = UserProperty(rawValue: "id")
 	public static let persistentID = UserProperty(rawValue: "persistent_id")
+	
+	public static let isSuspended = UserProperty(rawValue: "is_suspended")
 	
 	public static let firstName = UserProperty(rawValue: "first_name")
 	public static let lastName = UserProperty(rawValue: "last_name")

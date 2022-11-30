@@ -130,8 +130,6 @@ public final class GoogleService : UserService {
 	}
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GoogleUser? {
-		logSuspensionWarning(using: services)
-		
 		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
 		let ret = try await GoogleUser.get(id: pID, propertiesToFetch: GoogleUser.keysFromProperties(propertiesToFetch), connector: connector)
 		if ret?.isSuspended ?? true {
@@ -145,8 +143,7 @@ public final class GoogleService : UserService {
 		return try await existingUser(fromPersistentID: uID.rawValue, propertiesToFetch: propertiesToFetch, using: services)
 	}
 	
-	public func listAllUsers(propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [GoogleUser] {
-		logSuspensionWarning(using: services)
+	public func listAllUsers(propertiesToFetch: Set<UserProperty>?, includeSuspended: Bool, using services: Services) async throws -> [GoogleUser] {
 		throw Err.unsupportedOperation
 	}
 	
@@ -168,15 +165,6 @@ public final class GoogleService : UserService {
 	public let supportsPasswordChange: Bool = true
 	public func changePassword(of user: GoogleUser, to newPassword: String, using services: Services) async throws {
 		throw Err.unsupportedOperation
-	}
-	
-	private static var hasLoggedSuspensionWarning = false
-	private func logSuspensionWarning(using services: Services) {
-		guard !Self.hasLoggedSuspensionWarning else {
-			return
-		}
-		(try? services.make(Logger.self))?.warning("Note: Only non-suspended users are returned from the google service. This will be logged only once.")
-		Self.hasLoggedSuspensionWarning = true
 	}
 	
 }

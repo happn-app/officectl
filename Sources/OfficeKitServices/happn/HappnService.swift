@@ -155,9 +155,12 @@ public final class HappnService : UserService {
 		}
 	}
 	
-	public func listAllUsers(propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [HappnUser] {
+	public func listAllUsers(propertiesToFetch: Set<UserProperty>?, includeSuspended: Bool, using services: Services) async throws -> [HappnUser] {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
-		return try await HappnUser.search(text: nil, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector)
+		let forcedProperty: Set<UserProperty> = (!includeSuspended ? [.isSuspended] : [])
+		let users = try await HappnUser.search(text: nil, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch?.union(forcedProperty) ?? forcedProperty), connector: connector)
+		if !includeSuspended {return users.filter{ !($0.oU_isSuspended ?? false) }}
+		else                 {return users}
 	}
 	
 	public let supportsUserCreation: Bool = true

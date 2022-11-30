@@ -65,17 +65,7 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			print(error)
 			print((error.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.httpBody?.reduce("", { $0 + String(format: "%02x", $1) }))
 		}
-//		let happnService = try HappnService(id: "hppn", jsonConfig: .object([
-//			"service_name": .string("happn"),
-//			"domain_aliases": .object(officeKitConfig.globalConfig.domainAliases.mapValues{ .string($0) }),
-//			"connector_settings": .object([
-//				"base_url": .string(oldConf.connectorSettings.baseURL.absoluteString),
-//				"client_id": .string(oldConf.connectorSettings.clientID),
-//				"client_secret": .string(oldConf.connectorSettings.clientSecret),
-//				"admin_username": .string(oldConf.connectorSettings.authMode.username!),
-//				"admin_password": .string(oldConf.connectorSettings.authMode.password!),
-//			])
-//		]))
+//		let oldConf: OfficeKit.HappnServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
 //		let happnService = try HappnService(id: "hppn", jsonConfig: .object([
 //			"service_name": .string("happn"),
 //			"domain_aliases": .object(officeKitConfig.globalConfig.domainAliases.mapValues{ .string($0) }),

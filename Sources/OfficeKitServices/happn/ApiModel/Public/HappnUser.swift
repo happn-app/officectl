@@ -20,11 +20,22 @@ public struct HappnUser : Sendable, Hashable, Codable {
 		
 	}
 	
-	public var type: UserType = .client
+	public enum Status : String, Sendable, Codable {
+		
+		case active = "ACTIVE"
+		case signUpValidation = "SIGN_UP_VALIDATION"
+		
+		case deactivated = "DEACTIVATED"
+		case banned = "BANNED"
+		
+	}
 	
 	/* Updating the login is not possible, so this is a `let`, not a `var`. */
 	public let login: Email
 	public var id: String?
+	
+	public var type: UserType = .client
+	public var status: Status?
 	
 	public var firstName: String?
 	public var lastName: String?
@@ -48,9 +59,8 @@ public struct HappnUser : Sendable, Hashable, Codable {
 		var ret = HappnUser(login: login)
 		for property in properties {
 			switch property {
-				case .type, .login, .id:
-					(/*nop*/)
-					
+				case .login, .id, .type: (/*nop*/)
+				case .status:     ret.status    = status
 				case .firstName:  ret.firstName = firstName
 				case .lastName:   ret.lastName  = lastName
 				case .nickname:   ret.nickname  = nickname
@@ -63,8 +73,8 @@ public struct HappnUser : Sendable, Hashable, Codable {
 	}
 	
 	internal enum CodingKeys : String, CodingKey {
-		case type
 		case login, id
+		case type, status
 		case firstName = "first_name", lastName = "last_name", nickname
 		case gender, _birthDate = "birth_date"
 		case password

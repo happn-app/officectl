@@ -25,6 +25,8 @@ public protocol User<UserIDType> : Sendable {
 	var oU_id: UserIDType {get}
 	var oU_persistentID: PersistentUserIDType? {get}
 	
+	var oU_isSuspended: Bool? {get}
+	
 	var oU_firstName: String? {get}
 	var oU_lastName: String? {get}
 	var oU_nickname: String? {get}
@@ -42,6 +44,7 @@ public extension User {
 		switch property {
 			case .id:           return oU_id
 			case .persistentID: return oU_persistentID
+			case .isSuspended:  return oU_isSuspended
 			case .firstName:    return oU_firstName
 			case .lastName:     return oU_lastName
 			case .nickname:     return oU_nickname

@@ -18,6 +18,8 @@ extension HappnUser : User {
 	public var oU_id: Email {login}
 	public var oU_persistentID: String? {id}
 	
+	public var oU_isSuspended: Bool? {status.flatMap{ $0 == .deactivated || $0 == .banned }}
+	
 	public var oU_firstName: String? {firstName}
 	public var oU_lastName: String? {lastName}
 	public var oU_nickname: String? {nickname}
@@ -40,6 +42,7 @@ extension HappnUser : User {
 		[
 			.id: [.login],
 			.persistentID: [.id],
+			.isSuspended: [.status],
 			.firstName: [.firstName],
 			.lastName: [.lastName],
 			.nickname: [.nickname],

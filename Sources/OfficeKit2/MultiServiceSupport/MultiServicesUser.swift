@@ -105,14 +105,14 @@ public extension MultiServicesUser {
 		return await fetchStep(from: userAndService, in: services)
 	}
 	
-	static func fetchAll(in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty>? = nil, using depServices: Services) async throws -> (users: [MultiServicesUser], fetchErrorsByServices: [HashableUserService: Error]) {
+	static func fetchAll(in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty>? = nil, includeSuspended: Bool = true, using depServices: Services) async throws -> (users: [MultiServicesUser], fetchErrorsByServices: [HashableUserService: Error]) {
 		let (usersAndServices, fetchErrorsByService) = await withTaskGroup(
 			of: (service: HashableUserService, users: Result<[any User], Error>).self,
 			returning: (usersAndServices: [any UserAndService], fetchErrorsByServices: [HashableUserService: Error]).self,
 			body: { group in
 				for service in services {
 					group.addTask{
-						let usersResult = await Result{ try await service.value.listAllUsers(propertiesToFetch: propertiesToFetch, using: depServices) }
+						let usersResult = await Result{ try await service.value.listAllUsers(propertiesToFetch: propertiesToFetch, includeSuspended: includeSuspended, using: depServices) }
 						return (service, usersResult)
 					}
 				}

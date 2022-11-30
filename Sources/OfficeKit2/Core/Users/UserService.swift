@@ -75,7 +75,7 @@ public protocol UserService<UserType> : OfficeService {
 	/**
 	 List all of the users in the service.
 	 If `propertiesToFetch` is `nil`, **all** the properties supported should be fetched. */
-	func listAllUsers(propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [UserType]
+	func listAllUsers(propertiesToFetch: Set<UserProperty>?, includeSuspended: Bool, using services: Services) async throws -> [UserType]
 	
 	var supportsUserCreation: Bool {get}
 	func createUser(_ user: UserType, using services: Services) async throws -> UserType

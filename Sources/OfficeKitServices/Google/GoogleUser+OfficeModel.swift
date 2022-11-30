@@ -21,6 +21,8 @@ extension GoogleUser : User {
 	public var oU_id: Email {primaryEmail}
 	public var oU_persistentID: String? {id}
 	
+	public var oU_isSuspended: Bool? {isSuspended}
+	
 	public var oU_firstName: String? {name?.givenName}
 	public var oU_lastName: String? {name?.familyName}
 	public var oU_nickname: String? {nil}

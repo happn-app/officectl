@@ -21,6 +21,8 @@ public struct UserWrapper : User, Codable {
 	public var oU_id: TaggedID
 	public var oU_persistentID: TaggedID?
 	
+	public var oU_isSuspended: Bool?
+	
 	public var oU_firstName: String?
 	public var oU_lastName: String?
 	public var oU_nickname: String?
@@ -51,6 +53,8 @@ public struct UserWrapper : User, Codable {
 		oU_id = other.oU_id
 		oU_persistentID = other.oU_persistentID
 		
+		oU_isSuspended = other.oU_isSuspended
+		
 		oU_firstName = other.oU_firstName
 		oU_lastName = other.oU_lastName
 		oU_nickname = other.oU_nickname
@@ -64,6 +68,8 @@ public struct UserWrapper : User, Codable {
 	public init(json: JSON, forcedUserID: TaggedID?) throws {
 		oU_id = try forcedUserID ?? TaggedID(string: json[CodingKeys.oU_id.rawValue]?.stringValue ?! Err.invalidJSONEncodedUserWrapper)
 		oU_persistentID = try json[CodingKeys.oU_persistentID.rawValue].flatMap{ try TaggedID(string: $0.stringValue ?! Err.invalidJSONEncodedUserWrapper) }
+		
+		oU_isSuspended = try json[CodingKeys.oU_isSuspended.rawValue].flatMap{ try $0.boolValue ?! Err.invalidJSONEncodedUserWrapper }
 		
 		oU_firstName = try json[CodingKeys.oU_firstName.rawValue].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
 		oU_lastName  = try json[CodingKeys.oU_lastName.rawValue ].flatMap{ try $0.stringValue ?! Err.invalidJSONEncodedUserWrapper }
@@ -88,6 +94,8 @@ public struct UserWrapper : User, Codable {
 		res[CodingKeys.oU_id.rawValue] = .string(oU_id.stringValue)
 		if let pID = oU_persistentID {res[CodingKeys.oU_persistentID.rawValue] = .string(pID.stringValue)}
 		
+		if let s = oU_isSuspended {res[CodingKeys.oU_isSuspended.rawValue] = .bool(s)}
+		
 		if let fn = oU_firstName {res[CodingKeys.oU_firstName.rawValue] = .string(fn)}
 		if let ln = oU_lastName  {res[CodingKeys.oU_lastName.rawValue]  = .string(ln)}
 		if let nn = oU_nickname  {res[CodingKeys.oU_nickname.rawValue]  = .string(nn)}
@@ -98,6 +106,8 @@ public struct UserWrapper : User, Codable {
 	}
 	
 	public mutating func copyStandardNonIDProperties<U : User>(fromUser user: U) {
+		oU_isSuspended = user.oU_isSuspended
+		
 		oU_firstName = user.oU_firstName
 		oU_lastName = user.oU_lastName
 		oU_nickname = user.oU_nickname
@@ -139,17 +149,18 @@ public struct UserWrapper : User, Codable {
 						continue
 					}
 					touchedKey = Self.setValueIfNeeded(TaggedID(string: hintValue), in: &oU_id)
+				case .persistentID:
+					touchedKey = Self.setValueIfNeeded(hintValue.flatMap(TaggedID.init(string:)), in: &oU_persistentID)
+					
+				case .isSuspended:
+					touchedKey = Self.setValueIfNeeded(hintValue, in: &oU_isSuspended, converter: { Bool($0) })
 					
 				case .firstName: touchedKey = Self.setValueIfNeeded(hintValue, in: &oU_firstName)
 				case .lastName:  touchedKey = Self.setValueIfNeeded(hintValue, in: &oU_lastName)
 				case .nickname:  touchedKey = Self.setValueIfNeeded(hintValue, in: &oU_nickname)
 					
 				case .emails:
-					guard let parsedHint = Self.convertEmailsHintToEmails(hintValue) else {
-						Conf.logger?.warning("Cannot apply hint for key \(hintKey): value has invalid email(s): \(String(describing: hintValue))")
-						continue
-					}
-					touchedKey = Self.setValueIfNeeded(parsedHint, in: &oU_emails)
+					touchedKey = Self.setValueIfNeeded(hintValue, in: &oU_emails, converter: Self.convertEmailsHintToEmails)
 					
 				default:
 					Conf.logger?.warning("Cannot apply hint for key \(hintKey): key is unknown: \(String(describing: hintValue))")
@@ -173,26 +184,18 @@ public struct UserWrapper : User, Codable {
 		case savedHints
 		
 		case oU_id = "id", oU_persistentID = "persistent_id"
+		case oU_isSuspended = "is_suspended"
 		case oU_firstName = "first_name", oU_lastName = "last_name", oU_nickname = "nickname"
 		case oU_emails = "emails"
 	}
 	
-	/**
-	 Returns `.none` iif the conversion failed, `.some(.none)` iif the hint was `nil` and the emails if the conversion succeeds. */
-	private static func convertEmailsHintToEmails(_ hint: String?) -> [Email]?? {
-		guard let hint = hint else {
-			return .some(.none)
-		}
-		
+	private static func convertEmailsHintToEmails(_ hint: String) -> [Email]? {
 		/* We split the emails around the newline: AFAICT a newline is always invalid in an email adresse, whatever RFC you use to parse them.
 		 * Usually emails are separated by a comma, but a comma _can_ be in a valid email and we’d have to properly parse stuff to extract the different email addresses. */
 		let splitHint = hint.split(separator: "\n")
 		
 		struct Internal__InvalidEmailErrorMarker : Error {} /* Used as a marker if we encounter an invalid email. */
-		let emails = try? splitHint.map{ try Email(rawValue: String($0)) ?! Internal__InvalidEmailErrorMarker() }
-		
-		if let emails {return emails}
-		else          {return .none}
+		return try? splitHint.map{ try Email(rawValue: String($0)) ?! Internal__InvalidEmailErrorMarker() }
 	}
 	
 }
