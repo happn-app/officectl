@@ -73,7 +73,7 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 	func existingUser(fromID uID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser2? {
 	}
 	
-	func listAllUsers(propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [DummyUser2] {
+	func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [DummyUser2] {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	

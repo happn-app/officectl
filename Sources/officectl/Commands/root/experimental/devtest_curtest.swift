@@ -52,15 +52,17 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 		let oldConf: OfficeKit.GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
 		let googleService = try GoogleService(id: "ggl", jsonConfig: .object([
 			"service_name": .string("gougle"),
+			"primary_domains": .array(oldConf.primaryDomains.map{ .string($0) }),
 			"connector_settings": .object([
 				"admin_email": .string(oldConf.connectorSettings.userBehalf!),
 				"superuser_json_creds_path": .string(oldConf.connectorSettings.jsonCredentialsURL.path)
 			])
 		]))
 		do {
-			let user = try await googleService.existingUser(fromPersistentID: "103126761345692481320", propertiesToFetch: [.firstName, .id], using: app.services)
+//			let user = try await googleService.existingUser(fromPersistentID: "103126761345692481320", propertiesToFetch: [.firstName, .id], using: app.services)
 //			let user = try await googleService.existingUser(fromID: Email(rawValue: "formind.dev@happn.fr")!, propertiesToFetch: nil, using: app.services)
-			print(user)
+			let users = try await googleService.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: app.services)
+			users.forEach{ print($0) }
 		} catch let error as URLRequestOperationError {
 			print(error)
 			print((error.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.httpBody?.reduce("", { $0 + String(format: "%02x", $1) }))

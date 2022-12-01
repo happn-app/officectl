@@ -73,7 +73,7 @@ final class DummyService1 : UserService, GroupOfUsersService, AuthenticatorServi
 	func existingUser(fromID uID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser1? {
 	}
 	
-	func listAllUsers(propertiesToFetch: Set<OfficeKit2.UserProperty>?, using services: Services) async throws -> [DummyUser1] {
+	func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<OfficeKit2.UserProperty>?, using services: Services) async throws -> [DummyUser1] {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	

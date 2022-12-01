@@ -18,6 +18,8 @@ public struct GoogleServiceConfig : Sendable, Codable {
 	
 	public var serviceName: String
 	
+	public var primaryDomains: [String]
+	
 	public var connectorSettings: ConnectorSettings
 	public var userIDBuilders: [UserIDBuilder]?
 	
@@ -43,6 +45,8 @@ public struct GoogleServiceConfig : Sendable, Codable {
 	private enum CodingKeys : String, CodingKey {
 		
 		case serviceName = "service_name"
+		
+		case primaryDomains = "primary_domains"
 		
 		case connectorSettings = "connector_settings"
 		case userIDBuilders = "user_id_builders"

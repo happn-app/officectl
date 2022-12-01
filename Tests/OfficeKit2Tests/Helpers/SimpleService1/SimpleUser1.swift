@@ -21,6 +21,8 @@ struct SimpleUser1 : User {
 	var oU_id: String
 	var oU_persistentID: Never?
 	
+	var oU_isSuspended: Bool?
+	
 	var oU_firstName: String?
 	var oU_lastName: String?
 	var oU_nickname: String?

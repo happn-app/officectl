@@ -112,7 +112,7 @@ public extension MultiServicesUser {
 			body: { group in
 				for service in services {
 					group.addTask{
-						let usersResult = await Result{ try await service.value.listAllUsers(propertiesToFetch: propertiesToFetch, includeSuspended: includeSuspended, using: depServices) }
+						let usersResult = await Result{ try await service.value.listAllUsers(includeSuspended: includeSuspended, propertiesToFetch: propertiesToFetch, using: depServices) }
 						return (service, usersResult)
 					}
 				}

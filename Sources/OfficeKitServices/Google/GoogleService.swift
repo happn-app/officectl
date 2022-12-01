@@ -7,6 +7,7 @@
 
 import Foundation
 
+import CollectionConcurrencyKit
 import Crypto
 import Email
 import GenericJSON
@@ -143,8 +144,16 @@ public final class GoogleService : UserService {
 		return try await existingUser(fromPersistentID: uID.rawValue, propertiesToFetch: propertiesToFetch, using: services)
 	}
 	
-	public func listAllUsers(propertiesToFetch: Set<UserProperty>?, includeSuspended: Bool, using services: Services) async throws -> [GoogleUser] {
-		throw Err.unsupportedOperation
+	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [GoogleUser] {
+		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly")
+		let users = try await config.primaryDomains.asyncFlatMap{
+			try await GoogleUser.search(
+				SearchRequest(domain: $0, query: !includeSuspended ? "isSuspended=false" : nil),
+				propertiesToFetch: GoogleUser.keysFromProperties(propertiesToFetch),
+				connector: connector
+			)
+		}
+		return users
 	}
 	
 	public let supportsUserCreation: Bool = true
