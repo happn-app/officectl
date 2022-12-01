@@ -49,36 +49,58 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 //		let simpleMDMToken = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		/* OfficeKit2 tests. */
-		let oldConf: OfficeKit.GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
+		let oldConfGougle: OfficeKit.GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
 		let googleService = try GoogleService(id: "ggl", jsonConfig: .object([
 			"service_name": .string("gougle"),
-			"primary_domains": .array(oldConf.primaryDomains.map{ .string($0) }),
+			"primary_domains": .array(oldConfGougle.primaryDomains.map{ .string($0) }),
 			"connector_settings": .object([
-				"admin_email": .string(oldConf.connectorSettings.userBehalf!),
-				"superuser_json_creds_path": .string(oldConf.connectorSettings.jsonCredentialsURL.path)
+				"admin_email": .string(oldConfGougle.connectorSettings.userBehalf!),
+				"superuser_json_creds_path": .string(oldConfGougle.connectorSettings.jsonCredentialsURL.path)
+			]),
+			"user_id_builders": JSON(encodable: [
+				UserIDBuilder(format: "*|first_name|.|last_name|*@happn.fr")
+			])
+		]))
+		let oldConfHappn: OfficeKit.HappnServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
+		let happnService = try HappnService(id: "hppn", jsonConfig: .object([
+			"service_name": .string("happn"),
+			"domain_aliases": .object(officeKitConfig.globalConfig.domainAliases.mapValues{ .string($0) }),
+			"connector_settings": .object([
+				"base_url": .string(oldConfHappn.connectorSettings.baseURL.absoluteString),
+				"client_id": .string(oldConfHappn.connectorSettings.clientID),
+				"client_secret": .string(oldConfHappn.connectorSettings.clientSecret),
+				"admin_username": .string(oldConfHappn.connectorSettings.authMode.username!),
+				"admin_password": .string(oldConfHappn.connectorSettings.authMode.password!),
+			]),
+			"user_id_builders": JSON(encodable: [
+				UserIDBuilder(format: "*|first_name|.|last_name|*@happn.fr")
 			])
 		]))
 		do {
-//			let user = try await googleService.existingUser(fromPersistentID: "103126761345692481320", propertiesToFetch: [.firstName, .id], using: app.services)
-//			let user = try await googleService.existingUser(fromID: Email(rawValue: "formind.dev@happn.fr")!, propertiesToFetch: nil, using: app.services)
-			let users = try await googleService.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: app.services)
-			users.forEach{ print($0) }
-		} catch let error as URLRequestOperationError {
+			let allServices = Set([HashableUserService(happnService), HashableUserService(googleService)])
+			let res = try await MultiServicesUser.fetchAll(in: allServices, using: app.services)
+			res.users.forEach{
+				print("-----")
+				print("happn: \($0[HashableUserService(happnService)]!)")
+				print("Gougle: \($0[HashableUserService(googleService)]!)")
+			}
+			let vivien = try await googleService.existingUser(fromID: Email(rawValue: "vivien.toubeau@happn.fr")!, propertiesToFetch: nil, using: app.services)!
+			let multiVivien = try await MultiServicesUser.fetch(from: UserAndServiceFrom(user: vivien, service: googleService)!, in: allServices, propertiesToFetch: nil, using: app.services)
+			print("-----")
+			print("happn: \(multiVivien[HashableUserService(happnService)])")
+			print("Gougle: \(multiVivien[HashableUserService(googleService)])")
+		} catch {
 			print(error)
-			print((error.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.httpBody?.reduce("", { $0 + String(format: "%02x", $1) }))
 		}
-//		let oldConf: OfficeKit.HappnServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
-//		let happnService = try HappnService(id: "hppn", jsonConfig: .object([
-//			"service_name": .string("happn"),
-//			"domain_aliases": .object(officeKitConfig.globalConfig.domainAliases.mapValues{ .string($0) }),
-//			"connector_settings": .object([
-//				"base_url": .string(oldConf.connectorSettings.baseURL.absoluteString),
-//				"client_id": .string(oldConf.connectorSettings.clientID),
-//				"client_secret": .string(oldConf.connectorSettings.clientSecret),
-//				"admin_username": .string(oldConf.connectorSettings.authMode.username!),
-//				"admin_password": .string(oldConf.connectorSettings.authMode.password!),
-//			])
-//		]))
+//		do {
+////			let user = try await googleService.existingUser(fromPersistentID: "103126761345692481320", propertiesToFetch: [.firstName, .id], using: app.services)
+////			let user = try await googleService.existingUser(fromID: Email(rawValue: "formind.dev@happn.fr")!, propertiesToFetch: nil, using: app.services)
+//			let users = try await googleService.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: app.services)
+//			users.forEach{ print($0) }
+//		} catch let error as URLRequestOperationError {
+//			print(error)
+//			print((error.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.httpBody?.reduce("", { $0 + String(format: "%02x", $1) }))
+//		}
 //		do {
 //			var newAdmin = HappnUser(login: Email(rawValue: "officectl__test_user@happn.fr")!)
 //			newAdmin.firstName = "officectl"
