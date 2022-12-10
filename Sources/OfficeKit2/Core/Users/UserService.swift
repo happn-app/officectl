@@ -10,16 +10,17 @@ import Foundation
 import GenericJSON
 import ServiceKit
 
-import OfficeModelCore
-
 
 
 public protocol UserService<UserType> : OfficeService {
 	
 	associatedtype UserType : User
 	
-	/** These are the properties the user service supports. */
-	static var supportedUserProperties: Set<UserProperty> {get}
+	/**
+	 These are the properties the service supports.
+	 This is an instance property and not a static one because depending on configuration a given service could return different values.
+	 However for a given instance the value should never change. */
+	var supportedUserProperties: Set<UserProperty> {get}
 	
 	/** Convert the user to a user printable string. Mostly used for logging. */
 	func shortDescription(fromUser user: UserType) -> String
@@ -38,24 +39,31 @@ public protocol UserService<UserType> : OfficeService {
 	func json(fromUser user: UserType) throws -> JSON
 	
 	/**
-	 If possible, converts the given generic user to a user for the service with as much information as possible.
+	 Returns the different possible IDs from a given ID.
 	 
-	 The conversion should not fetch anything from the directory.
-	 It is simply a representation of how the given ID _should_ be created in the directory if it were to be created in it.
+	 Example: If you expect all of your users to be on a given domain, but you have a domain alias, and the underlying service do not support domain alias.
+	 In this case, you’d return `(regular: "user@main.domain", other: ["user@alias.domain"])`.
 	 
-	 Generally, the method implementation should first check the source service ID of the given user
-	  (which is actually the tag of the tagged ID of the wrapped user).
-	 If the user comes from your own service (the source service ID of the user and your service ID are equal),
-	  you should directly convert the underlying user of the given user (this is the equivalent of doing the reverse of ``UserService/json(fromUser:)``).
-	 Otherwise (the user comes from an unknown service), you should apply custom rules to create a user from the generic properties available in the wrapped user.
+	 In most cases, there should not be alternate IDs.
+	 In particular, if your service supports domain aliases natively, do **not** return any alternate IDs:
+	  the IDs of your user will predictably always be the one of the main domain.
 	 
-	 If the user wrapper has data that is inconsistent with the underlying user, the result of the method is undefined.
-	 Implementations can, but are not required to validate the user wrapper for consistency with its underlying user. */
-	func logicalUser<OtherUserType : User>(fromUser user: OtherUserType) throws -> UserType
+	 If you have alternate IDs, when getting the existing user for a given ID, alternate IDs should also be searched. */
+	func alternateIDs(fromUserID userID: UserType.UserIDType) -> (regular: UserType.UserIDType, other: Set<UserType.UserIDType>)
 	
-	/** Returns the properties that were successfully applied to the user. */
-	@discardableResult
-	func applyHints(_ hints: [UserProperty: String?], toUser user: inout UserType, allowUserIDChange: Bool) -> Set<UserProperty>
+	/**
+	 Returns the user ID the user should _logically_ get from the given user from another service.
+	 
+	 In theory, if you’re passed a user from the same service, the ID should be the same.
+	 In practice, sometimes the IDs can be incorrect.
+	 
+	 For instance if you create the email address of a user using the format `firstname.lastname@company.domain` and replacing spaces by dashes,
+	  it can happen that following a user error the spaces are removed instead of being replaced by dashes.
+	 
+	 To avoid this kind of issues and make the user uniquing go well between services,
+	  you _should_ always try and recognize the ID of the given user and work from that instead of working directly from other properties.
+	 For instance if your IDs are DNs and you get a user whose ID is an email, work directly from the email. */
+	func logicalUserID<OtherUserType : User>(fromUser user: OtherUserType) throws -> UserType.UserIDType
 	
 	/**
 	 Fetch and return the _only_ user matching the given ID.
@@ -69,7 +77,10 @@ public protocol UserService<UserType> : OfficeService {
 	 If `propertiesToFetch` is `nil`, **all** the properties supported should be fetched.
 	 
 	 If _more than one_ user matches the given ID, the function should **throw an error**.
-	 If _no_ users match the given ID, the method should return `nil`. */
+	 If _no_ users match the given ID, the method should return `nil`.
+	 
+	 If you support alternate IDs, you **must** also search for alternate IDs of the given ID.
+	 In general all aliases of the ID should be searched (if the underlying service supports domain aliases for instance, searching for an ID on one of the alias must find the user). */
 	func existingUser(fromID uID: UserType.UserIDType, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> UserType?
 	
 	/**
@@ -88,23 +99,6 @@ public protocol UserService<UserType> : OfficeService {
 	
 	var supportsPasswordChange: Bool {get}
 	func changePassword(of user: UserType, to newPassword: String, using services: Services) async throws
-	
-}
-
-
-extension UserService {
-	
-	/**
-	 Returns the value for the property.
-	 Always return either a `set` or `unsupported` property; never an `unset` one.
-	 (I’m not sure we’ll keep the concept of an `unset` property…) */
-	func valueForProperty(_ property: UserProperty, inUser user: UserType) -> RemoteProperty<Any?> {
-		guard Self.supportedUserProperties.contains(property) else {
-			return .unsupported
-		}
-		
-		return .set(user.valueForProperty(property))
-	}
 	
 }
 

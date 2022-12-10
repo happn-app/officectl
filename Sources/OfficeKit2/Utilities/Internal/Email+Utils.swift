@@ -19,8 +19,8 @@ public extension Email {
 	}
 	
 	/** Key of the alias map is a domain alias, value is the actual domain. */
-	func primaryDomainVariant(aliasMap: [String: String]) -> Email {
-		if let primary = aliasMap[domainPart] {
+	func primaryDomainVariant(aliasMap: [String: String]?) -> Email {
+		if let primary = aliasMap?[domainPart] {
 			return Email(self, newDomainPart: primary)
 		}
 		return self

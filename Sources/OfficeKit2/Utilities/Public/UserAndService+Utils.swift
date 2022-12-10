@@ -7,7 +7,9 @@
 
 import Foundation
 
+import CollectionConcurrencyKit
 import Email
+import Logging
 import OfficeModelCore
 
 import ServiceKit
@@ -28,20 +30,14 @@ public extension UserAndService {
 		return user.oU_persistentID.flatMap{ TaggedID(tag: service.id, id: service.string(fromPersistentUserID: $0)) }
 	}
 	
-	var wrappedUser: UserWrapper {
-		get throws {
-			var ret = UserWrapper(
-				id: taggedID,
-				persistentID: taggedPersistentID,
-				underlyingUser: try service.json(fromUser: user)
-			)
-			ret.copyStandardNonIDProperties(fromUser: user)
-			return ret
-		}
+	var userHints: UserHints {
+		return UserHints(uniqueKeysWithValues: service.supportedUserProperties.map{
+			($0, .some(user.oU_valueForProperty($0)))
+		})
 	}
 	
 	func fetch<OtherServiceType : UserService>(in otherService: OtherServiceType, propertiesToFetch: Set<UserProperty>? = [], using depServices: Services) async throws -> OtherServiceType.UserType? {
-		let otherID = try otherService.logicalUser(fromUser: user).oU_id
+		let otherID = try otherService.logicalUserID(fromUser: user)
 		return try await otherService.existingUser(fromID: otherID, propertiesToFetch: propertiesToFetch, using: depServices)
 	}
 	

@@ -9,6 +9,8 @@ import Foundation
 
 
 
+public typealias AnyUserPropertyValue = any Sendable
+
 public struct UserProperty : RawRepresentable, ExpressibleByStringLiteral, Sendable, Codable, Hashable, Equatable {
 	
 	/**

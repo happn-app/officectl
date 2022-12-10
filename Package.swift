@@ -52,8 +52,9 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/Frizlab/APIConnectionProtocols.git",         from: "1.0.0-beta.6"))
 		ret.append(.package(url: "https://github.com/Frizlab/HasResult.git",                      from: "1.0.0"))
 		ret.append(.package(url: "https://github.com/Frizlab/OperationAwaiting.git",              from: "1.2.0-beta.2"))
-		ret.append(.package(url: "https://github.com/Frizlab/swift-email.git",                    from: "0.2.3"))
+		ret.append(.package(url: "https://github.com/Frizlab/swift-email.git",                    from: "0.2.5"))
 		ret.append(.package(url: "https://github.com/Frizlab/UnwrapOrThrow.git",                  from: "1.0.0-beta.1"))
+		ret.append(.package(url: "https://github.com/happn-app/BMO.git",                          branch: "dev.tests")) /* Just for some convenience transformers. */
 		ret.append(.package(url: "https://github.com/happn-app/CollectionConcurrencyKit.git",     from: "0.2.0"))
 		ret.append(.package(url: "https://github.com/happn-app/officectl-model.git",              branch: "main"))
 		ret.append(.package(url: "https://github.com/happn-app/RetryingOperation.git",            from: "1.1.7"))
@@ -124,8 +125,9 @@ let package = Package(
 				var ret = [Target.Dependency]()
 				ret.append(contentsOf: coreDependencies)
 				ret.append(.product(name: "APIConnectionProtocols",   package: "APIConnectionProtocols"))
-				ret.append(.product(name: "URLRequestOperation", package: "URLRequestOperation"))
-				ret.append(.product(name: "XibLoc", package: "XibLoc"))
+				ret.append(.product(name: "URLRequestOperation",      package: "URLRequestOperation"))
+				ret.append(.product(name: "RESTUtils",                package: "BMO"))
+				ret.append(.product(name: "XibLoc",                   package: "XibLoc"))
 				return ret
 			}(),
 			swiftSettings: commonSwiftSettings

@@ -11,7 +11,9 @@ import Foundation
 
 public enum OfficeKitError : Error, Sendable {
 	
-	case invalidJSONEncodedUserWrapper
+	case notImplemented
+	
+	case invalidJSONEncodedGenericUser
 	
 	/** Error thrown by `logicalUser(fromWrappedUser:, hints:)` when the the conversion is not possible (missing info to compute id of user, for instance). */
 	case cannotCreateLogicalUserFromOtherUser

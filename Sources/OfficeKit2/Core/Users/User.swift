@@ -8,6 +8,7 @@
 import Foundation
 
 import Email
+import GenericJSON
 import OfficeModelCore
 
 
@@ -16,6 +17,8 @@ public protocol User<UserIDType> : Sendable {
 	
 	associatedtype UserIDType : Hashable & Sendable
 	associatedtype PersistentUserIDType : Hashable & Sendable
+	
+	init(oU_id userID: UserIDType)
 	
 	/**
 	 NON-Optional because even for locally created user, the ID must be _decided_.
@@ -33,14 +36,19 @@ public protocol User<UserIDType> : Sendable {
 	
 	var oU_emails: [Email]? {get}
 	
-	func oU_valueForNonStandardProperty(_ property: String) -> Any?
+	func oU_valueForNonStandardProperty(_ property: String) -> (any Sendable)?
+	/**
+	 When setting to `nil`, the property should be removed.
+	 
+	 - Returns: `true` if the property was modified, `false` otherwise. */
+	mutating func oU_setValue(_ value: (any Sendable)?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool
 	
 }
 
 
 public extension User {
 	
-	func valueForProperty(_ property: UserProperty) -> Any? {
+	func oU_valueForProperty(_ property: UserProperty) -> Any? {
 		switch property {
 			case .id:           return oU_id
 			case .persistentID: return oU_persistentID
@@ -53,6 +61,13 @@ public extension User {
 				assert(!property.isStandard)
 				return oU_valueForNonStandardProperty(property.rawValue)
 		}
+	}
+	
+	mutating func oU_applyHints(_ hints: [UserProperty: (any Sendable)?], allowIDChange: Bool, convertMismatchingTypes: Bool) -> Set<UserProperty> {
+		return Set(hints.compactMap{ kv in
+			oU_setValue(kv.value, forProperty: kv.key, allowIDChange: allowIDChange, convertMismatchingTypes: convertMismatchingTypes) ?
+				kv.key : nil
+		})
 	}
 	
 }

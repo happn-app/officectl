@@ -73,7 +73,13 @@ public final class HappnService : UserService {
 		return try JSON(encodable: user)
 	}
 	
-	public func logicalUser<OtherUserType>(fromUser user: OtherUserType) throws -> HappnUser where OtherUserType : User {
+	public func alternateIDs(fromUserID userID: Email) -> (regular: Email, other: [Email]) {
+		let regular = userID.primaryDomainVariant(aliasMap: config.domainAliases)
+		let other = regular.allDomainVariants(aliasMap: config.domainAliases).subtracting([regular]).sorted{ $0.rawValue < $1.rawValue }
+		return (regular, other)
+	}
+	
+	public func logicalUserID<OtherUserType>(fromUser user: OtherUserType) throws -> Email where OtherUserType : User {
 		let id = config.userIDBuilders?.lazy
 			.compactMap{ $0.inferID(fromUser: user) }
 			.compactMap{ Email(rawValue: $0) }
@@ -81,19 +87,13 @@ public final class HappnService : UserService {
 		guard let id else {
 			throw OfficeKitError.cannotCreateLogicalUserFromOtherUser
 		}
-		
-		var ret = HappnUser(login: id)
-		ret.firstName = user.oU_firstName
-		ret.lastName = user.oU_lastName
-		ret.nickname = user.oU_nickname
-		ret.gender = user.valueForProperty(.gender) as? Gender
-		ret.birthDate = user.valueForProperty(.birthdate) as? Date
-		return ret
+		return id
 	}
 	
-	public func applyHints(_ hints: [UserProperty : String?], toUser user: inout HappnUser, allowUserIDChange: Bool) -> Set<UserProperty> {
+	public func applyHints(_ hints: [UserProperty : Any?], toUser user: inout HappnUser, allowUserIDChange: Bool) -> Set<UserProperty> {
 		var ret = Set<UserProperty>()
 		for (property, newValue) in hints {
+			user.oU_setValue(newValue, forNonStandardProperty: <#T##String#>)
 			let touchedKey: Bool
 			switch property {
 				case .id, UserProperty("login"):
@@ -119,7 +119,7 @@ public final class HappnService : UserService {
 	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
 		
-		let ids = Set(uID.allDomainVariants(aliasMap: config.domainAliases))
+		let ids = Set(uID.allDomainVariants(aliasMap: allowIDVariants ? config.domainAliases : nil))
 		let users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector) }
 		guard users.count <= 1 else {
 			throw Err.tooManyUsersFromAPI(id: uID)

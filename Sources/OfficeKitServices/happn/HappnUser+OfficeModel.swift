@@ -15,6 +15,10 @@ import OfficeKit2
 
 extension HappnUser : User {
 	
+	public init(oU_id userID: Email) {
+		self.login = userID
+	}
+	
 	public var oU_id: Email {login}
 	public var oU_persistentID: String? {id}
 	

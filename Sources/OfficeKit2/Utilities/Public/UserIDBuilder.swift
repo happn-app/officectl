@@ -25,7 +25,7 @@ public struct UserIDBuilder : Sendable, Codable {
 		var gotError = false
 		let resolvingInfo = Str2StrXibLocInfo()
 			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "|"), replacement: { variable in
-				guard let v = (user.valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? String else {
+				guard let v = (user.oU_valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? String else {
 					gotError = true
 					return "MISSING_VALUE"
 				}
@@ -39,7 +39,7 @@ public struct UserIDBuilder : Sendable, Codable {
 				return transformed.replacingOccurrences(of: " ", with: "-")
 			})!
 			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "#"), replacement: { variable in
-				guard let email = (user.valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? Email else {
+				guard let email = (user.oU_valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? Email else {
 					gotError = true
 					return "MISSING_VALUE_OR_INVALID_EMAIL"
 				}
@@ -53,7 +53,7 @@ public struct UserIDBuilder : Sendable, Codable {
 				}
 				
 				let variable = String(parts[0])
-				guard let dn = (user.valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? DistinguishedName else {
+				guard let dn = (user.oU_valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? DistinguishedName else {
 					gotError = true
 					return "MISSING_VALUE_OR_INVALID_DISTINGUISHED_NAME"
 				}
