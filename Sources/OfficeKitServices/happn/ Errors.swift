@@ -17,7 +17,6 @@ public enum HappnOfficeError : Error, Sendable {
 	case noPersistentID
 	case notConnected
 	
-	case tooManyUsersFromAPI(id: Email)
 	case apiError(code: Int, message: String)
 	
 	case unsupportedOperation

@@ -90,6 +90,11 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			print("=====")
 			print("happn: \(multiVivien[HashableUserService(happnService)])")
 			print("Gougle: \(multiVivien[HashableUserService(googleService)])")
+			let françois = try await googleService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: nil, using: app.services)!
+			let multiFrançois = try await MultiServicesUser.fetch(from: UserAndServiceFrom(user: françois, service: googleService)!, in: allServices, propertiesToFetch: nil, using: app.services)
+			print("=====")
+			print("happn: \(multiFrançois[HashableUserService(happnService)])")
+			print("Gougle: \(multiFrançois[HashableUserService(googleService)])")
 		} catch {
 			print(error)
 		}

@@ -96,7 +96,7 @@ public final class HappnService : UserService {
 		let ids = Set(uID.allDomainVariants(aliasMap: config.domainAliases))
 		let users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector) }
 		guard users.count <= 1 else {
-			throw Err.tooManyUsersFromAPI(id: uID)
+			throw OfficeKitError.tooManyUsersFromAPI(users: users)
 		}
 		
 		return users.first
