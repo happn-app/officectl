@@ -35,7 +35,7 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 	   MARK: User Service
 	   ****************** */
 	
-	static let supportedUserProperties: Set<UserProperty> = []
+	let supportedUserProperties: Set<UserProperty> = []
 	
 	func shortDescription(fromUser user: DummyUser2) -> String {
 		return "<ERROR>"
@@ -59,12 +59,11 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
-	func logicalUser<OtherUserType>(fromUser user: OtherUserType) throws -> DummyUser2 where OtherUserType : User {
-		throw TheDummyServiceCannotBeUsed()
+	func alternateIDs(fromUserID userID: Never) -> (regular: Never, other: Set<Never>) {
 	}
 	
-	func applyHints(_ hints: [UserProperty : String?], toUser user: inout DummyUser2, allowUserIDChange: Bool) -> Set<UserProperty> {
-		return []
+	func logicalUserID<OtherUserType : User>(fromUser user: OtherUserType) throws -> Never {
+		throw TheDummyServiceCannotBeUsed()
 	}
 	
 	func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser2? {
