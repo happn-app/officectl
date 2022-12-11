@@ -25,7 +25,7 @@ public struct UserIDBuilder : Sendable, Codable {
 		var gotError = false
 		let resolvingInfo = Str2StrXibLocInfo()
 			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "|"), replacement: { variable in
-				guard let v = (user.oU_valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? String else {
+				guard let v = Converters.convertObjectToString(user.oU_valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) else {
 					gotError = true
 					return "MISSING_VALUE"
 				}

@@ -11,18 +11,31 @@ import Foundation
 
 public enum OfficeKitError : Error, Sendable {
 	
-	case notImplemented
+	/**
+	 Error thrown by ``UserService/existingUser(fromID:propertiesToFetch:using:)`` when there are more than one user matching the given ID.
+	 
+	 This can happen for instance when a service only supports domain aliases virtually, but the underlying service does not support it. */
+	case tooManyUsersFromAPI(users: [any User])
 	
-	case invalidJSONEncodedGenericUser
-	
-	/** Error thrown by `logicalUser(fromWrappedUser:, hints:)` when the the conversion is not possible (missing info to compute id of user, for instance). */
-	case cannotCreateLogicalUserFromOtherUser
-	var isCannotCreateLogicalUserFromOtherUser: Bool {
-		/* We create a special computed var because I’m pretty sure we’ll have cases with arguments some day… */
-		if case .cannotCreateLogicalUserFromOtherUser = self {return true}
-		else                                                 {return false}
-	}
+	/** Error thrown by ``UserService/logicalUserID(fromUser:)`` when the user ID computation is not possible (missing info from the user for instance). */
+	case cannotInferUserIDFromOtherUser
 	
 }
 
 typealias Err = OfficeKitError
+
+
+/* *****************
+   MARK: - Utilities
+   ***************** */
+
+public extension OfficeKitError {
+	
+	var isCannotInferUserIDFromOtherUser: Bool {
+		switch self {
+			case .cannotInferUserIDFromOtherUser: return true
+			default:                              return false
+		}
+	}
+	
+}

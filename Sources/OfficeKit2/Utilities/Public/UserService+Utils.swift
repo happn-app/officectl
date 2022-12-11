@@ -14,6 +14,16 @@ import OfficeModelCore
 
 public extension UserService {
 	
+	func taggedID(fromUserID userID: UserType.UserIDType) -> TaggedID {
+		TaggedID(tag: id, id: string(fromUserID: userID))
+	}
+	
+	func allLogicalTaggedIDs<OtherUserType : User>(fromOtherUser user: OtherUserType) throws -> Set<TaggedID> {
+		let logicalUserID = try logicalUserID(fromUser: user)
+		let allIDs = alternateIDs(fromUserID: logicalUserID)
+		return Set([taggedID(fromUserID: allIDs.regular)] + allIDs.other.map{ taggedID(fromUserID: $0) })
+	}
+	
 	/**
 	 Returns the value for the property.
 	 Always return either a `set` or `unsupported` property; never an `unset` one.

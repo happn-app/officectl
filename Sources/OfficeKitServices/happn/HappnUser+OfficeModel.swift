@@ -30,7 +30,7 @@ extension HappnUser : User {
 	
 	public var oU_emails: [Email]? {[login]}
 	
-	public func oU_valueForNonStandardProperty(_ property: String) -> Any? {
+	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		switch UserProperty(rawValue: property) {
 			case .gender:    return gender
 			case .birthdate: return birthDate
@@ -38,6 +38,24 @@ extension HappnUser : User {
 		}
 	}
 	
+	public mutating func oU_setValue(_ newValue: Sendable?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool {
+		switch property {
+			case .id, UserProperty("login"):
+				guard allowIDChange else {return false}
+				Conf.logger?.error("Changing the id of a happn user is not supported by the happn API.")
+				return false
+				
+#warning("TODO")
+//			case .firstName: return HappnUser.setValueIfNeeded(newValue, in: &firstName)
+//			case .lastName:  return HappnUser.setValueIfNeeded(newValue, in: &lastName)
+//			case .nickname:  return HappnUser.setValueIfNeeded(newValue, in: &nickname)
+//			case .gender:    return HappnUser.setValueIfNeeded(newValue, in: &gender)
+//			case .birthdate: return HappnUser.setValueIfNeeded(newValue, in: &birthDate, converter: { HappnBirthDateWrapper.birthDateFormatter.date(from: $0) })
+//			case .password:  return HappnUser.setValueIfNeeded(newValue, in: &password)
+			default:         return false
+		}
+	}
+
 	/* ***************
 	   MARK: - Private
 	   *************** */

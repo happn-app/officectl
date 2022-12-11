@@ -78,7 +78,7 @@ public extension MultiServicesUser {
 					OfficeKitConfig.logger?.error("Internal error: Got a service which has no result, that should not be possible. service = \(service)")
 					return true
 				}
-				return (result.failureValue?.errors.last as? Err)?.isCannotCreateLogicalUserFromOtherUser ?? false
+				return (result.failureValue?.errors.last as? Err)?.isCannotInferUserIDFromOtherUser ?? false
 			}
 			/* Compute all the service for which we have a user that we do not already have tried fetching from. */
 			let servicesWithAUser = res.compactMap{
@@ -145,40 +145,45 @@ public extension MultiServicesUser {
 	 (The argument is only useful when `validServices` is set to a non-`nil` value.)
 	 
 	 - Note: The method is async though everything in it is synchronous because the computation can be long and we want not to block everything while the computation is going on.
-	 Maybe we should check with absolute certainty the function will actually be called in the bg, but from my limited testing it seems it should be. */
+	 Maybe we should check with absolute certainty the function will actually be called in the bg, but from my limited testing it seems that it should be. */
 	static func merge(usersAndServices: [any UserAndService], validServices: Set<HashableUserService>? = nil, allowNonValidServices: Bool = false) async throws -> [MultiServicesUser] {
 		/* Transform the input to get something we can use (UserAndService to LinkedUsers + extracting the list of services). */
 		let services: Set<HashableUserService>
-		let linkedUsersByUserAndService: [HashableUserAndService: LinkedUser]
+		let linkedUsersByTaggedID: [TaggedID: LinkedUser]
 		do {
 			var servicesBuilding = Set<HashableUserService>()
-			var linkedUsersByUserAndServiceBuilding = [HashableUserAndService: LinkedUser](minimumCapacity: usersAndServices.count)
+			var linkedUsersByTaggedIDBuilding = [TaggedID: LinkedUser](minimumCapacity: usersAndServices.count)
 			for userAndService in usersAndServices {
-				let hashableUserAndService = HashableUserAndService(userAndService)
-				guard linkedUsersByUserAndServiceBuilding[hashableUserAndService] == nil else {
+				let taggedID = userAndService.taggedID
+				guard linkedUsersByTaggedIDBuilding[taggedID] == nil else {
 					OfficeKitConfig.logger?.warning("UserAndService \(userAndService) found more than once in merge request; ignoring...")
 					continue
 				}
-				linkedUsersByUserAndServiceBuilding[hashableUserAndService] = LinkedUser(userAndService: userAndService)
+				linkedUsersByTaggedIDBuilding[taggedID] = LinkedUser(userAndService: userAndService)
 				servicesBuilding.insert(.init(userAndService.service))
 			}
-			linkedUsersByUserAndService = linkedUsersByUserAndServiceBuilding
+			linkedUsersByTaggedID = linkedUsersByTaggedIDBuilding
 			services = servicesBuilding
 		}
 		let validServices = validServices ?? services
 		
 		/* Compute relations between the users. */
-		for (_, linkedUser) in linkedUsersByUserAndService {
+		for (_, linkedUser) in linkedUsersByTaggedID {
 			let currentUserServiceID = linkedUser.userAndService.serviceID
 			for service in services {
 				let serviceID = service.value.id
 				guard serviceID != currentUserServiceID else {continue}
-				guard let logicallyLinkedPair = try? UserAndServiceFrom(user: service.value.logicalUser(fromUser: linkedUser.userAndService.user), service: service.value)! else {
-//					OfficeKitConfig.logger?.debug("Error finding logically linked user with: {\n  source service ID: \(currentUserServiceID)\n  dest service ID:\(serviceID)\n  source user pair: \(linkedUser.userAndService)\n}")
+				guard let logicallyLinkedTaggedIDs = try? service.value.allLogicalTaggedIDs(fromOtherUser: linkedUser.userAndService.user) else {
+//					OfficeKitConfig.logger?.debug("Error finding logically linked user IDs with: {\n  source service ID: \(currentUserServiceID)\n  dest service ID:\(serviceID)\n  source user pair: \(linkedUser.userAndService)\n}")
 					continue
 				}
-				guard let logicallyLinkedLinkedUser = linkedUsersByUserAndService[.init(logicallyLinkedPair)] else {
+				let logicallyLinkedLinkedUsers = logicallyLinkedTaggedIDs.compactMap{ linkedUsersByTaggedID[$0] }
+				guard !logicallyLinkedLinkedUsers.isEmpty else {
 //					OfficeKitConfig.logger?.debug("Found logically linked user, but user does not exist: {\n  source service ID: \(currentUserServiceID)\n  dest service ID:\(serviceID)\n  source user pair: \(linkedUser.userAndService)\n  dest user pair: \(logicallyLinkedPair.dsuIDPair)\n}")
+					continue
+				}
+				guard let logicallyLinkedLinkedUser = logicallyLinkedLinkedUsers.onlyElement else {
+					#warning("TODO: Report the user is linked to more than one user in this service.")
 					continue
 				}
 				try linkedUser.link(to: logicallyLinkedLinkedUser)
@@ -187,20 +192,20 @@ public extension MultiServicesUser {
 		
 		/* Merge the linked users in MultiServicesUsers. */
 		var treatedUsersAndServices = Set<TaggedID>()
-		return try linkedUsersByUserAndService.compactMap{ kv -> MultiServicesUser? in
-			let (userAndService, linkedUser) = kv
+		return try linkedUsersByTaggedID.compactMap{ kv -> MultiServicesUser? in
+			let (taggedID, linkedUser) = kv
 			
-			guard treatedUsersAndServices.insert(userAndService.value.taggedID).inserted else {return nil}
+			guard treatedUsersAndServices.insert(taggedID).inserted else {return nil}
 			
-			guard allowNonValidServices || validServices.contains(.init(userAndService.value.service)) else {
-				OfficeKitConfig.logger?.info("Not adding UserAndService \(userAndService) in multi-user because it doesn’t have an explicitly-declared-valid service")
+			guard allowNonValidServices || validServices.contains(where: { $0.value.id == taggedID.tag }) else {
+				OfficeKitConfig.logger?.info("Not adding UserAndService \(taggedID) in multi-user because it doesn’t have an explicitly-declared-valid service")
 				return nil
 			}
 			
 			var res: [HashableUserService: (any User)?] = [.init(linkedUser.userAndService.service): linkedUser.userAndService.user]
 			for subLinkedUser in linkedUser.linkedUserByService.values {
 				guard !treatedUsersAndServices.contains(subLinkedUser.userAndService.taggedID) else {
-					throw InternalError(message: "Got already treated linked user! \(subLinkedUser.userAndService) for \(userAndService)")
+					throw InternalError(message: "Got already treated linked user! \(subLinkedUser.userAndService) for \(taggedID)")
 				}
 				guard res[subLinkedUser.userAndService.service] == nil else {
 					throw InternalError(message: "Got two users for service ID \(subLinkedUser.userAndService.serviceID): \(res[subLinkedUser.userAndService.service]!!) and \(subLinkedUser.userAndService)")

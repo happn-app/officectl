@@ -22,10 +22,6 @@ public final class HappnService : UserService {
 	
 	public static let providerID: String = "happn/happn"
 	
-	public static var supportedUserProperties: Set<UserProperty> {
-		return Set(HappnUser.propertyToKeys.filter{ !$0.value.isEmpty }.map{ $0.key })
-	}
-	
 	public typealias UserType = HappnUser
 	
 	public let id: String
@@ -44,6 +40,10 @@ public final class HappnService : UserService {
 			username: config.connectorSettings.adminUsername,
 			password: config.connectorSettings.adminPassword
 		)
+	}
+	
+	public var supportedUserProperties: Set<UserProperty> {
+		return Set(HappnUser.propertyToKeys.filter{ !$0.value.isEmpty }.map{ $0.key })
 	}
 	
 	public func shortDescription(fromUser user: HappnUser) -> String {
@@ -73,9 +73,9 @@ public final class HappnService : UserService {
 		return try JSON(encodable: user)
 	}
 	
-	public func alternateIDs(fromUserID userID: Email) -> (regular: Email, other: [Email]) {
+	public func alternateIDs(fromUserID userID: Email) -> (regular: Email, other: Set<Email>) {
 		let regular = userID.primaryDomainVariant(aliasMap: config.domainAliases)
-		let other = regular.allDomainVariants(aliasMap: config.domainAliases).subtracting([regular]).sorted{ $0.rawValue < $1.rawValue }
+		let other = regular.allDomainVariants(aliasMap: config.domainAliases).subtracting([regular])
 		return (regular, other)
 	}
 	
@@ -85,41 +85,15 @@ public final class HappnService : UserService {
 			.compactMap{ Email(rawValue: $0) }
 			.first{ _ in true } /* Not a simple `.first` because of https://stackoverflow.com/a/71778190 (avoid the handler(s) to be called more than once). */
 		guard let id else {
-			throw OfficeKitError.cannotCreateLogicalUserFromOtherUser
+			throw OfficeKitError.cannotInferUserIDFromOtherUser
 		}
 		return id
-	}
-	
-	public func applyHints(_ hints: [UserProperty : Any?], toUser user: inout HappnUser, allowUserIDChange: Bool) -> Set<UserProperty> {
-		var ret = Set<UserProperty>()
-		for (property, newValue) in hints {
-			user.oU_setValue(newValue, forNonStandardProperty: <#T##String#>)
-			let touchedKey: Bool
-			switch property {
-				case .id, UserProperty("login"):
-					guard allowUserIDChange else {continue}
-					Conf.logger?.error("Changing the id of a happn user is not supported by the happn API.")
-					touchedKey = false
-					
-				case .firstName: touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.firstName)
-				case .lastName:  touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.lastName)
-				case .nickname:  touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.nickname)
-				case .gender:    touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.gender)
-				case .birthdate: touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.birthDate, converter: { HappnBirthDateWrapper.birthDateFormatter.date(from: $0) })
-				case .password:  touchedKey = HappnUser.setValueIfNeeded(newValue, in: &user.password)
-				default:         touchedKey = false
-			}
-			if touchedKey {
-				ret.insert(property)
-			}
-		}
-		return ret
 	}
 	
 	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
 		
-		let ids = Set(uID.allDomainVariants(aliasMap: allowIDVariants ? config.domainAliases : nil))
+		let ids = Set(uID.allDomainVariants(aliasMap: config.domainAliases))
 		let users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector) }
 		guard users.count <= 1 else {
 			throw Err.tooManyUsersFromAPI(id: uID)

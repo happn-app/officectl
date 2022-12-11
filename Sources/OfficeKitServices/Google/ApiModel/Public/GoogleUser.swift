@@ -30,12 +30,11 @@ public struct GoogleUser : Sendable, Hashable, Codable {
 	public struct Name : Sendable, Codable, Hashable {
 		
 		public var givenName: String
-		public var familyName: String
+		public var familyName: String?
 		public var fullName: String?
 		
 		public init(givenName: String? = nil, familyName: String? = nil) {
 			self.givenName = givenName ?? ""
-			self.familyName = familyName ?? ""
 		}
 		
 	}

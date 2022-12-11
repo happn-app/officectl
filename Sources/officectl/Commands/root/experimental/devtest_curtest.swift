@@ -73,6 +73,7 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 				"admin_password": .string(oldConfHappn.connectorSettings.authMode.password!),
 			]),
 			"user_id_builders": JSON(encodable: [
+				UserIDBuilder(format: "|id|"),
 				UserIDBuilder(format: "*|first_name|.|last_name|*@happn.fr")
 			])
 		]))
@@ -86,7 +87,7 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			}
 			let vivien = try await googleService.existingUser(fromID: Email(rawValue: "vivien.toubeau@happn.fr")!, propertiesToFetch: nil, using: app.services)!
 			let multiVivien = try await MultiServicesUser.fetch(from: UserAndServiceFrom(user: vivien, service: googleService)!, in: allServices, propertiesToFetch: nil, using: app.services)
-			print("-----")
+			print("=====")
 			print("happn: \(multiVivien[HashableUserService(happnService)])")
 			print("Gougle: \(multiVivien[HashableUserService(googleService)])")
 		} catch {
