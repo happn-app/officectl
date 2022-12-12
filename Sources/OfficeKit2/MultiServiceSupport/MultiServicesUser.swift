@@ -169,10 +169,7 @@ public extension MultiServicesUser {
 		
 		/* Compute relations between the users. */
 		for (_, linkedUser) in linkedUsersByTaggedID {
-			let currentUserServiceID = linkedUser.userAndService.serviceID
 			for service in services {
-				let serviceID = service.value.id
-				guard serviceID != currentUserServiceID else {continue}
 				guard let logicallyLinkedTaggedIDs = try? service.value.allLogicalTaggedIDs(fromOtherUser: linkedUser.userAndService.user) else {
 //					OfficeKitConfig.logger?.debug("Error finding logically linked user IDs with: {\n  source service ID: \(currentUserServiceID)\n  dest service ID:\(serviceID)\n  source user pair: \(linkedUser.userAndService)\n}")
 					continue
@@ -210,20 +207,32 @@ public extension MultiServicesUser {
 				res[.init(linkedUser.userAndService.service)] = .failure(Err.tooManyUsersFromAPI(users: users))
 			}
 			
-			for subLinkedUsers in linkedUser.linkedUsersByServices.values {
+			for (service, subLinkedUsers) in linkedUser.linkedUsersByServices {
 				assert(!linkedUser.linkedUsersByServices.isEmpty)
+				
+				let service = service.value
+				assert(subLinkedUsers.allSatisfy{ $0.userAndService.serviceID == service.id })
+				
+				/* When the loop is done, all the linked users will be treated. */
+				defer {treatedUsersAndServices.formUnion(subLinkedUsers.map(\.userAndService.taggedID))}
+				
 				guard let subLinkedUser = subLinkedUsers.onlyElement else {
-					res[subLinkedUsers.randomElement()!.userAndService.service] = .failure(Err.tooManyUsersFromAPI(users: Array(subLinkedUsers.map{ $0.userAndService.user })))
+					/* There are more than one sub-linked user for the current service; we fail. */
+					res[service] = .failure(Err.tooManyUsersFromAPI(users: Array(subLinkedUsers.map{ $0.userAndService.user })))
 					continue
 				}
+				
+				/* Let’s do an internal logic validation check. */
 				guard !treatedUsersAndServices.contains(subLinkedUser.userAndService.taggedID) else {
-					throw InternalError(message: "Got already treated linked user! \(subLinkedUser.userAndService) for \(taggedID)")
+					throw InternalError(message: "Got already treated linked user! \(subLinkedUser) for \(taggedID)")
 				}
+				/* And another. */
 				guard res[subLinkedUser.userAndService.service] == nil else {
 					throw InternalError(message: "Got two linked users for service ID \(subLinkedUser.userAndService.serviceID): \(res[subLinkedUser.userAndService.service]!) and \(subLinkedUser.userAndService)")
 				}
+				
+				/* Finally we’re good! We can set the value of the multi-services user for the given service. */
 				res[subLinkedUser.userAndService.service] = .success(subLinkedUser.userAndService.user)
-				treatedUsersAndServices.insert(subLinkedUser.userAndService.taggedID)
 			}
 			/* Setting a value for all valid services IDs */
 			for s in validServices {
@@ -264,11 +273,6 @@ private class LinkedUser : Hashable, CustomStringConvertible {
 		self.userAndService = userAndService
 	}
 	
-	func link(to linkedUser: LinkedUser) throws {
-		var visited = Set<[TaggedID]>()
-		return try link(to: linkedUser, visited: &visited)
-	}
-	
 	subscript<Service : UserService>(_ service: Service) -> Set<LinkedUser> {
 		get {
 			if service.id == userAndService.serviceID {return linkedUsersSameService}
@@ -280,18 +284,22 @@ private class LinkedUser : Hashable, CustomStringConvertible {
 		}
 	}
 	
+	func link(to linkedUser: LinkedUser) throws {
+		var visited = Set<[TaggedID]>()
+		return try link(to: linkedUser, visited: &visited)
+	}
+	
 	private func link(to linkedUser: LinkedUser, visited: inout Set<[TaggedID]>) throws {
-		guard visited.insert([userAndService.taggedID, linkedUser.userAndService.taggedID]).inserted else {return}
-		
-		guard userAndService.taggedID != linkedUser.userAndService.taggedID else {
-			/* Not linking myself to myself… */
+		guard visited.insert([userAndService.taggedID, linkedUser.userAndService.taggedID]).inserted else {
 			return
 		}
 		
-		/* Make the actual link. */
-		self[linkedUser.userAndService.service].insert(linkedUser)
-		/* Make the reverse link. */
-		try linkedUser.link(to: self, visited: &visited)
+		if userAndService.taggedID != linkedUser.userAndService.taggedID {
+			/* Make the actual link. */
+			self[linkedUser.userAndService.service].insert(linkedUser)
+			/* Make the reverse link. */
+			try linkedUser.link(to: self, visited: &visited)
+		}
 		/* Link related users. */
 		for toLink in (linkedUsersByServices.values.flatMap{ $0 }) {
 			assert(toLink.linkedUsersByServices.values.flatMap{ $0 }.contains(where: { $0.userAndService.taggedID == userAndService.taggedID }))
