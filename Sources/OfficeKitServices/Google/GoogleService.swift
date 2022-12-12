@@ -86,11 +86,7 @@ public final class GoogleService : UserService {
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GoogleUser? {
 		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
-		let ret = try await GoogleUser.get(id: pID, propertiesToFetch: GoogleUser.keysFromProperties(propertiesToFetch), connector: connector)
-		if ret?.isSuspended ?? true {
-			return nil
-		}
-		return ret
+		return try await GoogleUser.get(id: pID, propertiesToFetch: GoogleUser.keysFromProperties(propertiesToFetch), connector: connector)
 	}
 	
 	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GoogleUser? {
