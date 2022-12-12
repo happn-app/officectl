@@ -79,22 +79,37 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 		]))
 		do {
 			let allServices = Set([HashableUserService(happnService), HashableUserService(googleService)])
-			let res = try await MultiServicesUser.fetchAll(in: allServices, using: app.services)
-			res.users.forEach{
-				print("-----")
-				print("happn: \($0[HashableUserService(happnService)]!)")
-				print("Gougle: \($0[HashableUserService(googleService)]!)")
+			do {
+				let res = try await MultiServicesUser.fetchAll(in: allServices, using: app.services)
+				res.users.forEach{
+					print("-----")
+					print("happn: \($0[HashableUserService(happnService)]!)")
+					print("Gougle: \($0[HashableUserService(googleService)]!)")
+				}
 			}
-			let vivien = try await googleService.existingUser(fromID: Email(rawValue: "vivien.toubeau@happn.fr")!, propertiesToFetch: nil, using: app.services)!
-			let multiVivien = try await MultiServicesUser.fetch(from: UserAndServiceFrom(user: vivien, service: googleService)!, in: allServices, propertiesToFetch: nil, using: app.services)
-			print("=====")
-			print("happn: \(multiVivien[HashableUserService(happnService)])")
-			print("Gougle: \(multiVivien[HashableUserService(googleService)])")
-			let françois = try await googleService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: nil, using: app.services)!
-			let multiFrançois = try await MultiServicesUser.fetch(from: UserAndServiceFrom(user: françois, service: googleService)!, in: allServices, propertiesToFetch: nil, using: app.services)
-			print("=====")
-			print("happn: \(multiFrançois[HashableUserService(happnService)])")
-			print("Gougle: \(multiFrançois[HashableUserService(googleService)])")
+//			do {
+//				let allHappn = try await happnService.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: app.services)
+//				let françoisfr  = allHappn.first(where: { $0.oU_id == Email(rawValue: "francois.lamboley@happn.fr")! })!
+//				let françoiscom = allHappn.first(where: { $0.oU_id == Email(rawValue: "francois.lamboley@happn.com")! })!
+//				let multiFrançois = try await MultiServicesUser.merge(usersAndServices: [
+//					UserAndServiceFrom(user: françoisfr,  service: happnService)!,
+//					UserAndServiceFrom(user: françoiscom, service: happnService)!
+//				])
+//				multiFrançois.forEach{
+//					print("-----")
+//					print("happn: \($0[HashableUserService(happnService)]!)")
+//				}
+//			}
+//			let vivien = try await googleService.existingUser(fromID: Email(rawValue: "vivien.toubeau@happn.fr")!, propertiesToFetch: nil, using: app.services)!
+//			let multiVivien = try await MultiServicesUser.fetch(from: UserAndServiceFrom(user: vivien, service: googleService)!, in: allServices, propertiesToFetch: nil, using: app.services)
+//			print("=====")
+//			print("happn: \(multiVivien[HashableUserService(happnService)])")
+//			print("Gougle: \(multiVivien[HashableUserService(googleService)])")
+//			let françois = try await googleService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: nil, using: app.services)!
+//			let multiFrançois = try await MultiServicesUser.fetch(from: UserAndServiceFrom(user: françois, service: googleService)!, in: allServices, propertiesToFetch: nil, using: app.services)
+//			print("=====")
+//			print("happn: \(multiFrançois[HashableUserService(happnService)])")
+//			print("Gougle: \(multiFrançois[HashableUserService(googleService)])")
 		} catch {
 			print(error)
 		}

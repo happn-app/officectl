@@ -178,15 +178,7 @@ public extension MultiServicesUser {
 					continue
 				}
 				let logicallyLinkedLinkedUsers = logicallyLinkedTaggedIDs.compactMap{ linkedUsersByTaggedID[$0] }
-				guard !logicallyLinkedLinkedUsers.isEmpty else {
-//					OfficeKitConfig.logger?.debug("Found logically linked user, but user does not exist: {\n  source service ID: \(currentUserServiceID)\n  dest service ID:\(serviceID)\n  source user pair: \(linkedUser.userAndService)\n  dest user pair: \(logicallyLinkedPair.dsuIDPair)\n}")
-					continue
-				}
-				guard let logicallyLinkedLinkedUser = logicallyLinkedLinkedUsers.onlyElement else {
-					#warning("TODO: Report the user is linked to more than one user in this service.")
-					continue
-				}
-				try linkedUser.link(to: logicallyLinkedLinkedUser)
+				try logicallyLinkedLinkedUsers.forEach{ try linkedUser.link(to: $0) }
 			}
 		}
 		
@@ -194,44 +186,78 @@ public extension MultiServicesUser {
 		var treatedUsersAndServices = Set<TaggedID>()
 		return try linkedUsersByTaggedID.compactMap{ kv -> MultiServicesUser? in
 			let (taggedID, linkedUser) = kv
+			assert(taggedID == linkedUser.userAndService.taggedID)
 			
+			/* If the current linked user is treated, no need to do it again. */
 			guard treatedUsersAndServices.insert(taggedID).inserted else {return nil}
+			
+			/* Mark other linked users from the same service as treated. */
+			treatedUsersAndServices.formUnion(linkedUser.linkedUsersSameService.map(\.userAndService.taggedID))
 			
 			guard allowNonValidServices || validServices.contains(where: { $0.value.id == taggedID.tag }) else {
 				OfficeKitConfig.logger?.info("Not adding UserAndService \(taggedID) in multi-user because it doesn’t have an explicitly-declared-valid service")
 				return nil
 			}
 			
-			var res: [HashableUserService: (any User)?] = [.init(linkedUser.userAndService.service): linkedUser.userAndService.user]
-			for subLinkedUser in linkedUser.linkedUserByService.values {
+			/* Initial result for the current linked user’s service.
+			 * If there is only one user it’s good, we have a success for this service.
+			 * If there are other linked users for the same service for this user (e.g. paul@main.domain and paul@alias.domain), we have a failure. */
+			var res = [HashableUserService: Result<(any User)?, Error>]()
+			if linkedUser.linkedUsersSameService.isEmpty {
+				res[.init(linkedUser.userAndService.service)] = .success(linkedUser.userAndService.user)
+			} else {
+				let users: [any User] = [linkedUser.userAndService.user] + linkedUser.linkedUsersSameService.map{ $0.userAndService.user }
+				res[.init(linkedUser.userAndService.service)] = .failure(Err.tooManyUsersFromAPI(users: users))
+			}
+			
+			for subLinkedUsers in linkedUser.linkedUsersByServices.values {
+				assert(!linkedUser.linkedUsersByServices.isEmpty)
+				guard let subLinkedUser = subLinkedUsers.onlyElement else {
+					res[subLinkedUsers.randomElement()!.userAndService.service] = .failure(Err.tooManyUsersFromAPI(users: Array(subLinkedUsers.map{ $0.userAndService.user })))
+					continue
+				}
 				guard !treatedUsersAndServices.contains(subLinkedUser.userAndService.taggedID) else {
 					throw InternalError(message: "Got already treated linked user! \(subLinkedUser.userAndService) for \(taggedID)")
 				}
 				guard res[subLinkedUser.userAndService.service] == nil else {
-					throw InternalError(message: "Got two users for service ID \(subLinkedUser.userAndService.serviceID): \(res[subLinkedUser.userAndService.service]!!) and \(subLinkedUser.userAndService)")
+					throw InternalError(message: "Got two linked users for service ID \(subLinkedUser.userAndService.serviceID): \(res[subLinkedUser.userAndService.service]!) and \(subLinkedUser.userAndService)")
 				}
-				res[subLinkedUser.userAndService.service] = subLinkedUser.userAndService.user
+				res[subLinkedUser.userAndService.service] = .success(subLinkedUser.userAndService.user)
 				treatedUsersAndServices.insert(subLinkedUser.userAndService.taggedID)
 			}
 			/* Setting a value for all valid services IDs */
 			for s in validServices {
 				guard res[s] == nil else {continue}
-				res[s] = .some(nil)
+				res[s] = .success(nil)
 			}
-			return res.mapValues{ .success($0) }
+			return res
 		}
 	}
 	
 }
 
 
-private class LinkedUser : CustomStringConvertible {
+/**
+ This represent a UserAndService, with its linked users by services.
+ 
+ Hashability is done on the represented userAndService; the linked users are ignored. */
+private class LinkedUser : Hashable, CustomStringConvertible {
 	
 	let userAndService: any UserAndService
-	var linkedUserByService: [HashableUserService: LinkedUser] = [:]
+	
+	var linkedUsersSameService = Set<LinkedUser>()
+	var linkedUsersByServices: [HashableUserService: Set<LinkedUser>] = [:]
 	
 	var description: String {
-		return "LinkedUser<\("service.config.serviceID") - \("user")>; linkedUsers: \("linkedUserByServiceID.keys")"
+		return "LinkedUser<\(userAndService.taggedID)>; linkedUsersSameService: \(linkedUsersSameService.map{ $0.userAndService.taggedID }); linkedUsers: \(linkedUsersByServices.values.flatMap{ $0 }.map{ $0.userAndService.taggedID })"
+	}
+	
+	static func ==(lhs: LinkedUser, rhs: LinkedUser) -> Bool {
+		return lhs.userAndService.taggedID == rhs.userAndService.taggedID
+	}
+	
+	func hash(into hasher: inout Hasher) {
+		hasher.combine(userAndService.taggedID)
 	}
 	
 	init(userAndService: any UserAndService) {
@@ -243,6 +269,17 @@ private class LinkedUser : CustomStringConvertible {
 		return try link(to: linkedUser, visited: &visited)
 	}
 	
+	subscript<Service : UserService>(_ service: Service) -> Set<LinkedUser> {
+		get {
+			if service.id == userAndService.serviceID {return linkedUsersSameService}
+			else                                      {return linkedUsersByServices[HashableUserService(service), default: []]}
+		}
+		set {
+			if service.id == userAndService.serviceID {linkedUsersSameService = newValue}
+			else                                      {linkedUsersByServices[HashableUserService(service)] = newValue}
+		}
+	}
+	
 	private func link(to linkedUser: LinkedUser, visited: inout Set<[TaggedID]>) throws {
 		guard visited.insert([userAndService.taggedID, linkedUser.userAndService.taggedID]).inserted else {return}
 		
@@ -252,18 +289,12 @@ private class LinkedUser : CustomStringConvertible {
 		}
 		
 		/* Make the actual link. */
-		if let currentlyLinkedUser = linkedUserByService[linkedUser.userAndService.service] {
-			guard currentlyLinkedUser.userAndService.taggedID == linkedUser.userAndService.taggedID else {
-				throw InternalError(message: "UserAndService \(userAndService) is asked to be linked to \(linkedUser.userAndService), but is also already linked to \(currentlyLinkedUser.userAndService)")
-			}
-		} else {
-			linkedUserByService[linkedUser.userAndService.service] = linkedUser
-		}
+		self[linkedUser.userAndService.service].insert(linkedUser)
 		/* Make the reverse link. */
 		try linkedUser.link(to: self, visited: &visited)
 		/* Link related users. */
-		for toLink in linkedUserByService.values {
-			assert(toLink.linkedUserByService.values.contains(where: { $0.userAndService.taggedID == userAndService.taggedID }))
+		for toLink in (linkedUsersByServices.values.flatMap{ $0 }) {
+			assert(toLink.linkedUsersByServices.values.flatMap{ $0 }.contains(where: { $0.userAndService.taggedID == userAndService.taggedID }))
 			try toLink.link(to: linkedUser, visited: &visited)
 		}
 	}
