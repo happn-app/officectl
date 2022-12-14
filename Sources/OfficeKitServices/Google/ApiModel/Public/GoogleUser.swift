@@ -67,6 +67,7 @@ public struct GoogleUser : Sendable, Hashable, Codable {
 	public var isEnrolledIn2Sv: Bool?
 	public var isEnforcedIn2Sv: Bool?
 	
+	@EmptyIsNil
 	public var recoveryEmail: Email?
 	public var recoveryPhone: String?
 	
