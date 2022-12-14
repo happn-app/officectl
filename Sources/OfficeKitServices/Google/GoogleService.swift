@@ -95,7 +95,7 @@ public final class GoogleService : UserService {
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [GoogleUser] {
-		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.group", "https://www.googleapis.com/auth/admin.directory.user.readonly")
+		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user.readonly")
 		let users = try await config.primaryDomains.asyncFlatMap{
 			try await GoogleUser.search(
 				SearchRequest(domain: $0, query: !includeSuspended ? "isSuspended=false" : nil),
@@ -114,7 +114,8 @@ public final class GoogleService : UserService {
 	
 	public let supportsUserUpdate: Bool = true
 	public func updateUser(_ user: GoogleUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> GoogleUser {
-		throw Err.unsupportedOperation
+		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
+		return try await user.update(properties: GoogleUser.keysFromProperties(propertiesToUpdate), connector: connector)
 	}
 	
 	public let supportsUserDeletion: Bool = true

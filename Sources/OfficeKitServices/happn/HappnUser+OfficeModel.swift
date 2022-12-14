@@ -62,13 +62,15 @@ extension HappnUser : User {
 	
 	internal static var propertyToKeys: [UserProperty: [HappnUser.CodingKeys]] {
 		[
+			/* Standard. */
 			.id: [.login],
 			.persistentID: [.id],
 			.isSuspended: [.status],
+			.emails: [.login],
 			.firstName: [.firstName],
 			.lastName: [.lastName],
 			.nickname: [.nickname],
-			.emails: [.login],
+			/* Other. */
 			.password: [.password],
 			.gender: [.gender],
 			.birthdate: [._birthDate]

@@ -86,18 +86,21 @@ extension GoogleUser : User {
 	
 	internal static var propertyToKeys: [UserProperty: [GoogleUser.CodingKeys]] {
 		[
+			/* Standard. */
 			.id: [.primaryEmail],
 			.persistentID: [.id],
+			.isSuspended: [.isSuspended],
+			.emails: [.primaryEmail],
 			.firstName: [.name],
 			.lastName: [.name],
 			.nickname: [],
-			.emails: [.primaryEmail],
 			.password: [.password, .passwordHashFunction]
+			/* Other. */
 		]
 	}
 	
-	internal static func keysFromProperties(_ properties: Set<UserProperty>?) -> Set<GoogleUser.CodingKeys>? {
-		guard let properties else {return nil}
+	internal static func keysFromProperties(_ properties: Set<UserProperty>?) -> Set<GoogleUser.CodingKeys> {
+		let properties = properties ?? Set(UserProperty.standardProperties + [])
 		let keys = properties
 			.compactMap{ propertyToKeys[$0] }
 			.flatMap{ $0 }

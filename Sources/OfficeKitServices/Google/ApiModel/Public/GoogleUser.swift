@@ -74,10 +74,36 @@ public struct GoogleUser : Sendable, Hashable, Codable {
 		primaryEmail = email
 	}
 	
-	public func cloneForPatching() -> GoogleUser {
+	internal func forPatching(properties: Set<CodingKeys>) -> GoogleUser {
 		var ret = GoogleUser(email: primaryEmail)
 		ret.id = id
 		ret.etag = etag
+		ret.kind = kind
+		for property in properties {
+			switch property {
+				case .id, .etag, .kind: (/*nop*/)
+				case .customerID:                 ret.customerID                 = customerID
+				case .name:                       ret.name                       = name
+				case .thumbnailPhotoUrl:          ret.thumbnailPhotoUrl          = thumbnailPhotoUrl
+				case .primaryEmail:               ret.primaryEmail               = primaryEmail
+				case .aliases:                    ret.aliases                    = aliases
+				case .nonEditableAliases:         ret.nonEditableAliases         = nonEditableAliases
+				case .includeInGlobalAddressList: ret.includeInGlobalAddressList = includeInGlobalAddressList
+				case .isAdmin:                    ret.isAdmin                    = isAdmin
+				case .isDelegatedAdmin:           ret.isDelegatedAdmin           = isDelegatedAdmin
+				case .lastLoginTime:              ret.lastLoginTime              = lastLoginTime
+				case .creationTime:               ret.creationTime               = creationTime
+				case .agreedToTerms:              ret.agreedToTerms              = agreedToTerms
+				case .isSuspended:                ret.isSuspended                = isSuspended
+				case .passwordHashFunction:       ret.passwordHashFunction       = passwordHashFunction
+				case .password:                   ret.password                   = password
+				case .changePasswordAtNextLogin:  ret.changePasswordAtNextLogin  = changePasswordAtNextLogin
+				case .isEnrolledIn2Sv:            ret.isEnrolledIn2Sv            = isEnrolledIn2Sv
+				case .isEnforcedIn2Sv:            ret.isEnforcedIn2Sv            = isEnforcedIn2Sv
+				case .recoveryEmail:              ret.recoveryEmail              = recoveryEmail
+				case .recoveryPhone:              ret.recoveryPhone              = recoveryPhone
+			}
+		}
 		return ret
 	}
 	

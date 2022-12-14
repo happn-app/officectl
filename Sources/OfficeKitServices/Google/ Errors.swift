@@ -19,6 +19,8 @@ public enum GoogleOfficeError : Error, Sendable {
 	
 	case cannotParseDateFromGoogle(String)
 	
+	case noPersistentID
+	
 	case notConnected
 	
 }
