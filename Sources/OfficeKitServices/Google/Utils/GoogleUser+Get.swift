@@ -8,7 +8,6 @@
 import Foundation
 
 import Email
-import GenericJSON
 import UnwrapOrThrow
 import URLRequestOperation
 

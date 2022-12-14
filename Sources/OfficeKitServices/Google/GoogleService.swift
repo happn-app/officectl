@@ -108,7 +108,8 @@ public final class GoogleService : UserService {
 	
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: GoogleUser, using services: Services) async throws -> GoogleUser {
-		throw Err.unsupportedOperation
+		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
+		return try await user.create(connector: connector)
 	}
 	
 	public let supportsUserUpdate: Bool = true
