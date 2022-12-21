@@ -18,7 +18,7 @@ import OfficeKit2
 internal extension HappnUser {
 	
 	func update(properties: Set<HappnUser.CodingKeys>, connector: HappnConnector) async throws -> HappnUser {
-		guard properties.contains(.login), !properties.contains(.id) else {
+		guard !properties.contains(.login), !properties.contains(.id) else {
 			throw Err.unsupportedOperation
 		}
 		guard let userID = id else {
