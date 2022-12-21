@@ -8,7 +8,7 @@
 import Foundation
 
 import Email
-@preconcurrency import GenericJSON
+import GenericJSON
 
 import OfficeModelCore
 
@@ -72,9 +72,9 @@ extension HintsUser : User {
 		return properties[.init(stringLiteral: property)]?.flatMap{ $0 }
 	}
 	
-	public mutating func oU_setValue(_ value: (any Sendable)?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool {
-		if let value {
-			properties[property] = value
+	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool {
+		if let newValue {
+			properties[property] = newValue
 			/* We always return true as we cannot check for equality with previous value as it is not Equatable. */
 			return true
 		} else {

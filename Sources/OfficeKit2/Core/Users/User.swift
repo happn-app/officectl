@@ -41,7 +41,7 @@ public protocol User<UserIDType> : Sendable {
 	 When setting to `nil`, the property should be removed.
 	 
 	 - Returns: `true` if the property was modified, `false` otherwise. */
-	mutating func oU_setValue(_ newValue: (any Sendable)?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool
+	mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool
 	
 }
 

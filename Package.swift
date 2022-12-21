@@ -146,7 +146,7 @@ let package = Package(
 		/* *********************
 		   MARK: Office Services
 		   ********************* */
-		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")], path: "Sources/OfficeKitServices", sources: ["CommonProperties.swift"], swiftSettings: commonSwiftSettings))
+		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")], path: "Sources/OfficeKitServices/ Common", swiftSettings: commonSwiftSettings))
 		ret.append(targetForService(named: "HappnOffice",  folderName: "happn",  additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
 		ret.append(targetForService(named: "GoogleOffice", folderName: "Google", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
 		

@@ -1,6 +1,6 @@
 /*
- * CommonProperties.swift
- * HappnOfficeServiceCommonProperties
+ * Properties.swift
+ * CommonOfficePropertiesFromHappn
  *
  * Created by François Lamboley on 2022/11/15.
  */
@@ -17,13 +17,5 @@ public extension UserProperty {
 	
 	static let gender    = UserProperty(rawValue: "gender")
 	static let birthdate = UserProperty(rawValue: "birthdate")
-	
-}
-
-
-public enum Gender : String, Sendable, Codable, RawRepresentable {
-	
-	case male
-	case female
 	
 }

@@ -38,21 +38,26 @@ extension HappnUser : User {
 		}
 	}
 	
-	public mutating func oU_setValue(_ newValue: Sendable?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool {
+	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool {
 		switch property {
-			case .id, UserProperty("login"):
+			case .id, .persistentID, .emails:
 				guard allowIDChange else {return false}
-				Conf.logger?.error("Changing the id of a happn user is not supported by the happn API.")
+				Conf.logger?.error("Changing the id (email) or persistent id of a happn user is not supported by the happn API.")
 				return false
 				
-#warning("TODO")
-//			case .firstName: return HappnUser.setValueIfNeeded(newValue, in: &firstName)
-//			case .lastName:  return HappnUser.setValueIfNeeded(newValue, in: &lastName)
-//			case .nickname:  return HappnUser.setValueIfNeeded(newValue, in: &nickname)
-//			case .gender:    return HappnUser.setValueIfNeeded(newValue, in: &gender)
-//			case .birthdate: return HappnUser.setValueIfNeeded(newValue, in: &birthDate, converter: { HappnBirthDateWrapper.birthDateFormatter.date(from: $0) })
-//			case .password:  return HappnUser.setValueIfNeeded(newValue, in: &password)
-			default:         return false
+			case .firstName: return Self.setValueIfNeeded(newValue, in: &firstName, converter: Converters.convertObjectToString(_:))
+			case .lastName:  return Self.setValueIfNeeded(newValue, in: &lastName,  converter: Converters.convertObjectToString(_:))
+			case .nickname:  return Self.setValueIfNeeded(newValue, in: &nickname,  converter: Converters.convertObjectToString(_:))
+			case .gender:    return Self.setValueIfNeeded(newValue, in: &gender,    converter: Converters.convertObjectToGender(_:))
+			case .birthdate: return Self.setValueIfNeeded(newValue, in: &birthDate, converter: Converters.objectToDateConverter{ HappnBirthDateWrapper.birthDateFormatter.date(from: $0) })
+			case .password:  return Self.setValueIfNeeded(newValue, in: &password,  converter: Converters.convertObjectToString(_:))
+				
+			case .isSuspended:
+				Conf.logger?.error("Suspending a user this way is not supported yet.")
+				return false
+				
+			default:
+				return false
 		}
 	}
 

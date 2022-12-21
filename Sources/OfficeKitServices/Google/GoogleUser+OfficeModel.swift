@@ -40,7 +40,7 @@ extension GoogleUser : User {
 		}
 	}
 	
-	public mutating func oU_setValue(_ newValue: Sendable?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool {
+	public func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool {
 		let primaryEmailProperty = UserProperty("primaryEmail")
 		switch property {
 			case .id, primaryEmailProperty:

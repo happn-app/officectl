@@ -4,6 +4,19 @@ import Foundation
 
 public extension User {
 	
+	/** If the converter returns nil the conversion has failed. */
+	static func setValueIfNeeded<T : Equatable, U>(_ val: U?, in dest: inout T?, converter: (U) -> T?) -> Bool {
+		switch (val, dest) {
+			case (nil,      nil): return false
+			case (nil,      _  ): dest = nil; return true
+			case (let val?, _  ):
+				guard let converted = converter(val) else {return false}
+				return setValueIfNeeded(converted, in: &dest)
+		}
+	}
+	
+	/* The function below will seldom be used and could probably be fully removed. */
+	
 	static func setValueIfNeeded<T : Equatable>(_ val: T, in dest: inout T) -> Bool {
 		guard val != dest else {
 			return false
@@ -28,17 +41,6 @@ public extension User {
 			case (nil,      nil): return false
 			case (nil,      _  ): dest = nil; return true
 			case (let val?, _  ): return setValueIfNeeded(val, in: &dest)
-		}
-	}
-	
-	/** If the converter returns nil the conversion has failed. */
-	static func setValueIfNeeded<T : Equatable>(_ val: String?, in dest: inout T?, converter: (String) -> T?) -> Bool {
-		switch (val, dest) {
-			case (nil,      nil): return false
-			case (nil,      _  ): dest = nil; return true
-			case (let val?, _  ):
-				guard let converted = converter(val) else {return false}
-				return setValueIfNeeded(converted, in: &dest)
 		}
 	}
 	

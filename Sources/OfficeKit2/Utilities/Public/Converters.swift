@@ -15,12 +15,15 @@ import UnwrapOrThrow
 
 
 public enum Converters {
+}
+
+public extension Converters {
 	
-	public static func unwrapJSONIfNeeded(_ obj: Any?) -> Any? {
+	static func unwrapJSONIfNeeded(_ obj: Any?) -> Any? {
 		return (obj as? JSON).flatMap(unwrapJSON(_:)) ?? obj
 	}
 	
-	public static func unwrapJSON(_ json: JSON) -> Any? {
+	static func unwrapJSON(_ json: JSON) -> Any? {
 		switch json {
 			case     .null:      return nil
 			case let .bool(b):   return b
@@ -31,23 +34,23 @@ public enum Converters {
 		}
 	}
 	
-	public static func convertObjectToBool(_ obj: Any?) -> Bool? {
+	static func convertObjectToBool(_ obj: Any?) -> Bool? {
 		return RESTBoolTransformer.convertObjectToBool(unwrapJSONIfNeeded(obj))
 	}
 	
-	public static func convertObjectToInt(_ obj: Any?) -> Int? {
+	static func convertObjectToInt(_ obj: Any?) -> Int? {
 		RESTNumericTransformer.convertObjectToInt(unwrapJSONIfNeeded(obj))
 	}
 	
-	public static func convertObjectToFloat(_ obj: Any?) -> Float? {
+	static func convertObjectToFloat(_ obj: Any?) -> Float? {
 		RESTNumericTransformer.convertObjectToFloat(unwrapJSONIfNeeded(obj))
 	}
 	
-	public static func convertObjectToDouble(_ obj: Any?) -> Double? {
+	static func convertObjectToDouble(_ obj: Any?) -> Double? {
 		RESTNumericTransformer.convertObjectToDouble(unwrapJSONIfNeeded(obj))
 	}
 	
-	public static func convertObjectToString(_ obj: Any?) -> String? {
+	static func convertObjectToString(_ obj: Any?) -> String? {
 		guard let obj = unwrapJSONIfNeeded(obj) else {
 			return nil
 		}
@@ -56,7 +59,7 @@ public enum Converters {
 		return (obj as? LosslessStringConvertible).flatMap{ String($0) }
 	}
 	
-	public static func convertObjectToEmail(_ obj: Any?) -> Email? {
+	static func convertObjectToEmail(_ obj: Any?) -> Email? {
 		guard let obj = unwrapJSONIfNeeded(obj) else {
 			return nil
 		}
@@ -71,7 +74,7 @@ public enum Converters {
 		}
 	}
 	
-	public static func convertObjectToEmails(_ obj: Any?) -> [Email]? {
+	static func convertObjectToEmails(_ obj: Any?) -> [Email]? {
 		guard let obj = unwrapJSONIfNeeded(obj) else {
 			return nil
 		}
@@ -89,6 +92,24 @@ public enum Converters {
 				struct Internal__InvalidEmailErrorMarker : Error {} /* Used as a marker if we encounter an invalid email. */
 				return try? splitStr.map{ try Email(rawValue: String($0)) ?! Internal__InvalidEmailErrorMarker() }
 		}
+	}
+	
+	static func convertObjectToDate(_ obj: Any?, dateFormatter: (String) -> Date?) -> Date? {
+		guard let obj = unwrapJSONIfNeeded(obj) else {
+			return nil
+		}
+		
+		switch obj {
+			case let date as Date: return date
+			default:
+				guard let str = convertObjectToString(obj) else {
+					return nil
+				}
+				return dateFormatter(str)
+		}
+	}
+	static func objectToDateConverter(with formatter: @escaping (String) -> Date?) -> (Any?) -> Date? {
+		return { convertObjectToDate($0, dateFormatter: formatter) }
 	}
 	
 }
