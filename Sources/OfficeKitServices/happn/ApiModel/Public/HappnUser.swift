@@ -57,15 +57,15 @@ public struct HappnUser : Sendable, Hashable, Codable {
 	
 	internal func forPatching(properties: Set<CodingKeys>) -> HappnUser {
 		var ret = HappnUser(login: login)
+		ret.gender    = gender    /* Mandatory property. */
+		ret.birthDate = birthDate /* Mandatory property. */
 		for property in properties {
 			switch property {
-				case .login, .id, .type: (/*nop*/)
+				case .login, .id, .type, .gender, ._birthDate: (/*nop*/)
 				case .status:     ret.status    = status
 				case .firstName:  ret.firstName = firstName
 				case .lastName:   ret.lastName  = lastName
 				case .nickname:   ret.nickname  = nickname
-				case .gender:     ret.gender    = gender
-				case ._birthDate: ret.birthDate = birthDate
 				case .password:   ret.password  = password
 			}
 		}

@@ -81,8 +81,10 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 			let allServices = Set([HashableUserService(happnService), HashableUserService(googleService)])
 			do {
 				var françois = try await happnService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: nil, using: app.services)!
-				print(françois.oU_setValue("François", forProperty: .firstName, allowIDChange: false, convertMismatchingTypes: false))
-				françois = try await happnService.updateUser(françois, propertiesToUpdate: [.firstName], using: app.services)
+//				print(françois.oU_setValue("François", forProperty: .firstName, allowIDChange: false, convertMismatchingTypes: false))
+				print(françois.oU_setValue("1990-06-09", forProperty: .birthdate, allowIDChange: false, convertMismatchingTypes: true))
+				print(françois)
+				françois = try await happnService.updateUser(françois, propertiesToUpdate: [.birthdate], using: app.services)
 				print(françois)
 			}
 //			do {
