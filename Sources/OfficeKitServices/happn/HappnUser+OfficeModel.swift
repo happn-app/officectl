@@ -38,19 +38,19 @@ extension HappnUser : User {
 		}
 	}
 	
-	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool {
+	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool {
 		switch property {
 			case .id, .persistentID, .emails:
 				guard allowIDChange else {return false}
 				Conf.logger?.error("Changing the id (email) or persistent id of a happn user is not supported by the happn API.")
 				return false
 				
-			case .firstName: return Self.setValueIfNeeded(newValue, in: &firstName, converter: Converters.convertObjectToString(_:))
-			case .lastName:  return Self.setValueIfNeeded(newValue, in: &lastName,  converter: Converters.convertObjectToString(_:))
-			case .nickname:  return Self.setValueIfNeeded(newValue, in: &nickname,  converter: Converters.convertObjectToString(_:))
-			case .gender:    return Self.setValueIfNeeded(newValue, in: &gender,    converter: Converters.convertObjectToGender(_:))
-			case .birthdate: return Self.setValueIfNeeded(newValue, in: &birthDate, converter: Converters.objectToDateConverter{ HappnBirthDateWrapper.birthDateFormatter.date(from: $0) })
-			case .password:  return Self.setValueIfNeeded(newValue, in: &password,  converter: Converters.convertObjectToString(_:))
+			case .firstName: return Self.setValueIfNeeded(newValue, in: &firstName, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
+			case .lastName:  return Self.setValueIfNeeded(newValue, in: &lastName,  converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
+			case .nickname:  return Self.setValueIfNeeded(newValue, in: &nickname,  converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
+			case .gender:    return Self.setValueIfNeeded(newValue, in: &gender,    converter: (!convertValue ? { $0 as? Gender } : Converters.convertObjectToGender(_:)))
+			case .birthdate: return Self.setValueIfNeeded(newValue, in: &birthDate, converter: (!convertValue ? { $0 as? Date }   : Converters.objectToDateConverter{ HappnBirthDateWrapper.birthDateFormatter.date(from: $0) }))
+			case .password:  return Self.setValueIfNeeded(newValue, in: &password,  converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
 				
 			case .isSuspended:
 				Conf.logger?.error("Suspending a user this way is not supported yet.")
