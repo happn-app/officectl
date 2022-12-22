@@ -7,6 +7,5 @@ xcuserdata/
 /.swiftpm/
 /Packages/
 
-# Other
-/TestsData/
-/linux_build/
+# Live data
+/TestsData/live/

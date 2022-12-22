@@ -117,7 +117,7 @@ let package = Package(
 			}(),
 			swiftSettings: commonSwiftSettings
 		))
-		ret.append(.testTarget(name: "OfficeKitTests", dependencies: ["OfficeKit", .product(name: "OfficeModel", package: "officectl-model")]))
+		ret.append(.testTarget(name: "OfficeKit-Tests", dependencies: ["OfficeKit", .product(name: "OfficeModel", package: "officectl-model")]))
 		
 		ret.append(.target(
 			name: "OfficeKit2",
@@ -132,7 +132,7 @@ let package = Package(
 			}(),
 			swiftSettings: commonSwiftSettings
 		))
-		ret.append(.testTarget(name: "OfficeKit2Tests", dependencies: {
+		ret.append(.testTarget(name: "OfficeKit2-Tests", dependencies: {
 			var ret = [Target.Dependency]()
 			/* The tested lib. */
 			ret.append(.target(name: "OfficeKit2"))
@@ -146,9 +146,10 @@ let package = Package(
 		/* *********************
 		   MARK: Office Services
 		   ********************* */
-		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")], path: "Sources/OfficeKitServices/ Common", swiftSettings: commonSwiftSettings))
-		ret.append(targetForService(named: "HappnOffice",  folderName: "happn",  additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
-		ret.append(targetForService(named: "GoogleOffice", folderName: "Google", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
+		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")], path: "Sources/OfficeKitServices/ Common",     swiftSettings: commonSwiftSettings))
+		ret.append(.target(name: "CommonForOfficeKitServicesTests", dependencies: [],                            path: "Tests/OfficeKitServices-Tests/ Common", swiftSettings: commonSwiftSettings))
+		ret.append(contentsOf: targetsForService(named: "HappnOffice",  folderName: "happn",  additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
+		ret.append(contentsOf: targetsForService(named: "GoogleOffice", folderName: "Google", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
 		
 		ret.append(.executableTarget(
 			name: "officectl",
@@ -205,16 +206,26 @@ let package = Package(
 )
 
 
-func targetForService(named name: String, folderName: String, additionalDependencies: [Target.Dependency] = [], additionalSwiftSettings: [SwiftSetting] = []) -> Target {
+func targetsForService(named name: String, folderName: String, additionalDependencies: [Target.Dependency] = [], additionalSwiftSettings: [SwiftSetting] = []) -> [Target] {
 	let commonServiceDependencies: [Target.Dependency] = [
 		.product(name: "APIConnectionProtocols", package: "APIConnectionProtocols"),
 		.target(name: "CommonOfficePropertiesFromHappn"),
 		.target(name: "OfficeKit2")
 	]
-	return .target(
+	let mainTarget: Target = .target(
 		name: name,
 		dependencies: coreDependencies + commonServiceDependencies + additionalDependencies,
 		path: "Sources/OfficeKitServices/" + folderName,
 		swiftSettings: commonSwiftSettings + additionalSwiftSettings
 	)
+	let testTarget: Target = .testTarget(
+		name: name + "-Tests",
+		dependencies: coreDependencies + [
+			.target(name: "CommonForOfficeKitServicesTests"),
+			.target(name: name)
+		],
+		path: "Tests/OfficeKitServices-Tests/" + folderName,
+		swiftSettings: commonSwiftSettings
+	)
+	return [testTarget, mainTarget]
 }

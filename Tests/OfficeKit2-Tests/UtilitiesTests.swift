@@ -7,11 +7,12 @@
 
 import Foundation
 import XCTest
+
 @testable import OfficeKit2
 
 
 
-class UtilitiesTests : XCTestCase {
+final class UtilitiesTests : XCTestCase {
 	
 	func testConvenienceDictionaryWithDeportedHashabilityOfOfficeServiceKeys() throws {
 		let value1 = "yolo1", value2 = "yolo2"

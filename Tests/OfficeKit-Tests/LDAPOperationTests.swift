@@ -6,13 +6,14 @@
  */
 
 import XCTest
+
 @testable import OfficeKit
 
 
 
 /* Tests must run IN THE CORRECT ORDER (test1, test2, etc.).
- * You must run ./Scripts/start_tests_helpers.sh before starting the tests. */
-class LDAPOperationTests : XCTestCase {
+ * You must run ./Scripts/start-tests-helpers.sh before starting the tests. */
+final class LDAPOperationTests : XCTestCase {
 	
 	func test1_LDAPObjectCreation() throws {
 		let connector = try getConnectedLDAPConnector()

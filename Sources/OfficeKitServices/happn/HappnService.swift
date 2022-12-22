@@ -29,9 +29,14 @@ public final class HappnService : UserService {
 	
 	public let connector: HappnConnector
 	
-	public init(id: String, jsonConfig: JSON) throws {
+	public convenience init(id: String, jsonConfig: JSON) throws {
+		let config = try HappnServiceConfig(json: jsonConfig)
+		try self.init(id: id, happnServiceConfig: config)
+	}
+	
+	public init(id: String, happnServiceConfig: HappnServiceConfig) throws {
 		self.id = id
-		self.config = try HappnServiceConfig(json: jsonConfig)
+		self.config = happnServiceConfig
 		
 		self.connector = HappnConnector(
 			baseURL: config.connectorSettings.baseURL,

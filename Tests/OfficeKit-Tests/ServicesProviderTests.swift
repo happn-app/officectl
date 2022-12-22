@@ -7,11 +7,12 @@
 
 import Foundation
 import XCTest
+
 @testable import OfficeKit
 
 
 
-class ServicesProviderTests : XCTestCase {
+final class ServicesProviderTests : XCTestCase {
 	
 	var servicesProvider: OfficeKitServiceProvider!
 	

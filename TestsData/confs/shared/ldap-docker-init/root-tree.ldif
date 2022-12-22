@@ -1,0 +1,11 @@
+dn: dc=happn,dc=test
+objectClass: dcObject
+objectClass: organization
+dc: happn
+o: happn
+description: The root
+
+dn: ou=people,dc=happn,dc=test
+objectClass: organizationalUnit
+ou: people
+description: The people group

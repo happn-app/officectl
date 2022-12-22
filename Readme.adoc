@@ -171,14 +171,8 @@ Builds the repo directly. If you want to avoid a ton of LDAP-related warnings, y
 *For Linux*
 [code,bash]
 ----
-Scripts/build_for_linux_on_macos.sh [treeish]
+docker build .
 ----
-You’ll need to have Docker running. You’ll need Docker for Mac version 2.2.0.0 or more so that
-mounting the special path `/run/host-services/ssh-auth.sock` works (for ssh auth).
-
-The resulting built product will be in the `linux_build` folder.
-
-You can use the `create_linux_deb.sh` script to create the debs for Linux.
 
 == Project Structure
 

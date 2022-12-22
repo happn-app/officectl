@@ -1,9 +1,17 @@
+/*
+ * LDAPSearchQueryTests.swift
+ * OfficeKitTests
+ *
+ * Created by François Lamboley on 2019/08/17.
+ */
+
 import XCTest
+
 @testable import OfficeKit
 
 
 
-class LDAPSearchQueryTests : XCTestCase {
+final class LDAPSearchQueryTests : XCTestCase {
 	
 	func testInvalidAttributeDescriptionInstantiation0() {
 		let attributeDescription = LDAPAttributeDescription(stringOID: "1")

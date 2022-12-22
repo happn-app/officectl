@@ -28,9 +28,14 @@ public final class GoogleService : UserService {
 	
 	public let connector: GoogleConnector
 	
-	public init(id: String, jsonConfig: JSON) throws {
+	public convenience init(id: String, jsonConfig: JSON) throws {
+		let config = try GoogleServiceConfig(json: jsonConfig)
+		try self.init(id: id, googleServiceConfig: config)
+	}
+	
+	public init(id: String, googleServiceConfig: GoogleServiceConfig) throws {
 		self.id = id
-		self.config = try GoogleServiceConfig(json: jsonConfig)
+		self.config = googleServiceConfig
 		
 		self.connector = try GoogleConnector(
 			jsonCredentialsURL: URL(fileURLWithPath: config.connectorSettings.superuserJSONCredsPath),

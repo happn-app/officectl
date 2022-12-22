@@ -79,20 +79,20 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 		]))
 		do {
 			let allServices = Set([HashableUserService(happnService), HashableUserService(googleService)])
-			do {
-				var françois = try await happnService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: nil, using: app.services)!
-				print(françois.oU_setValue("François", forProperty: .firstName, allowIDChange: false, convertMismatchingTypes: false))
-				print(françois.oU_setValue("1990-06-09", forProperty: .birthdate, allowIDChange: false, convertMismatchingTypes: true))
-				print(françois)
-				françois = try await happnService.updateUser(françois, propertiesToUpdate: [.birthdate, .firstName], using: app.services)
-				print(françois)
-			}
 //			do {
-//				var ryan = try await googleService.existingUser(fromID: Email(rawValue: "ryan.ismael@happn.fr")!, propertiesToFetch: nil, using: app.services)!
-//				print(ryan.oU_setValue("Ryan", forProperty: .firstName, allowIDChange: false, convertMismatchingTypes: false))
-//				ryan = try await googleService.updateUser(ryan, propertiesToUpdate: [.firstName], using: app.services)
-//				print(ryan)
+//				var françois = try await happnService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: nil, using: app.services)!
+//				print(françois.oU_setValue("François", forProperty: .firstName, allowIDChange: false, convertMismatchingTypes: false))
+//				print(françois.oU_setValue("1990-06-09", forProperty: .birthdate, allowIDChange: false, convertMismatchingTypes: true))
+//				print(françois)
+//				françois = try await happnService.updateUser(françois, propertiesToUpdate: [.birthdate, .firstName], using: app.services)
+//				print(françois)
 //			}
+			do {
+				var ryan = try await googleService.existingUser(fromID: Email(rawValue: "ryan.ismael@happn.fr")!, propertiesToFetch: nil, using: app.services)!
+				print(ryan.oU_setValue("Ryan", forProperty: .firstName, allowIDChange: false, convertMismatchingTypes: false))
+				ryan = try await googleService.updateUser(ryan, propertiesToUpdate: [.firstName], using: app.services)
+				print(ryan)
+			}
 //			do {
 //				let res = try await MultiServicesUser.fetchAll(in: allServices, using: app.services)
 //				res.users.forEach{
