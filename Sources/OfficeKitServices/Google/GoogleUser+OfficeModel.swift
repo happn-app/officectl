@@ -34,8 +34,8 @@ extension GoogleUser : User {
 	public var oU_emails: [Email]? {[primaryEmail] + (aliases ?? []) + (nonEditableAliases ?? [])}
 	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
-#warning("TODO")
 		switch UserProperty(rawValue: property) {
+			/* We do not support any non-standard properties for now. */
 			default: return nil
 		}
 	}

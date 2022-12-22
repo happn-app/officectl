@@ -57,7 +57,7 @@ class UtilitiesTests : XCTestCase {
 	}
 	
 	func testUserIDBuilder4() throws {
-		let user = SimpleUser1(oU_id: "uid=francois.lamboley,ou=people,dc=happn,dc=com", oU_firstName: "François", oU_lastName: "Lamboley")
+		let user = try SimpleUser1(oU_id: DistinguishedName(string: "uid=francois.lamboley,ou=people,dc=happn,dc=com"), oU_firstName: "François", oU_lastName: "Lamboley")
 		let builder = UserIDBuilder(format: "?id:uid?@happn.fr")
 		XCTAssertEqual(builder.inferID(fromUser: user), "francois.lamboley@happn.fr")
 	}
