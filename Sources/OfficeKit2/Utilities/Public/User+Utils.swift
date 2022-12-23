@@ -15,6 +15,11 @@ public extension User {
 		}
 	}
 	
+	static func setValueIfNeeded<T : Equatable, U>(_ val: U, in dest: inout T, converter: (U) -> T?) -> Bool {
+		guard let converted = converter(val) else {return false}
+		return setValueIfNeeded(converted, in: &dest)
+	}
+	
 	/* The function below will seldom be used and could probably be fully removed. */
 	
 	static func setValueIfNeeded<T : Equatable>(_ val: T, in dest: inout T) -> Bool {

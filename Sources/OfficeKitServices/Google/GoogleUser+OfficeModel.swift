@@ -8,6 +8,7 @@
 import Foundation
 
 import CommonOfficePropertiesFromHappn
+import Crypto
 import Email
 import OfficeKit2
 
@@ -31,7 +32,10 @@ extension GoogleUser : User {
 	public var oU_lastName: String? {name?.familyName}
 	public var oU_nickname: String? {nil}
 	
-	public var oU_emails: [Email]? {[primaryEmail] + (aliases ?? []) + (nonEditableAliases ?? [])}
+	/**
+	 Does _not_ contain the non-editable aliases.
+	 Rationale: we want this property to be editable. */
+	public var oU_emails: [Email]? {[primaryEmail] + (aliases ?? [])}
 	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		switch UserProperty(rawValue: property) {
@@ -40,7 +44,7 @@ extension GoogleUser : User {
 		}
 	}
 	
-	public func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool {
+	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool {
 		let primaryEmailProperty = UserProperty("primaryEmail")
 		switch property {
 			case .id, primaryEmailProperty:
@@ -49,34 +53,77 @@ extension GoogleUser : User {
 					Conf.logger?.error("Asked to remove the id of a user (nil value for id in hints). This is illegal, I’m not doing it.")
 					return false
 				}
-#warning("TODO (we’ll have to change setValue to return the set of the modified properties, maybe.")
-				return false
-//				touchedKey = GoogleUser.setValueIfNeeded(newValue, in: &primaryEmail)
-//				if touchedKey {
-//					/* We add both.
-//					 * `property` will be added twice, but that’s not a problem. */
-//					ret.insert(.id)
-//					ret.insert(primaryEmailProperty)
-//				}
+				return Self.setValueIfNeeded(newValue, in: &primaryEmail, converter: (convertValue ? { $0 as? Email } : Converters.convertObjectToEmail(_:)))
 				
-#warning("TODO")
-//			case .firstName: return GoogleUser.setValueIfNeeded(GoogleUser.Name(givenName: newValue,             familyName: user.name?.familyName), in: &user.name)
-//			case .lastName:  return GoogleUser.setValueIfNeeded(GoogleUser.Name(givenName: user.name?.givenName, familyName: newValue),              in: &user.name)
-//			case .password:
-//				if let newValue {
-//					let hashed = Insecure.SHA1.hash(data: Data(newValue.utf8)).reduce("", { $0 + String(format: "%02x", $1) })
-//					touchedKey = (user.password != hashed || user.passwordHashFunction != .sha1)
-//					user.password = hashed
-//					user.passwordHashFunction = .sha1
-//					user.changePasswordAtNextLogin = false
-//				} else {
-//					touchedKey = (user.password != nil || user.passwordHashFunction != nil)
-//					user.password = nil
-//					user.passwordHashFunction = nil
-//					user.changePasswordAtNextLogin = nil
-//				}
-//				/* TODO: Other properties. */
-			default: return false
+			case .isSuspended:
+				return Self.setValueIfNeeded(newValue, in: &isSuspended, converter: (convertValue ? { $0 as? Bool } : Converters.convertObjectToBool(_:)))
+				
+			case .firstName:
+				var newName = name ?? Name()
+				if Self.setValueIfNeeded(newValue, in: &newName.givenName, converter: (convertValue ? { $0 as? String } : Converters.convertObjectToString(_:))) {
+					name = newName
+					return true
+				}
+				return false
+				
+			case .lastName:
+				var newName = name ?? Name()
+				if Self.setValueIfNeeded(newValue, in: &newName.familyName, converter: (convertValue ? { $0 as? String } : Converters.convertObjectToString(_:))) {
+					name = newName
+					return true
+				}
+				return false
+				
+			case .nickname:
+				var newName = name ?? Name()
+				if Self.setValueIfNeeded(newValue, in: &newName.displayName, converter: (convertValue ? { $0 as? String } : Converters.convertObjectToString(_:))) {
+					name = newName
+					return true
+				}
+				return false
+				
+				
+			case .emails:
+				guard let newValue else {
+					Conf.logger?.error("Cannot remove all the emails of a gougle user (id is an email…).")
+					return false
+				}
+				guard let emails = (convertValue ? newValue as? [Email] : Converters.convertObjectToEmails(newValue)) else {
+					return false
+				}
+				guard let first = emails.first else {
+					Conf.logger?.error("Cannot remove all the emails of a gougle user (id is an email…).")
+					return false
+				}
+				guard allowIDChange || first == primaryEmail else {
+					return false
+				}
+				primaryEmail = first
+				aliases = Array(emails.dropFirst())
+				return true
+				
+			case .password:
+				if let newValue {
+					guard let newPass = (convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {
+						return false
+					}
+					let hash = Insecure.SHA1.hash(data: Data(newPass.utf8)).reduce("", { $0 + String(format: "%02x", $1) })
+					let touched = (password != hash || passwordHashFunction != .sha1 || changePasswordAtNextLogin != false)
+					changePasswordAtNextLogin = false
+					passwordHashFunction = .sha1
+					password = hash
+					return touched
+					
+				} else {
+					let touched = (password != nil || passwordHashFunction != nil || changePasswordAtNextLogin != nil)
+					password = nil
+					passwordHashFunction = nil
+					changePasswordAtNextLogin = nil
+					return touched
+				}
+				
+			default:
+				return false
 		}
 	}
 	
@@ -90,12 +137,13 @@ extension GoogleUser : User {
 			.id: [.primaryEmail],
 			.persistentID: [.id],
 			.isSuspended: [.isSuspended],
-			.emails: [.primaryEmail],
+			.emails: [.primaryEmail, .aliases],
 			.firstName: [.name],
 			.lastName: [.name],
 			.nickname: [],
-			.password: [.password, .passwordHashFunction]
+			.password: [.password, .passwordHashFunction, .changePasswordAtNextLogin],
 			/* Other. */
+			UserProperty("primaryEmail"): [.primaryEmail]
 		]
 	}
 	
