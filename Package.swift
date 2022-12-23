@@ -52,6 +52,7 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/Frizlab/APIConnectionProtocols.git",         from: "1.0.0-beta.6"))
 		ret.append(.package(url: "https://github.com/Frizlab/HasResult.git",                      from: "1.0.0"))
 		ret.append(.package(url: "https://github.com/Frizlab/OperationAwaiting.git",              from: "1.2.0-beta.2"))
+		ret.append(.package(url: "https://github.com/Frizlab/stream-reader.git",                  from: "3.5.0"))
 		ret.append(.package(url: "https://github.com/Frizlab/swift-email.git",                    from: "0.2.5"))
 		ret.append(.package(url: "https://github.com/Frizlab/UnwrapOrThrow.git",                  from: "1.0.0-beta.1"))
 		ret.append(.package(url: "https://github.com/happn-app/BMO.git",                          branch: "dev.tests")) /* Just for some convenience transformers. */
@@ -146,8 +147,8 @@ let package = Package(
 		/* *********************
 		   MARK: Office Services
 		   ********************* */
-		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")], path: "Sources/OfficeKitServices/ Common",     swiftSettings: commonSwiftSettings))
-		ret.append(.target(name: "CommonForOfficeKitServicesTests", dependencies: [],                            path: "Tests/OfficeKitServices-Tests/ Common", swiftSettings: commonSwiftSettings))
+		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")],                              path: "Sources/OfficeKitServices/ Common",     swiftSettings: commonSwiftSettings))
+		ret.append(.target(name: "CommonForOfficeKitServicesTests", dependencies: [.product(name: "StreamReader", package: "stream-reader")], path: "Tests/OfficeKitServices-Tests/ Common", swiftSettings: commonSwiftSettings))
 		ret.append(contentsOf: targetsForService(named: "HappnOffice",  folderName: "happn",  additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
 		ret.append(contentsOf: targetsForService(named: "GoogleOffice", folderName: "Google", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
 		

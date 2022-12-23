@@ -19,24 +19,35 @@ import ServiceKit
 
 final class GoogleOfficeTests : XCTestCase {
 	
+	struct TestConf : Decodable {
+		var fetchedUser: FetchedUser
+		struct FetchedUser : Decodable {
+			var id: String
+			var email: Email
+		}
+	}
+	
 	/* Parsed once for the whole test case. */
-	static var conf: Result<GoogleServiceConfig, Error>!
+	static var confs: Result<(GoogleServiceConfig, TestConf), Error>!
 	
 	/* A new instance of the service is created for each test. */
 	var service: GoogleService!
+	var testConf: TestConf!
 	
 	let services = Services()
 	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
-		conf = Result{ try parsedConf(for: "google") }
+		confs = Result{ try parsedConf(for: "google") }
 	}
 	
 	override func setUp() async throws {
 		try await super.setUp()
 		
-		let conf = try Self.conf.get()
-		service = try GoogleService(id: "test-gougle", googleServiceConfig: conf)
+		let (serviceConf, testConf) = try Self.confs.get()
+		
+		self.testConf = testConf
+		self.service = try GoogleService(id: "test-gougle", googleServiceConfig: serviceConf)
 	}
 	
 	override func tearDown() async throws {
@@ -46,10 +57,9 @@ final class GoogleOfficeTests : XCTestCase {
 	}
 	
 	func testGetUser() async throws {
-		let id = Email(rawValue: "<REDACTED>")!
-		let optionalUser = try await service.existingUser(fromID: id, propertiesToFetch: nil, using: services)
+		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.email, propertiesToFetch: nil, using: services)
 		let user = try XCTUnwrap(optionalUser)
-		XCTAssertEqual(user.oU_persistentID, "<REDACTED>")
+		XCTAssertEqual(user.oU_persistentID, testConf.fetchedUser.id)
 	}
 	
 }

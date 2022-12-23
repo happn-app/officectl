@@ -239,8 +239,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Frizlab/stream-reader.git",
       "state" : {
-        "revision" : "6c2ca97eb9c8cba174bee2249a0e5c891e7cc7fc",
-        "version" : "3.3.1"
+        "revision" : "bae1bfb2fc2cdc6f89c3f6e89ef92d22039ef7b5",
+        "version" : "3.5.0"
       }
     },
     {

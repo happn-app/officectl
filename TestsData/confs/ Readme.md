@@ -22,6 +22,13 @@ The file `happn.json` is expected with the following template:
       ...
    }
 }
+--------------------------------------------------------------------------------
+{
+   "fetchedUser": {
+      "id": "test-user-id",
+      "email": "test-user-email"
+   }
+}
 ```
 
 ## google
@@ -38,5 +45,12 @@ The file `google.json` is expected with the following template:
    },
    "user_id_builders": [
    ]
+}
+--------------------------------------------------------------------------------
+{
+   "fetchedUser": {
+      "id": "test-user-id",
+      "email": "test-user-email"
+   }
 }
 ```

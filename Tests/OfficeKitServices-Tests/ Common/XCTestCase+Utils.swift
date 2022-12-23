@@ -8,6 +8,8 @@
 import Foundation
 import XCTest
 
+import StreamReader
+
 
 
 public extension XCTestCase {
@@ -28,9 +30,22 @@ public extension XCTestCase {
 			.appendingPathExtension("json")
 	}
 	
-	static func parsedConf<Conf : Decodable>(for name: String) throws -> Conf {
-		let data = try Data(contentsOf: confPath(for: name))
-		return try JSONDecoder().decode(Conf.self, from: data)
+	static func parsedConf<ServiceConf : Decodable, TestConf : Decodable>(for name: String) throws -> (ServiceConf, TestConf) {
+		/* Note: We decided to have a two-part conf with a big line separator, but we could’ve had this:
+		 * struct FullConf : Decodable {
+		 *    var serviceConf: ServiceConf
+		 *    var testConf: TestConf
+		 * }
+		 * and decode the FullConf directly.
+		 * Or we could’ve had two different files for the two different confs. */
+		let delimiter = "}\n--------------------------------------------------------------------------------\n{"
+		let reader = try DataReader(data: Data(contentsOf: confPath(for: name)))
+		let part1 = try reader.readData(upTo: [Data(delimiter.utf8)], matchingMode: .anyMatchWins, failIfNotFound: true, includeDelimiter: false).data + Data("}".utf8)
+		_ = try reader.readData(size: delimiter.count - 1)
+		let part2 = try reader.readDataToEnd()
+		
+		let decoder = JSONDecoder()
+		return try (decoder.decode(ServiceConf.self, from: part1), decoder.decode(TestConf.self, from: part2))
 	}
 	
 }
