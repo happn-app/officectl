@@ -63,6 +63,7 @@ public extension User {
 		}
 	}
 	
+	@discardableResult
 	mutating func oU_applyHints(_ hints: [UserProperty: (any Sendable)?], allowIDChange: Bool, convertMismatchingTypes: Bool) -> Set<UserProperty> {
 		return Set(hints.compactMap{ kv in
 			oU_setValue(kv.value, forProperty: kv.key, allowIDChange: allowIDChange, convertMismatchingTypes: convertMismatchingTypes) ?

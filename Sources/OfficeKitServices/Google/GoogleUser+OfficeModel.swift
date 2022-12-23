@@ -53,14 +53,14 @@ extension GoogleUser : User {
 					Conf.logger?.error("Asked to remove the id of a user (nil value for id in hints). This is illegal, I’m not doing it.")
 					return false
 				}
-				return Self.setValueIfNeeded(newValue, in: &primaryEmail, converter: (convertValue ? { $0 as? Email } : Converters.convertObjectToEmail(_:)))
+				return Self.setValueIfNeeded(newValue, in: &primaryEmail, converter: (!convertValue ? { $0 as? Email } : Converters.convertObjectToEmail(_:)))
 				
 			case .isSuspended:
-				return Self.setValueIfNeeded(newValue, in: &isSuspended, converter: (convertValue ? { $0 as? Bool } : Converters.convertObjectToBool(_:)))
+				return Self.setValueIfNeeded(newValue, in: &isSuspended, converter: (!convertValue ? { $0 as? Bool } : Converters.convertObjectToBool(_:)))
 				
 			case .firstName:
 				var newName = name ?? Name()
-				if Self.setValueIfNeeded(newValue, in: &newName.givenName, converter: (convertValue ? { $0 as? String } : Converters.convertObjectToString(_:))) {
+				if Self.setValueIfNeeded(newValue, in: &newName.givenName, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:))) {
 					name = newName
 					return true
 				}
@@ -68,7 +68,7 @@ extension GoogleUser : User {
 				
 			case .lastName:
 				var newName = name ?? Name()
-				if Self.setValueIfNeeded(newValue, in: &newName.familyName, converter: (convertValue ? { $0 as? String } : Converters.convertObjectToString(_:))) {
+				if Self.setValueIfNeeded(newValue, in: &newName.familyName, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:))) {
 					name = newName
 					return true
 				}
@@ -76,7 +76,7 @@ extension GoogleUser : User {
 				
 			case .nickname:
 				var newName = name ?? Name()
-				if Self.setValueIfNeeded(newValue, in: &newName.displayName, converter: (convertValue ? { $0 as? String } : Converters.convertObjectToString(_:))) {
+				if Self.setValueIfNeeded(newValue, in: &newName.displayName, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:))) {
 					name = newName
 					return true
 				}
@@ -88,7 +88,7 @@ extension GoogleUser : User {
 					Conf.logger?.error("Cannot remove all the emails of a gougle user (id is an email…).")
 					return false
 				}
-				guard let emails = (convertValue ? newValue as? [Email] : Converters.convertObjectToEmails(newValue)) else {
+				guard let emails = (!convertValue ? newValue as? [Email] : Converters.convertObjectToEmails(newValue)) else {
 					return false
 				}
 				guard let first = emails.first else {
@@ -104,7 +104,7 @@ extension GoogleUser : User {
 				
 			case .password:
 				if let newValue {
-					guard let newPass = (convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {
+					guard let newPass = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {
 						return false
 					}
 					let hash = Insecure.SHA1.hash(data: Data(newPass.utf8)).reduce("", { $0 + String(format: "%02x", $1) })

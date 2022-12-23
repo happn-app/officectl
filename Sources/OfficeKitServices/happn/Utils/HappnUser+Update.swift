@@ -8,7 +8,7 @@
 import Foundation
 
 import Email
-import FormURLEncodedEncoding
+import FormURLEncodedCoder
 import URLRequestOperation
 
 import OfficeKit2

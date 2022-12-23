@@ -125,12 +125,17 @@ public final class GoogleService : UserService {
 	
 	public let supportsUserDeletion: Bool = true
 	public func deleteUser(_ user: GoogleUser, using services: Services) async throws {
-		throw Err.unsupportedOperation
+		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
+		return try await user.delete(connector: connector)
 	}
 	
 	public let supportsPasswordChange: Bool = true
 	public func changePassword(of user: GoogleUser, to newPassword: String, using services: Services) async throws {
-		throw Err.unsupportedOperation
+		var user = user
+		guard user.oU_setValue(newPassword, forProperty: .password, allowIDChange: false, convertMismatchingTypes: false) else {
+			throw Err.internalError
+		}
+		_ = try await updateUser(user, propertiesToUpdate: [.password], using: services)
 	}
 	
 }

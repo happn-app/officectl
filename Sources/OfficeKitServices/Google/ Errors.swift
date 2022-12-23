@@ -23,6 +23,8 @@ public enum GoogleOfficeError : Error, Sendable {
 	
 	case notConnected
 	
+	case internalError
+	
 }
 
 typealias Err = GoogleOfficeError

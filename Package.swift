@@ -21,6 +21,7 @@ let coreDependencies: [Target.Dependency] = [
 /* We do not use NIO http client. We probably should… */
 let networkDependencies: [Target.Dependency] = [
 	.product(name: "HasResult",           package: "HasResult"),
+	.product(name: "FormURLEncodedCoder", package: "HTTPCoders"),
 	.product(name: "OperationAwaiting",   package: "OperationAwaiting"),
 	.product(name: "URLRequestOperation", package: "URLRequestOperation")
 ]
@@ -57,6 +58,7 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/Frizlab/UnwrapOrThrow.git",                  from: "1.0.0-beta.1"))
 		ret.append(.package(url: "https://github.com/happn-app/BMO.git",                          branch: "dev.tests")) /* Just for some convenience transformers. */
 		ret.append(.package(url: "https://github.com/happn-app/CollectionConcurrencyKit.git",     from: "0.2.0"))
+		ret.append(.package(url: "https://github.com/happn-app/HTTPCoders.git",                   from: "0.1.0"))
 		ret.append(.package(url: "https://github.com/happn-app/officectl-model.git",              branch: "main"))
 		ret.append(.package(url: "https://github.com/happn-app/RetryingOperation.git",            from: "1.1.7"))
 		ret.append(.package(url: "https://github.com/happn-app/SemiSingleton.git",                from: "2.1.0-beta.1"))

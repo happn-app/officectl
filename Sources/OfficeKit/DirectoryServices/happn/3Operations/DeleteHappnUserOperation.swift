@@ -10,7 +10,7 @@ import Foundation
 import FoundationNetworking
 #endif
 
-import FormURLEncodedEncoding
+import FormURLEncodedCoder
 import GenericJSON
 import HasResult
 import NIO

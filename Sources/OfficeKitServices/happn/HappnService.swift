@@ -152,8 +152,7 @@ public final class HappnService : UserService {
 			 * Let’s generate a password!
 			 * A long and complex one. */
 			OfficeKitConfig.logger?.warning("Auto-generating a random password for happn user creation: creating a happn user w/o a password is not supported.")
-			let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789=+_-$!@#%^&*(){}[]'\\\";:/?.>,<§"
-			user.password = String((0..<64).map{ _ in chars.randomElement()! })
+			user.password = String.generatePassword()
 		}
 		
 		return try await user.create(connector: connector)

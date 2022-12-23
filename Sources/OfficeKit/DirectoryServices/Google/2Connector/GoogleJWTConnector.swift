@@ -11,7 +11,7 @@ import FoundationNetworking
 #endif
 
 import APIConnectionProtocols
-import FormURLEncodedEncoding
+import FormURLEncodedCoder
 @preconcurrency import JWT
 import OperationAwaiting
 import TaskQueue

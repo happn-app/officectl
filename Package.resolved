@@ -118,6 +118,15 @@
       }
     },
     {
+      "identity" : "httpcoders",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/happn-app/HTTPCoders.git",
+      "state" : {
+        "revision" : "b8e713844c9a0c23a8e6c8d4a288cff444f6fdb8",
+        "version" : "0.1.2"
+      }
+    },
+    {
       "identity" : "jwt",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/jwt.git",
@@ -419,8 +428,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/happn-app/URLRequestOperation.git",
       "state" : {
-        "revision" : "334de2fa75374f17f5262f3aa83d34f774d68058",
-        "version" : "2.0.0-alpha.13.3.0"
+        "revision" : "9c172bf40386739c9245555031662e557dae4551",
+        "version" : "2.0.0-alpha.13.5"
       }
     },
     {

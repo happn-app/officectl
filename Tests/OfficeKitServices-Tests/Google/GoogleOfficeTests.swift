@@ -10,8 +10,10 @@ import XCTest
 
 import CommonForOfficeKitServicesTests
 import Email
+import Logging
 import OfficeKit2
 import ServiceKit
+import URLRequestOperation
 
 @testable import GoogleOffice
 
@@ -38,6 +40,8 @@ final class GoogleOfficeTests : XCTestCase {
 	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
+		URLRequestOperationConfig.logHTTPResponses = true
+		URLRequestOperationConfig.logHTTPRequests = true
 		confs = Result{ try parsedConf(for: "google") }
 	}
 	
@@ -60,6 +64,40 @@ final class GoogleOfficeTests : XCTestCase {
 		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.email, propertiesToFetch: nil, using: services)
 		let user = try XCTUnwrap(optionalUser)
 		XCTAssertEqual(user.oU_persistentID, testConf.fetchedUser.id)
+	}
+	
+	func testCreateUpdateDeleteUser() async throws {
+		let initialEmailStr = "officectl.test.\((0..<42).randomElement()!)@happn.fr"
+		let modifiedEmailStr = "officectl.test-modified.\((0..<42).randomElement()!)@happn.fr"
+		
+		var user = GoogleUser(oU_id: Email(rawValue: initialEmailStr)!)
+		XCTAssertEqual(user.primaryEmail, Email(rawValue: initialEmailStr))
+		XCTAssertNil(user.oU_firstName)
+		XCTAssertNil(user.oU_lastName)
+		
+		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test", .password: String.generatePassword()], allowIDChange: false, convertMismatchingTypes: true)
+		XCTAssertEqual(user.primaryEmail, Email(rawValue: initialEmailStr))
+		XCTAssertEqual(user.oU_firstName, "Officectl")
+		XCTAssertEqual(user.oU_lastName, "Test")
+		
+		user = try await service.createUser(user, using: services)
+		XCTAssertEqual(user.primaryEmail, Email(rawValue: initialEmailStr))
+		XCTAssertEqual(user.oU_firstName, "Officectl")
+		XCTAssertEqual(user.oU_lastName, "Test")
+
+		XCTAssertFalse(user.oU_setValue(modifiedEmailStr, forProperty: .emails, allowIDChange: false, convertMismatchingTypes: true))
+		XCTAssertFalse(user.oU_setValue(modifiedEmailStr, forProperty: .emails, allowIDChange: true, convertMismatchingTypes: false))
+		XCTAssertTrue(user.oU_setValue(modifiedEmailStr, forProperty: .emails, allowIDChange: true, convertMismatchingTypes: true))
+		
+		/* We have to wait a bit because the user is not created immeditaly and if we try to update it we get an error. */
+		try await Task.sleep(nanoseconds: 13_000_000_000/*13s*/)
+		
+		user = try await service.updateUser(user, propertiesToUpdate: [.emails], using: services)
+		XCTAssertEqual(user.primaryEmail, Email(rawValue: modifiedEmailStr))
+		XCTAssertEqual(user.oU_firstName, "Officectl")
+		XCTAssertEqual(user.oU_lastName, "Test")
+		
+		try await service.deleteUser(user, using: services)
 	}
 	
 }
