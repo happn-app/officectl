@@ -12,6 +12,7 @@ import CommonForOfficeKitServicesTests
 import Email
 import OfficeKit2
 import ServiceKit
+import URLRequestOperation
 
 @testable import HappnOffice
 
@@ -38,6 +39,8 @@ final class HappnOfficeTests : XCTestCase {
 	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
+		URLRequestOperationConfig.logHTTPResponses = true
+		URLRequestOperationConfig.logHTTPRequests = true
 		confs = Result{ try parsedConf(for: "happn") }
 	}
 	
