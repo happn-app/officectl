@@ -20,6 +20,9 @@ public enum OfficeKitError : Error, Sendable {
 	/** Error thrown by ``UserService/logicalUserID(fromUser:)`` when the user ID computation is not possible (missing info from the user for instance). */
 	case cannotInferUserIDFromOtherUser
 	
+	/** Error thrown when a service is asked to do something it does not support. */
+	case unsupportedOperation
+	
 }
 
 typealias Err = OfficeKitError

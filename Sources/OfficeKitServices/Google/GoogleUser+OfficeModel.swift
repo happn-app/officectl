@@ -156,8 +156,7 @@ extension GoogleUser : User {
 	}
 	
 	internal static func validFieldsParameter(from keys: Set<CodingKeys>) -> String {
-		/* Retrieving the password is not possible, of course.
-		 * The login, id and type are mandatory for the happn service to work properly (type not really, but whatever). */
+		/* Retrieving the password is not possible, of course. */
 		return (keys.subtracting([.password]) + [.primaryEmail, .id, .kind]).map{ $0.stringValue }.joined(separator: ",")
 	}
 	

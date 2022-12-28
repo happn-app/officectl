@@ -152,6 +152,7 @@ let package = Package(
 		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")],                              path: "Sources/OfficeKitServices/ Common",     swiftSettings: commonSwiftSettings))
 		ret.append(.target(name: "CommonForOfficeKitServicesTests", dependencies: [.product(name: "StreamReader", package: "stream-reader")], path: "Tests/OfficeKitServices-Tests/ Common", swiftSettings: commonSwiftSettings))
 		ret.append(contentsOf: targetsForService(named: "HappnOffice",  folderName: "happn",  additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
+		ret.append(contentsOf: targetsForService(named: "GitHubOffice", folderName: "GitHub", additionalDependencies: networkDependencies + [.product(name: "JWT", package: "jwt")]))
 		ret.append(contentsOf: targetsForService(named: "GoogleOffice", folderName: "Google", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
 		
 		ret.append(.executableTarget(

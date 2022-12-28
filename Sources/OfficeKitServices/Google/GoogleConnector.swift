@@ -121,7 +121,7 @@ public actor GoogleConnector : Connector, Authenticator, HasTaskQueue {
 			throw Err.notConnected
 		}
 		
-		/* Add the “Authorization” header to the request */
+		/* Add the “Authorization” header to the request. */
 		var request = request
 		request.addValue("Bearer \(tokenInfo.token)", forHTTPHeaderField: "Authorization")
 		return request
