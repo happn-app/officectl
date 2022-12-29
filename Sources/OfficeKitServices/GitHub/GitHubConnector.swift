@@ -9,6 +9,7 @@ import Foundation
 
 import APIConnectionProtocols
 @preconcurrency import JWT
+import OperationAwaiting
 import TaskQueue
 import URLRequestOperation
 
@@ -17,15 +18,16 @@ import URLRequestOperation
 public actor GitHubConnector : Connector, Authenticator, HasTaskQueue {
 	
 	public typealias Request = URLRequest
-	public typealias Authentication = Set<String>
+	public typealias Authentication = Void
+	
+	public static let apiURL = URL(string: "https://api.github.com")!
 	
 	public let appID: String
 	public let installationID: String
 	public let privateKey: RSAKey
 	
-	public var isConnected:  Bool         {tokenInfo != nil}
-	public var accessToken:  String?      {tokenInfo?.token}
-	public var currentScope: Set<String>? {tokenInfo?.scope}
+	public var isConnected: Bool    {tokenInfo != nil}
+	public var accessToken: String? {tokenInfo?.token}
 	
 	public init(appID: String, installationID: String, privateKeyPath: String) throws {
 		self.appID = appID
@@ -33,31 +35,31 @@ public actor GitHubConnector : Connector, Authenticator, HasTaskQueue {
 		self.privateKey = try RSAKey.private(pem: Data(contentsOf: URL(fileURLWithPath: privateKeyPath, isDirectory: false)))
 	}
 	
-	public func increaseScopeIfNeeded(_ scope: String...) async throws {
-		guard !(currentScope?.isSubset(of: scope) ?? false) else {
-			/* The current scope contains the scope we want, we have nothing to do. */
-			return
-		}
-		
-		let scope = Set(scope).union(currentScope ?? [])
-		try await executeOnTaskQueue{
-			try await self.unqueuedDisconnect()
-			try await self.unqueuedConnect(scope)
-		}
-	}
-	
 	/* ********************************
 	   MARK: - Connector Implementation
 	   ******************************** */
 	
-	public func unqueuedConnect(_ scope: Set<String>) async throws {
+	public func unqueuedConnect(_ auth: Void) async throws {
 		try await unqueuedDisconnect()
 		
-		throw Err.notImplemented
+		/* GitHub does not support non-int exp or iat. */
+		let roundedNow = Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded())
+		let jwtPayload = TokenInstallOwnerProofPayload(iss: .init(value: appID), iat: .init(value: roundedNow), exp: .init(value: roundedNow + 30))
+		let jwtToken = try JWTSigner.rs256(key: privateKey).sign(jwtPayload)
+		
+		let accessTokenURL = try Self.apiURL.appendingPathComponentsSafely("app", "installations", installationID, "access_tokens")
+		let tokenResponse = try await URLRequestDataOperation<TokenResponseBody>
+			.forAPIRequest(url: accessTokenURL, method: "POST", headers: ["authorization": "Bearer \(jwtToken)"], retryProviders: [])
+			.startAndGetResult().result
+		
+		tokenInfo = TokenInfo(token: tokenResponse.token, expirationDate: tokenResponse.expiresAt)
 	}
-
+	
 	public func unqueuedDisconnect() async throws {
-		throw Err.notImplemented
+		/* We do nothing (apart from removing the token from memory).
+		 * The tokens we get from a connection operation are very short-lived.
+		 * AFAIK there are no possible way to explicitly revoke an installation token. */
+		tokenInfo = nil
 	}
 	
 	/* ************************************
@@ -69,7 +71,7 @@ public actor GitHubConnector : Connector, Authenticator, HasTaskQueue {
 			/* If the token expires soon, we reauth it.
 			 * Clients should retry requests failing for expired token reasons, but let’s be proactive and allow a useless call. */
 #warning("TODO: Mechanism to avoid double-token refresh when it’s not needed (a request waiting for a response, another one is launched in parallel, both get a token expired, both will refresh, but second refresh is useless).")
-			try await unqueuedConnect(tokenInfo.scope)
+			try await unqueuedConnect(())
 		}
 		
 		/* Make sure we're connected (_after_ potentially modifying the tokenInfo). */
@@ -77,8 +79,10 @@ public actor GitHubConnector : Connector, Authenticator, HasTaskQueue {
 			throw Err.notConnected
 		}
 		
-		/* TODO: Actual auth. */
-		throw Err.notImplemented
+		/* Add the “Authorization” header to the request */
+		var request = request
+		request.addValue("token \(tokenInfo.token)", forHTTPHeaderField: "Authorization")
+		return request
 	}
 	
 	/* ***************
@@ -94,8 +98,6 @@ public actor GitHubConnector : Connector, Authenticator, HasTaskQueue {
 		
 		var token: String
 		var expirationDate: Date
-		
-		var scope: Set<String>
 		
 	}
 	
