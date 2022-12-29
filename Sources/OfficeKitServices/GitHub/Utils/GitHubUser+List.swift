@@ -21,11 +21,18 @@ extension GitHubUser {
 		let baseURL = GitHubConnector.apiURL
 		
 		let decoder = JSONDecoder()
-		let op = try URLRequestDataOperation<[GitHubUser]>.forAPIRequest(
+		let op1 = try URLRequestDataOperation<[GitHubUser]>.forAPIRequest(
 			url: baseURL.appending("orgs", orgID, "members"),
 			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 		)
-		return try await op.startAndGetResult().result
+		let currentMembers = try await op1.startAndGetResult().result
+		
+		let op2 = try URLRequestDataOperation<[GitHubUser]>.forAPIRequest(
+			url: baseURL.appending("orgs", orgID, "invitations"),
+			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+		)
+		let invitedMembers = try await op2.startAndGetResult().result
+		return currentMembers + invitedMembers
 	}
 	
 }

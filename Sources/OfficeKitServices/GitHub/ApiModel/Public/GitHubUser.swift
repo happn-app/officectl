@@ -9,6 +9,8 @@ import Foundation
 
 import Email
 
+import OfficeKit2
+
 
 
 public struct GitHubUser : Sendable, Hashable, Codable {
@@ -34,6 +36,40 @@ public struct GitHubUser : Sendable, Hashable, Codable {
 	 Let’s check that later. */
 	public var company: String?
 	
+	/**
+	 Who invited the user to the organization?
+	 
+	 Not truly a part of a user per se.
+	 
+	 It _should_ be a part of an invitation object,
+	  but GitHub does not have an “invite” object and put everything in the user object.
+	 
+	 To be more precise, it seem the concept of “object” does not exist at all in GitHub’s (REST) API:
+	  the API is just a bunch of properties returned per endpoint, validated by a schema.
+	 
+	 Anyway, the “proper” way to handle this would probably be to create one kind of object per API endpoint.
+	 
+	 We won’t do that.
+	 
+	 So instead we put the inviter directly inside the User object. */
+	@Indirect
+	public var inviter: GitHubUser?
+	/**
+	 This is the role of the _invitee_.
+	 For a user who is already a member, this should be `nil`. */
+	public var inviteeRole: Role?
+	
+	public var invitationFailureDate: Date?
+	public var invitationFailureReason: String?
+	
+	public enum Role : String, Sendable, Codable {
+		
+		case admin
+		case directMember = "direct_member"
+		case billingManager = "billing_manager"
+		
+	}
+	
 	enum CodingKeys : String, CodingKey {
 		
 		case type
@@ -49,6 +85,12 @@ public struct GitHubUser : Sendable, Hashable, Codable {
 		case twoFactorAuthentication = "two_factor_authentication"
 		
 		case company
+		
+		case inviter
+		case inviteeRole = "role"
+		
+		case invitationFailureDate = "failed_at"
+		case invitationFailureReason = "failed_reason"
 		
 	}
 	
