@@ -35,6 +35,14 @@ public actor GitHubConnector : Connector, Authenticator, HasTaskQueue {
 		self.privateKey = try RSAKey.private(pem: Data(contentsOf: URL(fileURLWithPath: privateKeyPath, isDirectory: false)))
 	}
 	
+	public func connectIfNeeded() async throws {
+		guard !isConnected else {
+			return
+		}
+		
+		try await connect(())
+	}
+	
 	/* ********************************
 	   MARK: - Connector Implementation
 	   ******************************** */
@@ -83,7 +91,7 @@ public actor GitHubConnector : Connector, Authenticator, HasTaskQueue {
 		
 		/* Add the “Authorization” header to the request */
 		var request = request
-		request.addValue("token \(tokenInfo.token)", forHTTPHeaderField: "Authorization")
+		request.addValue("Bearer \(tokenInfo.token)", forHTTPHeaderField: "Authorization")
 		return request
 	}
 	

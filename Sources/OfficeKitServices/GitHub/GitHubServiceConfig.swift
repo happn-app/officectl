@@ -17,7 +17,9 @@ public struct GitHubServiceConfig : Sendable, Codable {
 	
 	public var serviceName: String
 	
+	public var orgID: String
 	public var connectorSettings: ConnectorSettings
+	
 	public var userIDBuilders: [UserIDBuilder]?
 	
 	public init(json: JSON) throws {
@@ -45,7 +47,9 @@ public struct GitHubServiceConfig : Sendable, Codable {
 		
 		case serviceName = "service_name"
 		
+		case orgID = "org_id"
 		case connectorSettings = "connector_settings"
+		
 		case userIDBuilders = "user_id_builders"
 		
 	}

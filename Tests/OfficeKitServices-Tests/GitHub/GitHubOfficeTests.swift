@@ -22,11 +22,6 @@ import URLRequestOperation
 final class GitHubOfficeTests : XCTestCase {
 	
 	struct TestConf : Decodable {
-		var fetchedUser: FetchedUser
-		struct FetchedUser : Decodable {
-			var id: Int
-			var login: String
-		}
 	}
 	
 	/* Parsed once for the whole test case. */
@@ -60,10 +55,9 @@ final class GitHubOfficeTests : XCTestCase {
 		service = nil
 	}
 	
-	func testGetUser() async throws {
-		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.login, propertiesToFetch: nil, using: services)
-		let user = try XCTUnwrap(optionalUser)
-		XCTAssertEqual(user.oU_persistentID, testConf.fetchedUser.id)
+	func testGetAllUsers() async throws {
+		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: services)
+		XCTAssertFalse(users.isEmpty)
 	}
 	
 }

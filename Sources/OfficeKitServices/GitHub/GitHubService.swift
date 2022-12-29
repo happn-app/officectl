@@ -93,19 +93,20 @@ public final class GitHubService : UserService {
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [GitHubUser] {
-		throw Err.notImplemented
+		try await connector.connectIfNeeded()
+		return try await GitHubUser.list(orgID: config.orgID, propertiesToFetch: GitHubUser.keysFromProperties(propertiesToFetch), connector: connector)
 	}
-
+	
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: GitHubUser, using services: Services) async throws -> GitHubUser {
 		throw Err.notImplemented
 	}
-
+	
 	public let supportsUserUpdate: Bool = false
 	public func updateUser(_ user: GitHubUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> GitHubUser {
 		throw OfficeKitError.unsupportedOperation
 	}
-
+	
 	public let supportsUserDeletion: Bool = true
 	public func deleteUser(_ user: GitHubUser, using services: Services) async throws {
 		throw Err.notImplemented
