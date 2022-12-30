@@ -85,11 +85,13 @@ public final class GitHubService : UserService {
 	}
 	
 	public func existingUser(fromPersistentID pID: Int, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GitHubUser? {
-		throw Err.notImplemented
+		try await connector.connectIfNeeded()
+		return try await GitHubUser.get(id: pID, orgID: config.orgID, connector: connector)
 	}
 	
 	public func existingUser(fromID uID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GitHubUser? {
-		throw Err.notImplemented
+		try await connector.connectIfNeeded()
+		return try await GitHubUser.get(login: uID, orgID: config.orgID, connector: connector)
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [GitHubUser] {

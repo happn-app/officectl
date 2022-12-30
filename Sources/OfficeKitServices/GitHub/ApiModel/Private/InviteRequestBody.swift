@@ -12,7 +12,7 @@ import Foundation
 struct InviteRequestBody : Codable, Sendable {
 	
 	var inviteeID: Int /* or email, but we don’t care, we only invite through id. */
-	var role: Role
+	var role: InviteeRole
 	
 	var teamIDs: Set<Int> = []
 	

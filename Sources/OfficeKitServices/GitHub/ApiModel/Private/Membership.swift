@@ -19,7 +19,7 @@ struct Membership : Codable, Sendable {
 	}
 	
 	var state: State
-	var role: Role
+	var role: MembershipRole
 	
 //	var organization: GitHubOrganization
 	var user: GitHubUser

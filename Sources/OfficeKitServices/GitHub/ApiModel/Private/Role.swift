@@ -9,7 +9,16 @@ import Foundation
 
 
 
-enum Role : String, Sendable, Codable {
+enum MembershipRole : String, Sendable, Codable {
+	
+	case admin
+	case member = "member"
+	case billingManager = "billing_manager"
+	
+}
+
+/* Mostly the same as the membership role, but member has another name… */
+enum InviteeRole : String, Sendable, Codable {
 	
 	case admin
 	case directMember = "direct_member"

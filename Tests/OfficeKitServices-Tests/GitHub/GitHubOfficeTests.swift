@@ -22,6 +22,13 @@ import URLRequestOperation
 final class GitHubOfficeTests : XCTestCase {
 	
 	struct TestConf : Decodable {
+		var fetchedUser: User
+		var existingUserNotPartOfHappn: User
+		var userToAddAndRemove: User
+		struct User : Decodable {
+			var id: Int
+			var login: String
+		}
 	}
 	
 	/* Parsed once for the whole test case. */
@@ -55,9 +62,29 @@ final class GitHubOfficeTests : XCTestCase {
 		service = nil
 	}
 	
+	func testGetUser() async throws {
+		let optionalUser = try await service.existingUser(fromPersistentID: testConf.fetchedUser.id, propertiesToFetch: nil, using: services)
+		let user = try XCTUnwrap(optionalUser)
+		XCTAssertEqual(user.login, testConf.fetchedUser.login)
+	}
+	
+	func testGetExistingUserNotPartOfHappn() async throws {
+		let user = try await service.existingUser(fromPersistentID: testConf.existingUserNotPartOfHappn.id, propertiesToFetch: nil, using: services)
+		XCTAssertNil(user)
+	}
+	
 	func testGetAllUsers() async throws {
 		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: services)
 		XCTAssertGreaterThan(users.count, 50)
+	}
+	
+	func testCreateAndDeleteUser() async throws {
+		var user = GitHubUser(login: testConf.userToAddAndRemove.login)
+		user = try await service.createUser(user, using: services)
+		print("*** User is invited.")
+		try await Task.sleep(nanoseconds: 1_000_000_000) /* Not necessarily required, but feels like a good thing. */
+		try await service.deleteUser(user, using: services)
+		print("*** Membership has been removed.")
 	}
 	
 }
