@@ -15,6 +15,8 @@ public enum GitHubOfficeError : Error, Sendable {
 	
 	case notConnected
 	
+	case loginNotFound
+	
 	case unsupportedOperation
 	case notImplemented
 	

@@ -99,7 +99,8 @@ public final class GitHubService : UserService {
 	
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: GitHubUser, using services: Services) async throws -> GitHubUser {
-		throw Err.notImplemented
+		try await connector.connectIfNeeded()
+		return try await user.create(role: .directMember, orgID: config.orgID, connector: connector)
 	}
 	
 	public let supportsUserUpdate: Bool = false

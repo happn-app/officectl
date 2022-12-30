@@ -17,7 +17,10 @@ import OfficeKit2
 
 extension GitHubUser {
 	
-	/* https://developers.google.com/admin-sdk/directory/v1/reference/users/get */
+	/* https://docs.github.com/en/rest/orgs/members?apiVersion=2022-11-28#list-organization-members
+	 * https://docs.github.com/en/rest/orgs/members?apiVersion=2022-11-28#list-pending-organization-invitations
+	 * https://docs.github.com/en/rest/orgs/outside-collaborators?apiVersion=2022-11-28#list-outside-collaborators-for-an-organization
+	 * Did not find for listing pending collaborators, sadly. */
 	static func list(
 		membershipTypes: Set<GitHubUser.MembershipType> = [.member, .invited, .outsideCollaborator],
 		orgID: String,
