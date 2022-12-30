@@ -6,7 +6,7 @@
  */
 
 /* TODO: Use ncurses to draw the current download status of the drive.
- *       https://dev.iachieved.it/iachievedit/ncurses-with-swift-on-linux/ */
+ *       <https://dev.iachieved.it/iachievedit/ncurses-with-swift-on-linux/> */
 #if canImport(Darwin)
 import Darwin.ncurses
 #else

@@ -43,8 +43,7 @@ public final class ExternalDirectoryServiceV1 : UserDirectoryService {
 		authenticator = ExternalServiceAuthenticator(secret: c.secret)
 		
 #warning("TODO: JSON encoder/decoder are thread-safe on macOS 13, not before apparently (conformance to Sendable is only starting at macOS 13)")
-		/* Note: We assume JSON encoder/decoder are thread-safe.
-		 *       https://stackoverflow.com/a/52183880 */
+		/* Note: We assume JSON encoder/decoder are thread-safe (<https://stackoverflow.com/a/52183880>). */
 		
 		jsonEncoder = JSONEncoder()
 //		jsonEncoder.keyEncodingStrategy = .convertToSnakeCase

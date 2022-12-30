@@ -28,7 +28,7 @@ import TaskQueue
  * I think it is because it will depend on the operation being done.
  * Reading does not require a password apparently, but the admin pass is required to modify certain fields (I think). */
 
-/* This helps: https://github.com/aosm/OpenDirectory/blob/master/Tests/TestApp.m */
+/* This helps: <https://github.com/aosm/OpenDirectory/blob/master/Tests/TestApp.m> */
 public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	
 	public typealias Authentication = Void

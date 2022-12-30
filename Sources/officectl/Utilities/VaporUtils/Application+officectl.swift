@@ -41,7 +41,7 @@ extension Application {
 		app.commands.use(vaporCommand, as: "handler", isDefault: true)
 		
 		do {
-			/* This whole block should be removed once storage is thread-safe (see https://github.com/vapor/vapor/issues/2330).
+			/* This whole block should be removed once storage is thread-safe (see <https://github.com/vapor/vapor/issues/2330>).
 			 * In the mean time we force get all the properties that set something in the storage so the storage is effectively read-only later.
 			 * Must be done after the app is configured. */
 			_ = app.semiSingletonStore

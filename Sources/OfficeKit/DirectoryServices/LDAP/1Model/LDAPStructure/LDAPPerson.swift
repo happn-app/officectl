@@ -9,7 +9,7 @@ import Foundation
 
 
 
-/* https://www.ietf.org/rfc/rfc4519.txt */
+/* <https://www.ietf.org/rfc/rfc4519.txt> */
 public class LDAPPerson : LDAPTop {
 	
 	public static let propNameSN = "sn"

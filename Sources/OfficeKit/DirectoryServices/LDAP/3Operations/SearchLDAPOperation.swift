@@ -14,7 +14,7 @@ import COpenLDAP
 
 
 
-/* Most of this class is adapted from https://github.com/PerfectlySoft/Perfect-LDAP/blob/3ec5155c2a3efa7aa64b66353024ed36ae77349b/Sources/PerfectLDAP/PerfectLDAP.swift */
+/* Most of this class is adapted from <https://github.com/PerfectlySoft/Perfect-LDAP/blob/3ec5155c2a3efa7aa64b66353024ed36ae77349b/Sources/PerfectLDAP/PerfectLDAP.swift> */
 
 public final class SearchLDAPOperation : RetryingOperation, HasResult {
 	
@@ -163,13 +163,13 @@ public struct LDAPSearchRequest {
 	
 	public enum Scope : ber_int_t {
 		
-		/** https://ldapwiki.com/wiki/BaseObject */
+		/** <https://ldapwiki.com/wiki/BaseObject> */
 		case base = 0
-		/** https://ldapwiki.com/wiki/SingleLevel */
+		/** <https://ldapwiki.com/wiki/SingleLevel> */
 		case singleLevel = 1
-		/** https://ldapwiki.com/wiki/WholeSubtree */
+		/** <https://ldapwiki.com/wiki/WholeSubtree> */
 		case subtree = 2
-		/** https://ldapwiki.com/wiki/SubordinateSubtree */
+		/** <https://ldapwiki.com/wiki/SubordinateSubtree> */
 		case children = 3 /* OpenLDAP Extension */
 		case `default` = -1 /* OpenLDAP Extension */
 		

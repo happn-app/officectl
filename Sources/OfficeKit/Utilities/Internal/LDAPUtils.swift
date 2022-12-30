@@ -30,7 +30,7 @@ func ldapModAlloc(method: Int32, key: String, values: [Data]) -> UnsafeMutablePo
 	return ptr
 }
 
-/* From https://github.com/PerfectlySoft/Perfect-LDAP/blob/3ec5155c2a3efa7aa64b66353024ed36ae77349b/Sources/PerfectLDAP/Utilities.swift */
+/* From <https://github.com/PerfectlySoft/Perfect-LDAP/blob/3ec5155c2a3efa7aa64b66353024ed36ae77349b/Sources/PerfectLDAP/Utilities.swift> */
 func withCLDAPArrayOfString<R>(array: [String]?, _ body: (UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?) throws -> R) rethrows -> R {
 	guard let array = array else {
 		return try body(nil)

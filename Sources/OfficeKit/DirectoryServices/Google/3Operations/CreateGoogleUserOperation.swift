@@ -16,11 +16,11 @@ import URLRequestOperation
 
 
 
-/* See https://github.com/happn-app/RetryingOperation/blob/123eafbc84db6b1bbcab6849882de2ccd1f6e60e/Sources/RetryingOperation/WrappedRetryingOperation.swift#L36
+/* See <https://github.com/happn-app/RetryingOperation/blob/123eafbc84db6b1bbcab6849882de2ccd1f6e60e/Sources/RetryingOperation/WrappedRetryingOperation.swift#L36>
  *  for more info about the unchecked Sendable conformance. */
 extension CreateGoogleUserOperation : @unchecked Sendable {}
 
-/* https://developers.google.com/admin-sdk/directory/v1/reference/users/insert */
+/* <https://developers.google.com/admin-sdk/directory/v1/reference/users/insert> */
 public final class CreateGoogleUserOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = GoogleUser

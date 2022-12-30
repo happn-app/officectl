@@ -17,7 +17,7 @@ import OfficeKit2
 
 internal extension GoogleUser {
 	
-	/* https://developers.google.com/admin-sdk/directory/reference/rest/v1/users/delete */
+	/* <https://developers.google.com/admin-sdk/directory/reference/rest/v1/users/delete> */
 	func delete(connector: GoogleConnector) async throws {
 		let baseURL = URL(string: "https://admin.googleapis.com/admin/directory/v1/")!
 		

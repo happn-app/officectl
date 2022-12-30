@@ -9,7 +9,7 @@ import Foundation
 
 
 
-/* https://www.ietf.org/rfc/rfc4512.txt */
+/* <https://www.ietf.org/rfc/rfc4512.txt> */
 public class LDAPTop {
 	
 	public static let propNameObjectClass = "objectClass"

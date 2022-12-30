@@ -13,7 +13,7 @@ import COpenLDAP
 
 
 
-/* Adapted from ldappasswd source code: https://github.com/openldap/openldap/blob/59e9ff6243465640956b58ad1756a3ede53eca7c/clients/tools/ldappasswd.c*/
+/* Adapted from ldappasswd source code: <https://github.com/openldap/openldap/blob/59e9ff6243465640956b58ad1756a3ede53eca7c/clients/tools/ldappasswd.c> */
 
 /* If the LDAPObject does not contain a password, will set to a randomly generated password. */
 public final class ModifyLDAPPasswordsOperation : RetryingOperation {

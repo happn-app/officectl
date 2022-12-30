@@ -68,7 +68,7 @@ class AuthController {
 		}
 	}
 	
-	/* We do not fail to revoke an invalid token: https://datatracker.ietf.org/doc/html/rfc7009#section-2.2. */
+	/* We do not fail to revoke an invalid token: <https://datatracker.ietf.org/doc/html/rfc7009#section-2.2>. */
 	func tokenRevoke(req: Request) async throws -> None {
 		guard req.headers.contentType == .urlEncodedForm else {
 			/* Specs requires content-type to be URL Encoded Form.

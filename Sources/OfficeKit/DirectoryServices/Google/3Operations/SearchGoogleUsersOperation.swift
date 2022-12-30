@@ -13,11 +13,11 @@ import URLRequestOperation
 
 
 
-/* See https://github.com/happn-app/RetryingOperation/blob/123eafbc84db6b1bbcab6849882de2ccd1f6e60e/Sources/RetryingOperation/WrappedRetryingOperation.swift#L36
+/* See <https://github.com/happn-app/RetryingOperation/blob/123eafbc84db6b1bbcab6849882de2ccd1f6e60e/Sources/RetryingOperation/WrappedRetryingOperation.swift#L36>
  *  for more info about the unchecked Sendable conformance. */
 extension SearchGoogleUsersOperation : @unchecked Sendable {}
 
-/* https://developers.google.com/admin-sdk/directory/v1/reference/users/list */
+/* <https://developers.google.com/admin-sdk/directory/v1/reference/users/list> */
 public final class SearchGoogleUsersOperation : RetryingOperation, HasResult {
 	
 	public typealias ResultType = [GoogleUser]
@@ -90,7 +90,7 @@ public struct GoogleUserSearchRequest : Sendable {
 	 If `nil`, the search will return all users in the given domain.
 	 No validation on the query is done.
 	 
-	 The format is described here: https://developers.google.com/admin-sdk/directory/v1/guides/search-users. */
+	 The format is described here: <https://developers.google.com/admin-sdk/directory/v1/guides/search-users>. */
 	let query: String?
 	
 	public init(domain d: String, query q: String?) {

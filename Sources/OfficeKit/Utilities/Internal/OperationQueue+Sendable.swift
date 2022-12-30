@@ -9,5 +9,5 @@ import Foundation
 
 
 
-/* See https://forums.swift.org/t/sendable-in-foundation/59577 */
+/* See <https://forums.swift.org/t/sendable-in-foundation/59577> */
 extension OperationQueue : @unchecked Sendable {}

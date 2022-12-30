@@ -16,7 +16,7 @@ import OfficeModel
 
 
 
-/* From https://datatracker.ietf.org/doc/html/draft-ietf-oauth-access-token-jwt#section-2.2 */
+/* From <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-access-token-jwt#section-2.2> */
 struct AuthToken : JWTPayload, Authenticatable {
 	
 	/** The issuer of the token. It’s “officectl”; see JWT specs for more info. */

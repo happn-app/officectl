@@ -13,8 +13,8 @@ import OfficeKit
 
 
 
-/* http://javadoc.iaik.tugraz.at/iaik_jce/current/iaik/x509/X509CRL.html
- * https://tools.ietf.org/html/rfc5280 § 5.1 */
+/* <http://javadoc.iaik.tugraz.at/iaik_jce/current/iaik/x509/X509CRL.html>
+ * <https://tools.ietf.org/html/rfc5280> § 5.1 */
 struct VaultCRL {
 	
 	let der: Data

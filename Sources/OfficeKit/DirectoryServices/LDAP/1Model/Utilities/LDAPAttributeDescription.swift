@@ -9,7 +9,7 @@ import Foundation
 
 
 
-/* https://tools.ietf.org/html/rfc4512#section-1.4 */
+/* <https://tools.ietf.org/html/rfc4512#section-1.4> */
 public struct LDAPAttributeDescription : Hashable {
 	
 	public static let uid = LDAPAttributeDescription(string: "uid")!

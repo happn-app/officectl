@@ -14,7 +14,7 @@ import COpenLDAP
 
 
 
-/* Most of this class is adapted from https://github.com/PerfectlySoft/Perfect-LDAP/blob/3ec5155c2a3efa7aa64b66353024ed36ae77349b/Sources/PerfectLDAP/PerfectLDAP.swift */
+/* Most of this class is adapted from <https://github.com/PerfectlySoft/Perfect-LDAP/blob/3ec5155c2a3efa7aa64b66353024ed36ae77349b/Sources/PerfectLDAP/PerfectLDAP.swift> */
 
 /**
  Result is an array of LDAPObject (the objects created).

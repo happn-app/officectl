@@ -11,7 +11,7 @@ import Email
 
 
 
-/* https://www.ietf.org/rfc/rfc2798.txt */
+/* <https://www.ietf.org/rfc/rfc2798.txt> */
 public class LDAPInetOrgPerson : LDAPOrganizationalPerson {
 	
 	public static let propNameUID = "uid"

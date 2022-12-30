@@ -77,7 +77,7 @@ public final class GitHubService : UserService {
 	public func logicalUserID<OtherUserType : User>(fromUser user: OtherUserType) throws -> String {
 		let id = config.userIDBuilders?.lazy
 			.compactMap{ $0.inferID(fromUser: user) }
-			.first{ _ in true } /* Not a simple `.first` because of https://stackoverflow.com/a/71778190 (avoid the handler(s) to be called more than once). */
+			.first{ _ in true } /* Not a simple `.first` because of <https://stackoverflow.com/a/71778190> (avoid the handler(s) to be called more than once). */
 		guard let id else {
 			throw OfficeKitError.cannotInferUserIDFromOtherUser
 		}

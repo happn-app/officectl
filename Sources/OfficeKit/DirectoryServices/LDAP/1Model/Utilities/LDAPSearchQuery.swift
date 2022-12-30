@@ -9,7 +9,7 @@ import Foundation
 
 
 
-/* https://tools.ietf.org/html/rfc4515#section-3 */
+/* <https://tools.ietf.org/html/rfc4515#section-3> */
 public indirect enum LDAPSearchQuery {
 	
 	public enum FilterType : String {

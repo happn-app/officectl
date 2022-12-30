@@ -17,7 +17,7 @@ import OfficeKit2
 
 internal extension GoogleUser {
 	
-	/* https://developers.google.com/admin-sdk/directory/v1/reference/users/get */
+	/* <https://developers.google.com/admin-sdk/directory/v1/reference/users/get> */
 	static func get(id: String, propertiesToFetch keys: Set<GoogleUser.CodingKeys>?, connector: GoogleConnector) async throws -> GoogleUser? {
 		let baseURL = URL(string: "https://www.googleapis.com/admin/directory/v1/")!
 		

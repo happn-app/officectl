@@ -27,7 +27,7 @@ public final actor ExternalServiceAuthenticator : Authenticator, HasTaskQueue {
 	}
 	
 	public func unqueuedAuthenticate(request: URLRequest) async throws -> URLRequest {
-		/* TODO one day, maybe: https://datatracker.ietf.org/doc/draft-cavage-http-signatures/?include_text=1.
+		/* TODO one day, maybe: <https://datatracker.ietf.org/doc/draft-cavage-http-signatures/?include_text=1>.
 		 * Note that at the time of writing, the revision is spec 11 and is not finalized. */
 		let validityEnd   = "\(Int((Date() + 9).timeIntervalSince1970))"
 		let validityStart = "\(Int((Date() - 9).timeIntervalSince1970))"

@@ -9,7 +9,7 @@ import Foundation
 
 
 
-/* RFC: https://www.ietf.org/rfc/rfc4514.txt
+/* RFC: <https://www.ietf.org/rfc/rfc4514.txt>
  * The RFC is not fully followed…
  * I know Multi-valued RDN are not supported.
  * There are probably other cases that do not correctly implement the RFC.

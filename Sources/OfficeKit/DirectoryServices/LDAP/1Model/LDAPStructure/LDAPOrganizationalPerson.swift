@@ -9,7 +9,7 @@ import Foundation
 
 
 
-/* https://www.ietf.org/rfc/rfc4519.txt */
+/* <https://www.ietf.org/rfc/rfc4519.txt> */
 public class LDAPOrganizationalPerson : LDAPPerson {
 	
 	public override func ldapObject() -> LDAPObject {

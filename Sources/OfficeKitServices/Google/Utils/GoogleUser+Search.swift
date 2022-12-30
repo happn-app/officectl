@@ -18,7 +18,7 @@ import OfficeKit2
 
 internal extension GoogleUser {
 	
-	/* https://developers.google.com/admin-sdk/directory/v1/reference/users/get */
+	/* <https://developers.google.com/admin-sdk/directory/v1/reference/users/get> */
 	static func search(_ request: SearchRequest, propertiesToFetch keys: Set<GoogleUser.CodingKeys>?, connector: GoogleConnector) async throws -> [GoogleUser] {
 		var token: String?
 		var res = [GoogleUser]()
@@ -62,7 +62,7 @@ internal struct SearchRequest : Sendable {
 	 If `nil`, the search will return all users in the given domain.
 	 No validation on the query is done.
 	 
-	 The format is described here: https://developers.google.com/admin-sdk/directory/v1/guides/search-users. */
+	 The format is described here: <https://developers.google.com/admin-sdk/directory/v1/guides/search-users>. */
 	let query: String?
 	
 	init(domain d: String, query q: String?) {
