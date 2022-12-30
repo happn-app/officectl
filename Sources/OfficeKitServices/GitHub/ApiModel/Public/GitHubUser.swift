@@ -40,24 +40,6 @@ public struct GitHubUser : Sendable, Hashable, Codable {
 	 Let’s check that later. */
 	public var company: String?
 	
-	public var membershipType: MembershipType?
-	
-	public func copyModifying(membershipType: MembershipType) -> Self {
-		var ret = self
-		ret.membershipType = membershipType
-		return ret
-	}
-	
-	public enum MembershipType : Sendable, Codable {
-		
-		case member
-		case invited
-		
-		case outsideCollaborator
-		case pendingCollaborator
-		
-	}
-	
 	enum CodingKeys : String, CodingKey {
 		
 		case type

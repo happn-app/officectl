@@ -37,14 +37,6 @@ struct Invite : Codable, Sendable {
 		return .init(login: inviteeLogin)
 	}
 	
-	enum Role : String, Sendable, Codable {
-		
-		case admin
-		case directMember = "direct_member"
-		case billingManager = "billing_manager"
-		
-	}
-	
 	enum CodingKeys : String, CodingKey {
 		
 		case id

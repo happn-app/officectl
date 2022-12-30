@@ -18,9 +18,9 @@ import OfficeKit2
 
 extension GitHubUser {
 	
-	/* https://docs.github.com/en/rest/orgs/members?apiVersion=2022-11-28#create-an-organization-invitation
-	 * https://docs.github.com/en/rest/users/users?apiVersion=2022-11-28#get-a-user */
-	func create(role: Invite.Role, teamIDs: Set<Int> = [], orgID: String, connector: GitHubConnector) async throws -> GitHubUser {
+	/* <https://docs.github.com/en/rest/orgs/members?apiVersion=2022-11-28#create-an-organization-invitation>
+	 * <https://docs.github.com/en/rest/users/users?apiVersion=2022-11-28#get-a-user> */
+	func create(role: Role, teamIDs: Set<Int> = [], orgID: String, connector: GitHubConnector) async throws -> GitHubUser {
 		let baseURL = GitHubConnector.apiURL
 		
 		let nonOptionalID: Int
@@ -39,7 +39,7 @@ extension GitHubUser {
 			url: baseURL.appending("orgs", orgID, "invitations"), httpBody: InviteRequestBody(inviteeID: nonOptionalID, role: role, teamIDs: teamIDs),
 			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 		)
-		return try await op.startAndGetResult().result.invitee.copyModifying(membershipType: .invited)
+		return try await op.startAndGetResult().result.invitee
 	}
 	
 }

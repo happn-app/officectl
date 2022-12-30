@@ -110,7 +110,8 @@ public final class GitHubService : UserService {
 	
 	public let supportsUserDeletion: Bool = true
 	public func deleteUser(_ user: GitHubUser, using services: Services) async throws {
-		throw Err.notImplemented
+		try await connector.connectIfNeeded()
+		try await user.delete(orgID: config.orgID, connector: connector)
 	}
 	
 	public let supportsPasswordChange: Bool = false
