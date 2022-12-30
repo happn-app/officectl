@@ -94,7 +94,7 @@ public final class GitHubService : UserService {
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [GitHubUser] {
 		try await connector.connectIfNeeded()
-		return try await GitHubUser.list(orgID: config.orgID, propertiesToFetch: GitHubUser.keysFromProperties(propertiesToFetch), connector: connector)
+		return try await GitHubUser.list(orgID: config.orgID, connector: connector)
 	}
 	
 	public let supportsUserCreation: Bool = true

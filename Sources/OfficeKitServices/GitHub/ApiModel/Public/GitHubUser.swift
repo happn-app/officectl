@@ -21,7 +21,8 @@ public struct GitHubUser : Sendable, Hashable, Codable {
 	 This is optional because it’s not returned when retrieving the invitations for a company.
 	 
 	 (**TODO**: Create an enum with GitHub object types, validate object types, etc.) */
-	public var type: String? = "User"
+	@DefaultForAbsentValue<DefaultTypeProvider>
+	public var type: String
 	
 	public var login: String
 	
@@ -67,12 +68,38 @@ public struct GitHubUser : Sendable, Hashable, Codable {
 	public var invitationFailureDate: Date?
 	public var invitationFailureReason: String?
 	
+	@DefaultForAbsentValue<DefaultMembershipTypeProvider>
+	public var membershipType: MembershipType?
+	
+	public func copyModifying(membershipType: MembershipType) -> Self {
+		var ret = self
+		ret.membershipType = membershipType
+		return ret
+	}
+	
 	public enum Role : String, Sendable, Codable {
 		
 		case admin
 		case directMember = "direct_member"
 		case billingManager = "billing_manager"
 		
+	}
+	
+	public enum MembershipType : Sendable, Codable {
+		
+		case member
+		case invited
+		
+		case outsideCollaborator
+		case pendingCollaborator
+		
+	}
+	
+	public struct DefaultTypeProvider : DefaultValueProvider {
+		public static var defaultValue: String = "User"
+	}
+	public struct DefaultMembershipTypeProvider : DefaultValueProvider {
+		public static var defaultValue: MembershipType? = nil
 	}
 	
 	enum CodingKeys : String, CodingKey {

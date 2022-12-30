@@ -57,7 +57,7 @@ final class GitHubOfficeTests : XCTestCase {
 	
 	func testGetAllUsers() async throws {
 		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: services)
-		XCTAssertFalse(users.isEmpty)
+		XCTAssertGreaterThan(users.count, 50)
 	}
 	
 }
