@@ -20,7 +20,7 @@ extension GitHubUser {
 	
 	/* https://docs.github.com/en/rest/orgs/members?apiVersion=2022-11-28#create-an-organization-invitation
 	 * https://docs.github.com/en/rest/users/users?apiVersion=2022-11-28#get-a-user */
-	func create(role: Role, teamIDs: Set<Int> = [], orgID: String, connector: GitHubConnector) async throws -> GitHubUser {
+	func create(role: Invite.Role, teamIDs: Set<Int> = [], orgID: String, connector: GitHubConnector) async throws -> GitHubUser {
 		let baseURL = GitHubConnector.apiURL
 		
 		let nonOptionalID: Int
@@ -35,11 +35,11 @@ extension GitHubUser {
 			nonOptionalID = try await op.startAndGetResult().result.id ?! Err.loginNotFound
 		}
 		
-		let op = try URLRequestDataOperation<GitHubUser>.forAPIRequest(
+		let op = try URLRequestDataOperation<Invite>.forAPIRequest(
 			url: baseURL.appending("orgs", orgID, "invitations"), httpBody: InviteRequestBody(inviteeID: nonOptionalID, role: role, teamIDs: teamIDs),
 			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
 		)
-		return try await op.startAndGetResult().result.copyModifying(membershipType: .invited)
+		return try await op.startAndGetResult().result.invitee.copyModifying(membershipType: .invited)
 	}
 	
 }
