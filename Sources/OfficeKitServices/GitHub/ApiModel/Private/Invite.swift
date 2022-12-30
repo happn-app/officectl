@@ -18,12 +18,9 @@ struct Invite : Codable, Sendable {
 	var nodeID: String?
 	
 	var inviteeLogin: String
-	/**
-	 This is the role of the _invitee_.
-	 For a user who is already a member, this should be `nil`. */
-	var inviteeRole: InviteeRole?
+	var inviteeRole: InviteeRole
 	
-	/** We created the invite? */
+	/** Who created the invite? */
 	var inviter: GitHubUser?
 	
 	@EmptyIsNil
