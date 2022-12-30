@@ -15,8 +15,13 @@ import OfficeKit2
 
 public struct GitHubUser : Sendable, Hashable, Codable {
 	
-	/** Should always be “User” for a user. (TODO: Create an enum with GitHub object types, validate object types, etc.) */
-	public var type: String = "User"
+	/**
+	 Should always be `“User”` for a user.
+	 
+	 This is optional because it’s not returned when retrieving the invitations for a company.
+	 
+	 (**TODO**: Create an enum with GitHub object types, validate object types, etc.) */
+	public var type: String? = "User"
 	
 	public var login: String
 	
