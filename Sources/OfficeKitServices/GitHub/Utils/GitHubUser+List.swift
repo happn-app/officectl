@@ -34,28 +34,8 @@ extension GitHubUser {
 		return try await membershipTypes.asyncFlatMap{ membershipType in
 			let (pathComponents, isInviteEndpoint) = membershipType
 			
-			let nPerPage = 100 /* max possible */
-			var pageNumber = 1
-			var curResult: [GitHubUser]
-			var allResults = [GitHubUser]()
-			repeat {
-				if !isInviteEndpoint {
-					let op = try URLRequestDataOperation<[GitHubUser]>.forAPIRequest(
-						url: baseURL.appendingPathComponentsSafely(pathComponents).appendingQueryParameters(from: ["per_page": nPerPage, "page": pageNumber]),
-						requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
-					)
-					curResult = try await op.startAndGetResult().result.map{ $0 }
-				} else {
-					let op = try URLRequestDataOperation<[Invite]>.forAPIRequest(
-						url: baseURL.appendingPathComponentsSafely(pathComponents).appendingQueryParameters(from: ["per_page": nPerPage, "page": pageNumber]),
-						requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
-					)
-					curResult = try await op.startAndGetResult().result.map{ $0.invitee }
-				}
-				allResults.append(contentsOf: curResult)
-				pageNumber += 1
-			} while curResult.count >= nPerPage
-			return allResults
+			if !isInviteEndpoint {return try await  Utils.getAll(baseURL: baseURL, pathComponents: pathComponents, connector: connector) as [GitHubUser]}
+			else                 {return try await (Utils.getAll(baseURL: baseURL, pathComponents: pathComponents, connector: connector) as [Invite]).map{ $0.invitee }}
 		}
 	}
 	
