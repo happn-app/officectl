@@ -48,7 +48,7 @@ struct SimpleUser1<UserIDType : Hashable & Sendable> : User {
 				guard let newValue = newValue as? UserIDType else {
 					return false
 				}
-				return Self.setValueIfNeeded(newValue, in: &oU_id)
+				return Self.setRequiredValueSameTypeIfNeeded(newValue, in: &oU_id)
 				
 			case .isSuspended: return Self.setValueIfNeeded(newValue, in: &oU_isSuspended, converter: (!convertValue ? { $0 as? Bool }    : Converters.convertObjectToBool(_:)))
 			case .firstName:   return Self.setValueIfNeeded(newValue, in: &oU_firstName,   converter: (!convertValue ? { $0 as? String }  : Converters.convertObjectToString(_:)))

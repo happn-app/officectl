@@ -53,7 +53,7 @@ extension GoogleUser : User {
 					Conf.logger?.error("Asked to remove the id of a user (nil value for id in hints). This is illegal, I’m not doing it.")
 					return false
 				}
-				return Self.setValueIfNeeded(newValue, in: &primaryEmail, converter: (!convertValue ? { $0 as? Email } : Converters.convertObjectToEmail(_:)))
+				return Self.setRequiredValueIfNeeded(newValue, in: &primaryEmail, converter: (!convertValue ? { $0 as? Email } : Converters.convertObjectToEmail(_:)))
 				
 			case .isSuspended:
 				return Self.setValueIfNeeded(newValue, in: &isSuspended, converter: (!convertValue ? { $0 as? Bool } : Converters.convertObjectToBool(_:)))

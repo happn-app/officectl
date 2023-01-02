@@ -16,13 +16,13 @@ final class UserUtilsTests : XCTestCase {
 	
 	func testSetValueIfNeeded() throws {
 		var value: String = "no"
-		_ = DummyUser1.setValueIfNeeded("yes" as Any, in: &value, converter: { $0 as? String })
+		_ = DummyUser1.setRequiredValueIfNeeded("yes" as Any, in: &value, converter: { $0 as? String })
 		XCTAssertEqual(value, "yes")
 	}
 	
 	func testSetValueIfNeededOptional() throws {
 		var value: String = "no"
-		_ = DummyUser1.setValueIfNeeded("yes" as Any?, in: &value, converter: { $0 as? String })
+		_ = DummyUser1.setRequiredValueIfNeeded("yes" as Any?, in: &value, converter: { $0 as? String })
 		XCTAssertEqual(value, "yes")
 	}
 	
@@ -41,7 +41,7 @@ final class UserUtilsTests : XCTestCase {
 	func testSetValueIfNeededOptionalHiddenNilValue() throws {
 		var value: String? = "no"
 		_ = DummyUser1.setValueIfNeeded(Optional<Int>.none as Any, in: &value, converter: { $0 as? String })
-		XCTAssertEqual(value, nil)
+		XCTAssertEqual(value, "no") /* Optionality is hidden, so it does not pass the switch case in setValueIfNeeded, thus calling the converter on “none”. */
 	}
 	
 }
