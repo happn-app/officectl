@@ -1,5 +1,5 @@
 /*
- * UtilitiesTests.swift
+ * UserIDBuilderTests.swift
  * OfficeKitTests
  *
  * Created by François Lamboley on 2022/10/25.
@@ -12,31 +12,7 @@ import XCTest
 
 
 
-final class UtilitiesTests : XCTestCase {
-	
-	func testConvenienceDictionaryWithDeportedHashabilityOfOfficeServiceKeys() throws {
-		let value1 = "yolo1", value2 = "yolo2"
-		let dummyService = try DummyService1(id: "dummy1", jsonConfig: .null)
-		var dictionaryOfServices = [DeportedHashability<any OfficeService>: String]()
-		
-		dictionaryOfServices[.init(value: dummyService, valueID: dummyService.id)] = value1
-		XCTAssertEqual(dictionaryOfServices[dummyService], value1)
-		
-		dictionaryOfServices[dummyService] = value2
-		XCTAssertEqual(dictionaryOfServices[dummyService], value2)
-	}
-	
-	func testConvenienceDictionaryWithDeportedHashabilityOfUserServiceKeys() throws {
-		let value1 = "yolo1", value2 = "yolo2"
-		let dummyService = try DummyService1(id: "dummy1", jsonConfig: .null)
-		var dictionaryOfServices = [DeportedHashability<any UserService>: String]()
-		
-		dictionaryOfServices[.init(value: dummyService, valueID: dummyService.id)] = value1
-		XCTAssertEqual(dictionaryOfServices[dummyService], value1)
-		
-		dictionaryOfServices[dummyService] = value2
-		XCTAssertEqual(dictionaryOfServices[dummyService], value2)
-	}
+final class UserIDBuilderTests : XCTestCase {
 	
 	func testUserIDBuilder1() throws {
 		let user = SimpleUser1(oU_id: "francois.lamboley@happn.fr", oU_firstName: "François", oU_lastName: "Lamboley")
