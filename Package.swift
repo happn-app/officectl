@@ -154,6 +154,9 @@ let package = Package(
 		ret.append(contentsOf: targetsForService(named: "HappnOffice",  folderName: "happn",  additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
 		ret.append(contentsOf: targetsForService(named: "GitHubOffice", folderName: "GitHub", additionalDependencies: networkDependencies + [.product(name: "JWT", package: "jwt")]))
 		ret.append(contentsOf: targetsForService(named: "GoogleOffice", folderName: "Google", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
+#if canImport(OpenDirectory)
+		ret.append(contentsOf: targetsForService(named: "OpenDirectoryOffice", folderName: "OpenDirectory"))
+#endif
 		
 		ret.append(.executableTarget(
 			name: "officectl",
@@ -175,8 +178,9 @@ let package = Package(
 				ret.append(.product(name: "Yaml",                     package: "YamlSwift"))
 				ret.append(.target(name: "OfficeKit"))
 				ret.append(.target(name: "OfficeKit2"))
-				ret.append(.target(name: "HappnOffice"))
 				ret.append(.target(name: "GoogleOffice"))
+				ret.append(.target(name: "HappnOffice"))
+				ret.append(.target(name: "OpenDirectoryOffice"))
 #if !canImport(Darwin)
 				ret.append(.target(name: "CNCurses"))
 #endif

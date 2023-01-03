@@ -94,6 +94,21 @@ public extension Converters {
 		}
 	}
 	
+	static func convertObjectToDN(_ obj: Any?) -> LDAPDistinguishedName? {
+		guard let obj = unwrapJSONIfNeeded(obj) else {
+			return nil
+		}
+		
+		switch obj {
+			case let dn as LDAPDistinguishedName: return dn
+			default:
+				guard let str = convertObjectToString(obj) else {
+					return nil
+				}
+				return try? LDAPDistinguishedName(string: str)
+		}
+	}
+	
 	static func convertObjectToDate(_ obj: Any?, dateFormatter: (String) -> Date?) -> Date? {
 		guard let obj = unwrapJSONIfNeeded(obj) else {
 			return nil

@@ -18,7 +18,7 @@ import SemiSingleton
 import URLRequestOperation
 
 import HappnOffice
-import GoogleOffice
+import OpenDirectoryOffice
 
 
 
@@ -49,18 +49,6 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 //		let simpleMDMToken = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		/* OfficeKit2 tests. */
-		let oldConfGougle: OfficeKit.GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
-		let googleService = try GoogleService(id: "ggl", jsonConfig: .object([
-			"service_name": .string("gougle"),
-			"primary_domains": .array(oldConfGougle.primaryDomains.map{ .string($0) }),
-			"connector_settings": .object([
-				"admin_email": .string(oldConfGougle.connectorSettings.userBehalf!),
-				"superuser_json_creds_path": .string(oldConfGougle.connectorSettings.jsonCredentialsURL.path)
-			]),
-			"user_id_builders": JSON(encodable: [
-				UserIDBuilder(format: "*|first_name|.|last_name|*@happn.fr")
-			])
-		]))
 		let oldConfHappn: OfficeKit.HappnServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
 		let happnService = try HappnService(id: "hppn", jsonConfig: .object([
 			"service_name": .string("happn"),
@@ -77,60 +65,22 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 				UserIDBuilder(format: "*|first_name|.|last_name|*@happn.fr")
 			])
 		]))
-		do {
-			let allServices = Set([HashableUserService(happnService), HashableUserService(googleService)])
-//			do {
-//				var françois = try await happnService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: nil, using: app.services)!
-//				print(françois.oU_setValue("François", forProperty: .firstName, allowIDChange: false, convertMismatchingTypes: false))
-//				print(françois.oU_setValue("1990-06-09", forProperty: .birthdate, allowIDChange: false, convertMismatchingTypes: true))
-//				print(françois)
-//				françois = try await happnService.updateUser(françois, propertiesToUpdate: [.birthdate, .firstName], using: app.services)
-//				print(françois)
-//			}
-			do {
-				var ryan = try await googleService.existingUser(fromID: Email(rawValue: "ryan.ismael@happn.fr")!, propertiesToFetch: nil, using: app.services)!
-				print(ryan.oU_setValue("Ryan", forProperty: .firstName, allowIDChange: false, convertMismatchingTypes: false))
-				ryan = try await googleService.updateUser(ryan, propertiesToUpdate: [.firstName], using: app.services)
-				print(ryan)
-			}
-//			do {
-//				let res = try await MultiServicesUser.fetchAll(in: allServices, using: app.services)
-//				res.users.forEach{
-//					print("-----")
-//					print("happn: \($0[HashableUserService(happnService)]!)")
-//					print("Gougle: \($0[HashableUserService(googleService)]!)")
-//				}
-//			}
-//			do {
-//				let vivien = try await googleService.existingUser(fromID: Email(rawValue: "vivien.toubeau@happn.fr")!, propertiesToFetch: nil, using: app.services)!
-//				let multiVivien = try await MultiServicesUser.fetch(from: UserAndServiceFrom(user: vivien, service: googleService)!, in: allServices, propertiesToFetch: nil, using: app.services)
-//				print("=====")
-//				print("happn: \(multiVivien[HashableUserService(happnService)])")
-//				print("Gougle: \(multiVivien[HashableUserService(googleService)])")
-//			}
-//			do {
-//				let françois = try await googleService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: nil, using: app.services)!
-//				let multiFrançois = try await MultiServicesUser.fetch(from: UserAndServiceFrom(user: françois, service: googleService)!, in: allServices, propertiesToFetch: nil, using: app.services)
-//				print("=====")
-//				print("happn: \(multiFrançois[HashableUserService(happnService)])")
-//				print("Gougle: \(multiFrançois[HashableUserService(googleService)])")
-//			}
-//			do {
-//				let allHappn = try await happnService.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: app.services)
-//				let françoisfr  = allHappn.first(where: { $0.oU_id == Email(rawValue: "francois.lamboley@happn.fr")! })!
-//				let françoiscom = allHappn.first(where: { $0.oU_id == Email(rawValue: "francois.lamboley@happn.com")! })!
-//				let multiFrançois = try await MultiServicesUser.merge(usersAndServices: [
-//					UserAndServiceFrom(user: françoisfr,  service: happnService)!,
-//					UserAndServiceFrom(user: françoiscom, service: happnService)!
-//				])
-//				print("=====")
-//				multiFrançois.forEach{
-//					print("\($0[HashableUserService(happnService)]!)")
-//				}
-//			}
-		} catch {
-			print(error)
-		}
+		let oldConfOD: OfficeKit.OpenDirectoryServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
+//		let odService = try HappnService(id: "hppn", jsonConfig: .object([
+//			"service_name": .string("happn"),
+//			"domain_aliases": .object(officeKitConfig.globalConfig.domainAliases.mapValues{ .string($0) }),
+//			"connector_settings": .object([
+//				"base_url": .string(oldConfHappn.connectorSettings.baseURL.absoluteString),
+//				"client_id": .string(oldConfHappn.connectorSettings.clientID),
+//				"client_secret": .string(oldConfHappn.connectorSettings.clientSecret),
+//				"admin_username": .string(oldConfHappn.connectorSettings.authMode.username!),
+//				"admin_password": .string(oldConfHappn.connectorSettings.authMode.password!),
+//			]),
+//			"user_id_builders": JSON(encodable: [
+//				UserIDBuilder(format: "|id|"),
+//				UserIDBuilder(format: "*|first_name|.|last_name|*@happn.fr")
+//			])
+//		]))
 //		do {
 ////			let user = try await googleService.existingUser(fromPersistentID: "103126761345692481320", propertiesToFetch: [.firstName, .id], using: app.services)
 ////			let user = try await googleService.existingUser(fromID: Email(rawValue: "formind.dev@happn.fr")!, propertiesToFetch: nil, using: app.services)

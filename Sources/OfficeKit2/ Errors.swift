@@ -11,6 +11,8 @@ import Foundation
 
 public enum OfficeKitError : Error, Sendable {
 	
+	case ldapDNParseFailure(reason: String)
+	
 	/**
 	 Error thrown by ``UserService/existingUser(fromID:propertiesToFetch:using:)`` when there are more than one user matching the given ID.
 	 

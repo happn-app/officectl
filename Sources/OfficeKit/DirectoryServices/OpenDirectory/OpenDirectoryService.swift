@@ -86,7 +86,7 @@ public final class OpenDirectoryService : UserDirectoryService {
 		if let record = user.record {
 			/* Is this making IO?
 			 * Who knows…
-			 * But it shouldn’t be; doc says if attributes is nil the method returns what’s in the cache. */
+			 * But it shouldn’t; doc says if attributes is nil the method returns what’s in the cache. */
 			let attributes = try record.recordDetails(forAttributes: nil)
 			for (key, val) in attributes {
 				guard let keyStr = key as? String else {
