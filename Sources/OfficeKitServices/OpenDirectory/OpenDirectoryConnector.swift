@@ -26,7 +26,9 @@ import TaskQueue
  * I think it is because it will depend on the operation being done.
  * Reading does not require a password apparently, but the admin pass is required to modify certain fields (I think). */
 
-/* This helped: <https://github.com/aosm/OpenDirectory/blob/master/Tests/TestApp.m> */
+/* This helped: <https://github.com/aosm/OpenDirectory/blob/master/Tests/TestApp.m>
+ * This was interesting also: <https://stackoverflow.com/a/69122631>
+ *  (For some info on what is the /Search node, aka almost always (don’t know of a case when it’s not true) the node with type kODNodeTypeAuthentication.) */
 public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	
 	public typealias Authentication = Void
