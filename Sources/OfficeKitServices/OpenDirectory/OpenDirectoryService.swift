@@ -93,11 +93,16 @@ public final class OpenDirectoryService : UserService {
 		try await connector.connectIfNeeded()
 		guard let uid = uID.uid else {
 			/* Sadly the search in OpenDirectory cannot be done on a full DN apparently.
-			 * No idea why, but I tried everything I could think of. */
+			 * No idea why, but I tried everything I could think of.
+			 * In particular a query on kODAttributeTypeRecordName does not work, it does like `record(withRecordType:, name:, attributes:)` does. */
 			throw Err.invalidID
 		}
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
 			do {
+				/* Note:
+				 * We use this convenience from OpenDirectory,
+				 *  but we could use the exact same method as for the persistent ID search,
+				 *  except the query would be inited with uid instead of guid. */
 				let record = try node.record(withRecordType: OpenDirectoryUser.recordType, name: uid, attributes: nil)
 				let user = try OpenDirectoryUser(record: record)
 				guard user.id == uID else {
