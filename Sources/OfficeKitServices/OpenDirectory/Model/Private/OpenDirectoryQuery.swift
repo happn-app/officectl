@@ -13,22 +13,33 @@ import Foundation
 /** Basically a wrapper for `ODQuery`, but without specifying the node. */
 internal struct OpenDirectoryQuery : Sendable {
 	
-	init(uid: String, maxResults: Int? = nil, returnAttributes attr: [String]? = nil) {
-		recordTypes = [kODRecordTypeUsers]
-		attribute = kODAttributeTypeRecordName
-		matchType = ODMatchType(kODMatchEqualTo)
-		queryValues = [Data(uid.utf8)]
-		returnAttributes = attr
-		maximumResults = maxResults
+	init(uid: String, maxResults: Int? = nil, returnAttributes: [String]? = nil) {
+		self.recordTypes = [kODRecordTypeUsers]
+		self.attribute = kODAttributeTypeRecordName
+		self.matchType = ODMatchType(kODMatchEqualTo)
+		self.queryValues = [Data(uid.utf8)]
+		self.returnAttributes = returnAttributes
+		self.maximumResults = maxResults
 	}
 	
-	init(guid: UUID, maxResults: Int? = nil, returnAttributes attr: [String]? = nil) {
-		recordTypes = [kODRecordTypeUsers]
-		attribute = kODAttributeTypeGUID
-		matchType = ODMatchType(kODMatchEqualTo)
-		queryValues = [Data(guid.uuidString.utf8)]
-		returnAttributes = attr
-		maximumResults = maxResults
+	init(guid: UUID, maxResults: Int? = nil, returnAttributes: [String]? = nil) {
+		self.recordTypes = [kODRecordTypeUsers]
+		self.attribute = kODAttributeTypeGUID
+		self.matchType = ODMatchType(kODMatchEqualTo)
+		self.queryValues = [Data(guid.uuidString.utf8)]
+		self.returnAttributes = returnAttributes
+		self.maximumResults = maxResults
+	}
+	
+	static func forAllUsers(returnAttributes: [String]? = nil) -> OpenDirectoryQuery {
+		return .init(
+			recordTypes: [kODRecordTypeUsers],
+			attribute: kODAttributeTypeMetaRecordName,
+			matchType: ODMatchType(kODMatchAny),
+			queryValues: nil,
+			returnAttributes: returnAttributes,
+			maximumResults: nil
+		)
 	}
 	
 	init(recordTypes: [String], attribute: String?, matchType: ODMatchType, queryValues: [Data]?, returnAttributes: [String]?, maximumResults: Int?) {

@@ -69,4 +69,10 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		XCTAssertEqual(user?.oU_id, testConf.fetchedUser.id)
 	}
 	
+	func testListAllUsers() async throws {
+		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: services)
+		print(users)
+		XCTAssertGreaterThan(users.count, 0)
+	}
+	
 }
