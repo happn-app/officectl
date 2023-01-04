@@ -21,6 +21,11 @@ import URLRequestOperation
 final class OpenDirectoryOfficeTests : XCTestCase {
 	
 	struct TestConf : Decodable {
+		var fetchedUser: FetchedUser
+		struct FetchedUser : Decodable {
+			var id: LDAPDistinguishedName
+			var gid: UUID
+		}
 	}
 	
 	/* Parsed once for the whole test case. */
@@ -45,7 +50,7 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		let (serviceConf, testConf) = try Self.confs.get()
 		
 		self.testConf = testConf
-		self.service = try OpenDirectoryService(id: "test-od", openDirectoryServiceConfig: serviceConf)
+		self.service = OpenDirectoryService(id: "test-od", openDirectoryServiceConfig: serviceConf)
 	}
 	
 	override func tearDown() async throws {
@@ -54,8 +59,9 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		service = nil
 	}
 	
-	func testNothing() async throws {
-#warning("TODO")
+	func testFetchUser() async throws {
+		let user = try await service.existingUser(fromID: testConf.fetchedUser.id, propertiesToFetch: nil, using: services)
+		XCTAssertEqual(user?.oU_persistentID, testConf.fetchedUser.gid)
 	}
 	
 }

@@ -91,14 +91,53 @@ public final class OpenDirectoryService : UserService {
 	
 	public func existingUser(fromID uID: LDAPDistinguishedName, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
 		try await connector.connectIfNeeded()
+		guard let uid = uID.uid else {
+			/* Sadly the search in OpenDirectory cannot be done on a full DN apparently.
+			 * No idea why, but I tried everything I could think of. */
+			throw Err.invalidID
+		}
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
-			let record = try node.record(withRecordType: OpenDirectoryUser.recordType, name: uID.stringValue, attributes: nil)
-			return try OpenDirectoryUser(record: record)
+			do {
+				let record = try node.record(withRecordType: OpenDirectoryUser.recordType, name: uid, attributes: nil)
+				let user = try OpenDirectoryUser(record: record)
+				print(user.id)
+				guard user.id == uID else {
+					/* We verify we did get the correct user (search was done on uid only, not full dn). */
+					return nil
+				}
+				return user
+			} catch let error as NSError {
+				guard error.code != 0/* || error.domain != "Foundation._GenericObjCError"*/ else {
+					/* So that’s a fun case.
+					 * OpenDirectory has not been refined AT ALL for Swift.
+					 * The original Objective-C method returns nil and sets *error when there is an error and returns nil if no record match.
+					 * Except it seems Swift understands the nil return value to be a failure whatever value is set to *error, and thus we get here, with a `nil` error…
+					 *
+					 * I have not tested thoroughly these assertions, but they seems most likely.
+					 *
+					 * We assume no error will ever have a code of 0.
+					 * We could also check for a domain equal to Foundation._GenericObjCError, but that seems too fragile. */
+					return nil
+				}
+				throw error
+			}
 		}
 	}
 	
 	public func existingUser(fromPersistentID pID: UUID, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
-		throw Err.__notImplemented
+		try await connector.connectIfNeeded()
+		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
+			/* The “as!” should be valid; OpenDirectory is simply not updated anymore and the returned array is not typed.
+			 * But doc says this method returns an array of ODRecord. */
+			let users = try OpenDirectoryQuery(guid: pID).execute(on: node).map{ try OpenDirectoryUser.init(record: $0) }
+			guard !users.isEmpty else {
+				return nil
+			}
+			guard let record = users.onlyElement else {
+				throw OfficeKitError.tooManyUsersFromAPI(users: users)
+			}
+			return record
+		}
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [OpenDirectoryUser] {
