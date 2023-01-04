@@ -33,25 +33,51 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	
 	public typealias Authentication = Void
 	
-	public typealias ProxySettings = (hostname: String, username: String, password: String)
-	public typealias CredentialsSettings = (recordType: String, username: String, password: String)
+	public struct ProxySettings : Sendable, Codable {
+		
+		public var hostname: String
+		public var username: String
+		public var password: String
+		
+	}
+	
+	public enum NodeType : Sendable, Codable {
+		
+		case nodeType(ODNodeType)
+		case nodeName(String)
+		
+	}
+	
+	public enum NodeCredentials : Sendable, Codable {
+		
+		case user(username: String, password: String)
+		
+	}
+	
+	public let nodeType: NodeType
+	public let nodeCredentials: NodeCredentials?
 	
 	public let sessionOptions: [String: Sendable]?
 	
-	/* TODO: We may want to let the user choose to instantiate the node with a node type instead of a node name (we used to use ODNodeType(kODNodeTypeAuthentication)). */
-	public let nodeName: String
-	public let nodeCredentials: CredentialsSettings?
+	/* We cannot use “node != nil” because “node” is on another actor context. */
+	public var isConnected: Bool = false
 	
-	public var isConnected: Bool {node != nil}
-	
-	public init(proxySettings: ProxySettings? = nil, nodeName n: String = "/LDAPv3/127.0.0.1", nodeCredentials creds: CredentialsSettings?) throws {
-		sessionOptions = proxySettings.flatMap{ [
+	public init(proxySettings: ProxySettings? = nil, nodeType: NodeType = .nodeName("/LDAPv3/127.0.0.1"), nodeCredentials: NodeCredentials?) {
+		self.sessionOptions = proxySettings.flatMap{ [
 			kODSessionProxyAddress!  as String: $0.hostname,
 			kODSessionProxyUsername! as String: $0.username,
 			kODSessionProxyPassword! as String: $0.password
 		] }
-		nodeName = n
-		nodeCredentials = creds
+		self.nodeType = nodeType
+		self.nodeCredentials = nodeCredentials
+	}
+	
+	public func connectIfNeeded() async throws {
+		guard !isConnected else {
+			return
+		}
+		
+		try await connect(())
 	}
 	
 	/**
@@ -61,13 +87,12 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	 - Parameter communicationBlock: The block to execute.
 	 - Parameter node: The OpenDirectory node.
 	 If the connector is not connected, will be `nil`. */
+	@ODActor
 	public func performOpenDirectoryCommunication<T>(_ communicationBlock: @Sendable (_ node: ODNode) throws -> T) throws -> T {
 		guard let node else {
 			throw Err.notConnected
 		}
 		
-		/* If I understand the actor principle correctly, it is not possible this function is called twice in parallel,
-		 *  so there should not be any need for a synchronization queue. */
 		return try communicationBlock(node)
 	}
 	
@@ -78,20 +103,26 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	public func unqueuedConnect(_: Void) async throws {
 		try await unqueuedDisconnect()
 		
-		node = try await withCheckedThrowingContinuation{ continuation in
-			DispatchQueue(label: "OpenDirectory Connector Connect Queue").async{continuation.resume(with: Result{
-				let session = try ODSession(options: self.sessionOptions)
-				let node = try ODNode(session: session, name: self.nodeName)
-				if let creds = self.nodeCredentials {
-					try node.setCredentialsWithRecordType(creds.recordType, recordName: creds.username, password: creds.password)
-				}
-				return node
-			})}
+		try await _node.perform{ wrappedNode in
+			let session = try ODSession(options: self.sessionOptions)
+			let node: ODNode
+			switch self.nodeType {
+				case let .nodeType(type): node = try ODNode(session: session, type: type)
+				case let .nodeName(name): node = try ODNode(session: session, name: name)
+			}
+			switch self.nodeCredentials {
+				case .none: (/*nop*/)
+				case let .user(username: username, password: password):
+					try node.setCredentialsWithRecordType(kODRecordTypeUsers, recordName: username, password: password)
+			}
+			wrappedNode = node
 		}
+		isConnected = true
 	}
 	
 	public func unqueuedDisconnect() async throws {
-		node = nil
+		isConnected = false
+		await _node.perform{ $0 = nil }
 	}
 	
 	/* ***************
@@ -101,6 +132,7 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	/** Technically public because it fulfill the HasTaskQueue requirement, but should not be used directly. */
 	public var _taskQueue = TaskQueue()
 	
+	@ODObjectWrapper
 	private var node: ODNode?
 	
 }

@@ -12,12 +12,22 @@ import UnwrapOrThrow
 
 
 
-public enum OpenDirectoryAttributeValue : Sendable {
+public enum OpenDirectoryAttributeValue : Sendable, Codable {
 	
 	case string(String)
 	case multiString([String])
 	case data(Data)
 	case multiData([Data])
+	
+	internal init(any: Any) throws {
+		switch any {
+			case let str       as  String:  self = .string(str)
+			case let multiStr  as [String]: self = .multiString(multiStr)
+			case let data      as  Data:    self = .data(data)
+			case let multiData as [Data]:   self = .multiData(multiData)
+			default: throw Err.internalError
+		}
+	}
 	
 	public var asString: String? {
 		switch self {

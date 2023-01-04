@@ -1,0 +1,129 @@
+/*
+ * OpenDirectoryService.swift
+ * OpenDirectoryOffice
+ *
+ * Created by François Lamboley on 2023/01/03.
+ */
+
+import Foundation
+
+import Email
+import GenericJSON
+
+import OfficeKit2
+import ServiceKit
+
+
+
+public final class OpenDirectoryService : UserService {
+	
+	public static let providerID: String = "happn/open-directory"
+	
+	public typealias UserType = OpenDirectoryUser
+	
+	public let id: String
+	public let config: OpenDirectoryServiceConfig
+	
+	public let connector: OpenDirectoryConnector
+	
+	public convenience init(id: String, jsonConfig: JSON) throws {
+		let config = try OpenDirectoryServiceConfig(json: jsonConfig)
+		self.init(id: id, openDirectoryServiceConfig: config)
+	}
+	
+	public init(id: String, openDirectoryServiceConfig: OpenDirectoryServiceConfig) {
+		self.id = id
+		self.config = openDirectoryServiceConfig
+		
+		self.connector = OpenDirectoryConnector(
+			proxySettings: config.connectorSettings.proxySettings,
+			nodeType: config.connectorSettings.nodeType,
+			nodeCredentials: config.connectorSettings.nodeCredentials
+		)
+	}
+	
+	public var supportedUserProperties: Set<UserProperty> {
+		/* OpenDirectory supports a lot of properties, but we map only a very few of them, at least for now.
+		 * Later, we should call `supportedAttributes(forRecordType: kODRecordTypeUsers)` on the node (presumably at init time)
+		 *  to get the list of actually supported properties by the node.  */
+		return UserProperty.standardProperties
+	}
+	
+	public func shortDescription(fromUser user: OpenDirectoryUser) -> String {
+		return user.id.stringValue
+	}
+	
+	public func string(fromUserID userID: LDAPDistinguishedName) -> String {
+		return userID.stringValue
+	}
+	
+	public func userID(fromString string: String) throws -> LDAPDistinguishedName {
+		return try LDAPDistinguishedName(string: string)
+	}
+	
+	public func string(fromPersistentUserID pID: String) -> String {
+		return pID
+	}
+	
+	public func persistentUserID(fromString string: String) throws -> String {
+		return string
+	}
+	
+	public func json(fromUser user: OpenDirectoryUser) throws -> JSON {
+		return try JSON(encodable: user)
+	}
+	
+	public func alternateIDs(fromUserID userID: LDAPDistinguishedName) -> (regular: LDAPDistinguishedName, other: Set<LDAPDistinguishedName>) {
+		return (regular: userID, other: [])
+	}
+	
+	public func logicalUserID<OtherUserType>(fromUser user: OtherUserType) throws -> LDAPDistinguishedName where OtherUserType : User {
+		let id = config.userIDBuilders?.lazy
+			.compactMap{ $0.inferID(fromUser: user) }
+			.compactMap{ try? LDAPDistinguishedName(string: $0) }
+			.first{ _ in true } /* Not a simple `.first` because of <https://stackoverflow.com/a/71778190> (avoid the handler(s) to be called more than once). */
+		guard let id else {
+			throw OfficeKitError.cannotInferUserIDFromOtherUser
+		}
+		return id
+	}
+	
+	public func existingUser(fromID uID: LDAPDistinguishedName, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
+		try await connector.connectIfNeeded()
+		return try await connector.performOpenDirectoryCommunication{ node in
+			return OpenDirectoryUser{
+#warning("TODO: Not fetch all the attributes if not needed, maybe.")
+				return try node.record(withRecordType: OpenDirectoryUser.recordType, name: uID.stringValue, attributes: nil)
+			}
+		}
+	}
+	
+	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
+		throw Err.__notImplemented
+	}
+	
+	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [OpenDirectoryUser] {
+		throw Err.__notImplemented
+	}
+	
+	public let supportsUserCreation: Bool = true
+	public func createUser(_ user: OpenDirectoryUser, using services: Services) async throws -> OpenDirectoryUser {
+		throw Err.__notImplemented
+	}
+	
+	public let supportsUserUpdate: Bool = true
+	public func updateUser(_ user: OpenDirectoryUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> OpenDirectoryUser {
+		throw Err.__notImplemented
+	}
+	
+	public let supportsUserDeletion: Bool = true
+	public func deleteUser(_ user: OpenDirectoryUser, using services: Services) async throws {
+		throw Err.__notImplemented
+	}
+	
+	public let supportsPasswordChange: Bool = true
+	public func changePassword(of user: OpenDirectoryUser, to newPassword: String, using services: Services) async throws {
+		throw Err.__notImplemented
+	}
+	
+}
