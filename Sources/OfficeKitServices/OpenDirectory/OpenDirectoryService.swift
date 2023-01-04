@@ -100,7 +100,6 @@ public final class OpenDirectoryService : UserService {
 			do {
 				let record = try node.record(withRecordType: OpenDirectoryUser.recordType, name: uid, attributes: nil)
 				let user = try OpenDirectoryUser(record: record)
-				print(user.id)
 				guard user.id == uID else {
 					/* We verify we did get the correct user (search was done on uid only, not full dn). */
 					return nil
