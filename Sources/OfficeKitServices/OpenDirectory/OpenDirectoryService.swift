@@ -126,8 +126,6 @@ public final class OpenDirectoryService : UserService {
 	public func existingUser(fromPersistentID pID: UUID, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
 		try await connector.connectIfNeeded()
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
-			/* The “as!” should be valid; OpenDirectory is simply not updated anymore and the returned array is not typed.
-			 * But doc says this method returns an array of ODRecord. */
 			let users = try OpenDirectoryQuery(guid: pID).execute(on: node).map{ try OpenDirectoryUser.init(record: $0) }
 			guard !users.isEmpty else {
 				return nil
