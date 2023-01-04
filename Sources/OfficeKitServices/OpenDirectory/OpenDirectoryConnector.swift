@@ -59,7 +59,7 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	
 	public let sessionOptions: [String: Sendable]?
 	
-	/* We cannot use “node != nil” because “node” is on another actor context. */
+	/* We cannot use “_node.wrappedValue != nil” because “_node” is on another actor context. */
 	public var isConnected: Bool = false
 	
 	public init(proxySettings: ProxySettings? = nil, nodeType: NodeType = .nodeName("/LDAPv3/127.0.0.1"), nodeCredentials: NodeCredentials?) {
