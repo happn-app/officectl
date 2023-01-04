@@ -9,6 +9,7 @@ import Foundation
 
 import Email
 import GenericJSON
+import UnwrapOrThrow
 
 import OfficeKit2
 import ServiceKit
@@ -61,12 +62,12 @@ public final class OpenDirectoryService : UserService {
 		return try LDAPDistinguishedName(string: string)
 	}
 	
-	public func string(fromPersistentUserID pID: String) -> String {
-		return pID
+	public func string(fromPersistentUserID pID: UUID) -> String {
+		return pID.uuidString
 	}
 	
-	public func persistentUserID(fromString string: String) throws -> String {
-		return string
+	public func persistentUserID(fromString string: String) throws -> UUID {
+		return try UUID(uuidString: string) ?! Err.invalidPersistentID
 	}
 	
 	public func json(fromUser user: OpenDirectoryUser) throws -> JSON {
@@ -90,15 +91,13 @@ public final class OpenDirectoryService : UserService {
 	
 	public func existingUser(fromID uID: LDAPDistinguishedName, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
 		try await connector.connectIfNeeded()
-		return try await connector.performOpenDirectoryCommunication{ node in
-			return OpenDirectoryUser{
-#warning("TODO: Not fetch all the attributes if not needed, maybe.")
-				return try node.record(withRecordType: OpenDirectoryUser.recordType, name: uID.stringValue, attributes: nil)
-			}
+		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
+			let record = try node.record(withRecordType: OpenDirectoryUser.recordType, name: uID.stringValue, attributes: nil)
+			return try OpenDirectoryUser(record: record)
 		}
 	}
 	
-	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
+	public func existingUser(fromPersistentID pID: UUID, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
 		throw Err.__notImplemented
 	}
 	

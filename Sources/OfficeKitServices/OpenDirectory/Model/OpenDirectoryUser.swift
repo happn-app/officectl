@@ -28,51 +28,30 @@ public struct OpenDirectoryUser : Sendable, Codable {
 	}
 	
 	/**
-	 Initialiazes an ``OpenDirectoryUser`` with an ODRecord.
-	 
-	 We do not ask for a record directly, but instead we ask for a _Sendable_ block that returns a record.
-	 
-	 The reason for this is `ODRecord` is not (AFAIK) Sendable.
-	 Even considering the fact `OpenDirectory` pre-dates Swift, I don’t think `OpenDirectory` is even thread-safe (if it is, it is not documented).
-	 
-	 So we have to be careful how to use records and avoid passing them through async contexts.
-	 
-	 To do this we have created an actor wrapper for the `ODRecord`.
-	 Everything happening on the record should happen in the wrapper async context.
-	 Including the creation of the record itself, which will thus be done in the `recordGetter`.
-	 
-	 Obviously the client must not keep a reference to the `ODRecord` after returning it in the `recordGetter` block. */
-	internal init?(recordGetter: @Sendable () throws -> ODRecord?) async throws {
-		let properties: [String: OpenDirectoryAttributeValue]? = try await _record.perform{ wrappedRecord in
-			guard let record = try recordGetter() else {
-				return nil
-			}
-			wrappedRecord = record
-			
-			guard record.recordType == Self.recordType else {
-				/* Invalid init of OpenDirectoryUser. */
-				throw Err.internalError
-			}
-			/* This should not throw ever because we’re asking for the attributes already in memory (nil list). */
-			guard let attributes = try record.recordDetails(forAttributes: nil) as? [String: Any] else {
-				/* We believe recordDetails(forAttributes:) actually returns a [String: Any], not a [AnyHashable: Any] but that because of OpenDirectory not being updated the type is incorrect. */
-				throw Err.internalError
-			}
-			return try attributes.mapValues{ try OpenDirectoryAttributeValue(any: $0) }
+	 Initialiazes an ``OpenDirectoryUser`` with an ODRecord. */
+	@ODActor
+	internal init(record: ODRecord) throws {
+		guard record.recordType == Self.recordType else {
+			/* Invalid init of OpenDirectoryUser. */
+			throw Err.internalError
 		}
-		guard var properties else {
-			return nil
+		/* This should not throw ever because we’re asking for the attributes already in memory (nil list). */
+		guard let attributes = try record.recordDetails(forAttributes: nil) as? [String: Any] else {
+			/* We believe recordDetails(forAttributes:) actually returns a [String: Any], not a [AnyHashable: Any] but that because of OpenDirectory not being updated the type is incorrect. */
+			throw Err.internalError
 		}
+		
+		self.properties = try attributes.mapValues{ try OpenDirectoryAttributeValue(any: $0) }
 		
 		guard let idStr = properties[kODAttributeTypeMetaRecordName]?.asString else {
 			/* I don’t think it’s possible to get a user record (or any record tbh) without a record name. */
 			throw Err.internalError
 		}
 		properties.removeValue(forKey: kODAttributeTypeMetaRecordName)
-		let id = try LDAPDistinguishedName(string: idStr)
 		
-		self.id = id
-		self.properties = properties
+		self.id = try LDAPDistinguishedName(string: idStr)
+		
+		_record.wrappedValue = record
 	}
 	
 	/* With the OpenDirectory framework, unless I’m mistaken, to change a record one *must* have the an ODRecord object representing the current record.
@@ -80,12 +59,12 @@ public struct OpenDirectoryUser : Sendable, Codable {
 	 * Because ODRecord is (presumably) not thread safe, we confine it to an actor.
 	 *
 	 * I do not declare this as “`@ODObjectWrapper var record: ODRecord?`” because
-	 *   1. for semi-explained reasons if I do this the struct does not automatically conforms to Codable.
+	 *   1. For semi-explained reasons if I do this the struct does not automatically conforms to Codable.
 	 *      This kind of makes sense as the wrapper variable is not optional.
 	 *      However setting an initial value (“`@ODObjectWrapper var record: ODRecord? = nil`”) does not solve the issue.
 	 *      It might be an oversight of the automatic Codable conformance, but honestly I’m not sure.
 	 *   2. For fully unexplained reasons, using the wrapper seems to remove some concurrency protections.
-	 *      With the wrapper, the call to `perform(_:)` in `init(recordGetter:)` is not considered async, which is weird… */
+	 *      With the wrapper, when setting _record.wrappedValue in the init while removing @ODActor does not seem to be an issue… which is unexpected. */
 	internal var _record: ODObjectWrapper<ODRecord?> = .init()
 	
 	private enum CodingKeys : CodingKey {

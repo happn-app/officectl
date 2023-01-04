@@ -1,5 +1,5 @@
 /*
- * RecordWrapper.swift
+ * ODObjectWrapper.swift
  * OpenDirectoryOffice
  *
  * Created by François Lamboley on 2023/01/04.
@@ -21,7 +21,7 @@ internal final class ODObjectWrapper<ODObject> {
 		self.wrappedValue = nil
 	}
 	
-	func perform<T : Sendable>(_ block: @Sendable (inout ODObject?) throws -> T) rethrows -> T {
+	func perform<T : Sendable>(_ block: @ODActor @Sendable (inout ODObject?) throws -> T) rethrows -> T {
 		return try block(&wrappedValue)
 	}
 	

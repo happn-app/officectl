@@ -13,6 +13,7 @@ public enum OpenDirectoryOfficeError : Error, Sendable {
 	
 	case notConnected
 	
+	case invalidPersistentID
 	case internalError
 	
 	case __notImplemented

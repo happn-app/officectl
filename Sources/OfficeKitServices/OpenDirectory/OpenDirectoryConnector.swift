@@ -87,13 +87,14 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	 - Parameter communicationBlock: The block to execute.
 	 - Parameter node: The OpenDirectory node.
 	 If the connector is not connected, will be `nil`. */
-	@ODActor
-	public func performOpenDirectoryCommunication<T>(_ communicationBlock: @Sendable (_ node: ODNode) throws -> T) throws -> T {
-		guard let node else {
-			throw Err.notConnected
+	public func performOpenDirectoryCommunication<T : Sendable>(_ communicationBlock: @ODActor @Sendable (_ node: ODNode) throws -> T) async throws -> T {
+		return try await _node.perform{ node in
+			guard let node else {
+				throw Err.notConnected
+			}
+			
+			return try communicationBlock(node)
 		}
-		
-		return try communicationBlock(node)
 	}
 	
 	/* ********************************
@@ -132,7 +133,7 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	/** Technically public because it fulfill the HasTaskQueue requirement, but should not be used directly. */
 	public var _taskQueue = TaskQueue()
 	
-	@ODObjectWrapper
-	private var node: ODNode?
+	/* Not using the wrapper as a property wrapper or the init becomes mysteriously isolated to @ODActor… */
+	private var _node: ODObjectWrapper<ODNode> = .init()
 	
 }
