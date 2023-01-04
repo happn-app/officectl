@@ -59,9 +59,14 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		service = nil
 	}
 	
-	func testFetchUser() async throws {
+	func testFetchUserFromID() async throws {
 		let user = try await service.existingUser(fromID: testConf.fetchedUser.id, propertiesToFetch: nil, using: services)
 		XCTAssertEqual(user?.oU_persistentID, testConf.fetchedUser.gid)
+	}
+	
+	func testFetchUserFromPersistentID() async throws {
+		let user = try await service.existingUser(fromPersistentID: testConf.fetchedUser.gid, propertiesToFetch: nil, using: services)
+		XCTAssertEqual(user?.oU_id, testConf.fetchedUser.id)
 	}
 	
 }
