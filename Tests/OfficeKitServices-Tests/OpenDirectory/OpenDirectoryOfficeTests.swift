@@ -41,6 +41,7 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
 		OpenDirectoryOfficeConfig.logger = Logger(label: "test-od")
+		OpenDirectoryOfficeConfig.logger?.logLevel = .trace
 		URLRequestOperationConfig.logHTTPResponses = true
 		URLRequestOperationConfig.logHTTPRequests = true
 		confs = Result{ try parsedConf(for: "od") }
@@ -111,18 +112,20 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
 		
+		XCTAssertTrue(user.oU_setValue("Test Modified", forProperty: .lastName, allowIDChange: true, convertMismatchingTypes: true))
 		XCTAssertFalse(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: false, convertMismatchingTypes: true))
 		XCTAssertFalse(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: true, convertMismatchingTypes: false))
-		XCTAssertTrue(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
+		/* Modifying the record name is not supported apparently. */
+		XCTAssertFalse(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
 		
 		let testEmailStrs = ["officectl.test.1@invalid.happn.fr", "officectl.test.2@invalid.happn.fr"]
 		XCTAssertTrue(user.oU_setValue(testEmailStrs, forProperty: .emails, allowIDChange: true, convertMismatchingTypes: true))
 		
-		user = try await service.updateUser(user, propertiesToUpdate: [.id, .emails], using: services)
-		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: modifiedDNStr))
+		user = try await service.updateUser(user, propertiesToUpdate: [.emails, .lastName], using: services)
+		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNStr))
 		XCTAssertEqual(user.oU_emails?.map(\.rawValue), testEmailStrs)
 		XCTAssertEqual(user.oU_firstName, "Officectl")
-		XCTAssertEqual(user.oU_lastName, "Test")
+		XCTAssertEqual(user.oU_lastName, "Test Modified")
 		
 		try await service.deleteUser(user, using: services)
 	}

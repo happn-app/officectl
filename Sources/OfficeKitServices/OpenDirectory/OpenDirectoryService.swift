@@ -212,12 +212,59 @@ public final class OpenDirectoryService : UserService {
 	
 	public let supportsUserUpdate: Bool = true
 	public func updateUser(_ user: OpenDirectoryUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> OpenDirectoryUser {
-		throw Err.__notImplemented
+		try await connector.connectIfNeeded()
+		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
+			let record = try user.record(using: node)
+			
+			/* Let’s get the OD names of the attributes we want to update. */
+			let attributeNames = Set(propertiesToUpdate.compactMap{ OpenDirectoryUser.propertyToAttributeNames[$0] }.flatMap{ $0 })
+			
+			/* Now let’s pre-compute the new attributes we will send.
+			 * We do this in case some values are invalid, to fail the whole operation instead of having a partially updated record (some nodes auto-commit modifications). */
+			var newAttributes = [String: Any?]()
+			if attributeNames.contains(kODAttributeTypeMetaRecordName) || attributeNames.contains(kODAttributeTypeRecordName) {
+				throw Err.unsupportedOperation
+			}
+			for attribute in attributeNames {
+				/* AFAICT multi-data for setting a value always work, except maybe for record name and such, but setting those do not work whatever we do…
+				 * I might be wrong, I did not test everything. */
+				newAttributes[attribute] = user.properties[attribute]?.asMultiData
+			}
+			
+			/* Now let’s set the attributes on the record. */
+			for (attribute, value) in newAttributes {
+				if let value {
+					Conf.logger?.debug("Setting attribute \(attribute) to \(value)")
+					try record.setValue(value, forAttribute: attribute)
+				} else {
+					Conf.logger?.debug("Removing attribute \(attribute)")
+					try record.removeValues(forAttribute: attribute)
+				}
+			}
+			
+			/* Finally, synchronize the node because some do not automatically. */
+			try record.synchronize()
+			/* It seems some attributes (I don’t know which exactly, but “mails” is) are dropped from the record after synchronization; let’s re-fetch them.
+			 * We do not fail if the fetch does not work because the update has been done anyway.
+			 *
+			 * I know recordDetails(forAttributes:) is supposed to be able to take an _array_ of attributes and I should not have to iterate over attributeNames,
+			 *  but it seems if I do not do that, it does not work reliably.
+			 * OpenDirectory is amazing. */
+			attributeNames.forEach{ attributeName in
+				_ = try? record.recordDetails(forAttributes: [attributeName])
+			}
+			
+			return try OpenDirectoryUser(record: record)
+		}
 	}
 	
 	public let supportsUserDeletion: Bool = true
 	public func deleteUser(_ user: OpenDirectoryUser, using services: Services) async throws {
-		throw Err.__notImplemented
+		try await connector.connectIfNeeded()
+		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
+			let record = try user.record(using: node)
+			try record.delete()
+		}
 	}
 	
 	public let supportsPasswordChange: Bool = true

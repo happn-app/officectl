@@ -68,7 +68,15 @@ public struct OpenDirectoryUser : Sendable, Codable {
 	 *      It might be an oversight of the automatic Codable conformance, but honestly I’m not sure.
 	 *   2. For fully unexplained reasons, using the wrapper seems to remove some concurrency protections.
 	 *      With the wrapper, when setting _record.wrappedValue in the init while removing @ODActor does not seem to be an issue… which is unexpected. */
-	internal var _record: ODObjectWrapper<ODRecord?> = .init()
+	internal var _record: ODObjectWrapper<ODRecord> = .init()
+	
+	@ODActor
+	internal func record(allowCache: Bool = true, using node: ODNode) throws -> ODRecord {
+		if allowCache, let record = _record.wrappedValue {
+			return record
+		}
+		return try node.record(withRecordType: Self.recordType, name: id.uid, attributes: [kODAttributeTypeMetaRecordName])
+	}
 	
 	/**
 	 Returns the full name computed from first name and last name, whether full name is set or not.

@@ -50,7 +50,8 @@ extension OpenDirectoryUser : User {
 	
 	public var oU_emails: [Email]? {
 		struct NotAnEmail : Error {}
-		/* kODAttributeTypeEMailContacts also exists; should we return both? */
+		/* kODAttributeTypeEMailContacts also exists; should we return both?
+		 * I don’t think it’s necessary: in the users browser in Server, the value seems to be from this attribute. */
 		return try? properties[kODAttributeTypeEMailAddress]?.asMultiString?.map{ try Email(rawValue: $0) ?! NotAnEmail() }
 	}
 	
@@ -61,12 +62,8 @@ extension OpenDirectoryUser : User {
 	public mutating func oU_setValue<V>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool where V : Sendable {
 		switch property {
 			case .id:
-				guard allowIDChange else {return false}
-				guard let newValue else {
-					Conf.logger?.error("Asked to remove the id of a user. This is illegal, I’m not doing it.")
-					return false
-				}
-				return Self.setRequiredValueIfNeeded(newValue, in: &id, converter: (!convertValue ? { $0 as? LDAPDistinguishedName } : Converters.convertObjectToDN(_:)))
+				/* Changing the ID of an ODRecord is not supported. */
+				return false
 				
 			case .persistentID:
 				Conf.logger?.error("The persistent ID cannot be changed.")
@@ -78,10 +75,12 @@ extension OpenDirectoryUser : User {
 			case .firstName:
 				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
 				properties[kODAttributeTypeFirstName] = .string(newValue)
+				properties[kODAttributeTypeFullName] = .string(computedFullName)
 				return true
 			case .lastName:
 				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
 				properties[kODAttributeTypeLastName] = .string(newValue)
+				properties[kODAttributeTypeFullName] = .string(computedFullName)
 				return true
 			case .nickname:
 				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
@@ -111,9 +110,9 @@ extension OpenDirectoryUser : User {
 			.id: [kODAttributeTypeMetaRecordName],
 			.persistentID: [kODAttributeTypeGUID],
 			.isSuspended: [],
-			.emails: [kODAttributeTypeEMailAddress, kODAttributeTypeEMailContacts],
-			.firstName: [kODAttributeTypeFirstName],
-			.lastName: [kODAttributeTypeLastName],
+			.emails: [kODAttributeTypeEMailAddress/*, kODAttributeTypeEMailContacts*/],
+			.firstName: [kODAttributeTypeFirstName, kODAttributeTypeFullName], /* Full name is not needed for reading but for writing. */
+			.lastName: [kODAttributeTypeLastName, kODAttributeTypeFullName], /* Full name is not needed for reading but for writing. */
 			.nickname: [kODAttributeTypeNickName],
 			.password: [],
 			/* Other. */

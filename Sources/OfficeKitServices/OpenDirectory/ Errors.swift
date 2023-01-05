@@ -17,6 +17,7 @@ public enum OpenDirectoryOfficeError : Error, Sendable {
 	
 	case invalidID
 	case invalidPersistentID
+	case invalidAttributeType(attribute: String, value: OpenDirectoryAttributeValue)
 	
 	/* TODO: Maybe (probably) the UserIDType of OpenDirectoryUser is incorrect and should be String (the uid directly). */
 	/**
@@ -26,6 +27,9 @@ public enum OpenDirectoryOfficeError : Error, Sendable {
 	 We have to only specify the so-called “record name,” which is basically the uid of the DN.
 	 So we create the user, then hope for the best… */
 	case createdDNDoesNotMatchExpectedDN(createdDN: LDAPDistinguishedName, expectedDN: LDAPDistinguishedName)
+	
+	/** E.g. Modifying the ID of a user. */
+	case unsupportedOperation
 	
 	case internalError
 	
