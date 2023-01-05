@@ -217,28 +217,34 @@ public final class OpenDirectoryService : UserService {
 			let record = try user.record(using: node)
 			
 			/* Let’s get the OD names of the attributes we want to update. */
-			let attributeNames = Set(propertiesToUpdate.compactMap{ OpenDirectoryUser.propertyToAttributeNames[$0] }.flatMap{ $0 })
+			var attributeNames = Set(propertiesToUpdate.compactMap{ OpenDirectoryUser.propertyToAttributeNames[$0] }.flatMap{ $0 })
 			
-			/* Now let’s pre-compute the new attributes we will send.
-			 * We do this in case some values are invalid, to fail the whole operation instead of having a partially updated record (some nodes auto-commit modifications). */
-			var newAttributes = [String: Any?]()
-			if attributeNames.contains(kODAttributeTypeMetaRecordName) || attributeNames.contains(kODAttributeTypeRecordName) {
-				throw Err.unsupportedOperation
+			/* Now let’s set the attributes on the record.
+			 *
+			 * From different tests I did, at least on our OpenDirectory setup (Server App), I gathered that:
+			 * - Updating kODAttributeTypeRecordName does not work (fails with error “Connection failed to the directory server.”);
+			 * - Updating kODAttributeTypeMetaRecordName does not work either (fails with error “An invalid attribute type was provided.”);
+			 * - All other updates I tested (no much though) did work, even setting a value to multi-data when a string is “expected” (with valid UTF-8 data of course).
+			 *
+			 * From this, we do the update of kODAttributeTypeRecordName and kODAttributeTypeMetaRecordName if applicable first, to fail as early as possible. */
+			if attributeNames.remove(kODAttributeTypeRecordName) != nil {
+				guard let uid = user.id.uid else {
+					throw Err.invalidID
+				}
+				Conf.logger?.debug("Setting attribute \(kODAttributeTypeRecordName) to \(uid)")
+				try record.setValue(uid, forAttribute: kODAttributeTypeRecordName)
 			}
-			for attribute in attributeNames {
-				/* AFAICT multi-data for setting a value always work, except maybe for record name and such, but setting those do not work whatever we do…
-				 * I might be wrong, I did not test everything. */
-				newAttributes[attribute] = user.properties[attribute]?.asMultiData
+			if attributeNames.remove(kODAttributeTypeMetaRecordName) != nil {
+				Conf.logger?.debug("Setting attribute \(kODAttributeTypeMetaRecordName) to \(user.id.stringValue)")
+				try record.setValue(user.id.stringValue, forAttribute: kODAttributeTypeMetaRecordName)
 			}
-			
-			/* Now let’s set the attributes on the record. */
-			for (attribute, value) in newAttributes {
-				if let value {
-					Conf.logger?.debug("Setting attribute \(attribute) to \(value)")
-					try record.setValue(value, forAttribute: attribute)
+			for attributeName in attributeNames {
+				if let value = user.properties[attributeName]?.asMultiData {
+					Conf.logger?.debug("Setting attribute \(attributeName) to \(value)")
+					try record.setValue(value, forAttribute: attributeName)
 				} else {
-					Conf.logger?.debug("Removing attribute \(attribute)")
-					try record.removeValues(forAttribute: attribute)
+					Conf.logger?.debug("Removing attribute \(attributeName)")
+					try record.removeValues(forAttribute: attributeName)
 				}
 			}
 			

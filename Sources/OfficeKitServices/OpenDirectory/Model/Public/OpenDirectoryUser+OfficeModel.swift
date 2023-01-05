@@ -62,8 +62,12 @@ extension OpenDirectoryUser : User {
 	public mutating func oU_setValue<V>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool where V : Sendable {
 		switch property {
 			case .id:
-				/* Changing the ID of an ODRecord is not supported. */
-				return false
+				guard allowIDChange else {return false}
+				guard let newValue else {
+					Conf.logger?.error("Asked to remove the id of a user. This is illegal, I’m not doing it.")
+					return false
+				}
+				return Self.setRequiredValueIfNeeded(newValue, in: &id, converter: (!convertValue ? { $0 as? LDAPDistinguishedName } : Converters.convertObjectToDN(_:)))
 				
 			case .persistentID:
 				Conf.logger?.error("The persistent ID cannot be changed.")

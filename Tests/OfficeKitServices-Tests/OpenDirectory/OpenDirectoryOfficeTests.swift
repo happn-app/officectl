@@ -116,7 +116,7 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		XCTAssertFalse(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: false, convertMismatchingTypes: true))
 		XCTAssertFalse(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: true, convertMismatchingTypes: false))
 		/* Modifying the record name is not supported apparently. */
-		XCTAssertFalse(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertTrue(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
 		
 		let testEmailStrs = ["officectl.test.1@invalid.happn.fr", "officectl.test.2@invalid.happn.fr"]
 		XCTAssertTrue(user.oU_setValue(testEmailStrs, forProperty: .emails, allowIDChange: true, convertMismatchingTypes: true))
@@ -126,6 +126,29 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		XCTAssertEqual(user.oU_emails?.map(\.rawValue), testEmailStrs)
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test Modified")
+		
+		try await service.deleteUser(user, using: services)
+	}
+	
+	func testCreateUpdateDNDeleteUser() async throws {
+		let initialDNStr = "uid=officectl.test.\((0..<42).randomElement()!),cn=users,dc=od1,dc=happn,dc=private"
+		let modifiedDNStr = "uid=officectl.test-modified.23,cn=users,dc=od1,dc=happn,dc=private"
+		
+		var user = OpenDirectoryUser(oU_id: try LDAPDistinguishedName(string: initialDNStr))
+		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNStr))
+		
+		user = try await service.createUser(user, using: services)
+		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNStr))
+		
+		XCTAssertTrue(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: modifiedDNStr))
+		
+		/* So changing the ID of a user is not unsupported per se in Open Directory, but with our instance, it fails (with a cryptic error, of course: “Connection failed to the directory server.”) */
+		let result = await Result{ try await service.updateUser(user, propertiesToUpdate: [.id], using: services) }
+		XCTAssertThrowsError(try result.get())
+		
+		/* The update fails, but the user does not revert back to the server values. */
+		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: modifiedDNStr))
 		
 		try await service.deleteUser(user, using: services)
 	}
