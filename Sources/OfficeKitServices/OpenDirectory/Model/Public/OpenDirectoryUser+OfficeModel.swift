@@ -100,9 +100,6 @@ extension OpenDirectoryUser : User {
 				properties[kODAttributeTypeEMailAddress] = .multiString(newValue.map(\.rawValue))
 				return true
 				
-			case .password:
-				return false
-				
 			default:
 				return false
 		}
@@ -122,7 +119,6 @@ extension OpenDirectoryUser : User {
 			.firstName: [kODAttributeTypeFirstName, kODAttributeTypeFullName], /* Full name is not needed for reading but for writing. */
 			.lastName: [kODAttributeTypeLastName, kODAttributeTypeFullName], /* Full name is not needed for reading but for writing. */
 			.nickname: [kODAttributeTypeNickName],
-			.password: [],
 			/* Other. */
 		]
 	}

@@ -45,6 +45,7 @@ extension GoogleUser : User {
 	}
 	
 	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool {
+		let passwordProperty = UserProperty(rawValue: "google/password")
 		let primaryEmailProperty = UserProperty("primaryEmail")
 		switch property {
 			case .id, primaryEmailProperty:
@@ -102,7 +103,7 @@ extension GoogleUser : User {
 				aliases = Array(emails.dropFirst())
 				return true
 				
-			case .password:
+			case passwordProperty:
 				if let newValue {
 					guard let newPass = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {
 						return false
@@ -141,9 +142,9 @@ extension GoogleUser : User {
 			.firstName: [.name],
 			.lastName: [.name],
 			.nickname: [],
-			.password: [.password, .passwordHashFunction, .changePasswordAtNextLogin],
 			/* Other. */
-			UserProperty("primaryEmail"): [.primaryEmail]
+			UserProperty("primaryEmail"): [.primaryEmail],
+			.init(rawValue: "google/password"): [.password, .passwordHashFunction, .changePasswordAtNextLogin],
 		]
 	}
 	

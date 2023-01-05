@@ -40,8 +40,6 @@ public struct UserProperty : RawRepresentable, ExpressibleByStringLiteral, Senda
 	
 	public static let emails = UserProperty(rawValue: "emails")
 	
-	public static let password = UserProperty(rawValue: "password")
-	
 	public var rawValue: String
 	
 	public var isStandard: Bool {

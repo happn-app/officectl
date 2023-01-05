@@ -39,6 +39,7 @@ extension HappnUser : User {
 	}
 	
 	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool {
+		let passwdProp = UserProperty(rawValue: "happn/password")
 		switch property {
 			case .id, .persistentID, .emails:
 				guard allowIDChange else {return false}
@@ -50,7 +51,7 @@ extension HappnUser : User {
 			case .nickname:  return Self.setValueIfNeeded(newValue, in: &nickname,  converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
 			case .gender:    return Self.setValueIfNeeded(newValue, in: &gender,    converter: (!convertValue ? { $0 as? Gender } : Converters.convertObjectToGender(_:)))
 			case .birthdate: return Self.setValueIfNeeded(newValue, in: &birthDate, converter: (!convertValue ? { $0 as? Date }   : Converters.objectToDateConverter{ HappnBirthDateWrapper.birthDateFormatter.date(from: $0) }))
-			case .password:  return Self.setValueIfNeeded(newValue, in: &password,  converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
+			case passwdProp: return Self.setValueIfNeeded(newValue, in: &password,  converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
 				
 			case .isSuspended:
 				Conf.logger?.error("Suspending a user this way is not supported yet.")
@@ -76,9 +77,9 @@ extension HappnUser : User {
 			.lastName: [.lastName],
 			.nickname: [.nickname],
 			/* Other. */
-			.password: [.password],
 			.gender: [.gender],
-			.birthdate: [._birthDate]
+			.birthdate: [._birthDate],
+			.init(rawValue: "happn/password"): [.password],
 		]
 	}
 	

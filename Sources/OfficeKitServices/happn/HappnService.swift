@@ -174,7 +174,7 @@ public final class HappnService : UserService {
 	public func changePassword(of user: HappnUser, to newPassword: String, using services: Services) async throws {
 		var user = user
 		user.password = newPassword
-		_ = try await updateUser(user, propertiesToUpdate: [.id, .password], using: services)
+		_ = try await updateUser(user, propertiesToUpdate: [.id, .init(rawValue: "happn/password")], using: services)
 	}
 	
 }
