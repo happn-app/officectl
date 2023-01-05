@@ -79,9 +79,11 @@ public extension Converters {
 			return nil
 		}
 		
+		struct InvalidEmailFound : Error {}
 		switch obj {
 			case let arr   as [Email]: return arr
 			case let email as  Email:  return [email]
+			case let arr   as [Any]:   return try? arr.map{ try convertObjectToEmail($0) ?! InvalidEmailFound() }
 			default:
 				guard let str = convertObjectToString(obj) else {
 					return nil
