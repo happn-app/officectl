@@ -55,6 +55,10 @@ extension OpenDirectoryUser : User {
 		return try? properties[kODAttributeTypeEMailAddress]?.asMultiString?.map{ try Email(rawValue: $0) ?! NotAnEmail() }
 	}
 	
+	public var distinguishedName: LDAPDistinguishedName? {
+		return properties[kODAttributeTypeMetaRecordName]?.asString.flatMap{ try? LDAPDistinguishedName(string: $0) }
+	}
+	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		return nil
 	}
