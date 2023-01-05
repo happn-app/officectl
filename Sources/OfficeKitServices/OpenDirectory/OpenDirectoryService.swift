@@ -6,9 +6,11 @@
  */
 
 import Foundation
+import OpenDirectory
 
 import Email
 import GenericJSON
+import Logging
 import UnwrapOrThrow
 
 import OfficeKit2
@@ -154,7 +156,58 @@ public final class OpenDirectoryService : UserService {
 	
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: OpenDirectoryUser, using services: Services) async throws -> OpenDirectoryUser {
-		throw Err.__notImplemented
+		guard let uid = user.id.uid else {
+			throw Err.invalidID
+		}
+		
+		try await connector.connectIfNeeded()
+		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
+			/* Let’s first search all the user records (trust me on this, we’ll need them; see later). */
+			let query = OpenDirectoryQuery(
+				recordTypes: [OpenDirectoryUser.recordType],
+				attribute: kODAttributeTypeMetaRecordName,
+				matchType: ODMatchType(kODMatchAny),
+				queryValues: nil,
+				returnAttributes: [kODAttributeTypeUniqueID],
+				maximumResults: nil
+			)
+			let records = try query.execute(on: node)
+			/* Now find the max UID of these records.
+			 * We start at 501; users with a UID <= 500 are invisble. */
+			var maxUID = 501
+			for record in records {
+				/* The kODAttributeTypeUniqueID should already be fetched, so asking for nil here is ok. */
+				let attributes = try record.recordDetails(forAttributes: nil)
+				guard let uidstr = try? attributes[kODAttributeTypeUniqueID].flatMap(OpenDirectoryAttributeValue.init(any:))?.asString,
+						let uid = Int(uidstr)
+				else {
+					Conf.logger?.warning("Found non-int (or missing or invalid) uid \(String(describing: attributes[kODAttributeTypeUniqueID])) in user OpenDirectory record \(record).")
+					continue
+				}
+				maxUID = max(maxUID, uid)
+			}
+			
+			var user = user
+			/* We set a new unique ID from the max we found earlier. */
+			user.properties[kODAttributeTypeUniqueID] = .string(String(maxUID + 1))
+			if user.properties[kODAttributeTypeFullName] == nil {user.properties[kODAttributeTypeFullName] = .string(user.computedFullName)}
+			let createdRecord = try node.createRecord(withRecordType: OpenDirectoryUser.recordType, name: uid, attributes: user.properties.mapValues{ $0.asMultiData })
+			try createdRecord.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName]) /* We fetch the record name because the creation operation does not return it. */
+			let createdUser = try OpenDirectoryUser(record: createdRecord)
+			guard createdUser.id == user.id else {
+				/* We have created a user whose dn is not the same as the one we wanted.
+				 * Let’s delete the created user and return an error. */
+				let logMetadata: Logger.Metadata = [
+					"created-dn": Logger.MetadataValue(stringLiteral: createdUser.id.stringValue),
+					"expected-dn": Logger.MetadataValue(stringLiteral: user.id.stringValue)
+				]
+				Conf.logger?.info("Created user does not have the same DN as the expected one. Removing created user.", metadata: logMetadata)
+				try createdRecord.delete()
+				Conf.logger?.info("Done.", metadata: logMetadata)
+				throw Err.createdDNDoesNotMatchExpectedDN(createdDN: createdUser.id, expectedDN: user.id)
+			}
+			return createdUser
+		}
 	}
 	
 	public let supportsUserUpdate: Bool = true

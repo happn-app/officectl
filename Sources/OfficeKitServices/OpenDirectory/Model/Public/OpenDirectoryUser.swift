@@ -23,8 +23,11 @@ public struct OpenDirectoryUser : Sendable, Codable {
 	/** All of the properties of the user except for its id. */
 	public var properties = [String: OpenDirectoryAttributeValue]()
 	
-	public init(id: LDAPDistinguishedName) {
+	public init(id: LDAPDistinguishedName, groupID: String = "20", nfsHomeDirectory: String? = "/dev/null", shell: String? = "/usr/bin/false") {
 		self.id = id
+		properties[kODAttributeTypePrimaryGroupID] = .string(groupID)
+		if let shell            {properties[kODAttributeTypeUserShell]        = .string(shell)}
+		if let nfsHomeDirectory {properties[kODAttributeTypeNFSHomeDirectory] = .string(nfsHomeDirectory)}
 	}
 	
 	/**
@@ -44,7 +47,7 @@ public struct OpenDirectoryUser : Sendable, Codable {
 		self.properties = try attributes.mapValues{ try OpenDirectoryAttributeValue(any: $0) }
 		
 		guard let idStr = properties[kODAttributeTypeMetaRecordName]?.asString else {
-			/* I don’t think it’s possible to get a user record (or any record tbh) without a record name. */
+			/* Getting a record without a meta record name is possible, but we do everything we can to avoid that. */
 			throw Err.internalError
 		}
 		properties.removeValue(forKey: kODAttributeTypeMetaRecordName)
@@ -66,6 +69,17 @@ public struct OpenDirectoryUser : Sendable, Codable {
 	 *   2. For fully unexplained reasons, using the wrapper seems to remove some concurrency protections.
 	 *      With the wrapper, when setting _record.wrappedValue in the init while removing @ODActor does not seem to be an issue… which is unexpected. */
 	internal var _record: ODObjectWrapper<ODRecord?> = .init()
+	
+	/**
+	 Returns the full name computed from first name and last name, whether full name is set or not.
+	 If there are no first name nor last name, we return a static string. */
+	internal var computedFullName: String {
+		let firstAndLastName = [oU_firstName, oU_lastName].compactMap{ $0 }
+		guard !firstAndLastName.isEmpty else {
+			return "<Unknown Name>"
+		}
+		return firstAndLastName.joined(separator: " ")
+	}
 	
 	private enum CodingKeys : CodingKey {
 		case id

@@ -126,6 +126,7 @@ extension OpenDirectoryUser : User {
 		}
 		
 		let keys = properties
+			.union([.id, .persistentID]) /* id is definitely mandatory; persistent ID we could let go. */
 			.compactMap{ propertyToAttributeNames[$0] }
 			.flatMap{ $0 }
 		return Set(keys)

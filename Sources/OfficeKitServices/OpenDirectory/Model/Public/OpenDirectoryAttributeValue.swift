@@ -56,7 +56,7 @@ public enum OpenDirectoryAttributeValue : Sendable, Codable {
 		}
 	}
 	
-	public var asMultiData: [Data]? {
+	public var asMultiData: [Data] {
 		switch self {
 			case let .data(data):        return [data]
 			case let .multiData(datas):  return datas
