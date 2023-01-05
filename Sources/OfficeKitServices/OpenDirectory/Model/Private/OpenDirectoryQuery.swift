@@ -13,7 +13,7 @@ import Foundation
 /** Basically a wrapper for `ODQuery`, but without specifying the node. */
 internal struct OpenDirectoryQuery : Sendable {
 	
-	init(uid: String, maxResults: Int? = nil, returnAttributes: [String]? = nil) {
+	init(uid: String, maxResults: Int? = nil, returnAttributes: Set<String>? = nil) {
 		self.recordTypes = [kODRecordTypeUsers]
 		self.attribute = kODAttributeTypeRecordName
 		self.matchType = ODMatchType(kODMatchEqualTo)
@@ -22,7 +22,7 @@ internal struct OpenDirectoryQuery : Sendable {
 		self.maximumResults = maxResults
 	}
 	
-	init(guid: UUID, maxResults: Int? = nil, returnAttributes: [String]? = nil) {
+	init(guid: UUID, maxResults: Int? = nil, returnAttributes: Set<String>? = nil) {
 		self.recordTypes = [kODRecordTypeUsers]
 		self.attribute = kODAttributeTypeGUID
 		self.matchType = ODMatchType(kODMatchEqualTo)
@@ -31,7 +31,7 @@ internal struct OpenDirectoryQuery : Sendable {
 		self.maximumResults = maxResults
 	}
 	
-	static func forAllUsers(returnAttributes: [String]? = nil) -> OpenDirectoryQuery {
+	static func forAllUsers(returnAttributes: Set<String>? = nil) -> OpenDirectoryQuery {
 		return .init(
 			recordTypes: [kODRecordTypeUsers],
 			attribute: kODAttributeTypeMetaRecordName,
@@ -42,7 +42,7 @@ internal struct OpenDirectoryQuery : Sendable {
 		)
 	}
 	
-	init(recordTypes: [String], attribute: String?, matchType: ODMatchType, queryValues: [Data]?, returnAttributes: [String]?, maximumResults: Int?) {
+	init(recordTypes: Set<String>, attribute: String?, matchType: ODMatchType, queryValues: [Data]?, returnAttributes: Set<String>?, maximumResults: Int?) {
 		self.recordTypes = recordTypes
 		self.attribute = attribute
 		self.matchType = matchType
@@ -51,11 +51,11 @@ internal struct OpenDirectoryQuery : Sendable {
 		self.maximumResults = maximumResults
 	}
 	
-	var recordTypes: [String]
+	var recordTypes: Set<String>
 	var attribute: String?
 	var matchType: ODMatchType
 	var queryValues: [Data]?
-	var returnAttributes: [String]?
+	var returnAttributes: Set<String>?
 	var maximumResults: Int?
 	
 	@ODActor
@@ -64,11 +64,11 @@ internal struct OpenDirectoryQuery : Sendable {
 		 *        try node.record(withRecordType: kODRecordTypeUsers, name: the_uid (e.g. "francois.lamboley"), attributes: request.returnAttributes) */
 		return try ODQuery(
 			node: node,
-			forRecordTypes: recordTypes,
+			forRecordTypes: Array(recordTypes),
 			attribute: attribute,
 			matchType: matchType,
 			queryValues: queryValues,
-			returnAttributes: returnAttributes/* ?? kODAttributeTypeAllAttributes*/,
+			returnAttributes: returnAttributes.flatMap(Array.init)/* ?? kODAttributeTypeAllAttributes*/,
 			maximumResults: maximumResults ?? 0
 		)
 	}

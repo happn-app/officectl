@@ -50,7 +50,8 @@ extension OpenDirectoryUser : User {
 	
 	public var oU_emails: [Email]? {
 		struct NotAnEmail : Error {}
-		return try? properties[kODAttributeTypeNickName]?.asMultiString?.map{ try Email(rawValue: $0) ?! NotAnEmail() }
+		/* kODAttributeTypeEMailContacts also exists; should we return both? */
+		return try? properties[kODAttributeTypeEMailAddress]?.asMultiString?.map{ try Email(rawValue: $0) ?! NotAnEmail() }
 	}
 	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
@@ -98,6 +99,36 @@ extension OpenDirectoryUser : User {
 			default:
 				return false
 		}
+	}
+	
+	/* ***************
+	   MARK: - Private
+	   *************** */
+	
+	internal static var propertyToAttributeNames: [UserProperty: [String]] {
+		[
+			/* Standard. */
+			.id: [kODAttributeTypeMetaRecordName],
+			.persistentID: [kODAttributeTypeGUID],
+			.isSuspended: [],
+			.emails: [kODAttributeTypeEMailAddress, kODAttributeTypeEMailContacts],
+			.firstName: [kODAttributeTypeFirstName],
+			.lastName: [kODAttributeTypeLastName],
+			.nickname: [kODAttributeTypeNickName],
+			.password: [],
+			/* Other. */
+		]
+	}
+	
+	internal static func attributeNamesFromProperties(_ properties: Set<UserProperty>?) -> Set<String>? {
+		guard let properties else {
+			return nil
+		}
+		
+		let keys = properties
+			.compactMap{ propertyToAttributeNames[$0] }
+			.flatMap{ $0 }
+		return Set(keys)
 	}
 	
 }

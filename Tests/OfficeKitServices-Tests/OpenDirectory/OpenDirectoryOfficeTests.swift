@@ -61,7 +61,16 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 	
 	func testFetchUserFromID() async throws {
 		let user = try await service.existingUser(fromID: testConf.fetchedUser.id, propertiesToFetch: nil, using: services)
+		XCTAssertNotNil(user?.oU_lastName)
+		XCTAssertNotNil(user?.oU_firstName)
 		XCTAssertEqual(user?.oU_persistentID, testConf.fetchedUser.gid)
+	}
+	
+	func testFetchPartialUserFromID() async throws {
+		let user = try await service.existingUser(fromID: testConf.fetchedUser.id, propertiesToFetch: [.firstName], using: services)
+		XCTAssertNotNil(user)
+		XCTAssertNil(user?.oU_lastName)
+		XCTAssertNotNil(user?.oU_firstName)
 	}
 	
 	func testFetchUserFromPersistentID() async throws {
@@ -69,9 +78,15 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		XCTAssertEqual(user?.oU_id, testConf.fetchedUser.id)
 	}
 	
+	func testFetchPartialUserFromPersistentID() async throws {
+		let user = try await service.existingUser(fromPersistentID: testConf.fetchedUser.gid, propertiesToFetch: [.firstName], using: services)
+		XCTAssertNotNil(user)
+		XCTAssertNil(user?.oU_lastName)
+		XCTAssertNotNil(user?.oU_firstName)
+	}
+	
 	func testListAllUsers() async throws {
 		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: services)
-		print(users)
 		XCTAssertGreaterThan(users.count, 0)
 	}
 	

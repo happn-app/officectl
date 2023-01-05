@@ -103,8 +103,8 @@ public final class OpenDirectoryService : UserService {
 				 * We use this convenience from OpenDirectory,
 				 *  but we could use the exact same method as for the persistent ID search,
 				 *  except the query would be inited with uid instead of guid. */
-#warning("TODO: attributes")
-				let record = try node.record(withRecordType: OpenDirectoryUser.recordType, name: uid, attributes: nil)
+				let attributes = OpenDirectoryUser.attributeNamesFromProperties(propertiesToFetch)
+				let record = try node.record(withRecordType: OpenDirectoryUser.recordType, name: uid, attributes: attributes.flatMap(Array.init))
 				let user = try OpenDirectoryUser(record: record)
 				guard user.id == uID else {
 					/* We verify we did get the correct user (search was done on uid only, not full dn). */
@@ -132,8 +132,8 @@ public final class OpenDirectoryService : UserService {
 	public func existingUser(fromPersistentID pID: UUID, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
 		try await connector.connectIfNeeded()
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
-#warning("TODO: attributes (in the query)")
-			let users = try OpenDirectoryQuery(guid: pID).execute(on: node).map{ try OpenDirectoryUser.init(record: $0) }
+			let attributes = OpenDirectoryUser.attributeNamesFromProperties(propertiesToFetch)
+			let users = try OpenDirectoryQuery(guid: pID, returnAttributes: attributes).execute(on: node).map{ try OpenDirectoryUser.init(record: $0) }
 			guard !users.isEmpty else {
 				return nil
 			}
@@ -147,8 +147,8 @@ public final class OpenDirectoryService : UserService {
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [OpenDirectoryUser] {
 		try await connector.connectIfNeeded()
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
-#warning("TODO: attributes (in the query)")
-			return try OpenDirectoryQuery.forAllUsers().execute(on: node).map{ try OpenDirectoryUser.init(record: $0) }
+			let attributes = OpenDirectoryUser.attributeNamesFromProperties(propertiesToFetch)
+			return try OpenDirectoryQuery.forAllUsers(returnAttributes: attributes).execute(on: node).map{ try OpenDirectoryUser.init(record: $0) }
 		}
 	}
 	
