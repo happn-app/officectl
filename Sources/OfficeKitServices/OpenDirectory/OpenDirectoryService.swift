@@ -248,7 +248,11 @@ public final class OpenDirectoryService : UserService {
 	
 	public let supportsPasswordChange: Bool = true
 	public func changePassword(of user: OpenDirectoryUser, to newPassword: String, using services: Services) async throws {
-		throw Err.__notImplemented
+		try await connector.connectIfNeeded()
+		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
+			let record = try user.record(using: node)
+			try record.changePassword(nil, toPassword: newPassword)
+		}
 	}
 	
 }
