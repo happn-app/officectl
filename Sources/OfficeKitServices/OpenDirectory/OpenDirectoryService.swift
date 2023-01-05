@@ -53,15 +53,15 @@ public final class OpenDirectoryService : UserService {
 	}
 	
 	public func shortDescription(fromUser user: OpenDirectoryUser) -> String {
-		return user.id.stringValue
+		return user.id
 	}
 	
-	public func string(fromUserID userID: LDAPDistinguishedName) -> String {
-		return userID.stringValue
+	public func string(fromUserID userID: String) -> String {
+		return userID
 	}
 	
-	public func userID(fromString string: String) throws -> LDAPDistinguishedName {
-		return try LDAPDistinguishedName(string: string)
+	public func userID(fromString string: String) throws -> String {
+		return string
 	}
 	
 	public func string(fromPersistentUserID pID: UUID) -> String {
@@ -76,14 +76,13 @@ public final class OpenDirectoryService : UserService {
 		return try JSON(encodable: user)
 	}
 	
-	public func alternateIDs(fromUserID userID: LDAPDistinguishedName) -> (regular: LDAPDistinguishedName, other: Set<LDAPDistinguishedName>) {
+	public func alternateIDs(fromUserID userID: String) -> (regular: String, other: Set<String>) {
 		return (regular: userID, other: [])
 	}
 	
-	public func logicalUserID<OtherUserType>(fromUser user: OtherUserType) throws -> LDAPDistinguishedName where OtherUserType : User {
+	public func logicalUserID<OtherUserType>(fromUser user: OtherUserType) throws -> String where OtherUserType : User {
 		let id = config.userIDBuilders?.lazy
 			.compactMap{ $0.inferID(fromUser: user) }
-			.compactMap{ try? LDAPDistinguishedName(string: $0) }
 			.first{ _ in true } /* Not a simple `.first` because of <https://stackoverflow.com/a/71778190> (avoid the handler(s) to be called more than once). */
 		guard let id else {
 			throw OfficeKitError.cannotInferUserIDFromOtherUser
@@ -91,14 +90,8 @@ public final class OpenDirectoryService : UserService {
 		return id
 	}
 	
-	public func existingUser(fromID uID: LDAPDistinguishedName, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
+	public func existingUser(fromID uID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
 		try await connector.connectIfNeeded()
-		guard let uid = uID.uid else {
-			/* Sadly the search in OpenDirectory cannot be done on a full DN apparently.
-			 * No idea why, but I tried everything I could think of.
-			 * In particular a query on kODAttributeTypeRecordName does not work, it does like `record(withRecordType:, name:, attributes:)` does. */
-			throw Err.invalidID
-		}
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
 			do {
 				/* Note:
@@ -106,7 +99,7 @@ public final class OpenDirectoryService : UserService {
 				 *  but we could use the exact same method as for the persistent ID search,
 				 *  except the query would be inited with uid instead of guid. */
 				let attributes = OpenDirectoryUser.attributeNamesFromProperties(propertiesToFetch)
-				let record = try node.record(withRecordType: OpenDirectoryUser.recordType, name: uid, attributes: attributes.flatMap(Array.init))
+				let record = try node.record(withRecordType: OpenDirectoryUser.recordType, name: uID, attributes: attributes.flatMap(Array.init))
 				let user = try OpenDirectoryUser(record: record)
 				guard user.id == uID else {
 					/* We verify we did get the correct user (search was done on uid only, not full dn). */
@@ -156,16 +149,12 @@ public final class OpenDirectoryService : UserService {
 	
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: OpenDirectoryUser, using services: Services) async throws -> OpenDirectoryUser {
-		guard let uid = user.id.uid else {
-			throw Err.invalidID
-		}
-		
 		try await connector.connectIfNeeded()
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
 			/* Let’s first search all the user records (trust me on this, we’ll need them; see later). */
 			let query = OpenDirectoryQuery(
 				recordTypes: [OpenDirectoryUser.recordType],
-				attribute: kODAttributeTypeMetaRecordName,
+				attribute: kODAttributeTypeRecordName,
 				matchType: ODMatchType(kODMatchAny),
 				queryValues: nil,
 				returnAttributes: [kODAttributeTypeUniqueID],
@@ -191,22 +180,9 @@ public final class OpenDirectoryService : UserService {
 			/* We set a new unique ID from the max we found earlier. */
 			user.properties[kODAttributeTypeUniqueID] = .string(String(maxUID + 1))
 			if user.properties[kODAttributeTypeFullName] == nil {user.properties[kODAttributeTypeFullName] = .string(user.computedFullName)}
-			let createdRecord = try node.createRecord(withRecordType: OpenDirectoryUser.recordType, name: uid, attributes: user.properties.mapValues{ $0.asMultiData })
+			let createdRecord = try node.createRecord(withRecordType: OpenDirectoryUser.recordType, name: user.id, attributes: user.properties.mapValues{ $0.asMultiData })
 			try createdRecord.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName]) /* We fetch the record name because the creation operation does not return it. */
-			let createdUser = try OpenDirectoryUser(record: createdRecord)
-			guard createdUser.id == user.id else {
-				/* We have created a user whose dn is not the same as the one we wanted.
-				 * Let’s delete the created user and return an error. */
-				let logMetadata: Logger.Metadata = [
-					"created-dn": Logger.MetadataValue(stringLiteral: createdUser.id.stringValue),
-					"expected-dn": Logger.MetadataValue(stringLiteral: user.id.stringValue)
-				]
-				Conf.logger?.info("Created user does not have the same DN as the expected one. Removing created user.", metadata: logMetadata)
-				try createdRecord.delete()
-				Conf.logger?.info("Done.", metadata: logMetadata)
-				throw Err.createdDNDoesNotMatchExpectedDN(createdDN: createdUser.id, expectedDN: user.id)
-			}
-			return createdUser
+			return try OpenDirectoryUser(record: createdRecord)
 		}
 	}
 	
@@ -228,17 +204,14 @@ public final class OpenDirectoryService : UserService {
 			 *
 			 * From this, we do the update of kODAttributeTypeRecordName and kODAttributeTypeMetaRecordName if applicable first, to fail as early as possible. */
 			if attributeNames.remove(kODAttributeTypeRecordName) != nil {
-				guard let uid = user.id.uid else {
-					throw Err.invalidID
-				}
-				Conf.logger?.debug("Setting attribute \(kODAttributeTypeRecordName) to \(uid)")
-				try record.setValue(uid, forAttribute: kODAttributeTypeRecordName)
+				Conf.logger?.debug("Setting attribute \(kODAttributeTypeRecordName) to \(user.id)")
+				try record.setValue(user.id, forAttribute: kODAttributeTypeRecordName)
 			}
-			if attributeNames.remove(kODAttributeTypeMetaRecordName) != nil {
-				Conf.logger?.debug("Setting attribute \(kODAttributeTypeMetaRecordName) to \(user.id.stringValue)")
-				try record.setValue(user.id.stringValue, forAttribute: kODAttributeTypeMetaRecordName)
-			}
-			for attributeName in attributeNames {
+			let sortedAttributesName = (
+				[attributeNames.remove(kODAttributeTypeMetaRecordName)].compactMap{ $0 } +
+				Array(attributeNames)
+			)
+			for attributeName in sortedAttributesName {
 				if let value = user.properties[attributeName]?.asMultiData {
 					Conf.logger?.debug("Setting attribute \(attributeName) to \(value)")
 					try record.setValue(value, forAttribute: attributeName)

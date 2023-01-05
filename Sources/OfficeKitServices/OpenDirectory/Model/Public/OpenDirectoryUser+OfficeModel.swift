@@ -17,14 +17,14 @@ import OfficeKit2
 
 extension OpenDirectoryUser : User {
 	
-	public typealias UserIDType = LDAPDistinguishedName
+	public typealias UserIDType = String
 	public typealias PersistentUserIDType = UUID
 	
-	public init(oU_id userID: LDAPDistinguishedName) {
+	public init(oU_id userID: String) {
 		self.init(id: userID)
 	}
 	
-	public var oU_id: LDAPDistinguishedName {
+	public var oU_id: String {
 		return id
 	}
 	
@@ -67,7 +67,7 @@ extension OpenDirectoryUser : User {
 					Conf.logger?.error("Asked to remove the id of a user. This is illegal, I’m not doing it.")
 					return false
 				}
-				return Self.setRequiredValueIfNeeded(newValue, in: &id, converter: (!convertValue ? { $0 as? LDAPDistinguishedName } : Converters.convertObjectToDN(_:)))
+				return Self.setRequiredValueIfNeeded(newValue, in: &id, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
 				
 			case .persistentID:
 				Conf.logger?.error("The persistent ID cannot be changed.")
@@ -111,7 +111,7 @@ extension OpenDirectoryUser : User {
 	internal static var propertyToAttributeNames: [UserProperty: [String]] {
 		[
 			/* Standard. */
-			.id: [kODAttributeTypeMetaRecordName],
+			.id: [kODAttributeTypeRecordName],
 			.persistentID: [kODAttributeTypeGUID],
 			.isSuspended: [],
 			.emails: [kODAttributeTypeEMailAddress/*, kODAttributeTypeEMailContacts*/],

@@ -17,13 +17,13 @@ public struct OpenDirectoryUser : Sendable, Codable {
 	
 	public static let recordType: String = kODRecordTypeUsers
 	
-	/* kODAttributeTypeMetaRecordName
+	/* kODAttributeTypeRecordName
 	 * We do not store it in properties because we want it to never be nil. */
-	public var id: LDAPDistinguishedName
+	public var id: String
 	/** All of the properties of the user except for its id. */
 	public var properties = [String: OpenDirectoryAttributeValue]()
 	
-	public init(id: LDAPDistinguishedName, groupID: String = "20", nfsHomeDirectory: String? = "/dev/null", shell: String? = "/usr/bin/false") {
+	public init(id: String, groupID: String = "20", nfsHomeDirectory: String? = "/dev/null", shell: String? = "/usr/bin/false") {
 		self.id = id
 		properties[kODAttributeTypePrimaryGroupID] = .string(groupID)
 		if let shell            {properties[kODAttributeTypeUserShell]        = .string(shell)}
@@ -46,13 +46,13 @@ public struct OpenDirectoryUser : Sendable, Codable {
 		
 		self.properties = try attributes.mapValues{ try OpenDirectoryAttributeValue(any: $0) }
 		
-		guard let idStr = properties[kODAttributeTypeMetaRecordName]?.asString else {
+		guard let idStr = properties[kODAttributeTypeRecordName]?.asString else {
 			/* Getting a record without a meta record name is possible, but we do everything we can to avoid that. */
 			throw Err.internalError
 		}
-		properties.removeValue(forKey: kODAttributeTypeMetaRecordName)
+		properties.removeValue(forKey: kODAttributeTypeRecordName)
 		
-		self.id = try LDAPDistinguishedName(string: idStr)
+		self.id = idStr
 		
 		_record.wrappedValue = record
 	}
@@ -75,7 +75,7 @@ public struct OpenDirectoryUser : Sendable, Codable {
 		if allowCache, let record = _record.wrappedValue {
 			return record
 		}
-		return try node.record(withRecordType: Self.recordType, name: id.uid, attributes: [kODAttributeTypeMetaRecordName])
+		return try node.record(withRecordType: Self.recordType, name: id, attributes: [kODAttributeTypeRecordName])
 	}
 	
 	/**

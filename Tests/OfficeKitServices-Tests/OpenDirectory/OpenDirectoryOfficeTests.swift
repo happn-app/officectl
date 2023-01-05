@@ -24,7 +24,7 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 	struct TestConf : Decodable {
 		var fetchedUser: FetchedUser
 		struct FetchedUser : Decodable {
-			var id: LDAPDistinguishedName
+			var id: String
 			var gid: UUID
 		}
 	}
@@ -94,35 +94,33 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 	}
 	
 	func testCreateUpdateDeleteUser() async throws {
-		let initialDNStr = "uid=officectl.test.\((0..<42).randomElement()!),cn=users,dc=od1,dc=happn,dc=private"
-		let modifiedDNStr = "uid=officectl.test-modified.\((0..<42).randomElement()!),cn=users,dc=od1,dc=happn,dc=private"
+		let initialID = "officectl.test.\((0..<42).randomElement()!)"
+		let modifiedID = "officectl.test-modified.\((0..<42).randomElement()!)"
 		
-		var user = OpenDirectoryUser(oU_id: try LDAPDistinguishedName(string: initialDNStr))
-		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNStr))
+		var user = OpenDirectoryUser(oU_id: initialID)
+		XCTAssertEqual(user.id, initialID)
 		XCTAssertNil(user.oU_firstName)
 		XCTAssertNil(user.oU_lastName)
 		
 		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test", .password: String.generatePassword()], allowIDChange: false, convertMismatchingTypes: true)
-		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNStr))
+		XCTAssertEqual(user.id, initialID)
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
 		
 		user = try await service.createUser(user, using: services)
-		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNStr))
+		XCTAssertEqual(user.id, initialID)
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
 		
 		XCTAssertTrue(user.oU_setValue("Test Modified", forProperty: .lastName, allowIDChange: true, convertMismatchingTypes: true))
-		XCTAssertFalse(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: false, convertMismatchingTypes: true))
-		XCTAssertFalse(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: true, convertMismatchingTypes: false))
-		/* Modifying the record name is not supported apparently. */
-		XCTAssertTrue(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertFalse(user.oU_setValue(modifiedID, forProperty: .id, allowIDChange: false, convertMismatchingTypes: true))
+		XCTAssertTrue(user.oU_setValue(modifiedID, forProperty: .id, allowIDChange: true, convertMismatchingTypes: false))
 		
 		let testEmailStrs = ["officectl.test.1@invalid.happn.fr", "officectl.test.2@invalid.happn.fr"]
 		XCTAssertTrue(user.oU_setValue(testEmailStrs, forProperty: .emails, allowIDChange: true, convertMismatchingTypes: true))
 		
 		user = try await service.updateUser(user, propertiesToUpdate: [.emails, .lastName], using: services)
-		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNStr))
+		XCTAssertEqual(user.id, initialID)
 		XCTAssertEqual(user.oU_emails?.map(\.rawValue), testEmailStrs)
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test Modified")
@@ -130,25 +128,25 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		try await service.deleteUser(user, using: services)
 	}
 	
-	func testCreateUpdateDNDeleteUser() async throws {
-		let initialDNStr = "uid=officectl.test.\((0..<42).randomElement()!),cn=users,dc=od1,dc=happn,dc=private"
-		let modifiedDNStr = "uid=officectl.test-modified.23,cn=users,dc=od1,dc=happn,dc=private"
+	func testCreateUpdateIDDeleteUser() async throws {
+		let initialID = "officectl.test.\((0..<42).randomElement()!)"
+		let modifiedID = "officectl.test-modified.23"
 		
-		var user = OpenDirectoryUser(oU_id: try LDAPDistinguishedName(string: initialDNStr))
-		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNStr))
+		var user = OpenDirectoryUser(oU_id: initialID)
+		XCTAssertEqual(user.id, initialID)
 		
 		user = try await service.createUser(user, using: services)
-		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNStr))
+		XCTAssertEqual(user.id, initialID)
 		
-		XCTAssertTrue(user.oU_setValue(modifiedDNStr, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
-		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: modifiedDNStr))
+		XCTAssertTrue(user.oU_setValue(modifiedID, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertEqual(user.id, modifiedID)
 		
 		/* So changing the ID of a user is not unsupported per se in Open Directory, but with our instance, it fails (with a cryptic error, of course: “Connection failed to the directory server.”) */
 		let result = await Result{ try await service.updateUser(user, propertiesToUpdate: [.id], using: services) }
 		XCTAssertThrowsError(try result.get())
 		
 		/* The update fails, but the user does not revert back to the server values. */
-		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: modifiedDNStr))
+		XCTAssertEqual(user.id, modifiedID)
 		
 		try await service.deleteUser(user, using: services)
 	}
