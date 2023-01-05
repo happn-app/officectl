@@ -181,7 +181,6 @@ public final class OpenDirectoryService : UserService {
 			user.properties[kODAttributeTypeUniqueID] = .string(String(maxUID + 1))
 			if user.properties[kODAttributeTypeFullName] == nil {user.properties[kODAttributeTypeFullName] = .string(user.computedFullName)}
 			let createdRecord = try node.createRecord(withRecordType: OpenDirectoryUser.recordType, name: user.id, attributes: user.properties.mapValues{ $0.asMultiData })
-			try createdRecord.recordDetails(forAttributes: [kODAttributeTypeMetaRecordName]) /* We fetch the record name because the creation operation does not return it. */
 			return try OpenDirectoryUser(record: createdRecord)
 		}
 	}
