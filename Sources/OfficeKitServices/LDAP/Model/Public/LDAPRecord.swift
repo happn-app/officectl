@@ -13,4 +13,4 @@ import OfficeKit2
 
 
 
-public typealias LDAPRecord = [String: [Data]]
+public typealias LDAPRecord = [LDAPObjectID: [Data]]

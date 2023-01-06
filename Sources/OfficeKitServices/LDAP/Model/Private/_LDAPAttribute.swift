@@ -13,32 +13,23 @@ import OfficeKit2
 
 
 
-enum AttributeDescription {
+/* Sometime the numericoid or description can be unknown, but this describes the properties we **do** know. */
+struct AttributeDescription {
 	
-	case knownDescr(LDAPObjectID.Descr)
-	case knownNumericoid(LDAPObjectID.Numericoid)
-	case knownDescrAndNumericoid(LDAPObjectID.Descr, LDAPObjectID.Numericoid)
+	let descr: LDAPObjectID.Descr
+	let numericoid: LDAPObjectID.Numericoid
 	
-	var descr: LDAPObjectID.Descr? {
-		switch self {
-			case .knownDescr(let descr), .knownDescrAndNumericoid(let descr, _): return descr
-			case .knownNumericoid:                                               return nil
-		}
+	init(_ descr: LDAPObjectID.Descr, _ numericoid: LDAPObjectID.Numericoid) {
+		self.descr = descr
+		self.numericoid = numericoid
 	}
 	
-	var numericoid: LDAPObjectID.Numericoid? {
-		switch self {
-			case .knownNumericoid(let n), .knownDescrAndNumericoid(_, let n): return n
-			case .knownDescr:                                                 return nil
-		}
+	var descrOID: LDAPObjectID {
+		.descr(descr)
 	}
 	
-	var stringValue: String {
-		/* descr is preferred as per the RFC. */
-		switch self {
-			case let .knownDescr(descr), let .knownDescrAndNumericoid(descr, _): return descr.rawValue
-			case let .knownNumericoid(num):                                      return num.rawValue
-		}
+	var numericoidOID: LDAPObjectID {
+		.numericoid(numericoid)
 	}
 	
 }
@@ -54,6 +45,15 @@ protocol LDAPAttribute {
 
 
 extension LDAPAttribute {
+	
+	static func value(in record: LDAPRecord) throws -> Value? {
+		/* TODO: Should we check the object classes?
+		 *       Probably, but we do not have access to the class the property belong to here… */
+		guard let v = record[attributeDescription.descrOID] ?? record[attributeDescription.numericoidOID] else {
+			return nil
+		}
+		return try value(from: v)
+	}
 	
 	static func singleValue(for value: [Data]) throws -> Data {
 		return try value.onlyElement ?! Err.valueIsNotSingleData

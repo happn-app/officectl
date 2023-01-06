@@ -21,7 +21,7 @@ enum LDAPInetOrgPersonClass : LDAPClass {
 	enum UID : LDAPAttribute {
 		
 		typealias Value = String /* I _think_ this cannot be an array. */
-		static let attributeDescription: AttributeDescription = .knownDescrAndNumericoid(
+		static let attributeDescription: AttributeDescription = .init(
 			.init(rawValue: "uid")! /* Note: RFC 1274 uses the identifier "userid" <http://www.oid-info.com/get/0.9.2342.19200300.100.1.1> */,
 			.init(rawValue: "0.9.2342.19200300.100.1.1")!
 		)
@@ -31,7 +31,7 @@ enum LDAPInetOrgPersonClass : LDAPClass {
 	enum GivenName : LDAPAttribute {
 		
 		typealias Value = [String] /* I _think_ this can be an array. */
-		static let attributeDescription: AttributeDescription = .knownDescrAndNumericoid(
+		static let attributeDescription: AttributeDescription = .init(
 			.init(rawValue: "givenName")!,
 			.init(rawValue: "2.5.4.42")!
 		)
@@ -41,8 +41,8 @@ enum LDAPInetOrgPersonClass : LDAPClass {
 	enum Mail : LDAPAttribute {
 		
 		typealias Value = [Email]
-		static let attributeDescription: AttributeDescription = .knownDescrAndNumericoid(
-			.init(rawValue: "givenName")! /* Note: RFC 1274 uses the identifier "rfc822Mailbox" <http://www.oid-info.com/get/0.9.2342.19200300.100.1.3> */,
+		static let attributeDescription: AttributeDescription = .init(
+			.init(rawValue: "mail")! /* Note: RFC 1274 uses the identifier "rfc822Mailbox" <http://www.oid-info.com/get/0.9.2342.19200300.100.1.3> */,
 			.init(rawValue: "0.9.2342.19200300.100.1.3")!
 		)
 		

@@ -78,17 +78,6 @@ public struct OpenDirectoryUser : Sendable, Codable {
 		return try node.record(withRecordType: Self.recordType, name: id, attributes: [kODAttributeTypeRecordName])
 	}
 	
-	/**
-	 Returns the full name computed from first name and last name, whether full name is set or not.
-	 If there are no first name nor last name, we return a static string. */
-	internal var computedFullName: String {
-		let firstAndLastName = [oU_firstName, oU_lastName].compactMap{ $0 }
-		guard !firstAndLastName.isEmpty else {
-			return "<Unknown Name>"
-		}
-		return firstAndLastName.joined(separator: " ")
-	}
-	
 	private enum CodingKeys : CodingKey {
 		case id
 		case properties

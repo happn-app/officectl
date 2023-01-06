@@ -19,7 +19,7 @@ enum LDAPPersonClass : LDAPClass {
 	enum Surname : LDAPAttribute {
 		
 		typealias Value = [String] /* RFC seems to say this can be an array. */
-		static let attributeDescription: AttributeDescription = .knownDescrAndNumericoid(
+		static let attributeDescription: AttributeDescription = .init(
 			.init(rawValue: "sn")!,
 			.init(rawValue: "2.5.4.4")!
 		)
@@ -29,7 +29,7 @@ enum LDAPPersonClass : LDAPClass {
 	enum CommonName : LDAPAttribute {
 		
 		typealias Value = [String] /* RFC seems to say this can be an array. */
-		static let attributeDescription: AttributeDescription = .knownDescrAndNumericoid(
+		static let attributeDescription: AttributeDescription = .init(
 			.init(rawValue: "cn")!,
 			.init(rawValue: "2.5.4.3")!
 		)
@@ -39,7 +39,7 @@ enum LDAPPersonClass : LDAPClass {
 	enum UserPassword : LDAPAttribute {
 		
 		typealias Value = [String] /* RFC seems to say this can be an array. */
-		static let attributeDescription: AttributeDescription = .knownDescrAndNumericoid(
+		static let attributeDescription: AttributeDescription = .init(
 			.init(rawValue: "userPassword")!,
 			.init(rawValue: "2.5.4.35")!
 		)

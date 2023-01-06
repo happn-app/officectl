@@ -19,7 +19,7 @@ enum LDAPTopClass : LDAPClass {
 	enum ObjectClass : LDAPAttribute {
 		
 		typealias Value = [String]
-		static let attributeDescription: AttributeDescription = .knownDescrAndNumericoid(
+		static let attributeDescription: AttributeDescription = .init(
 			.init(rawValue: "objectClass")!,
 			.init(rawValue: "2.5.4.0")!
 		)

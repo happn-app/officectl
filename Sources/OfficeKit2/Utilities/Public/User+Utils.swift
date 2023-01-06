@@ -32,3 +32,19 @@ public extension User {
 	}
 	
 }
+
+
+public extension User {
+	
+	/**
+	 Returns the full name computed from first name and last name, whether full name is set or not.
+	 If there are no first name nor last name, we return a static string. */
+	var computedFullName: String {
+		let firstAndLastName = [oU_firstName, oU_lastName].compactMap{ $0 }
+		guard !firstAndLastName.isEmpty else {
+			return "<Unknown Name>"
+		}
+		return firstAndLastName.joined(separator: " ")
+	}
+	
+}
