@@ -48,7 +48,7 @@ public final class OpenDirectoryService : UserService {
 	public var supportedUserProperties: Set<UserProperty> {
 		/* OpenDirectory supports a lot of properties, but we map only a very few of them, at least for now.
 		 * Later, we should call `supportedAttributes(forRecordType: kODRecordTypeUsers)` on the node (presumably at init time)
-		 *  to get the list of actually supported properties by the node.  */
+		 *  to get the list of actually supported properties by the node. */
 		return UserProperty.standardProperties
 	}
 	

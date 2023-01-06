@@ -25,7 +25,11 @@ public enum LDAPOfficeError : Error, Sendable {
 	case valueIsDoesNotContainStrings
 	case valueIsNotEmails
 	
+	case serviceDoesNotHavePersistentID
+	
 	case internalError
+	
+	case __notImplemented
 	
 }
 

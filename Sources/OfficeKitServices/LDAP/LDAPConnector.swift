@@ -27,7 +27,7 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 		}
 	}
 	
-	public enum LDAPProtocolVersion : Sendable, Hashable {
+	public enum ProtocolVersion : Sendable, Hashable, Codable {
 		
 		case v1, v2, v3
 		
@@ -41,7 +41,7 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 		
 	}
 	
-	public enum Auth : Sendable, Hashable {
+	public enum Auth : Sendable, Hashable, Codable {
 		
 		case userPass(username: String, password: String)
 		
@@ -50,7 +50,7 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 	public typealias Authentication = Void
 	
 	public let ldapURL: URL
-	public let version: LDAPProtocolVersion
+	public let version: ProtocolVersion
 	public let startTLS: Bool
 	
 	public let auth: Auth?
@@ -58,7 +58,7 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 	/* We do not simply return “ldapPtr != nil” because ldapPtr can be non-nil when we are not connected if connection fails and unbind fails too. */
 	public var isConnected: Bool = false
 	
-	public init(ldapURL: URL, version: LDAPProtocolVersion, auth: Auth?, startTLS: Bool) throws {
+	public init(ldapURL: URL, version: ProtocolVersion, startTLS: Bool, auth: Auth?) {
 		self.ldapURL = ldapURL
 		self.version = version
 		self.startTLS = startTLS
@@ -107,7 +107,7 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 		 *  As such the first call should be single-threaded or otherwise protected to insure that only one call is active.
 		 *  It is recommended that ldap_get_option() or ldap_set_option() be used in the program's main thread before any additional threads are created.
 		 *  See ldap_get_option(3).” */
-		let initBlock: @LDAPInitActor (URL, LDAPProtocolVersion, Bool) -> (OpaquePointer?, Error?) = { ldapURL, version, startTLS in
+		let initBlock: @LDAPInitActor (URL, ProtocolVersion, Bool) -> (OpaquePointer?, Error?) = { ldapURL, version, startTLS in
 			let ldapPtr: OpaquePointer
 			var ldapPtrInit: OpaquePointer? = nil
 			let error = ldap_initialize(&ldapPtrInit, ldapURL.absoluteString)
