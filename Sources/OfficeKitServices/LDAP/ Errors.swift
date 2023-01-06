@@ -7,6 +7,8 @@
 
 import Foundation
 
+import COpenLDAP
+
 import OfficeKit2
 
 
@@ -36,6 +38,10 @@ public struct OpenLDAPError : Error, Sendable {
 	
 	internal init(code: Int32) {
 		self.code = code
+	}
+	
+	public var isInvalidPassError: Bool {
+		return (code == LDAP_INVALID_CREDENTIALS)
 	}
 	
 }
