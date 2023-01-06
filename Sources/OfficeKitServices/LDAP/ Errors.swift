@@ -15,6 +15,8 @@ public enum LDAPOfficeError : Error, Sendable {
 	
 	case notConnected
 	
+	case passwordIsNotASCII
+	
 	case valueIsNotSingleData
 	case valueIsNotSingleString
 	case valueIsNotStrings
@@ -26,3 +28,14 @@ public enum LDAPOfficeError : Error, Sendable {
 }
 
 typealias Err = LDAPOfficeError
+
+
+public struct OpenLDAPError : Error, Sendable {
+	
+	public var code: Int32
+	
+	internal init(code: Int32) {
+		self.code = code
+	}
+	
+}

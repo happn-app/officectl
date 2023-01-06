@@ -65,8 +65,6 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 	
 	public var isConnected: Bool = false
 	
-	public let connectorOperationQueue = SyncOperationQueue(name: "LDAPConnector")
-	
 	public init(ldapURL u: URL, protocolVersion: LDAPProtocolVersion, startTLS: Bool) throws {
 		try self.init(ldapURL: u, protocolVersion: protocolVersion, startTLS: startTLS, authMode: .none)
 	}
@@ -122,7 +120,7 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 	 The structure is opaque in the openldap headers, so we get an opaque pointer in Swift. */
 	public func performLDAPCommunication<T>(_ communicationBlock: @Sendable (_ ldapPtr: OpaquePointer) throws -> T) rethrows -> T {
 		/* If I understand the actor principle correctly, it is not possible this function is called twice in parallel,
-		 * so there should not be any need for a synchronization queue. */
+		 *  so there should not be any need for a synchronization queue. */
 		return try communicationBlock(ldapPtr)
 	}
 	
