@@ -24,8 +24,7 @@ final class LDAPOfficeTests : XCTestCase {
 	struct TestConf : Decodable {
 		var fetchedUser: FetchedUser
 		struct FetchedUser : Decodable {
-			var id: String
-			var gid: UUID
+			var dn: LDAPDistinguishedName
 		}
 	}
 	
@@ -53,7 +52,7 @@ final class LDAPOfficeTests : XCTestCase {
 		let (serviceConf, testConf) = try Self.confs.get()
 		
 		self.testConf = testConf
-		self.service = LDAPService(id: "test-ldap", LDAPServiceConfig: serviceConf)
+		self.service = LDAPService(id: "test-ldap", ldapServiceConfig: serviceConf)
 	}
 	
 	override func tearDown() async throws {
@@ -63,92 +62,10 @@ final class LDAPOfficeTests : XCTestCase {
 	}
 	
 	func testFetchUserFromID() async throws {
-		let user = try await service.existingUser(fromID: testConf.fetchedUser.id, propertiesToFetch: nil, using: services)
+		let user = try await service.existingUser(fromID: testConf.fetchedUser.dn, propertiesToFetch: nil, using: services)
 		XCTAssertNotNil(user?.oU_lastName)
 		XCTAssertNotNil(user?.oU_firstName)
-		XCTAssertEqual(user?.oU_persistentID, testConf.fetchedUser.gid)
-	}
-	
-	func testFetchPartialUserFromID() async throws {
-		let user = try await service.existingUser(fromID: testConf.fetchedUser.id, propertiesToFetch: [.firstName], using: services)
-		XCTAssertNotNil(user)
-		XCTAssertNil(user?.oU_lastName)
-		XCTAssertNotNil(user?.oU_firstName)
-	}
-	
-	func testFetchUserFromPersistentID() async throws {
-		let user = try await service.existingUser(fromPersistentID: testConf.fetchedUser.gid, propertiesToFetch: nil, using: services)
-		XCTAssertEqual(user?.oU_id, testConf.fetchedUser.id)
-	}
-	
-	func testFetchPartialUserFromPersistentID() async throws {
-		let user = try await service.existingUser(fromPersistentID: testConf.fetchedUser.gid, propertiesToFetch: [.firstName], using: services)
-		XCTAssertNotNil(user)
-		XCTAssertNil(user?.oU_lastName)
-		XCTAssertNotNil(user?.oU_firstName)
-	}
-	
-	func testListAllUsers() async throws {
-		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: services)
-		XCTAssertGreaterThan(users.count, 0)
-	}
-	
-	func testCreateUpdateDeleteUser() async throws {
-		let initialID = "officectl.test.\((0..<42).randomElement()!)"
-		let modifiedID = "officectl.test-modified.\((0..<42).randomElement()!)"
-		
-		var user = LDAPUser(oU_id: initialID)
-		XCTAssertEqual(user.id, initialID)
-		XCTAssertNil(user.oU_firstName)
-		XCTAssertNil(user.oU_lastName)
-		
-		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test", .password: String.generatePassword()], allowIDChange: false, convertMismatchingTypes: true)
-		XCTAssertEqual(user.id, initialID)
-		XCTAssertEqual(user.oU_firstName, "Officectl")
-		XCTAssertEqual(user.oU_lastName, "Test")
-		
-		user = try await service.createUser(user, using: services)
-		XCTAssertEqual(user.id, initialID)
-		XCTAssertEqual(user.oU_firstName, "Officectl")
-		XCTAssertEqual(user.oU_lastName, "Test")
-		
-		XCTAssertTrue(user.oU_setValue("Test Modified", forProperty: .lastName, allowIDChange: true, convertMismatchingTypes: true))
-		XCTAssertFalse(user.oU_setValue(modifiedID, forProperty: .id, allowIDChange: false, convertMismatchingTypes: true))
-		XCTAssertTrue(user.oU_setValue(modifiedID, forProperty: .id, allowIDChange: true, convertMismatchingTypes: false))
-		
-		let testEmailStrs = ["officectl.test.1@invalid.happn.fr", "officectl.test.2@invalid.happn.fr"]
-		XCTAssertTrue(user.oU_setValue(testEmailStrs, forProperty: .emails, allowIDChange: true, convertMismatchingTypes: true))
-		
-		user = try await service.updateUser(user, propertiesToUpdate: [.emails, .lastName], using: services)
-		XCTAssertEqual(user.id, initialID)
-		XCTAssertEqual(user.oU_emails?.map(\.rawValue), testEmailStrs)
-		XCTAssertEqual(user.oU_firstName, "Officectl")
-		XCTAssertEqual(user.oU_lastName, "Test Modified")
-		
-		try await service.deleteUser(user, using: services)
-	}
-	
-	func testCreateUpdateIDDeleteUser() async throws {
-		let initialID = "officectl.test.\((0..<42).randomElement()!)"
-		let modifiedID = "officectl.test-modified.23"
-		
-		var user = LDAPUser(oU_id: initialID)
-		XCTAssertEqual(user.id, initialID)
-		
-		user = try await service.createUser(user, using: services)
-		XCTAssertEqual(user.id, initialID)
-		
-		XCTAssertTrue(user.oU_setValue(modifiedID, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
-		XCTAssertEqual(user.id, modifiedID)
-		
-		/* So changing the ID of a user is not unsupported per se in Open Directory, but with our instance, it fails (with a cryptic error, of course: “Connection failed to the directory server.”) */
-		let result = await Result{ try await service.updateUser(user, propertiesToUpdate: [.id], using: services) }
-		XCTAssertThrowsError(try result.get())
-		
-		/* The update fails, but the user does not revert back to the server values. */
-		XCTAssertEqual(user.id, modifiedID)
-		
-		try await service.deleteUser(user, using: services)
+		XCTAssertEqual(user?.oU_id, testConf.fetchedUser.dn)
 	}
 	
 }

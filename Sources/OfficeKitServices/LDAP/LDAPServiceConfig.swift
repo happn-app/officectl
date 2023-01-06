@@ -39,7 +39,7 @@ public struct LDAPServiceConfig : Sendable, Codable {
 			case ldapVersion = "ldap_version"
 			case startTLS = "start_tls"
 			
-			case auth = "auth"
+			case auth
 			
 		}
 		

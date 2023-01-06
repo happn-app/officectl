@@ -75,7 +75,7 @@ final class GoogleOfficeTests : XCTestCase {
 		XCTAssertNil(user.oU_firstName)
 		XCTAssertNil(user.oU_lastName)
 		
-		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test", .password: String.generatePassword()], allowIDChange: false, convertMismatchingTypes: true)
+		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test", UserProperty(rawValue: "google/password"): String.generatePassword()], allowIDChange: false, convertMismatchingTypes: true)
 		XCTAssertEqual(user.primaryEmail, Email(rawValue: initialEmailStr))
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")

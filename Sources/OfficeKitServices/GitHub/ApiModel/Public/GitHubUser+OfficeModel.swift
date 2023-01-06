@@ -87,8 +87,7 @@ extension GitHubUser : User {
 			.emails: [],
 			.firstName: [.name],
 			.lastName: [.name],
-			.nickname: [.login],
-			.password: []
+			.nickname: [.login]
 			/* Other. */
 		]
 	}

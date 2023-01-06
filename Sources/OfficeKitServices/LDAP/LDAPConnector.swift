@@ -27,7 +27,7 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 		}
 	}
 	
-	public enum ProtocolVersion : Sendable, Hashable, Codable {
+	public enum ProtocolVersion : String, Sendable, Hashable, Codable {
 		
 		case v1, v2, v3
 		
@@ -67,10 +67,12 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 	}
 	
 	deinit {
-		if ldap_unbind_ext_s(ldapPtr, nil, nil) != LDAP_SUCCESS {
-			Conf.logger?.warning("LEAKING ldap struct: ldap_unbind failed in connector deinit.")
+		if ldapPtr != nil {
+			if ldap_unbind_ext_s(ldapPtr, nil, nil) != LDAP_SUCCESS {
+				Conf.logger?.warning("LEAKING ldap struct: ldap_unbind failed in connector deinit.")
+			}
+			ldapPtr = nil
 		}
-		ldapPtr = nil
 	}
 	
 	/**
