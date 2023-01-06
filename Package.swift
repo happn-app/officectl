@@ -26,6 +26,19 @@ let networkDependencies: [Target.Dependency] = [
 	.product(name: "URLRequestOperation", package: "URLRequestOperation")
 ]
 
+let ldapDependencies: [Target.Dependency] = {
+	var ret = [Target.Dependency]()
+#if !os(Linux)
+	/* On macOS we use xcframework dependencies for OpenSSL and OpenLDAP. */
+	ret.append(.product(name: "COpenSSL-dynamic",  package: "COpenSSL"))
+	ret.append(.product(name: "COpenLDAP-dynamic", package: "COpenLDAP"))
+#else
+	/* On Linux we use the standard OpenLDAP package. */
+	ret.append(.target(name: "COpenLDAP"))
+#endif
+	return ret
+}()
+
 
 let package = Package(
 	name: "officectl",
@@ -151,9 +164,10 @@ let package = Package(
 		   ********************* */
 		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")],                              path: "Sources/OfficeKitServices/ Common",     swiftSettings: commonSwiftSettings))
 		ret.append(.target(name: "CommonForOfficeKitServicesTests", dependencies: [.product(name: "StreamReader", package: "stream-reader")], path: "Tests/OfficeKitServices-Tests/ Common", swiftSettings: commonSwiftSettings))
-		ret.append(contentsOf: targetsForService(named: "HappnOffice",  folderName: "happn",  additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
-		ret.append(contentsOf: targetsForService(named: "GitHubOffice", folderName: "GitHub", additionalDependencies: networkDependencies + [.product(name: "JWT", package: "jwt")]))
-		ret.append(contentsOf: targetsForService(named: "GoogleOffice", folderName: "Google", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
+		ret.append(contentsOf: targetsForService(named: "HappnOffice",         folderName: "happn",  additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
+		ret.append(contentsOf: targetsForService(named: "GitHubOffice",        folderName: "GitHub", additionalDependencies: networkDependencies + [.product(name: "JWT", package: "jwt")]))
+		ret.append(contentsOf: targetsForService(named: "GoogleOffice",        folderName: "Google", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
+		ret.append(contentsOf: targetsForService(named: "LDAPOffice",          folderName: "LDAP",   additionalDependencies: ldapDependencies))
 #if canImport(OpenDirectory)
 		ret.append(contentsOf: targetsForService(named: "OpenDirectoryOffice", folderName: "OpenDirectory"))
 #endif

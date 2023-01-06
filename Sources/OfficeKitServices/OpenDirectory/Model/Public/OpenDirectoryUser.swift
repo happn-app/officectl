@@ -19,9 +19,9 @@ public struct OpenDirectoryUser : Sendable, Codable {
 	
 	/* kODAttributeTypeRecordName
 	 * We do not store it in properties because we want it to never be nil. */
-	public var id: String
+	public internal(set) var id: String
 	/** All of the properties of the user except for its id. */
-	public var properties = [String: OpenDirectoryAttributeValue]()
+	public internal(set) var properties = [String: OpenDirectoryAttributeValue]()
 	
 	public init(id: String, groupID: String = "20", nfsHomeDirectory: String? = "/dev/null", shell: String? = "/usr/bin/false") {
 		self.id = id
