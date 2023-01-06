@@ -22,6 +22,7 @@ import URLRequestOperation
 final class LDAPOfficeTests : XCTestCase {
 	
 	struct TestConf : Decodable {
+		var caCerts: String?
 		var fetchedUser: FetchedUser
 		struct FetchedUser : Decodable {
 			var dn: LDAPDistinguishedName
@@ -43,7 +44,14 @@ final class LDAPOfficeTests : XCTestCase {
 		LDAPOfficeConfig.logger?.logLevel = .trace
 		URLRequestOperationConfig.logHTTPResponses = true
 		URLRequestOperationConfig.logHTTPRequests = true
-		confs = Result{ try parsedConf(for: "ldap") }
+		confs = Result{
+			let ret: (LDAPServiceConfig, TestConf) = try parsedConf(for: "ldap")
+			if let path = ret.1.caCerts {
+				try LDAPConnector.setCA(path)
+			}
+			return ret
+		}
+		
 	}
 	
 	override func setUp() async throws {

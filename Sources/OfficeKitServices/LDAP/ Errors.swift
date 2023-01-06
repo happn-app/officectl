@@ -36,7 +36,7 @@ public enum LDAPOfficeError : Error, Sendable {
 typealias Err = LDAPOfficeError
 
 
-public struct OpenLDAPError : Error, Sendable {
+public struct OpenLDAPError : Error, CustomStringConvertible, Sendable {
 	
 	public var code: Int32
 	
@@ -46,6 +46,10 @@ public struct OpenLDAPError : Error, Sendable {
 	
 	public var isInvalidPassError: Bool {
 		return (code == LDAP_INVALID_CREDENTIALS)
+	}
+	
+	public var description: String {
+		return String(cString: ldap_err2string(code))
 	}
 	
 }
