@@ -95,8 +95,7 @@ public final class LDAPService : UserService {
 		try await connector.connectIfNeeded()
 		
 		let request = LDAPSearchRequest(base: uID, scope: .base, attributesToFetch: LDAPObject.attributeNamesFromProperties(propertiesToFetch))
-		let objects = try await LDAPObject.search(request, connector: connector).results
-		/* TODO: Is there a way to know for certain the objects we get are users? Probably using the object class… */
+		let objects = try await LDAPObject.search(request, connector: connector).results.filter(\.isInetOrgPerson)
 		
 		guard let object = objects.first else {
 			return nil
@@ -114,31 +113,50 @@ public final class LDAPService : UserService {
 		try await connector.connectIfNeeded()
 		
 		let request = LDAPSearchRequest(base: config.peopleDN + config.baseDN, scope: .children, attributesToFetch: LDAPObject.attributeNamesFromProperties(propertiesToFetch))
-		/* TODO: Check objects are users… */
-		return try await LDAPObject.search(request, connector: connector).results
+		return try await LDAPObject.search(request, connector: connector).results.filter(\.isInetOrgPerson)
 	}
 	
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: LDAPObject, using services: Services) async throws -> LDAPObject {
+		guard user.isInetOrgPerson else {
+			throw Err.invalidLDAPObjectClass
+		}
+		
 		try await connector.connectIfNeeded()
-		/* TODO: Check created object was a user… */
-		return try await user.create(connector: connector)
+		
+		let res = try await user.create(connector: connector)
+		guard res.isInetOrgPerson else {
+			throw Err.invalidLDAPObjectClass
+		}
+		return res
 	}
 	
 	public let supportsUserUpdate: Bool = true
 	public func updateUser(_ user: LDAPObject, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> LDAPObject {
+		guard user.isInetOrgPerson else {
+			throw Err.invalidLDAPObjectClass
+		}
+		
 		try await connector.connectIfNeeded()
 		return try await user.update(properties: LDAPObject.attributeDescriptionsFromProperties(propertiesToUpdate), connector: connector)
 	}
 	
 	public let supportsUserDeletion: Bool = true
 	public func deleteUser(_ user: LDAPObject, using services: Services) async throws {
+		guard user.isInetOrgPerson else {
+			throw Err.invalidLDAPObjectClass
+		}
+		
 		try await connector.connectIfNeeded()
 		try await user.delete(connector: connector)
 	}
 	
 	public let supportsPasswordChange: Bool = true
 	public func changePassword(of user: LDAPObject, to newPassword: String, using services: Services) async throws {
+		guard user.isInetOrgPerson else {
+			throw Err.invalidLDAPObjectClass
+		}
+		
 		try await connector.connectIfNeeded()
 		try await user.updatePassword(newPassword, connector: connector)
 	}

@@ -25,10 +25,12 @@ public enum LDAPOfficeError : Error, Sendable {
 	case valueIsDoesNotContainStrings
 	case valueIsNotEmails
 	
-	case serviceDoesNotHavePersistentID
+	case invalidLDAPObjectClass
 	
 	case malformedDNReturnedByOpenLDAP(String)
 	case malformedAttributeReturnedByOpenLDAP(String)
+	
+	case serviceDoesNotHavePersistentID
 	
 	case internalError
 	

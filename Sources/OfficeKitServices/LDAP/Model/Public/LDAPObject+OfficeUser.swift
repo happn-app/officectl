@@ -20,7 +20,19 @@ extension LDAPObject : User {
 	
 	public init(oU_id userID: LDAPDistinguishedName) {
 		self.id = userID
-		self.record = [:]
+		self.record = [LDAPTopClass.ObjectClass.attributeDescription.descrOID: [Data(LDAPInetOrgPersonClass.name.utf8)]]
+	}
+	
+	public init?(oU_id userID: LDAPDistinguishedName, record: LDAPRecord) {
+		self.id = userID
+		self.record = record
+		guard isInetOrgPerson else {
+			return nil
+		}
+	}
+	
+	public var isInetOrgPerson: Bool {
+		return (try? LDAPTopClass.ObjectClass.value(in: record))?.contains(LDAPInetOrgPersonClass.name) ?? false
 	}
 	
 	public var oU_id: LDAPDistinguishedName {
@@ -119,7 +131,7 @@ extension LDAPObject : User {
 			.union([.id, .persistentID]) /* id is definitely mandatory; persistent ID we could let go. */
 			.compactMap{ propertyToAttributeDescriptions[$0] }
 			.flatMap{ $0 }
-		return Set(keys)
+		return Set(keys).union([LDAPTopClass.ObjectClass.attributeDescription])
 	}
 	
 	internal static func attributeDescriptionsFromProperties(_ properties: Set<UserProperty>?) -> Set<AttributeDescription>? {

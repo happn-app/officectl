@@ -100,7 +100,7 @@ internal extension LDAPObject {
 							
 							swiftAttributesAndValues[currentAttributeOID] = swiftValues
 						}
-						swiftResults.append(LDAPObject(id: dn, record: swiftAttributesAndValues))
+						swiftResults.append(LDAPObject(idForAnyObjectType: dn, record: swiftAttributesAndValues))
 						
 					case LDAP_RES_SEARCH_REFERENCE: /* UNTESTED (our server does not return search references; not sure what search references are anyway…) */
 						var referrals: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?
