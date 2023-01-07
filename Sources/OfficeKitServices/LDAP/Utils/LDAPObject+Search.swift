@@ -31,8 +31,8 @@ internal extension LDAPObject {
 				return ldap_search_ext_s(
 					ldapPtr,
 					request.base.stringValue, request.scope.rawValue, request.searchQuery?.stringValue, attributesPtr,
-					0 /* We want attributes and values */, nil /* Server controls */, nil /* Client controls */,
-					nil /* Timeout */, 0 /* Size limit */, &searchResultMessagePtr
+					0/* We want attributes and values */, nil/* Server controls */, nil/* Client controls */,
+					nil/* Timeout */, 0/* Size limit */, &searchResultMessagePtr
 				)
 			}
 			defer {_ = ldap_msgfree(searchResultMessagePtr)}
@@ -104,7 +104,7 @@ internal extension LDAPObject {
 						
 					case LDAP_RES_SEARCH_REFERENCE: /* UNTESTED (our server does not return search references; not sure what search references are anyway…) */
 						var referrals: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?
-						let err = ldap_parse_reference(ldapPtr, currentMessage, &referrals, nil /* Server Controls */, 0 /* Do not free the message */)
+						let err = ldap_parse_reference(ldapPtr, currentMessage, &referrals, nil/* Server Controls */, 0/* Do not free the message */)
 						guard err == LDAP_SUCCESS else {
 							Conf.logger?.info("Cannot get search reference: \(String(cString: ldap_err2string(err)))")
 							continue

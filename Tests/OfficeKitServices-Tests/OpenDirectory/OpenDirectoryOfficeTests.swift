@@ -135,6 +135,7 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		var user = OpenDirectoryUser(oU_id: initialID)
 		XCTAssertEqual(user.id, initialID)
 		
+		print("Creating user...")
 		user = try await service.createUser(user, using: services)
 		XCTAssertEqual(user.id, initialID)
 		
@@ -142,12 +143,14 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		XCTAssertEqual(user.id, modifiedID)
 		
 		/* So changing the ID of a user is not unsupported per se in Open Directory, but with our instance, it fails (with a cryptic error, of course: “Connection failed to the directory server.”) */
+		print("Updating user...")
 		let result = await Result{ try await service.updateUser(user, propertiesToUpdate: [.id], using: services) }
 		XCTAssertThrowsError(try result.get())
 		
 		/* The update fails, but the user does not revert back to the server values. */
 		XCTAssertEqual(user.id, modifiedID)
 		
+		print("Deleting user...")
 		try await service.deleteUser(user, using: services)
 	}
 	

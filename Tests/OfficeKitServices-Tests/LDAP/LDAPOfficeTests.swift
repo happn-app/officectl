@@ -119,5 +119,36 @@ final class LDAPOfficeTests : XCTestCase {
 		try await service.deleteUser(user, using: services)
 	}
 	
+	func testCreateUpdateIDDeleteUser() async throws {
+		let initialDNString = "uid=officectl.test.\((0..<42).randomElement()!),ou=people,dc=happn,dc=com"
+		let modifiedDNString = "uid=officectl.test-modified.\((0..<42).randomElement()!),ou=people,dc=happn,dc=com"
+		
+		var user = LDAPObject(oU_id: try LDAPDistinguishedName(string: initialDNString))
+		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNString))
+		
+		/* First name and or last name are mandatory for an LDAP user… */
+		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], allowIDChange: false, convertMismatchingTypes: true)
+		
+		print("Creating user...")
+		user = try await service.createUser(user, using: services)
+		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNString))
+		
+		XCTAssertTrue(user.oU_setValue(modifiedDNString, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: modifiedDNString))
+		
+		/* Changing the DN of an LDAP record is not possible AFAIK (see oU_setValue implementation in LDAPObject). */
+		print("Updating user...")
+		let result = await Result{ try await service.updateUser(user, propertiesToUpdate: [.id], using: services) }
+		XCTAssertThrowsError(try result.get())
+		
+		/* The update fails, but the user does not revert back to the server values. */
+		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: modifiedDNString))
+		
+		/* We have to change the ID back to be able to delete the user. */
+		XCTAssertTrue(user.oU_setValue(initialDNString, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
+		
+		print("Deleting user...")
+		try await service.deleteUser(user, using: services)
+	}
 	
 }

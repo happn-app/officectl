@@ -16,19 +16,23 @@ import OfficeKit2
 internal extension LDAPObject {
 	
 	func update(properties: Set<LDAPObjectID>, connector: LDAPConnector) async throws -> LDAPObject {
-#warning("TODO: Update of dn of user.")
 		return try await connector.performLDAPCommunication{ ldapPtr in
 			/* TODO: Check we do not leak. We should not, though. */
-			var ldapModifsRequest = record
-				.filter{ keyVal in properties.contains(keyVal.key) }
-				.map{ v -> UnsafeMutablePointer<LDAPMod>? in
-					CBridge.ldapModAlloc(method: LDAP_MOD_REPLACE | LDAP_MOD_BVALUES, key: v.key.rawValue, values: v.value)
+			var ldapModifsRequest = properties
+				.map{ oid -> UnsafeMutablePointer<LDAPMod>? in
+					if let v = record[oid] {
+						return CBridge.ldapModAlloc(method: LDAP_MOD_REPLACE | LDAP_MOD_BVALUES, key: oid.rawValue, values: v)
+					} else {
+						/* NOTE: If the key does not exist on the server, the server will probably return an error.
+						 *       From <https://www.ibm.com/docs/en/i/7.2?topic=ssw_ibm_i_72/apis/ldap_modify.htm>. */
+						return CBridge.ldapModAlloc(method: LDAP_MOD_DELETE | LDAP_MOD_BVALUES, key: oid.rawValue, values: nil)
+					}
 				} + [nil]
 			defer {ldap_mods_free(&ldapModifsRequest, 0)}
 			
 			/* We use the synchronous version of the function.
 			 * See long comment in search operation for details. */
-			let r = ldap_modify_ext_s(ldapPtr, id.stringValue, &ldapModifsRequest, nil /* Server controls */, nil /* Client controls */)
+			let r = ldap_modify_ext_s(ldapPtr, id.stringValue, &ldapModifsRequest, nil/* Server controls */, nil/* Client controls */)
 			guard r == LDAP_SUCCESS else {
 				throw OpenLDAPError(code: r)
 			}
@@ -56,7 +60,7 @@ internal extension LDAPObject {
 			
 			/* We use the synchronous version of the function.
 			 * See long comment in search operation for details. */
-			let r = ldap_extended_operation_s(ldapPtr, LDAP_EXOP_MODIFY_PASSWD, &bv, nil /* Server controls */, nil /* Client controls */, nil, nil)
+			let r = ldap_extended_operation_s(ldapPtr, LDAP_EXOP_MODIFY_PASSWD, &bv, nil/* Server controls */, nil/* Client controls */, nil, nil)
 			guard r == LDAP_SUCCESS else {
 				throw OpenLDAPError(code: r)
 			}

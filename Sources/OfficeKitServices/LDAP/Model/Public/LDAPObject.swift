@@ -25,7 +25,7 @@ public struct LDAPObject : Sendable, Codable {
 		return record.objectClasses
 	}
 	
-	init(forAnyObjectTypeWith id: LDAPDistinguishedName, record: LDAPRecord) {
+	internal init(forAnyObjectTypeWith id: LDAPDistinguishedName, record: LDAPRecord) {
 		self.id = id
 		self.record = record
 	}

@@ -86,6 +86,9 @@ extension LDAPObject : User {
 					Conf.logger?.error("Asked to remove the id of a user. This is illegal, I’m not doing it.")
 					return false
 				}
+				/* When communicating with LDAP, libldap uses the DN to specify which object the operation is destined to.
+				 * AFAICT there is no way to _change_ the DN of an entry using LDAP, one has to delete the entry and create it again. */
+				Conf.logger?.warning("Changing the ID of an LDAP is not recommended at all as it will probably not do what you expect. Please delete and re-create the object instead.")
 				return Self.setRequiredValueIfNeeded(newValue, in: &id, converter: (!convertValue ? { $0 as? LDAPDistinguishedName } : Converters.convertObjectToDN(_:)))
 				
 			case .persistentID:
@@ -96,11 +99,13 @@ extension LDAPObject : User {
 				
 			case .firstName:
 				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
+				/* TODO: Check if the value _changed_ */
 				LDAPInetOrgPersonClass.GivenName .setValue([newValue],         in: &record)
 				LDAPPersonClass       .CommonName.setValue([computedFullName], in: &record)
 				return true
 			case .lastName:
 				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
+				/* TODO: Check if the value _changed_ */
 				LDAPPersonClass.Surname   .setValue([newValue],         in: &record)
 				LDAPPersonClass.CommonName.setValue([computedFullName], in: &record)
 				return true
@@ -110,6 +115,7 @@ extension LDAPObject : User {
 				
 			case .emails:
 				guard let newValue = (!convertValue ? newValue as? [Email] : Converters.convertObjectToEmails(newValue)) else {return false}
+				/* TODO: Check if the value _changed_ */
 				LDAPInetOrgPersonClass.Mail.setValue(newValue, in: &record)
 				return true
 				
@@ -124,6 +130,7 @@ extension LDAPObject : User {
 					return false
 				}
 				guard let newValue = (!convertValue ? newValue as? [Data] : Converters.convertObjectToDatas(newValue)) else {return false}
+				/* TODO: Check if the value _changed_ */
 				record[oid] = newValue
 				return true
 		}
@@ -134,7 +141,7 @@ extension LDAPObject : User {
 	   *************** */
 	
 	internal static var propertyToOIDs: [UserProperty: [LDAPObjectID.Descr]] {
-		[
+		return [
 			/* Standard. */
 			.id: [],
 			.persistentID: [],

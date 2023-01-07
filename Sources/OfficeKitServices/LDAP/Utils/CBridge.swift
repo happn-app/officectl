@@ -15,17 +15,20 @@ import COpenLDAP
 
 enum CBridge {
 	
-	static func ldapModAlloc(method: Int32, key: String, values: [Data]) -> UnsafeMutablePointer<LDAPMod> {
-		var bervalValues = (values as [Data?] + [nil]).map{ value -> UnsafeMutablePointer<berval>? in
-			guard let value = value else {return nil}
-			return value.withUnsafeBytes{ (valueBytes: UnsafeRawBufferPointer) -> UnsafeMutablePointer<berval> in
-				let valueBytes = valueBytes.bindMemory(to: Int8.self).baseAddress!
-				return ber_mem2bv(valueBytes, ber_len_t(value.count), 1 /* Duplicate the bytes */, nil /* Where to copy to. If nil, allocates a new berval. */)
+	static func ldapModAlloc(method: Int32, key: String, values: [Data]?) -> UnsafeMutablePointer<LDAPMod> {
+		let bervalValuesPtr = values.flatMap{ values in
+			var bervalValues = (values as [Data?] + [nil]).map{ value -> UnsafeMutablePointer<berval>? in
+				guard let value else {return nil}
+				return value.withUnsafeBytes{ (valueBytes: UnsafeRawBufferPointer) -> UnsafeMutablePointer<berval> in
+					let valueBytes = valueBytes.bindMemory(to: Int8.self).baseAddress!
+					return ber_mem2bv(valueBytes, ber_len_t(value.count), 1/* Duplicate the bytes */, nil/* Where to copy to. If nil, allocates a new berval. */)
+				}
 			}
+			
+			let bervalValuesPtr = UnsafeMutablePointer<UnsafeMutablePointer<berval>?>.allocate(capacity: bervalValues.count)
+			bervalValuesPtr.initialize(from: &bervalValues, count: bervalValues.count)
+			return bervalValuesPtr
 		}
-		
-		let bervalValuesPtr = UnsafeMutablePointer<UnsafeMutablePointer<berval>?>.allocate(capacity: bervalValues.count)
-		bervalValuesPtr.initialize(from: &bervalValues, count: bervalValues.count)
 		
 		let ptr = UnsafeMutablePointer<LDAPMod>.allocate(capacity: 1)
 		ptr.pointee.mod_op = method
