@@ -17,6 +17,10 @@ public struct LDAPObject : Sendable, Codable {
 	public internal(set) var id: LDAPDistinguishedName
 	public internal(set) var record: LDAPRecord
 	
+	public var objectClasses: [String]? {
+		return try? LDAPTopClass.ObjectClass.value(in: record)
+	}
+	
 	init(idForAnyObjectType id: LDAPDistinguishedName, record: LDAPRecord) {
 		self.id = id
 		self.record = record

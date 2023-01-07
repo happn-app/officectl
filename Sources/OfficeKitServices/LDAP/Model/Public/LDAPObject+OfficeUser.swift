@@ -34,7 +34,7 @@ extension LDAPObject : User {
 	}
 	
 	public var isInetOrgPerson: Bool {
-		return (try? LDAPTopClass.ObjectClass.value(in: record))?.contains(LDAPInetOrgPersonClass.name) ?? false
+		return objectClasses?.contains(LDAPInetOrgPersonClass.name) ?? false
 	}
 	
 	public var oU_id: LDAPDistinguishedName {
