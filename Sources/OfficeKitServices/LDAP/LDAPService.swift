@@ -140,9 +140,7 @@ public final class LDAPService : UserService {
 	public let supportsPasswordChange: Bool = true
 	public func changePassword(of user: LDAPObject, to newPassword: String, using services: Services) async throws {
 		try await connector.connectIfNeeded()
-		return try await connector.performLDAPCommunication{ ldap in
-			throw Err.__notImplemented
-		}
+		try await user.updatePassword(newPassword, connector: connector)
 	}
 	
 }

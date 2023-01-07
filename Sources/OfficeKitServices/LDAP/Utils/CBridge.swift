@@ -47,4 +47,42 @@ enum CBridge {
 		return try parr.withUnsafeMutableBufferPointer{ try body($0.baseAddress) }
 	}
 	
+	static func buildBervalPasswordChangeRequest(dn: String, newPass: String, ber: OpaquePointer, berval: inout berval) throws {
+		/* Basically what we wanne do is:
+		 *    ber_printf(ber, "{tstON}", LDAP_TAG_EXOP_MODIFY_PASSWD_ID, dn, LDAP_TAG_EXOP_MODIFY_PASSWD_NEW, &newPassBER);
+		 * but ber_printf is unavailable in Swift!
+		 *
+		 * So we build the ber manually…
+		 * The resulting bytes we get when building manually have been tested to be the same that we get when building with ber_printf. */
+		
+		guard ber_start_seq(ber, LDAP_TAG_MESSAGE) >= 0 else {
+			throw Err.internalError
+		}
+		
+		let dnData = Data(dn.utf8)
+		let retPassID = dnData.withUnsafeBytes{ (bytes: UnsafeRawBufferPointer) -> Int32 in
+			let bytes = bytes.bindMemory(to: Int8.self).baseAddress!
+			return ber_put_ostring(ber, bytes, ber_len_t(dnData.count), LDAP_TAG_EXOP_MODIFY_PASSWD_ID)
+		}
+		guard retPassID >= 0 else {
+			throw Err.internalError
+		}
+		
+		let passData = Data(newPass.utf8)
+		let retNewPass = passData.withUnsafeBytes{ (bytes: UnsafeRawBufferPointer) -> Int32 in
+			let bytes = bytes.bindMemory(to: Int8.self).baseAddress!
+			return ber_put_ostring(ber, bytes, ber_len_t(passData.count), LDAP_TAG_EXOP_MODIFY_PASSWD_NEW)
+		}
+		guard retNewPass >= 0 else {
+			throw Err.internalError
+		}
+		
+		guard ber_put_seq(ber) >= 0 else {
+			throw Err.internalError
+		}
+		
+		guard ber_flatten2(ber, &berval, 0) >= 0 else {
+			throw Err.internalError
+		}
+	}
 }
