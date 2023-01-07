@@ -2,7 +2,7 @@
  * LDAPAttributeDescription.swift
  * OfficeKit
  *
- * Created by François Lamboley on 2018/09/07.
+ * Created by François Lamboley on 2023/01/07.
  */
 
 import Foundation
@@ -10,11 +10,11 @@ import Foundation
 
 
 /* <https://tools.ietf.org/html/rfc4512#section-2.5> */
-public struct LDAPAttributeDescription : Hashable {
+public struct LDAPAttributeDescription : RawRepresentable, Codable, Sendable {
 	
-	public static let uid = LDAPAttributeDescription(string: "uid")!
-	public static let mail = LDAPAttributeDescription(string: "mail")!
-	public static let memberof = LDAPAttributeDescription(string: "memberof")!
+	public static let uid = LDAPAttributeDescription(rawValue: "uid")!
+	public static let mail = LDAPAttributeDescription(rawValue: "mail")!
+	public static let memberof = LDAPAttributeDescription(rawValue: "memberof")!
 	
 	public var oid: LDAPObjectID
 	/**
@@ -23,42 +23,44 @@ public struct LDAPAttributeDescription : Hashable {
 	 This is to have a validation of the options before they are changed (the method can fail). */
 	public private(set) var options: [String]
 	
-	public var stringValue: String {
-		return oid.stringValue + options.reduce("", { $0 + ";" + $1 })
-	}
-	
-	public init?(stringOID: String, options opts: [String] = []) {
-		guard let o = LDAPObjectID(oid: stringOID) else {
+	public init?(stringOID: String, options: [String] = []) {
+		guard let o = LDAPObjectID(rawValue: stringOID) else {
 			return nil
 		}
-		oid = o
+		self.oid = o
 		
-		/* Let’s validate the options */
-		guard LDAPAttributeDescription.validateOptions(opts) else {
+		/* Let’s validate the options. */
+		guard LDAPAttributeDescription.validateOptions(options) else {
 			return nil
 		}
-		options = opts
+		self.options = options
 	}
 	
-	public init?(string: String) {
-		let split = string.split(separator: ";").map(String.init)
+	public init?(rawValue: String) {
+		let split = rawValue.split(separator: ";").map(String.init)
 		self.init(stringOID: split[0], options: Array(split.dropFirst()))
+	}
+	
+	public var rawValue: String {
+		return options.reduce(oid.rawValue, { $0 + ";" + $1 })
 	}
 	
 	/** Set new options in the attribute description. */
 	public mutating func setOptions(_ newOptions: [String]) throws {
-		guard LDAPAttributeDescription.validateOptions(newOptions) else {throw InvalidArgumentError()}
+		guard LDAPAttributeDescription.validateOptions(newOptions) else {
+			throw Err.ldapInvalidAttributeDescriptionOptions(newOptions)
+		}
 		options = newOptions
 	}
 	
 	private static func validateOptions(_ options: [String]) -> Bool {
 		for option in options {
 			guard !option.isEmpty else {
-				/* An option cannot be empty */
+				/* An option cannot be empty. */
 				return false
 			}
 			guard option.rangeOfCharacter(from: CharacterSet.ldapKeycharCharset.inverted, options: [.literal]) == nil else {
-				/* Invalid character found in option */
+				/* Invalid character found in option. */
 				return false
 			}
 		}

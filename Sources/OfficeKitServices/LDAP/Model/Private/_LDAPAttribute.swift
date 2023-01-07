@@ -13,7 +13,8 @@ import OfficeKit2
 
 
 
-/* Sometime the numericoid or description can be unknown, but this describes the properties we **do** know. */
+/* Sometime the numericoid or description can be unknown, but this describes the properties we **do** know.
+ * NOT related to <https://tools.ietf.org/html/rfc4512#section-2.5> (we should rename the struct). */
 struct AttributeDescription {
 	
 	let descr: LDAPObjectID.Descr
