@@ -138,7 +138,7 @@ public final class LDAPService : UserService, AuthenticatorService {
 		}
 		
 		try await connector.connectIfNeeded()
-		return try await user.update(properties: Set(LDAPObject.oidsFromProperties(propertiesToUpdate).map{ .descr($0) }), connector: connector)
+		return try await user.update(properties: Set(LDAPObject.oidsFromProperties(propertiesToUpdate)), connector: connector)
 	}
 	
 	public let supportsUserDeletion: Bool = true

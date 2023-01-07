@@ -117,25 +117,10 @@ extension LDAPObject : User {
 				return LDAPInetOrgPersonClass.Mail.setValueIfNeeded(newValue, in: &record)
 				
 			default:
-				/* Expected format:
-				 *  "happn/ldap:custom-attribute:"/*prefix for custom property*/ + "className:propertyName" */
-				
-				let propertyName = property.rawValue
-				guard propertyName.hasPrefix(Self.customAttributePrefix) else {
-					return false
-				}
-				let attributeAndClassName = String(propertyName.dropFirst(Self.customAttributePrefix.count))
-				guard !attributeAndClassName.isEmpty else {
-					Conf.logger?.warning("Invalid property name.")
-					return false
-				}
-				let split = attributeAndClassName.split(separator: ":", omittingEmptySubsequences: false)
-				guard split.count == 2, let oid = LDAPObjectID(rawValue: String(split[1])) else {
-					Conf.logger?.warning("Invalid property name.")
-					return false
-				}
-				let className = String(split[0])
 				guard let newValue = (!convertValue ? newValue as? [Data] : Converters.convertObjectToDatas(newValue)) else {return false}
+				guard let (oid, className) = Self.customUserPropertyToAttribute(property) else {
+					return false
+				}
 				return record.setValueIfNeeded(newValue, for: oid, expectedObjectClassName: className)
 		}
 	}
@@ -158,12 +143,13 @@ extension LDAPObject : User {
 		]
 	}
 	
-	internal static func oidsFromProperties(_ properties: Set<UserProperty>) -> Set<LDAPObjectID.Descr> {
+	internal static func oidsFromProperties(_ properties: Set<UserProperty>) -> Set<LDAPObjectID> {
 		let keys = properties
 			.union([.id, .persistentID]) /* id is definitely mandatory; persistent ID we could let go. */
 			.compactMap{ propertyToOIDs[$0] }
 			.flatMap{ $0 }
-		return Set(keys).union([LDAPTopClass.ObjectClass.descr])
+			.map{ LDAPObjectID.descr($0) }
+		return Set(keys).union([LDAPTopClass.ObjectClass.descrOID] + properties.compactMap{ customUserPropertyToAttribute($0)?.oid })
 	}
 	
 	internal static func attributeNamesFromProperties(_ properties: Set<UserProperty>?) -> Set<String>? {
@@ -172,6 +158,27 @@ extension LDAPObject : User {
 		}
 		
 		return Set(oidsFromProperties(properties).map{ $0.rawValue })
+	}
+	
+	private static func customUserPropertyToAttribute(_ property: UserProperty) -> (oid: LDAPObjectID, className: String)? {
+		/* Expected format:
+		 *  "happn/ldap:custom-attribute:"/*prefix for custom property*/ + "className:propertyName" */
+		let propertyName = property.rawValue
+		guard propertyName.hasPrefix(Self.customAttributePrefix) else {
+			return nil
+		}
+		let attributeAndClassName = String(propertyName.dropFirst(Self.customAttributePrefix.count))
+		guard !attributeAndClassName.isEmpty else {
+			Conf.logger?.warning("Invalid property name.")
+			return nil
+		}
+		let split = attributeAndClassName.split(separator: ":", omittingEmptySubsequences: false)
+		guard split.count == 2, let oid = LDAPObjectID(rawValue: String(split[1])) else {
+			Conf.logger?.warning("Invalid property name.")
+			return nil
+		}
+		let className = String(split[0])
+		return (oid, className)
 	}
 	
 }
