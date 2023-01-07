@@ -99,25 +99,22 @@ extension LDAPObject : User {
 				
 			case .firstName:
 				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
-				/* TODO: Check if the value _changed_ */
-				LDAPInetOrgPersonClass.GivenName .setValue([newValue],         in: &record)
-				LDAPPersonClass       .CommonName.setValue([computedFullName], in: &record)
-				return true
+				let c1 = LDAPInetOrgPersonClass.GivenName .setValueIfNeeded([newValue],         in: &record)
+				let c2 = LDAPPersonClass       .CommonName.setValueIfNeeded([computedFullName], in: &record)
+				return c1 || c2
+				
 			case .lastName:
 				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
-				/* TODO: Check if the value _changed_ */
-				LDAPPersonClass.Surname   .setValue([newValue],         in: &record)
-				LDAPPersonClass.CommonName.setValue([computedFullName], in: &record)
-				return true
+				let c1 = LDAPPersonClass.Surname   .setValueIfNeeded([newValue],         in: &record)
+				let c2 = LDAPPersonClass.CommonName.setValueIfNeeded([computedFullName], in: &record)
+				return c1 || c2
 				
 			case .nickname:
 				return false
 				
 			case .emails:
 				guard let newValue = (!convertValue ? newValue as? [Email] : Converters.convertObjectToEmails(newValue)) else {return false}
-				/* TODO: Check if the value _changed_ */
-				LDAPInetOrgPersonClass.Mail.setValue(newValue, in: &record)
-				return true
+				return LDAPInetOrgPersonClass.Mail.setValueIfNeeded(newValue, in: &record)
 				
 			default:
 				/* Expected format:
@@ -139,10 +136,7 @@ extension LDAPObject : User {
 				}
 				let className = String(split[0])
 				guard let newValue = (!convertValue ? newValue as? [Data] : Converters.convertObjectToDatas(newValue)) else {return false}
-				/* TODO: Check if the value _changed_ */
-				record.setValue(newValue, for: oid, expectedObjectClassName: className)
-				
-				return true
+				return record.setValueIfNeeded(newValue, for: oid, expectedObjectClassName: className)
 		}
 	}
 	

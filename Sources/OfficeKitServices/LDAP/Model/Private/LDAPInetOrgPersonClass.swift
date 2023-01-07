@@ -60,9 +60,10 @@ enum LDAPInetOrgPersonClass : LDAPClass {
 			return value.map{ Data($0.rawValue.utf8) }
 		}
 		
-		static func setValue(_ value: [Email], in record: inout LDAPRecord, checkClass: Bool = true) {
+		@discardableResult
+		static func setValueIfNeeded(_ value: [Email], in record: inout LDAPRecord, checkClass: Bool = true) -> Bool {
 			let ldapValue = value.map{ Data($0.rawValue.utf8) }
-			record.setValue(ldapValue, for: descrOID, numericoid: numericoid, expectedObjectClassName: checkClass ? objectClass.name : nil)
+			return record.setValueIfNeeded(ldapValue, for: descrOID, numericoid: numericoid, expectedObjectClassName: checkClass ? objectClass.name : nil)
 		}
 		
 	}

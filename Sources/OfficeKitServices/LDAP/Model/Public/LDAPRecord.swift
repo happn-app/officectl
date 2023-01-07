@@ -47,9 +47,10 @@ public extension LDAPRecord {
 /* Convenience setters. */
 public extension LDAPRecord {
 	
-	mutating func setValue(_ value: [Data], for oid: LDAPObjectID, numericoid: LDAPObjectID.Numericoid? = nil, expectedObjectClassName: String?) {
+	@discardableResult
+	mutating func setValueIfNeeded(_ value: [Data], for oid: LDAPObjectID, numericoid: LDAPObjectID.Numericoid? = nil, expectedObjectClassName: String?) -> Bool {
 		/* The only case where the setValue method throws is when the record does not have the correct class and allowAddingClass is false. */
-		try! setValue(value, for: oid, numericoid: numericoid, expectedObjectClassName: expectedObjectClassName, allowAddingClass: true)
+		return try! setValueIfNeeded(value, for: oid, numericoid: numericoid, expectedObjectClassName: expectedObjectClassName, allowAddingClass: true)
 	}
 	
 	/**
@@ -59,8 +60,10 @@ public extension LDAPRecord {
 	 If it is not and `allowAddingClass` is `true`, the class will be added, otherwise the set fails (throws).
 	 
 	 This function will remove the numericoid value from the record if any, then set the descr OID one. */
-	mutating func setValue(_ value: [Data], for oid: LDAPObjectID, numericoid: LDAPObjectID.Numericoid? = nil, expectedObjectClassName: String?, allowAddingClass: Bool) throws {
+	@discardableResult
+	mutating func setValueIfNeeded(_ value: [Data], for oid: LDAPObjectID, numericoid: LDAPObjectID.Numericoid? = nil, expectedObjectClassName: String?, allowAddingClass: Bool) throws -> Bool {
 		/* Check the given record has the proper class if required. */
+		var changedValue = false
 		if let expectedObjectClassName {
 			if !(allObjectClasses?.contains(expectedObjectClassName) ?? false) {
 				/* The object does not have the expected class. */
@@ -68,7 +71,7 @@ public extension LDAPRecord {
 					throw Err.invalidLDAPRecordClass
 				}
 				
-				setValue(
+				changedValue = setValueIfNeeded(
 					((objectClasses ?? []) + [expectedObjectClassName]).map{ Data($0.utf8) },
 					for: .descr(LDAPTopClass.ObjectClass.descr),
 					numericoid: LDAPTopClass.ObjectClass.numericoid,
@@ -78,9 +81,13 @@ public extension LDAPRecord {
 		}
 		
 		if let numericoid {
-			removeValue(forKey: .numericoid(numericoid))
+			changedValue = (removeValue(forKey: .numericoid(numericoid)) != nil)
 		}
-		self[oid] = value
+		if self[oid] != value {
+			changedValue = true
+			self[oid] = value
+		}
+		return changedValue
 	}
 	
 }

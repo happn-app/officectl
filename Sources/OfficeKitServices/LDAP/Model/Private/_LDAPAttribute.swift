@@ -59,9 +59,10 @@ extension LDAPAttribute {
 		return try value(from: v)
 	}
 	
-	static func setValue(_ value: Value, in record: inout LDAPRecord, checkClass: Bool = true, allowAddingClass: Bool = true) throws {
+	@discardableResult
+	static func setValueIfNeeded(_ value: Value, in record: inout LDAPRecord, checkClass: Bool = true, allowAddingClass: Bool = true) throws -> Bool {
 		let ldapValue = try ldapValue(from: value)
-		try record.setValue(ldapValue, for: descrOID, numericoid: numericoid, expectedObjectClassName: checkClass ? objectClass.name : nil, allowAddingClass: allowAddingClass)
+		return try record.setValueIfNeeded(ldapValue, for: descrOID, numericoid: numericoid, expectedObjectClassName: checkClass ? objectClass.name : nil, allowAddingClass: allowAddingClass)
 	}
 	
 	static func singleValue(for value: [Data]) throws -> Data {
@@ -94,9 +95,10 @@ extension LDAPAttribute where Value == String {
 		return [Data(value.utf8)]
 	}
 	
-	static func setValue(_ value: String, in record: inout LDAPRecord, checkClass: Bool = true) {
+	@discardableResult
+	static func setValueIfNeeded(_ value: String, in record: inout LDAPRecord, checkClass: Bool = true) -> Bool {
 		let ldapValue = [Data(value.utf8)]
-		record.setValue(ldapValue, for: descrOID, numericoid: numericoid, expectedObjectClassName: checkClass ? objectClass.name : nil)
+		return record.setValueIfNeeded(ldapValue, for: descrOID, numericoid: numericoid, expectedObjectClassName: checkClass ? objectClass.name : nil)
 	}
 	
 }
@@ -112,9 +114,10 @@ extension LDAPAttribute where Value == [String] {
 		return value.map{ Data($0.utf8) }
 	}
 	
-	static func setValue(_ value: [String], in record: inout LDAPRecord, checkClass: Bool = true) {
+	@discardableResult
+	static func setValueIfNeeded(_ value: [String], in record: inout LDAPRecord, checkClass: Bool = true) -> Bool {
 		let ldapValue = value.map{ Data($0.utf8) }
-		record.setValue(ldapValue, for: descrOID, numericoid: numericoid, expectedObjectClassName: checkClass ? objectClass.name : nil)
+		return record.setValueIfNeeded(ldapValue, for: descrOID, numericoid: numericoid, expectedObjectClassName: checkClass ? objectClass.name : nil)
 	}
 	
 }

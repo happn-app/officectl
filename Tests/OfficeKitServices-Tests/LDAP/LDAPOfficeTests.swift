@@ -101,7 +101,8 @@ final class LDAPOfficeTests : XCTestCase {
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
 		
-		XCTAssertTrue(user.oU_setValue("Test Modified", forProperty: .lastName, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertTrue( user.oU_setValue("Test Modified", forProperty: .lastName, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertFalse(user.oU_setValue("Test Modified", forProperty: .lastName, allowIDChange: true, convertMismatchingTypes: true))
 		XCTAssertFalse(user.oU_setValue(modifiedDNString, forProperty: .id, allowIDChange: false, convertMismatchingTypes: true))
 		XCTAssertFalse(user.oU_setValue(modifiedDNString, forProperty: .id, allowIDChange: true,  convertMismatchingTypes: false))
 		
