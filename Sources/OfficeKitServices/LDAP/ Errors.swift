@@ -17,6 +17,7 @@ public enum LDAPOfficeError : Error, Sendable {
 	
 	case notConnected
 	
+	case passwordIsEmpty
 	case passwordIsNotASCII
 	
 	case valueIsNotSingleData

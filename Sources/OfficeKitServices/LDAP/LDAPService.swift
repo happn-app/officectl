@@ -18,7 +18,7 @@ import ServiceKit
 
 
 
-public final class LDAPService : UserService {
+public final class LDAPService : UserService, AuthenticatorService {
 	
 	public static let providerID: String = "happn/ldap"
 	
@@ -159,6 +159,34 @@ public final class LDAPService : UserService {
 		
 		try await connector.connectIfNeeded()
 		try await user.updatePassword(newPassword, connector: connector)
+	}
+	
+	/* ***************************
+	   MARK: Authenticator Service
+	   *************************** */
+	
+	public typealias AuthenticatedUserType = LDAPObject
+	public typealias AuthenticationChallenge = (username: LDAPDistinguishedName, password: String)
+	
+	public func authenticate(with challenge: (username: LDAPDistinguishedName, password: String), using services: Services) async throws -> LDAPDistinguishedName {
+		do {
+			guard !challenge.password.isEmpty else {
+				throw Err.passwordIsEmpty
+			}
+			
+			let connector = LDAPConnector(
+				ldapURL: config.connectorSettings.ldapURL,
+				version: config.connectorSettings.ldapVersion,
+				startTLS: config.connectorSettings.startTLS,
+				auth: .userPass(username: challenge.username.stringValue, password: challenge.password)
+			)
+			try await connector.connect()
+			_ = try? await connector.disconnect()
+			return challenge.username
+			
+		} catch let error as OpenLDAPError where error.isInvalidPassError {
+			throw OfficeKitError.invalidUsernameOrPassword
+		}
 	}
 	
 }

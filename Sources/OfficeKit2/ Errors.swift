@@ -23,6 +23,9 @@ public enum OfficeKitError : Error, Sendable {
 	/** Error thrown by ``UserService/logicalUserID(fromUser:)`` when the user ID computation is not possible (missing info from the user for instance). */
 	case cannotInferUserIDFromOtherUser
 	
+	/** Error thrown by ``AuthenticatorService/authenticate(with:using:)`` when the error is an invalid username or password. */
+	case invalidUsernameOrPassword
+	
 	/** Error thrown when a service is asked to do something it does not support. */
 	case unsupportedOperation
 	
