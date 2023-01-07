@@ -69,6 +69,11 @@ final class LDAPOfficeTests : XCTestCase {
 		service = nil
 	}
 	
+	func testFetchUserAll() async throws {
+		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: services)
+		XCTAssertGreaterThan(users.count, 0)
+	}
+	
 	func testFetchUserFromID() async throws {
 		let user = try await service.existingUser(fromID: testConf.fetchedUser.dn, propertiesToFetch: [.firstName], using: services)
 		XCTAssertNil(user?.oU_lastName)

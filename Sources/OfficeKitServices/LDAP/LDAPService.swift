@@ -93,6 +93,7 @@ public final class LDAPService : UserService {
 	
 	public func existingUser(fromID uID: LDAPDistinguishedName, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> LDAPObject? {
 		try await connector.connectIfNeeded()
+		
 		let request = LDAPSearchRequest(base: uID, scope: .base, attributesToFetch: LDAPObject.attributeNamesFromProperties(propertiesToFetch))
 		let objects = try await LDAPObject.search(request, connector: connector).results
 		/* TODO: Is there a way to know for certain the objects we get are users? Probably using the object class… */
@@ -111,9 +112,9 @@ public final class LDAPService : UserService {
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [LDAPObject] {
 		try await connector.connectIfNeeded()
-		return try await connector.performLDAPCommunication{ ldap in
-			throw Err.__notImplemented
-		}
+		
+		let request = LDAPSearchRequest(base: config.peopleDN + config.baseDN, scope: .children, attributesToFetch: LDAPObject.attributeNamesFromProperties(propertiesToFetch))
+		return try await LDAPObject.search(request, connector: connector).results
 	}
 	
 	public let supportsUserCreation: Bool = true

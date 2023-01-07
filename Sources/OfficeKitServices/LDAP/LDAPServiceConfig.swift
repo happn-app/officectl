@@ -17,6 +17,10 @@ public struct LDAPServiceConfig : Sendable, Codable {
 	
 	public var serviceName: String
 	
+	public var baseDN: LDAPDistinguishedName
+	public var peopleDN: LDAPDistinguishedName
+	public var groupsDN: LDAPDistinguishedName?
+	
 	public var connectorSettings: ConnectorSettings
 	public var userIDBuilders: [UserIDBuilder]?
 	
@@ -48,6 +52,10 @@ public struct LDAPServiceConfig : Sendable, Codable {
 	private enum CodingKeys : String, CodingKey {
 		
 		case serviceName = "service_name"
+		
+		case baseDN = "base_dn"
+		case peopleDN = "people_dn"
+		case groupsDN = "groups_dn"
 		
 		case connectorSettings = "connector_settings"
 		case userIDBuilders = "user_id_builders"
