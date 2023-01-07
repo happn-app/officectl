@@ -93,9 +93,17 @@ public final class LDAPService : UserService {
 	
 	public func existingUser(fromID uID: LDAPDistinguishedName, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> LDAPObject? {
 		try await connector.connectIfNeeded()
-		return try await connector.performLDAPCommunication{ ldap in
-			throw Err.__notImplemented
+		let request = LDAPSearchRequest(base: uID, scope: .base, attributesToFetch: LDAPObject.attributeNamesFromProperties(propertiesToFetch))
+		let objects = try await LDAPObject.search(request, connector: connector).results
+		/* TODO: Is there a way to know for certain the objects we get are users? Probably using the object class… */
+		
+		guard let object = objects.first else {
+			return nil
 		}
+		guard objects.count == 1 else {
+			throw OfficeKitError.tooManyUsersFromAPI(users: objects)
+		}
+		return object
 	}
 	
 	public func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> LDAPObject? {

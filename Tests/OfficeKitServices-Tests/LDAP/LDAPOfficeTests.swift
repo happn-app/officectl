@@ -70,8 +70,8 @@ final class LDAPOfficeTests : XCTestCase {
 	}
 	
 	func testFetchUserFromID() async throws {
-		let user = try await service.existingUser(fromID: testConf.fetchedUser.dn, propertiesToFetch: nil, using: services)
-		XCTAssertNotNil(user?.oU_lastName)
+		let user = try await service.existingUser(fromID: testConf.fetchedUser.dn, propertiesToFetch: [.firstName], using: services)
+		XCTAssertNil(user?.oU_lastName)
 		XCTAssertNotNil(user?.oU_firstName)
 		XCTAssertEqual(user?.oU_id, testConf.fetchedUser.dn)
 	}
