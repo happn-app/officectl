@@ -15,6 +15,8 @@ import OfficeKit2
 
 extension LDAPObject : User {
 	
+	static let customAttributePrefix = "happn/ldap:custom-attribute:"
+	
 	public typealias UserIDType = LDAPDistinguishedName
 	public typealias PersistentUserIDType = Never
 	
@@ -65,7 +67,15 @@ extension LDAPObject : User {
 	}
 	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
-		return nil
+		guard property.hasPrefix(Self.customAttributePrefix) else {
+			return nil
+		}
+		let attributeName = String(property.dropFirst(Self.customAttributePrefix.count))
+		guard !attributeName.isEmpty, let oid = LDAPObjectID(rawValue: attributeName) else {
+			Conf.logger?.warning("Invalid property name.")
+			return false
+		}
+		return record[oid]
 	}
 	
 	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool {
@@ -104,7 +114,18 @@ extension LDAPObject : User {
 				return true
 				
 			default:
-				return false
+				let propertyName = property.rawValue
+				guard propertyName.hasPrefix(Self.customAttributePrefix) else {
+					return false
+				}
+				let attributeName = String(propertyName.dropFirst(Self.customAttributePrefix.count))
+				guard !attributeName.isEmpty, let oid = LDAPObjectID(rawValue: attributeName) else {
+					Conf.logger?.warning("Invalid property name.")
+					return false
+				}
+				guard let newValue = (!convertValue ? newValue as? [Data] : Converters.convertObjectToDatas(newValue)) else {return false}
+				record[oid] = newValue
+				return true
 		}
 	}
 	

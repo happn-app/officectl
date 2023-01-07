@@ -111,6 +111,35 @@ public extension Converters {
 		}
 	}
 	
+	static func convertObjectToData(_ obj: Any?) -> Data? {
+		guard let obj = unwrapJSONIfNeeded(obj) else {
+			return nil
+		}
+		
+		switch obj {
+			case let data as Data: return data
+			default:
+				guard let str = convertObjectToString(obj) else {
+					return nil
+				}
+				return Data(str.utf8)
+		}
+	}
+	
+	static func convertObjectToDatas(_ obj: Any?) -> [Data]? {
+		guard let obj = unwrapJSONIfNeeded(obj) else {
+			return nil
+		}
+		
+		struct InvalidDataFound : Error {}
+		switch obj {
+			case let datas as [Data]: return datas
+			case let arr   as [Any]:   return try? arr.map{ try convertObjectToData($0) ?! InvalidDataFound() }
+			default:
+				return convertObjectToData(obj).flatMap{ [$0] }
+		}
+	}
+	
 	static func convertObjectToDate(_ obj: Any?, dateFormatter: (String) -> Date?) -> Date? {
 		guard let obj = unwrapJSONIfNeeded(obj) else {
 			return nil
