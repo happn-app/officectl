@@ -1,5 +1,5 @@
 /*
- * LDAPUser+OfficeModel.swift
+ * LDAPObject+OfficeModel.swift
  * LDAPOffice
  *
  * Created by François Lamboley on 2023/01/06.
@@ -13,7 +13,7 @@ import OfficeKit2
 
 
 
-extension LDAPUser : User {
+extension LDAPObject : User {
 	
 	public typealias UserIDType = LDAPDistinguishedName
 	public typealias PersistentUserIDType = Never
@@ -94,6 +94,37 @@ extension LDAPUser : User {
 			default:
 				return false
 		}
+	}
+	
+	/* ***************
+	   MARK: - Private
+	   *************** */
+	
+	internal static var propertyToAttributeDescriptions: [UserProperty: [AttributeDescription]] {
+		[
+			/* Standard. */
+			.id: [],
+			.persistentID: [],
+			.isSuspended: [],
+			.emails: [LDAPInetOrgPersonClass.Mail.attributeDescription],
+			.firstName: [LDAPInetOrgPersonClass.GivenName.attributeDescription, LDAPPersonClass.CommonName.attributeDescription], /* Full name is not needed for reading but for writing. */
+			.lastName:  [LDAPPersonClass       .Surname  .attributeDescription, LDAPPersonClass.CommonName.attributeDescription], /* Full name is not needed for reading but for writing. */
+			.nickname: [],
+			/* Other. */
+		]
+	}
+	
+	internal static func attributeNamesFromProperties(_ properties: Set<UserProperty>?) -> Set<String>? {
+		guard let properties else {
+			return nil
+		}
+		
+		let keys = properties
+			.union([.id, .persistentID]) /* id is definitely mandatory; persistent ID we could let go. */
+			.compactMap{ propertyToAttributeDescriptions[$0] }
+			.flatMap{ $0 }
+			.map{ $0.descr.rawValue }
+		return Set(keys)
 	}
 	
 }

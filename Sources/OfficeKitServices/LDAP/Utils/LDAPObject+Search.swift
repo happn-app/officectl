@@ -1,5 +1,5 @@
 /*
- * LDAPUser+Search.swift
+ * LDAPObject+Search.swift
  * LDAPOffice
  *
  * Created by François Lamboley on 2023/01/07.
@@ -13,9 +13,9 @@ import OfficeKit2
 
 
 
-internal extension LDAPUser {
+internal extension LDAPObject {
 	
-	static func search(_ request: LDAPSearchRequest, connector: LDAPConnector) async throws -> (results: [LDAPUser], references: [[String]]) {
+	static func search(_ request: LDAPSearchRequest, connector: LDAPConnector) async throws -> (results: [LDAPObject], references: [[String]]) {
 		return try await connector.performLDAPCommunication{ ldapPtr in
 			/* We use ldap_search_ext_s (the synchronous version of the function).
 			 * The operation should be run on a queue to have async behavior.
@@ -49,7 +49,7 @@ internal extension LDAPUser {
 				throw OpenLDAPError(code: searchResultError)
 			}
 			
-			var swiftResults = [LDAPUser]()
+			var swiftResults = [LDAPObject]()
 			var swiftReferences = [[String]]()
 			var nextMessage = ldap_first_entry(ldapPtr, searchResultMessagePtr)
 			while let currentMessage = nextMessage {
@@ -100,7 +100,7 @@ internal extension LDAPUser {
 							
 							swiftAttributesAndValues[currentAttributeOID] = swiftValues
 						}
-						swiftResults.append(LDAPUser(id: dn, record: swiftAttributesAndValues))
+						swiftResults.append(LDAPObject(id: dn, record: swiftAttributesAndValues))
 						
 					case LDAP_RES_SEARCH_REFERENCE: /* UNTESTED (our server does not return search references; not sure what search references are anyway…) */
 						var referrals: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>?
