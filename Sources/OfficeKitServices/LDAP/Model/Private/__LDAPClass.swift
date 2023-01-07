@@ -47,7 +47,7 @@ protocol LDAPClass {
 extension LDAPClass {
 	
 	static var allParents: [LDAPClass.Type] {
-		return directParents.flatMap{ $0.allParents }
+		return directParents.flatMap{ [$0] + $0.allParents }
 	}
 	
 }
