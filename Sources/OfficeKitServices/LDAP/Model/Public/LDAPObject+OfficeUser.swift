@@ -114,17 +114,24 @@ extension LDAPObject : User {
 		]
 	}
 	
-	internal static func attributeNamesFromProperties(_ properties: Set<UserProperty>?) -> Set<String>? {
-		guard let properties else {
-			return nil
-		}
-		
+	internal static func attributeDescriptionsFromProperties(_ properties: Set<UserProperty>) -> Set<AttributeDescription> {
 		let keys = properties
 			.union([.id, .persistentID]) /* id is definitely mandatory; persistent ID we could let go. */
 			.compactMap{ propertyToAttributeDescriptions[$0] }
 			.flatMap{ $0 }
-			.map{ $0.descr.rawValue }
 		return Set(keys)
+	}
+	
+	internal static func attributeDescriptionsFromProperties(_ properties: Set<UserProperty>?) -> Set<AttributeDescription>? {
+		guard let properties else {
+			return nil
+		}
+		
+		return attributeDescriptionsFromProperties(properties)
+	}
+	
+	internal static func attributeNamesFromProperties(_ properties: Set<UserProperty>?) -> Set<String>? {
+		return (attributeDescriptionsFromProperties(properties)?.map(\.descr.rawValue)).flatMap{ Set($0) }
 	}
 	
 }

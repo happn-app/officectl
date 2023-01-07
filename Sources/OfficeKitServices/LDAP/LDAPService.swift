@@ -114,31 +114,27 @@ public final class LDAPService : UserService {
 		try await connector.connectIfNeeded()
 		
 		let request = LDAPSearchRequest(base: config.peopleDN + config.baseDN, scope: .children, attributesToFetch: LDAPObject.attributeNamesFromProperties(propertiesToFetch))
+		/* TODO: Check objects are users… */
 		return try await LDAPObject.search(request, connector: connector).results
 	}
 	
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: LDAPObject, using services: Services) async throws -> LDAPObject {
 		try await connector.connectIfNeeded()
-		return try await connector.performLDAPCommunication{ ldap in
-			throw Err.__notImplemented
-		}
+		/* TODO: Check created object was a user… */
+		return try await user.create(connector: connector)
 	}
 	
 	public let supportsUserUpdate: Bool = true
 	public func updateUser(_ user: LDAPObject, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> LDAPObject {
 		try await connector.connectIfNeeded()
-		return try await connector.performLDAPCommunication{ ldap in
-			throw Err.__notImplemented
-		}
+		return try await user.update(properties: LDAPObject.attributeDescriptionsFromProperties(propertiesToUpdate), connector: connector)
 	}
 	
 	public let supportsUserDeletion: Bool = true
 	public func deleteUser(_ user: LDAPObject, using services: Services) async throws {
 		try await connector.connectIfNeeded()
-		return try await connector.performLDAPCommunication{ ldap in
-			throw Err.__notImplemented
-		}
+		try await user.delete(connector: connector)
 	}
 	
 	public let supportsPasswordChange: Bool = true
