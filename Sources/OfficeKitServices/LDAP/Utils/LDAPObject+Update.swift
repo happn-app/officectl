@@ -16,6 +16,7 @@ import OfficeKit2
 internal extension LDAPObject {
 	
 	func update(properties: Set<AttributeDescription>, connector: LDAPConnector) async throws -> LDAPObject {
+#warning("TODO: Update of dn of user.")
 		return try await connector.performLDAPCommunication{ ldapPtr in
 			/* TODO: Check we do not leak. We should not, though. */
 			var ldapModifsRequest = record
