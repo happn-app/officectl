@@ -10,9 +10,9 @@ import Foundation
 
 
 /* <https://tools.ietf.org/html/rfc4515#section-3> */
-public indirect enum LDAPSearchQuery {
+public indirect enum LDAPSearchQuery : Sendable {
 	
-	public enum FilterType : String {
+	public enum FilterType : String, Sendable {
 		
 		case equal          =  "="
 		case approx         = "~="

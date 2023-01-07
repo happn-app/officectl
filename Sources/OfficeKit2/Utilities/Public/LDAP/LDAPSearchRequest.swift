@@ -11,9 +11,9 @@ import COpenLDAP
 
 
 
-public struct LDAPSearchRequest {
+public struct LDAPSearchRequest : Sendable {
 	
-	public enum Scope : ber_int_t {
+	public enum Scope : ber_int_t, Sendable {
 		
 		/** <https://ldapwiki.com/wiki/BaseObject> */
 		case base = 0

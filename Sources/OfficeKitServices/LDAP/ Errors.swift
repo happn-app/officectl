@@ -27,6 +27,9 @@ public enum LDAPOfficeError : Error, Sendable {
 	
 	case serviceDoesNotHavePersistentID
 	
+	case malformedDNReturnedByOpenLDAP(String)
+	case malformedAttributeReturnedByOpenLDAP(String)
+	
 	case internalError
 	
 	case __notImplemented
