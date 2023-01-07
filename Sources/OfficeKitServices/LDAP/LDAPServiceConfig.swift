@@ -21,14 +21,6 @@ public struct LDAPServiceConfig : Sendable, Codable {
 	public var peopleDN: LDAPDistinguishedName
 	public var groupsDN: LDAPDistinguishedName?
 	
-#warning("TODO: Implement this.")
-	/**
-	 When a user is created he will have those classes,
-	  but if they are not present when the user is retrieved,
-	  as long as the main class (inetOrgPerson, non-customizable) is there,
-	  the object will be considered a user. */
-	public var userOptionalClasses: [String]?
-	
 	public var connectorSettings: ConnectorSettings
 	public var userIDBuilders: [UserIDBuilder]?
 	
@@ -64,8 +56,6 @@ public struct LDAPServiceConfig : Sendable, Codable {
 		case baseDN = "base_dn"
 		case peopleDN = "people_dn"
 		case groupsDN = "groups_dn"
-		
-		case userOptionalClasses = "user_optional_classes"
 		
 		case connectorSettings = "connector_settings"
 		case userIDBuilders = "user_id_builders"

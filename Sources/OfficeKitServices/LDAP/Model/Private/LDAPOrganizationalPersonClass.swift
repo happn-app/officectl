@@ -13,6 +13,6 @@ import Foundation
 enum LDAPOrganizationalPersonClass : LDAPClass {
 	
 	static let name: String = "organizationalPerson"
-	static var parents: [LDAPClass.Type] = [LDAPPersonClass.self]
+	static let directParents: [LDAPClass.Type] = [LDAPPersonClass.self]
 	
 }

@@ -26,6 +26,7 @@ public enum LDAPOfficeError : Error, Sendable {
 	case valueIsDoesNotContainStrings
 	case valueIsNotEmails
 	
+	case invalidLDAPRecordClass
 	case invalidLDAPObjectClass
 	
 	case malformedDNReturnedByOpenLDAP(String)

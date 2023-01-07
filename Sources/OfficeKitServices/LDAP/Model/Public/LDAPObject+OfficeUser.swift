@@ -22,7 +22,7 @@ extension LDAPObject : User {
 	
 	public init(oU_id userID: LDAPDistinguishedName) {
 		self.id = userID
-		self.record = [LDAPTopClass.ObjectClass.attributeDescription.descrOID: [Data(LDAPInetOrgPersonClass.name.utf8)]]
+		self.record = [LDAPTopClass.ObjectClass.descrOID: [Data(LDAPInetOrgPersonClass.name.utf8)]]
 	}
 	
 	public init?(oU_id userID: LDAPDistinguishedName, record: LDAPRecord) {
@@ -34,7 +34,7 @@ extension LDAPObject : User {
 	}
 	
 	public var isInetOrgPerson: Bool {
-		return objectClasses?.contains(LDAPInetOrgPersonClass.name) ?? false
+		return allObjectClasses?.contains(LDAPInetOrgPersonClass.name) ?? false
 	}
 	
 	public var oU_id: LDAPDistinguishedName {
@@ -96,13 +96,13 @@ extension LDAPObject : User {
 				
 			case .firstName:
 				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
-				record[LDAPInetOrgPersonClass.GivenName .attributeDescription.descrOID] = [Data(newValue.utf8)]
-				record[LDAPPersonClass       .CommonName.attributeDescription.descrOID] = [Data(computedFullName.utf8)]
+				LDAPInetOrgPersonClass.GivenName .setValue([newValue],         in: &record)
+				LDAPPersonClass       .CommonName.setValue([computedFullName], in: &record)
 				return true
 			case .lastName:
 				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
-				record[LDAPPersonClass.Surname   .attributeDescription.descrOID] = [Data(newValue.utf8)]
-				record[LDAPPersonClass.CommonName.attributeDescription.descrOID] = [Data(computedFullName.utf8)]
+				LDAPPersonClass.Surname   .setValue([newValue],         in: &record)
+				LDAPPersonClass.CommonName.setValue([computedFullName], in: &record)
 				return true
 				
 			case .nickname:
@@ -110,7 +110,7 @@ extension LDAPObject : User {
 				
 			case .emails:
 				guard let newValue = (!convertValue ? newValue as? [Email] : Converters.convertObjectToEmails(newValue)) else {return false}
-				record[LDAPInetOrgPersonClass.Mail.attributeDescription.descrOID] = newValue.map{ Data($0.rawValue.utf8) }
+				LDAPInetOrgPersonClass.Mail.setValue(newValue, in: &record)
 				return true
 				
 			default:
@@ -133,38 +133,34 @@ extension LDAPObject : User {
 	   MARK: - Private
 	   *************** */
 	
-	internal static var propertyToAttributeDescriptions: [UserProperty: [AttributeDescription]] {
+	internal static var propertyToOIDs: [UserProperty: [LDAPObjectID.Descr]] {
 		[
 			/* Standard. */
 			.id: [],
 			.persistentID: [],
 			.isSuspended: [],
-			.emails: [LDAPInetOrgPersonClass.Mail.attributeDescription],
-			.firstName: [LDAPInetOrgPersonClass.GivenName.attributeDescription, LDAPPersonClass.CommonName.attributeDescription], /* Full name is not needed for reading but for writing. */
-			.lastName:  [LDAPPersonClass       .Surname  .attributeDescription, LDAPPersonClass.CommonName.attributeDescription], /* Full name is not needed for reading but for writing. */
+			.emails: [LDAPInetOrgPersonClass.Mail.descr],
+			.firstName: [LDAPInetOrgPersonClass.GivenName.descr, LDAPPersonClass.CommonName.descr], /* Full name is not needed for reading but for writing. */
+			.lastName:  [LDAPPersonClass       .Surname  .descr, LDAPPersonClass.CommonName.descr], /* Full name is not needed for reading but for writing. */
 			.nickname: [],
 			/* Other. */
 		]
 	}
 	
-	internal static func attributeDescriptionsFromProperties(_ properties: Set<UserProperty>) -> Set<AttributeDescription> {
+	internal static func oidsFromProperties(_ properties: Set<UserProperty>) -> Set<LDAPObjectID.Descr> {
 		let keys = properties
 			.union([.id, .persistentID]) /* id is definitely mandatory; persistent ID we could let go. */
-			.compactMap{ propertyToAttributeDescriptions[$0] }
+			.compactMap{ propertyToOIDs[$0] }
 			.flatMap{ $0 }
-		return Set(keys).union([LDAPTopClass.ObjectClass.attributeDescription])
+		return Set(keys).union([LDAPTopClass.ObjectClass.descr])
 	}
 	
-	internal static func attributeDescriptionsFromProperties(_ properties: Set<UserProperty>?) -> Set<AttributeDescription>? {
+	internal static func attributeNamesFromProperties(_ properties: Set<UserProperty>?) -> Set<String>? {
 		guard let properties else {
 			return nil
 		}
 		
-		return attributeDescriptionsFromProperties(properties)
-	}
-	
-	internal static func attributeNamesFromProperties(_ properties: Set<UserProperty>?) -> Set<String>? {
-		return (attributeDescriptionsFromProperties(properties)?.map(\.descr.rawValue)).flatMap{ Set($0) }
+		return Set(oidsFromProperties(properties).map{ $0.rawValue })
 	}
 	
 }

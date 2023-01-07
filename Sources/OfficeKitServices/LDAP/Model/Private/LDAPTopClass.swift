@@ -7,22 +7,26 @@
 
 import Foundation
 
+import OfficeKit2
+
 
 
 /* <https://www.ietf.org/rfc/rfc4512.txt> (we have not done all of the attributes). */
 enum LDAPTopClass : LDAPClass {
 	
 	static let name: String = "top"
-	static var parents: [LDAPClass.Type] = []
+	static let directParents: [LDAPClass.Type] = []
 	
 	/* The classes of the object. */
 	enum ObjectClass : LDAPAttribute {
 		
 		typealias Value = [String]
-		static let attributeDescription: AttributeDescription = .init(
-			.init(rawValue: "objectClass")!,
-			.init(rawValue: "2.5.4.0")!
-		)
+		
+		static let objectClass: LDAPClass.Type = LDAPTopClass.self
+		
+		static let descr = LDAPObjectID.Descr(rawValue: "objectClass")!
+		static let numericoid = LDAPObjectID.Numericoid(rawValue: "2.5.4.0")!
+		
 	}
 	
 }

@@ -15,12 +15,12 @@ import OfficeKit2
 
 internal extension LDAPObject {
 	
-	func update(properties: Set<AttributeDescription>, connector: LDAPConnector) async throws -> LDAPObject {
+	func update(properties: Set<LDAPObjectID>, connector: LDAPConnector) async throws -> LDAPObject {
 #warning("TODO: Update of dn of user.")
 		return try await connector.performLDAPCommunication{ ldapPtr in
 			/* TODO: Check we do not leak. We should not, though. */
 			var ldapModifsRequest = record
-				.filter{ keyVal in properties.contains{ keyVal.key == $0.descrOID || keyVal.key == $0.numericoidOID } }
+				.filter{ keyVal in properties.contains(keyVal.key) }
 				.map{ v -> UnsafeMutablePointer<LDAPMod>? in
 					CBridge.ldapModAlloc(method: LDAP_MOD_REPLACE | LDAP_MOD_BVALUES, key: v.key.rawValue, values: v.value)
 				} + [nil]

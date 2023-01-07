@@ -13,47 +13,55 @@ import OfficeKit2
 
 
 
-/* Sometime the numericoid or description can be unknown, but this describes the properties we **do** know.
- * NOT related to <https://tools.ietf.org/html/rfc4512#section-2.5> (we should rename the struct). */
-struct AttributeDescription : Hashable {
-	
-	let descr: LDAPObjectID.Descr
-	let numericoid: LDAPObjectID.Numericoid
-	
-	init(_ descr: LDAPObjectID.Descr, _ numericoid: LDAPObjectID.Numericoid) {
-		self.descr = descr
-		self.numericoid = numericoid
-	}
-	
-	var descrOID: LDAPObjectID {
-		.descr(descr)
-	}
-	
-	var numericoidOID: LDAPObjectID {
-		.numericoid(numericoid)
-	}
-	
-}
-
-
 protocol LDAPAttribute {
 	
 	associatedtype Value
-	static var attributeDescription: AttributeDescription {get}
+	
+	/** The object class containing the attribute. */
+	static var objectClass: LDAPClass.Type {get}
+	
+	/** The descr OID form of the attribute. */
+	static var descr: LDAPObjectID.Descr {get}
+	/** The numericoid OID form of the attribute. */
+	static var numericoid: LDAPObjectID.Numericoid {get}
+	
+	/** Converts the raw LDAP value to the attribute’s type. */
 	static func value(from ldapValue: [Data]) throws -> Value
+	/** Converts the attribute’s type to the raw LDAP value. */
+	static func ldapValue(from value: Value) throws -> [Data]
 	
 }
 
 
 extension LDAPAttribute {
 	
-	static func value(in record: LDAPRecord) throws -> Value? {
-		/* TODO: Should we check the object classes?
-		 *       Probably, but we do not have access to the class the property belong to here… */
-		guard let v = record[attributeDescription.descrOID] ?? record[attributeDescription.numericoidOID] else {
+	static var descrOID: LDAPObjectID {
+		return .descr(descr)
+	}
+	
+	static var numericoidOID: LDAPObjectID {
+		return .numericoid(numericoid)
+	}
+	
+	static var oidPair: (LDAPObjectID.Descr, LDAPObjectID.Numericoid) {
+		return (descr, numericoid)
+	}
+	
+}
+
+	
+extension LDAPAttribute {
+	
+	static func value(in record: LDAPRecord, checkClass: Bool = true) throws -> Value? {
+		guard let v = record.valueFor(oidPair: (descr, numericoid), expectedObjectClassName: checkClass ? objectClass.name : nil) else {
 			return nil
 		}
 		return try value(from: v)
+	}
+	
+	static func setValue(_ value: Value, in record: inout LDAPRecord, checkClass: Bool = true, allowAddingClass: Bool = true) throws {
+		let ldapValue = try ldapValue(from: value)
+		try record.setValue(ldapValue, for: descrOID, numericoid: numericoid, expectedObjectClassName: checkClass ? objectClass.name : nil, allowAddingClass: allowAddingClass)
 	}
 	
 	static func singleValue(for value: [Data]) throws -> Data {
@@ -82,6 +90,15 @@ extension LDAPAttribute where Value == String {
 		return try singleStringValue(for: ldapValue)
 	}
 	
+	static func ldapValue(from value: String) throws -> [Data] {
+		return [Data(value.utf8)]
+	}
+	
+	static func setValue(_ value: String, in record: inout LDAPRecord, checkClass: Bool = true) {
+		let ldapValue = [Data(value.utf8)]
+		record.setValue(ldapValue, for: descrOID, numericoid: numericoid, expectedObjectClassName: checkClass ? objectClass.name : nil)
+	}
+	
 }
 
 
@@ -89,6 +106,15 @@ extension LDAPAttribute where Value == [String] {
 	
 	static func value(from ldapValue: [Data]) throws -> [String] {
 		return try stringValues(for: ldapValue)
+	}
+	
+	static func ldapValue(from value: [String]) throws -> [Data] {
+		return value.map{ Data($0.utf8) }
+	}
+	
+	static func setValue(_ value: [String], in record: inout LDAPRecord, checkClass: Bool = true) {
+		let ldapValue = value.map{ Data($0.utf8) }
+		record.setValue(ldapValue, for: descrOID, numericoid: numericoid, expectedObjectClassName: checkClass ? objectClass.name : nil)
 	}
 	
 }
