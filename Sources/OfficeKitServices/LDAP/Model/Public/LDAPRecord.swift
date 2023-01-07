@@ -62,7 +62,7 @@ public extension LDAPRecord {
 	mutating func setValue(_ value: [Data], for oid: LDAPObjectID, numericoid: LDAPObjectID.Numericoid? = nil, expectedObjectClassName: String?, allowAddingClass: Bool) throws {
 		/* Check the given record has the proper class if required. */
 		if let expectedObjectClassName {
-			if allObjectClasses?.contains(expectedObjectClassName) ?? false {
+			if !(allObjectClasses?.contains(expectedObjectClassName) ?? false) {
 				/* The object does not have the expected class. */
 				guard allowAddingClass else {
 					throw Err.invalidLDAPRecordClass
@@ -89,7 +89,7 @@ public extension LDAPRecord {
 public extension LDAPRecord {
 	
 	var objectClasses: [String]? {
-		return try? LDAPTopClass.ObjectClass.value(in: self)
+		return try? LDAPTopClass.ObjectClass.value(in: self, checkClass: false)
 	}
 	
 	var allObjectClasses: Set<String>? {
