@@ -120,18 +120,28 @@ extension LDAPObject : User {
 				return true
 				
 			default:
+				/* Expected format:
+				 *  "happn/ldap:custom-attribute:"/*prefix for custom property*/ + "className:propertyName" */
+				
 				let propertyName = property.rawValue
 				guard propertyName.hasPrefix(Self.customAttributePrefix) else {
 					return false
 				}
-				let attributeName = String(propertyName.dropFirst(Self.customAttributePrefix.count))
-				guard !attributeName.isEmpty, let oid = LDAPObjectID(rawValue: attributeName) else {
+				let attributeAndClassName = String(propertyName.dropFirst(Self.customAttributePrefix.count))
+				guard !attributeAndClassName.isEmpty else {
 					Conf.logger?.warning("Invalid property name.")
 					return false
 				}
+				let split = attributeAndClassName.split(separator: ":", omittingEmptySubsequences: false)
+				guard split.count == 2, let oid = LDAPObjectID(rawValue: String(split[1])) else {
+					Conf.logger?.warning("Invalid property name.")
+					return false
+				}
+				let className = String(split[0])
 				guard let newValue = (!convertValue ? newValue as? [Data] : Converters.convertObjectToDatas(newValue)) else {return false}
 				/* TODO: Check if the value _changed_ */
-				record[oid] = newValue
+				record.setValue(newValue, for: oid, expectedObjectClassName: className)
+				
 				return true
 		}
 	}
