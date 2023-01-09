@@ -10,6 +10,7 @@ import Foundation
 import CollectionConcurrencyKit
 import Email
 import GenericJSON
+import UnwrapOrThrow
 import URLRequestOperation
 
 import CommonOfficePropertiesFromHappn
@@ -60,10 +61,7 @@ public final class HappnService : UserService {
 	}
 	
 	public func userID(fromString string: String) throws -> Email {
-		guard let email = Email(rawValue: string) else {
-			throw Err.invalidEmail(string)
-		}
-		return email
+		return try Email(rawValue: string) ?! Err.invalidEmail(string)
 	}
 	
 	public func string(fromPersistentUserID pID: String) -> String {
