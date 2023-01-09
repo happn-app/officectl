@@ -54,7 +54,7 @@ public final class LDAPService : UserService, AuthenticatorService {
 	}
 	
 	public func shortDescription(fromUser user: LDAPObject) -> String {
-		return user.id.stringValue
+		return "LDAPUser<\(user.id.stringValue)>"
 	}
 	
 	public func string(fromUserID userID: LDAPDistinguishedName) -> String {

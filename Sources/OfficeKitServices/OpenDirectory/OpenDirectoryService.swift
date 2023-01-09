@@ -53,7 +53,7 @@ public final class OpenDirectoryService : UserService {
 	}
 	
 	public func shortDescription(fromUser user: OpenDirectoryUser) -> String {
-		return user.id
+		return "OpenDirectoryUser<\(user.id)>"
 	}
 	
 	public func string(fromUserID userID: String) -> String {

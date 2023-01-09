@@ -47,7 +47,7 @@ public final class GitHubService : UserService {
 	}
 	
 	public func shortDescription(fromUser user: GitHubUser) -> String {
-		return user.login
+		return "GitHubUser<\(user.login)>"
 	}
 	
 	public func string(fromUserID userID: String) -> String {

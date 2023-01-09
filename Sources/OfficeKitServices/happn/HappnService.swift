@@ -52,7 +52,7 @@ public final class HappnService : UserService {
 	}
 	
 	public func shortDescription(fromUser user: HappnUser) -> String {
-		return user.login.rawValue
+		return "HappnUser<\(user.login.rawValue)>"
 	}
 	
 	public func string(fromUserID userID: Email) -> String {

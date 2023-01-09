@@ -49,7 +49,7 @@ public final class GoogleService : UserService {
 	}
 	
 	public func shortDescription(fromUser user: GoogleUser) -> String {
-		return user.primaryEmail.rawValue
+		return "GoogleUser<\(user.primaryEmail.rawValue)>"
 	}
 	
 	public func string(fromUserID userID: Email) -> String {
