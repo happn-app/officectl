@@ -9,6 +9,7 @@ import Foundation
 
 import Email
 @preconcurrency import GenericJSON
+import OfficeKit2
 
 
 
@@ -25,6 +26,17 @@ public struct OfficeKitUser : Codable, Sendable {
 	
 	public var emails: [Email]?
 	
-	public var nonStandardProperties = [String: JSON]()
+	public var underlyingUserAsJSON: JSON
+	
+	public init(id: String, persistentID: String? = nil, underlyingUserAndService: any UserAndService) throws {
+		self.id = id
+		self.persistentID = persistentID
+		self.isSuspended = underlyingUserAndService.user.oU_isSuspended
+		self.firstName = underlyingUserAndService.user.oU_firstName
+		self.lastName = underlyingUserAndService.user.oU_lastName
+		self.nickname = underlyingUserAndService.user.oU_nickname
+		self.emails = underlyingUserAndService.user.oU_emails
+		self.underlyingUserAsJSON = try underlyingUserAndService.userAsJSON()
+	}
 	
 }

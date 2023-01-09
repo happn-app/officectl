@@ -13,6 +13,6 @@ import OfficeKit2
 
 public struct DeleteUserRequest : Codable, Sendable {
 	
-	var user: OfficeKitUser
+	public var user: OfficeKitUser
 	
 }

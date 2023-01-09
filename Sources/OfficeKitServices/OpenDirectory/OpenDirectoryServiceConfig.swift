@@ -20,6 +20,12 @@ public struct OpenDirectoryServiceConfig : Sendable, Codable {
 	public var connectorSettings: ConnectorSettings
 	public var userIDBuilders: [UserIDBuilder]?
 	
+	public init(serviceName: String, connectorSettings: ConnectorSettings, userIDBuilders: [UserIDBuilder]?) {
+		self.serviceName = serviceName
+		self.connectorSettings = connectorSettings
+		self.userIDBuilders = userIDBuilders
+	}
+	
 	public init(json: JSON) throws {
 		let data = try JSONEncoder().encode(json)
 		self = try JSONDecoder().decode(Self.self, from: data)

@@ -84,20 +84,20 @@ public final class OfficeKitService : UserService {
 		/* We use POST because 1. we want the request _not_ to be idempotent and 2. we want to avoid sending user ID or other sensitive informations in the logs.
 		 * Not sure this is justified; we can change this if needed. */
 		let request = ExistingUserFromIDRequest(userID: uID, propertiesToFetch: propertiesToFetch)
-		let operation = try URLRequestDataOperation<OfficeKitUser?>.forAPIRequest(
+		let operation = try URLRequestDataOperation<WrappedOptional<OfficeKitUser>>.forAPIRequest(
 			url: config.upstreamURL.appending("existing-user", "from-id"), method: "POST", httpBody: request,
 			requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
 		)
-		return try await operation.startAndGetResult().result
+		return try await operation.startAndGetResult().result.value
 	}
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OfficeKitUser? {
 		let request = ExistingUserFromPersistentIDRequest(userPersistentID: pID, propertiesToFetch: propertiesToFetch)
-		let operation = try URLRequestDataOperation<OfficeKitUser?>.forAPIRequest(
+		let operation = try URLRequestDataOperation<WrappedOptional<OfficeKitUser>>.forAPIRequest(
 			url: config.upstreamURL.appending("existing-user", "from-persistent-id"), method: "POST", httpBody: request,
 			requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
 		)
-		return try await operation.startAndGetResult().result
+		return try await operation.startAndGetResult().result.value
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [OfficeKitUser] {

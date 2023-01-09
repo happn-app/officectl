@@ -21,6 +21,7 @@ extension OfficeKitUser : User {
 	
 	public init(oU_id userID: String) {
 		self.id = userID
+		self.underlyingUserAsJSON = .object([:])
 	}
 	
 	public var oU_id: String {id}
@@ -32,7 +33,7 @@ extension OfficeKitUser : User {
 	public var oU_emails: [Email]? {emails}
 	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
-		return nonStandardProperties[property]
+		return underlyingUserAsJSON[property]
 	}
 	
 	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool {
@@ -69,10 +70,11 @@ extension OfficeKitUser : User {
 					guard let newValue = (!convertValue ? newValue as? JSON : Converters.convertObjectToJSON(newValue)) else {
 						return false
 					}
-					nonStandardProperties[property.rawValue] = newValue
+					underlyingUserAsJSON = underlyingUserAsJSON.merging(with: .object([property.rawValue: newValue]))
 					return true
 				} else {
-					nonStandardProperties.removeValue(forKey: property.rawValue)
+#warning("TODO")
+//					underlyingUserAsJSON.removeValue(forKey: property.rawValue)
 					return true
 				}
 		}

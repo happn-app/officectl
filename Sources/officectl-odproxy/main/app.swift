@@ -7,7 +7,7 @@
 
 import Foundation
 
-import OfficeKit
+import OfficeKit2
 import Vapor
 
 
@@ -31,7 +31,7 @@ func app(_ env: Environment) throws -> Application {
 	}
 	
 	guard !env.arguments.contains(where: { Set(arrayLiteral: "--config-file", "--verbose").contains($0) }) else {
-		throw InvalidArgumentError(message: "The --config-file or --verbose options can only be specified once. The config-file option requires an argument.")
+		throw MessageError(message: "The --config-file or --verbose options can only be specified once. The config-file option requires an argument.")
 	}
 	
 	try LoggingSystem.bootstrap(from: &env)

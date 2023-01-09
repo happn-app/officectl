@@ -1,6 +1,6 @@
 /*
  * VerifySignatureMiddleware.swift
- * officectl_odproxy
+ * officectl-odproxy
  *
  * Created by François Lamboley on 2019/07/11.
  */
@@ -8,14 +8,19 @@
 import Foundation
 
 import Crypto
-import OfficeKit
+import OfficeKit2
 import Vapor
 
 
 
 class VerifySignatureMiddleware : AsyncMiddleware {
 	
-	typealias SignatureURLPathPrefixTransform = (from: String, to: String)
+	struct SignatureURLPathPrefixTransform : Codable {
+		
+		var from: String
+		var to: String
+		
+	}
 	
 	let secret: Data
 	let signatureURLPathPrefixTransform: SignatureURLPathPrefixTransform?

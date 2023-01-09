@@ -165,7 +165,7 @@ let package = Package(
 		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")],                              path: "Sources/OfficeKitServices/ Common",     swiftSettings: commonSwiftSettings))
 		ret.append(.target(name: "CommonForOfficeKitServicesTests", dependencies: [.product(name: "StreamReader", package: "stream-reader")], path: "Tests/OfficeKitServices-Tests/ Common", swiftSettings: commonSwiftSettings))
 		ret.append(contentsOf: targetsForService(named: "LDAPOffice",          folderName: "LDAP",      additionalDependencies: ldapDependencies))
-		ret.append(contentsOf: targetsForService(named: "OfficeKitOffice",     folderName: "OfficeKit", additionalDependencies: networkDependencies))
+		ret.append(contentsOf: targetsForService(named: "OfficeKitOffice",     folderName: "OfficeKit", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
 		ret.append(contentsOf: targetsForService(named: "HappnOffice",         folderName: "happn",     additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
 		ret.append(contentsOf: targetsForService(named: "GitHubOffice",        folderName: "GitHub",    additionalDependencies: networkDependencies + [.product(name: "JWT", package: "jwt")]))
 		ret.append(contentsOf: targetsForService(named: "GoogleOffice",        folderName: "Google",    additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
@@ -218,10 +218,11 @@ let package = Package(
 			.product(name: "GenericJSON",  package: "generic-json-swift"),
 			.product(name: "JWT",          package: "jwt"),
 			.product(name: "LegibleError", package: "LegibleError"),
-			.product(name: "OfficeModel",  package: "officectl-model"),
 			.product(name: "Vapor",        package: "vapor"),
 			.product(name: "Yaml",         package: "YamlSwift"),
-			.target(name: "OfficeKit")
+			.target(name: "OfficeKit2"),
+			.target(name: "OfficeKitOffice"),
+			.target(name: "OpenDirectoryOffice")
 		]))
 #endif
 		return ret

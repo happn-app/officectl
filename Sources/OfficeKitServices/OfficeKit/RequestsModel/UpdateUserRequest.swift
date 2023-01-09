@@ -13,7 +13,7 @@ import OfficeKit2
 
 public struct UpdateUserRequest : Codable, Sendable {
 	
-	var user: OfficeKitUser
-	var propertiesToUpdate: Set<UserProperty>
+	public var user: OfficeKitUser
+	public var propertiesToUpdate: Set<UserProperty>
 	
 }

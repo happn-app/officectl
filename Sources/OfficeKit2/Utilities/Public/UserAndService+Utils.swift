@@ -9,6 +9,7 @@ import Foundation
 
 import CollectionConcurrencyKit
 import Email
+import GenericJSON
 import Logging
 import OfficeModelCore
 
@@ -34,6 +35,10 @@ public extension UserAndService {
 		return UserHints(uniqueKeysWithValues: service.supportedUserProperties.map{
 			($0, .some(user.oU_valueForProperty($0)))
 		})
+	}
+	
+	func userAsJSON() throws -> JSON {
+		return try service.json(fromUser: user)
 	}
 	
 	func fetch<OtherServiceType : UserService>(in otherService: OtherServiceType, propertiesToFetch: Set<UserProperty>? = [], using depServices: Services) async throws -> OtherServiceType.UserType? {

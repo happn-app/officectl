@@ -13,7 +13,7 @@ import OfficeKit2
 
 public struct ExistingUserFromIDRequest : Codable, Sendable {
 	
-	var userID: String
-	var propertiesToFetch: Set<UserProperty>?
+	public var userID: String
+	public var propertiesToFetch: Set<UserProperty>?
 	
 }

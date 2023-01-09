@@ -8,7 +8,7 @@
 import Foundation
 
 import LegibleError
-import OfficeKit
+import OfficeKit2
 import Vapor
 
 
@@ -17,12 +17,9 @@ do {
 	let application = try app(.detect())
 	defer {application.shutdown()}
 	try application.run()
-}
-catch {
-	let errorMsg = """
-		Error creating or running the App.
-		   error \(error.legibleLocalizedDescription)
-		"""
+	
+} catch {
+	let errorMsg = "Error creating or running the App: \(error.legibleLocalizedDescription).\n"
 	if #available(macOS 10.15.4, *),
 		(try? FileHandle.standardError.write(contentsOf: Data(errorMsg.utf8))) != nil {
 	} else {

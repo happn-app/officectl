@@ -13,6 +13,6 @@ import OfficeKit2
 
 public struct CreateUserRequest : Codable, Sendable {
 	
-	var user: OfficeKitUser
+	public var user: OfficeKitUser
 	
 }

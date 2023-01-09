@@ -13,7 +13,7 @@ import OfficeKit2
 
 public struct ListAllUsersRequest : Codable, Sendable {
 	
-	var includeSuspended: Bool
-	var propertiesToFetch: Set<UserProperty>?
+	public var includeSuspended: Bool
+	public var propertiesToFetch: Set<UserProperty>?
 	
 }

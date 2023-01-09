@@ -13,7 +13,7 @@ import OfficeKit2
 
 public struct ChangePasswordRequest : Codable, Sendable {
 	
-	var user: OfficeKitUser
-	var newPassword: String
+	public var user: OfficeKitUser
+	public var newPassword: String
 	
 }
