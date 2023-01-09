@@ -26,5 +26,5 @@ func configureRoutes(_ app: Application, _ serverConfig: ServerConfig, _ odServi
 	/* ********* Register Routes ********* */
 	
 	let serviceController = ServiceController(odService: odService)
-	app.post("existing-user", "from-user-id", use: serviceController.existingUserFromID)
+	app.post("existing-user-from-id", use: serviceController.existingUserFromID)
 }

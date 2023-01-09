@@ -85,7 +85,7 @@ public final class OfficeKitService : UserService {
 		 * Not sure this is justified; we can change this if needed. */
 		let request = ExistingUserFromIDRequest(userID: uID, propertiesToFetch: propertiesToFetch)
 		let operation = try URLRequestDataOperation<WrappedOptional<OfficeKitUser>>.forAPIRequest(
-			url: config.upstreamURL.appending("existing-user", "from-id"), method: "POST", httpBody: request,
+			url: config.upstreamURL.appending("existing-user-from-id"), method: "POST", httpBody: request,
 			requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
 		)
 		return try await operation.startAndGetResult().result.value
@@ -94,7 +94,7 @@ public final class OfficeKitService : UserService {
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OfficeKitUser? {
 		let request = ExistingUserFromPersistentIDRequest(userPersistentID: pID, propertiesToFetch: propertiesToFetch)
 		let operation = try URLRequestDataOperation<WrappedOptional<OfficeKitUser>>.forAPIRequest(
-			url: config.upstreamURL.appending("existing-user", "from-persistent-id"), method: "POST", httpBody: request,
+			url: config.upstreamURL.appending("existing-user-from-persistent-id"), method: "POST", httpBody: request,
 			requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
 		)
 		return try await operation.startAndGetResult().result.value
