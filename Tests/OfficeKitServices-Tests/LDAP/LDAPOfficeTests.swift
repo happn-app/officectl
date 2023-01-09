@@ -13,7 +13,6 @@ import Email
 import Logging
 import OfficeKit2
 import ServiceKit
-import URLRequestOperation
 
 @testable import LDAPOffice
 
@@ -42,8 +41,6 @@ final class LDAPOfficeTests : XCTestCase {
 	override class func setUp() {
 		LDAPOfficeConfig.logger = Logger(label: "test-ldap")
 		LDAPOfficeConfig.logger?.logLevel = .trace
-		URLRequestOperationConfig.logHTTPResponses = true
-		URLRequestOperationConfig.logHTTPRequests = true
 		confs = Result{
 			let ret: (LDAPServiceConfig, TestConf) = try parsedConf(for: "ldap")
 			if let path = ret.1.caCerts {
@@ -51,7 +48,6 @@ final class LDAPOfficeTests : XCTestCase {
 			}
 			return ret
 		}
-		
 	}
 	
 	override func setUp() async throws {
