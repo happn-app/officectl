@@ -49,8 +49,8 @@ let package = Package(
 		var ret = [Product]()
 		ret.append(.library(name: "OfficeKit", targets: ["OfficeKit", "OfficeKit2"]))
 		ret.append(.executable(name: "officectl", targets: ["officectl"]))
-#if canImport(DirectoryService) && canImport(OpenDirectory)
-		ret.append(.executable(name: "officectl_odproxy", targets: ["officectl_odproxy"]))
+#if canImport(OpenDirectory)
+		ret.append(.executable(name: "officectl-odproxy", targets: ["officectl-odproxy"]))
 #endif
 		return ret
 	}(),
@@ -212,8 +212,8 @@ let package = Package(
 		 * Note: The standard OpenLDAP package does not have a pkg-config file, so no pkgconfig argument here. */
 		ret.append(.systemLibrary(name: "COpenLDAP", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])]))
 #endif
-#if canImport(DirectoryService) && canImport(OpenDirectory)
-		ret.append(.executableTarget(name: "officectl_odproxy", dependencies: [
+#if canImport(OpenDirectory)
+		ret.append(.executableTarget(name: "officectl-odproxy", dependencies: [
 			.product(name: "Crypto",       package: "swift-crypto"),
 			.product(name: "GenericJSON",  package: "generic-json-swift"),
 			.product(name: "JWT",          package: "jwt"),
