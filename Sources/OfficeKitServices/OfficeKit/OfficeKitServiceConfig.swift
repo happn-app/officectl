@@ -17,6 +17,9 @@ public struct OfficeKitServiceConfig : Sendable, Codable {
 	
 	public var serviceName: String
 	
+	public var upstreamURL: URL
+	public var secret: Data
+	
 	public var supportedProperties: Set<UserProperty>
 	public var supportsUserCreation: Bool
 	public var supportsUserUpdate: Bool
@@ -34,6 +37,9 @@ public struct OfficeKitServiceConfig : Sendable, Codable {
 	private enum CodingKeys : String, CodingKey {
 		
 		case serviceName = "service_name"
+		
+		case upstreamURL = "upstream_url"
+		case secret = "secret"
 		
 		case supportedProperties = "supported_properties"
 		case supportsUserCreation = "supports_user_creation"

@@ -9,7 +9,9 @@ import Foundation
 
 import Email
 import GenericJSON
+import OperationAwaiting
 import ServiceKit
+import URLRequestOperation
 
 import OfficeKit2
 
@@ -26,12 +28,13 @@ public final class OfficeKitService : UserService {
 	
 	public convenience init(id: String, jsonConfig: JSON) throws {
 		let config = try OfficeKitServiceConfig(json: jsonConfig)
-		try self.init(id: id, officeKitServiceConfig: config)
+		self.init(id: id, officeKitServiceConfig: config)
 	}
 	
 	public init(id: String, officeKitServiceConfig: OfficeKitServiceConfig) {
 		self.id = id
 		self.config = officeKitServiceConfig
+		self.authenticator = OfficeKitAuthenticator(secret: config.secret)
 	}
 	
 	public var supportedUserProperties: Set<UserProperty> {
@@ -78,43 +81,82 @@ public final class OfficeKitService : UserService {
 	}
 	
 	public func existingUser(fromID uID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OfficeKitUser? {
-		throw Err.__notImplemented
+		/* We use POST because 1. we want the request _not_ to be idempotent and 2. we want to avoid sending user ID or other sensitive informations in the logs.
+		 * Not sure this is justified; we can change this if needed. */
+		let request = ExistingUserFromIDRequest(userID: uID, propertiesToFetch: propertiesToFetch)
+		let operation = try URLRequestDataOperation<OfficeKitUser?>.forAPIRequest(
+			url: config.upstreamURL.appending("existing-user", "from-id"), method: "POST", httpBody: request,
+			requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		return try await operation.startAndGetResult().result
 	}
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OfficeKitUser? {
-		throw Err.__notImplemented
+		let request = ExistingUserFromPersistentIDRequest(userPersistentID: pID, propertiesToFetch: propertiesToFetch)
+		let operation = try URLRequestDataOperation<OfficeKitUser?>.forAPIRequest(
+			url: config.upstreamURL.appending("existing-user", "from-persistent-id"), method: "POST", httpBody: request,
+			requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		return try await operation.startAndGetResult().result
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [OfficeKitUser] {
-		throw Err.__notImplemented
+		let request = ListAllUsersRequest(includeSuspended: includeSuspended, propertiesToFetch: propertiesToFetch)
+		let operation = try URLRequestDataOperation<[OfficeKitUser]>.forAPIRequest(
+			url: config.upstreamURL.appending("list-all-users").appendingQueryParameters(from: request),
+			requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		return try await operation.startAndGetResult().result
 	}
 	
 	public var supportsUserCreation: Bool {
 		return config.supportsUserCreation
 	}
 	public func createUser(_ user: OfficeKitUser, using services: Services) async throws -> OfficeKitUser {
-		throw Err.__notImplemented
+		let request = CreateUserRequest(user: user)
+		let operation = try URLRequestDataOperation<OfficeKitUser>.forAPIRequest(
+			url: config.upstreamURL.appending("create-user"), method: "POST", httpBody: request,
+			requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		return try await operation.startAndGetResult().result
 	}
 	
 	public var supportsUserUpdate: Bool {
 		return config.supportsUserUpdate
 	}
 	public func updateUser(_ user: OfficeKitUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> OfficeKitUser {
-		throw Err.__notImplemented
+		let request = UpdateUserRequest(user: user, propertiesToUpdate: propertiesToUpdate)
+		let operation = try URLRequestDataOperation<OfficeKitUser>.forAPIRequest(
+			url: config.upstreamURL.appending("update-user"), method: "PATCH", httpBody: request,
+			requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		return try await operation.startAndGetResult().result
 	}
 	
 	public var supportsUserDeletion: Bool {
 		return config.supportsUserDeletion
 	}
 	public func deleteUser(_ user: OfficeKitUser, using services: Services) async throws {
-		throw Err.__notImplemented
+		let request = DeleteUserRequest(user: user)
+		let operation = try URLRequestDataOperation<Empty>.forAPIRequest(
+			url: config.upstreamURL.appending("delete-user"), method: "DELETE", httpBody: request,
+			requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		_ = try await operation.startAndGetResult()
 	}
 	
 	public var supportsPasswordChange: Bool {
 		return config.supportsPasswordChange
 	}
 	public func changePassword(of user: OfficeKitUser, to newPassword: String, using services: Services) async throws {
-		throw Err.__notImplemented
+		let request = ChangePasswordRequest(user: user, newPassword: newPassword)
+		let operation = try URLRequestDataOperation<Empty>.forAPIRequest(
+			url: config.upstreamURL.appending("change-password"), method: "POST", httpBody: request,
+			requestProcessors: [AuthRequestProcessor(authenticator)], retryProviders: []
+		)
+		_ = try await operation.startAndGetResult()
 	}
+	
+	private let authenticator: OfficeKitAuthenticator
 	
 }
