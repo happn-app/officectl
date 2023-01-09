@@ -158,4 +158,12 @@ public extension Converters {
 		return { convertObjectToDate($0, dateFormatter: formatter) }
 	}
 	
+	static func convertObjectToJSON(_ obj: Any?) -> JSON? {
+		switch obj {
+			case let json as JSON:           return json
+			case let encodable as Encodable: return try? JSON(encodable: encodable)
+			default:                         return nil
+		}
+	}
+	
 }
