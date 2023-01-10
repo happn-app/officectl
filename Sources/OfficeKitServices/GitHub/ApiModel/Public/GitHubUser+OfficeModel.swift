@@ -36,7 +36,7 @@ extension GitHubUser : User {
 	
 	/** We do not support the suspended state (not GitHub Enterprise). */
 	public var oU_isSuspended: Bool? {
-		return false
+		return nil
 	}
 	
 	public var oU_firstName: String? {
