@@ -75,7 +75,7 @@ final class GoogleOfficeTests : XCTestCase {
 		XCTAssertNil(user.oU_firstName)
 		XCTAssertNil(user.oU_lastName)
 		
-		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test", UserProperty(rawValue: "google/password"): String.generatePassword()], allowIDChange: false, convertMismatchingTypes: true)
+		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test", UserProperty(rawValue: "google/password"): String.generatePassword()], convertMismatchingTypes: true)
 		XCTAssertEqual(user.primaryEmail, Email(rawValue: initialEmailStr))
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
@@ -85,9 +85,8 @@ final class GoogleOfficeTests : XCTestCase {
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
 
-		XCTAssertFalse(user.oU_setValue(modifiedEmailStr, forProperty: .emails, allowIDChange: false, convertMismatchingTypes: true))
-		XCTAssertFalse(user.oU_setValue(modifiedEmailStr, forProperty: .emails, allowIDChange: true, convertMismatchingTypes: false))
-		XCTAssertTrue(user.oU_setValue(modifiedEmailStr, forProperty: .emails, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertFalse(user.oU_setValue(modifiedEmailStr, forProperty: .emails, convertMismatchingTypes: false).propertyWasModified)
+		XCTAssertTrue( user.oU_setValue(modifiedEmailStr, forProperty: .emails, convertMismatchingTypes: true ).propertyWasModified)
 		
 		/* We have to wait a bit because the user is not created immeditaly and if we try to update it we get an error. */
 		try await Task.sleep(nanoseconds: 13_000_000_000/*13s*/)

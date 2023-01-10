@@ -134,7 +134,7 @@ public final class GoogleService : UserService {
 	public func changePassword(of user: GoogleUser, to newPassword: String, using services: Services) async throws {
 		var user = user
 		let passwordProperty = UserProperty(rawValue: "google/password")
-		guard user.oU_setValue(newPassword, forProperty: passwordProperty, allowIDChange: false, convertMismatchingTypes: false) else {
+		guard user.oU_setValue(newPassword, forProperty: passwordProperty, convertMismatchingTypes: false).isSuccessful else {
 			throw Err.internalError
 		}
 		_ = try await updateUser(user, propertiesToUpdate: [passwordProperty], using: services)

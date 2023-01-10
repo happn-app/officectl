@@ -37,8 +37,8 @@ struct DummyUser2 : User {
 		return nil
 	}
 	
-	mutating func oU_setValue<V>(_ newValue: V?, forProperty property: OfficeKit2.UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool where V : Sendable {
-		return false
+	mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult {
+		return .failure(.unsupportedProperty)
 	}
 	
 }

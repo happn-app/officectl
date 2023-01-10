@@ -86,7 +86,7 @@ final class LDAPOfficeTests : XCTestCase {
 		XCTAssertNil(user.oU_firstName)
 		XCTAssertNil(user.oU_lastName)
 		
-		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], allowIDChange: false, convertMismatchingTypes: true)
+		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], convertMismatchingTypes: true)
 		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNString))
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
@@ -97,13 +97,12 @@ final class LDAPOfficeTests : XCTestCase {
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
 		
-		XCTAssertTrue( user.oU_setValue("Test Modified", forProperty: .lastName, allowIDChange: true, convertMismatchingTypes: true))
-		XCTAssertFalse(user.oU_setValue("Test Modified", forProperty: .lastName, allowIDChange: true, convertMismatchingTypes: true))
-		XCTAssertFalse(user.oU_setValue(modifiedDNString, forProperty: .id, allowIDChange: false, convertMismatchingTypes: true))
-		XCTAssertFalse(user.oU_setValue(modifiedDNString, forProperty: .id, allowIDChange: true,  convertMismatchingTypes: false))
+		XCTAssertTrue( user.oU_setValue("Test Modified", forProperty: .lastName, convertMismatchingTypes: true).propertyWasModified)
+		XCTAssertFalse(user.oU_setValue("Test Modified", forProperty: .lastName, convertMismatchingTypes: true).propertyWasModified)
+		XCTAssertFalse(user.oU_setValue(modifiedDNString, forProperty: .id,  convertMismatchingTypes: false).propertyWasModified)
 		
 		let testEmailStrs = ["officectl.test.1@invalid.happn.fr", "officectl.test.2@invalid.happn.fr"]
-		XCTAssertTrue(user.oU_setValue(testEmailStrs, forProperty: .emails, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertTrue(user.oU_setValue(testEmailStrs, forProperty: .emails, convertMismatchingTypes: true).propertyWasModified)
 		
 		print("Updating user...")
 		user = try await service.updateUser(user, propertiesToUpdate: [.emails, .lastName], using: services)
@@ -124,13 +123,13 @@ final class LDAPOfficeTests : XCTestCase {
 		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNString))
 		
 		/* First name and or last name are mandatory for an LDAP user… */
-		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], allowIDChange: false, convertMismatchingTypes: true)
+		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], convertMismatchingTypes: true)
 		
 		print("Creating user...")
 		user = try await service.createUser(user, using: services)
 		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNString))
 		
-		XCTAssertTrue(user.oU_setValue(modifiedDNString, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertTrue(user.oU_setValue(modifiedDNString, forProperty: .id, convertMismatchingTypes: true).propertyWasModified)
 		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: modifiedDNString))
 		
 		/* Changing the DN of an LDAP record is not possible AFAIK (see oU_setValue implementation in LDAPObject). */
@@ -142,7 +141,7 @@ final class LDAPOfficeTests : XCTestCase {
 		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: modifiedDNString))
 		
 		/* We have to change the ID back to be able to delete the user. */
-		XCTAssertTrue(user.oU_setValue(initialDNString, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertTrue(user.oU_setValue(initialDNString, forProperty: .id, convertMismatchingTypes: true).propertyWasModified)
 		
 		print("Deleting user...")
 		try await service.deleteUser(user, using: services)
@@ -153,13 +152,13 @@ final class LDAPOfficeTests : XCTestCase {
 		
 		var user = LDAPObject(oU_id: dn)
 		/* It seems first name and last name are mandatory. */
-		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], allowIDChange: false, convertMismatchingTypes: true)
+		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], convertMismatchingTypes: true)
 		
 		print("Creating user...")
 		user = try await service.createUser(user, using: services)
 		
 		let property = UserProperty(rawValue: "happn/ldap:custom-attribute:ldapPublicKey:sshPublicKey")
-		user.oU_applyHints([property: "ssh-rsa yolo"], allowIDChange: false, convertMismatchingTypes: true)
+		user.oU_applyHints([property: "ssh-rsa yolo"], convertMismatchingTypes: true)
 		
 		print("Updating user...")
 		user = try await service.updateUser(user, propertiesToUpdate: [property], using: services)

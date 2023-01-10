@@ -42,21 +42,16 @@ struct SimpleUser1<UserIDType : Hashable & Sendable> : User {
 		return nil
 	}
 	
-	mutating func oU_setValue<V>(_ newValue: V?, forProperty property: OfficeKit2.UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool where V : Sendable {
+	mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult {
 		switch property {
-			case .id:
-				guard let newValue = newValue as? UserIDType else {
-					return false
-				}
-				return Self.setRequiredValueSameTypeIfNeeded(newValue, in: &oU_id)
+			case .id:          return Self.setProperty(&oU_id, to: newValue, allowTypeConversion: convert, converter: { $0 as? UserIDType })
+			case .isSuspended: return Self.setOptionalProperty(&oU_isSuspended, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToBool)
+			case .firstName:   return Self.setOptionalProperty(&oU_firstName,   to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+			case .lastName:    return Self.setOptionalProperty(&oU_lastName,    to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+			case .nickname:    return Self.setOptionalProperty(&oU_nickname,    to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+			case .emails:      return Self.setOptionalProperty(&oU_emails,      to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToEmails)
 				
-			case .isSuspended: return Self.setValueIfNeeded(newValue, in: &oU_isSuspended, converter: (!convertValue ? { $0 as? Bool }    : Converters.convertObjectToBool(_:)))
-			case .firstName:   return Self.setValueIfNeeded(newValue, in: &oU_firstName,   converter: (!convertValue ? { $0 as? String }  : Converters.convertObjectToString(_:)))
-			case .lastName:    return Self.setValueIfNeeded(newValue, in: &oU_lastName,    converter: (!convertValue ? { $0 as? String }  : Converters.convertObjectToString(_:)))
-			case .nickname:    return Self.setValueIfNeeded(newValue, in: &oU_nickname,    converter: (!convertValue ? { $0 as? String }  : Converters.convertObjectToString(_:)))
-			case .emails:      return Self.setValueIfNeeded(newValue, in: &oU_emails,      converter: (!convertValue ? { $0 as? [Email] } : Converters.convertObjectToEmails(_:)))
-				
-			default: return false
+			default: return .failure(.unsupportedProperty)
 		}
 	}
 	

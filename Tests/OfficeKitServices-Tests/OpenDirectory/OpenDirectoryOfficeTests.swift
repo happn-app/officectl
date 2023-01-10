@@ -102,7 +102,7 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		XCTAssertNil(user.oU_firstName)
 		XCTAssertNil(user.oU_lastName)
 		
-		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], allowIDChange: false, convertMismatchingTypes: true)
+		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], convertMismatchingTypes: true)
 		XCTAssertEqual(user.id, initialID)
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
@@ -112,12 +112,11 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
 		
-		XCTAssertTrue(user.oU_setValue("Test Modified", forProperty: .lastName, allowIDChange: true, convertMismatchingTypes: true))
-		XCTAssertFalse(user.oU_setValue(modifiedID, forProperty: .id, allowIDChange: false, convertMismatchingTypes: true))
-		XCTAssertTrue(user.oU_setValue(modifiedID, forProperty: .id, allowIDChange: true, convertMismatchingTypes: false))
+		XCTAssertTrue(user.oU_setValue("Test Modified", forProperty: .lastName, convertMismatchingTypes: true).propertyWasModified)
+		XCTAssertTrue(user.oU_setValue(modifiedID, forProperty: .id, convertMismatchingTypes: false).propertyWasModified)
 		
 		let testEmailStrs = ["officectl.test.1@invalid.happn.fr", "officectl.test.2@invalid.happn.fr"]
-		XCTAssertTrue(user.oU_setValue(testEmailStrs, forProperty: .emails, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertTrue(user.oU_setValue(testEmailStrs, forProperty: .emails, convertMismatchingTypes: true).propertyWasModified)
 		
 		user = try await service.updateUser(user, propertiesToUpdate: [.emails, .lastName], using: services)
 		XCTAssertEqual(user.id, initialID)
@@ -139,7 +138,7 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		user = try await service.createUser(user, using: services)
 		XCTAssertEqual(user.id, initialID)
 		
-		XCTAssertTrue(user.oU_setValue(modifiedID, forProperty: .id, allowIDChange: true, convertMismatchingTypes: true))
+		XCTAssertTrue(user.oU_setValue(modifiedID, forProperty: .id, convertMismatchingTypes: true).propertyWasModified)
 		XCTAssertEqual(user.id, modifiedID)
 		
 		/* So changing the ID of a user is not unsupported per se in Open Directory, but with our instance, it fails (with a cryptic error, of course: “Connection failed to the directory server.”) */
