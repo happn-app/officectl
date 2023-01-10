@@ -167,3 +167,21 @@ public extension Converters {
 	}
 	
 }
+
+public extension Converters {
+	
+	static func convertPropertyValue<T, U>(_ toConvert: U, allowTypeConversion: Bool, converter: (U) -> T?) throws -> T {
+		if allowTypeConversion {
+			guard let converted = converter(toConvert) else {
+				throw PropertyChangeResult.Failure.valueConversionFailed
+			}
+			return converted
+		} else {
+			guard let converted = toConvert as? T else {
+				throw PropertyChangeResult.Failure.invalidValueType
+			}
+			return converted
+		}
+	}
+	
+}

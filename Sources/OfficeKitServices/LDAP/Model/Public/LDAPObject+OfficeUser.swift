@@ -78,50 +78,47 @@ extension LDAPObject : User {
 		return record[oid]
 	}
 	
-	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool {
-		switch property {
-			case .id:
-				guard allowIDChange else {return false}
-				guard let newValue else {
-					Conf.logger?.error("Asked to remove the id of a user. This is illegal, I’m not doing it.")
-					return false
-				}
-				/* When communicating with LDAP, libldap uses the DN to specify which object the operation is destined to.
-				 * AFAICT there is no way to _change_ the DN of an entry using LDAP, one has to delete the entry and create it again. */
-				Conf.logger?.warning("Changing the ID of an LDAP is not recommended at all as it will probably not do what you expect. Please delete and re-create the object instead.")
-				return Self.setRequiredValueIfNeeded(newValue, in: &id, converter: (!convertValue ? { $0 as? LDAPDistinguishedName } : Converters.convertObjectToDN(_:)))
-				
-			case .persistentID:
-				return false
-				
-			case .isSuspended:
-				return false
-				
-			case .firstName:
-				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
-				let c1 = LDAPInetOrgPersonClass.GivenName .setValueIfNeeded([newValue],         in: &record)
-				let c2 = LDAPPersonClass       .CommonName.setValueIfNeeded([computedFullName], in: &record)
-				return c1 || c2
-				
-			case .lastName:
-				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
-				let c1 = LDAPPersonClass.Surname   .setValueIfNeeded([newValue],         in: &record)
-				let c2 = LDAPPersonClass.CommonName.setValueIfNeeded([computedFullName], in: &record)
-				return c1 || c2
-				
-			case .nickname:
-				return false
-				
-			case .emails:
-				guard let newValue = (!convertValue ? newValue as? [Email] : Converters.convertObjectToEmails(newValue)) else {return false}
-				return LDAPInetOrgPersonClass.Mail.setValueIfNeeded(newValue, in: &record)
-				
-			default:
-				guard let newValue = (!convertValue ? newValue as? [Data] : Converters.convertObjectToDatas(newValue)) else {return false}
-				guard let (oid, className) = Self.customUserPropertyToAttribute(property) else {
-					return false
-				}
-				return record.setValueIfNeeded(newValue, for: oid, expectedObjectClassName: className)
+	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult {
+		do {
+			switch property {
+				case .id:
+					/* When communicating with LDAP, libldap uses the DN to specify which object the operation is destined to.
+					 * AFAICT there is no way to _change_ the DN of an entry using LDAP, one has to delete the entry and create it again. */
+					Conf.logger?.warning("Changing the ID of an LDAP is not recommended at all as it will probably not do what you expect. Please delete and re-create the object instead.")
+					return Self.setProperty(&id, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToDN)
+					
+				case .persistentID, .isSuspended:
+					return .failure(.unsupportedProperty)
+					
+				case .firstName:
+					let newValue = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+					let c1 = LDAPInetOrgPersonClass.GivenName .setValueIfNeeded([newValue],         in: &record)
+					let c2 = LDAPPersonClass       .CommonName.setValueIfNeeded([computedFullName], in: &record)
+					return (c1 || c2 ? .successChanged : .successUnchanged)
+					
+				case .lastName:
+					let newValue = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+					let c1 = LDAPPersonClass.Surname   .setValueIfNeeded([newValue],         in: &record)
+					let c2 = LDAPPersonClass.CommonName.setValueIfNeeded([computedFullName], in: &record)
+					return (c1 || c2 ? .successChanged : .successUnchanged)
+					
+				case .nickname:
+					return .failure(.unsupportedProperty)
+					
+				case .emails:
+					let newValue = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToEmails)
+					return (LDAPInetOrgPersonClass.Mail.setValueIfNeeded(newValue, in: &record) ? .successChanged : .successUnchanged)
+					
+				default:
+					let newValue = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToDatas)
+					guard let (oid, className) = Self.customUserPropertyToAttribute(property) else {
+						throw PropertyChangeResult.Failure.unsupportedProperty
+					}
+					return (record.setValueIfNeeded(newValue, for: oid, expectedObjectClassName: className) ? .successChanged : .successUnchanged)
+			}
+			
+		} catch {
+			return .anyFailure(error)
 		}
 	}
 	

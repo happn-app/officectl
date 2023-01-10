@@ -44,87 +44,87 @@ extension GoogleUser : User {
 		}
 	}
 	
-	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool {
+	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult {
 		let passwordProperty = UserProperty(rawValue: "google/password")
 		let primaryEmailProperty = UserProperty("primaryEmail")
 		switch property {
 			case .id, primaryEmailProperty:
-				guard allowIDChange else {return false}
-				guard let newValue else {
-					Conf.logger?.error("Asked to remove the id of a user (nil value for id in hints). This is illegal, I’m not doing it.")
-					return false
-				}
-				return Self.setRequiredValueIfNeeded(newValue, in: &primaryEmail, converter: (!convertValue ? { $0 as? Email } : Converters.convertObjectToEmail(_:)))
+				return Self.setProperty(&primaryEmail, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToEmail)
 				
 			case .isSuspended:
-				return Self.setValueIfNeeded(newValue, in: &isSuspended, converter: (!convertValue ? { $0 as? Bool } : Converters.convertObjectToBool(_:)))
+				return Self.setOptionalProperty(&isSuspended, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToBool)
 				
 			case .firstName:
 				var newName = name ?? Name()
-				if Self.setValueIfNeeded(newValue, in: &newName.givenName, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:))) {
+				let changeResult = Self.setProperty(&newName.givenName, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+				if changeResult.propertyWasModified {
 					name = newName
-					return true
 				}
-				return false
+				return changeResult
 				
 			case .lastName:
 				var newName = name ?? Name()
-				if Self.setValueIfNeeded(newValue, in: &newName.familyName, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:))) {
+				let changeResult = Self.setProperty(&newName.familyName, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+				if changeResult.propertyWasModified {
 					name = newName
-					return true
 				}
-				return false
+				return changeResult
 				
 			case .nickname:
 				var newName = name ?? Name()
-				if Self.setValueIfNeeded(newValue, in: &newName.displayName, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:))) {
+				let changeResult = Self.setProperty(&newName.displayName, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+				if changeResult.propertyWasModified {
 					name = newName
-					return true
 				}
-				return false
-				
+				return changeResult
 				
 			case .emails:
-				guard let newValue else {
-					Conf.logger?.error("Cannot remove all the emails of a gougle user (id is an email…).")
-					return false
+				do {
+					guard let newValue else {
+						Conf.logger?.error("Cannot remove all the emails of a gougle user (id is an email…).")
+						throw PropertyChangeResult.Failure.unremovableProperty
+					}
+					
+					let emails = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToEmails)
+					guard let first = emails.first else {
+						Conf.logger?.error("Cannot remove all the emails of a gougle user (id is an email…).")
+						throw PropertyChangeResult.Failure.unremovableProperty
+					}
+					let other = Array(emails.dropFirst())
+					let changed = (primaryEmail != first && aliases != other)
+					primaryEmail = first
+					aliases = other
+					return changed ? .successChanged : .successUnchanged
+					
+				} catch {
+					return .anyFailure(error)
 				}
-				guard let emails = (!convertValue ? newValue as? [Email] : Converters.convertObjectToEmails(newValue)) else {
-					return false
-				}
-				guard let first = emails.first else {
-					Conf.logger?.error("Cannot remove all the emails of a gougle user (id is an email…).")
-					return false
-				}
-				guard allowIDChange || first == primaryEmail else {
-					return false
-				}
-				primaryEmail = first
-				aliases = Array(emails.dropFirst())
-				return true
 				
 			case passwordProperty:
-				if let newValue {
-					guard let newPass = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {
-						return false
+				do {
+					if let newValue {
+						let newPass = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+						let hash = Insecure.SHA1.hash(data: Data(newPass.utf8)).reduce("", { $0 + String(format: "%02x", $1) })
+						let changed = (password != hash || passwordHashFunction != .sha1 || changePasswordAtNextLogin != false)
+						changePasswordAtNextLogin = false
+						passwordHashFunction = .sha1
+						password = hash
+						return changed ? .successChanged : .successUnchanged
+						
+					} else {
+						let changed = (password != nil || passwordHashFunction != nil || changePasswordAtNextLogin != nil)
+						password = nil
+						passwordHashFunction = nil
+						changePasswordAtNextLogin = nil
+						return changed ? .successChanged : .successUnchanged
 					}
-					let hash = Insecure.SHA1.hash(data: Data(newPass.utf8)).reduce("", { $0 + String(format: "%02x", $1) })
-					let touched = (password != hash || passwordHashFunction != .sha1 || changePasswordAtNextLogin != false)
-					changePasswordAtNextLogin = false
-					passwordHashFunction = .sha1
-					password = hash
-					return touched
 					
-				} else {
-					let touched = (password != nil || passwordHashFunction != nil || changePasswordAtNextLogin != nil)
-					password = nil
-					passwordHashFunction = nil
-					changePasswordAtNextLogin = nil
-					return touched
+				} catch {
+					return .anyFailure(error)
 				}
 				
 			default:
-				return false
+				return .failure(.unsupportedProperty)
 		}
 	}
 	

@@ -69,9 +69,9 @@ extension GitHubUser : User {
 		}
 	}
 	
-	public mutating func oU_setValue<V>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool where V : Sendable {
+	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult {
 		Conf.logger?.info("Cannot change any property of a GitHub User (not GitHub Enterprise; only the user can change his profile).")
-		return false
+		return .failure(.readOnlyProperty)
 	}
 	
 	/* ***************

@@ -21,7 +21,8 @@ extension OfficeKitUser : User {
 	
 	public init(oU_id userID: String) {
 		self.id = userID
-		self.underlyingUserAsJSON = .object([:])
+		self.nonStandardProperties = [:]
+		self.opaqueUserInfo = nil
 	}
 	
 	public var oU_id: String {id}
@@ -33,49 +34,41 @@ extension OfficeKitUser : User {
 	public var oU_emails: [Email]? {emails}
 	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
-		return underlyingUserAsJSON[property]
+		return nonStandardProperties[property]
 	}
 	
-	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool {
+	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult {
 		switch property {
 			case .id:
-				guard allowIDChange else {return false}
-				guard let newValue else {
-					Conf.logger?.error("Asked to remove the id of a user (set to nil value). This is illegal, I’m not doing it.")
-					return false
-				}
-				return Self.setRequiredValueIfNeeded(newValue, in: &id, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
+				return Self.setProperty(&id, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
 				
 			case .persistentID:
-				guard allowIDChange else {return false}
-				return Self.setValueIfNeeded(newValue, in: &persistentID, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
+				return Self.setProperty(&persistentID, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
 				
 			case .isSuspended:
-				return Self.setValueIfNeeded(newValue, in: &isSuspended, converter: (!convertValue ? { $0 as? Bool } : Converters.convertObjectToBool(_:)))
+				return Self.setOptionalProperty(&isSuspended, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToBool)
 				
 			case .firstName:
-				return Self.setValueIfNeeded(newValue, in: &firstName, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
+				return Self.setOptionalProperty(&firstName, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
 				
 			case .lastName:
-				return Self.setValueIfNeeded(newValue, in: &lastName, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
+				return Self.setOptionalProperty(&lastName, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
 				
 			case .nickname:
-				return Self.setValueIfNeeded(newValue, in: &nickname, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
+				return Self.setOptionalProperty(&nickname, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
 				
 			case .emails:
-				return Self.setValueIfNeeded(newValue, in: &emails, converter: (!convertValue ? { $0 as? [Email] } : Converters.convertObjectToEmails(_:)))
+				return Self.setOptionalProperty(&emails, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToEmails)
 				
 			default:
+				assert(!property.isStandard)
 				if let newValue {
-					guard let newValue = (!convertValue ? newValue as? JSON : Converters.convertObjectToJSON(newValue)) else {
-						return false
-					}
-					underlyingUserAsJSON = underlyingUserAsJSON.merging(with: .object([property.rawValue: newValue]))
-					return true
+					return Self.setProperty(&nonStandardProperties[property.rawValue], to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToJSON)
+					
 				} else {
-#warning("TODO")
-//					underlyingUserAsJSON.removeValue(forKey: property.rawValue)
-					return true
+					let changed = (nonStandardProperties[property.rawValue] != nil)
+					nonStandardProperties.removeValue(forKey: property.rawValue)
+					return (changed ? .successChanged : .successUnchanged)
 				}
 		}
 	}

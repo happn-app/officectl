@@ -12,12 +12,16 @@ import UnwrapOrThrow
 
 
 
-public enum OpenDirectoryAttributeValue : Sendable, Codable {
+public enum OpenDirectoryAttributeValue : Sendable, Codable, Equatable {
 	
 	case string(String)
 	case multiString([String])
 	case data(Data)
 	case multiData([Data])
+	
+	public static func ==(_ lhs: Self, _ rhs: Self) -> Bool {
+		return lhs.asMultiData == rhs.asMultiData
+	}
 	
 	internal init(any: Any) throws {
 		switch any {

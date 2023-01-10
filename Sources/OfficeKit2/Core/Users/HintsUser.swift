@@ -72,16 +72,27 @@ extension HintsUser : User {
 		return properties[.init(stringLiteral: property)]?.flatMap{ $0 }
 	}
 	
-	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes: Bool) -> Bool {
-		if let newValue {
-			properties[property] = newValue
-			/* We always return true as we cannot check for equality with previous value as it is not Equatable. */
-			return true
-		} else {
-			let hadValue = (properties[property] != nil)
-			properties.removeValue(forKey: property)
-			return hadValue
+	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult {
+		func checkEquality<T1 : Equatable, T2 : Equatable>(_ v1: T1, _ v2: T2) -> Bool {
+			switch (v1, v2) {
+				case let v2 as T1: return v1 == v2
+				default:           return false
+			}
 		}
+		
+		let changed: Bool
+		if let newValue {
+			if let oldValueEquatable = properties[property] as? any Equatable, let newValueEquatable = newValue as? any Equatable {
+				changed = checkEquality(oldValueEquatable, newValueEquatable)
+			} else {
+				changed = false
+			}
+			properties[property] = newValue
+		} else {
+			changed = (properties[property] != nil)
+			properties.removeValue(forKey: property)
+		}
+		return changed ? .successChanged : .successUnchanged
 	}
 	
 }

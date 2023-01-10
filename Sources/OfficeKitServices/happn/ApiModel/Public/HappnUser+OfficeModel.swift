@@ -38,27 +38,25 @@ extension HappnUser : User {
 		}
 	}
 	
-	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool {
+	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult {
 		let passwdProp = UserProperty(rawValue: "happn/password")
 		switch property {
 			case .id, .persistentID, .emails:
-				guard allowIDChange else {return false}
 				Conf.logger?.error("Changing the id (email) or persistent id of a happn user is not supported by the happn API.")
-				return false
+				return .failure(.readOnlyProperty)
 				
-			case .firstName: return Self.setValueIfNeeded(newValue, in: &firstName, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
-			case .lastName:  return Self.setValueIfNeeded(newValue, in: &lastName,  converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
-			case .nickname:  return Self.setValueIfNeeded(newValue, in: &nickname,  converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
-			case .gender:    return Self.setValueIfNeeded(newValue, in: &gender,    converter: (!convertValue ? { $0 as? Gender } : Converters.convertObjectToGender(_:)))
-			case .birthdate: return Self.setValueIfNeeded(newValue, in: &birthDate, converter: (!convertValue ? { $0 as? Date }   : Converters.objectToDateConverter{ HappnBirthDateWrapper.birthDateFormatter.date(from: $0) }))
-			case passwdProp: return Self.setValueIfNeeded(newValue, in: &password,  converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
+			case .firstName: return Self.setOptionalProperty(&firstName, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+			case .lastName:  return Self.setOptionalProperty(&lastName,  to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+			case .nickname:  return Self.setOptionalProperty(&nickname,  to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+			case .gender:    return Self.setOptionalProperty(&gender,    to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToGender)
+			case .birthdate: return Self.setOptionalProperty(&birthDate, to: newValue, allowTypeConversion: convert, converter: Converters.objectToDateConverter{ HappnBirthDateWrapper.birthDateFormatter.date(from: $0) })
+			case passwdProp: return Self.setOptionalProperty(&password,  to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
 				
 			case .isSuspended:
 				Conf.logger?.error("Suspending a user this way is not supported yet.")
-				return false
-				
+				fallthrough
 			default:
-				return false
+				return .failure(.unsupportedProperty)
 		}
 	}
 

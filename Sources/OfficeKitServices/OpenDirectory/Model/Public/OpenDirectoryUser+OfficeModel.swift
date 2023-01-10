@@ -63,45 +63,43 @@ extension OpenDirectoryUser : User {
 		return nil
 	}
 	
-	public mutating func oU_setValue<V>(_ newValue: V?, forProperty property: UserProperty, allowIDChange: Bool, convertMismatchingTypes convertValue: Bool) -> Bool where V : Sendable {
-		switch property {
-			case .id:
-				guard allowIDChange else {return false}
-				guard let newValue else {
-					Conf.logger?.error("Asked to remove the id of a user. This is illegal, I’m not doing it.")
-					return false
-				}
-				return Self.setRequiredValueIfNeeded(newValue, in: &id, converter: (!convertValue ? { $0 as? String } : Converters.convertObjectToString(_:)))
-				
-			case .persistentID:
-				Conf.logger?.error("The persistent ID cannot be changed.")
-				return false
-				
-			case .isSuspended:
-				return false
-				
-			case .firstName:
-				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
-				properties[kODAttributeTypeFirstName] = .string(newValue)
-				properties[kODAttributeTypeFullName] = .string(computedFullName)
-				return true
-			case .lastName:
-				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
-				properties[kODAttributeTypeLastName] = .string(newValue)
-				properties[kODAttributeTypeFullName] = .string(computedFullName)
-				return true
-			case .nickname:
-				guard let newValue = (!convertValue ? newValue as? String : Converters.convertObjectToString(newValue)) else {return false}
-				properties[kODAttributeTypeNickName] = .string(newValue)
-				return true
-				
-			case .emails:
-				guard let newValue = (!convertValue ? newValue as? [Email] : Converters.convertObjectToEmails(newValue)) else {return false}
-				properties[kODAttributeTypeEMailAddress] = .multiString(newValue.map(\.rawValue))
-				return true
-				
-			default:
-				return false
+	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult {
+		do {
+			switch property {
+				case .id:
+					return Self.setProperty(&id, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+					
+				case .persistentID:
+					Conf.logger?.error("The persistent ID cannot be changed.")
+					return .failure(.readOnlyProperty)
+					
+				case .isSuspended:
+					return .failure(.unsupportedProperty)
+					
+				case .firstName:
+					let newValue = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+					let c1 = Self.setProperty(&properties[kODAttributeTypeFirstName], to: .string(newValue))
+					let c2 = Self.setProperty(&properties[kODAttributeTypeFullName],  to: .string(computedFullName))
+					return (c1 || c2 ? .successChanged : .successUnchanged)
+					
+				case .lastName:
+					let newValue = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+					let c1 = Self.setProperty(&properties[kODAttributeTypeLastName], to: .string(newValue))
+					let c2 = Self.setProperty(&properties[kODAttributeTypeFullName], to: .string(computedFullName))
+					return (c1 || c2 ? .successChanged : .successUnchanged)
+					
+				case .nickname:
+					return Self.setProperty(&properties[kODAttributeTypeNickName], to: newValue, allowTypeConversion: convert, converter: { Converters.convertObjectToString($0).flatMap{ .string($0) } })
+					
+				case .emails:
+					return Self.setProperty(&properties[kODAttributeTypeEMailAddress], to: newValue, allowTypeConversion: convert, converter: { Converters.convertObjectToEmails($0).flatMap{ .multiString($0.map(\.rawValue)) } })
+					
+				default:
+					throw PropertyChangeResult.Failure.unsupportedProperty
+			}
+			
+		} catch {
+			return .anyFailure(error)
 		}
 	}
 	

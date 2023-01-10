@@ -26,17 +26,23 @@ public struct OfficeKitUser : Codable, Sendable {
 	
 	public var emails: [Email]?
 	
-	public var underlyingUserAsJSON: JSON
+	public var nonStandardProperties: [String: JSON]
 	
-	public init(id: String, persistentID: String? = nil, underlyingUserAndService: any UserAndService) throws {
+	public var opaqueUserInfo: Data?
+	
+	public init(id: String, persistentID: String? = nil, underlyingUser: any User, nonStandardProperties: [String: JSON], opaqueUserInfo: Data?) {
 		self.id = id
 		self.persistentID = persistentID
-		self.isSuspended = underlyingUserAndService.user.oU_isSuspended
-		self.firstName = underlyingUserAndService.user.oU_firstName
-		self.lastName = underlyingUserAndService.user.oU_lastName
-		self.nickname = underlyingUserAndService.user.oU_nickname
-		self.emails = underlyingUserAndService.user.oU_emails
-		self.underlyingUserAsJSON = try underlyingUserAndService.userAsJSON()
+		
+		self.isSuspended = underlyingUser.oU_isSuspended
+		self.firstName = underlyingUser.oU_firstName
+		self.lastName = underlyingUser.oU_lastName
+		self.nickname = underlyingUser.oU_nickname
+		self.emails = underlyingUser.oU_emails
+		
+		self.nonStandardProperties = nonStandardProperties
+		
+		self.opaqueUserInfo = opaqueUserInfo
 	}
 	
 }
