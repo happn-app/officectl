@@ -35,8 +35,6 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 	   MARK: User Service
 	   ****************** */
 	
-	let supportedUserProperties: Set<UserProperty> = []
-	
 	func shortDescription(fromUser user: DummyUser2) -> String {
 		return "<ERROR>"
 	}

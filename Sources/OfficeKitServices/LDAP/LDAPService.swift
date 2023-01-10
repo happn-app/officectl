@@ -46,13 +46,6 @@ public final class LDAPService : UserService, AuthenticatorService {
 		)
 	}
 	
-	public var supportedUserProperties: Set<UserProperty> {
-		/* LDAP supports a lot of properties, but we map only a very few of them, at least for now.
-		 * Later, we should get the list of supported properties of the server (presumably at init time)
-		 *  to get the list of actually supported properties by the service. */
-		return UserProperty.standardProperties
-	}
-	
 	public func shortDescription(fromUser user: LDAPObject) -> String {
 		return "LDAPUser<\(user.id.stringValue)>"
 	}

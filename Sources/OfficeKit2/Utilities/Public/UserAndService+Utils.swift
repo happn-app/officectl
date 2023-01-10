@@ -31,16 +31,6 @@ public extension UserAndService {
 		return user.oU_persistentID.flatMap{ TaggedID(tag: service.id, id: service.string(fromPersistentUserID: $0)) }
 	}
 	
-	var userHints: UserHints {
-		return UserHints(uniqueKeysWithValues: service.supportedUserProperties.map{
-			($0, .some(user.oU_valueForProperty($0)))
-		})
-	}
-	
-	func userAsJSON() throws -> JSON {
-		return try service.json(fromUser: user)
-	}
-	
 	func fetch<OtherServiceType : UserService>(in otherService: OtherServiceType, propertiesToFetch: Set<UserProperty>? = [], using depServices: Services) async throws -> OtherServiceType.UserType? {
 		let otherID = try otherService.logicalUserID(fromUser: user)
 		return try await otherService.existingUser(fromID: otherID, propertiesToFetch: propertiesToFetch, using: depServices)

@@ -37,10 +37,6 @@ public final class OfficeKitService : UserService {
 		self.authenticator = OfficeKitAuthenticator(secret: config.secret)
 	}
 	
-	public var supportedUserProperties: Set<UserProperty> {
-		return config.supportedProperties
-	}
-	
 	public func shortDescription(fromUser user: OfficeKitUser) -> String {
 		return "OfficeKitUser<\(user.id)>"
 	}

@@ -42,10 +42,6 @@ public final class GitHubService : UserService {
 		)
 	}
 	
-	public var supportedUserProperties: Set<UserProperty> {
-		return Set(GitHubUser.propertyToKeys.filter{ !$0.value.isEmpty }.map{ $0.key })
-	}
-	
 	public func shortDescription(fromUser user: GitHubUser) -> String {
 		return "GitHubUser<\(user.login)>"
 	}

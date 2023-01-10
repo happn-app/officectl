@@ -48,10 +48,6 @@ public final class HappnService : UserService {
 		)
 	}
 	
-	public var supportedUserProperties: Set<UserProperty> {
-		return Set(HappnUser.propertyToKeys.filter{ !$0.value.isEmpty }.map{ $0.key })
-	}
-	
 	public func shortDescription(fromUser user: HappnUser) -> String {
 		return "HappnUser<\(user.login.rawValue)>"
 	}

@@ -44,10 +44,6 @@ public final class GoogleService : UserService {
 		)
 	}
 	
-	public var supportedUserProperties: Set<UserProperty> {
-		return Set(GoogleUser.propertyToKeys.filter{ !$0.value.isEmpty }.map{ $0.key })
-	}
-	
 	public func shortDescription(fromUser user: GoogleUser) -> String {
 		return "GoogleUser<\(user.primaryEmail.rawValue)>"
 	}

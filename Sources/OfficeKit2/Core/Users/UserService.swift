@@ -16,12 +16,6 @@ public protocol UserService<UserType> : OfficeService {
 	
 	associatedtype UserType : User
 	
-	/**
-	 These are the properties the service supports.
-	 This is an instance property and not a static one because depending on configuration a given service could return different values.
-	 However for a given instance the value should never change. */
-	var supportedUserProperties: Set<UserProperty> {get}
-	
 	/** Convert the user to a user printable string. Mostly used for logging. */
 	func shortDescription(fromUser user: UserType) -> String
 	
