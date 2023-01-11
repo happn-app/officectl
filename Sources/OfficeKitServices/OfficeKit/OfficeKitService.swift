@@ -9,8 +9,10 @@ import Foundation
 
 import Email
 import GenericJSON
+import OfficeModelCore
 import OperationAwaiting
 import ServiceKit
+import UnwrapOrThrow
 import URLRequestOperation
 
 import OfficeKit2
@@ -55,10 +57,6 @@ public final class OfficeKitService : UserService {
 	
 	public func persistentUserID(fromString string: String) throws -> String {
 		return string
-	}
-	
-	public func json(fromUser user: OfficeKitUser) throws -> JSON {
-		return try JSON(encodable: user)
 	}
 	
 	public func alternateIDs(fromUserID userID: String) -> (regular: String, other: Set<String>) {

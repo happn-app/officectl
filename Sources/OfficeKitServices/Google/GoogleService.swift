@@ -67,10 +67,6 @@ public final class GoogleService : UserService {
 		return string
 	}
 	
-	public func json(fromUser user: GoogleUser) throws -> JSON {
-		return try JSON(encodable: user)
-	}
-	
 	public func alternateIDs(fromUserID userID: Email) -> (regular: Email, other: Set<Email>) {
 		return (regular: userID, other: [])
 	}

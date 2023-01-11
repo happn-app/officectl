@@ -68,10 +68,6 @@ public final class HappnService : UserService {
 		return string
 	}
 	
-	public func json(fromUser user: HappnUser) throws -> JSON {
-		return try JSON(encodable: user)
-	}
-	
 	public func alternateIDs(fromUserID userID: Email) -> (regular: Email, other: Set<Email>) {
 		let regular = userID.primaryDomainVariant(aliasMap: config.domainAliases)
 		let other = regular.allDomainVariants(aliasMap: config.domainAliases).subtracting([regular])

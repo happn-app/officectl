@@ -26,13 +26,6 @@ public protocol UserService<UserType> : OfficeService {
 	func persistentUserID(fromString string: String) throws -> UserType.PersistentUserIDType
 	
 	/**
-	 Converts the given user to a JSON (generic codable storage representation).
-	 
-	 The representation is usually stored as an underlying user in a ``UserWrapper``.
-	 It should contain as much as possible from the original user. */
-	func json(fromUser user: UserType) throws -> JSON
-	
-	/**
 	 Returns the different possible IDs from a given ID.
 	 
 	 Example: If you expect all of your users to be on a given domain, but you have a domain alias, and the underlying service do not support domain alias.

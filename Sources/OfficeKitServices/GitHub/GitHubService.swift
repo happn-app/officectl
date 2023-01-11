@@ -62,10 +62,6 @@ public final class GitHubService : UserService {
 		return try Int(string) ?! Err.invalidPersistentID
 	}
 	
-	public func json(fromUser user: GitHubUser) throws -> GenericJSON.JSON {
-		return try JSON(encodable: user)
-	}
-	
 	public func alternateIDs(fromUserID userID: String) -> (regular: String, other: Set<String>) {
 		return (regular: userID, other: [])
 	}

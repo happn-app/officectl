@@ -65,10 +65,6 @@ public final class LDAPService : UserService, AuthenticatorService {
 		throw Err.serviceDoesNotHavePersistentID
 	}
 	
-	public func json(fromUser user: LDAPObject) throws -> JSON {
-		return try JSON(encodable: user)
-	}
-	
 	public func alternateIDs(fromUserID userID: LDAPDistinguishedName) -> (regular: LDAPDistinguishedName, other: Set<LDAPDistinguishedName>) {
 		return (regular: userID, other: [])
 	}
