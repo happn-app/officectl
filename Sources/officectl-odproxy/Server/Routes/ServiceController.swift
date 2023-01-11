@@ -31,11 +31,7 @@ final class ServiceController {
 		guard let odUser = try await odService.existingUser(fromID: input.userID.id, propertiesToFetch: input.propertiesToFetch, using: req.services) else {
 			return .init(nil)
 		}
-		return try .init(OfficeKitUser(
-			underlyingUser: UserAndServiceFrom(user: odUser, service: odService)!,
-			nonStandardProperties: [:],
-			opaqueUserInfo: JSONEncoder().encode(odUser.properties)
-		))
+		return try .init(OfficeKitUser(odUser: odUser, odService: odService))
 	}
 	
 	func existingUserFromPersistentID(_ req: Request) async throws -> WrappedOptional<OfficeKitUser> {
@@ -46,11 +42,13 @@ final class ServiceController {
 		guard let odUser = try await odService.existingUser(fromPersistentID: persistentID, propertiesToFetch: input.propertiesToFetch, using: req.services) else {
 			return .init(nil)
 		}
-		return try .init(OfficeKitUser(
-			underlyingUser: UserAndServiceFrom(user: odUser, service: odService)!,
-			nonStandardProperties: [:],
-			opaqueUserInfo: JSONEncoder().encode(odUser.properties)
-		))
+		return try .init(OfficeKitUser(odUser: odUser, odService: odService))
+	}
+	
+	func listAllUsers(_ req: Request) async throws -> [OfficeKitUser] {
+		let input = try req.query.decode(ListAllUsersRequest.self)
+		let users = try await odService.listAllUsers(includeSuspended: input.includeSuspended, propertiesToFetch: input.propertiesToFetch, using: req.services)
+		return try users.map{ try OfficeKitUser(odUser: $0, odService: odService) }
 	}
 	
 }
