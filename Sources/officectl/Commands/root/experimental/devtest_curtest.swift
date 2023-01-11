@@ -17,8 +17,7 @@ import OfficeKit2
 import SemiSingleton
 import URLRequestOperation
 
-import HappnOffice
-import OpenDirectoryOffice
+import GoogleOffice
 
 
 
@@ -49,82 +48,19 @@ struct CurrentDevTestCommand : AsyncParsableCommand {
 //		let simpleMDMToken = try nil2throw(officectlConfig.tmpSimpleMDMToken)
 		
 		/* OfficeKit2 tests. */
-		let oldConfHappn: OfficeKit.HappnServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
-		let happnService = try HappnService(id: "hppn", jsonConfig: .object([
-			"service_name": .string("happn"),
-			"domain_aliases": .object(officeKitConfig.globalConfig.domainAliases.mapValues{ .string($0) }),
+		let oldConfGougle: OfficeKit.GoogleServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
+		let googleService = try GoogleService(id: "ggl", jsonConfig: .object([
+			"service_name": .string("gougle"),
+			"primary_domains": .array(oldConfGougle.primaryDomains.map{ .string($0) }),
 			"connector_settings": .object([
-				"base_url": .string(oldConfHappn.connectorSettings.baseURL.absoluteString),
-				"client_id": .string(oldConfHappn.connectorSettings.clientID),
-				"client_secret": .string(oldConfHappn.connectorSettings.clientSecret),
-				"admin_username": .string(oldConfHappn.connectorSettings.authMode.username!),
-				"admin_password": .string(oldConfHappn.connectorSettings.authMode.password!),
+				"admin_email": .string(oldConfGougle.connectorSettings.userBehalf!),
+				"superuser_json_creds_path": .string(oldConfGougle.connectorSettings.jsonCredentialsURL.path)
 			]),
 			"user_id_builders": JSON(encodable: [
-				UserIDBuilder(format: "|id|"),
 				UserIDBuilder(format: "*|first_name|.|last_name|*@happn.fr")
 			])
 		]))
-		let oldConfOD: OfficeKit.OpenDirectoryServiceConfig = try officeKitConfig.getServiceConfig(id: nil)
-//		let odService = try HappnService(id: "hppn", jsonConfig: .object([
-//			"service_name": .string("happn"),
-//			"domain_aliases": .object(officeKitConfig.globalConfig.domainAliases.mapValues{ .string($0) }),
-//			"connector_settings": .object([
-//				"base_url": .string(oldConfHappn.connectorSettings.baseURL.absoluteString),
-//				"client_id": .string(oldConfHappn.connectorSettings.clientID),
-//				"client_secret": .string(oldConfHappn.connectorSettings.clientSecret),
-//				"admin_username": .string(oldConfHappn.connectorSettings.authMode.username!),
-//				"admin_password": .string(oldConfHappn.connectorSettings.authMode.password!),
-//			]),
-//			"user_id_builders": JSON(encodable: [
-//				UserIDBuilder(format: "|id|"),
-//				UserIDBuilder(format: "*|first_name|.|last_name|*@happn.fr")
-//			])
-//		]))
-//		do {
-////			let user = try await googleService.existingUser(fromPersistentID: "103126761345692481320", propertiesToFetch: [.firstName, .id], using: app.services)
-////			let user = try await googleService.existingUser(fromID: Email(rawValue: "formind.dev@happn.fr")!, propertiesToFetch: nil, using: app.services)
-//			let users = try await googleService.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: app.services)
-//			users.forEach{ print($0) }
-//		} catch let error as URLRequestOperationError {
-//			print(error)
-//			print((error.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.httpBody?.reduce("", { $0 + String(format: "%02x", $1) }))
-//		}
-//		do {
-//			var newAdmin = HappnUser(login: Email(rawValue: "officectl__test_user@happn.fr")!)
-//			newAdmin.firstName = "officectl"
-//
-//			print("Creating new test admin")
-//			newAdmin = try await happnService.createUser(newAdmin, using: app.services)
-//
-//			print("Waiting a bit")
-//			try await Task.sleep(nanoseconds: 3_000_000_000)
-//
-//			newAdmin.firstName = "officectl (modified)"
-//			newAdmin.lastName = "Test"
-//			newAdmin.gender = .female
-//			do {
-//				let updatedAdmin = try await happnService.updateUser(newAdmin, propertiesToUpdate: [.id, .lastName], using: app.services)
-//				try await happnService.changePassword(of: updatedAdmin, to: "toto", using: app.services)
-//				print(updatedAdmin)
-//			} catch {
-//				print(error)
-//			}
-//
-//
-//			print("Waiting again")
-//			try await Task.sleep(nanoseconds: 7_000_000_000)
-//
-//			print("Deleting test admin")
-//			try await happnService.deleteUser(newAdmin, using: app.services)
-//
-//			try await print(happnService.existingUser(fromID: Email(rawValue: "francois.lamboley@happn.fr")!, propertiesToFetch: nil, using: app.services))
-////			try await print(happnService.existingUser(fromPersistentID: "243", propertiesToFetch: nil, using: app.services))
-////			try await print(happnService.listAllUsers(propertiesToFetch: nil, using: app.services))
-//		} catch let error as URLRequestOperationError {
-//			print(error)
-//			print((error.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.httpBody?.reduce("", { $0 + String(format: "%02x", $1) }))
-//		}
+		googleService.connector
 		
 		/* List users by creation date decreasing */
 //		let gougleService: GoogleService = try app.officeKitServiceProvider.getService(id: nil)
