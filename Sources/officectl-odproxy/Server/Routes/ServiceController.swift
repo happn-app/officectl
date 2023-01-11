@@ -63,4 +63,18 @@ final class ServiceController {
 		return try await OfficeKitUser(odUser: odService.updateUser(odUser, propertiesToUpdate: input.propertiesToUpdate, using: req.services), odService: odService)
 	}
 	
+	func deleteUser(_ req: Request) async throws -> Empty {
+		let input = try req.content.decode(DeleteUserRequest.self)
+		let odUser = try input.user.odUser(odServiceID: odService.id)
+		try await odService.deleteUser(odUser, using: req.services)
+		return Empty()
+	}
+	
+	func changePasswordOfUser(_ req: Request) async throws -> Empty {
+		let input = try req.content.decode(ChangePasswordRequest.self)
+		let odUser = try input.user.odUser(odServiceID: odService.id)
+		try await odService.changePassword(of: odUser, to: input.newPassword, using: req.services)
+		return Empty()
+	}
+	
 }

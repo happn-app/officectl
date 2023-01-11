@@ -13,5 +13,6 @@ import OfficeKitOffice
 
 
 
+extension Empty : Content {}
 extension OfficeKitUser : Content {}
 extension WrappedOptional : Content {}
