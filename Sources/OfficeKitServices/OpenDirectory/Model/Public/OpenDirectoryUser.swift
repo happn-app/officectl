@@ -30,6 +30,11 @@ public struct OpenDirectoryUser : Sendable, Codable {
 		if let nfsHomeDirectory {properties[kODAttributeTypeNFSHomeDirectory] = .string(nfsHomeDirectory)}
 	}
 	
+	public init(id: String, properties: [String: OpenDirectoryAttributeValue]) {
+		self.id = id
+		self.properties = properties
+	}
+	
 	/**
 	 Initialiazes an ``OpenDirectoryUser`` with an ODRecord. */
 	@ODActor

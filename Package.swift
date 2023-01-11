@@ -214,12 +214,13 @@ let package = Package(
 #endif
 #if canImport(OpenDirectory)
 		ret.append(.executableTarget(name: "officectl-odproxy", dependencies: [
-			.product(name: "Crypto",       package: "swift-crypto"),
-			.product(name: "GenericJSON",  package: "generic-json-swift"),
-			.product(name: "JWT",          package: "jwt"),
-			.product(name: "LegibleError", package: "LegibleError"),
-			.product(name: "Vapor",        package: "vapor"),
-			.product(name: "Yaml",         package: "YamlSwift"),
+			.product(name: "Crypto",        package: "swift-crypto"),
+			.product(name: "GenericJSON",   package: "generic-json-swift"),
+			.product(name: "JWT",           package: "jwt"),
+			.product(name: "LegibleError",  package: "LegibleError"),
+			.product(name: "UnwrapOrThrow", package: "UnwrapOrThrow"),
+			.product(name: "Vapor",         package: "vapor"),
+			.product(name: "Yaml",          package: "YamlSwift"),
 			.target(name: "OfficeKit2"),
 			.target(name: "OfficeKitOffice"),
 			.target(name: "OpenDirectoryOffice")
