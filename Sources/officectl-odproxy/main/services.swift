@@ -16,32 +16,6 @@ import Vapor
 
 extension Application {
 	
-	var semiSingletonStore: SemiSingletonStore {
-		/* I’m not sure accessing storage outside of the queue is thread-safe… */
-		if let existing = storage[SemiSingletonStoreKey.self] {
-			return existing
-		} else {
-			return Application.depRegisteringQueue.sync{
-				if let existing = storage[SemiSingletonStoreKey.self] {
-					return existing
-				} else {
-					let new = SemiSingletonStore(forceClassInKeys: true)
-					storage[SemiSingletonStoreKey.self] = new
-					return new
-				}
-			}
-		}
-	}
-	
-	private struct SemiSingletonStoreKey: StorageKey {
-		typealias Value = SemiSingletonStore
-	}
-	
-}
-
-
-extension Application {
-	
 	var services: Services {
 		/* I’m not sure accessing storage outside of the queue is thread-safe… */
 		if let existing = storage[ServicesKey.self] {
@@ -54,7 +28,6 @@ extension Application {
 					var new = Services()
 					let queue = OperationQueue()
 					new.register{ queue } /* We always want to return the same queue */
-					new.register{ self.semiSingletonStore }
 					storage[ServicesKey.self] = new
 					return new
 				}
