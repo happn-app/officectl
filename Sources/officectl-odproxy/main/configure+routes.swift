@@ -26,8 +26,9 @@ func configureRoutes(_ app: Application, _ serverConfig: ServerConfig, _ odServi
 	/* ********* Register Routes ********* */
 	
 	let serviceController = ServiceController(odService: odService)
-	app.post("existing-user-from-id",            use: serviceController.existingUserFromID)
-	app.post("existing-user-from-persistent-id", use: serviceController.existingUserFromPersistentID)
-	app.get( "list-all-users",                   use: serviceController.listAllUsers)
-	app.post("create-user",                      use: serviceController.createUser)
+	app.post( "existing-user-from-id",            use: serviceController.existingUserFromID)
+	app.post( "existing-user-from-persistent-id", use: serviceController.existingUserFromPersistentID)
+	app.get(  "list-all-users",                   use: serviceController.listAllUsers)
+	app.post( "create-user",                      use: serviceController.createUser)
+	app.patch("update-user",                      use: serviceController.updateUser)
 }

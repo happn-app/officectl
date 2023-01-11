@@ -57,4 +57,10 @@ final class ServiceController {
 		return try await OfficeKitUser(odUser: odService.createUser(odUser, using: req.services), odService: odService)
 	}
 	
+	func updateUser(_ req: Request) async throws -> OfficeKitUser {
+		let input = try req.content.decode(UpdateUserRequest.self)
+		let odUser = try input.user.odUser(odServiceID: odService.id)
+		return try await OfficeKitUser(odUser: odService.updateUser(odUser, propertiesToUpdate: input.propertiesToUpdate, using: req.services), odService: odService)
+	}
+	
 }
