@@ -25,13 +25,16 @@ final class ServiceController {
 	
 	func existingUserFromID(_ req: Request) async throws -> WrappedOptional<OfficeKitUser> {
 		let input = try req.content.decode(ExistingUserFromIDRequest.self)
-		guard let odUser = try await odService.existingUser(fromID: input.userID, propertiesToFetch: input.propertiesToFetch, using: req.services) else {
+		guard input.userID.tag == odService.id else {
+			throw Abort(.badRequest, reason: "Invalid tag for user.")
+		}
+		guard let odUser = try await odService.existingUser(fromID: input.userID.id, propertiesToFetch: input.propertiesToFetch, using: req.services) else {
 			return .init(nil)
 		}
 		return try .init(OfficeKitUser(
-			id: odService.string(fromUserID: odUser.oU_id),
-			persistentID: odUser.oU_persistentID.flatMap(odService.string(fromPersistentUserID:)),
-			underlyingUserAndService: UserAndServiceFrom(user: odUser, service: odService)!
+			underlyingUser: UserAndServiceFrom(user: odUser, service: odService)!,
+			nonStandardProperties: [:],
+			opaqueUserInfo: JSONEncoder().encode(odUser.properties)
 		))
 	}
 	
