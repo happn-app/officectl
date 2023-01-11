@@ -43,30 +43,31 @@ public final class OfficeKitService : UserService {
 		return "OfficeKitUser<\(user.id)>"
 	}
 	
-	public func string(fromUserID userID: String) -> String {
-		return userID
+	public func string(fromUserID userID: TaggedID) -> String {
+		return userID.stringValue
 	}
 	
-	public func userID(fromString string: String) throws -> String {
-		return string
+	public func userID(fromString string: String) throws -> TaggedID {
+		return try .init(string) ?! Err.invalidUserIDFormat
 	}
 	
-	public func string(fromPersistentUserID pID: String) -> String {
-		return pID
+	public func string(fromPersistentUserID pID: TaggedID) -> String {
+		return pID.stringValue
 	}
 	
-	public func persistentUserID(fromString string: String) throws -> String {
-		return string
+	public func persistentUserID(fromString string: String) throws -> TaggedID {
+		return try .init(string) ?! Err.invalidUserIDFormat
 	}
 	
-	public func alternateIDs(fromUserID userID: String) -> (regular: String, other: Set<String>) {
+	public func alternateIDs(fromUserID userID: TaggedID) -> (regular: TaggedID, other: Set<TaggedID>) {
 #warning("TODO: Use config.alternateUserIDsBuilders")
 		return (userID, [])
 	}
 	
-	public func logicalUserID<OtherUserType : User>(fromUser user: OtherUserType) throws -> String {
+	public func logicalUserID<OtherUserType : User>(fromUser user: OtherUserType) throws -> TaggedID {
 		let id = config.userIDBuilders?.lazy
 			.compactMap{ $0.inferID(fromUser: user) }
+			.compactMap(TaggedID.init(_:))
 			.first{ _ in true } /* Not a simple `.first` because of <https://stackoverflow.com/a/71778190> (avoid the handler(s) to be called more than once). */
 		guard let id else {
 			throw OfficeKitError.cannotInferUserIDFromOtherUser
@@ -74,7 +75,7 @@ public final class OfficeKitService : UserService {
 		return id
 	}
 	
-	public func existingUser(fromID uID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OfficeKitUser? {
+	public func existingUser(fromID uID: TaggedID, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OfficeKitUser? {
 		/* We use POST because 1. we want the request _not_ to be idempotent and 2. we want to avoid sending user ID or other sensitive informations in the logs.
 		 * Not sure this is justified; we can change this if needed. */
 		let request = ExistingUserFromIDRequest(userID: uID, propertiesToFetch: propertiesToFetch)
@@ -85,7 +86,7 @@ public final class OfficeKitService : UserService {
 		return try await operation.startAndGetResult().result.value
 	}
 	
-	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OfficeKitUser? {
+	public func existingUser(fromPersistentID pID: TaggedID, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OfficeKitUser? {
 		let request = ExistingUserFromPersistentIDRequest(userPersistentID: pID, propertiesToFetch: propertiesToFetch)
 		let operation = try URLRequestDataOperation<WrappedOptional<OfficeKitUser>>.forAPIRequest(
 			url: config.upstreamURL.appending("existing-user-from-persistent-id"), method: "POST", httpBody: request,

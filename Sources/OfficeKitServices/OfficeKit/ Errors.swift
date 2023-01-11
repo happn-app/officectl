@@ -11,6 +11,8 @@ import Foundation
 
 public enum OfficeKitOfficeError : Error, Sendable {
 	
+	case invalidUserIDFormat
+	
 	case internalError
 	
 	case __notImplemented

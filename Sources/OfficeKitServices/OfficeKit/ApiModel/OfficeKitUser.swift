@@ -9,14 +9,16 @@ import Foundation
 
 import Email
 @preconcurrency import GenericJSON
+import OfficeModelCore
+
 import OfficeKit2
 
 
 
 public struct OfficeKitUser : Codable, Sendable {
 	
-	public var id: String
-	public var persistentID: String?
+	public var id: TaggedID
+	public var persistentID: TaggedID?
 	
 	public var isSuspended: Bool?
 	
@@ -26,22 +28,27 @@ public struct OfficeKitUser : Codable, Sendable {
 	
 	public var emails: [Email]?
 	
+	/** Must contain all the non-standard properties contained in the destination service’s user, encoded as JSON. */
 	public var nonStandardProperties: [String: JSON]
 	
+	/**
+	 Used by destination service internally to avoid re-fetching users from their upstream service if it can be avoided.
+	 Can be left `nil`. */
 	public var opaqueUserInfo: Data?
 	
-	public init(id: String, persistentID: String? = nil, underlyingUser: any User, nonStandardProperties: [String: JSON], opaqueUserInfo: Data?) {
-		self.id = id
-		self.persistentID = persistentID
-		
-		self.isSuspended = underlyingUser.oU_isSuspended
-		self.firstName = underlyingUser.oU_firstName
-		self.lastName = underlyingUser.oU_lastName
-		self.nickname = underlyingUser.oU_nickname
-		self.emails = underlyingUser.oU_emails
+	/**
+	 Init an OfficeKit user.
+	 The standard properties are filled automatically from the underlying user. */
+	public init(underlyingUser: any UserAndService, nonStandardProperties: [String: JSON], opaqueUserInfo: Data?) {
+		self.id = underlyingUser.taggedID
+		self.persistentID = underlyingUser.taggedPersistentID
+		self.isSuspended = underlyingUser.user.oU_isSuspended
+		self.firstName = underlyingUser.user.oU_firstName
+		self.lastName = underlyingUser.user.oU_lastName
+		self.nickname = underlyingUser.user.oU_nickname
+		self.emails = underlyingUser.user.oU_emails
 		
 		self.nonStandardProperties = nonStandardProperties
-		
 		self.opaqueUserInfo = opaqueUserInfo
 	}
 	

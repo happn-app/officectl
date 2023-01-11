@@ -7,13 +7,15 @@
 
 import Foundation
 
+import OfficeModelCore
+
 import OfficeKit2
 
 
 
 public struct ExistingUserFromIDRequest : Codable, Sendable {
 	
-	public var userID: String
+	public var userID: TaggedID
 	public var propertiesToFetch: Set<UserProperty>?
 	
 }
