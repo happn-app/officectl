@@ -102,7 +102,7 @@ public actor HappnConnector : Connector, Authenticator, HasTaskQueue {
 		do {
 			_ = try await op.startAndGetResult()
 			self.tokenInfo = nil
-		} catch where ((error as? URLRequestOperationError)?.postProcessError as? URLRequestOperationError.UnexpectedStatusCode)?.actual == 410 {
+		} catch where (error as? URLRequestOperationError)?.unexpectedStatusCodeError?.actual == 410 {
 			/* We consider the 410 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
 		}
 	}

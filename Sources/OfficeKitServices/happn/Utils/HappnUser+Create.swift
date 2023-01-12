@@ -18,9 +18,10 @@ import OfficeKit
 internal extension HappnUser {
 	
 	func create(connector: HappnConnector) async throws -> HappnUser {
-		let decoder = JSONDecoder()
-		decoder.dateDecodingStrategy = .iso8601
-		decoder.keyDecodingStrategy = .useDefaultKeys
+		let decoder = SendableJSONDecoder{
+			$0.dateDecodingStrategy = .iso8601
+			$0.keyDecodingStrategy = .useDefaultKeys
+		}
 		
 		guard password != nil else {
 			/* A user must be created w/ a password (or we get a weird error when creating the account, and the account is unusable though it appear to exist). */

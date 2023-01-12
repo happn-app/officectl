@@ -8,9 +8,10 @@
 import Foundation
 
 import HasResult
+import OperationAwaiting
 import URLRequestOperation
 
 
 
-extension URLRequestDataOperation : HasResult {}
-extension URLRequestDownloadOperation : HasResult {}
+extension URLRequestDataOperation : HasResult, SendableOperation {}
+extension URLRequestDownloadOperation : HasResult, SendableOperation {}

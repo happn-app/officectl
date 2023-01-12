@@ -34,8 +34,9 @@ internal extension GoogleUser {
 		let baseURL = URL(string: "https://www.googleapis.com/admin/directory/v1/")!
 		let queryParams = RequestQuery(domain: request.domain, query: request.query, projection: "BASIC", pageToken: nextPageToken)
 		
-		let decoder = JSONDecoder()
-		decoder.dateDecodingStrategy = Conf.dateDecodingStrategy
+		let decoder = SendableJSONDecoder{
+			$0.dateDecodingStrategy = Conf.dateDecodingStrategy
+		}
 		let op = try URLRequestDataOperation<GoogleUsersList>.forAPIRequest(
 			url: baseURL.appendingPathComponentsSafely("users"), urlParameters: queryParams,
 			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []

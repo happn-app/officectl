@@ -113,8 +113,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Frizlab/HasResult.git",
       "state" : {
-        "revision" : "a6eb60f65e33f9fb3ad425fea0838a05e298f270",
-        "version" : "1.0.0"
+        "revision" : "bedeb48a48d536d6fc706dc5327a3ea41f1b1061",
+        "version" : "2.0.0"
       }
     },
     {
@@ -203,8 +203,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Frizlab/OperationAwaiting.git",
       "state" : {
-        "revision" : "a1c40b3e1fc6d837adee76d4fb924e27441151a3",
-        "version" : "1.2.0-beta.2"
+        "revision" : "ab349561964c500a1794e8053c4edd76833d9c01",
+        "version" : "1.3.0-beta.1"
       }
     },
     {
@@ -428,8 +428,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/happn-app/URLRequestOperation.git",
       "state" : {
-        "revision" : "9c172bf40386739c9245555031662e557dae4551",
-        "version" : "2.0.0-alpha.13.5"
+        "revision" : "098dde8b8579ab845393d3a9c4ff78c33c47ab2c",
+        "version" : "2.0.0-alpha.14.1"
       }
     },
     {

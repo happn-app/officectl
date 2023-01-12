@@ -26,8 +26,9 @@ internal extension GoogleUser {
 		if let _ = keys {urlParameters = ["projection": "BASIC"]}
 		else            {urlParameters = ["projection": "BASIC"]}
 		
-		let decoder = JSONDecoder()
-		decoder.dateDecodingStrategy = Conf.dateDecodingStrategy
+		let decoder = SendableJSONDecoder{
+			$0.dateDecodingStrategy = Conf.dateDecodingStrategy
+		}
 		let op = try URLRequestDataOperation<GoogleUser>.forAPIRequest(
 			url: try baseURL.appending("users", id), urlParameters: urlParameters,
 			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []

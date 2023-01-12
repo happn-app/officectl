@@ -25,8 +25,9 @@ internal extension HappnUser {
 			throw Err.noPersistentID
 		}
 		
-		let decoder = JSONDecoder()
-		decoder.dateDecodingStrategy = .iso8601
+		let decoder = SendableJSONDecoder{
+			$0.dateDecodingStrategy = .iso8601
+		}
 		
 		let op = try URLRequestDataOperation<ApiResult<HappnUser>>.forAPIRequest(
 			url: connector.baseURL.appending("api", "users", userID), method: "PUT"/* Partial apply should be PATCH in theory… */,

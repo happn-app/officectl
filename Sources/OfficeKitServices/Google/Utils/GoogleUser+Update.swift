@@ -25,8 +25,9 @@ internal extension GoogleUser {
 			throw Err.noPersistentID
 		}
 		
-		let decoder = JSONDecoder()
-		decoder.dateDecodingStrategy = Conf.dateDecodingStrategy
+		let decoder = SendableJSONDecoder{
+			$0.dateDecodingStrategy = Conf.dateDecodingStrategy
+		}
 		
 		/* Partial apply should be PATCH, doc says PUT supports PATCH semantics.
 		 * It also says PATCH is slower and clearing properties that are arrays is not possible with PATCH. */

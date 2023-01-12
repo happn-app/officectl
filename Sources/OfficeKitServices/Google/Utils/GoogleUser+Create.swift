@@ -21,8 +21,9 @@ internal extension GoogleUser {
 	func create(connector: GoogleConnector) async throws -> GoogleUser {
 		let baseURL = URL(string: "https://www.googleapis.com/admin/directory/v1/")!
 		
-		let decoder = JSONDecoder()
-		decoder.dateDecodingStrategy = Conf.dateDecodingStrategy
+		let decoder = SendableJSONDecoder{
+			$0.dateDecodingStrategy = Conf.dateDecodingStrategy
+		}
 		let createUserOperation = try URLRequestDataOperation<GoogleUser>.forAPIRequest(
 			url: baseURL.appending("users"), httpBody: self,
 			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
