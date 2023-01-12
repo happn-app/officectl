@@ -9,7 +9,7 @@ import Foundation
 
 import COpenLDAP
 
-import OfficeKit2
+import OfficeKit
 
 
 

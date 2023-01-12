@@ -8,7 +8,7 @@
 import Foundation
 
 import LegibleError
-import OfficeKit2
+import OfficeKit
 import Vapor
 
 

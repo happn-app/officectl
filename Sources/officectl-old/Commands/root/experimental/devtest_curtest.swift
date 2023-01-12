@@ -13,7 +13,7 @@ import GenericJSON
 import Vapor
 
 import OfficeKit
-import OfficeKit2
+import OfficeKit
 import SemiSingleton
 import URLRequestOperation
 

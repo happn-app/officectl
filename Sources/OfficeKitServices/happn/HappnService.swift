@@ -14,7 +14,7 @@ import UnwrapOrThrow
 import URLRequestOperation
 
 import CommonOfficePropertiesFromHappn
-import OfficeKit2
+import OfficeKit
 import ServiceKit
 
 

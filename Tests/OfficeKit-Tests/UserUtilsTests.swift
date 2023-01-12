@@ -8,7 +8,7 @@
 import Foundation
 import XCTest
 
-@testable import OfficeKit2
+@testable import OfficeKit
 
 
 

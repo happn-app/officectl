@@ -9,7 +9,7 @@ import Foundation
 
 import Vapor
 
-import OfficeKit2
+import OfficeKit
 import OfficeKitOffice
 import OpenDirectoryOffice
 

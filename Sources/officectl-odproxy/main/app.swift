@@ -7,7 +7,7 @@
 
 import Foundation
 
-import OfficeKit2
+import OfficeKit
 import Vapor
 
 

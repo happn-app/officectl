@@ -47,7 +47,7 @@ let package = Package(
 	],
 	products: {
 		var ret = [Product]()
-		ret.append(.library(name: "OfficeKit", targets: ["OfficeKit", "OfficeKit2"]))
+		ret.append(.library(name: "OfficeKit", targets: ["OfficeKit"]))
 		ret.append(.executable(name: "officectl", targets: ["officectl"]))
 #if canImport(OpenDirectory)
 		ret.append(.executable(name: "officectl-odproxy", targets: ["officectl-odproxy"]))
@@ -96,7 +96,6 @@ let package = Package(
 	targets: {
 		var ret = [Target]()
 		ret.append(.target(name: "ServiceKit",     swiftSettings: commonSwiftSettings))
-		ret.append(.target(name: "GenericStorage", swiftSettings: commonSwiftSettings))
 		
 		/* ***************
 		   MARK: OfficeKit
@@ -106,52 +105,20 @@ let package = Package(
 			name: "OfficeKit",
 			dependencies: {
 				var ret = [Target.Dependency]()
-				ret.append(contentsOf: networkDependencies)
-				ret.append(.product(name: "APIConnectionProtocols",   package: "APIConnectionProtocols"))
-				ret.append(.product(name: "CollectionConcurrencyKit", package: "CollectionConcurrencyKit"))
-				ret.append(.product(name: "Crypto",                   package: "swift-crypto"))
-				ret.append(.product(name: "Email",                    package: "swift-email"))
-				ret.append(.product(name: "GenericJSON",              package: "generic-json-swift"))
-				ret.append(.product(name: "JWT",                      package: "jwt"))
-				ret.append(.product(name: "Logging",                  package: "swift-log"))
-				ret.append(.product(name: "NIO",                      package: "swift-nio"))
-				ret.append(.product(name: "OfficeModel",              package: "officectl-model")) /* We should try and get rid of this dep from there. */
-				ret.append(.product(name: "RetryingOperation",        package: "RetryingOperation"))
-				ret.append(.product(name: "SemiSingleton",            package: "SemiSingleton"))
-				ret.append(.product(name: "Yaml",                     package: "YamlSwift"))
-				ret.append(.target(name: "GenericStorage"))
-				ret.append(.target(name: "ServiceKit"))
-#if !os(Linux)
-				/* On macOS we use xcframework dependencies for OpenSSL and OpenLDAP. */
-				ret.append(.product(name: "COpenSSL-dynamic",  package: "COpenSSL"))
-				ret.append(.product(name: "COpenLDAP-dynamic", package: "COpenLDAP"))
-#else
-				/* On Linux we use the standard OpenLDAP package. */
-				ret.append(.target(name: "COpenLDAP"))
-#endif
-				return ret
-			}(),
-			swiftSettings: commonSwiftSettings
-		))
-		ret.append(.testTarget(name: "OfficeKit-Tests", dependencies: ["OfficeKit", .product(name: "OfficeModel", package: "officectl-model")]))
-		
-		ret.append(.target(
-			name: "OfficeKit2",
-			dependencies: {
-				var ret = [Target.Dependency]()
 				ret.append(contentsOf: coreDependencies)
-				ret.append(.product(name: "APIConnectionProtocols",   package: "APIConnectionProtocols"))
-				ret.append(.product(name: "URLRequestOperation",      package: "URLRequestOperation"))
-				ret.append(.product(name: "RESTUtils",                package: "BMO"))
-				ret.append(.product(name: "XibLoc",                   package: "XibLoc"))
+				ret.append(contentsOf: ldapDependencies)
+				ret.append(.product(name: "APIConnectionProtocols", package: "APIConnectionProtocols"))
+				ret.append(.product(name: "URLRequestOperation",    package: "URLRequestOperation"))
+				ret.append(.product(name: "RESTUtils",              package: "BMO"))
+				ret.append(.product(name: "XibLoc",                 package: "XibLoc"))
 				return ret
 			}(),
 			swiftSettings: commonSwiftSettings
 		))
-		ret.append(.testTarget(name: "OfficeKit2-Tests", dependencies: {
+		ret.append(.testTarget(name: "OfficeKit-Tests", dependencies: {
 			var ret = [Target.Dependency]()
 			/* The tested lib. */
-			ret.append(.target(name: "OfficeKit2"))
+			ret.append(.target(name: "OfficeKit"))
 			/* Dependencies for helpers and co. */
 			ret.append(.product(name: "Email",       package: "swift-email"))
 			ret.append(.product(name: "GenericJSON", package: "generic-json-swift"))
@@ -162,7 +129,7 @@ let package = Package(
 		/* *********************
 		   MARK: Office Services
 		   ********************* */
-		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit2")],                              path: "Sources/OfficeKitServices/ Common",     swiftSettings: commonSwiftSettings))
+		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit")],                               path: "Sources/OfficeKitServices/ Common",     swiftSettings: commonSwiftSettings))
 		ret.append(.target(name: "CommonForOfficeKitServicesTests", dependencies: [.product(name: "StreamReader", package: "stream-reader")], path: "Tests/OfficeKitServices-Tests/ Common", swiftSettings: commonSwiftSettings))
 		ret.append(contentsOf: targetsForService(named: "LDAPOffice",          folderName: "LDAP",      additionalDependencies: ldapDependencies))
 		ret.append(contentsOf: targetsForService(named: "OfficeKitOffice",     folderName: "OfficeKit", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
@@ -177,22 +144,8 @@ let package = Package(
 			name: "officectl",
 			dependencies: {
 				var ret = [Target.Dependency]()
-				ret.append(.product(name: "ArgumentParser",           package: "swift-argument-parser"))
-				ret.append(.product(name: "ASN1Decoder",              package: "ASN1Decoder"))
-				ret.append(.product(name: "CLTLogger",                package: "clt-logger"))
-				ret.append(.product(name: "CollectionConcurrencyKit", package: "CollectionConcurrencyKit"))
-				ret.append(.product(name: "ConsoleKit",               package: "console-kit"))
-				ret.append(.product(name: "Crypto",                   package: "swift-crypto"))
-				ret.append(.product(name: "JWT",                      package: "jwt"))
-				ret.append(.product(name: "Leaf",                     package: "leaf"))
-				ret.append(.product(name: "LegibleError",             package: "LegibleError"))
-				ret.append(.product(name: "Metrics",                  package: "swift-metrics"))
-				ret.append(.product(name: "OfficeModel",              package: "officectl-model"))
-				ret.append(.product(name: "SwiftPrometheus",          package: "SwiftPrometheus"))
-				ret.append(.product(name: "Vapor",                    package: "vapor"))
-				ret.append(.product(name: "Yaml",                     package: "YamlSwift"))
+				ret.append(.product(name: "ArgumentParser", package: "swift-argument-parser"))
 				ret.append(.target(name: "OfficeKit"))
-				ret.append(.target(name: "OfficeKit2"))
 				ret.append(.target(name: "GoogleOffice"))
 				ret.append(.target(name: "HappnOffice"))
 				ret.append(.target(name: "OpenDirectoryOffice"))
@@ -221,7 +174,7 @@ let package = Package(
 			.product(name: "UnwrapOrThrow", package: "UnwrapOrThrow"),
 			.product(name: "Vapor",         package: "vapor"),
 			.product(name: "Yaml",          package: "YamlSwift"),
-			.target(name: "OfficeKit2"),
+			.target(name: "OfficeKit"),
 			.target(name: "OfficeKitOffice"),
 			.target(name: "OpenDirectoryOffice")
 		]))
@@ -235,7 +188,7 @@ func targetsForService(named name: String, folderName: String, additionalDepende
 	let commonServiceDependencies: [Target.Dependency] = [
 		.product(name: "APIConnectionProtocols", package: "APIConnectionProtocols"),
 		.target(name: "CommonOfficePropertiesFromHappn"),
-		.target(name: "OfficeKit2")
+		.target(name: "OfficeKit")
 	]
 	let mainTarget: Target = .target(
 		name: name,

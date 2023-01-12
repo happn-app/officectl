@@ -15,7 +15,7 @@ extension DefaultForAbsentValue : Hashable where Wrapped : Hashable {}
 extension DefaultForAbsentValue : Equatable where Wrapped : Equatable {}
 
 @propertyWrapper
-public struct DefaultForAbsentValue<DefaultValueProvider : OfficeKit2.DefaultValueProvider> {
+public struct DefaultForAbsentValue<DefaultValueProvider : OfficeKit.DefaultValueProvider> {
 	
 	public typealias Wrapped = DefaultValueProvider.DefaultValue
 	
@@ -62,7 +62,7 @@ extension DefaultForAbsentValue : Encodable where Wrapped : Encodable {
 
 extension KeyedDecodingContainer {
 	
-	public func decode<DefaultValueProvider : OfficeKit2.DefaultValueProvider>(_ type: DefaultForAbsentValue<DefaultValueProvider>.Type, forKey key: Key) throws -> DefaultForAbsentValue<DefaultValueProvider>
+	public func decode<DefaultValueProvider : OfficeKit.DefaultValueProvider>(_ type: DefaultForAbsentValue<DefaultValueProvider>.Type, forKey key: Key) throws -> DefaultForAbsentValue<DefaultValueProvider>
 	where DefaultValueProvider.DefaultValue : Codable {
 		return try decodeIfPresent(DefaultForAbsentValue.self, forKey: key) ?? DefaultForAbsentValue()
 	}

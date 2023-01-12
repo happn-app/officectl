@@ -13,7 +13,7 @@ import URLRequestOperation
 import Vapor
 import Yaml
 
-import OfficeKit2
+import OfficeKit
 import OpenDirectoryOffice
 
 

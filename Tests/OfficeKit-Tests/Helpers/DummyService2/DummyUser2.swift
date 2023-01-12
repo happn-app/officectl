@@ -9,11 +9,11 @@ import Foundation
 
 import Email
 
-import OfficeKit2
+import OfficeKit
 
 
 
-struct DummyUser1 : User {
+struct DummyUser2 : User {
 	
 	typealias UserIDType = Never
 	typealias PersistentUserIDType = Never

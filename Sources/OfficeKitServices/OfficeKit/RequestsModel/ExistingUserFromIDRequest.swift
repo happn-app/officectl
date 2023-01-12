@@ -9,7 +9,7 @@ import Foundation
 
 import OfficeModelCore
 
-import OfficeKit2
+import OfficeKit
 
 
 

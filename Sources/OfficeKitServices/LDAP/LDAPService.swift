@@ -13,7 +13,7 @@ import GenericJSON
 import Logging
 import UnwrapOrThrow
 
-import OfficeKit2
+import OfficeKit
 import ServiceKit
 
 

@@ -7,9 +7,10 @@
 
 import Foundation
 
-import CommonOfficePropertiesFromHappn
 import Email
-import OfficeKit2
+
+import CommonOfficePropertiesFromHappn
+import OfficeKit
 
 
 

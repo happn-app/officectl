@@ -11,7 +11,7 @@ import XCTest
 import CommonForOfficeKitServicesTests
 import Email
 import Logging
-import OfficeKit2
+import OfficeKit
 import ServiceKit
 
 @testable import LDAPOffice

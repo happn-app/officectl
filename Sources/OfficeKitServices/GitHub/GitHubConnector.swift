@@ -8,7 +8,7 @@
 import Foundation
 
 import APIConnectionProtocols
-@preconcurrency import JWT
+import JWT
 import OperationAwaiting
 import TaskQueue
 import URLRequestOperation

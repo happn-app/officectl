@@ -10,7 +10,7 @@ import XCTest
 
 import CommonForOfficeKitServicesTests
 import Email
-import OfficeKit2
+import OfficeKit
 import ServiceKit
 import URLRequestOperation
 

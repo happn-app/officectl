@@ -10,19 +10,19 @@ import Foundation
 import Email
 import GenericJSON
 
-import OfficeKit2
+import OfficeKit
 import ServiceKit
 
 
 
-final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorService {
+final class DummyService1 : UserService, GroupOfUsersService, AuthenticatorService {
 	
 	struct TheDummyServiceCannotBeUsed : Error {}
 	
 	static let providerID: String = ""
 	
-	typealias AuthenticatedUserType = DummyUser2
-	typealias GroupOfUsersType = DummyGroupOfUsers2
+	typealias AuthenticatedUserType = DummyUser1
+	typealias GroupOfUsersType = DummyGroupOfUsers1
 	typealias AuthenticationChallenge = Never
 	
 	let id: String
@@ -35,7 +35,7 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 	   MARK: User Service
 	   ****************** */
 	
-	func shortDescription(fromUser user: DummyUser2) -> String {
+	func shortDescription(fromUser user: DummyUser1) -> String {
 		return "<ERROR>"
 	}
 	
@@ -53,7 +53,7 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
-	func json(fromUser user: DummyUser2) throws -> JSON {
+	func json(fromUser user: DummyUser1) throws -> JSON {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
@@ -64,33 +64,33 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
-	func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser2? {
+	func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser1? {
 	}
 	
-	func existingUser(fromID uID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser2? {
+	func existingUser(fromID uID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser1? {
 	}
 	
-	func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [DummyUser2] {
+	func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [DummyUser1] {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
 	let supportsUserCreation: Bool = false
-	func createUser(_ user: DummyUser2, using services: Services) async throws -> DummyUser2 {
+	func createUser(_ user: DummyUser1, using services: Services) async throws -> DummyUser1 {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
 	let supportsUserUpdate: Bool = false
-	func updateUser(_ user: DummyUser2, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> DummyUser2 {
+	func updateUser(_ user: DummyUser1, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> DummyUser1 {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
 	let supportsUserDeletion: Bool = false
-	func deleteUser(_ user: DummyUser2, using services: Services) async throws {
+	func deleteUser(_ user: DummyUser1, using services: Services) async throws {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
 	let supportsPasswordChange: Bool = false
-	func changePassword(of user: DummyUser2, to newPassword: String, using services: Services) throws {
+	func changePassword(of user: DummyUser1, to newPassword: String, using services: Services) throws {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
@@ -98,7 +98,7 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 	   MARK: Group of Users Service
 	   **************************** */
 	
-	func shortDescription(fromGroupOfUsers groupOfUsers: DummyGroupOfUsers2) -> String {
+	func shortDescription(fromGroupOfUsers groupOfUsers: DummyGroupOfUsers1) -> String {
 		return "<ERROR>"
 	}
 	
@@ -116,16 +116,16 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
-	func listUsers(inGroupOfUsers groupOfUsers: DummyGroupOfUsers2, using services: Services) async throws -> [DummyUser2] {
+	func listUsers(inGroupOfUsers groupOfUsers: DummyGroupOfUsers1, using services: Services) async throws -> [DummyUser1] {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
-	func listGroupsOfUsers(containingUser user: DummyUser2, using services: Services) async throws -> [DummyGroupOfUsers2] {
+	func listGroupsOfUsers(containingUser user: DummyUser1, using services: Services) async throws -> [DummyGroupOfUsers1] {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
 	let supportsEmbeddedGroupsOfUsers: Bool = false
-	func listGroupsOfUsers(inGroupOfUser groupOfUser: DummyGroupOfUsers2, using services: Services) async throws -> [DummyGroupOfUsers2] {
+	func listGroupsOfUsers(inGroupOfUser groupOfUser: DummyGroupOfUsers1, using services: Services) async throws -> [DummyGroupOfUsers1] {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
