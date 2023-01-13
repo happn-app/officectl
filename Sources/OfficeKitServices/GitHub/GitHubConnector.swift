@@ -55,8 +55,9 @@ public actor GitHubConnector : Connector, Authenticator, HasTaskQueue {
 		let jwtPayload = TokenInstallOwnerProofPayload(iss: .init(value: appID), iat: .init(value: roundedNow), exp: .init(value: roundedNow + 30))
 		let jwtToken = try JWTSigner.rs256(key: privateKey).sign(jwtPayload)
 		
-		let decoder = JSONDecoder()
-		decoder.dateDecodingStrategy = .iso8601
+		let decoder = SendableJSONDecoder{
+			$0.dateDecodingStrategy = .iso8601
+		}
 		let accessTokenURL = try Self.apiURL.appendingPathComponentsSafely("app", "installations", installationID, "access_tokens")
 		let tokenResponse = try await URLRequestDataOperation<TokenResponseBody>
 			.forAPIRequest(url: accessTokenURL, method: "POST", headers: ["authorization": "Bearer \(jwtToken)"], decoders: [decoder], retryProviders: [])

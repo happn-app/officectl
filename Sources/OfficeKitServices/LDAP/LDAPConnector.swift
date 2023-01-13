@@ -157,8 +157,8 @@ public final actor LDAPConnector : Connector, HasTaskQueue {
 					defer {ber_memfree(cred.bv_val)}
 					
 					/* TODO: <https://twitter.com/CodaFi_/status/1362671988171370496>
-					 * Cursed LDAP fact of the day: ldap_sasl_bind(_s) sends a BIND request with the credentials given and nothing more. SASL I/O is not actually installed on the channel even if the bind succeeds. You pretty much always want ldap_sasl_interactive_bind_s - which’ll handle multi-step too.
-					 * Why is this cursed? Well, you can (mis)use ldap_sasl_bind(_s) to pretty easily send anonymous - and often cleartext if you forget to instal SSL on the channel - binds. If you hit an old enough install of Active Directory, it just might let you in too! */
+					 * > Cursed LDAP fact of the day: ldap_sasl_bind(_s) sends a BIND request with the credentials given and nothing more. SASL I/O is not actually installed on the channel even if the bind succeeds. You pretty much always want ldap_sasl_interactive_bind_s - which’ll handle multi-step too.
+					 * > Why is this cursed? Well, you can (mis)use ldap_sasl_bind(_s) to pretty easily send anonymous - and often cleartext if you forget to instal SSL on the channel - binds. If you hit an old enough install of Active Directory, it just might let you in too! */
 					let r = ldap_sasl_bind_s(ldapPtr, username, nil, &cred, nil, nil, nil)
 					guard r == LDAP_SUCCESS else {
 						throw OpenLDAPError(code: r)
