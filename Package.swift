@@ -80,7 +80,7 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/Frizlab/stream-reader.git",                  from: "3.5.0"))
 		ret.append(.package(url: "https://github.com/Frizlab/swift-email.git",                    from: "0.2.5"))
 		ret.append(.package(url: "https://github.com/Frizlab/swift-xdg.git",                      from: "1.0.0-beta.1"))
-		ret.append(.package(url: "https://github.com/Frizlab/UnwrapOrThrow.git",                  from: "1.0.0-beta.1"))
+		ret.append(.package(url: "https://github.com/Frizlab/UnwrapOrThrow.git",                  from: "1.0.0"))
 		ret.append(.package(url: "https://github.com/happn-app/BMO.git",                          branch: "dev.tests")) /* Just for some convenience transformers. */
 		ret.append(.package(url: "https://github.com/happn-app/CollectionConcurrencyKit.git",     from: "0.2.0"))
 		ret.append(.package(url: "https://github.com/happn-app/HTTPCoders.git",                   from: "0.1.0"))

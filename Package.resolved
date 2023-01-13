@@ -401,8 +401,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Frizlab/UnwrapOrThrow.git",
       "state" : {
-        "revision" : "b7a5ead174096f816030508f223a4f7030970299",
-        "version" : "1.0.0-beta.1"
+        "revision" : "f35da77c8d86987e29fd8b77f78115ce7a144a0c",
+        "version" : "1.0.0"
       }
     },
     {
