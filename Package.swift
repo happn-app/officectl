@@ -79,6 +79,7 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/Frizlab/OperationAwaiting.git",              from: "1.3.0-beta.1"))
 		ret.append(.package(url: "https://github.com/Frizlab/stream-reader.git",                  from: "3.5.0"))
 		ret.append(.package(url: "https://github.com/Frizlab/swift-email.git",                    from: "0.2.5"))
+		ret.append(.package(url: "https://github.com/Frizlab/swift-xdg.git",                      from: "1.0.0-beta.1"))
 		ret.append(.package(url: "https://github.com/Frizlab/UnwrapOrThrow.git",                  from: "1.0.0-beta.1"))
 		ret.append(.package(url: "https://github.com/happn-app/BMO.git",                          branch: "dev.tests")) /* Just for some convenience transformers. */
 		ret.append(.package(url: "https://github.com/happn-app/CollectionConcurrencyKit.git",     from: "0.2.0"))
@@ -111,7 +112,6 @@ let package = Package(
 		/* ***************
 		   MARK: OfficeKit
 		   *************** */
-		
 		ret.append(.target(
 			name: "OfficeKit",
 			dependencies: {
@@ -158,6 +158,7 @@ let package = Package(
 				ret.append(.product(name: "ArgumentParser", package: "swift-argument-parser"))
 				ret.append(.product(name: "CLTLogger",      package: "clt-logger"))
 				ret.append(.product(name: "TOMLDecoder",    package: "TOMLDecoder"))
+				ret.append(.product(name: "XDG",            package: "swift-xdg"))
 				ret.append(.target(name: "OfficeKit"))
 				ret.append(.target(name: "GitHubOffice"))
 				ret.append(.target(name: "GoogleOffice"))

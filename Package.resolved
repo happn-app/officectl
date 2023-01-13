@@ -379,6 +379,15 @@
       }
     },
     {
+      "identity" : "swift-xdg",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Frizlab/swift-xdg.git",
+      "state" : {
+        "revision" : "e462bd2bcb52f3d2a5d7c74d0e543a6870e7ffbb",
+        "version" : "1.0.0-beta.1"
+      }
+    },
+    {
       "identity" : "tomldecoder",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/dduan/TOMLDecoder.git",
