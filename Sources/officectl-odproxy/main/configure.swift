@@ -10,8 +10,10 @@ import Foundation
 import RetryingOperation
 import SemiSingleton
 import TOMLDecoder
+import UnwrapOrThrow
 import URLRequestOperation
 import Vapor
+import XDG
 
 import OfficeKit
 import OpenDirectoryOffice
@@ -26,8 +28,9 @@ func configure(_ app: Application, forcedConfigPath: String?, verbose: Bool) thr
 	URLRequestOperationConfig.oslog = nil
 	URLRequestOperationConfig.logger = app.logger
 	
-	let configURL = try configPath(withForcedPath: forcedConfigPath)
-	let config = try TOMLDecoder().decode(AppConfig.self, from: Data(contentsOf: configURL))
+	let dirs = try BaseDirectories(prefixAll: "officectl-odproxy", runtimeDirHandling: .skipSetup)
+	let configPath = try forcedConfigPath ?? dirs.findConfigFile("config.toml")?.string ?! MessageError(message: "Cannot find file config file path.")
+	let config = try TOMLDecoder().decode(AppConfig.self, from: Data(contentsOf: URL(fileURLWithPath: configPath)))
 	
 	/* Set hostname and port from server conf. */
 	switch (config.serverConfig.hostname, config.serverConfig.port) {
@@ -47,26 +50,4 @@ func configure(_ app: Application, forcedConfigPath: String?, verbose: Bool) thr
 		)
 	)
 	try configureRoutes(app, config.serverConfig, odService)
-}
-
-
-private func configPath(withForcedPath forcedConfigFilePath: String?) throws -> URL {
-	var isDir: ObjCBool = false
-	let fm = FileManager.default
-	if let path = forcedConfigFilePath {
-		guard fm.fileExists(atPath: path, isDirectory: &isDir), !isDir.boolValue else {
-			throw MessageError(message: "Cannot find file at path \(path).")
-		}
-		return URL(fileURLWithPath: path, isDirectory: false)
-		
-	} else {
-		let searchedURLs = [
-			fm.homeDirectoryForCurrentUser.appendingPathComponent(".config/officectl/officectl-odproxy.yaml", isDirectory: false),
-			URL(fileURLWithPath: "/etc/officectl/officectl-odproxy.yaml", isDirectory: false)
-		]
-		guard let firstURL = searchedURLs.first(where: { fm.fileExists(atPath: $0.path, isDirectory: &isDir) && !isDir.boolValue }) else {
-			throw MessageError(message: "Cannot find config file.")
-		}
-		return firstURL
-	}
 }

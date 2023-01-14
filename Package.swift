@@ -193,6 +193,7 @@ let package = Package(
 			.product(name: "TOMLDecoder",   package: "TOMLDecoder"),
 			.product(name: "UnwrapOrThrow", package: "UnwrapOrThrow"),
 			.product(name: "Vapor",         package: "vapor"),
+			.product(name: "XDG",           package: "swift-xdg"),
 			.target(name: "OfficeKit"),
 			.target(name: "OfficeKitOffice"),
 			.target(name: "OpenDirectoryOffice")
