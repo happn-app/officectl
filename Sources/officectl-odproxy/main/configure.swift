@@ -9,9 +9,9 @@ import Foundation
 
 import RetryingOperation
 import SemiSingleton
+import TOMLDecoder
 import URLRequestOperation
 import Vapor
-import Yaml
 
 import OfficeKit
 import OpenDirectoryOffice
@@ -27,7 +27,7 @@ func configure(_ app: Application, forcedConfigPath: String?, verbose: Bool) thr
 	URLRequestOperationConfig.logger = app.logger
 	
 	let configURL = try configPath(withForcedPath: forcedConfigPath)
-	let config = try JSONDecoder().decode(AppConfig.self, from: Data(contentsOf: configURL))
+	let config = try TOMLDecoder().decode(AppConfig.self, from: Data(contentsOf: configURL))
 	
 	/* Set hostname and port from server conf. */
 	switch (config.serverConfig.hostname, config.serverConfig.port) {
