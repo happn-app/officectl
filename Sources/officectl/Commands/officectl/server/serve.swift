@@ -23,7 +23,14 @@ struct Serve : AsyncParsableCommand {
 	func run() async throws {
 		try officectlOptions.bootstrap()
 		
-		try Server.runVaporCommand(["serve"], officectlOptions: officectlOptions)
+		var serverArgs = [String]()
+		if let hostname = officectlOptions.conf?.serverConf?.hostname {
+			serverArgs.append(contentsOf: ["--hostname", hostname])
+		}
+		if let port = officectlOptions.conf?.serverConf?.port {
+			serverArgs.append(contentsOf: ["--port", String(port)])
+		}
+		try Server.runVaporCommand(["serve"] + serverArgs, officectlOptions: officectlOptions)
 	}
 	
 }
