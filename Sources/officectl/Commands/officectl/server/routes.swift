@@ -1,5 +1,5 @@
 /*
- * serve.swift
+ * routes.swift
  * officectl
  *
  * Created by François Lamboley on 2023/01/16.
@@ -11,10 +11,10 @@ import ArgumentParser
 
 
 
-struct Serve : AsyncParsableCommand {
+struct Routes : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
-		abstract: "Start the server."
+		abstract: "Show all the server’s routes."
 	)
 	
 	@OptionGroup()
@@ -23,7 +23,7 @@ struct Serve : AsyncParsableCommand {
 	func run() async throws {
 		try officectlOptions.bootstrap()
 		
-		try Server.runVaporCommand(["serve"], officectlOptions: officectlOptions)
+		try Server.runVaporCommand(["routes"], officectlOptions: officectlOptions)
 	}
 	
 }
