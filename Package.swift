@@ -103,6 +103,9 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/xcode-actions/COpenSSL.git",                 from: "1.1.111"))
 		ret.append(.package(url: "https://github.com/xcode-actions/COpenLDAP.git",                from: "2.5.5"))
 #endif
+#if !canImport(System)
+		ret.append(.package(url: "https://github.com/apple/swift-system.git",                     from: "1.0.0"))
+#endif
 		return ret
 	}(),
 	targets: {
@@ -170,9 +173,13 @@ let package = Package(
 				var ret = [Target.Dependency]()
 				ret.append(.product(name: "ArgumentParser", package: "swift-argument-parser"))
 				ret.append(.product(name: "CLTLogger",      package: "clt-logger"))
+				ret.append(.product(name: "JWT",            package: "jwt"))
 				ret.append(.product(name: "TOMLDecoder",    package: "TOMLDecoder"))
 				ret.append(.product(name: "Vapor",          package: "Vapor"))
 				ret.append(.product(name: "XDG",            package: "swift-xdg"))
+#if !canImport(System)
+				ret.append(.product(name: "SystemPackage",  package: "swift-system"))
+#endif
 				
 				ret.append(.target(name: "OfficeServer"))
 				

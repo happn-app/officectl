@@ -6,6 +6,11 @@
  */
 
 import Foundation
+#if canImport(System)
+import System
+#else
+import SystemPackage
+#endif
 
 import ArgumentParser
 import CLTLogger
@@ -42,10 +47,10 @@ struct Officectl : AsyncParsableCommand {
 		var env: Environment?
 		
 		@Option(name: .long, help: "The path to an officectl config file. By default we use `$XDG_CONFIG_DIRS/officectl/config.toml`.")
-		var configFile: String?
+		var configFile: FilePath?
 		
 		@Option(name: .long, help: "Override the path to the static data dir. If not defined either in the CLI options or in the config file, we use `$XDG_DATA_DIRS/officectl/`.")
-		var staticDataDir: String?
+		var staticDataDir: FilePath?
 		
 		/* Could be in the config file, maybe. */
 		@Flag(name: .long, inversion: .prefixedEnableDisable, help: "Enable or disable interactive console (ncurses or Vapor’s activity console) for commands that have it.")
@@ -65,9 +70,9 @@ extension Officectl.Options {
 		/* *** CONF *** */
 		let confPath = try configFile ?? {
 			let dirs = try BaseDirectories(prefixAll: "officectl", runtimeDirHandling: .skipSetup)
-			return try dirs.findConfigFile("config.toml")?.string
+			return try dirs.findConfigFile("config.toml")
 		}()
-		let conf = try confPath.flatMap{ try TOMLDecoder().decode(Conf.self, from: Data(contentsOf: URL(fileURLWithPath: $0))) }
+		let conf = try confPath.flatMap{ try TOMLDecoder().decode(Conf.self, from: Data(contentsOf: URL(fileURLWithPath: $0.string))) }
 		Officectl.services.register{ conf } /* We want to return always the same conf. */
 		
 		/* *** LOGGER *** */
@@ -96,16 +101,20 @@ extension Officectl.Options {
 		}
 	}
 	
+	var resolvedEnvironment: Environment {
+		env ?? conf?.environment ?? .development
+	}
+	
+	var resolvedStaticDataDir: FilePath? {
+		staticDataDir ?? conf?.staticDataDir
+	}
+	
 	var logger: Logger {
 		try! Officectl.services.make()
 	}
 	
 	var conf: Conf? {
 		try! Officectl.services.make()
-	}
-	
-	var resolvedEnvironment: Environment {
-		env ?? conf?.environment ?? .development
 	}
 	
 }
