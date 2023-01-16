@@ -8,10 +8,11 @@
 import Foundation
 
 import ArgumentParser
+import Logging
 
 
 
-enum Environment : CaseIterable, ExpressibleByArgument {
+enum Environment : String, CaseIterable, Decodable, ExpressibleByArgument {
 
 	case development
 	case production
@@ -21,6 +22,13 @@ enum Environment : CaseIterable, ExpressibleByArgument {
 			case let str where str.starts(with: "dev"):  self = .development
 			case let str where str.starts(with: "prod"): self = .production
 			default: return nil
+		}
+	}
+	
+	var defaultLogLevel: Logger.Level {
+		switch self {
+			case .production:  return .notice
+			case .development: return .info
 		}
 	}
 

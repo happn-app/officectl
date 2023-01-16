@@ -10,6 +10,8 @@ import Foundation
 import ArgumentParser
 import CLTLogger
 import Logging
+import TOMLDecoder
+import XDG
 
 import ServiceKit
 
@@ -21,7 +23,8 @@ struct Officectl : AsyncParsableCommand {
 	static var configuration = CommandConfiguration(
 		abstract: "Manage multiple directories.",
 		subcommands: [
-			Users.self
+			Users.self,
+			Server.self
 		]
 	)
 	
@@ -29,13 +32,13 @@ struct Officectl : AsyncParsableCommand {
 	
 	struct Options : ParsableArguments {
 		
-		@Option(name: .long, help: "Override the verbosity defined in the configuration. If no verbosity is defined in the conf, the default level is warning. Overrides the --verbose option.")
+		@Option(name: .long, help: "Override the verbosity defined in the configuration. If no verbosity is defined in the conf, the default level is notice for production environment, info for development environment. Overrides the --verbose option.")
 		var verbosity: Logger.Level?
 		
 		@Flag(name: .shortAndLong, inversion: .prefixedNo, help: "Shortcut to set the verbosity. When on, verbosity is set to debug, when off it is set to warning. Overridden by the --verbosity option.")
 		var verbose: Bool?
 		
-		@Option(name: .long, help: "Override the environment in which to run the program (dev or prod).")
+		@Option(name: .long, help: "Override the environment in which to run the program (dev or prod). If no environment is defined, the default value is development.")
 		var env: Environment?
 		
 		@Option(name: .long, help: "The path to an officectl config file. By default we use `$XDG_CONFIG_DIRS/officectl/config.toml`.")
@@ -58,19 +61,38 @@ struct Officectl : AsyncParsableCommand {
 
 extension Officectl.Options {
 	
-	func bootstrap() {
-		let (logLevel, shouldWarn) = resolvedVerbosityAndShouldWarnAboutVerbosity
+	func bootstrap() throws {
+		/* *** CONF *** */
+		let confPath = try configFile ?? {
+			let dirs = try BaseDirectories(prefixAll: "officectl", runtimeDirHandling: .skipSetup)
+			return try dirs.findConfigFile("config.toml")?.string
+		}()
+		let conf = try confPath.flatMap{ try TOMLDecoder().decode(Conf.self, from: Data(contentsOf: URL(fileURLWithPath: $0))) }
+		Officectl.services.register{ conf } /* We want to return always the same conf. */
+		
+		/* *** LOGGER *** */
 		LoggingSystem.bootstrap{ id in
 			/* Note: CLTLoggers do not have IDs, so we do not use the id parameter of the handler. */
 			var ret = CLTLogger()
-			ret.logLevel = logLevel
+			ret.logLevel = resolvedLogLevel
 			return ret
 		}
 		let logger = Logger(label: "com.happn.officectl")
 		Officectl.services.register{ logger } /* We want to return always the same logger. */
 		
-		if shouldWarn {
+		if verbose != nil && verbosity != nil {
 			logger.warning("Got both --verbose and --verbosity options. Ignoring --verbose.")
+		}
+		if confPath == nil {
+			logger.error("Conf file not found. Continuing without services.")
+		}
+	}
+	
+	var resolvedLogLevel: Logger.Level {
+		switch (verbose, verbosity) {
+			case let (_,        verbosity?): return verbosity
+			case let (verbose?, nil):        return (verbose ? .debug : .warning)
+			case     (nil,      nil):        return conf?.logLevel ?? resolvedEnvironment.defaultLogLevel
 		}
 	}
 	
@@ -78,21 +100,12 @@ extension Officectl.Options {
 		try! Officectl.services.make()
 	}
 	
-	/* For info, you should use the logger var instead. */
-	var resolvedVerbosity: Logger.Level {
-		return resolvedVerbosityAndShouldWarnAboutVerbosity.level
+	var conf: Conf? {
+		try! Officectl.services.make()
 	}
 	
-	private var resolvedVerbosityAndShouldWarnAboutVerbosity: (level: Logger.Level, bothVerboseAndVerbosityWereDefined: Bool) {
-		let logLevel: Logger.Level
-		var shouldWarn = false
-		switch (verbose, verbosity) {
-			case let (.some,    verbosity?): shouldWarn = true; fallthrough
-			case let (nil,      verbosity?): logLevel = verbosity
-			case let (verbose?, nil):        logLevel = (verbose ? .debug : .warning)
-			case     (nil,      nil):        logLevel = .warning
-		}
-		return (logLevel, shouldWarn)
+	var resolvedEnvironment: Environment {
+		env ?? conf?.environment ?? .development
 	}
 	
 }

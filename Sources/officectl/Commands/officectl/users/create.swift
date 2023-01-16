@@ -25,7 +25,7 @@ struct Create : AsyncParsableCommand {
 	var userPropertiesOptions: Users.UserPropertiesOptions
 	
 	func run() async throws {
-		officectlOptions.bootstrap()
+		try officectlOptions.bootstrap()
 		
 		officectlOptions.logger.warning("Hello from users create")
 		print(userPropertiesOptions)
