@@ -7,9 +7,14 @@
 
 import Foundation
 
+import Metrics
+import Prometheus
 import Vapor
 
 
 
 public func configure(_ app: Application) throws {
+	MetricsSystem.bootstrap(PrometheusMetricsFactory(client: PrometheusClient()))
+	
+	try routes(app)
 }

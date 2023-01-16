@@ -388,6 +388,15 @@
       }
     },
     {
+      "identity" : "swiftprometheus",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swift-server-community/SwiftPrometheus.git",
+      "state" : {
+        "revision" : "2095e26b2b70f8e04598c7d57ca6268d1221aecd",
+        "version" : "1.0.1"
+      }
+    },
+    {
       "identity" : "tomldecoder",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/dduan/TOMLDecoder.git",
