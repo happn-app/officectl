@@ -11,6 +11,8 @@ import ArgumentParser
 import CLTLogger
 import Logging
 
+import ServiceKit
+
 
 
 @main
@@ -22,6 +24,8 @@ struct Officectl : AsyncParsableCommand {
 			Users.self
 		]
 	)
+	
+	static private(set) var services = Services()
 	
 	struct Options : ParsableArguments {
 		
@@ -54,10 +58,6 @@ struct Officectl : AsyncParsableCommand {
 
 extension Officectl.Options {
 	
-	static private(set) var logger: Logger = {
-		Logger(label: "com.happn.officectl")
-	}()
-	
 	func bootstrap() {
 		let (logLevel, shouldWarn) = resolvedVerbosityAndShouldWarnAboutVerbosity
 		LoggingSystem.bootstrap{ id in
@@ -66,13 +66,16 @@ extension Officectl.Options {
 			ret.logLevel = logLevel
 			return ret
 		}
+		let logger = Logger(label: "com.happn.officectl")
+		Officectl.services.register{ logger } /* We want to return always the same logger. */
+		
 		if shouldWarn {
 			logger.warning("Got both --verbose and --verbosity options. Ignoring --verbose.")
 		}
 	}
 	
 	var logger: Logger {
-		Self.logger
+		try! Officectl.services.make()
 	}
 	
 	/* For info, you should use the logger var instead. */
