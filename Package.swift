@@ -151,6 +151,17 @@ let package = Package(
 		ret.append(contentsOf: targetsForService(named: "OpenDirectoryOffice", folderName: "OpenDirectory"))
 #endif
 		
+		ret.append(.target(
+			name: "OfficeServer",
+			dependencies: {
+				var ret = [Target.Dependency]()
+				ret.append(.product(name: "Vapor", package: "Vapor"))
+				ret.append(contentsOf: coreDependencies)
+				return ret
+			}(),
+			swiftSettings: commonSwiftSettings
+		))
+		
 		ret.append(.executableTarget(
 			name: "officectl",
 			dependencies: {
@@ -158,7 +169,11 @@ let package = Package(
 				ret.append(.product(name: "ArgumentParser", package: "swift-argument-parser"))
 				ret.append(.product(name: "CLTLogger",      package: "clt-logger"))
 				ret.append(.product(name: "TOMLDecoder",    package: "TOMLDecoder"))
+				ret.append(.product(name: "Vapor",          package: "Vapor"))
 				ret.append(.product(name: "XDG",            package: "swift-xdg"))
+				
+				ret.append(.target(name: "OfficeServer"))
+				
 				ret.append(.target(name: "OfficeKit"))
 				ret.append(.target(name: "GitHubOffice"))
 				ret.append(.target(name: "GoogleOffice"))
@@ -176,14 +191,6 @@ let package = Package(
 			swiftSettings: commonSwiftSettings,
 			linkerSettings: [.linkedLibrary("ncurses", .when(platforms: [.macOS]))]
 		))
-#if !canImport(Darwin)
-		ret.append(.systemLibrary(name: "CNCurses", pkgConfig: "ncurses", providers: [.apt(["libncurses-dev"]), .brew(["ncurses"])]))
-#endif
-#if os(Linux)
-		/* On Linux we use the standard OpenLDAP package, but we need to create its module.
-		 * Note: The standard OpenLDAP package does not have a pkg-config file, so no pkgconfig argument here. */
-		ret.append(.systemLibrary(name: "COpenLDAP", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])]))
-#endif
 #if canImport(OpenDirectory)
 		ret.append(.executableTarget(name: "officectl-odproxy", dependencies: [
 			.product(name: "Crypto",        package: "swift-crypto"),
@@ -198,6 +205,15 @@ let package = Package(
 			.target(name: "OfficeKitOffice"),
 			.target(name: "OpenDirectoryOffice")
 		]))
+#endif
+		
+#if !canImport(Darwin)
+		ret.append(.systemLibrary(name: "CNCurses", pkgConfig: "ncurses", providers: [.apt(["libncurses-dev"]), .brew(["ncurses"])]))
+#endif
+#if os(Linux)
+		/* On Linux we use the standard OpenLDAP package, but we need to create its module.
+		 * Note: The standard OpenLDAP package does not have a pkg-config file, so no pkgconfig argument here. */
+		ret.append(.systemLibrary(name: "COpenLDAP", providers: [.apt(["libldap2-dev"]), .brew(["openldap"])]))
 #endif
 		return ret
 	}()

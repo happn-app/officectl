@@ -10,6 +10,8 @@ import Foundation
 import ArgumentParser
 import Vapor
 
+import OfficeServer
+
 
 
 struct Serve : AsyncParsableCommand {
@@ -37,7 +39,9 @@ struct Serve : AsyncParsableCommand {
 		
 		vaporEnv.commandInput = CommandInput(arguments: ["serve"])
 		let app = Application(vaporEnv)
-		defer {app.shutdown()}
+		defer {app.shutdown()} /* Apparently it’s ok to shutdown the app before it’s run (case where configure fails). */
+		
+		try configure(app)
 		try app.run()
 	}
 	
