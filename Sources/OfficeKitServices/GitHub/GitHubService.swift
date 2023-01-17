@@ -28,17 +28,17 @@ public final class GitHubService : UserService {
 	
 	public convenience init(id: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try GitHubServiceConfig(json: jsonConfig)
-		try self.init(id: id, gitHubServiceConfig: config)
+		try self.init(id: id, gitHubServiceConfig: config, workdir: workdir)
 	}
 	
-	public init(id: String, gitHubServiceConfig: GitHubServiceConfig) throws {
+	public init(id: String, gitHubServiceConfig: GitHubServiceConfig, workdir: URL?) throws {
 		self.id = id
 		self.config = gitHubServiceConfig
 		
 		self.connector = try GitHubConnector(
 			appID: gitHubServiceConfig.connectorSettings.appID,
 			installationID: gitHubServiceConfig.connectorSettings.installationID,
-			privateKeyPath: gitHubServiceConfig.connectorSettings.privateKeyPath
+			privateKeyURL: URL(fileURLWithPath: gitHubServiceConfig.connectorSettings.privateKeyPath, isDirectory: false, relativeTo: workdir)
 		)
 	}
 	

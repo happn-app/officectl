@@ -29,10 +29,10 @@ public actor GitHubConnector : Connector, Authenticator, HasTaskQueue {
 	public var isConnected: Bool    {tokenInfo != nil}
 	public var accessToken: String? {tokenInfo?.token}
 	
-	public init(appID: String, installationID: String, privateKeyPath: String) throws {
+	public init(appID: String, installationID: String, privateKeyURL: URL) throws {
 		self.appID = appID
 		self.installationID = installationID
-		self.privateKey = try RSAKey.private(pem: Data(contentsOf: URL(fileURLWithPath: privateKeyPath, isDirectory: false)))
+		self.privateKey = try RSAKey.private(pem: Data(contentsOf: privateKeyURL))
 	}
 	
 	public func connectIfNeeded() async throws {
