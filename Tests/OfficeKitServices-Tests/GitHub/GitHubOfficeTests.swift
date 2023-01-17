@@ -53,7 +53,7 @@ final class GitHubOfficeTests : XCTestCase {
 		let (serviceConf, testConf) = try Self.confs.get()
 		
 		self.testConf = testConf
-		self.service = try GitHubService(id: "test-github", gitHubServiceConfig: serviceConf)
+		self.service = try GitHubService(id: "test-github", gitHubServiceConfig: serviceConf, workdir: nil)
 	}
 	
 	override func tearDown() async throws {

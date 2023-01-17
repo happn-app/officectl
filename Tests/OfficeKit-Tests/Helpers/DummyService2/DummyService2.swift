@@ -27,7 +27,7 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 	
 	let id: String
 	
-	init(id: String, jsonConfig: JSON) throws {
+	init(id: String, jsonConfig: JSON, workdir: URL?) throws {
 		self.id = id
 	}
 	
