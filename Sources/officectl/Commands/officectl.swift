@@ -125,7 +125,7 @@ extension Officectl.Options {
 				logger.error("Cannot find provider ID for service.", metadata: [LMK.serviceID: "\(serviceID)", LMK.providerID: "\(serviceDef.providerID)"])
 				throw ExitCode(1)
 			}
-			services.allServices[serviceID] = try provider.init(id: serviceID, jsonConfig: serviceDef.config)
+			services.allServices[serviceID] = try provider.init(id: serviceID, jsonConfig: serviceDef.config, workdir: (confPath?.removingLastComponent().string).flatMap(URL.init(fileURLWithPath:)))
 		}
 		if let authServiceID = conf?.servicesConf.authServiceID {
 			guard let authService = services.allServices[authServiceID] as? any AuthenticatorService else {

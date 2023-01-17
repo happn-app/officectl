@@ -29,7 +29,7 @@ public final class LDAPService : UserService, AuthenticatorService {
 	
 	public let connector: LDAPConnector
 	
-	public convenience init(id: String, jsonConfig: JSON) throws {
+	public convenience init(id: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try LDAPServiceConfig(json: jsonConfig)
 		self.init(id: id, ldapServiceConfig: config)
 	}

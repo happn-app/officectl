@@ -26,7 +26,7 @@ public final class GitHubService : UserService {
 	
 	public let connector: GitHubConnector
 	
-	public convenience init(id: String, jsonConfig: JSON) throws {
+	public convenience init(id: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try GitHubServiceConfig(json: jsonConfig)
 		try self.init(id: id, gitHubServiceConfig: config)
 	}

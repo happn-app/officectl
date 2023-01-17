@@ -29,17 +29,17 @@ public final class GoogleService : UserService {
 	
 	public let connector: GoogleConnector
 	
-	public convenience init(id: String, jsonConfig: JSON) throws {
+	public convenience init(id: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try GoogleServiceConfig(json: jsonConfig)
-		try self.init(id: id, googleServiceConfig: config)
+		try self.init(id: id, googleServiceConfig: config, workdir: workdir)
 	}
 	
-	public init(id: String, googleServiceConfig: GoogleServiceConfig) throws {
+	public init(id: String, googleServiceConfig: GoogleServiceConfig, workdir: URL?) throws {
 		self.id = id
 		self.config = googleServiceConfig
 		
 		self.connector = try GoogleConnector(
-			jsonCredentialsURL: URL(fileURLWithPath: config.connectorSettings.superuserJSONCredsPath),
+			jsonCredentialsURL: URL(fileURLWithPath: config.connectorSettings.superuserJSONCredsPath, isDirectory: false, relativeTo: workdir),
 			userBehalf: config.connectorSettings.adminEmail?.rawValue
 		)
 	}

@@ -29,7 +29,7 @@ public final class OpenDirectoryService : UserService {
 	
 	public let connector: OpenDirectoryConnector
 	
-	public convenience init(id: String, jsonConfig: JSON) throws {
+	public convenience init(id: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try OpenDirectoryServiceConfig(json: jsonConfig)
 		self.init(id: id, openDirectoryServiceConfig: config)
 	}

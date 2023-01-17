@@ -28,7 +28,11 @@ struct Create : AsyncParsableCommand {
 		try officectlOptions.bootstrap()
 		let officeKitServices = officectlOptions.resolvedOfficeKitServices
 		
-		try await print(officeKitServices.userServices.first?.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: Officectl.services))
+		for userService in officeKitServices.userServices {
+			print("****************************")
+			print("\(userService.id)")
+			try await print(userService.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: Officectl.services))
+		}
 	}
 	
 }

@@ -28,7 +28,7 @@ public final class OfficeKitService : UserService {
 	public let id: String
 	public let config: OfficeKitServiceConfig
 	
-	public convenience init(id: String, jsonConfig: JSON) throws {
+	public convenience init(id: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try OfficeKitServiceConfig(json: jsonConfig)
 		self.init(id: id, officeKitServiceConfig: config)
 	}

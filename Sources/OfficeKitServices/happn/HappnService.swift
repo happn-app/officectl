@@ -30,7 +30,7 @@ public final class HappnService : UserService {
 	
 	public let connector: HappnConnector
 	
-	public convenience init(id: String, jsonConfig: JSON) throws {
+	public convenience init(id: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try HappnServiceConfig(json: jsonConfig)
 		try self.init(id: id, happnServiceConfig: config)
 	}
