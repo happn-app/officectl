@@ -60,6 +60,7 @@ struct Server : AsyncParsableCommand {
 		for (key, secret) in serverConf.jwtSecrets {
 			app.jwt.signers.use(.hs256(key: secret), kid: key)
 		}
+		app.officeKitServices = officectlOptions.resolvedOfficeKitServices.allServices
 		
 		try configure(app)
 		try app.run()

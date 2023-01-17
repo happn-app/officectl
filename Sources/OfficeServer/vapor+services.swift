@@ -8,6 +8,7 @@
 import Foundation
 
 import JWT
+import OfficeKit
 import Vapor
 
 
@@ -21,6 +22,29 @@ public extension Application {
 	
 	private struct JWTKeyKey: StorageKey {
 		typealias Value = JWKIdentifier
+	}
+	
+}
+
+
+public extension Application {
+	
+	var authService: (any AuthenticatorService)? {
+		get {storage[AuthServiceKey.self]}
+		set {storage[AuthServiceKey.self] = newValue}
+	}
+	
+	private struct AuthServiceKey: StorageKey {
+		typealias Value = any AuthenticatorService
+	}
+	
+	var officeKitServices: [String: any OfficeService]? {
+		get {storage[OfficeKitServicesKey.self]}
+		set {storage[OfficeKitServicesKey.self] = newValue}
+	}
+	
+	private struct OfficeKitServicesKey: StorageKey {
+		typealias Value = [String: any OfficeService]
 	}
 	
 }
