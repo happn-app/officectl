@@ -15,6 +15,7 @@ import URLRequestOperation
 
 import CommonOfficePropertiesFromHappn
 import OfficeKit
+import OfficeModelCore
 import ServiceKit
 
 
@@ -49,15 +50,31 @@ public final class HappnService : UserService {
 	}
 	
 	public func shortDescription(fromUser user: HappnUser) -> String {
-		return "HappnUser<\(user.login.rawValue)>"
+		return "HappnUser<\(user.login)>"
 	}
 	
-	public func string(fromUserID userID: Email) -> String {
-		return userID.rawValue
+	public func string(fromUserID userID: HappnUserID) -> String {
+		switch userID {
+			case .nullLogin:    return "null:"
+			case .login(let l): return "login:\(l.rawValue)"
+		}
 	}
 	
-	public func userID(fromString string: String) throws -> Email {
-		return try Email(rawValue: string) ?! Err.invalidEmail(string)
+	public func userID(fromString string: String) throws -> HappnUserID {
+		let taggedID = TaggedID(string: string)
+		switch taggedID.tag {
+			case "null":
+				guard taggedID.id == "" else {
+					throw Err.invalidID(string)
+				}
+				return .nullLogin
+				
+			case "login":
+				return try .login(Email(rawValue: string) ?! Err.invalidID(string))
+				
+			default:
+				throw Err.invalidID(string)
+		}
 	}
 	
 	public func string(fromPersistentUserID pID: String) -> String {
@@ -68,16 +85,20 @@ public final class HappnService : UserService {
 		return string
 	}
 	
-	public func alternateIDs(fromUserID userID: Email) -> (regular: Email, other: Set<Email>) {
-		let regular = userID.primaryDomainVariant(aliasMap: config.domainAliases)
+	public func alternateIDs(fromUserID userID: HappnUserID) -> (regular: HappnUserID, other: Set<HappnUserID>) {
+		guard let email = userID.email else {
+			return (userID, [])
+		}
+		let regular = email.primaryDomainVariant(aliasMap: config.domainAliases)
 		let other = regular.allDomainVariants(aliasMap: config.domainAliases).subtracting([regular])
-		return (regular, other)
+		return (.login(regular), Set(other.map{ .login($0) }))
 	}
 	
-	public func logicalUserID<OtherUserType>(fromUser user: OtherUserType) throws -> Email where OtherUserType : User {
+	public func logicalUserID<OtherUserType : User>(fromUser user: OtherUserType) throws -> HappnUserID {
 		let id = config.userIDBuilders?.lazy
 			.compactMap{ $0.inferID(fromUser: user) }
 			.compactMap{ Email(rawValue: $0) }
+			.map{ HappnUserID.login($0) }
 			.first{ _ in true } /* Not a simple `.first` because of <https://stackoverflow.com/a/71778190> (avoid the handler(s) to be called more than once). */
 		guard let id else {
 			throw OfficeKitError.cannotInferUserIDFromOtherUser
@@ -85,43 +106,38 @@ public final class HappnService : UserService {
 		return id
 	}
 	
-	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> HappnUser? {
+	public func existingUser(fromID uID: HappnUserID, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
 		
-		let ids = Set(uID.allDomainVariants(aliasMap: config.domainAliases))
-		let users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector) }
-		guard users.count <= 1 else {
-			throw OfficeKitError.tooManyUsersFromAPI(users: users)
+		switch uID {
+			case .nullLogin:
+				/* TODO: Is there a better solution than this? */
+				return try await existingUser(fromPersistentID: "244", propertiesToFetch: propertiesToFetch, using: services)
+				
+			case .login(let l):
+				let ids = Set(l.allDomainVariants(aliasMap: config.domainAliases))
+				let users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector) }
+				guard users.count <= 1 else {
+					throw OfficeKitError.tooManyUsersFromAPI(users: users)
+				}
+				
+				return users.first
 		}
-		
-		return users.first
 	}
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read")
 		
-		do {
-			return try await HappnUser.get(id: pID, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector)
-		} catch let error as URLRequestOperationError {
-			/* happn’s API happily returns a user for a non-existing ID!
-			 * Except all the fields (apart from id) are nil.
-			 * We’ll detect if the error was a decoding error for the path data.login because a nil login is not possible,
-			 *  so the user does not exist if we get this error. */
-			guard
-				let decodeError = error.postProcessError as? DecodeHTTPContentResultProcessorError,
-				case let .dataConversionFailed(_, decodeError as DecodingError) = decodeError,
-				case let .valueNotFound(type, context) = decodeError
-			else {
-				throw error
-			}
-			let codingPathStr = context.codingPath.map{ $0.stringValue }
-			let expectedCodingPathStr = [ApiResult<HappnUser>.CodingKeys.data.stringValue, HappnUser.CodingKeys.login.stringValue]
-			/* Note: We also check the expected type was a String though it’s most like not useful. */
-			guard type == String.self, codingPathStr == expectedCodingPathStr else {
-				throw error
-			}
+		let ret = try await HappnUser.get(id: pID, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector)
+		/* happn’s API happily returns a user for a non-existing ID!
+		 * Except all the fields (apart from id) are nil.
+		 *
+		 * We’ll detect these invalid user by checking the firstName (which we always ask in the fields).
+		 * The first name cannot be nil for a valid user AFAIK, so a nil first name indicates an invalid user. */
+		guard ret?.firstName != nil else {
 			return nil
 		}
+		return ret
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [HappnUser] {

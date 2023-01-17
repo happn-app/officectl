@@ -22,7 +22,7 @@ internal extension HappnUser {
 	 Note: The only way to find a user by his login on happn’s API is to do a full-text search on all fields and filter later. */
 	static func search(text: String?, admins: Bool = true, propertiesToFetch: Set<HappnUser.CodingKeys>, connector: HappnConnector) async throws -> [HappnUser] {
 		/* Key is the user ID. */
-		var res = [Email: HappnUser]()
+		var res = [HappnUserID: HappnUser]()
 		
 		let limit = 500
 		var curOffset = 0

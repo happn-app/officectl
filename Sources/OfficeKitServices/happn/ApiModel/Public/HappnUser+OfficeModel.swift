@@ -16,11 +16,14 @@ import OfficeKit
 
 extension HappnUser : User {
 	
-	public init(oU_id userID: Email) {
+	public init(oU_id userID: HappnUserID) {
 		self.login = userID
 	}
 	
-	public var oU_id: Email {login}
+	/* Note about the ID: It is NOT a primary key!
+	 * It is _technically_ possible that two admins from happn share the same key: `nil`.
+	 * In practice this does not happ(e)n, but it could. */
+	public var oU_id: HappnUserID {login}
 	public var oU_persistentID: String? {id}
 	
 	public var oU_isSuspended: Bool? {status.flatMap{ $0 == .deactivated || $0 == .banned }}
@@ -29,7 +32,7 @@ extension HappnUser : User {
 	public var oU_lastName: String? {lastName}
 	public var oU_nickname: String? {nickname}
 	
-	public var oU_emails: [Email]? {[login]}
+	public var oU_emails: [Email]? {login.email.flatMap{ [$0] }}
 	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		switch UserProperty(rawValue: property) {
@@ -68,7 +71,7 @@ extension HappnUser : User {
 	internal static var propertyToKeys: [UserProperty: [HappnUser.CodingKeys]] {
 		[
 			/* Standard. */
-			.id: [.login],
+			.id: [.login, .firstName/*to see if the user exists*/, .isAdmin/*for info; good to have*/],
 			.persistentID: [.id],
 			.isSuspended: [.status],
 			.emails: [.login],

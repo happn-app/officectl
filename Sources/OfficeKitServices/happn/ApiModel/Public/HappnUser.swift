@@ -10,6 +10,8 @@ import Foundation
 import CommonOfficePropertiesFromHappn
 import Email
 
+import OfficeKit
+
 
 
 public struct HappnUser : Sendable, Hashable, Codable {
@@ -28,11 +30,19 @@ public struct HappnUser : Sendable, Hashable, Codable {
 		case deactivated = "DEACTIVATED"
 		case banned = "BANNED"
 		
+		/**
+		 Status of the user is unknown.
+		 
+		 This is probably returned only for non-existing users.
+		 I don’t know if it is returned for other types of users. */
+		case unknown = "UNKNOWN"
+		
 	}
 	
 	/* Updating the login is not possible, so this is a `let`, not a `var`. */
-	public let login: Email
+	public let login: HappnUserID
 	public var id: String?
+	public var isAdmin: Bool?
 	
 	public var type: UserType = .client
 	public var status: Status?
@@ -41,6 +51,7 @@ public struct HappnUser : Sendable, Hashable, Codable {
 	public var lastName: String?
 	public var nickname: String?
 	
+	@EmptyIsNil
 	public var gender: Gender?
 	public var birthDate: Date? {
 		get {_birthDate}
@@ -50,7 +61,7 @@ public struct HappnUser : Sendable, Hashable, Codable {
 	public var password: String?
 	
 	/* The gender and birth date are mandatory to create a new user, and usually not set, so we define a non-nil default value. */
-	public init(login: Email, gender: Gender? = .male, birthDate: Date? = Date(timeIntervalSinceNow: -21*366*24*60*60)/* ~21 yo */) {
+	public init(login: HappnUserID, gender: Gender? = .male, birthDate: Date? = Date(timeIntervalSinceNow: -21*366*24*60*60)/* ~21 yo */) {
 		self.login = login
 		self.gender = gender
 		self._birthDate = birthDate
@@ -60,7 +71,7 @@ public struct HappnUser : Sendable, Hashable, Codable {
 		var ret = HappnUser(login: login, gender: nil, birthDate: nil)
 		for property in properties {
 			switch property {
-				case .login, .id, .type: (/*nop*/)
+				case .login, .id, .type, .isAdmin: (/*nop*/)
 				case .status:     ret.status    = status
 				case .firstName:  ret.firstName = firstName
 				case .lastName:   ret.lastName  = lastName
@@ -74,7 +85,7 @@ public struct HappnUser : Sendable, Hashable, Codable {
 	}
 	
 	internal enum CodingKeys : String, CodingKey {
-		case login, id
+		case login, id, isAdmin = "is_admin"
 		case type, status
 		case firstName = "first_name", lastName = "last_name", nickname
 		case gender, _birthDate = "birth_date"

@@ -13,7 +13,7 @@ import Email
 
 public enum HappnOfficeError : Error, Sendable {
 	
-	case invalidEmail(String)
+	case invalidID(String)
 	case noPersistentID
 	case notConnected
 	
