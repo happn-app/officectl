@@ -21,10 +21,11 @@ import URLRequestOperation
 final class HappnOfficeTests : XCTestCase {
 	
 	struct TestConf : Decodable {
+		var nullUserID: String
 		var fetchedUser: FetchedUser
 		struct FetchedUser : Decodable {
 			var id: String
-			var userID: HappnUserID
+			var login: HappnUserID
 		}
 	}
 	
@@ -66,7 +67,7 @@ final class HappnOfficeTests : XCTestCase {
 	}
 	
 	func testGetUser() async throws {
-		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.userID, propertiesToFetch: nil, using: services)
+		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.login, propertiesToFetch: nil, using: services)
 		let user = try XCTUnwrap(optionalUser)
 		XCTAssertEqual(user.oU_persistentID, testConf.fetchedUser.id)
 	}
@@ -74,13 +75,13 @@ final class HappnOfficeTests : XCTestCase {
 	func testGetUserWithNullID() async throws {
 		let optionalUser = try await service.existingUser(fromID: .nullLogin, propertiesToFetch: nil, using: services)
 		let user = try XCTUnwrap(optionalUser)
-		XCTAssertEqual(user.oU_persistentID, "244")
+		XCTAssertEqual(user.oU_persistentID, testConf.nullUserID)
 	}
 	
 	func testGetExistingUserFromPersistentID() async throws {
 		let optionalUser = try await service.existingUser(fromPersistentID: testConf.fetchedUser.id, propertiesToFetch: nil, using: services)
 		let user = try XCTUnwrap(optionalUser)
-		XCTAssertEqual(user.oU_id, testConf.fetchedUser.userID)
+		XCTAssertEqual(user.oU_id, testConf.fetchedUser.login)
 		XCTAssertEqual(user.oU_persistentID, testConf.fetchedUser.id)
 	}
 	

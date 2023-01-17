@@ -109,20 +109,22 @@ public final class HappnService : UserService {
 	public func existingUser(fromID uID: HappnUserID, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
 		
+		let users: [HappnUser]
 		switch uID {
 			case .nullLogin:
-				/* TODO: Is there a better solution than this? */
-				return try await existingUser(fromPersistentID: "244", propertiesToFetch: propertiesToFetch, using: services)
+				/* Very inefficient, but I don’t think happn’s API can search for users with a null ID. */
+				users = try await listAllUsers(includeSuspended: true, propertiesToFetch: propertiesToFetch, using: services)
+					.filter{ $0.login == .nullLogin }
 				
 			case .login(let l):
 				let ids = Set(l.allDomainVariants(aliasMap: config.domainAliases))
-				let users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector) }
-				guard users.count <= 1 else {
-					throw OfficeKitError.tooManyUsersFromAPI(users: users)
-				}
-				
-				return users.first
+				users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector) }
 		}
+		
+		guard users.count <= 1 else {
+			throw OfficeKitError.tooManyUsersFromAPI(users: users)
+		}
+		return users.first
 	}
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> HappnUser? {
