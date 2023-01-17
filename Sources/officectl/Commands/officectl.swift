@@ -104,7 +104,7 @@ extension Officectl.Options {
 		
 		/* *** SET CA CERTS FILE FOR LDAP *** */
 		if let path = conf?.caCertsFile, let confPath {
-			try LDAPConnector.setCA(URL(fileURLWithPath: path.string, isDirectory: false, relativeTo: URL(fileURLWithPath: confPath.string)).path)
+			try LDAPConnector.setCA(URL(fileURLWithPath: path, isDirectory: false, relativeTo: URL(fileURLWithPath: confPath.string)).path)
 		}
 		
 		
@@ -150,7 +150,7 @@ extension Officectl.Options {
 	}
 	
 	var resolvedStaticDataDir: FilePath? {
-		staticDataDir ?? conf?.staticDataDir
+		staticDataDir ?? conf?.staticDataDirPath
 	}
 	
 	var resolvedOfficeKitServices: OfficeKitServices {
