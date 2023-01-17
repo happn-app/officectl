@@ -13,5 +13,6 @@ public enum Gender : String, Sendable, Codable, RawRepresentable {
 	
 	case male
 	case female
+	case unknown
 	
 }
