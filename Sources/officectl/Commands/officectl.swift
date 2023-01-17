@@ -18,6 +18,15 @@ import Logging
 import TOMLDecoder
 import XDG
 
+import OfficeKit
+import GitHubOffice
+import GoogleOffice
+import HappnOffice
+import LDAPOffice
+import OfficeKitOffice
+#if canImport(OpenDirectoryOffice)
+import OpenDirectoryOffice
+#endif
 import ServiceKit
 
 
@@ -91,6 +100,41 @@ extension Officectl.Options {
 		if confPath == nil {
 			logger.error("Conf file not found. Continuing without services.")
 		}
+		
+		
+		/* *** SET CA CERTS FILE FOR LDAP *** */
+		if let path = conf?.caCertsFile, let confPath {
+			try LDAPConnector.setCA(URL(fileURLWithPath: path.string, isDirectory: false, relativeTo: URL(fileURLWithPath: confPath.string)).path)
+		}
+		
+		
+		/* *** OFFICEKIT SERVICE PROVIDERS *** */
+		OfficeKitServices.providers[       GitHubService.providerID] =        GitHubService.self
+		OfficeKitServices.providers[       GoogleService.providerID] =        GoogleService.self
+		OfficeKitServices.providers[        HappnService.providerID] =         HappnService.self
+		OfficeKitServices.providers[         LDAPService.providerID] =          LDAPService.self
+		OfficeKitServices.providers[    OfficeKitService.providerID] =     OfficeKitService.self
+#if canImport(OpenDirectoryOffice)
+		OfficeKitServices.providers[OpenDirectoryService.providerID] = OpenDirectoryService.self
+#endif
+		
+		/* *** OFFICEKIT SERVICES *** */
+		var services = OfficeKitServices()
+		for (serviceID, serviceDef) in conf?.services ?? [:] {
+			guard let provider = OfficeKitServices.providers[serviceDef.providerID] else {
+				logger.error("Cannot find provider ID for service.", metadata: [LMK.serviceID: "\(serviceID)", LMK.providerID: "\(serviceDef.providerID)"])
+				throw ExitCode(1)
+			}
+			services.allServices[serviceID] = try provider.init(id: serviceID, jsonConfig: serviceDef.config)
+		}
+		if let authServiceID = conf?.servicesConf.authServiceID {
+			guard let authService = services.allServices[authServiceID] as? any AuthenticatorService else {
+				logger.error("Cannot find auth service for given auth service ID.", metadata: [LMK.serviceID: "\(authServiceID)"])
+				throw ExitCode(1)
+			}
+			services.authService = authService
+		}
+		Officectl.services.register{ [services] in services } /* We want to return always the same services. */
 	}
 	
 	var resolvedLogLevel: Logger.Level {
@@ -107,6 +151,10 @@ extension Officectl.Options {
 	
 	var resolvedStaticDataDir: FilePath? {
 		staticDataDir ?? conf?.staticDataDir
+	}
+	
+	var resolvedOfficeKitServices: OfficeKitServices {
+		try! Officectl.services.make()
 	}
 	
 	var logger: Logger {

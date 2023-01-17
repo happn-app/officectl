@@ -26,9 +26,9 @@ struct Create : AsyncParsableCommand {
 	
 	func run() async throws {
 		try officectlOptions.bootstrap()
+		let officeKitServices = officectlOptions.resolvedOfficeKitServices
 		
-		officectlOptions.logger.warning("Hello from users create")
-		print(userPropertiesOptions)
+		try await print(officeKitServices.userServices.first?.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: Officectl.services))
 	}
 	
 }
