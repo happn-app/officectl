@@ -67,13 +67,9 @@ extension LDAPObject : User {
 	}
 	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
-		guard property.hasPrefix(Self.customAttributePrefix) else {
-			return nil
-		}
-		let attributeName = String(property.dropFirst(Self.customAttributePrefix.count))
-		guard !attributeName.isEmpty, let oid = LDAPObjectID(rawValue: attributeName) else {
+		guard let (oid, _) = Self.customUserPropertyToAttribute(UserProperty(rawValue: property)) else {
 			Conf.logger?.warning("Invalid property name.")
-			return false
+			return nil
 		}
 		return record[oid]
 	}
