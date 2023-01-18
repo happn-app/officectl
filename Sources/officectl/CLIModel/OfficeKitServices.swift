@@ -22,4 +22,9 @@ struct OfficeKitServices : Sendable {
 		return allServices.compactMap{ $0.value as? any UserService }
 	}
 	
+	func hashableUserServices(matching serviceIDs: String?) -> Set<HashableUserService> {
+		let serviceIDs = serviceIDs.flatMap{ Set($0.split(separator: ",").map(String.init)) }
+		return Set(userServices.filter{ service in serviceIDs?.contains(service.id) ?? true }.map(HashableUserService.init))
+	}
+	
 }

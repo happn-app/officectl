@@ -153,7 +153,7 @@ extension Officectl.Options {
 		staticDataDir ?? conf?.staticDataDirPath
 	}
 	
-	var resolvedOfficeKitServices: OfficeKitServices {
+	var officeKitServices: OfficeKitServices {
 		try! Officectl.services.make()
 	}
 	
