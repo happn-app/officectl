@@ -1,4 +1,5 @@
 # Generated from happn.schema
+
 dn: cn=happn,cn=schema,cn=config
 objectClass: olcSchemaConfig
 cn: happn

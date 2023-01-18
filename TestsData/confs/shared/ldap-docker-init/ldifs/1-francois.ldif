@@ -1,0 +1,8 @@
+dn: uid=francois.lamboley,ou=people,dc=happn,dc=test
+cn:; François Lamboley
+givenName:; François
+objectClass: inetOrgPerson
+objectClass: top
+sn: Lamboley
+uid: francois.lamboley
+mail: francois.lamboley@happn.fr

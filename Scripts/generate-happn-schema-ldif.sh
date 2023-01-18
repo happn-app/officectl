@@ -19,7 +19,7 @@ rm -f "$TMP_CONF_FILE"
 
 # Move the generated ldifs in .
 for ldif in "./cn=config/cn=schema"/*.ldif; do
-	mv -f "$ldif" "$(basename "$ldif" | sed -E 's/^cn=\{0\}//')"
+	mv -f "$ldif" "$(basename "$ldif" | sed -E 's/^cn=\{[0-9]+\}//')"
 done
 
 # Remove extra files

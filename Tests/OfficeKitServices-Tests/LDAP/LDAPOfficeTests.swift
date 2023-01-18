@@ -78,8 +78,8 @@ final class LDAPOfficeTests : XCTestCase {
 	}
 	
 	func testCreateUpdateDeleteUser() async throws {
-		let initialDNString = "uid=officectl.test.\((0..<42).randomElement()!),ou=people,dc=happn,dc=com"
-		let modifiedDNString = "uid=officectl.test-modified.\((0..<42).randomElement()!),ou=people,dc=happn,dc=com"
+		let initialDNString = "uid=officectl.test.\((0..<42).randomElement()!),\(service.config.peopleDN),\(service.config.baseDN)"
+		let modifiedDNString = "uid=officectl.test-modified.\((0..<42).randomElement()!),\(service.config.peopleDN),\(service.config.baseDN)"
 		
 		var user = LDAPObject(oU_id: try LDAPDistinguishedName(string: initialDNString))
 		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNString))
@@ -116,8 +116,8 @@ final class LDAPOfficeTests : XCTestCase {
 	}
 	
 	func testCreateUpdateIDDeleteUser() async throws {
-		let initialDNString = "uid=officectl.test.\((0..<42).randomElement()!),ou=people,dc=happn,dc=com"
-		let modifiedDNString = "uid=officectl.test-modified.\((0..<42).randomElement()!),ou=people,dc=happn,dc=com"
+		let initialDNString = "uid=officectl.test.\((0..<42).randomElement()!),\(service.config.peopleDN),\(service.config.baseDN)"
+		let modifiedDNString = "uid=officectl.test-modified.\((0..<42).randomElement()!),\(service.config.peopleDN),\(service.config.baseDN)"
 		
 		var user = LDAPObject(oU_id: try LDAPDistinguishedName(string: initialDNString))
 		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNString))
@@ -147,8 +147,8 @@ final class LDAPOfficeTests : XCTestCase {
 		try await service.deleteUser(user, using: services)
 	}
 	
-	func testCreateUpdateCustomPropAndDeleteUser() async throws {
-		let dn = try LDAPDistinguishedName(string: "uid=officectl.test.\((0..<42).randomElement()!),ou=people,dc=happn,dc=com")
+	func testCreateUpdateCustomPropSSHKeyAndDeleteUser() async throws {
+		let dn = try LDAPDistinguishedName(string: "uid=officectl.test.\((0..<42).randomElement()!),\(service.config.peopleDN),\(service.config.baseDN)")
 		
 		var user = LDAPObject(oU_id: dn)
 		/* It seems first name and last name are mandatory. */
@@ -159,6 +159,26 @@ final class LDAPOfficeTests : XCTestCase {
 		
 		let property = UserProperty(rawValue: "happn/ldap:custom-attribute:ldapPublicKey:sshPublicKey")
 		user.oU_applyHints([property: "ssh-rsa yolo"], convertMismatchingTypes: true)
+		
+		print("Updating user...")
+		user = try await service.updateUser(user, propertiesToUpdate: [property], using: services)
+		
+		print("Deleting user...")
+		try await service.deleteUser(user, using: services)
+	}
+	
+	func testCreateUpdateCustomPropGitHubIDAndDeleteUser() async throws {
+		let dn = try LDAPDistinguishedName(string: "uid=officectl.test.\((0..<42).randomElement()!),\(service.config.peopleDN),\(service.config.baseDN)")
+		
+		var user = LDAPObject(oU_id: dn)
+		/* It seems first name and last name are mandatory. */
+		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], convertMismatchingTypes: true)
+		
+		print("Creating user...")
+		user = try await service.createUser(user, using: services)
+		
+		let property = UserProperty(rawValue: "happn/ldap:custom-attribute:happnObject:gitHubID")
+		user.oU_applyHints([property: "Frizlab"], convertMismatchingTypes: true)
 		
 		print("Updating user...")
 		user = try await service.updateUser(user, propertiesToUpdate: [property], using: services)
