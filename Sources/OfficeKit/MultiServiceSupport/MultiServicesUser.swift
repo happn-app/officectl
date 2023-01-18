@@ -207,8 +207,13 @@ public extension MultiServicesUser {
 				res[.init(linkedUser.userAndService.service)] = .failure(Err.tooManyUsersFromAPI(users: users))
 			}
 			
-			for (service, subLinkedUsers) in linkedUser.linkedUsersByServices {
-				assert(!linkedUser.linkedUsersByServices.isEmpty)
+			/* Let’s get all the linked users by services for our current linked user and its linked user for the same service. */
+			let allLinkedUsersByServices = ([linkedUser] + linkedUser.linkedUsersSameService).reduce(
+				[HashableUserService: Set<LinkedUser>](),
+				{ $0.merging($1.linkedUsersByServices, uniquingKeysWith: { $0.union($1) }) }
+			)
+			for (service, subLinkedUsers) in allLinkedUsersByServices {
+				assert(!allLinkedUsersByServices.isEmpty)
 				
 				let service = service.value
 				assert(subLinkedUsers.allSatisfy{ $0.userAndService.serviceID == service.id })

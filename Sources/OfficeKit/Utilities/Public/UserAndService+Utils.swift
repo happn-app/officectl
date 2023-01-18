@@ -31,6 +31,10 @@ public extension UserAndService {
 		return user.oU_persistentID.flatMap{ TaggedID(tag: service.id, id: service.string(fromPersistentUserID: $0)) }
 	}
 	
+	var shortUserDescription: String {
+		return service.shortDescription(fromUser: user)
+	}
+	
 	func fetch<OtherServiceType : UserService>(in otherService: OtherServiceType, propertiesToFetch: Set<UserProperty>? = [], using depServices: Services) async throws -> OtherServiceType.UserType? {
 		let otherID = try otherService.logicalUserID(fromUser: user)
 		return try await otherService.existingUser(fromID: otherID, propertiesToFetch: propertiesToFetch, using: depServices)
