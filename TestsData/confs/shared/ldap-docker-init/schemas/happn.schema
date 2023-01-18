@@ -1,0 +1,16 @@
+# 1.3.6.1.4.1.52260 -> happn
+# 1.3.6.1.4.1.52260.0 -> happnObject Class
+# 1.3.6.1.4.1.52260.0.0 -> gitHubID
+
+# octetString SYNTAX
+attributetype ( 1.3.6.1.4.1.52260.0.0 NAME 'gitHubID'
+	DESC 'MANDATORY: The GitHub ID of the happnObject'
+	EQUALITY octetStringMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.40
+ )
+
+# printableString SYNTAX yes|no
+objectclass ( 1.3.6.1.4.1.52260.0 NAME 'happnObject' SUP top AUXILIARY
+	DESC 'MANDATORY: happnObject objectclass'
+	MAY ( gitHubID $ uid )
+ )

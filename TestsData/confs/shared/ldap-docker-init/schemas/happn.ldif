@@ -1,0 +1,8 @@
+dn: cn=happn,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: happn
+olcAttributeTypes: {0}( 1.3.6.1.4.1.52260.0.0 NAME 'gitHubID' DESC 'MANDATORY:
+  The GitHub ID of the happnObject' EQUALITY octetStringMatch SYNTAX 1.3.6.1.4
+ .1.1466.115.121.1.40 )
+olcObjectClasses: {0}( 1.3.6.1.4.1.52260.0 NAME 'happnObject' DESC 'MANDATORY:
+  happnObject objectclass' SUP top AUXILIARY MAY ( gitHubID $ uid ) )
