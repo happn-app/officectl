@@ -56,7 +56,12 @@ public extension Converters {
 		}
 		
 		/* Hint: A String or a BinaryInteger is LosslessStringConvertible. */
-		return (obj as? LosslessStringConvertible).flatMap{ String($0) }
+		switch obj {
+			case let strish as LosslessStringConvertible: return String(strish)
+			case let data  as  Data:  return                      String(data: data, encoding: .utf8) /* We happily and shamelessly assume UTF-8 */
+			case let datas as [Data]: return datas.first.flatMap{ String(data: $0,   encoding: .utf8) } /* Case for LDAP */
+			default: return nil
+		}
 	}
 	
 	static func convertObjectToEmail(_ obj: Any?) -> Email? {
