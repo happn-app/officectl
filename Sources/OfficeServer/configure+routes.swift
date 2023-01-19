@@ -16,5 +16,7 @@ import Vapor
 func routes(_ app: Application) throws {
 	app.routes.get("_internal", "metrics", use: { _ in try await MetricsSystem.prometheus().collect() })
 	
+	let apiRoute = app.grouped("api")
 //	try app.register(collection: AuthController())
+	try apiRoute.register(collection: UsersController())
 }

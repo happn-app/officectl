@@ -8,8 +8,10 @@
 import Foundation
 
 import JWT
-import OfficeKit
 import Vapor
+
+import OfficeKit
+import ServiceKit
 
 
 
@@ -38,13 +40,45 @@ public extension Application {
 		typealias Value = any AuthenticatorService
 	}
 	
-	var officeKitServices: [String: any OfficeService]? {
+	var officeKitServices: OfficeKitServices! {
 		get {storage[OfficeKitServicesKey.self]}
 		set {storage[OfficeKitServicesKey.self] = newValue}
 	}
 	
 	private struct OfficeKitServicesKey: StorageKey {
-		typealias Value = [String: any OfficeService]
+		typealias Value = OfficeKitServices
+	}
+	
+}
+
+
+
+extension Application {
+	
+	var services: Services {
+		if let existing = storage[ServicesKey.self] {
+			return existing
+		} else {
+			var new = Services()
+			new.register{ self.logger }
+			storage[ServicesKey.self] = new
+			return new
+		}
+	}
+	
+	private struct ServicesKey: StorageKey {
+		typealias Value = Services
+	}
+	
+}
+
+
+extension Request {
+	
+	var services: Services {
+		var ret = Services(duplicating: application.services)
+		ret.register{ self.logger }
+		return ret
 	}
 	
 }

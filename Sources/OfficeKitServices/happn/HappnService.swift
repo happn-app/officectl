@@ -61,7 +61,7 @@ public final class HappnService : UserService {
 	}
 	
 	public func userID(fromString string: String) throws -> HappnUserID {
-		let taggedID = TaggedID(string: string)
+		let taggedID = try TaggedID(string) ?! Err.invalidID(string)
 		switch taggedID.tag {
 			case "null":
 				guard taggedID.id == "" else {

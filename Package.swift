@@ -160,6 +160,7 @@ let package = Package(
 				var ret = [Target.Dependency]()
 				ret.append(.product(name: "JWT",             package: "jwt"))
 				ret.append(.product(name: "Metrics",         package: "swift-metrics"))
+				ret.append(.product(name: "OfficeModel",     package: "officectl-model"))
 				ret.append(.product(name: "SwiftPrometheus", package: "SwiftPrometheus"))
 				ret.append(.product(name: "Vapor",           package: "Vapor"))
 				ret.append(contentsOf: coreDependencies)
