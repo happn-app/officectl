@@ -48,8 +48,7 @@ extension ApiMergedUserWithSource {
 				uniqueKeysWithValues: multiServicesUser
 					.map{
 						let (hashableServie, userResult) = $0
-#warning("TODO: Error mapping.")
-						return (hashableServie.value.id, userResult.mapError{ _ in ApiError(code: 1, domain: "yolo", message: "TODO") }.map{ optionalUser in
+						return (hashableServie.value.id, userResult.mapError(ApiError.init(error:)).map{ optionalUser in
 							guard let user = optionalUser else {
 								return nil
 							}

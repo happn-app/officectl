@@ -28,9 +28,8 @@ struct UsersController : RouteCollection {
 		let serviceIDs = try req.query.get(String?.self, at: "service_ids")
 		let userServices = req.application.officeKitServices.hashableUserServices(matching: serviceIDs)
 		let (users, fetchErrors) = try await MultiServicesUser.fetchAll(in: userServices, propertiesToFetch: nil, includeSuspended: true, using: req.services)
-#warning("TODO: Error mapping.")
 		let errors: [String: Result<None, ApiError>] = Dictionary(uniqueKeysWithValues: userServices.map{ service in
-			(service.value.id, fetchErrors[service].flatMap{ _ in .failure(ApiError(code: 1, domain: "yolo", message: "amazing error")) } ?? .success(None()))
+			(service.value.id, fetchErrors[service].flatMap{ .failure(ApiError(error: $0)) } ?? .success(None()))
 		})
 		return ApiUsers(results: errors, mergedResults: users.map{ ApiMergedUserWithSource(multiServicesUser: $0, servicesMergePriority: [], logger: req.logger) })
 	}
