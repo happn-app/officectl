@@ -28,10 +28,11 @@ extension ApiDirectoryUser {
 			nickname: userAndService.user.oU_nickname,
 			emails: userAndService.user.oU_emails,
 			nonStandardProperties: Dictionary(uniqueKeysWithValues: userAndService.user.oU_nonStandardProperties.compactMap{ property in
-				guard let v = userAndService.user.oU_valueForNonStandardProperty(property) as? Encodable,
-						let json = try? JSON(encodable: v)
-				else {
-					logger?.warning("Got nil or non-encodable value for custom property.", metadata: [LMK.property: "\(property)"])
+				guard let v = userAndService.user.oU_valueForNonStandardProperty(property) as? Encodable else {
+					return (property, .null)
+				}
+				guard let json = try? JSON(encodable: v) else {
+					logger?.warning("Got non-encodable value for custom property.", metadata: [LMK.property: "\(property)"])
 					return nil
 				}
 				return (property, json)
