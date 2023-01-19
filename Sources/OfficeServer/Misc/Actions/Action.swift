@@ -11,9 +11,11 @@ import Foundation
 
 public protocol ActionProtocol : Sendable {
 	
+	associatedtype Subject    : Sendable
 	associatedtype Parameters : Sendable
-	associatedtype Results : Sendable
+	associatedtype Results    : Sendable
 	
+	init(subject: Subject)
 	func execute(parameters: Parameters) async throws -> Results
 	
 }

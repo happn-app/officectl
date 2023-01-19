@@ -7,12 +7,19 @@
 
 import Foundation
 
+import SemiSingleton
 
 
+
+extension ActionExecutor : SemiSingleton where Subject : Hashable {}
 public final class ActionExecutor<Action : ActionProtocol> : @unchecked Sendable {
-	
+
+	public typealias Subject    = Action.Subject
 	public typealias Parameters = Action.Parameters
 	public typealias Results    = Action.Results
+	
+	public typealias SemiSingletonKey = Subject
+	public typealias SemiSingletonAdditionalInitInfo = Void
 	
 	public final var isExecuting: Bool {
 		return stateSyncQueue.sync{ currentState.isRunning }
@@ -38,9 +45,13 @@ public final class ActionExecutor<Action : ActionProtocol> : @unchecked Sendable
 		return stateSyncQueue.sync{ currentState.result }
 	}
 	
-	public init(action: Action) {
+	public init(subject: Subject) {
 		self.currentState = .idleWeak
-		self.action = action
+		self.action = Action(subject: subject)
+	}
+	
+	public convenience init(key: Subject, additionalInfo: Void, store: SemiSingletonStore) {
+		self.init(subject: key)
 	}
 	
 	deinit {
