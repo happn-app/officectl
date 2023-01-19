@@ -36,6 +36,15 @@ public protocol User<UserIDType> : Sendable {
 	
 	var oU_emails: [Email]? {get}
 	
+	/**
+	 Return here the non-standard properties that can be exposed.
+	 
+	 Some non-standard properties are for internal use only (e.g. happn’s password property),
+	  and some other can and should be public (e.g. a custom property in LDAP).
+	 
+	 Only the public non-standard properties should be returned here. */
+	var oU_nonStandardProperties: Set<String> {get}
+	
 	func oU_valueForNonStandardProperty(_ property: String) -> (any Sendable)?
 	/** When setting to `nil`, the property should be removed if possible (otherwise set to `nil`). */
 	mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult

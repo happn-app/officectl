@@ -34,6 +34,10 @@ extension OfficeKitUser : User {
 	public var oU_nickname: String? {nickname}
 	public var oU_emails: [Email]? {emails}
 	
+	public var oU_nonStandardProperties: Set<String> {
+		return Set(nonStandardProperties.keys)
+	}
+	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		return nonStandardProperties[property]
 	}

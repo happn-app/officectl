@@ -38,6 +38,10 @@ struct SimpleUser1<UserIDType : Hashable & Sendable> : User {
 	
 	var oU_emails: [Email]?
 	
+	var oU_nonStandardProperties: Set<String> {
+		return []
+	}
+	
 	func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		return nil
 	}

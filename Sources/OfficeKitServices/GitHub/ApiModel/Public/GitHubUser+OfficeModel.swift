@@ -62,6 +62,10 @@ extension GitHubUser : User {
 		return []
 	}
 	
+	public var oU_nonStandardProperties: Set<String> {
+		return []
+	}
+	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		switch UserProperty(rawValue: property) {
 				/* We do not support any non-standard properties for now. */

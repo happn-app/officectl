@@ -66,6 +66,10 @@ extension LDAPObject : User {
 		return try? LDAPInetOrgPersonClass.Mail.value(in: record)
 	}
 	
+	public var oU_nonStandardProperties: Set<String> {
+		return Set(record.keys.map{ Self.customAttributePrefix + ":" + $0.rawValue })
+	}
+	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		guard let (oid, _) = Self.customUserPropertyToAttribute(UserProperty(rawValue: property)) else {
 			Conf.logger?.warning("Invalid property name.")
@@ -153,9 +157,10 @@ extension LDAPObject : User {
 		return Set(oidsFromProperties(properties).map{ $0.rawValue })
 	}
 	
-	private static func customUserPropertyToAttribute(_ property: UserProperty) -> (oid: LDAPObjectID, className: String)? {
+	private static func customUserPropertyToAttribute(_ property: UserProperty) -> (oid: LDAPObjectID, className: String?)? {
 		/* Expected format:
-		 *  "happn/ldap:custom-attribute:"/*prefix for custom property*/ + "className:propertyName" */
+		 *  "happn/ldap:custom-attribute:"/*prefix for custom property*/ + "className:propertyName"
+		 * The className can be empty if unknown, in which case nil is returned for className. */
 		let propertyName = property.rawValue
 		guard propertyName.hasPrefix(Self.customAttributePrefix) else {
 			return nil
@@ -171,7 +176,7 @@ extension LDAPObject : User {
 			return nil
 		}
 		let className = String(split[0])
-		return (oid, className)
+		return (oid, !className.isEmpty ? className : nil)
 	}
 	
 }

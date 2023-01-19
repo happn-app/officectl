@@ -59,6 +59,10 @@ extension OpenDirectoryUser : User {
 		return properties[kODAttributeTypeMetaRecordName]?.asString.flatMap{ try? LDAPDistinguishedName(string: $0) }
 	}
 	
+	public var oU_nonStandardProperties: Set<String> {
+		return []
+	}
+	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		return nil
 	}

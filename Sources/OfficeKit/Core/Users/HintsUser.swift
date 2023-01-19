@@ -68,6 +68,10 @@ extension HintsUser : User {
 		self.properties = [:]
 	}
 	
+	public var oU_nonStandardProperties: Set<String> {
+		Set(properties.keys.filter{ !$0.isStandard }.map(\.rawValue))
+	}
+	
 	public func oU_valueForNonStandardProperty(_ property: String) -> (any Sendable)? {
 		return properties[.init(stringLiteral: property)]?.flatMap{ $0 }
 	}

@@ -34,6 +34,10 @@ extension HappnUser : User {
 	
 	public var oU_emails: [Email]? {login.email.flatMap{ [$0] }}
 	
+	public var oU_nonStandardProperties: Set<String> {
+		return [UserProperty.gender.rawValue, UserProperty.birthdate.rawValue]
+	}
+	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		switch UserProperty(rawValue: property) {
 			case .gender:    return gender

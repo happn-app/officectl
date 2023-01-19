@@ -33,6 +33,10 @@ struct DummyUser1 : User {
 	
 	var oU_emails: [Email]?
 	
+	var oU_nonStandardProperties: Set<String> {
+		return []
+	}
+	
 	func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		return nil
 	}

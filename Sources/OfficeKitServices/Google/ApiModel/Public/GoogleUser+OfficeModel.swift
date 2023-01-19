@@ -37,9 +37,14 @@ extension GoogleUser : User {
 	 Rationale: we want this property to be editable. */
 	public var oU_emails: [Email]? {[primaryEmail] + (aliases ?? [])}
 	
+	public var oU_nonStandardProperties: Set<String> {
+		/* We do not support any non-standard properties for now except for the password one, but it’s private. */
+		return []
+	}
+	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		switch UserProperty(rawValue: property) {
-			/* We do not support any non-standard properties for now. */
+			/* We do not support any non-standard properties for now except for the password one, but it’s private. */
 			default: return nil
 		}
 	}
