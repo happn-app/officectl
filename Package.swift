@@ -68,6 +68,7 @@ let package = Package(
 	dependencies: {
 		var ret = [Package.Dependency]()
 		ret.append(.package(url: "https://github.com/apple/swift-argument-parser.git",            from: "1.1.0"))
+		ret.append(.package(url: "https://github.com/apple/swift-collections.git",                from: "1.0.4"))
 		ret.append(.package(url: "https://github.com/apple/swift-crypto.git",                     from: "2.1.0"))
 		ret.append(.package(url: "https://github.com/apple/swift-log.git",                        from: "1.4.0"))
 		ret.append(.package(url: "https://github.com/apple/swift-metrics.git",                    from: "2.2.0"))
@@ -158,11 +159,12 @@ let package = Package(
 			name: "OfficeServer",
 			dependencies: {
 				var ret = [Target.Dependency]()
-				ret.append(.product(name: "JWT",             package: "jwt"))
-				ret.append(.product(name: "Metrics",         package: "swift-metrics"))
-				ret.append(.product(name: "OfficeModel",     package: "officectl-model"))
-				ret.append(.product(name: "SwiftPrometheus", package: "SwiftPrometheus"))
-				ret.append(.product(name: "Vapor",           package: "Vapor"))
+				ret.append(.product(name: "JWT",                package: "jwt"))
+				ret.append(.product(name: "Metrics",            package: "swift-metrics"))
+				ret.append(.product(name: "OfficeModel",        package: "officectl-model"))
+				ret.append(.product(name: "OrderedCollections", package: "swift-collections"))
+				ret.append(.product(name: "SwiftPrometheus",    package: "SwiftPrometheus"))
+				ret.append(.product(name: "Vapor",              package: "Vapor"))
 				ret.append(contentsOf: coreDependencies)
 				return ret
 			}(),

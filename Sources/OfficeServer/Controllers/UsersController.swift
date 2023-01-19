@@ -28,23 +28,11 @@ struct UsersController : RouteCollection {
 		let serviceIDs = try req.query.get(String?.self, at: "service_ids")
 		let userServices = req.application.officeKitServices.hashableUserServices(matching: serviceIDs)
 		let (users, fetchErrors) = try await MultiServicesUser.fetchAll(in: userServices, propertiesToFetch: nil, includeSuspended: true, using: req.services)
+#warning("TODO: Error mapping.")
 		let errors: [String: Result<None, ApiError>] = Dictionary(uniqueKeysWithValues: userServices.map{ service in
 			(service.value.id, fetchErrors[service].flatMap{ _ in .failure(ApiError(code: 1, domain: "yolo", message: "amazing error")) } ?? .success(None()))
 		})
-		return ApiUsers(results: errors, mergedResults: users.map{ user in
-			let directoryUsers: [String: Result<ApiDirectoryUser?, ApiError>] = user
-				.mapKeys{ $0.value.id }
-				.mapValues{ userResult in
-					userResult
-						.mapError{ _ in ApiError(code: 1, domain: "yolo", message: "amazing error") }
-						.map{ optionalUser in optionalUser.flatMap{ user in ApiDirectoryUser(
-							serviceID: "yolo", userID: "yolo", persistentID: nil,
-							isSuspended: user.oU_isSuspended, firstName: user.oU_firstName, lastName: user.oU_lastName, nickname: user.oU_nickname,
-							emails: user.oU_emails, nonStandardProperties: [:]
-						) } }
-				}
-			return ApiMergedUserWithSource(directoryUsers: directoryUsers)
-		})
+		return ApiUsers(results: errors, mergedResults: users.map{ ApiMergedUserWithSource(multiServicesUser: $0, servicesMergePriority: [], logger: req.logger) })
 	}
 	
 }
