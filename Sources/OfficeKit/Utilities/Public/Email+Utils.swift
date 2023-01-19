@@ -11,6 +11,15 @@ import Email
 
 
 
+extension Email : MightHaveEmail {
+	
+	public var email: Email? {
+		return self
+	}
+	
+}
+
+
 public extension Email {
 	
 	init(_ e: Email, newLocalPart: String? = nil, newDomainPart: String? = nil) {

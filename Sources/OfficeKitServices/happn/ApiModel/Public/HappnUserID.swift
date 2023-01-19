@@ -9,13 +9,15 @@ import Foundation
 
 import Email
 
+import OfficeKit
+
 
 
 /* About the Codable conformance:
  * For now, we’re codable w/o issues as the HappnUserID value is directly linked to the `login` key.
  * Later, if there is support for LDAP-connect (or other) in the happn API, we might have to use some other keys (most likely `social_synchronization`) to get the HappnUserID.
  * In order to do this, we’ll probably have to remove HappnUserID’s conformance to Codable and do the decoding manually in HappnUser. */
-public enum HappnUserID : Hashable, Codable, Sendable, CustomStringConvertible {
+public enum HappnUserID : Hashable, Codable, Sendable, CustomStringConvertible, MightHaveEmail {
 	
 	/**
 	 Case where the login field in the user is `null` (aka `nil`, in Swift) and the login is the primary key.

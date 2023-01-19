@@ -39,7 +39,9 @@ public struct UserIDBuilder : Sendable, Codable {
 				return transformed.replacingOccurrences(of: " ", with: "-")
 			})!
 			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "#"), replacement: { variable in
-				guard let email = (user.oU_valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? Email else {
+				let propValEmail = (user.oU_valueForProperty(.init(stringLiteral: variable)) as? MightHaveEmail)?.email
+				let additionalVarEmail = (additionalVariables[variable] as? MightHaveEmail)?.email
+				guard let email = propValEmail ?? additionalVarEmail else {
 					gotError = true
 					return "MISSING_VALUE_OR_INVALID_EMAIL"
 				}
