@@ -13,4 +13,5 @@ import OfficeModel
 
 
 
+extension ApiService : Content {}
 extension ApiMultiServicesResults : Content {}
