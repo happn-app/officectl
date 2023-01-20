@@ -22,17 +22,19 @@ public final class GitHubService : UserService {
 	public typealias UserType = GitHubUser
 	
 	public let id: String
+	public let name: String
 	public let config: GitHubServiceConfig
 	
 	public let connector: GitHubConnector
 	
-	public convenience init(id: String, jsonConfig: JSON, workdir: URL?) throws {
+	public convenience init(id: String, name: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try GitHubServiceConfig(json: jsonConfig)
-		try self.init(id: id, gitHubServiceConfig: config, workdir: workdir)
+		try self.init(id: id, name: name, gitHubServiceConfig: config, workdir: workdir)
 	}
 	
-	public init(id: String, gitHubServiceConfig: GitHubServiceConfig, workdir: URL?) throws {
+	public init(id: String, name: String, gitHubServiceConfig: GitHubServiceConfig, workdir: URL?) throws {
 		self.id = id
+		self.name = name
 		self.config = gitHubServiceConfig
 		
 		self.connector = try GitHubConnector(

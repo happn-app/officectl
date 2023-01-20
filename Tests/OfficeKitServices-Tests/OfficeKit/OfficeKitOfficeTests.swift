@@ -47,7 +47,7 @@ final class OfficeKitOfficeTests : XCTestCase {
 		let (serviceConf, testConf) = try Self.confs.get()
 		
 		self.testConf = testConf
-		self.service = OfficeKitService(id: "test-officekit", officeKitServiceConfig: serviceConf)
+		self.service = OfficeKitService(id: "test-officekit", name: "Tested OfficeKit Service", officeKitServiceConfig: serviceConf)
 	}
 	
 	override func tearDown() async throws {

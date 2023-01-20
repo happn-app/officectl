@@ -51,7 +51,7 @@ final class GoogleOfficeTests : XCTestCase {
 		let (serviceConf, testConf) = try Self.confs.get()
 		
 		self.testConf = testConf
-		self.service = try GoogleService(id: "test-gougle", googleServiceConfig: serviceConf, workdir: nil)
+		self.service = try GoogleService(id: "test-gougle", name: "Tested Gougle Service", googleServiceConfig: serviceConf, workdir: nil)
 	}
 	
 	override func tearDown() async throws {

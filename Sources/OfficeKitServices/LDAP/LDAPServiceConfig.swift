@@ -15,8 +15,6 @@ import OfficeKit
 
 public struct LDAPServiceConfig : Sendable, Codable {
 	
-	public var serviceName: String
-	
 	public var baseDN: LDAPDistinguishedName
 	public var peopleDN: LDAPDistinguishedName
 	public var groupsDN: LDAPDistinguishedName?
@@ -50,8 +48,6 @@ public struct LDAPServiceConfig : Sendable, Codable {
 	}
 	
 	private enum CodingKeys : String, CodingKey {
-		
-		case serviceName = "service_name"
 		
 		case baseDN = "base_dn"
 		case peopleDN = "people_dn"

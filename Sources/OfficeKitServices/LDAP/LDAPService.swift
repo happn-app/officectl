@@ -25,17 +25,19 @@ public final class LDAPService : UserService, AuthenticatorService {
 	public typealias UserType = LDAPObject
 	
 	public let id: String
+	public let name: String
 	public let config: LDAPServiceConfig
 	
 	public let connector: LDAPConnector
 	
-	public convenience init(id: String, jsonConfig: JSON, workdir: URL?) throws {
+	public convenience init(id: String, name: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try LDAPServiceConfig(json: jsonConfig)
-		self.init(id: id, ldapServiceConfig: config)
+		self.init(id: id, name: name, ldapServiceConfig: config)
 	}
 	
-	public init(id: String, ldapServiceConfig: LDAPServiceConfig) {
+	public init(id: String, name: String, ldapServiceConfig: LDAPServiceConfig) {
 		self.id = id
+		self.name = name
 		self.config = ldapServiceConfig
 		
 		self.connector = LDAPConnector(

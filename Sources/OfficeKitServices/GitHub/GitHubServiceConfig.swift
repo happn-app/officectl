@@ -15,8 +15,6 @@ import OfficeKit
 
 public struct GitHubServiceConfig : Sendable, Codable {
 	
-	public var serviceName: String
-	
 	public var orgID: String
 	public var connectorSettings: ConnectorSettings
 	
@@ -44,8 +42,6 @@ public struct GitHubServiceConfig : Sendable, Codable {
 	}
 	
 	private enum CodingKeys : String, CodingKey {
-		
-		case serviceName = "service_name"
 		
 		case orgID = "org_id"
 		case connectorSettings = "connector_settings"

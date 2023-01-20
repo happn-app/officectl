@@ -51,7 +51,7 @@ final class HappnOfficeTests : XCTestCase {
 		let (serviceConf, testConf) = try Self.confs.get()
 		
 		self.testConf = testConf
-		self.service = try HappnService(id: "test-happn", happnServiceConfig: serviceConf)
+		self.service = try HappnService(id: "test-happn", name: "Tested Happn Service", happnServiceConfig: serviceConf)
 	}
 	
 	override func tearDown() async throws {

@@ -16,8 +16,6 @@ import OfficeKit
 
 public struct GoogleServiceConfig : Sendable, Codable {
 	
-	public var serviceName: String
-	
 	public var primaryDomains: [String]
 	
 	public var connectorSettings: ConnectorSettings
@@ -43,8 +41,6 @@ public struct GoogleServiceConfig : Sendable, Codable {
 	}
 	
 	private enum CodingKeys : String, CodingKey {
-		
-		case serviceName = "service_name"
 		
 		case primaryDomains = "primary_domains"
 		

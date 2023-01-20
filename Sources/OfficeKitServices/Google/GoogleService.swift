@@ -25,17 +25,19 @@ public final class GoogleService : UserService {
 	public typealias UserType = GoogleUser
 	
 	public let id: String
+	public let name: String
 	public let config: GoogleServiceConfig
 	
 	public let connector: GoogleConnector
 	
-	public convenience init(id: String, jsonConfig: JSON, workdir: URL?) throws {
+	public convenience init(id: String, name: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try GoogleServiceConfig(json: jsonConfig)
-		try self.init(id: id, googleServiceConfig: config, workdir: workdir)
+		try self.init(id: id, name: name, googleServiceConfig: config, workdir: workdir)
 	}
 	
-	public init(id: String, googleServiceConfig: GoogleServiceConfig, workdir: URL?) throws {
+	public init(id: String, name: String, googleServiceConfig: GoogleServiceConfig, workdir: URL?) throws {
 		self.id = id
+		self.name = name
 		self.config = googleServiceConfig
 		
 		self.connector = try GoogleConnector(

@@ -43,8 +43,8 @@ func configure(_ app: Application, forcedConfigPath: String?, verbose: Bool) thr
 	/* Setup the controllers and routes. */
 	let odService = OpenDirectoryService(
 		id: "_internal_od_",
+		name: "Open Directory for officectl-odproxy",
 		openDirectoryServiceConfig: OpenDirectoryServiceConfig(
-			serviceName: "Open Directory Proxy for OfficeKit",
 			connectorSettings: config.openDirectoryConfig,
 			userIDBuilders: nil
 		)

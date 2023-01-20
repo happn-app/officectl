@@ -56,7 +56,7 @@ final class LDAPOfficeTests : XCTestCase {
 		let (serviceConf, testConf) = try Self.confs.get()
 		
 		self.testConf = testConf
-		self.service = LDAPService(id: "test-ldap", ldapServiceConfig: serviceConf)
+		self.service = LDAPService(id: "test-ldap", name: "Tested LDAP Service", ldapServiceConfig: serviceConf)
 	}
 	
 	override func tearDown() async throws {

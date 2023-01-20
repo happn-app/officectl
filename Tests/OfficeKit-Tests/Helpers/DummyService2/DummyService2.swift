@@ -26,9 +26,11 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 	typealias AuthenticationChallenge = Never
 	
 	let id: String
+	let name: String
 	
-	init(id: String, jsonConfig: JSON, workdir: URL?) throws {
+	init(id: String, name: String, jsonConfig: JSON, workdir: URL?) throws {
 		self.id = id
+		self.name = name
 	}
 	
 	/* ******************

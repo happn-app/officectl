@@ -15,10 +15,12 @@ import Foundation
 struct ServiceDef : Decodable, Sendable {
 	
 	var providerID: String
+	var serviceName: String
 	var config: JSON
 	
 	enum CodingKeys : String, CodingKey {
 		case providerID = "provider_id"
+		case serviceName = "service_name"
 		case config
 	}
 	

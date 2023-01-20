@@ -15,8 +15,6 @@ import OfficeKit
 
 public struct HappnServiceConfig : Sendable, Codable {
 	
-	public var serviceName: String
-	
 	public var connectorSettings: ConnectorSettings
 	public var userIDBuilders: [UserIDBuilder]?
 	
@@ -51,8 +49,6 @@ public struct HappnServiceConfig : Sendable, Codable {
 	}
 	
 	private enum CodingKeys : String, CodingKey {
-		
-		case serviceName = "service_name"
 		
 		case connectorSettings = "connector_settings"
 		case userIDBuilders = "user_id_builders"

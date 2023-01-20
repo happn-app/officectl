@@ -53,7 +53,7 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		let (serviceConf, testConf) = try Self.confs.get()
 		
 		self.testConf = testConf
-		self.service = OpenDirectoryService(id: "test-od", openDirectoryServiceConfig: serviceConf)
+		self.service = OpenDirectoryService(id: "test-od", name: "Tested OpenDirectory Service", openDirectoryServiceConfig: serviceConf)
 	}
 	
 	override func tearDown() async throws {

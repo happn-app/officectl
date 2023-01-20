@@ -15,13 +15,10 @@ import OfficeKit
 
 public struct OpenDirectoryServiceConfig : Sendable, Codable {
 	
-	public var serviceName: String
-	
 	public var connectorSettings: ConnectorSettings
 	public var userIDBuilders: [UserIDBuilder]?
 	
-	public init(serviceName: String, connectorSettings: ConnectorSettings, userIDBuilders: [UserIDBuilder]?) {
-		self.serviceName = serviceName
+	public init(connectorSettings: ConnectorSettings, userIDBuilders: [UserIDBuilder]?) {
 		self.connectorSettings = connectorSettings
 		self.userIDBuilders = userIDBuilders
 	}
@@ -50,8 +47,6 @@ public struct OpenDirectoryServiceConfig : Sendable, Codable {
 	}
 	
 	private enum CodingKeys : String, CodingKey {
-		
-		case serviceName = "service_name"
 		
 		case connectorSettings = "connector_settings"
 		case userIDBuilders = "user_id_builders"

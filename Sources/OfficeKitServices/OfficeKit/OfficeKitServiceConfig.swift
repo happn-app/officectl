@@ -15,8 +15,6 @@ import OfficeKit
 
 public struct OfficeKitServiceConfig : Sendable, Codable {
 	
-	public var serviceName: String
-	
 	public var upstreamURL: URL
 	public var secret: Data
 	
@@ -35,8 +33,6 @@ public struct OfficeKitServiceConfig : Sendable, Codable {
 	}
 	
 	private enum CodingKeys : String, CodingKey {
-		
-		case serviceName = "service_name"
 		
 		case upstreamURL = "upstream_url"
 		case secret = "secret"

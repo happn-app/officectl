@@ -27,17 +27,19 @@ public final class HappnService : UserService {
 	public typealias UserType = HappnUser
 	
 	public let id: String
+	public let name: String
 	public let config: HappnServiceConfig
 	
 	public let connector: HappnConnector
 	
-	public convenience init(id: String, jsonConfig: JSON, workdir: URL?) throws {
+	public convenience init(id: String, name: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try HappnServiceConfig(json: jsonConfig)
-		try self.init(id: id, happnServiceConfig: config)
+		try self.init(id: id, name: name, happnServiceConfig: config)
 	}
 	
-	public init(id: String, happnServiceConfig: HappnServiceConfig) throws {
+	public init(id: String, name: String, happnServiceConfig: HappnServiceConfig) throws {
 		self.id = id
+		self.name = name
 		self.config = happnServiceConfig
 		
 		self.connector = HappnConnector(
