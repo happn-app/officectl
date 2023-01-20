@@ -24,7 +24,7 @@ struct ServicesController : RouteCollection {
 	}
 	
 	func listServices(req: Request) async throws -> [ApiService] {
-		//		let authToken = try req.auth.require(AuthToken.self)
+//		let authToken = try req.auth.require(AuthToken.self)
 		/* TODO: Auth (of course) and filter for user services, etc. */
 		return req.application.officeKitServices.allServices.values
 			.map{ ApiService(providerID: type(of: $0).providerID, serviceID: $0.id, serviceFullName: $0.name) }
