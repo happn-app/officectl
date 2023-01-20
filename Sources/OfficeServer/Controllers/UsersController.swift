@@ -31,7 +31,10 @@ struct UsersController : RouteCollection {
 		let errors: [String: Result<None, ApiError>] = Dictionary(uniqueKeysWithValues: userServices.map{ service in
 			(service.value.id, fetchErrors[service].flatMap{ .failure(ApiError(error: $0)) } ?? .success(None()))
 		})
-		return ApiUsers(results: errors, mergedResults: users.map{ ApiMergedUserWithSource(multiServicesUser: $0, servicesMergePriority: [], logger: req.logger) })
+		return ApiUsers(
+			mergedResults: users.map{ ApiUser(multiServicesUser: $0, servicesMergePriority: [], logger: req.logger) },
+			results: errors
+		)
 	}
 	
 }

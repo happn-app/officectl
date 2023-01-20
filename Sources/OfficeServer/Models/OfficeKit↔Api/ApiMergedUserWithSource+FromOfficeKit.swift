@@ -16,7 +16,7 @@ import OfficeModel
 
 
 
-extension ApiMergedUserWithSource {
+extension ApiUser {
 	
 	init(multiServicesUser: MultiServicesUser, servicesMergePriority: [any UserService] = [], logger: Logger?) {
 		let priority = Dictionary(uniqueKeysWithValues: servicesMergePriority.enumerated().map{ ($0.element.id, $0.offset) })
@@ -40,11 +40,14 @@ extension ApiMergedUserWithSource {
 			}
 		})
 		self.init(
-			firstName: orderedUserAndServices.lazy.compactMap{ $0.user.oU_firstName }.first{ _ in true },
-			lastName:  orderedUserAndServices.lazy.compactMap{ $0.user.oU_lastName  }.first{ _ in true },
-			nickname:  orderedUserAndServices.lazy.compactMap{ $0.user.oU_nickname  }.first{ _ in true },
-			emails: emails.flatMap(Array.init),
-			directoryUsers: Dictionary(
+			mergedResults: ApiMergedUser(
+				ids: ApiMultiServicesID(taggedIDs: orderedUserAndServices.map{ $0.taggedID }),
+				firstName: orderedUserAndServices.lazy.compactMap{ $0.user.oU_firstName }.first{ _ in true },
+				lastName:  orderedUserAndServices.lazy.compactMap{ $0.user.oU_lastName  }.first{ _ in true },
+				nickname:  orderedUserAndServices.lazy.compactMap{ $0.user.oU_nickname  }.first{ _ in true },
+				emails: emails.flatMap(Array.init)
+			),
+			results: Dictionary(
 				uniqueKeysWithValues: multiServicesUser
 					.map{
 						let (hashableServie, userResult) = $0
