@@ -84,6 +84,7 @@ extension Officectl.Options {
 		let conf = try confPath.flatMap{ try TOMLDecoder().decode(Conf.self, from: Data(contentsOf: URL(fileURLWithPath: $0.string))) }
 		Officectl.services.register{ conf } /* We want to return always the same conf. */
 		
+		
 		/* *** LOGGER *** */
 		LoggingSystem.bootstrap{ id in
 			/* Note: CLTLoggers do not have IDs, so we do not use the id parameter of the handler. */
