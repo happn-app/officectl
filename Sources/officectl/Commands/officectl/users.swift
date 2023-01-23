@@ -18,6 +18,7 @@ struct Users : AsyncParsableCommand {
 		abstract: "Manage the users.",
 		subcommands: [
 			Create.self,
+			Delete.self,
 			List.self
 		]
 	)
