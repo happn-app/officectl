@@ -167,6 +167,7 @@ let package = Package(
 				ret.append(.product(name: "SwiftPrometheus",    package: "SwiftPrometheus"))
 				ret.append(.product(name: "Vapor",              package: "Vapor"))
 				ret.append(contentsOf: coreDependencies)
+				ret.append(contentsOf: ldapDependencies) /* Not sure we need this directly but build fails in CLI if not added. */
 				return ret
 			}(),
 			swiftSettings: commonSwiftSettings
