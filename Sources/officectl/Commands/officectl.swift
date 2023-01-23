@@ -67,8 +67,17 @@ struct Officectl : AsyncParsableCommand {
 		
 	}
 	
+	struct ServiceSearchSelectionOptions : ParsableArguments {
+		
+		@Option(name: .long, help: "Comma-separated list of service IDs. Select in which services the given ID should be searched for. If unset, all services are searched.")
+		var idSearchServices: String?
+		
+	}
+	
 	@OptionGroup()
 	var options: Options
+	@OptionGroup()
+	var serviceSearchSelectionOptions: ServiceSearchSelectionOptions
 	
 }
 

@@ -24,8 +24,6 @@ struct Create : AsyncParsableCommand {
 	var officectlOptions: Officectl.Options
 	@OptionGroup()
 	var usersOptions: Users.Options
-	@OptionGroup()
-	var userPropertiesOptions: Users.UserPropertiesOptions
 	
 	func run() async throws {
 		try officectlOptions.bootstrap()

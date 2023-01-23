@@ -7,11 +7,13 @@
 
 import Foundation
 
+import OfficeModelCore
+
 
 
 struct ServicesConf : Decodable, Sendable {
 	
-	var authServiceID: String
+	var authServiceID: Tag
 	
 	enum CodingKeys : String, CodingKey {
 		case authServiceID = "auth_service_id"

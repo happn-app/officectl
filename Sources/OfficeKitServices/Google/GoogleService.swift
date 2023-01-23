@@ -12,6 +12,7 @@ import Crypto
 import Email
 import GenericJSON
 import Logging
+import OfficeModelCore
 import ServiceKit
 
 import OfficeKit
@@ -24,18 +25,18 @@ public final class GoogleService : UserService {
 	
 	public typealias UserType = GoogleUser
 	
-	public let id: String
+	public let id: Tag
 	public let name: String
 	public let config: GoogleServiceConfig
 	
 	public let connector: GoogleConnector
 	
-	public convenience init(id: String, name: String, jsonConfig: JSON, workdir: URL?) throws {
+	public convenience init(id: Tag, name: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try GoogleServiceConfig(json: jsonConfig)
 		try self.init(id: id, name: name, googleServiceConfig: config, workdir: workdir)
 	}
 	
-	public init(id: String, name: String, googleServiceConfig: GoogleServiceConfig, workdir: URL?) throws {
+	public init(id: Tag, name: String, googleServiceConfig: GoogleServiceConfig, workdir: URL?) throws {
 		self.id = id
 		self.name = name
 		self.config = googleServiceConfig

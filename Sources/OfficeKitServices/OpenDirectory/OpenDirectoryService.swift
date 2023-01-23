@@ -11,6 +11,7 @@ import OpenDirectory
 import Email
 import GenericJSON
 import Logging
+import OfficeModelCore
 import UnwrapOrThrow
 
 import OfficeKit
@@ -24,18 +25,18 @@ public final class OpenDirectoryService : UserService {
 	
 	public typealias UserType = OpenDirectoryUser
 	
-	public let id: String
+	public let id: Tag
 	public let name: String
 	public let config: OpenDirectoryServiceConfig
 	
 	public let connector: OpenDirectoryConnector
 	
-	public convenience init(id: String, name: String, jsonConfig: JSON, workdir: URL?) throws {
+	public convenience init(id: Tag, name: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try OpenDirectoryServiceConfig(json: jsonConfig)
 		self.init(id: id, name: name, openDirectoryServiceConfig: config)
 	}
 	
-	public init(id: String, name: String, openDirectoryServiceConfig: OpenDirectoryServiceConfig) {
+	public init(id: Tag, name: String, openDirectoryServiceConfig: OpenDirectoryServiceConfig) {
 		self.id = id
 		self.name = name
 		self.config = openDirectoryServiceConfig

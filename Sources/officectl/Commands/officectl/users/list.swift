@@ -1,8 +1,8 @@
 /*
- * create.swift
+ * list.swift
  * officectl
  *
- * Created by François Lamboley on 2023/01/12.
+ * Created by François Lamboley on 2023/01/17.
  */
 
 import Foundation
@@ -13,7 +13,6 @@ import TabularData
 import ArgumentParser
 
 import OfficeKit
-import LDAPOffice
 
 
 
@@ -51,7 +50,7 @@ struct List : AsyncParsableCommand {
 		}
 #else
 		let multiUsers = multiUsersResult.users
-		let allServices = Set(multiUsers.flatMap{ $0.keys }).sorted{ $0.value.id < $1.value.id }
+		let allServices = Set(multiUsers.flatMap{ $0.keys }).sorted{ $0.value.id.rawValue < $1.value.id.rawValue }
 		var dataFrame = DataFrame()
 		allServices.forEach{ service in
 			let rows = multiUsers.map{ $0[service] }.map{ userResult in
@@ -64,7 +63,7 @@ struct List : AsyncParsableCommand {
 					case .failure:            return "ERROR"
 				}
 			}
-			dataFrame.append(column: Column<String>(name: service.value.id, contents: rows))
+			dataFrame.append(column: Column<String>(name: service.value.id.rawValue, contents: rows))
 		}
 		print(dataFrame.sorted(on: "ggl").description(options: .init(maximumLineWidth: .max, maximumCellWidth: .max, maximumRowCount: .max, includesColumnTypes: false)))
 #endif

@@ -10,6 +10,7 @@ import Foundation
 import COpenLDAP
 import Email
 import GenericJSON
+import OfficeModelCore
 import Logging
 import UnwrapOrThrow
 
@@ -24,18 +25,18 @@ public final class LDAPService : UserService, AuthenticatorService {
 	
 	public typealias UserType = LDAPObject
 	
-	public let id: String
+	public let id: Tag
 	public let name: String
 	public let config: LDAPServiceConfig
 	
 	public let connector: LDAPConnector
 	
-	public convenience init(id: String, name: String, jsonConfig: JSON, workdir: URL?) throws {
+	public convenience init(id: Tag, name: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try LDAPServiceConfig(json: jsonConfig)
 		self.init(id: id, name: name, ldapServiceConfig: config)
 	}
 	
-	public init(id: String, name: String, ldapServiceConfig: LDAPServiceConfig) {
+	public init(id: Tag, name: String, ldapServiceConfig: LDAPServiceConfig) {
 		self.id = id
 		self.name = name
 		self.config = ldapServiceConfig

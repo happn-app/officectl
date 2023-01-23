@@ -19,7 +19,7 @@ import ServiceKit
 
 public extension UserAndService {
 	
-	var serviceID: String {
+	var serviceID: Tag {
 		return service.id
 	}
 	

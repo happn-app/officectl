@@ -47,5 +47,7 @@ struct Users : AsyncParsableCommand {
 	
 	@OptionGroup()
 	var options: Options
+	@OptionGroup()
+	var serviceSearchSelectionOptions: Officectl.ServiceSearchSelectionOptions
 	
 }

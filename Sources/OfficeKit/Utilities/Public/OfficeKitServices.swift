@@ -7,6 +7,8 @@
 
 import Foundation
 
+import OfficeModelCore
+
 
 
 public struct OfficeKitServices : Sendable {
@@ -14,9 +16,9 @@ public struct OfficeKitServices : Sendable {
 	public static var providers = [String: OfficeService.Type]()
 	
 	public var authService: (any AuthenticatorService)?
-	public var allServices = [String: any OfficeService]()
+	public var allServices = [Tag: any OfficeService]()
 	
-	public init(authService: (any AuthenticatorService)? = nil, allServices: [String : any OfficeService] = [:]) {
+	public init(authService: (any AuthenticatorService)? = nil, allServices: [Tag: any OfficeService] = [:]) {
 		self.authService = authService
 		self.allServices = allServices
 	}
@@ -26,7 +28,7 @@ public struct OfficeKitServices : Sendable {
 	}
 	
 	public func hashableUserServices(matching serviceIDs: String?) -> Set<HashableUserService> {
-		let serviceIDs = serviceIDs.flatMap{ Set($0.split(separator: ",").map(String.init)) }
+		let serviceIDs = serviceIDs.flatMap{ Set($0.split(separator: ",").map(Tag.init)) }
 		return Set(userServices.filter{ service in serviceIDs?.contains(service.id) ?? true }.map(HashableUserService.init))
 	}
 	

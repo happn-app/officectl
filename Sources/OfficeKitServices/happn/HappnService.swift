@@ -26,18 +26,18 @@ public final class HappnService : UserService {
 	
 	public typealias UserType = HappnUser
 	
-	public let id: String
+	public let id: Tag
 	public let name: String
 	public let config: HappnServiceConfig
 	
 	public let connector: HappnConnector
 	
-	public convenience init(id: String, name: String, jsonConfig: JSON, workdir: URL?) throws {
+	public convenience init(id: Tag, name: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try HappnServiceConfig(json: jsonConfig)
 		try self.init(id: id, name: name, happnServiceConfig: config)
 	}
 	
-	public init(id: String, name: String, happnServiceConfig: HappnServiceConfig) throws {
+	public init(id: Tag, name: String, happnServiceConfig: HappnServiceConfig) throws {
 		self.id = id
 		self.name = name
 		self.config = happnServiceConfig
@@ -64,15 +64,17 @@ public final class HappnService : UserService {
 	
 	public func userID(fromString string: String) throws -> HappnUserID {
 		let taggedID = try TaggedID(string) ?! Err.invalidID(string)
-		switch taggedID.tag {
-			case "null":
-				guard taggedID.id == "" else {
-					throw Err.invalidID(string)
-				}
+		if taggedID.id == "" {
+			/* Either we have a null ID (tag will be "null", or we have a “maybe login but w/o a prefix”).
+			 * We are lenient on IDs w/o the login tag and parse them anyway. */
+			if taggedID.tag == "null" {
 				return .nullLogin
-				
+			}
+			return try .login(Email(rawValue: taggedID.tag.rawValue) ?! Err.invalidID(string))
+		}
+		switch taggedID.tag {
 			case "login":
-				return try .login(Email(rawValue: string) ?! Err.invalidID(string))
+				return try .login(Email(rawValue: taggedID.id) ?! Err.invalidID(string))
 				
 			default:
 				throw Err.invalidID(string)

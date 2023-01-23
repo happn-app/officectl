@@ -8,6 +8,7 @@
 import Foundation
 
 import GenericJSON
+import OfficeModelCore
 
 
 
@@ -19,9 +20,9 @@ public protocol OfficeService : AnyObject, Sendable {
 	static var providerID: String {get}
 	
 	/** The id should not be empty (an empty ID is used for the tag of a user wrapper created from hints only). */
-	init(id: String, name: String, jsonConfig: JSON, workdir: URL?) throws
+	init(id: Tag, name: String, jsonConfig: JSON, workdir: URL?) throws
 	
-	var id: String {get}
+	var id: Tag {get}
 	var name: String {get}
 	
 }

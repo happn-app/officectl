@@ -25,16 +25,16 @@ public final class OfficeKitService : UserService {
 	
 	public typealias UserType = OfficeKitUser
 	
-	public let id: String
+	public let id: Tag
 	public let name: String
 	public let config: OfficeKitServiceConfig
 	
-	public convenience init(id: String, name: String, jsonConfig: JSON, workdir: URL?) throws {
+	public convenience init(id: Tag, name: String, jsonConfig: JSON, workdir: URL?) throws {
 		let config = try OfficeKitServiceConfig(json: jsonConfig)
 		self.init(id: id, name: name, officeKitServiceConfig: config)
 	}
 	
-	public init(id: String, name: String, officeKitServiceConfig: OfficeKitServiceConfig) {
+	public init(id: Tag, name: String, officeKitServiceConfig: OfficeKitServiceConfig) {
 		self.id = id
 		self.name = name
 		self.config = officeKitServiceConfig

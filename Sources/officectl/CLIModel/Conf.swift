@@ -6,6 +6,7 @@
  */
 
 import Foundation
+import OfficeModelCore
 #if canImport(System)
 import System
 #else
@@ -36,7 +37,7 @@ struct Conf : Decodable, Sendable {
 	var serverConf: ServerConf?
 	
 	var servicesConf: ServicesConf
-	var services: [String: ServiceDef]
+	var services: [Tag: ServiceDef]
 	
 	enum CodingKeys : String, CodingKey {
 		case logLevel = "log_level"

@@ -28,7 +28,7 @@ struct UsersController : RouteCollection {
 		let serviceIDs = try req.query.get(String?.self, at: "service_ids")
 		let userServices = req.application.officeKitServices.hashableUserServices(matching: serviceIDs)
 		let (users, fetchErrors) = try await MultiServicesUser.fetchAll(in: userServices, propertiesToFetch: nil, includeSuspended: true, using: req.services)
-		let errors: [String: Result<None, ApiError>] = Dictionary(uniqueKeysWithValues: userServices.map{ service in
+		let errors: [Tag: Result<None, ApiError>] = Dictionary(uniqueKeysWithValues: userServices.map{ service in
 			(service.value.id, fetchErrors[service].flatMap{ .failure(ApiError(error: $0)) } ?? .success(None()))
 		})
 		return ApiUsers(
