@@ -16,7 +16,10 @@ public protocol UserService<UserType> : OfficeService {
 	
 	associatedtype UserType : User
 	
-	/** Convert the user to a user printable string. Mostly used for logging. */
+	/**
+	 Convert the user to a user printable string.
+	 
+	 The value returned by this method should usually be the string version of the ID, or simpler (e.g. only the uid part of a DN for instance). */
 	func shortDescription(fromUser user: UserType) -> String
 	
 	func string(fromUserID userID: UserType.UserIDType) -> String

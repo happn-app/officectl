@@ -65,6 +65,9 @@ struct Officectl : AsyncParsableCommand {
 		@Flag(name: .long, inversion: .prefixedEnableDisable, help: "Enable or disable interactive console (ncurses or Vapor’s activity console) for commands that have it.")
 		var interactiveConsole = true
 		
+		@Flag(name: .shortAndLong, help: "Do not ask question (when a question would have been asked, yes is answered).")
+		var yes: Bool = false
+		
 	}
 	
 	struct ServiceSearchSelectionOptions : ParsableArguments {

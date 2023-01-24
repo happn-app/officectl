@@ -52,7 +52,7 @@ public final class HappnService : UserService {
 	}
 	
 	public func shortDescription(fromUser user: HappnUser) -> String {
-		return "HappnUser<\(user.login)>"
+		return user.login.description
 	}
 	
 	public func string(fromUserID userID: HappnUserID) -> String {
@@ -99,6 +99,10 @@ public final class HappnService : UserService {
 	}
 	
 	public func logicalUserID<OtherUserType : User>(fromUser user: OtherUserType) throws -> HappnUserID {
+		if let user = user as? UserType {
+			return user.oU_id
+		}
+		
 		let id = config.userIDBuilders?.lazy
 			.compactMap{ $0.inferID(fromUser: user) }
 			.compactMap{ Email(rawValue: $0) }

@@ -50,7 +50,7 @@ public final class LDAPService : UserService, AuthenticatorService {
 	}
 	
 	public func shortDescription(fromUser user: LDAPObject) -> String {
-		return "LDAPUser<\(user.id.stringValue)>"
+		return user.id.uid ?? "nouid:\(user.id.stringValue)"
 	}
 	
 	public func string(fromUserID userID: LDAPDistinguishedName) -> String {
@@ -73,6 +73,10 @@ public final class LDAPService : UserService, AuthenticatorService {
 	}
 	
 	public func logicalUserID<OtherUserType : User>(fromUser user: OtherUserType) throws -> LDAPDistinguishedName {
+		if let user = user as? UserType {
+			return user.oU_id
+		}
+		
 		let id = config.userIDBuilders?.lazy
 			.compactMap{ $0.inferID(fromUser: user) }
 			.compactMap{ try? LDAPDistinguishedName(string: $0) }

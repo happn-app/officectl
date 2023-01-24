@@ -46,7 +46,7 @@ public final class GitHubService : UserService {
 	}
 	
 	public func shortDescription(fromUser user: GitHubUser) -> String {
-		return "GitHubUser<\(user.login)>"
+		return user.login
 	}
 	
 	public func string(fromUserID userID: String) -> String {
@@ -70,6 +70,10 @@ public final class GitHubService : UserService {
 	}
 	
 	public func logicalUserID<OtherUserType : User>(fromUser user: OtherUserType) throws -> String {
+		if let user = user as? UserType {
+			return user.oU_id
+		}
+		
 		let id = config.userIDBuilders?.lazy
 			.compactMap{ $0.inferID(fromUser: user) }
 			.first{ _ in true } /* Not a simple `.first` because of <https://stackoverflow.com/a/71778190> (avoid the handler(s) to be called more than once). */

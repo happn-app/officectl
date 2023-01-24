@@ -9,6 +9,7 @@ import Foundation
 
 import Email
 import GenericJSON
+import OfficeModelCore
 
 import OfficeKit
 import ServiceKit
@@ -25,10 +26,10 @@ final class DummyService2 : UserService, GroupOfUsersService, AuthenticatorServi
 	typealias GroupOfUsersType = DummyGroupOfUsers2
 	typealias AuthenticationChallenge = Never
 	
-	let id: String
+	let id: Tag
 	let name: String
 	
-	init(id: String, name: String, jsonConfig: JSON, workdir: URL?) throws {
+	init(id: Tag, name: String, jsonConfig: JSON, workdir: URL?) throws {
 		self.id = id
 		self.name = name
 	}

@@ -49,7 +49,7 @@ public final class OpenDirectoryService : UserService {
 	}
 	
 	public func shortDescription(fromUser user: OpenDirectoryUser) -> String {
-		return "OpenDirectoryUser<\(user.id)>"
+		return user.id
 	}
 	
 	public func string(fromUserID userID: String) -> String {
@@ -73,6 +73,10 @@ public final class OpenDirectoryService : UserService {
 	}
 	
 	public func logicalUserID<OtherUserType>(fromUser user: OtherUserType) throws -> String where OtherUserType : User {
+		if let user = user as? UserType {
+			return user.oU_id
+		}
+		
 		let id = config.userIDBuilders?.lazy
 			.compactMap{ $0.inferID(fromUser: user) }
 			.first{ _ in true } /* Not a simple `.first` because of <https://stackoverflow.com/a/71778190> (avoid the handler(s) to be called more than once). */

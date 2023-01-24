@@ -180,6 +180,7 @@ let package = Package(
 				ret.append(.product(name: "ArgumentParser", package: "swift-argument-parser"))
 				ret.append(.product(name: "CLTLogger",      package: "clt-logger"))
 				ret.append(.product(name: "JWT",            package: "jwt"))
+				ret.append(.product(name: "StreamReader",   package: "stream-reader"))
 				ret.append(.product(name: "TOMLDecoder",    package: "TOMLDecoder"))
 				ret.append(.product(name: "Vapor",          package: "Vapor"))
 				ret.append(.product(name: "XDG",            package: "swift-xdg"))

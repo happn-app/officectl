@@ -8,6 +8,8 @@
 import Foundation
 
 import ArgumentParser
+import Logging
+import StreamReader
 
 import OfficeKit
 
@@ -39,13 +41,57 @@ struct Delete : AsyncParsableCommand {
 			return
 		}
 		
-		guard let userAndService = await UserAndServiceFrom(stringUserID: anyUserID, fromAny: servicesForUserSearch, propertiesToFetch: nil, depServices: Officectl.services) else {
+		guard let userAndService = await UserAndServiceFrom(stringUserID: anyUserID, fromAny: servicesForUserSearch, propertiesToFetch: [], depServices: Officectl.services) else {
 			officectlOptions.logger.error("User cannot be found.")
 			throw ExitCode(rawValue: 1)
 		}
 		
-		print(userAndService)
-//		MultiServicesUser.fe
+		let multiUser = try await MultiServicesUser.fetch(from: userAndService, in: servicesActedOn, propertiesToFetch: [], using: Officectl.services)
+		for (id, error) in (multiUser.compactMap{ keyVal in keyVal.value.failure.flatMap{ (keyVal.key.value, $0) } }) {
+			officectlOptions.logger.warning("Skipping deletion for service because the user cannot be fetched for this servie.", metadata: [LMK.serviceID: "\(id)", LMK.error: "\(error)"])
+		}
+		let usersAndServices = multiUser
+			.compactMap{ keyVal in keyVal.value.success.flatMap{ $0 }.flatMap{ ($0, keyVal.key.value) } }
+			.map{ userAndService in
+				let (user, service) = userAndService
+				return UserAndServiceFrom(user: user, service: service)!
+			}
+		guard !usersAndServices.isEmpty else {
+			officectlOptions.logger.info("No users exist for successful services; nothing to do.")
+			return
+		}
+		
+		if !officectlOptions.yes {
+			/* Let’s confirm everything is ok before deleting the user. */
+			var stderrStream = StderrStream()
+			print("Will try and delete the uesr on these services:", to: &stderrStream)
+			for userAndService in usersAndServices {
+				print("   - \(userAndService.shortDescription)", to: &stderrStream)
+			}
+			print("", to: &stderrStream)
+			guard try UserConfirmation.confirmYesOrNo(inputFileHandle: .standardInput, outputStream: &stderrStream) else {
+				throw ExitCode(1)
+			}
+		} else {
+			officectlOptions.logger.info("Deleting user on selected services.", metadata: [LMK.userAndServices: .array(usersAndServices.map{ .string($0.shortDescription) })])
+		}
+		
+		/* Doing the actual deletion! */
+		let deletionResults = await usersAndServices.concurrentMap{ userAndService in
+			await (userAndService.service, Result{ try await userAndService.delete(using: Officectl.services) })
+		}
+		
+		/* Printing the results. */
+		print("********* DELETION RESULTS *********")
+		for (service, result) in deletionResults {
+			switch result {
+				case .success:            print("✅ \(service.id): deleted")
+				case .failure(let error): print("🛑 \(service.id): \(error)")
+			}
+		}
+		guard !(deletionResults.contains{ $0.1.failure != nil }) else {
+			throw ExitCode(1)
+		}
 	}
 	
 }

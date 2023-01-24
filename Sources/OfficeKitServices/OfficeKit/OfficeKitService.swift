@@ -42,7 +42,7 @@ public final class OfficeKitService : UserService {
 	}
 	
 	public func shortDescription(fromUser user: OfficeKitUser) -> String {
-		return "OfficeKitUser<\(user.id)>"
+		return user.id.stringValue
 	}
 	
 	public func string(fromUserID userID: TaggedID) -> String {
@@ -67,6 +67,10 @@ public final class OfficeKitService : UserService {
 	}
 	
 	public func logicalUserID<OtherUserType : User>(fromUser user: OtherUserType) throws -> TaggedID {
+		if let user = user as? UserType {
+			return user.oU_id
+		}
+		
 		let id = config.userIDBuilders?.lazy
 			.compactMap{ $0.inferID(fromUser: user) }
 			.compactMap(TaggedID.init(_:))
