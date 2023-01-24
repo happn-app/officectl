@@ -46,7 +46,10 @@ struct Delete : AsyncParsableCommand {
 			throw ExitCode(rawValue: 1)
 		}
 		
-		let multiUser = try await MultiServicesUser.fetch(from: userAndService, in: servicesActedOn, propertiesToFetch: [], using: Officectl.services)
+		/* Important: if properties to fetch does not contain the properties needed to infer the user ID from other users, the user on some services might fail to fetch.
+		 * Concrete example: if a property in an LDAP directory is the GitHub ID of a user, this property **must** be fetched in order for the link to be made.
+		 * To not take any risks of losing users, we just fetch all the properties on all the services. */
+		let multiUser = try await MultiServicesUser.fetch(from: userAndService, in: servicesActedOn, propertiesToFetch: nil, using: Officectl.services)
 		for (id, error) in (multiUser.compactMap{ keyVal in keyVal.value.failure.flatMap{ (keyVal.key.value, $0) } }) {
 			officectlOptions.logger.warning("Skipping deletion for service because the user cannot be fetched for this servie.", metadata: [LMK.serviceID: "\(id)", LMK.error: "\(error)"])
 		}
