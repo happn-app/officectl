@@ -15,6 +15,8 @@ import SystemPackage
 import ArgumentParser
 import CLTLogger
 import Logging
+import RetryingOperation
+import URLRequestOperation
 import TOMLDecoder
 import XDG
 
@@ -113,6 +115,12 @@ extension Officectl.Options {
 		if confPath == nil {
 			logger.error("Conf file not found. Continuing without services.")
 		}
+#if canImport(os)
+		RetryingOperationConfig.oslog = nil
+		URLRequestOperationConfig.oslog = nil
+#endif
+		RetryingOperationConfig.logger = Logger(label: "RetryingOperation")
+		URLRequestOperationConfig.logger = Logger(label: "URLRequestOperation")
 		
 		
 		/* *** SET CA CERTS FILE FOR LDAP *** */
