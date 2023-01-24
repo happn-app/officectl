@@ -9,7 +9,6 @@ import Foundation
 
 import GenericJSON
 import OfficeModelCore
-import ServiceKit
 import UnwrapOrThrow
 
 import OfficeKit
@@ -83,40 +82,40 @@ public final class GitHubService : UserService {
 		return id
 	}
 	
-	public func existingUser(fromPersistentID pID: Int, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GitHubUser? {
+	public func existingUser(fromPersistentID pID: Int, propertiesToFetch: Set<UserProperty>?) async throws -> GitHubUser? {
 		try await connector.connectIfNeeded()
 		return try await GitHubUser.get(id: pID, orgID: config.orgID, connector: connector)
 	}
 	
-	public func existingUser(fromID uID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GitHubUser? {
+	public func existingUser(fromID uID: String, propertiesToFetch: Set<UserProperty>?) async throws -> GitHubUser? {
 		try await connector.connectIfNeeded()
 		return try await GitHubUser.get(login: uID, orgID: config.orgID, connector: connector)
 	}
 	
-	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [GitHubUser] {
+	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [GitHubUser] {
 		try await connector.connectIfNeeded()
 		return try await GitHubUser.list(orgID: config.orgID, connector: connector)
 	}
 	
 	public let supportsUserCreation: Bool = true
-	public func createUser(_ user: GitHubUser, using services: Services) async throws -> GitHubUser {
+	public func createUser(_ user: GitHubUser) async throws -> GitHubUser {
 		try await connector.connectIfNeeded()
 		return try await user.create(role: .directMember, orgID: config.orgID, connector: connector)
 	}
 	
 	public let supportsUserUpdate: Bool = false
-	public func updateUser(_ user: GitHubUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> GitHubUser {
+	public func updateUser(_ user: GitHubUser, propertiesToUpdate: Set<UserProperty>) async throws -> GitHubUser {
 		throw OfficeKitError.unsupportedOperation
 	}
 	
 	public let supportsUserDeletion: Bool = true
-	public func deleteUser(_ user: GitHubUser, using services: Services) async throws {
+	public func deleteUser(_ user: GitHubUser) async throws {
 		try await connector.connectIfNeeded()
 		try await user.delete(orgID: config.orgID, connector: connector)
 	}
 	
 	public let supportsPasswordChange: Bool = false
-	public func changePassword(of user: GitHubUser, to newPassword: String, using services: Services) async throws {
+	public func changePassword(of user: GitHubUser, to newPassword: String) async throws {
 		throw OfficeKitError.unsupportedOperation
 	}
 	

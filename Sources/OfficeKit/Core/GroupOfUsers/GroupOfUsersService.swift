@@ -7,8 +7,6 @@
 
 import Foundation
 
-import ServiceKit
-
 
 
 public typealias HashableGroupOfUsersService = DeportedHashability<any GroupOfUsersService>
@@ -26,11 +24,11 @@ public protocol GroupOfUsersService<UserType> : OfficeService {
 	func string(fromPersistentGroupOfUsersID pID: GroupOfUsersType.PersistentGroupOfUsersIDType) -> String
 	func persistentGroupOfUsersID(fromString string: String) throws -> GroupOfUsersType.PersistentGroupOfUsersIDType
 	
-	func listUsers(inGroupOfUsers groupOfUsers: GroupOfUsersType, using services: Services) async throws -> [UserType]
-	func listGroupsOfUsers(containingUser user: UserType, using services: Services) async throws -> [GroupOfUsersType]
+	func listUsers(inGroupOfUsers groupOfUsers: GroupOfUsersType) async throws -> [UserType]
+	func listGroupsOfUsers(containingUser user: UserType) async throws -> [GroupOfUsersType]
 	
 	var supportsEmbeddedGroupsOfUsers: Bool {get}
-	func listGroupsOfUsers(inGroupOfUser groupOfUser: GroupOfUsersType, using services: Services) async throws -> [GroupOfUsersType]
+	func listGroupsOfUsers(inGroupOfUser groupOfUser: GroupOfUsersType) async throws -> [GroupOfUsersType]
 	
 }
 

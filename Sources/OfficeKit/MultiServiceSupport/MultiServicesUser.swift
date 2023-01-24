@@ -9,8 +9,6 @@ import Foundation
 
 import OfficeModelCore
 
-import ServiceKit
-
 
 
 public typealias MultiServicesUser = [HashableUserService: Result<(any User)?, Error>]
@@ -23,7 +21,7 @@ public extension MultiServicesUser {
 	 If a logical user can be created, it is then fetched as an _existing_ user from the service.
 	 If a logical user cannot be created, once we have a fetched other users from other services, we try again with another user and service.
 	 In the end, the resulting MultiServicesUser is guaranteed to have one result per service. */
-	static func fetch(from userAndService: any UserAndService, in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty>? = [], using depServices: Services) async throws -> MultiServicesUser {
+	static func fetch(from userAndService: any UserAndService, in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty>? = []) async throws -> MultiServicesUser {
 		var res = [HashableUserService: Result<(any User)?, ErrorCollection>]()
 		var triedServiceIDSource = Set<HashableUserService>()
 		
@@ -36,7 +34,7 @@ public extension MultiServicesUser {
 				body: { group in
 					for service in services {
 						group.addTask{
-							let userResult = await Result{ try await source.fetch(in: service.value, propertiesToFetch: propertiesToFetch, using: depServices) }
+							let userResult = await Result{ try await source.fetch(in: service.value, propertiesToFetch: propertiesToFetch) }
 							return (service, userResult)
 						}
 					}
@@ -105,14 +103,14 @@ public extension MultiServicesUser {
 		return await fetchStep(from: userAndService, in: services)
 	}
 	
-	static func fetchAll(in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty>? = nil, includeSuspended: Bool = true, using depServices: Services) async throws -> (users: [MultiServicesUser], fetchErrorsByServices: [HashableUserService: Error]) {
+	static func fetchAll(in services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty>? = nil, includeSuspended: Bool = true) async throws -> (users: [MultiServicesUser], fetchErrorsByServices: [HashableUserService: Error]) {
 		let (usersAndServices, fetchErrorsByService) = await withTaskGroup(
 			of: (service: HashableUserService, users: Result<[any User], Error>).self,
 			returning: (usersAndServices: [any UserAndService], fetchErrorsByServices: [HashableUserService: Error]).self,
 			body: { group in
 				for service in services {
 					group.addTask{
-						let usersResult = await Result{ try await service.value.listAllUsers(includeSuspended: includeSuspended, propertiesToFetch: propertiesToFetch, using: depServices) }
+						let usersResult = await Result{ try await service.value.listAllUsers(includeSuspended: includeSuspended, propertiesToFetch: propertiesToFetch) }
 						return (service, usersResult)
 					}
 				}

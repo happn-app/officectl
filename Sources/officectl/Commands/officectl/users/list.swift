@@ -33,7 +33,7 @@ struct List : AsyncParsableCommand {
 		try officectlOptions.bootstrap()
 		let officeKitServices = officectlOptions.officeKitServices
 		
-		let multiUsersResult = try await MultiServicesUser.fetchAll(in: officeKitServices.hashableUserServices(matching: usersOptions.serviceIDs), using: Officectl.services)
+		let multiUsersResult = try await MultiServicesUser.fetchAll(in: officeKitServices.hashableUserServices(matching: usersOptions.serviceIDs))
 #if !canImport(TabularData)
 		multiUsersResult.users.forEach{ multiUser in
 			print("---")

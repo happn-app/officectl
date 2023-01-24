@@ -16,7 +16,6 @@ import URLRequestOperation
 import CommonOfficePropertiesFromHappn
 import OfficeKit
 import OfficeModelCore
-import ServiceKit
 
 
 
@@ -114,14 +113,14 @@ public final class HappnService : UserService {
 		return id
 	}
 	
-	public func existingUser(fromID uID: HappnUserID, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> HappnUser? {
+	public func existingUser(fromID uID: HappnUserID, propertiesToFetch: Set<UserProperty>?) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
 		
 		let users: [HappnUser]
 		switch uID {
 			case .nullLogin:
 				/* Very inefficient, but I don’t think happn’s API can search for users with a null ID. */
-				users = try await listAllUsers(includeSuspended: true, propertiesToFetch: propertiesToFetch, using: services)
+				users = try await listAllUsers(includeSuspended: true, propertiesToFetch: propertiesToFetch)
 					.filter{ $0.login == .nullLogin }
 				
 			case .login(let l):
@@ -135,7 +134,7 @@ public final class HappnService : UserService {
 		return users.first
 	}
 	
-	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> HappnUser? {
+	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read")
 		
 		let ret = try await HappnUser.get(id: pID, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector)
@@ -150,7 +149,7 @@ public final class HappnService : UserService {
 		return ret
 	}
 	
-	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [HappnUser] {
+	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [HappnUser] {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
 		let forcedProperty: Set<UserProperty> = (!includeSuspended ? [.isSuspended] : [])
 		let users = try await HappnUser.search(text: nil, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch?.union(forcedProperty)), connector: connector)
@@ -159,7 +158,7 @@ public final class HappnService : UserService {
 	}
 	
 	public let supportsUserCreation: Bool = true
-	public func createUser(_ user: HappnUser, using services: Services) async throws -> HappnUser {
+	public func createUser(_ user: HappnUser) async throws -> HappnUser {
 		try await connector.increaseScopeIfNeeded("admin_create", "user_create")
 		
 		var user = user
@@ -175,22 +174,22 @@ public final class HappnService : UserService {
 	}
 	
 	public let supportsUserUpdate: Bool = true
-	public func updateUser(_ user: HappnUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> HappnUser {
+	public func updateUser(_ user: HappnUser, propertiesToUpdate: Set<UserProperty>) async throws -> HappnUser {
 		try await connector.increaseScopeIfNeeded("admin_read", "all_user_update")
 		return try await user.update(properties: HappnUser.keysFromProperties(propertiesToUpdate), connector: connector)
 	}
 	
 	public let supportsUserDeletion: Bool = true
-	public func deleteUser(_ user: HappnUser, using services: Services) async throws {
+	public func deleteUser(_ user: HappnUser) async throws {
 		try await connector.increaseScopeIfNeeded("admin_create"/* 😱🤷‍♂️ */, "admin_delete", "all_user_delete")
 		return try await user.delete(connector: connector)
 	}
 	
 	public let supportsPasswordChange: Bool = true
-	public func changePassword(of user: HappnUser, to newPassword: String, using services: Services) async throws {
+	public func changePassword(of user: HappnUser, to newPassword: String) async throws {
 		var user = user
 		user.password = newPassword
-		_ = try await updateUser(user, propertiesToUpdate: [.id, .init(rawValue: "happn/password")], using: services)
+		_ = try await updateUser(user, propertiesToUpdate: [.id, .init(rawValue: "happn/password")])
 	}
 	
 }

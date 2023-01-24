@@ -10,8 +10,6 @@ import Foundation
 import CollectionConcurrencyKit
 import OfficeModelCore
 
-import ServiceKit
-
 
 
 /**
@@ -26,19 +24,19 @@ public func UserAndServiceFrom<UserType : User, ServiceType : UserService>(user:
 	return UserAndServiceImpl(user: user, service: service)
 }
 
-public func UserAndServiceFrom<ServiceType : UserService>(stringUserID: String, in service: ServiceType, propertiesToFetch: Set<UserProperty>? = nil, depServices: Services) async -> (any UserAndService)? {
+public func UserAndServiceFrom<ServiceType : UserService>(stringUserID: String, in service: ServiceType, propertiesToFetch: Set<UserProperty>? = nil) async -> (any UserAndService)? {
 	guard let userID = try? service.userID(fromString: stringUserID),
-			let user = try? await service.existingUser(fromID: userID, propertiesToFetch: propertiesToFetch, using: depServices)
+			let user = try? await service.existingUser(fromID: userID, propertiesToFetch: propertiesToFetch)
 	else {
 		return nil
 	}
 	return UserAndServiceImpl(user: user, service: service)
 }
 
-public func UserAndServiceFrom(stringUserID: String, fromAny services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty>? = nil, depServices: Services) async -> (any UserAndService)? {
+public func UserAndServiceFrom(stringUserID: String, fromAny services: Set<HashableUserService>, propertiesToFetch: Set<UserProperty>? = nil) async -> (any UserAndService)? {
 	return await services
 		.lazy
-		.concurrentCompactMap{ await UserAndServiceFrom(stringUserID: stringUserID, in: $0.value, propertiesToFetch: propertiesToFetch, depServices: depServices) }
+		.concurrentCompactMap{ await UserAndServiceFrom(stringUserID: stringUserID, in: $0.value, propertiesToFetch: propertiesToFetch) }
 		.first{ _ in true }
 }
 

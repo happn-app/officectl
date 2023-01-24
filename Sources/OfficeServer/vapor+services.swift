@@ -11,7 +11,6 @@ import JWT
 import Vapor
 
 import OfficeKit
-import ServiceKit
 
 
 
@@ -47,38 +46,6 @@ public extension Application {
 	
 	private struct OfficeKitServicesKey: StorageKey {
 		typealias Value = OfficeKitServices
-	}
-	
-}
-
-
-
-extension Application {
-	
-	var services: Services {
-		if let existing = storage[ServicesKey.self] {
-			return existing
-		} else {
-			var new = Services()
-			new.register{ self.logger }
-			storage[ServicesKey.self] = new
-			return new
-		}
-	}
-	
-	private struct ServicesKey: StorageKey {
-		typealias Value = Services
-	}
-	
-}
-
-
-extension Request {
-	
-	var services: Services {
-		var ret = Services(duplicating: application.services)
-		ret.register{ self.logger }
-		return ret
 	}
 	
 }

@@ -7,8 +7,6 @@
 
 import Foundation
 
-import ServiceKit
-
 
 
 public typealias HashableAuthenticatorService = DeportedHashability<any AuthenticatorService>
@@ -18,7 +16,7 @@ public protocol AuthenticatorService<AuthenticatedUserType, AuthenticationChalle
 	associatedtype AuthenticatedUserType : User
 	associatedtype AuthenticationChallenge
 	
-	func authenticate(with challenge: AuthenticationChallenge, using services: Services) async throws -> AuthenticatedUserType.UserIDType
+	func authenticate(with challenge: AuthenticationChallenge) async throws -> AuthenticatedUserType.UserIDType
 	
 }
 

@@ -15,7 +15,6 @@ import OfficeModelCore
 import UnwrapOrThrow
 
 import OfficeKit
-import ServiceKit
 
 
 
@@ -86,7 +85,7 @@ public final class OpenDirectoryService : UserService {
 		return id
 	}
 	
-	public func existingUser(fromID uID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
+	public func existingUser(fromID uID: String, propertiesToFetch: Set<UserProperty>?) async throws -> OpenDirectoryUser? {
 		try await connector.connectIfNeeded()
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
 			do {
@@ -120,7 +119,7 @@ public final class OpenDirectoryService : UserService {
 		}
 	}
 	
-	public func existingUser(fromPersistentID pID: UUID, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OpenDirectoryUser? {
+	public func existingUser(fromPersistentID pID: UUID, propertiesToFetch: Set<UserProperty>?) async throws -> OpenDirectoryUser? {
 		try await connector.connectIfNeeded()
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
 			let attributes = OpenDirectoryUser.attributeNamesFromProperties(propertiesToFetch)
@@ -135,7 +134,7 @@ public final class OpenDirectoryService : UserService {
 		}
 	}
 	
-	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [OpenDirectoryUser] {
+	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [OpenDirectoryUser] {
 		try await connector.connectIfNeeded()
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
 			let attributes = OpenDirectoryUser.attributeNamesFromProperties(propertiesToFetch)
@@ -144,7 +143,7 @@ public final class OpenDirectoryService : UserService {
 	}
 	
 	public let supportsUserCreation: Bool = true
-	public func createUser(_ user: OpenDirectoryUser, using services: Services) async throws -> OpenDirectoryUser {
+	public func createUser(_ user: OpenDirectoryUser) async throws -> OpenDirectoryUser {
 		try await connector.connectIfNeeded()
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
 			/* Let’s first search all the user records (trust me on this, we’ll need them; see later). */
@@ -182,7 +181,7 @@ public final class OpenDirectoryService : UserService {
 	}
 	
 	public let supportsUserUpdate: Bool = true
-	public func updateUser(_ user: OpenDirectoryUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> OpenDirectoryUser {
+	public func updateUser(_ user: OpenDirectoryUser, propertiesToUpdate: Set<UserProperty>) async throws -> OpenDirectoryUser {
 		try await connector.connectIfNeeded()
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
 			let record = try user.record(using: node)
@@ -233,7 +232,7 @@ public final class OpenDirectoryService : UserService {
 	}
 	
 	public let supportsUserDeletion: Bool = true
-	public func deleteUser(_ user: OpenDirectoryUser, using services: Services) async throws {
+	public func deleteUser(_ user: OpenDirectoryUser) async throws {
 		try await connector.connectIfNeeded()
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
 			let record = try user.record(using: node)
@@ -242,7 +241,7 @@ public final class OpenDirectoryService : UserService {
 	}
 	
 	public let supportsPasswordChange: Bool = true
-	public func changePassword(of user: OpenDirectoryUser, to newPassword: String, using services: Services) async throws {
+	public func changePassword(of user: OpenDirectoryUser, to newPassword: String) async throws {
 		try await connector.connectIfNeeded()
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
 			let record = try user.record(using: node)

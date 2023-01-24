@@ -13,8 +13,6 @@ import GenericJSON
 import Logging
 import OfficeModelCore
 
-import ServiceKit
-
 
 
 public extension UserAndServiceID {
@@ -27,8 +25,8 @@ public extension UserAndServiceID {
 		return TaggedID(tag: service.id, id: service.string(fromUserID: userID))
 	}
 	
-	func fetch(propertiesToFetch: Set<UserProperty>? = [], using depServices: Services) async throws -> (any UserAndService)? {
-		guard let user = try await service.existingUser(fromID: userID, propertiesToFetch: propertiesToFetch, using: depServices) else {
+	func fetch(propertiesToFetch: Set<UserProperty>? = []) async throws -> (any UserAndService)? {
+		guard let user = try await service.existingUser(fromID: userID, propertiesToFetch: propertiesToFetch) else {
 			return nil
 		}
 		return UserAndServiceFrom(user: user, service: service)

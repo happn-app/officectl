@@ -13,7 +13,6 @@ import Email
 import GenericJSON
 import Logging
 import OfficeModelCore
-import ServiceKit
 
 import OfficeKit
 
@@ -89,17 +88,17 @@ public final class GoogleService : UserService {
 		return id
 	}
 	
-	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GoogleUser? {
+	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?) async throws -> GoogleUser? {
 		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
 		return try await GoogleUser.get(id: pID, propertiesToFetch: GoogleUser.keysFromProperties(propertiesToFetch), connector: connector)
 	}
 	
-	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> GoogleUser? {
+	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>?) async throws -> GoogleUser? {
 		/* Gougle returns the user whether from persistent or standard id. */
-		return try await existingUser(fromPersistentID: uID.rawValue, propertiesToFetch: propertiesToFetch, using: services)
+		return try await existingUser(fromPersistentID: uID.rawValue, propertiesToFetch: propertiesToFetch)
 	}
 	
-	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [GoogleUser] {
+	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [GoogleUser] {
 		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user.readonly")
 		let users = try await config.primaryDomains.asyncFlatMap{
 			try await GoogleUser.search(
@@ -112,31 +111,31 @@ public final class GoogleService : UserService {
 	}
 	
 	public let supportsUserCreation: Bool = true
-	public func createUser(_ user: GoogleUser, using services: Services) async throws -> GoogleUser {
+	public func createUser(_ user: GoogleUser) async throws -> GoogleUser {
 		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
 		return try await user.create(connector: connector)
 	}
 	
 	public let supportsUserUpdate: Bool = true
-	public func updateUser(_ user: GoogleUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> GoogleUser {
+	public func updateUser(_ user: GoogleUser, propertiesToUpdate: Set<UserProperty>) async throws -> GoogleUser {
 		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
 		return try await user.update(properties: GoogleUser.keysFromProperties(propertiesToUpdate), connector: connector)
 	}
 	
 	public let supportsUserDeletion: Bool = true
-	public func deleteUser(_ user: GoogleUser, using services: Services) async throws {
+	public func deleteUser(_ user: GoogleUser) async throws {
 		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
 		return try await user.delete(connector: connector)
 	}
 	
 	public let supportsPasswordChange: Bool = true
-	public func changePassword(of user: GoogleUser, to newPassword: String, using services: Services) async throws {
+	public func changePassword(of user: GoogleUser, to newPassword: String) async throws {
 		var user = user
 		let passwordProperty = UserProperty(rawValue: "google/password")
 		guard user.oU_setValue(newPassword, forProperty: passwordProperty, convertMismatchingTypes: false).isSuccessful else {
 			throw Err.internalError
 		}
-		_ = try await updateUser(user, propertiesToUpdate: [passwordProperty], using: services)
+		_ = try await updateUser(user, propertiesToUpdate: [passwordProperty])
 	}
 	
 }

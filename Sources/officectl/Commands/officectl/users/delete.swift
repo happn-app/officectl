@@ -41,7 +41,7 @@ struct Delete : AsyncParsableCommand {
 			return
 		}
 		
-		guard let userAndService = await UserAndServiceFrom(stringUserID: anyUserID, fromAny: servicesForUserSearch, propertiesToFetch: [], depServices: Officectl.services) else {
+		guard let userAndService = await UserAndServiceFrom(stringUserID: anyUserID, fromAny: servicesForUserSearch, propertiesToFetch: []) else {
 			officectlOptions.logger.error("User cannot be found.")
 			throw ExitCode(rawValue: 1)
 		}
@@ -49,7 +49,7 @@ struct Delete : AsyncParsableCommand {
 		/* Important: if properties to fetch does not contain the properties needed to infer the user ID from other users, the user on some services might fail to fetch.
 		 * Concrete example: if a property in an LDAP directory is the GitHub ID of a user, this property **must** be fetched in order for the link to be made.
 		 * To not take any risks of losing users, we just fetch all the properties on all the services. */
-		let multiUser = try await MultiServicesUser.fetch(from: userAndService, in: servicesActedOn, propertiesToFetch: nil, using: Officectl.services)
+		let multiUser = try await MultiServicesUser.fetch(from: userAndService, in: servicesActedOn, propertiesToFetch: nil)
 		for (id, error) in (multiUser.compactMap{ keyVal in keyVal.value.failure.flatMap{ (keyVal.key.value, $0) } }) {
 			officectlOptions.logger.warning("Skipping deletion for service because the user cannot be fetched for this servie.", metadata: [LMK.serviceID: "\(id)", LMK.error: "\(error)"])
 		}
@@ -81,7 +81,7 @@ struct Delete : AsyncParsableCommand {
 		
 		/* Doing the actual deletion! */
 		let deletionResults = await usersAndServices.concurrentMap{ userAndService in
-			await (userAndService.service, Result{ try await userAndService.delete(using: Officectl.services) })
+			await (userAndService.service, Result{ try await userAndService.delete() })
 		}
 		
 		/* Printing the results. */

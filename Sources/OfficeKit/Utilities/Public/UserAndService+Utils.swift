@@ -13,8 +13,6 @@ import GenericJSON
 import Logging
 import OfficeModelCore
 
-import ServiceKit
-
 
 
 public extension UserAndService {
@@ -35,13 +33,13 @@ public extension UserAndService {
 		return "\(serviceID.rawValue) (\(service.name)): \(service.shortDescription(fromUser: user))"
 	}
 	
-	func fetch<OtherServiceType : UserService>(in otherService: OtherServiceType, propertiesToFetch: Set<UserProperty>? = [], using depServices: Services) async throws -> OtherServiceType.UserType? {
+	func fetch<OtherServiceType : UserService>(in otherService: OtherServiceType, propertiesToFetch: Set<UserProperty>? = []) async throws -> OtherServiceType.UserType? {
 		let otherID = try otherService.logicalUserID(fromUser: user)
-		return try await otherService.existingUser(fromID: otherID, propertiesToFetch: propertiesToFetch, using: depServices)
+		return try await otherService.existingUser(fromID: otherID, propertiesToFetch: propertiesToFetch)
 	}
 	
-	func delete(using depServices: Services) async throws {
-		try await service.deleteUser(user, using: depServices)
+	func delete() async throws {
+		try await service.deleteUser(user)
 	}
 	
 }

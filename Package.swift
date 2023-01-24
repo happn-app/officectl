@@ -14,8 +14,7 @@ let coreDependencies: [Target.Dependency] = [
 	.product(name: "GenericJSON",              package: "generic-json-swift"),
 	.product(name: "Logging",                  package: "swift-log"),
 	.product(name: "OfficeModelCore",          package: "officectl-model"/*Xcode is not read for this:, moduleAliases: ["OfficeModelCore": "ModelCore"]*/),
-	.product(name: "UnwrapOrThrow",            package: "UnwrapOrThrow"),
-	.target(name: "ServiceKit")
+	.product(name: "UnwrapOrThrow",            package: "UnwrapOrThrow")
 ]
 
 /* We do not use NIO http client. We probably should… */
@@ -111,7 +110,6 @@ let package = Package(
 	}(),
 	targets: {
 		var ret = [Target]()
-		ret.append(.target(name: "ServiceKit",     swiftSettings: commonSwiftSettings))
 		
 		/* ***************
 		   MARK: OfficeKit
@@ -137,7 +135,6 @@ let package = Package(
 			/* Dependencies for helpers and co. */
 			ret.append(.product(name: "Email",       package: "swift-email"))
 			ret.append(.product(name: "GenericJSON", package: "generic-json-swift"))
-			ret.append(.target(name: "ServiceKit"))
 			return ret
 		}()))
 		

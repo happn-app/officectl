@@ -11,7 +11,6 @@ import Email
 import GenericJSON
 import OfficeModelCore
 import OperationAwaiting
-import ServiceKit
 import UnwrapOrThrow
 import URLRequestOperation
 
@@ -81,7 +80,7 @@ public final class OfficeKitService : UserService {
 		return id
 	}
 	
-	public func existingUser(fromID uID: TaggedID, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OfficeKitUser? {
+	public func existingUser(fromID uID: TaggedID, propertiesToFetch: Set<UserProperty>?) async throws -> OfficeKitUser? {
 		/* We use POST because 1. we want the request _not_ to be idempotent and 2. we want to avoid sending user ID or other sensitive informations in the logs.
 		 * Not sure this is justified; we can change this if needed. */
 		let request = ExistingUserFromIDRequest(userID: uID, propertiesToFetch: propertiesToFetch)
@@ -92,7 +91,7 @@ public final class OfficeKitService : UserService {
 		return try await operation.startAndGetResult().result.value
 	}
 	
-	public func existingUser(fromPersistentID pID: TaggedID, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> OfficeKitUser? {
+	public func existingUser(fromPersistentID pID: TaggedID, propertiesToFetch: Set<UserProperty>?) async throws -> OfficeKitUser? {
 		let request = ExistingUserFromPersistentIDRequest(userPersistentID: pID, propertiesToFetch: propertiesToFetch)
 		let operation = try URLRequestDataOperation<WrappedOptional<OfficeKitUser>>.forAPIRequest(
 			url: config.upstreamURL.appending("existing-user-from-persistent-id"), method: "POST", httpBody: request,
@@ -101,7 +100,7 @@ public final class OfficeKitService : UserService {
 		return try await operation.startAndGetResult().result.value
 	}
 	
-	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [OfficeKitUser] {
+	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [OfficeKitUser] {
 		let request = ListAllUsersRequest(includeSuspended: includeSuspended, propertiesToFetch: propertiesToFetch)
 		let operation = try URLRequestDataOperation<[OfficeKitUser]>.forAPIRequest(
 			url: config.upstreamURL.appending("list-all-users").appendingQueryParameters(from: request),
@@ -113,7 +112,7 @@ public final class OfficeKitService : UserService {
 	public var supportsUserCreation: Bool {
 		return config.supportsUserCreation
 	}
-	public func createUser(_ user: OfficeKitUser, using services: Services) async throws -> OfficeKitUser {
+	public func createUser(_ user: OfficeKitUser) async throws -> OfficeKitUser {
 		let request = CreateUserRequest(user: user)
 		let operation = try URLRequestDataOperation<OfficeKitUser>.forAPIRequest(
 			url: config.upstreamURL.appending("create-user"), method: "POST", httpBody: request,
@@ -125,7 +124,7 @@ public final class OfficeKitService : UserService {
 	public var supportsUserUpdate: Bool {
 		return config.supportsUserUpdate
 	}
-	public func updateUser(_ user: OfficeKitUser, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> OfficeKitUser {
+	public func updateUser(_ user: OfficeKitUser, propertiesToUpdate: Set<UserProperty>) async throws -> OfficeKitUser {
 		let request = UpdateUserRequest(user: user, propertiesToUpdate: propertiesToUpdate)
 		let operation = try URLRequestDataOperation<OfficeKitUser>.forAPIRequest(
 			url: config.upstreamURL.appending("update-user"), method: "PATCH", httpBody: request,
@@ -137,7 +136,7 @@ public final class OfficeKitService : UserService {
 	public var supportsUserDeletion: Bool {
 		return config.supportsUserDeletion
 	}
-	public func deleteUser(_ user: OfficeKitUser, using services: Services) async throws {
+	public func deleteUser(_ user: OfficeKitUser) async throws {
 		let request = DeleteUserRequest(user: user)
 		let operation = try URLRequestDataOperation<Empty>.forAPIRequest(
 			url: config.upstreamURL.appending("delete-user"), method: "DELETE", httpBody: request,
@@ -149,7 +148,7 @@ public final class OfficeKitService : UserService {
 	public var supportsPasswordChange: Bool {
 		return config.supportsPasswordChange
 	}
-	public func changePassword(of user: OfficeKitUser, to newPassword: String, using services: Services) async throws {
+	public func changePassword(of user: OfficeKitUser, to newPassword: String) async throws {
 		let request = ChangePasswordRequest(user: user, newPassword: newPassword)
 		let operation = try URLRequestDataOperation<Empty>.forAPIRequest(
 			url: config.upstreamURL.appending("change-password"), method: "POST", httpBody: request,

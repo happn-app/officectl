@@ -29,7 +29,6 @@ import OfficeKitOffice
 #if canImport(OpenDirectoryOffice)
 import OpenDirectoryOffice
 #endif
-import ServiceKit
 
 
 
@@ -43,8 +42,6 @@ struct Officectl : AsyncParsableCommand {
 			Server.self
 		]
 	)
-	
-	static private(set) var services = Services()
 	
 	struct Options : ParsableArguments {
 		
@@ -69,6 +66,28 @@ struct Officectl : AsyncParsableCommand {
 		
 		@Flag(name: .shortAndLong, help: "Do not ask question (when a question would have been asked, yes is answered).")
 		var yes: Bool = false
+		
+		/* We must do this because otherwise Swift complains that the struct is not Decodable because of the storage var.
+		 * Another solution would be to have a static storage instead, maybe even outside of Options, but an instance var is better. */
+		enum CodingKeys: CodingKey {
+			case verbosity
+			case verbose
+			case env
+			case configFile
+			case staticDataDir
+			case interactiveConsole
+			case yes
+		}
+		
+		fileprivate let storage = Storage()
+		fileprivate final class Storage {
+			/* None of these properties can be accessed before the bootstrap. */
+			
+			var conf: Conf?
+			var logger: Logger!
+			var officeKitServices: OfficeKitServices!
+			
+		}
 		
 	}
 	
@@ -96,7 +115,7 @@ extension Officectl.Options {
 			return try dirs.findConfigFile("config.toml")
 		}()
 		let conf = try confPath.flatMap{ try TOMLDecoder().decode(Conf.self, from: Data(contentsOf: URL(fileURLWithPath: $0.string))) }
-		Officectl.services.register{ conf } /* We want to return always the same conf. */
+		storage.conf = conf
 		
 		
 		/* *** LOGGER *** */
@@ -106,8 +125,7 @@ extension Officectl.Options {
 			ret.logLevel = resolvedLogLevel
 			return ret
 		}, metadataProvider: nil)
-		let logger = Logger(label: "com.happn.officectl")
-		Officectl.services.register{ logger } /* We want to return always the same logger. */
+		storage.logger = Logger(label: "com.happn.officectl")
 		
 		if verbose != nil && verbosity != nil {
 			logger.warning("Got both --verbose and --verbosity options. Ignoring --verbose.")
@@ -155,7 +173,7 @@ extension Officectl.Options {
 			}
 			services.authService = authService
 		}
-		Officectl.services.register{ [services] in services } /* We want to return always the same services. */
+		storage.officeKitServices = services
 	}
 	
 	var resolvedLogLevel: Logger.Level {
@@ -175,15 +193,15 @@ extension Officectl.Options {
 	}
 	
 	var officeKitServices: OfficeKitServices {
-		try! Officectl.services.make()
+		return storage.officeKitServices
 	}
 	
 	var logger: Logger {
-		try! Officectl.services.make()
+		return storage.logger
 	}
 	
 	var conf: Conf? {
-		try! Officectl.services.make()
+		return storage.conf
 	}
 	
 }

@@ -8,7 +8,6 @@
 import Foundation
 
 import GenericJSON
-import ServiceKit
 
 
 
@@ -61,7 +60,7 @@ public protocol UserService<UserType> : OfficeService {
 	 
 	 If _more than one_ user matches the given ID, the function should **throw an error**.
 	 If _no_ users match the given ID, the method should return `nil`. */
-	func existingUser(fromPersistentID pID: UserType.PersistentUserIDType, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> UserType?
+	func existingUser(fromPersistentID pID: UserType.PersistentUserIDType, propertiesToFetch: Set<UserProperty>?) async throws -> UserType?
 	/**
 	 Fetch and return the _only_ user matching the given ID.
 	 If `propertiesToFetch` is `nil`, **all** the properties supported should be fetched.
@@ -71,24 +70,24 @@ public protocol UserService<UserType> : OfficeService {
 	 
 	 If you support alternate IDs, you **must** also search for alternate IDs of the given ID.
 	 In general all aliases of the ID should be searched (if the underlying service supports domain aliases for instance, searching for an ID on one of the alias must find the user). */
-	func existingUser(fromID uID: UserType.UserIDType, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> UserType?
+	func existingUser(fromID uID: UserType.UserIDType, propertiesToFetch: Set<UserProperty>?) async throws -> UserType?
 	
 	/**
 	 List all of the users in the service.
 	 If `propertiesToFetch` is `nil`, **all** the properties supported should be fetched. */
-	func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [UserType]
+	func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [UserType]
 	
 	var supportsUserCreation: Bool {get}
-	func createUser(_ user: UserType, using services: Services) async throws -> UserType
+	func createUser(_ user: UserType) async throws -> UserType
 	
 	var supportsUserUpdate: Bool {get}
-	func updateUser(_ user: UserType, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> UserType
+	func updateUser(_ user: UserType, propertiesToUpdate: Set<UserProperty>) async throws -> UserType
 	
 	var supportsUserDeletion: Bool {get}
-	func deleteUser(_ user: UserType, using services: Services) async throws
+	func deleteUser(_ user: UserType) async throws
 	
 	var supportsPasswordChange: Bool {get}
-	func changePassword(of user: UserType, to newPassword: String, using services: Services) async throws
+	func changePassword(of user: UserType, to newPassword: String) async throws
 	
 }
 

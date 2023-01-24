@@ -15,7 +15,6 @@ import Logging
 import UnwrapOrThrow
 
 import OfficeKit
-import ServiceKit
 
 
 
@@ -87,7 +86,7 @@ public final class LDAPService : UserService, AuthenticatorService {
 		return id
 	}
 	
-	public func existingUser(fromID uID: LDAPDistinguishedName, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> LDAPObject? {
+	public func existingUser(fromID uID: LDAPDistinguishedName, propertiesToFetch: Set<UserProperty>?) async throws -> LDAPObject? {
 		try await connector.connectIfNeeded()
 		
 		let request = LDAPSearchRequest(base: uID, scope: .base, attributesToFetch: LDAPObject.attributeNamesFromProperties(propertiesToFetch))
@@ -102,10 +101,10 @@ public final class LDAPService : UserService, AuthenticatorService {
 		return object
 	}
 	
-	public func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> LDAPObject? {
+	public func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>?) async throws -> LDAPObject? {
 	}
 	
-	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [LDAPObject] {
+	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [LDAPObject] {
 		try await connector.connectIfNeeded()
 		
 		let request = LDAPSearchRequest(base: config.peopleDN + config.baseDN, scope: .children, attributesToFetch: LDAPObject.attributeNamesFromProperties(propertiesToFetch))
@@ -113,7 +112,7 @@ public final class LDAPService : UserService, AuthenticatorService {
 	}
 	
 	public let supportsUserCreation: Bool = true
-	public func createUser(_ user: LDAPObject, using services: Services) async throws -> LDAPObject {
+	public func createUser(_ user: LDAPObject) async throws -> LDAPObject {
 		guard user.isInetOrgPerson else {
 			throw Err.invalidLDAPObjectClass
 		}
@@ -128,7 +127,7 @@ public final class LDAPService : UserService, AuthenticatorService {
 	}
 	
 	public let supportsUserUpdate: Bool = true
-	public func updateUser(_ user: LDAPObject, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> LDAPObject {
+	public func updateUser(_ user: LDAPObject, propertiesToUpdate: Set<UserProperty>) async throws -> LDAPObject {
 		guard user.isInetOrgPerson else {
 			throw Err.invalidLDAPObjectClass
 		}
@@ -138,7 +137,7 @@ public final class LDAPService : UserService, AuthenticatorService {
 	}
 	
 	public let supportsUserDeletion: Bool = true
-	public func deleteUser(_ user: LDAPObject, using services: Services) async throws {
+	public func deleteUser(_ user: LDAPObject) async throws {
 		guard user.isInetOrgPerson else {
 			throw Err.invalidLDAPObjectClass
 		}
@@ -148,7 +147,7 @@ public final class LDAPService : UserService, AuthenticatorService {
 	}
 	
 	public let supportsPasswordChange: Bool = true
-	public func changePassword(of user: LDAPObject, to newPassword: String, using services: Services) async throws {
+	public func changePassword(of user: LDAPObject, to newPassword: String) async throws {
 		guard user.isInetOrgPerson else {
 			throw Err.invalidLDAPObjectClass
 		}
@@ -164,7 +163,7 @@ public final class LDAPService : UserService, AuthenticatorService {
 	public typealias AuthenticatedUserType = LDAPObject
 	public typealias AuthenticationChallenge = (username: LDAPDistinguishedName, password: String)
 	
-	public func authenticate(with challenge: (username: LDAPDistinguishedName, password: String), using services: Services) async throws -> LDAPDistinguishedName {
+	public func authenticate(with challenge: (username: LDAPDistinguishedName, password: String)) async throws -> LDAPDistinguishedName {
 		do {
 			guard !challenge.password.isEmpty else {
 				throw Err.passwordIsEmpty
