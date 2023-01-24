@@ -100,12 +100,12 @@ extension Officectl.Options {
 		
 		
 		/* *** LOGGER *** */
-		LoggingSystem.bootstrap{ id in
+		LoggingSystem.bootstrap({ id, metadataProvider in
 			/* Note: CLTLoggers do not have IDs, so we do not use the id parameter of the handler. */
-			var ret = CLTLogger()
+			var ret = CLTLogger(metadataProvider: metadataProvider)
 			ret.logLevel = resolvedLogLevel
 			return ret
-		}
+		}, metadataProvider: nil)
 		let logger = Logger(label: "com.happn.officectl")
 		Officectl.services.register{ logger } /* We want to return always the same logger. */
 		
