@@ -208,6 +208,7 @@ let package = Package(
 		))
 #if canImport(OpenDirectory)
 		ret.append(.executableTarget(name: "officectl-odproxy", dependencies: [
+			.product(name: "CLTLogger",     package: "clt-logger"),
 			.product(name: "Crypto",        package: "swift-crypto"),
 			.product(name: "GenericJSON",   package: "generic-json-swift"),
 			.product(name: "JWT",           package: "jwt"),

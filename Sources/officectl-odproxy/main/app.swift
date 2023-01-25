@@ -7,6 +7,7 @@
 
 import Foundation
 
+import CLTLogger
 import OfficeKit
 import Vapor
 
@@ -34,7 +35,13 @@ func app(_ env: Environment) throws -> Application {
 		throw MessageError(message: "The --config-file or --verbose options can only be specified once. The config-file option requires an argument.")
 	}
 	
-	try LoggingSystem.bootstrap(from: &env)
+	try LoggingSystem.bootstrap(from: &env, { level in
+		return { _ in
+			var ret = CLTLogger()
+			ret.logLevel = level
+			return ret
+		}
+	})
 	
 	let app = Application(env)
 	do    {try configure(app, forcedConfigPath: forcedConfigPath, verbose: verbose)}
