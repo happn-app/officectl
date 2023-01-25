@@ -28,15 +28,6 @@
       }
     },
     {
-      "identity" : "bmo",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/happn-app/BMO.git",
-      "state" : {
-        "branch" : "dev.tests",
-        "revision" : "f9b66e22b7f9b3db6290294cad0f75efa4cccc3a"
-      }
-    },
-    {
       "identity" : "clt-logger",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/xcode-actions/clt-logger.git",
@@ -52,15 +43,6 @@
       "state" : {
         "revision" : "903a94af1104ccf907982dd35f980b60d95025a3",
         "version" : "0.2.0"
-      }
-    },
-    {
-      "identity" : "collectionloader",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/happn-app/CollectionLoader.git",
-      "state" : {
-        "branch" : "dev.tests",
-        "revision" : "d8de8eac3d8311e7f6a57ca2e8e1aee4767fa9db"
       }
     },
     {
@@ -133,15 +115,6 @@
       "state" : {
         "revision" : "87ce13a1df913ba4d51cf00606df7ef24d455571",
         "version" : "4.7.0"
-      }
-    },
-    {
-      "identity" : "kvobserver",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/happn-app/KVObserver.git",
-      "state" : {
-        "revision" : "6b6252489a2b1cdb67857576962676b6cb6c679a",
-        "version" : "0.9.5"
       }
     },
     {
