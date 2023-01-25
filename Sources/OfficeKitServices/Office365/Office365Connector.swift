@@ -24,19 +24,42 @@ public actor Office365Connector : Connector, Authenticator, HasTaskQueue {
 	public typealias Request = URLRequest
 	public typealias Authentication = Set<String>
 	
+	public enum Grant : Sendable {
+		
+		case clientSecret(String)
+		case clientCertificate(x5t: String, privateKey: RSAKey)
+		
+	}
+	
 	public let tenantID: String
 	
 	public let clientID: String
-	public let clientSecret: String
+	public let grant: Grant
 	
 	public var isConnected:  Bool         {tokenInfo != nil}
 	public var accessToken:  String?      {tokenInfo?.token}
 	public var currentScope: Set<String>? {tokenInfo?.scope}
 	
-	public init(tenantID: String, clientID: String, clientSecret: String) throws {
+	public init(tenantID: String, clientID: String, grant: Office365ServiceConfig.ConnectorSettings.Grant) throws {
+		switch grant {
+			case let .clientSecret(secret):                       self.init(tenantID: tenantID, clientID: clientID, clientSecret: secret)
+			case let .clientCertificate(x5t, privateKeyPath): try self.init(tenantID: tenantID, clientID: clientID, clientCertificateX5t: x5t, clientCertificateKeyURL: URL(fileURLWithPath: privateKeyPath))
+		}
+	}
+	
+	public init(tenantID: String, clientID: String, clientSecret: String) {
+		self.init(tenantID: tenantID, clientID: clientID, grant: .clientSecret(clientSecret))
+	}
+	
+	public init(tenantID: String, clientID: String, clientCertificateX5t: String, clientCertificateKeyURL: URL) throws {
+		let key = try RSAKey.private(pem: Data(contentsOf: clientCertificateKeyURL))
+		self.init(tenantID: tenantID, clientID: clientID, grant: .clientCertificate(x5t: clientCertificateX5t, privateKey: key))
+	}
+	
+	public init(tenantID: String, clientID: String, grant: Grant) {
 		self.tenantID = tenantID
 		self.clientID = clientID
-		self.clientSecret = clientSecret
+		self.grant = grant
 	}
 	
 	public func increaseScopeIfNeeded(_ scope: String...) async throws {
@@ -60,22 +83,32 @@ public actor Office365Connector : Connector, Authenticator, HasTaskQueue {
 		try await unqueuedDisconnect()
 		
 		let authURL = try URL(string: "https://login.microsoftonline.com")!.appending(tenantID, "oauth2", "v2.0", "token")
+		let tokenRequestGrant: TokenRequestBody.Grant
+		switch grant {
+			case let .clientSecret(secret):
+				tokenRequestGrant = .clientSecret(secret)
+				
+			case let .clientCertificate(x5t: x5t, privateKey: privateKey):
+				let assertion = TokenRequestAssertion(
+					aud: .init(value: authURL.absoluteString),
+					iss: .init(value: clientID),
+					sub: .init(value: clientID),
+					jti: UUID(),
+					nbf: .init(value: .now - 9),
+					exp: .init(value: .now + 30)
+				)
+				tokenRequestGrant = .signedAssertion(
+					/* M$ expects the x5t to be in a “x5t” field in the header instead of a “kid” field,
+					 *  but the JWT framework does not allow header fields customization. */
+					try JWTSigner.rs256(key: privateKey).sign(assertion, kid: .init(string: x5t)),
+					type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+				)
+		}
 		let requestBody = TokenRequestBody(
-			scope: scope.joined(separator: ","),
 			grantType: "client_credentials",
 			clientID: clientID,
-			clientSecret: clientSecret
-//			clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-//			clientAssertion: .init(
-//				aud: .init(value: authURL.absoluteString),
-//				iss: .init(value: clientID),
-//				sub: .init(value: clientID),
-//				jti: UUID(),
-//				nbf: .init(value: .now - 9),
-//				exp: .init(value: .now + 30)
-//			),
-//			kid: .init(string: certifID),
-//			assertionSigner: JWTSigner.rs256(key: privateKey)
+			grant: tokenRequestGrant,
+			scope: scope.joined(separator: ",")
 		)
 		
 		let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(url: authURL, httpBody: requestBody, bodyEncoder: FormURLEncodedEncoder(), retryProviders: [])

@@ -63,8 +63,7 @@ final class Office365OfficeTests : XCTestCase {
 		let connector = try Office365Connector(
 			tenantID: serviceConf.connectorSettings.tenantID,
 			clientID: serviceConf.connectorSettings.clientID,
-			clientSecret: serviceConf.connectorSettings.clientSecret
-//			privateKeyURL: URL(fileURLWithPath: serviceConf.connectorSettings.privateKeyPath, isDirectory: false)
+			grant: serviceConf.connectorSettings.grant
 		)
 		try await connector.connect(["https://graph.microsoft.com/.default"])
 		let connected = await connector.isConnected

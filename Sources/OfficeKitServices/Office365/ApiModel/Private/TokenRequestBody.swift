@@ -7,44 +7,37 @@
 
 import Foundation
 
-@preconcurrency import JWT
-
 
 
 struct TokenRequestBody : Sendable, Encodable {
 	
-	struct Assertion : JWTPayload {
-		var aud: AudienceClaim
-		var iss: IssuerClaim
-		var sub: SubjectClaim
-		var jti: UUID
-		var nbf: NotBeforeClaim
-		var exp: ExpirationClaim
-		func verify(using signer: JWTSigner) throws {
-			/* We do not verify the token, the server will. */
-			throw Err.unsupportedOperation
-		}
+	enum Grant {
+		
+		case clientSecret(String)
+		case signedAssertion(String, type: String)
+		
 	}
 	
-	var scope: String
-	
 	var grantType: String
-	var clientID: String
-	var clientSecret: String
-//	var clientAssertionType: String
-//	var clientAssertion: Assertion
 	
-//	var kid: JWKIdentifier
-//	var assertionSigner: JWTSigner
+	var clientID: String
+	var grant: Grant
+	
+	var scope: String
 	
 	func encode(to encoder: Encoder) throws {
 		var container = encoder.container(keyedBy: CodingKeys.self)
 		try container.encode(scope, forKey: .scope)
 		try container.encode(grantType, forKey: .grantType)
 		try container.encode(clientID, forKey: .clientID)
-		try container.encode(clientSecret, forKey: .clientSecret)
-//		try container.encode(clientAssertionType, forKey: .clientAssertionType)
-//		try container.encode(assertionSigner.sign(clientAssertion, kid: kid), forKey: .clientAssertion)
+		switch grant {
+			case let .clientSecret(secret):
+				try container.encode(secret, forKey: .clientSecret)
+				
+			case let .signedAssertion(assertion, type: type):
+				try container.encode(type,      forKey: .clientAssertionType)
+				try container.encode(assertion, forKey: .clientAssertion)
+		}
 	}
 	
 	private enum CodingKeys : String, CodingKey {
@@ -52,8 +45,8 @@ struct TokenRequestBody : Sendable, Encodable {
 		case clientID = "client_id"
 		case clientSecret = "client_secret"
 		case grantType = "grant_type"
-//		case clientAssertionType = "client_assertion_type"
-//		case clientAssertion = "client_assertion"
+		case clientAssertionType = "client_assertion_type"
+		case clientAssertion = "client_assertion"
 	}
 	
 }
