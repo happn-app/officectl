@@ -31,6 +31,7 @@ struct Delete : AsyncParsableCommand {
 	@Argument
 	var anyUserID: String
 	
+	
 	func run() async throws {
 		try officectlOptions.bootstrap()
 		let servicesActedOn = officectlOptions.officeKitServices.hashableUserServices(matching: usersOptions.serviceIDs)

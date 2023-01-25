@@ -20,6 +20,8 @@ struct Server : AsyncParsableCommand {
 	static var configuration = CommandConfiguration(
 		abstract: "Interact with the server.",
 		subcommands: [
+			ProcessQueues.self,
+			ProcessScheduledQueues.self,
 			Routes.self,
 			Serve.self
 		]
@@ -27,6 +29,8 @@ struct Server : AsyncParsableCommand {
 	
 	@OptionGroup()
 	var officectlOptions: Officectl.Options
+	
+	
 	
 	static func runVaporCommand(_ args: [String], officectlOptions: Officectl.Options) throws {
 		/* We require the server conf for any server command. */
