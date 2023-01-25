@@ -32,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/xcode-actions/clt-logger.git",
       "state" : {
-        "revision" : "20eb9941bd9fb7acbbbed96a46a31a011959cbb5",
-        "version" : "0.5.0"
+        "revision" : "a3e33f58aa30ec9c33f022dd512e00e0663606c1",
+        "version" : "0.5.1"
       }
     },
     {
@@ -347,8 +347,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Frizlab/swift-xdg.git",
       "state" : {
-        "revision" : "e462bd2bcb52f3d2a5d7c74d0e543a6870e7ffbb",
-        "version" : "1.0.0-beta.1"
+        "revision" : "c3d21e15e46e8b9d471bd351c9b11ff836b8b50a",
+        "version" : "1.0.0-beta.1.0.1"
       }
     },
     {
@@ -383,8 +383,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/happn-app/URLRequestOperation.git",
       "state" : {
-        "revision" : "098dde8b8579ab845393d3a9c4ff78c33c47ab2c",
-        "version" : "2.0.0-alpha.14.1"
+        "branch" : "dev.final_operation",
+        "revision" : "da14284d8a05a202275380125e5d4c07985551fd"
       }
     },
     {
@@ -410,8 +410,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/happn-app/XibLoc.git",
       "state" : {
-        "revision" : "65dd13d7c7da5e860b2587e9cb4182b8a3e8b01f",
-        "version" : "1.2.3"
+        "revision" : "1abb69ac28e2a30b997f720ff3b3cdab59d9b1fa",
+        "version" : "1.2.4"
       }
     }
   ],

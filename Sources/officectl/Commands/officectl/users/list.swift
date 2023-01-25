@@ -37,9 +37,9 @@ struct List : AsyncParsableCommand {
 #if !canImport(TabularData)
 		multiUsersResult.users.forEach{ multiUser in
 			print("---")
-			let maxLength = multiUser.keys.map(\.value.id.count).max() ?? 0
-			for key in (multiUser.keys.sorted{ $0.value.id < $1.value.id }) {
-				print("\(String(repeating: " ", count: maxLength - key.value.id.count))\(key.id): ", terminator: "")
+			let maxLength = multiUser.keys.map(\.value.id.rawValue.count).max() ?? 0
+			for key in (multiUser.keys.sorted{ $0.value.id.rawValue < $1.value.id.rawValue }) {
+				print("\(String(repeating: " ", count: maxLength - key.value.id.rawValue.count))\(key.id): ", terminator: "")
 				let result = multiUser[key]!
 				switch result {
 					case .success(nil):       print("<none>")
