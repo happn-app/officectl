@@ -152,6 +152,7 @@ let package = Package(
 #if canImport(OpenDirectory)
 		ret.append(contentsOf: targetsForService(named: "OpenDirectoryOffice", folderName: "OpenDirectory"))
 #endif
+		ret.append(contentsOf: targetsForService(named: "VaultPKIOffice",      folderName: "VaultPKI",  additionalDependencies: networkDependencies))
 		
 		ret.append(.target(
 			name: "OfficeServer",
@@ -194,10 +195,13 @@ let package = Package(
 				ret.append(.target(name: "GoogleOffice"))
 				ret.append(.target(name: "HappnOffice"))
 				ret.append(.target(name: "LDAPOffice"))
+				ret.append(.target(name: "Office365Office"))
 				ret.append(.target(name: "OfficeKitOffice"))
 #if canImport(OpenDirectory)
 				ret.append(.target(name: "OpenDirectoryOffice"))
 #endif
+				ret.append(.target(name: "VaultPKIOffice"))
+				
 #if !canImport(Darwin)
 				ret.append(.target(name: "CNCurses"))
 #endif

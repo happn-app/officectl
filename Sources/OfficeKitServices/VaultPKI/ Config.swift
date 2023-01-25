@@ -1,6 +1,6 @@
 /*
  *  Config.swift
- * Office365Office
+ * VaultPKIOffice
  *
  * Created by François Lamboley on 2023/01/25.
  */
@@ -11,10 +11,10 @@ import Logging
 
 
 
-public enum Office365OfficeConfig : Sendable {
+public enum VaultPKIOfficeConfig : Sendable {
 	
 	static public var logger: Logger?
 	
 }
 
-typealias Conf = Office365OfficeConfig
+typealias Conf = VaultPKIOfficeConfig
