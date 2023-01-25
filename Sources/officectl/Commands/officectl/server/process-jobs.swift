@@ -37,9 +37,7 @@ struct ProcessJobs : AsyncParsableCommand {
 	func run() async throws {
 		try officectlOptions.bootstrap()
 		
-		try Server.runVaporCommand(["queues"] + (queuesOptions.queue.flatMap{ ["--queue", $0] } ?? []), officectlOptions: officectlOptions, appSetup: { app in
-			try OfficeServerConfig.setupQueues(app)
-		})
+		try Server.runVaporCommand(["queues"] + (queuesOptions.queue.flatMap{ ["--queue", $0] } ?? []), officectlOptions: officectlOptions, appSetup: OfficeServerConfig.setupQueues)
 	}
 	
 }

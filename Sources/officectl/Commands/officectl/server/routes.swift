@@ -26,9 +26,7 @@ struct Routes : AsyncParsableCommand {
 	func run() async throws {
 		try officectlOptions.bootstrap()
 		
-		try Server.runVaporCommand(["routes"], officectlOptions: officectlOptions, appSetup: { app in
-			try OfficeServerConfig.setupRoutes(app)
-		})
+		try Server.runVaporCommand(["routes"], officectlOptions: officectlOptions, appSetup: OfficeServerConfig.setupRoutes)
 	}
 	
 }
