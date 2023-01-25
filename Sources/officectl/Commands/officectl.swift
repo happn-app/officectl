@@ -137,7 +137,7 @@ extension Officectl.Options {
 		RetryingOperationConfig.oslog = nil
 		URLRequestOperationConfig.oslog = nil
 #endif
-		RetryingOperationConfig.logger = Logger(label: "RetryingOperation")
+		RetryingOperationConfig.logger = nil
 		URLRequestOperationConfig.logger = Logger(label: "URLRequestOperation")
 		
 		
