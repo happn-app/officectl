@@ -7,11 +7,12 @@
 
 import Foundation
 
+import OfficeModelCore
+import UnwrapOrThrow
+
 import OfficeKit
 import OfficeKitOffice
 import OpenDirectoryOffice
-
-import UnwrapOrThrow
 
 
 
@@ -25,7 +26,7 @@ extension OfficeKitUser {
 		)
 	}
 	
-	func odUser(odServiceID: String) throws -> OpenDirectoryUser {
+	func odUser(odServiceID: Tag) throws -> OpenDirectoryUser {
 		guard id.tag == odServiceID, let opaqueUserInfo else {
 			throw InvalidUserError()
 		}
