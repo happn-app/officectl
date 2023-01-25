@@ -12,7 +12,6 @@ import CommonForOfficeKitServicesTests
 import Email
 import Logging
 import OfficeKit
-import ServiceKit
 
 @testable import LDAPOffice
 
@@ -34,8 +33,6 @@ final class LDAPOfficeTests : XCTestCase {
 	/* A new instance of the service is created for each test. */
 	var service: LDAPService!
 	var testConf: TestConf!
-	
-	let services = Services()
 	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
@@ -66,12 +63,12 @@ final class LDAPOfficeTests : XCTestCase {
 	}
 	
 	func testFetchUserAll() async throws {
-		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: services)
+		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil)
 		XCTAssertGreaterThan(users.count, 0)
 	}
 	
 	func testFetchUserFromID() async throws {
-		let user = try await service.existingUser(fromID: testConf.fetchedUser.dn, propertiesToFetch: [.firstName], using: services)
+		let user = try await service.existingUser(fromID: testConf.fetchedUser.dn, propertiesToFetch: [.firstName])
 		XCTAssertNil(user?.oU_lastName)
 		XCTAssertNotNil(user?.oU_firstName)
 		XCTAssertEqual(user?.oU_id, testConf.fetchedUser.dn)
@@ -92,7 +89,7 @@ final class LDAPOfficeTests : XCTestCase {
 		XCTAssertEqual(user.oU_lastName, "Test")
 		
 		print("Creating user...")
-		user = try await service.createUser(user, using: services)
+		user = try await service.createUser(user)
 		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNString))
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
@@ -105,14 +102,14 @@ final class LDAPOfficeTests : XCTestCase {
 		XCTAssertTrue(user.oU_setValue(testEmailStrs, forProperty: .emails, convertMismatchingTypes: true).propertyWasModified)
 		
 		print("Updating user...")
-		user = try await service.updateUser(user, propertiesToUpdate: [.emails, .lastName], using: services)
+		user = try await service.updateUser(user, propertiesToUpdate: [.emails, .lastName])
 		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNString))
 		XCTAssertEqual(user.oU_emails?.map(\.rawValue), testEmailStrs)
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test Modified")
 		
 		print("Deleting user...")
-		try await service.deleteUser(user, using: services)
+		try await service.deleteUser(user)
 	}
 	
 	func testCreateUpdateIDDeleteUser() async throws {
@@ -126,7 +123,7 @@ final class LDAPOfficeTests : XCTestCase {
 		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], convertMismatchingTypes: true)
 		
 		print("Creating user...")
-		user = try await service.createUser(user, using: services)
+		user = try await service.createUser(user)
 		XCTAssertEqual(user.id, try LDAPDistinguishedName(string: initialDNString))
 		
 		XCTAssertTrue(user.oU_setValue(modifiedDNString, forProperty: .id, convertMismatchingTypes: true).propertyWasModified)
@@ -134,7 +131,7 @@ final class LDAPOfficeTests : XCTestCase {
 		
 		/* Changing the DN of an LDAP record is not possible AFAIK (see oU_setValue implementation in LDAPObject). */
 		print("Updating user...")
-		let result = await Result{ try await service.updateUser(user, propertiesToUpdate: [.id], using: services) }
+		let result = await Result{ try await service.updateUser(user, propertiesToUpdate: [.id]) }
 		XCTAssertThrowsError(try result.get())
 		
 		/* The update fails, but the user does not revert back to the server values. */
@@ -144,7 +141,7 @@ final class LDAPOfficeTests : XCTestCase {
 		XCTAssertTrue(user.oU_setValue(initialDNString, forProperty: .id, convertMismatchingTypes: true).propertyWasModified)
 		
 		print("Deleting user...")
-		try await service.deleteUser(user, using: services)
+		try await service.deleteUser(user)
 	}
 	
 	func testCreateUpdateCustomPropSSHKeyAndDeleteUser() async throws {
@@ -155,16 +152,16 @@ final class LDAPOfficeTests : XCTestCase {
 		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], convertMismatchingTypes: true)
 		
 		print("Creating user...")
-		user = try await service.createUser(user, using: services)
+		user = try await service.createUser(user)
 		
 		let property = UserProperty(rawValue: "happn/ldap:custom-attribute:ldapPublicKey:sshPublicKey")
 		user.oU_applyHints([property: "ssh-rsa yolo"], convertMismatchingTypes: true)
 		
 		print("Updating user...")
-		user = try await service.updateUser(user, propertiesToUpdate: [property], using: services)
+		user = try await service.updateUser(user, propertiesToUpdate: [property])
 		
 		print("Deleting user...")
-		try await service.deleteUser(user, using: services)
+		try await service.deleteUser(user)
 	}
 	
 	func testCreateUpdateCustomPropGitHubIDAndDeleteUser() async throws {
@@ -175,16 +172,16 @@ final class LDAPOfficeTests : XCTestCase {
 		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], convertMismatchingTypes: true)
 		
 		print("Creating user...")
-		user = try await service.createUser(user, using: services)
+		user = try await service.createUser(user)
 		
 		let property = UserProperty(rawValue: "happn/ldap:custom-attribute:happnObject:gitHubID")
 		user.oU_applyHints([property: "Frizlab"], convertMismatchingTypes: true)
 		
 		print("Updating user...")
-		user = try await service.updateUser(user, propertiesToUpdate: [property], using: services)
+		user = try await service.updateUser(user, propertiesToUpdate: [property])
 		
 		print("Deleting user...")
-		try await service.deleteUser(user, using: services)
+		try await service.deleteUser(user)
 	}
 	
 }

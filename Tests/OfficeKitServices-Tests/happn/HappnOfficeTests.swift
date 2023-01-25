@@ -11,7 +11,6 @@ import XCTest
 import CommonForOfficeKitServicesTests
 import Email
 import OfficeKit
-import ServiceKit
 import URLRequestOperation
 
 @testable import HappnOffice
@@ -36,12 +35,10 @@ final class HappnOfficeTests : XCTestCase {
 	var service: HappnService!
 	var testConf: TestConf!
 	
-	let services = Services()
-	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
-		URLRequestOperationConfig.logHTTPResponses = true
-		URLRequestOperationConfig.logHTTPRequests = true
+		URLRequestOperationConfig.maxResponseBodySizeToLog = .max
+		URLRequestOperationConfig.maxRequestBodySizeToLog = .max
 		confs = Result{ try parsedConf(for: "happn") }
 	}
 	
@@ -61,32 +58,32 @@ final class HappnOfficeTests : XCTestCase {
 	}
 	
 	func testListAllUser() async throws {
-		let allUsers = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: services)
+		let allUsers = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil)
 		print(allUsers)
 		XCTAssertGreaterThan(allUsers.count, 0)
 	}
 	
 	func testGetUser() async throws {
-		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.login, propertiesToFetch: nil, using: services)
+		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.login, propertiesToFetch: nil)
 		let user = try XCTUnwrap(optionalUser)
 		XCTAssertEqual(user.oU_persistentID, testConf.fetchedUser.id)
 	}
 	
 	func testGetUserWithNullID() async throws {
-		let optionalUser = try await service.existingUser(fromID: .nullLogin, propertiesToFetch: nil, using: services)
+		let optionalUser = try await service.existingUser(fromID: .nullLogin, propertiesToFetch: nil)
 		let user = try XCTUnwrap(optionalUser)
 		XCTAssertEqual(user.oU_persistentID, testConf.nullUserID)
 	}
 	
 	func testGetExistingUserFromPersistentID() async throws {
-		let optionalUser = try await service.existingUser(fromPersistentID: testConf.fetchedUser.id, propertiesToFetch: nil, using: services)
+		let optionalUser = try await service.existingUser(fromPersistentID: testConf.fetchedUser.id, propertiesToFetch: nil)
 		let user = try XCTUnwrap(optionalUser)
 		XCTAssertEqual(user.oU_id, testConf.fetchedUser.login)
 		XCTAssertEqual(user.oU_persistentID, testConf.fetchedUser.id)
 	}
 	
 	func testGetNonExistingUserWithPersistentID() async throws {
-		let optionalUser = try await service.existingUser(fromPersistentID: "42", propertiesToFetch: nil, using: services)
+		let optionalUser = try await service.existingUser(fromPersistentID: "42", propertiesToFetch: nil)
 		XCTAssertNil(optionalUser)
 	}
 	

@@ -11,7 +11,6 @@ import XCTest
 
 import CommonForOfficeKitServicesTests
 import Logging
-import ServiceKit
 
 @testable import OfficeKitOffice
 
@@ -31,8 +30,6 @@ final class OfficeKitOfficeTests : XCTestCase {
 	/* A new instance of the service is created for each test. */
 	var service: OfficeKitService!
 	var testConf: TestConf!
-	
-	let services = Services()
 	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {

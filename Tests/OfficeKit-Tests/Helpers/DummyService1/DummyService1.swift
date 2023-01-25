@@ -12,7 +12,6 @@ import GenericJSON
 import OfficeModelCore
 
 import OfficeKit
-import ServiceKit
 
 
 
@@ -67,33 +66,33 @@ final class DummyService1 : UserService, GroupOfUsersService, AuthenticatorServi
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
-	func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser1? {
+	func existingUser(fromPersistentID pID: Never, propertiesToFetch: Set<UserProperty>?) async throws -> DummyUser1? {
 	}
 	
-	func existingUser(fromID uID: Never, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> DummyUser1? {
+	func existingUser(fromID uID: Never, propertiesToFetch: Set<UserProperty>?) async throws -> DummyUser1? {
 	}
 	
-	func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?, using services: Services) async throws -> [DummyUser1] {
+	func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [DummyUser1] {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
 	let supportsUserCreation: Bool = false
-	func createUser(_ user: DummyUser1, using services: Services) async throws -> DummyUser1 {
+	func createUser(_ user: DummyUser1) async throws -> DummyUser1 {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
 	let supportsUserUpdate: Bool = false
-	func updateUser(_ user: DummyUser1, propertiesToUpdate: Set<UserProperty>, using services: Services) async throws -> DummyUser1 {
+	func updateUser(_ user: DummyUser1, propertiesToUpdate: Set<UserProperty>) async throws -> DummyUser1 {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
 	let supportsUserDeletion: Bool = false
-	func deleteUser(_ user: DummyUser1, using services: Services) async throws {
+	func deleteUser(_ user: DummyUser1) async throws {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
 	let supportsPasswordChange: Bool = false
-	func changePassword(of user: DummyUser1, to newPassword: String, using services: Services) throws {
+	func changePassword(of user: DummyUser1, to newPassword: String) throws {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
@@ -119,16 +118,16 @@ final class DummyService1 : UserService, GroupOfUsersService, AuthenticatorServi
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
-	func listUsers(inGroupOfUsers groupOfUsers: DummyGroupOfUsers1, using services: Services) async throws -> [DummyUser1] {
+	func listUsers(inGroupOfUsers groupOfUsers: DummyGroupOfUsers1) async throws -> [DummyUser1] {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
-	func listGroupsOfUsers(containingUser user: DummyUser1, using services: Services) async throws -> [DummyGroupOfUsers1] {
+	func listGroupsOfUsers(containingUser user: DummyUser1) async throws -> [DummyGroupOfUsers1] {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
 	let supportsEmbeddedGroupsOfUsers: Bool = false
-	func listGroupsOfUsers(inGroupOfUser groupOfUser: DummyGroupOfUsers1, using services: Services) async throws -> [DummyGroupOfUsers1] {
+	func listGroupsOfUsers(inGroupOfUser groupOfUser: DummyGroupOfUsers1) async throws -> [DummyGroupOfUsers1] {
 		throw TheDummyServiceCannotBeUsed()
 	}
 	
@@ -136,7 +135,7 @@ final class DummyService1 : UserService, GroupOfUsersService, AuthenticatorServi
 	   MARK: Authenticator Service
 	   *************************** */
 	
-	func authenticate(with challenge: Never, using services: Services) async throws -> Never {
+	func authenticate(with challenge: Never) async throws -> Never {
 	}
 	
 }

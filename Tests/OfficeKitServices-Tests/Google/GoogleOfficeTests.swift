@@ -12,7 +12,6 @@ import CommonForOfficeKitServicesTests
 import Email
 import Logging
 import OfficeKit
-import ServiceKit
 import URLRequestOperation
 
 @testable import GoogleOffice
@@ -36,12 +35,10 @@ final class GoogleOfficeTests : XCTestCase {
 	var service: GoogleService!
 	var testConf: TestConf!
 	
-	let services = Services()
-	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
-		URLRequestOperationConfig.logHTTPResponses = true
-		URLRequestOperationConfig.logHTTPRequests = true
+		URLRequestOperationConfig.maxRequestBodySizeToLog = .max
+		URLRequestOperationConfig.maxResponseBodySizeToLog = .max
 		confs = Result{ try parsedConf(for: "google") }
 	}
 	
@@ -61,7 +58,7 @@ final class GoogleOfficeTests : XCTestCase {
 	}
 	
 	func testGetUser() async throws {
-		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.email, propertiesToFetch: nil, using: services)
+		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.email, propertiesToFetch: nil)
 		let user = try XCTUnwrap(optionalUser)
 		XCTAssertEqual(user.oU_persistentID, testConf.fetchedUser.id)
 	}
@@ -80,7 +77,7 @@ final class GoogleOfficeTests : XCTestCase {
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
 		
-		user = try await service.createUser(user, using: services)
+		user = try await service.createUser(user)
 		XCTAssertEqual(user.primaryEmail, Email(rawValue: initialEmailStr))
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
@@ -91,12 +88,12 @@ final class GoogleOfficeTests : XCTestCase {
 		/* We have to wait a bit because the user is not created immeditaly and if we try to update it we get an error. */
 		try await Task.sleep(nanoseconds: 13_000_000_000/*13s*/)
 		
-		user = try await service.updateUser(user, propertiesToUpdate: [.emails], using: services)
+		user = try await service.updateUser(user, propertiesToUpdate: [.emails])
 		XCTAssertEqual(user.primaryEmail, Email(rawValue: modifiedEmailStr))
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
 		
-		try await service.deleteUser(user, using: services)
+		try await service.deleteUser(user)
 	}
 	
 }

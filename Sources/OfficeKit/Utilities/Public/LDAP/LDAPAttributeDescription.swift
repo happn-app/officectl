@@ -10,7 +10,7 @@ import Foundation
 
 
 /* <https://tools.ietf.org/html/rfc4512#section-2.5> */
-public struct LDAPAttributeDescription : RawRepresentable, Codable, Sendable {
+public struct LDAPAttributeDescription : Hashable, RawRepresentable, Codable, Sendable {
 	
 	public static let uid = LDAPAttributeDescription(rawValue: "uid")!
 	public static let mail = LDAPAttributeDescription(rawValue: "mail")!

@@ -12,7 +12,6 @@ import CommonForOfficeKitServicesTests
 import Email
 import Logging
 import OfficeKit
-import ServiceKit
 import URLRequestOperation
 
 @testable import GitHubOffice
@@ -38,12 +37,10 @@ final class GitHubOfficeTests : XCTestCase {
 	var service: GitHubService!
 	var testConf: TestConf!
 	
-	let services = Services()
-	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
-		URLRequestOperationConfig.logHTTPResponses = true
-		URLRequestOperationConfig.logHTTPRequests = true
+		URLRequestOperationConfig.maxResponseBodySizeToLog = .max
+		URLRequestOperationConfig.maxRequestBodySizeToLog = .max
 		confs = Result{ try parsedConf(for: "github") }
 	}
 	
@@ -63,27 +60,27 @@ final class GitHubOfficeTests : XCTestCase {
 	}
 	
 	func testGetUser() async throws {
-		let optionalUser = try await service.existingUser(fromPersistentID: testConf.fetchedUser.id, propertiesToFetch: nil, using: services)
+		let optionalUser = try await service.existingUser(fromPersistentID: testConf.fetchedUser.id, propertiesToFetch: nil)
 		let user = try XCTUnwrap(optionalUser)
 		XCTAssertEqual(user.login, testConf.fetchedUser.login)
 	}
 	
 	func testGetExistingUserNotPartOfHappn() async throws {
-		let user = try await service.existingUser(fromPersistentID: testConf.existingUserNotPartOfHappn.id, propertiesToFetch: nil, using: services)
+		let user = try await service.existingUser(fromPersistentID: testConf.existingUserNotPartOfHappn.id, propertiesToFetch: nil)
 		XCTAssertNil(user)
 	}
 	
 	func testGetAllUsers() async throws {
-		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil, using: services)
+		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil)
 		XCTAssertGreaterThan(users.count, 50)
 	}
 	
 	func testCreateAndDeleteUser() async throws {
 		var user = GitHubUser(login: testConf.userToAddAndRemove.login)
-		user = try await service.createUser(user, using: services)
+		user = try await service.createUser(user)
 		print("*** User is invited.")
 		try await Task.sleep(nanoseconds: 1_000_000_000) /* Not necessarily required, but feels like a good thing. */
-		try await service.deleteUser(user, using: services)
+		try await service.deleteUser(user)
 		print("*** Membership has been removed.")
 	}
 	
