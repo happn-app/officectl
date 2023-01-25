@@ -1,8 +1,8 @@
 /*
- * GoogleConnector.swift
- * GoogleOffice
+ * Office365Connector.swift
+ * Office365Office
  *
- * Created by François Lamboley on 2018/05/31.
+ * Created by François Lamboley on 2023/01/25.
  */
 
 import Foundation
@@ -19,37 +19,24 @@ import URLRequestOperation
 
 
 
-public actor GoogleConnector : Connector, Authenticator, HasTaskQueue {
+public actor Office365Connector : Connector, Authenticator, HasTaskQueue {
 	
 	public typealias Request = URLRequest
 	public typealias Authentication = Set<String>
 	
-	public let userBehalf: String?
-	public let privateKey: RSAKey
-	public let superuserEmail: String
+	public let tenantID: String
+	
+	public let clientID: String
+	public let clientSecret: String
 	
 	public var isConnected:  Bool         {tokenInfo != nil}
 	public var accessToken:  String?      {tokenInfo?.token}
 	public var currentScope: Set<String>? {tokenInfo?.scope}
 	
-	public init(jsonCredentialsURL: URL, userBehalf: String?) throws {
-		/* Decode JSON credentials. */
-		let superuserCreds = try JSONDecoder().decode(ConnectorCredentialsFile.self, from: Data(contentsOf: jsonCredentialsURL))
-		
-		guard superuserCreds.type == "service_account" else {
-			/* We expect to have a service account; we do not know how to handle anything else. */
-			throw Err.invalidConnectorCredentials
-		}
-		
-		self.userBehalf = userBehalf
-		self.superuserEmail = superuserCreds.clientEmail
-		self.privateKey = try RSAKey.private(pem: Data(superuserCreds.privateKey.utf8))
-	}
-	
-	public init(from connector: GoogleConnector, userBehalf: String?) {
-		self.userBehalf = userBehalf
-		self.privateKey = connector.privateKey
-		self.superuserEmail = connector.superuserEmail
+	public init(tenantID: String, clientID: String, clientSecret: String) throws {
+		self.tenantID = tenantID
+		self.clientID = clientID
+		self.clientSecret = clientSecret
 	}
 	
 	public func increaseScopeIfNeeded(_ scope: String...) async throws {
@@ -72,15 +59,23 @@ public actor GoogleConnector : Connector, Authenticator, HasTaskQueue {
 	public func unqueuedConnect(_ scope: Set<String>) async throws {
 		try await unqueuedDisconnect()
 		
-		let authURL = URL(string: "https://www.googleapis.com/oauth2/v4/token")!
+		let authURL = try URL(string: "https://login.microsoftonline.com")!.appending(tenantID, "oauth2", "v2.0", "token")
 		let requestBody = TokenRequestBody(
-			grantType: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-			assertion: .init(
-				iss: .init(value: superuserEmail), scope: scope.joined(separator: " "),
-				aud: .init(value: authURL.absoluteString), iat: .init(value: Date()), exp: .init(value: Date() + 30),
-				sub: userBehalf.flatMap(SubjectClaim.init(value:))
-			),
-			assertionSigner: JWTSigner.rs256(key: privateKey)
+			scope: scope.joined(separator: ","),
+			grantType: "client_credentials",
+			clientID: clientID,
+			clientSecret: clientSecret
+//			clientAssertionType: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+//			clientAssertion: .init(
+//				aud: .init(value: authURL.absoluteString),
+//				iss: .init(value: clientID),
+//				sub: .init(value: clientID),
+//				jti: UUID(),
+//				nbf: .init(value: .now - 9),
+//				exp: .init(value: .now + 30)
+//			),
+//			kid: .init(string: certifID),
+//			assertionSigner: JWTSigner.rs256(key: privateKey)
 		)
 		
 		let op = try URLRequestDataOperation<TokenResponseBody>.forAPIRequest(url: authURL, httpBody: requestBody, bodyEncoder: FormURLEncodedEncoder(), retryProviders: [])
@@ -95,13 +90,13 @@ public actor GoogleConnector : Connector, Authenticator, HasTaskQueue {
 	public func unqueuedDisconnect() async throws {
 		guard let tokenInfo else {return}
 		
-		let op = try URLRequestDataOperation<TokenRevokeResponseBody>.forAPIRequest(url: URL(string: "https://accounts.google.com/o/oauth2/revoke")!, urlParameters: TokenRevokeRequestQuery(token: tokenInfo.token), retryProviders: [])
-		do {
-			_ = try await op.startAndGetResult()
-			self.tokenInfo = nil
-		} catch where (error as? URLRequestOperationError)?.unexpectedStatusCodeError?.actual == 400 {
-			/* We consider the 400 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
-		}
+//		let op = try URLRequestDataOperation<TokenRevokeResponseBody>.forAPIRequest(url: URL(string: "https://accounts.google.com/o/oauth2/revoke")!, urlParameters: TokenRevokeRequestQuery(token: tokenInfo.token), retryProviders: [])
+//		do {
+//			_ = try await op.startAndGetResult()
+//			self.tokenInfo = nil
+//		} catch where (error as? URLRequestOperationError)?.unexpectedStatusCodeError?.actual == 400 {
+//			/* We consider the 400 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
+//		}
 	}
 	
 	/* ************************************

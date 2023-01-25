@@ -147,6 +147,7 @@ let package = Package(
 		ret.append(contentsOf: targetsForService(named: "GoogleOffice",        folderName: "Google",    additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
 		ret.append(contentsOf: targetsForService(named: "HappnOffice",         folderName: "happn",     additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
 		ret.append(contentsOf: targetsForService(named: "LDAPOffice",          folderName: "LDAP",      additionalDependencies: ldapDependencies))
+		ret.append(contentsOf: targetsForService(named: "Office365Office",     folderName: "Office365", additionalDependencies: networkDependencies + [.product(name: "JWT", package: "jwt")]))
 		ret.append(contentsOf: targetsForService(named: "OfficeKitOffice",     folderName: "OfficeKit", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
 #if canImport(OpenDirectory)
 		ret.append(contentsOf: targetsForService(named: "OpenDirectoryOffice", folderName: "OpenDirectory"))
