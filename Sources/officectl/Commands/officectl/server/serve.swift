@@ -9,6 +9,8 @@ import Foundation
 
 import ArgumentParser
 
+import OfficeServer
+
 
 
 struct Serve : AsyncParsableCommand {
@@ -31,7 +33,9 @@ struct Serve : AsyncParsableCommand {
 		if let port = officectlOptions.conf?.serverConf?.port {
 			serverArgs.append(contentsOf: ["--port", String(port)])
 		}
-		try Server.runVaporCommand(["serve"] + serverArgs, officectlOptions: officectlOptions)
+		try Server.runVaporCommand(["serve"] + serverArgs, officectlOptions: officectlOptions, appSetup: { app in
+			try OfficeServerConfig.setupServer(app)
+		})
 	}
 	
 }

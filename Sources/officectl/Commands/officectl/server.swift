@@ -20,8 +20,7 @@ struct Server : AsyncParsableCommand {
 	static var configuration = CommandConfiguration(
 		abstract: "Interact with the server.",
 		subcommands: [
-			ProcessQueues.self,
-			ProcessScheduledQueues.self,
+//			ProcessJobs.self, /* We do not have jobs. */
 			Routes.self,
 			Serve.self
 		]
@@ -31,8 +30,7 @@ struct Server : AsyncParsableCommand {
 	var officectlOptions: Officectl.Options
 	
 	
-	
-	static func runVaporCommand(_ args: [String], officectlOptions: Officectl.Options) throws {
+	static func runVaporCommand(_ args: [String], officectlOptions: Officectl.Options, appSetup: (Application) throws -> Void) throws {
 		/* We require the server conf for any server command. */
 		guard let serverConf = officectlOptions.conf?.serverConf else {
 			/* An alternative to printing a message via the logger then throwing the ExitCode.validationFailure error would be to throw a ValidationError directly.
@@ -42,7 +40,7 @@ struct Server : AsyncParsableCommand {
 			throw ExitCode.validationFailure
 		}
 		
-		/* Straight from Vapor’s `bootstrap(from:_:)` */
+		/* Straight from Vapor’s `bootstrap(from:_:)`. */
 		if officectlOptions.resolvedLogLevel > .trace {
 			StackTrace.isCaptureEnabled = false
 		}
@@ -66,7 +64,8 @@ struct Server : AsyncParsableCommand {
 		}
 		app.officeKitServices = officectlOptions.officeKitServices
 		
-		try configure(app)
+		try OfficeServerConfig.bootstrap(app, skipLogger: true)
+		try appSetup(app)
 		try app.run()
 	}
 	

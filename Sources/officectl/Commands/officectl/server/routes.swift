@@ -9,6 +9,8 @@ import Foundation
 
 import ArgumentParser
 
+import OfficeServer
+
 
 
 struct Routes : AsyncParsableCommand {
@@ -24,7 +26,9 @@ struct Routes : AsyncParsableCommand {
 	func run() async throws {
 		try officectlOptions.bootstrap()
 		
-		try Server.runVaporCommand(["routes"], officectlOptions: officectlOptions)
+		try Server.runVaporCommand(["routes"], officectlOptions: officectlOptions, appSetup: { app in
+			try OfficeServerConfig.setupRoutes(app)
+		})
 	}
 	
 }

@@ -1,5 +1,5 @@
 /*
- * process-queues.swift
+ * process-jobs.swift
  * officectl
  *
  * Created by François Lamboley on 2023/01/25.
@@ -9,9 +9,11 @@ import Foundation
 
 import ArgumentParser
 
+import OfficeServer
 
 
-struct ProcessQueues : AsyncParsableCommand {
+
+struct ProcessJobs : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		abstract: "Start processing (non-scheduled) jobs in Vapor queues."
@@ -35,7 +37,9 @@ struct ProcessQueues : AsyncParsableCommand {
 	func run() async throws {
 		try officectlOptions.bootstrap()
 		
-		try Server.runVaporCommand(["queues"] + (queuesOptions.queue.flatMap{ ["--queue", $0] } ?? []), officectlOptions: officectlOptions)
+		try Server.runVaporCommand(["queues"] + (queuesOptions.queue.flatMap{ ["--queue", $0] } ?? []), officectlOptions: officectlOptions, appSetup: { app in
+			try OfficeServerConfig.setupQueues(app)
+		})
 	}
 	
 }
