@@ -7,11 +7,18 @@
 
 import Foundation
 
+import OfficeKit
+
 
 
 public enum VaultPKIOfficeError : Error, Sendable {
 	
-	case __notImplemented
+	case invalidCRL(message: String)
+	
+	case foundInvalidCertificateWithNoDN
+	case foundInvalidCertificateWithNoUnambiguousCNInDN(dn: LDAPDistinguishedName)
+	case foundInvalidCertificateWithNoValidityStartDate(dn: LDAPDistinguishedName)
+	case foundInvalidCertificateWithNoExpirationDate(dn: LDAPDistinguishedName)
 	
 }
 

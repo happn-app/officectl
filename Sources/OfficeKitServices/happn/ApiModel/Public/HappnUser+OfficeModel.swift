@@ -47,7 +47,7 @@ extension HappnUser : User {
 	}
 	
 	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult {
-		let passwdProp = UserProperty(rawValue: "happn/password")
+		let passwdProp = UserProperty(rawValue: HappnService.providerID + "/password")
 		switch property {
 			case .id, .persistentID, .emails:
 				Conf.logger?.error("Changing the id (email) or persistent id of a happn user is not supported by the happn API.")
@@ -85,7 +85,7 @@ extension HappnUser : User {
 			/* Other. */
 			.gender: [.gender],
 			.birthdate: [._birthDate],
-			.init(rawValue: "happn/password"): [.password],
+			.init(rawValue: HappnService.providerID + "/password"): [.password],
 		]
 	}
 	

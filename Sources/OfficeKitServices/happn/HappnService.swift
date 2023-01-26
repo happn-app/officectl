@@ -189,7 +189,7 @@ public final class HappnService : UserService {
 	public func changePassword(of user: HappnUser, to newPassword: String) async throws {
 		var user = user
 		user.password = newPassword
-		_ = try await updateUser(user, propertiesToUpdate: [.id, .init(rawValue: "happn/password")])
+		_ = try await updateUser(user, propertiesToUpdate: [.id, .init(rawValue: HappnService.providerID + "/password")])
 	}
 	
 }

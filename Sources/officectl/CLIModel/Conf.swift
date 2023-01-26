@@ -23,29 +23,46 @@ struct Conf : Decodable, Sendable {
 	var logLevel: Logger.Level?
 	var environment: Environment?
 	
-	/* This should probably not exist.
-	 * Certificates should be installed in the system, period.
-	 * Only used for the LDAP service. */
-	var caCertsFile: String?
-	
 	/* Not sure if this should be in the server config… for now only the server uses it anyway. */
 	var staticDataDir: String?
 	var staticDataDirPath: FilePath? {
 		staticDataDir.flatMap{ FilePath($0) }
 	}
 	
+	var misc: Misc
+	
 	var serverConf: ServerConf?
 	
 	var servicesConf: ServicesConf
 	var services: [Tag: ServiceDef]
 	
+	struct Misc : Decodable, Sendable {
+		
+		/* This should probably not exist.
+		 * Certificates should be installed in the system, period.
+		 * Only used for the LDAP service. */
+		var caCertsFile: String?
+		
+		/* I’m not 100% sure where to put this.
+		 * It’s not something that could be directly in the VaultPKI service because we need a way to override the value.
+		 * It’s only a first line of defense against the non-admin users, not an actual part of the service. */
+		var maxExpirationDelayBeforeAllowingReissuance: TimeInterval
+		
+		enum CodingKeys : String, CodingKey {
+			case caCertsFile = "ca_certs_file"
+			case maxExpirationDelayBeforeAllowingReissuance = "max_expiration_delay_before_allowing_reissuance"
+		}
+		
+	}
+	
+	
 	enum CodingKeys : String, CodingKey {
 		case logLevel = "log_level"
 		case environment
 		
-		case caCertsFile = "ca_certs_file"
-		
 		case staticDataDir = "static_data_dir"
+		
+		case misc
 		
 		case serverConf = "server"
 		

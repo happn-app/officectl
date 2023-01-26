@@ -10,6 +10,15 @@
       }
     },
     {
+      "identity" : "asn1decoder",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/filom/ASN1Decoder.git",
+      "state" : {
+        "revision" : "65953a42a0f039f53c73e48fd88c02809f7db607",
+        "version" : "1.8.0"
+      }
+    },
+    {
       "identity" : "async-http-client",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swift-server/async-http-client.git",
