@@ -52,6 +52,9 @@ struct Officectl : AsyncParsableCommand {
 		@Flag(name: .shortAndLong, inversion: .prefixedNo, help: "Shortcut to set the verbosity. When on, verbosity is set to debug, when off it is set to warning. Overridden by the --verbosity option.")
 		var verbose: Bool?
 		
+		@Flag(name: .long, inversion: .prefixedNo, help: "By default, logs are printed on stderr. Use this option to print to stdout instead.")
+		var logToStdout: Bool = false
+		
 		@Option(name: .long, help: "Override the environment in which to run the program (dev or prod). If no environment is defined, the default value is development.")
 		var env: Environment?
 		
@@ -70,9 +73,10 @@ struct Officectl : AsyncParsableCommand {
 		
 		/* We must do this because otherwise Swift complains that the struct is not Decodable because of the storage var.
 		 * Another solution would be to have a static storage instead, maybe even outside of Options, but an instance var is better. */
-		enum CodingKeys: CodingKey {
+		enum CodingKeys : CodingKey {
 			case verbosity
 			case verbose
+			case logToStdout
 			case env
 			case configFile
 			case staticDataDir
@@ -122,7 +126,7 @@ extension Officectl.Options {
 		/* *** LOGGER *** */
 		LoggingSystem.bootstrap({ id, metadataProvider in
 			/* Note: CLTLoggers do not have IDs, so we do not use the id parameter of the handler. */
-			var ret = CLTLogger(metadataProvider: metadataProvider)
+			var ret = CLTLogger(fd: !logToStdout ? .standardError : .standardOutput, metadataProvider: metadataProvider)
 			ret.logLevel = resolvedLogLevel
 			return ret
 		}, metadataProvider: nil)
