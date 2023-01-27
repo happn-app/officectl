@@ -91,7 +91,7 @@ public final class VaultPKIService : UserService {
 		return try await ([config.issuerName] + config.additionalActiveIssuers).concurrentFlatMap{ issuerName -> [VaultPKIUser] in
 			return try await VaultPKIUser.getAll(
 				from: issuerName,
-				includeRevoked: false,
+				includeRevoked: includeSuspended,
 				vaultBaseURL: self.config.baseURL,
 				vaultAuthenticator: self.authenticator
 			)

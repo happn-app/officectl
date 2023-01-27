@@ -23,19 +23,19 @@ extension VaultPKIUser {
 		let requestProcessor = AuthRequestProcessor(vaultAuthenticator)
 		
 		/* Let’s get the CRL */
-		let opCRL = try URLRequestDataOperation.forData(url: vaultBaseURL.appending(issuerName, "crl"), requestProcessors: [requestProcessor])
+		let opCRL = try URLRequestDataOperation.forData(url: vaultBaseURL.appending("v1", issuerName, "crl"), requestProcessors: [requestProcessor])
 		let revocationByCertificateID = try await VaultCRL(der: opCRL.startAndGetResult().result).revocationByCertificateID
 		
 		/* Let’s fetch the list of current certificates in the vault. */
 		let opListCurrentCertifs = URLRequestDataOperation<VaultResponse<VaultCertificateSerialsList>>.forAPIRequest(
-			url: try vaultBaseURL.appending(issuerName, "certs"), method: "LIST",
+			url: try vaultBaseURL.appending("v1", issuerName, "certs"), method: "LIST",
 			errorType: VaultError.self, requestProcessors: [requestProcessor],
 			resultProcessorModifier: { rp in
 				rp.flatMapError{ (error, response) in
 					/* When there are no certificates in the PKI, vault returns a fucking 404!
 					 * With a response like so '{"errors":[]}'. */
 					if (response as? HTTPURLResponse)?.statusCode == 404,
-						let e = (error as? URLRequestOperationError)?.apiError(VaultError.self),
+						let e = (error as? APIResultErrorWrapper<VaultError>)?.apiError,
 						e.errors.isEmpty
 					{
 						return VaultResponse(data: VaultCertificateSerialsList(keys: []))
@@ -63,7 +63,7 @@ extension VaultPKIUser {
 				return nil
 			}
 			let certificateResponse = try await URLRequestDataOperation<VaultResponse<VaultCertificateContainer>>.forAPIRequest(
-				url: try vaultBaseURL.appending(issuerName, "cert", id),
+				url: try vaultBaseURL.appending("v1", issuerName, "cert", id),
 				requestProcessors: [requestProcessor], retryProviders: []
 			).startAndGetResult().result
 			
