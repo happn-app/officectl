@@ -16,8 +16,8 @@ import Vapor
 
 public extension Conf {
 	
-	static func setupServer(_ app: Application) throws {
-		scheduleServerJobs(app)
+	static func setupServer(_ app: Application, scheduledJobs: [(AsyncScheduledJob, (ScheduleBuilder) -> Void)] = []) throws {
+		scheduleServerJobs(scheduledJobs, with: app)
 		
 		try setupRoutes(app)
 		try app.queues.startScheduledJobs()
@@ -33,8 +33,17 @@ public extension Conf {
 	}
 	
 	
-	internal static func scheduleServerJobs(_ app: Application) {
-		app.queues.schedule(UpdateCAMetricsJob()).daily().at(4, 30)
+	internal static func scheduleServerJobs(_ jobs: [(AsyncScheduledJob, (ScheduleBuilder) -> Void)], with app: Application) {
+		for (job, buildSchedule) in jobs {
+			buildSchedule(app.queues.schedule(job))
+		}
+		/* We also run the jobs directly on server launch.
+		 * Not sure whether it’s a good idea though. */
+		Task{ [jobs] in
+			for (job, _) in jobs {
+				_ = try? await job.run(context: .init(queueName: .default, configuration: .init(), application: app, logger: app.logger, on: app.eventLoopGroup.next()))
+			}
+		}
 	}
 	
 }

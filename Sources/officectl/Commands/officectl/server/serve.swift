@@ -33,7 +33,11 @@ struct Serve : AsyncParsableCommand {
 		if let port = officectlOptions.conf?.serverConf?.port {
 			serverArgs.append(contentsOf: ["--port", String(port)])
 		}
-		try Server.runVaporCommand(["serve"] + serverArgs, officectlOptions: officectlOptions, appSetup: OfficeServerConfig.setupServer)
+		try Server.runVaporCommand(["serve"] + serverArgs, officectlOptions: officectlOptions, appSetup: { app in
+			try OfficeServerConfig.setupServer(app, scheduledJobs: [
+				(UpdateCAMetricsJob(), { $0.daily().at(4, 30) })
+			])
+		})
 	}
 	
 }

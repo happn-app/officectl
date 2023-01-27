@@ -11,12 +11,14 @@ import Foundation
 
 enum LMK {
 	
-	static let providerID = "provider-id"
-	static let serviceID = "service-id"
+	static let providerID = "provider_id"
+	static let serviceID = "service_id"
 	
-	static let serviceIDs = "service-ids"
+	static let serviceIDs = "service_ids"
 	
-	static let userAndServices = "users-and-services"
+	static let userAndServices = "users_and_services"
+	
+	static let certifCN = "certificate_cn"
 	
 	static let error = "error"
 	

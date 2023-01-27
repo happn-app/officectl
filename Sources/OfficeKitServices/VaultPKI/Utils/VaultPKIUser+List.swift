@@ -22,7 +22,7 @@ extension VaultPKIUser {
 	static func getAll(from issuerName: String, includeRevoked: Bool = false, vaultBaseURL: URL, vaultAuthenticator: VaultPKIAuthenticator) async throws -> [VaultPKIUser] {
 		let requestProcessor = AuthRequestProcessor(vaultAuthenticator)
 		
-		/* Let’s get the CRL */
+		/* Let’s get the CRL. */
 		let opCRL = try URLRequestDataOperation.forData(url: vaultBaseURL.appending("v1", issuerName, "crl"), requestProcessors: [requestProcessor])
 		let revocationByCertificateID = try await VaultCRL(der: opCRL.startAndGetResult().result).revocationByCertificateID
 		
