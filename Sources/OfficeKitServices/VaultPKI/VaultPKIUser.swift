@@ -23,8 +23,8 @@ public struct VaultPKIUser : User {
 	
 	public init(oU_id userID: String) {
 		self.oU_id = userID
-		self.validityStartDate = .now
-		self.expirationDate = .now + Self.defaultCertificateValidityLength
+		self.validityStartDate = Date() /* .now is not available on Linux apparently… but compilation pass when we use it! */
+		self.expirationDate = Date() + Self.defaultCertificateValidityLength
 	}
 	
 	public var oU_id: String
@@ -44,7 +44,7 @@ public struct VaultPKIUser : User {
 	
 	public var certif: X509Certificate?
 	
-	public func isValid(at date: Date = .now) -> Bool {
+	public func isValid(at date: Date = Date()) -> Bool {
 		return (
 			(revocationDate.flatMap{ $0 > date } ?? true) &&
 			expirationDate > date &&

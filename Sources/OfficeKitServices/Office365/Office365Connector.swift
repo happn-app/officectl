@@ -94,8 +94,8 @@ public actor Office365Connector : Connector, Authenticator, HasTaskQueue {
 					iss: .init(value: clientID),
 					sub: .init(value: clientID),
 					jti: UUID(),
-					nbf: .init(value: .now - 9),
-					exp: .init(value: .now + 30)
+					nbf: .init(value: Date() - 9),
+					exp: .init(value: Date() + 30)
 				)
 				tokenRequestGrant = .signedAssertion(
 					/* M$ expects the x5t to be in a “x5t” field in the header instead of a “kid” field,
