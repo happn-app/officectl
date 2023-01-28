@@ -95,6 +95,7 @@ public final class VaultPKIService : UserService {
 		return user
 	}
 	
+#warning("TODO: Filter the list of certificates so only client certificates are kept (and related TODO in UpdateCAMetricsJob).")
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<OfficeKit.UserProperty>?) async throws -> [VaultPKIUser] {
 		return try await ([config.issuerName] + config.additionalActiveIssuers).concurrentFlatMap{ issuerName -> [VaultPKIUser] in
 			return try await VaultPKIUser.getAll(
