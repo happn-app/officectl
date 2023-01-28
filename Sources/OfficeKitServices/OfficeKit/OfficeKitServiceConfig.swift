@@ -18,7 +18,6 @@ public struct OfficeKitServiceConfig : Sendable, Codable {
 	public var upstreamURL: URL
 	public var secret: Data
 	
-	public var supportedProperties: Set<UserProperty>
 	public var supportsUserCreation: Bool
 	public var supportsUserUpdate: Bool
 	public var supportsUserDeletion: Bool
@@ -37,7 +36,6 @@ public struct OfficeKitServiceConfig : Sendable, Codable {
 		case upstreamURL = "upstream_url"
 		case secret = "secret"
 		
-		case supportedProperties = "supported_properties"
 		case supportsUserCreation = "supports_user_creation"
 		case supportsUserUpdate = "supports_user_update"
 		case supportsUserDeletion = "supports_user_deletion"
