@@ -83,8 +83,16 @@ public final class VaultPKIService : UserService {
 	}
 	
 	public func existingUser(fromID uID: String, propertiesToFetch: Set<OfficeKit.UserProperty>?) async throws -> VaultPKIUser? {
-		struct NI : Error {}
-		throw NI()
+		/* AFAIK to retrieve a certificate with a given CN w/ Vault PKI, the only way is to get them all and filter. */
+		let users = try await listAllUsers(includeSuspended: true, propertiesToFetch: nil)
+			.filter{ $0.oU_id == uID }
+		guard let user = users.first else {
+			return nil
+		}
+		guard users.count <= 1 else {
+			throw OfficeKitError.tooManyUsersFromAPI(users: users)
+		}
+		return user
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<OfficeKit.UserProperty>?) async throws -> [VaultPKIUser] {
