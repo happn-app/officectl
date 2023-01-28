@@ -113,15 +113,18 @@ public final class VaultPKIService : UserService {
 		throw NI()
 	}
 	
-	public let supportsUserUpdate = false
+	/* Use update is supported for suspending the user. */
+	public let supportsUserUpdate = true
 	public func updateUser(_ user: VaultPKIUser, propertiesToUpdate: Set<OfficeKit.UserProperty>) async throws -> VaultPKIUser {
-		throw OfficeKitError.unsupportedOperation
-	}
-	
-	public let supportsUserDeletion = true
-	public func deleteUser(_ user: VaultPKIUser) async throws {
 		struct NI : Error {}
 		throw NI()
+	}
+	
+	/* Yes, user deletion is **not** supported.
+	 * Only revoking a certificate (in terms of OfficeKit, suspending it) is supported. */
+	public let supportsUserDeletion = false
+	public func deleteUser(_ user: VaultPKIUser) async throws {
+		throw OfficeKitError.unsupportedOperation
 	}
 	
 	public let supportsPasswordChange = false
