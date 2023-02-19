@@ -154,7 +154,7 @@ public extension MultiServicesUser {
 			for userAndService in usersAndServices {
 				let taggedID = userAndService.taggedID
 				guard linkedUsersByTaggedIDBuilding[taggedID] == nil else {
-					OfficeKitConfig.logger?.warning("UserAndService \(userAndService) found more than once in merge request; keeping only one (randomly)...")
+					OfficeKitConfig.logger?.warning("UserAndService found more than once in merge request; keeping only one (randomly)...", metadata: ["user_and_service": "\(userAndService)"])
 					continue
 				}
 				linkedUsersByTaggedIDBuilding[taggedID] = LinkedUser(userAndService: userAndService)
