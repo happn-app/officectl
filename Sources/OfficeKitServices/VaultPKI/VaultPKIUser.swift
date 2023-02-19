@@ -22,10 +22,10 @@ public struct VaultPKIUser : User {
 	public typealias PersistentUserIDType = String
 	
 	public init(oU_id userID: String) {
-		self.oU_id = userID
-		
 		let now = Date() /* .now is not available on Linux apparently… but compilation pass when we use it! */
 		self.certificateMetadata = .init(
+			cn: userID,
+			certifID: nil,
 			keyUsageHasServerAuth: false,
 			keyUsageHasClientAuth: true,
 			validityStartDate: now,
@@ -33,17 +33,18 @@ public struct VaultPKIUser : User {
 		)
 	}
 	
-	internal init(cn: String, certifID: String, certificateMetadata: CertificateMetadata) {
+	internal init(certificateMetadata: CertificateMetadata) {
 		if !certificateMetadata.keyUsageHasClientAuth {
-			Conf.logger?.error("VaultPKIUser init’d with a certificate whose key usage does not have client auth. This is an internal logic error in the VaultPKIOffice module.", metadata: ["user_id": "\(cn)", "certificate_id": "\(certifID)"])
+			Conf.logger?.error(
+				"VaultPKIUser init’d with a certificate whose key usage does not have client auth. This is an internal logic error in the VaultPKIOffice module.",
+				metadata: ["user_id": "\(certificateMetadata.cn)", "certificate_id": "\(certificateMetadata.certifID ?? "<none>")"]
+			)
 		}
-		self.oU_id = cn
-		self.oU_persistentID = certifID
 		self.certificateMetadata = certificateMetadata
 	}
 	
-	public var oU_id: String
-	public var oU_persistentID: String?
+	public var oU_id: String {certificateMetadata.cn}
+	public var oU_persistentID: String? {certificateMetadata.certifID}
 	
 	public var oU_isSuspended: Bool? {!certificateMetadata.isValid()}
 	

@@ -13,6 +13,10 @@ import Foundation
 
 public struct CertificateMetadata : Sendable {
 	
+	public var cn: String
+	/** `nil` if the certif is not generated yet (description of a future certif). */
+	public var certifID: String?
+	
 	public var keyUsageHasServerAuth: Bool
 	public var keyUsageHasClientAuth: Bool
 	
@@ -33,7 +37,14 @@ public struct CertificateMetadata : Sendable {
 	 We might also remove the property altogether… */
 	var underlyingCertif: X509Certificate?
 	
-	public init(keyUsageHasServerAuth: Bool, keyUsageHasClientAuth: Bool, validityStartDate: Date, expirationDate: Date, revocationDate: Date? = nil, underlyingCertif: X509Certificate? = nil) {
+	public init(
+		cn: String, certifID: String?,
+		keyUsageHasServerAuth: Bool, keyUsageHasClientAuth: Bool,
+		validityStartDate: Date, expirationDate: Date, revocationDate: Date? = nil,
+		underlyingCertif: X509Certificate? = nil
+	) {
+		self.cn = cn
+		self.certifID = certifID
 		self.keyUsageHasServerAuth = keyUsageHasServerAuth
 		self.keyUsageHasClientAuth = keyUsageHasClientAuth
 		self.validityStartDate = validityStartDate
@@ -42,10 +53,18 @@ public struct CertificateMetadata : Sendable {
 		self.underlyingCertif = underlyingCertif
 	}
 	
+	public func isRevoked(at date: Date = Date()) -> Bool {
+		return revocationDate.flatMap{ $0 <= date } ?? false
+	}
+	
+	public func isExpired(at date: Date = Date()) -> Bool {
+		return expirationDate <= date
+	}
+	
 	public func isValid(at date: Date = Date()) -> Bool {
 		return (
-			(revocationDate.flatMap{ $0 > date } ?? true) &&
-			expirationDate > date &&
+			!isRevoked(at: date) &&
+			!isExpired(at: date) &&
 			validityStartDate <= date
 		)
 	}

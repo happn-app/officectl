@@ -18,32 +18,29 @@ import VaultPKIOffice
 struct UpdateCAMetricsJob : AsyncScheduledJob {
 	
 	func run(context: Queues.QueueContext) async throws {
+		let now = Date()
 		let pkiServices = context.application.officeKitServices.userServices.compactMap{ $0 as? VaultPKIService }
 		for pkiService in pkiServices {
 			do {
-				/* TODO: We retrive here the list of the _users_, but we technically need the list of all the certificates (including from passive CAs).
-				 *       For now the PKIUserService does not differentiate server certifs and client ones, so it does not matter.
-				 *       Later we’ll do the distinction in the service and we’ll have to do differently here. */
-				let users = try await pkiService.listAllUsers(includeSuspended: true, propertiesToFetch: nil)
-				for certificate in users {
-					guard let id = certificate.oU_persistentID,
-//							let issuerName = certificate.oU_valueForProperty(UserProperty.vaultPKI_certificateIssuerName),
-							let revoked = certificate.oU_isSuspended, /* TODO: This is not exactly true; isSuspended also checks expiration date. */
-							let expirationDate = certificate.oU_valueForProperty(UserProperty.vaultPKI_certificateExpirationDate) as? Date
-					else {
-						context.logger.warning("Skipping certificate for expiration dates metrics as it is missing some properties.", metadata: [LMK.certifCN: "\(certificate.oU_id)"])
+				let certifs = try await pkiService.listAllCertificateMetadatas(includeRevoked: true)
+				for certificate in certifs {
+					guard let id = certificate.certifID else {
+						context.logger.warning("Skipping certificate for expiration dates metrics as it does not have an ID.", metadata: [LMK.certifCN: "\(certificate.cn)"])
 						continue
 					}
 					let dimensions = [
 						("id", id),
-						("common_name", certificate.oU_id),
+						("common_name", certificate.cn),
 //						("issuer_name", certificate.issuerName),
-						("revoked", revoked ? "true" : "false"),
+						("valid", certificate.isValid(at: now) ? "true" : "false"),
+						("revoked", certificate.isRevoked(at: now) ? "true" : "false"),
+						("key_usage_server_auth", certificate.keyUsageHasServerAuth ? "true" : "false"),
+						("key_usage_client_auth", certificate.keyUsageHasClientAuth ? "true" : "false"),
 //						certificate.certif.issuerDistinguishedName.flatMap{ ("issuer_dn", $0) },
 //						certificate.certif.subjectDistinguishedName.flatMap{ ("subject_dn", $0) }
 					].compactMap{ $0 }
 					let gauge = Gauge(label: "happn_vault_certs_expiration", dimensions: dimensions)
-					gauge.record(expirationDate.timeIntervalSinceNow)
+					gauge.record(certificate.expirationDate.timeIntervalSinceNow)
 				}
 			} catch {
 				context.application.logger.error("Cannot update VaultPKI metrics.", metadata: [LMK.serviceID: "\(pkiService.id)"])

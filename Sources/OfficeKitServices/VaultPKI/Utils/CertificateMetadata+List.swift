@@ -17,9 +17,9 @@ import OfficeKit
 
 
 
-extension VaultPKIUser {
+extension CertificateMetadata {
 	
-	static func getAll(from issuerName: String, includeRevoked: Bool = false, vaultBaseURL: URL, vaultAuthenticator: VaultPKIAuthenticator) async throws -> [VaultPKIUser] {
+	static func getAll(from issuerName: String, includeRevoked: Bool = false, vaultBaseURL: URL, vaultAuthenticator: VaultPKIAuthenticator) async throws -> [CertificateMetadata] {
 		let requestProcessor = AuthRequestProcessor(vaultAuthenticator)
 		
 		/* Let’s get the CRL. */
@@ -57,7 +57,7 @@ extension VaultPKIUser {
 		 */
 		
 		/* Get the list of certificates (which are the users). */
-		return try await certificatesList.keys.concurrentCompactMap{ id -> VaultPKIUser? in
+		return try await certificatesList.keys.concurrentCompactMap{ id -> CertificateMetadata? in
 			let revocationDate = revocationByCertificateID[VaultCRL.normalizeCertificateID(id)]
 			guard includeRevoked || revocationDate == nil else {
 				return nil
@@ -84,14 +84,16 @@ extension VaultPKIUser {
 				throw Err.foundInvalidCertificateWithNoExpirationDate(dn: subjectDN)
 			}
 			
-			return VaultPKIUser(cn: subjectCN, certifID: id, certificateMetadata: .init(
+			return CertificateMetadata(
+				cn: subjectCN,
+				certifID: id,
 				keyUsageHasServerAuth: certificateResponse.data.certificate.extendedKeyUsage.contains("1.3.6.1.5.5.7.3.1"/*serverAuth*/),
 				keyUsageHasClientAuth: certificateResponse.data.certificate.extendedKeyUsage.contains("1.3.6.1.5.5.7.3.2"/*clientAuth*/),
 				validityStartDate: validityStartDate,
 				expirationDate: expirationDate,
 				revocationDate: revocationDate,
 				underlyingCertif: certificateResponse.data.certificate
-			))
+			)
 		}
 	}
 	

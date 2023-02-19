@@ -95,16 +95,22 @@ public final class VaultPKIService : UserService {
 		return user
 	}
 	
-#warning("TODO: Filter the list of certificates so only client certificates are kept (and related TODO in UpdateCAMetricsJob).")
-	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<OfficeKit.UserProperty>?) async throws -> [VaultPKIUser] {
-		return try await ([config.issuerName] + config.additionalActiveIssuers).concurrentFlatMap{ issuerName -> [VaultPKIUser] in
-			return try await VaultPKIUser.getAll(
+	/* Not part of the UserService protocol. */
+	public func listAllCertificateMetadatas(includeRevoked: Bool) async throws -> [CertificateMetadata] {
+		return try await ([config.issuerName] + config.additionalActiveIssuers).concurrentFlatMap{ issuerName -> [CertificateMetadata] in
+			return try await CertificateMetadata.getAll(
 				from: issuerName,
-				includeRevoked: includeSuspended,
+				includeRevoked: includeRevoked,
 				vaultBaseURL: self.config.baseURL,
 				vaultAuthenticator: self.authenticator
 			)
 		}
+	}
+	
+	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<OfficeKit.UserProperty>?) async throws -> [VaultPKIUser] {
+		return try await listAllCertificateMetadatas(includeRevoked: includeSuspended)
+			.filter{ $0.keyUsageHasClientAuth }
+			.map{ VaultPKIUser(certificateMetadata: $0) }
 	}
 	
 	public let supportsUserCreation = true
