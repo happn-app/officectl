@@ -14,7 +14,7 @@ import UnwrapOrThrow
 
 public enum GoogleOfficeConfig : Sendable {
 	
-	static public var logger: Logger?
+	static public var logger: Logger? = Logger(label: "com.happn.officekit-services.google")
 	
 	/* Let’s use the config as a “globals container…” */
 	static let dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = {

@@ -13,7 +13,7 @@ import Logging
 
 public enum GitHubOfficeConfig : Sendable {
 	
-	static public var logger: Logger?
+	static public var logger: Logger? = Logger(label: "com.happn.officekit-services.github")
 	
 }
 
