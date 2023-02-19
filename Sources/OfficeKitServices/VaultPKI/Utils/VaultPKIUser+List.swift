@@ -84,15 +84,14 @@ extension VaultPKIUser {
 				throw Err.foundInvalidCertificateWithNoExpirationDate(dn: subjectDN)
 			}
 			
-			return {
-				var ret = VaultPKIUser(oU_id: subjectCN)
-				ret.oU_persistentID = id
-				ret.certif = certificateResponse.data.certificate
-				ret.validityStartDate = validityStartDate
-				ret.expirationDate = expirationDate
-				ret.revocationDate = revocationDate
-				return ret
-			}()
+			return VaultPKIUser(cn: subjectCN, certifID: id, certificateMetadata: .init(
+				keyUsageHasServerAuth: certificateResponse.data.certificate.extendedKeyUsage.contains("1.3.6.1.5.5.7.3.1"/*serverAuth*/),
+				keyUsageHasClientAuth: certificateResponse.data.certificate.extendedKeyUsage.contains("1.3.6.1.5.5.7.3.2"/*clientAuth*/),
+				validityStartDate: validityStartDate,
+				expirationDate: expirationDate,
+				revocationDate: revocationDate,
+				underlyingCertif: certificateResponse.data.certificate
+			))
 		}
 	}
 	

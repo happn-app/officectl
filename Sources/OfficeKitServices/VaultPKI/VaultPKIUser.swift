@@ -7,7 +7,7 @@
 
 import Foundation
 
-@preconcurrency import ASN1Decoder
+import ASN1Decoder
 import Email
 
 import OfficeKit
@@ -23,14 +23,29 @@ public struct VaultPKIUser : User {
 	
 	public init(oU_id userID: String) {
 		self.oU_id = userID
-		self.validityStartDate = Date() /* .now is not available on Linux apparently… but compilation pass when we use it! */
-		self.expirationDate = Date() + Self.defaultCertificateValidityLength
+		
+		let now = Date() /* .now is not available on Linux apparently… but compilation pass when we use it! */
+		self.certificateMetadata = .init(
+			keyUsageHasServerAuth: false,
+			keyUsageHasClientAuth: true,
+			validityStartDate: now,
+			expirationDate: now + Self.defaultCertificateValidityLength
+		)
+	}
+	
+	internal init(cn: String, certifID: String, certificateMetadata: CertificateMetadata) {
+		if !certificateMetadata.keyUsageHasClientAuth {
+			Conf.logger?.error("VaultPKIUser init’d with a certificate whose key usage does not have client auth. This is an internal logic error in the VaultPKIOffice module.", metadata: ["user_id": "\(cn)", "certificate_id": "\(certifID)"])
+		}
+		self.oU_id = cn
+		self.oU_persistentID = certifID
+		self.certificateMetadata = certificateMetadata
 	}
 	
 	public var oU_id: String
 	public var oU_persistentID: String?
 	
-	public var oU_isSuspended: Bool? {!isValid()}
+	public var oU_isSuspended: Bool? {!certificateMetadata.isValid()}
 	
 	public var oU_firstName: String? {nil}
 	public var oU_lastName: String? {nil}
@@ -38,19 +53,7 @@ public struct VaultPKIUser : User {
 	
 	public var oU_emails: [Email]? {nil}
 	
-	public var validityStartDate: Date
-	public var expirationDate: Date
-	public var revocationDate: Date?
-	
-	public var certif: X509Certificate?
-	
-	public func isValid(at date: Date = Date()) -> Bool {
-		return (
-			(revocationDate.flatMap{ $0 > date } ?? true) &&
-			expirationDate > date &&
-			validityStartDate <= date
-		)
-	}
+	public internal(set) var certificateMetadata: CertificateMetadata
 	
 	public var oU_nonStandardProperties: Set<String> {
 		return [
@@ -62,9 +65,9 @@ public struct VaultPKIUser : User {
 	
 	public func oU_valueForNonStandardProperty(_ property: String) -> Sendable? {
 		switch property {
-			case UserProperty.vaultPKI_certificateValidityStartDate.rawValue: return validityStartDate
-			case UserProperty.vaultPKI_certificateExpirationDate.rawValue:    return expirationDate
-			case UserProperty.vaultPKI_certificateRevocationDate.rawValue:    return revocationDate
+			case UserProperty.vaultPKI_certificateValidityStartDate.rawValue: return certificateMetadata.validityStartDate
+			case UserProperty.vaultPKI_certificateExpirationDate.rawValue:    return certificateMetadata.expirationDate
+			case UserProperty.vaultPKI_certificateRevocationDate.rawValue:    return certificateMetadata.revocationDate
 			default:
 				return nil
 		}
