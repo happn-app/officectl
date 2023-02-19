@@ -111,6 +111,7 @@ public final class VaultPKIService : UserService {
 		return try await listAllCertificateMetadatas(includeRevoked: includeSuspended)
 			.filter{ $0.keyUsageHasClientAuth }
 			.map{ VaultPKIUser(certificateMetadata: $0) }
+#warning("TODO: Filter duplicate CN (only keep oldest expiration date of valid certifs, or oldest expiration date if all certifs are invalid)")
 	}
 	
 	public let supportsUserCreation = true
