@@ -108,10 +108,32 @@ public final class VaultPKIService : UserService {
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<OfficeKit.UserProperty>?) async throws -> [VaultPKIUser] {
-		return try await listAllCertificateMetadatas(includeRevoked: includeSuspended)
+		let now = Date()
+		return try await Array(listAllCertificateMetadatas(includeRevoked: includeSuspended)
 			.filter{ $0.keyUsageHasClientAuth }
 			.map{ VaultPKIUser(certificateMetadata: $0) }
-#warning("TODO: Filter duplicate CN (only keep oldest expiration date of valid certifs, or oldest expiration date if all certifs are invalid)")
+			.reduce(into: [String: VaultPKIUser](), { dic, newUser in
+				let id = newUser.oU_id
+				if let currentUser = dic[id] {
+					let     newIsValid =     newUser.certificateMetadata.isValid(at: now)
+					let currentIsValid = currentUser.certificateMetadata.isValid(at: now)
+					if newIsValid == currentIsValid {
+						/* Both certifs have the same validity. We keep the one who expires the latest. */
+						if newUser.certificateMetadata.expirationDate > currentUser.certificateMetadata.expirationDate {
+							dic[id] = newUser
+						}
+					} else {
+						if newIsValid {
+							/* That means the current is invalid. We keep the valid one. */
+							dic[id] = newUser
+						}
+					}
+				} else {
+					dic[id] = newUser
+				}
+			})
+			.values
+		)
 	}
 	
 	public let supportsUserCreation = true
