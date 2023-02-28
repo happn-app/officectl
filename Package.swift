@@ -154,6 +154,9 @@ let package = Package(
 #endif
 		ret.append(contentsOf: targetsForService(named: "VaultPKIOffice",      folderName: "VaultPKI",  additionalDependencies: networkDependencies + [.product(name: "ASN1Decoder", package: "ASN1Decoder")]))
 		
+		/* ************************
+		   MARK: OfficeServer (lib)
+		   ************************ */
 		ret.append(.target(
 			name: "OfficeServer",
 			dependencies: {
@@ -173,6 +176,9 @@ let package = Package(
 			swiftSettings: commonSwiftSettings
 		))
 		
+		/* **************************
+		   MARK: officectl Executable
+		   ************************** */
 		ret.append(.executableTarget(
 			name: "officectl",
 			dependencies: {
@@ -210,6 +216,9 @@ let package = Package(
 			swiftSettings: commonSwiftSettings,
 			linkerSettings: [.linkedLibrary("ncurses", .when(platforms: [.macOS]))]
 		))
+		/* **********************************
+		   MARK: officectl-odproxy Executable
+		   ********************************** */
 #if canImport(OpenDirectory)
 		ret.append(.executableTarget(name: "officectl-odproxy", dependencies: [
 			.product(name: "CLTLogger",     package: "clt-logger"),
@@ -227,6 +236,9 @@ let package = Package(
 		]))
 #endif
 		
+		/* ********************
+		   MARK: Some C Bridges
+		   ******************** */
 #if !canImport(Darwin)
 		ret.append(.systemLibrary(name: "CNCurses", pkgConfig: "ncurses", providers: [.apt(["libncurses-dev"]), .brew(["ncurses"])]))
 #endif
@@ -240,6 +252,9 @@ let package = Package(
 )
 
 
+/* *******
+   MARK: -
+   ******* */
 func targetsForService(named name: String, folderName: String, additionalDependencies: [Target.Dependency] = [], additionalSwiftSettings: [SwiftSetting] = []) -> [Target] {
 	let commonServiceDependencies: [Target.Dependency] = [
 		.product(name: "APIConnectionProtocols", package: "APIConnectionProtocols"),
