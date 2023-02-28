@@ -118,7 +118,7 @@ public final class VaultPKIService : UserService {
 					let     newIsValid =     newUser.certificateMetadata.isValid(at: now)
 					let currentIsValid = currentUser.certificateMetadata.isValid(at: now)
 					if newIsValid == currentIsValid {
-						/* Both certifs have the same validity. We keep the one who expires the latest. */
+						/* Both certifs have the same validity. We keep the one who expires last. */
 						if newUser.certificateMetadata.expirationDate > currentUser.certificateMetadata.expirationDate {
 							dic[id] = newUser
 						}
