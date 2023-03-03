@@ -11,6 +11,8 @@ import Foundation
 
 public enum Office365OfficeError : Error, Sendable {
 	
+	case invalidEmail(String)
+	
 	case unsupportedOperation
 	case unsupportedTokenType(String)
 	

@@ -23,8 +23,8 @@ final class Office365OfficeTests : XCTestCase {
 	struct TestConf : Decodable {
 		var fetchedUser: FetchedUser
 		struct FetchedUser : Decodable {
-			var id: UUID
-			var login: String
+			var id: String
+			var userPrincipalName: Email
 		}
 	}
 	
@@ -32,7 +32,7 @@ final class Office365OfficeTests : XCTestCase {
 	static var confs: Result<(Office365ServiceConfig, TestConf), Error>!
 	
 	/* A new instance of the service is created for each test. */
-//	var service: Office365Service!
+	var service: Office365Service!
 	var serviceConf: Office365ServiceConfig!
 	var testConf: TestConf!
 	
@@ -45,18 +45,18 @@ final class Office365OfficeTests : XCTestCase {
 	
 	override func setUp() async throws {
 		try await super.setUp()
-
+		
 		let (serviceConf, testConf) = try Self.confs.get()
-
+		
 		self.testConf = testConf
 		self.serviceConf = serviceConf
-//		self.service = try Office365Service(id: "test-o365", name: "Tested Office 365 Service", office365ServiceConfig: serviceConf, workdir: nil)
+		self.service = try Office365Service(id: "test-o365", name: "Tested Office 365 Service", office365ServiceConfig: serviceConf, workdir: nil)
 	}
 	
 	override func tearDown() async throws {
 		try await super.tearDown()
 		
-//		service = nil
+		service = nil
 	}
 	
 	func testConnection() async throws {
@@ -68,6 +68,12 @@ final class Office365OfficeTests : XCTestCase {
 		try await connector.connect(["https://graph.microsoft.com/.default"])
 		let connected = await connector.isConnected
 		XCTAssertTrue(connected)
+	}
+	
+	func testGetUser() async throws {
+		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.userPrincipalName, propertiesToFetch: nil)
+		let user = try XCTUnwrap(optionalUser)
+		XCTAssertEqual(user.oU_persistentID, testConf.fetchedUser.id)
 	}
 	
 }

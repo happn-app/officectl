@@ -81,7 +81,7 @@ final class GoogleOfficeTests : XCTestCase {
 		XCTAssertEqual(user.primaryEmail, Email(rawValue: initialEmailStr))
 		XCTAssertEqual(user.oU_firstName, "Officectl")
 		XCTAssertEqual(user.oU_lastName, "Test")
-
+		
 		XCTAssertFalse(user.oU_setValue(modifiedEmailStr, forProperty: .emails, convertMismatchingTypes: false).propertyWasModified)
 		XCTAssertTrue( user.oU_setValue(modifiedEmailStr, forProperty: .emails, convertMismatchingTypes: true ).propertyWasModified)
 		

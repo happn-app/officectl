@@ -51,7 +51,7 @@ extension GoogleUser : User {
 	
 	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult {
 		let passwordProperty = UserProperty(rawValue: GoogleService.providerID + "/password")
-		let primaryEmailProperty = UserProperty("primaryEmail")
+		let primaryEmailProperty = UserProperty(GoogleService.providerID + "/primaryEmail")
 		switch property {
 			case .id, primaryEmailProperty:
 				return Self.setProperty(&primaryEmail, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToEmail)
