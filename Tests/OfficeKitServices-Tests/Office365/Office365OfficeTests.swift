@@ -70,6 +70,11 @@ final class Office365OfficeTests : XCTestCase {
 		XCTAssertTrue(connected)
 	}
 	
+	func testFetchUserAll() async throws {
+		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil)
+		XCTAssertGreaterThan(users.count, 0)
+	}
+	
 	func testGetUser() async throws {
 		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.userPrincipalName, propertiesToFetch: nil)
 		let user = try XCTUnwrap(optionalUser)

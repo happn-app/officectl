@@ -28,4 +28,12 @@ public struct Office365User : Sendable, Hashable, Codable {
 	public var mobilePhone: String?
 	public var businessPhones: [String] = []
 	
+	public enum CodingKeys : String, CodingKey {
+		case id
+		case givenName, surname
+		case userPrincipalName, mail
+		case displayName
+		case mobilePhone, businessPhones
+	}
+	
 }
