@@ -98,7 +98,7 @@ public final class Office365Service : UserService {
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [Office365User] {
-#warning("TODO: Proper scope")
+		/* For a client credential flow, only “/.default” scopes are allowed. */
 		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
 #warning("TODO: Properties to fetch")
 		return try await Office365User.getAll(includeSuspended: includeSuspended, propertiesToFetch: nil, connector: connector)
