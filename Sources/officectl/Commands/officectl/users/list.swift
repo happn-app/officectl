@@ -26,15 +26,16 @@ struct List : AsyncParsableCommand {
 	var officectlOptions: Officectl.Options
 	@OptionGroup()
 	var usersOptions: Users.Options
-	@OptionGroup()
-	var userPropertiesOptions: Users.UserPropertiesOptions
+	
+	@Flag(help: "For the directory services that supports it, do we filter out the suspended users?")
+	var includeSuspendedUsers = false
 	
 	
 	func run() async throws {
 		try officectlOptions.bootstrap()
 		let officeKitServices = officectlOptions.officeKitServices
 		
-		let multiUsersResult = try await MultiServicesUser.fetchAll(in: officeKitServices.hashableUserServices(matching: usersOptions.serviceIDs))
+		let multiUsersResult = try await MultiServicesUser.fetchAll(in: officeKitServices.hashableUserServices(matching: usersOptions.serviceIDs), includeSuspended: includeSuspendedUsers)
 #if !canImport(TabularData)
 		multiUsersResult.users.forEach{ multiUser in
 			print("---")
