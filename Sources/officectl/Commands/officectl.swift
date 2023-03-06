@@ -25,6 +25,7 @@ import GitHubOffice
 import GoogleOffice
 import HappnOffice
 import LDAPOffice
+import Office365Office
 import OfficeKitOffice
 #if canImport(OpenDirectoryOffice)
 import OpenDirectoryOffice
@@ -157,6 +158,7 @@ extension Officectl.Options {
 		OfficeKitServices.providers[       GoogleService.providerID] =        GoogleService.self
 		OfficeKitServices.providers[        HappnService.providerID] =         HappnService.self
 		OfficeKitServices.providers[         LDAPService.providerID] =          LDAPService.self
+		OfficeKitServices.providers[    Office365Service.providerID] =     Office365Service.self
 		OfficeKitServices.providers[    OfficeKitService.providerID] =     OfficeKitService.self
 #if canImport(OpenDirectoryOffice)
 		OfficeKitServices.providers[OpenDirectoryService.providerID] = OpenDirectoryService.self
