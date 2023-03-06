@@ -40,10 +40,10 @@ public actor Office365Connector : Connector, Authenticator, HasTaskQueue {
 	public var accessToken:  String?      {tokenInfo?.token}
 	public var currentScope: Set<String>? {tokenInfo?.scope}
 	
-	public init(tenantID: String, clientID: String, grant: Office365ServiceConfig.ConnectorSettings.Grant) throws {
+	public init(tenantID: String, clientID: String, grant: Office365ServiceConfig.ConnectorSettings.Grant, workdir: URL? = nil) throws {
 		switch grant {
 			case let .clientSecret(secret):                       self.init(tenantID: tenantID, clientID: clientID, clientSecret: secret)
-			case let .clientCertificate(x5t, privateKeyPath): try self.init(tenantID: tenantID, clientID: clientID, clientCertificateX5t: x5t, clientCertificateKeyURL: URL(fileURLWithPath: privateKeyPath))
+			case let .clientCertificate(x5t, privateKeyPath): try self.init(tenantID: tenantID, clientID: clientID, clientCertificateX5t: x5t, clientCertificateKeyURL: URL(fileURLWithPath: privateKeyPath, isDirectory: false, relativeTo: workdir))
 		}
 	}
 	

@@ -43,7 +43,8 @@ public final class Office365Service : UserService {
 		self.connector = try Office365Connector(
 			tenantID: config.connectorSettings.tenantID,
 			clientID: config.connectorSettings.clientID,
-			grant: config.connectorSettings.grant
+			grant: config.connectorSettings.grant,
+			workdir: workdir
 		)
 	}
 	
