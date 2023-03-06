@@ -90,4 +90,33 @@ extension Office365User : User {
 		}
 	}
 	
+	/* ***************
+	   MARK: - Private
+	   *************** */
+	
+	internal static var propertyToKeys: [UserProperty: [Office365User.CodingKeys]] {
+		[
+			/* Standard. */
+			.id: [.userPrincipalName],
+			.persistentID: [.id],
+			.isSuspended: [.accountEnabled],
+			.emails: [.userPrincipalName, .mail],
+			.firstName: [.givenName],
+			.lastName: [.surname],
+			.nickname: [.displayName]
+		]
+	}
+	
+	internal static func keysFromProperties(_ properties: Set<UserProperty>?) -> Set<Office365User.CodingKeys> {
+		let properties = (properties ?? Set(UserProperty.standardProperties)).union([.id])
+		let keys = properties
+			.compactMap{ propertyToKeys[$0] }
+			.flatMap{ $0 }
+		return Set(keys)
+	}
+	
+	internal static func validFieldsParameter(from keys: Set<CodingKeys>) -> String {
+		return (keys + [.userPrincipalName, .id]).map{ $0.stringValue }.joined(separator: ",")
+	}
+	
 }

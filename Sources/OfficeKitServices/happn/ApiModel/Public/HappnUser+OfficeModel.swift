@@ -67,7 +67,7 @@ extension HappnUser : User {
 				return .failure(.unsupportedProperty)
 		}
 	}
-
+	
 	/* ***************
 	   MARK: - Private
 	   *************** */

@@ -14,6 +14,7 @@ import Email
 public struct Office365User : Sendable, Hashable, Codable {
 	
 	public var id: String?
+	public var accountEnabled: Bool?
 	
 	/** First name */
 	public var givenName: String?
@@ -25,15 +26,16 @@ public struct Office365User : Sendable, Hashable, Codable {
 	
 	public var displayName: String?
 	
-	public var mobilePhone: String?
-	public var businessPhones: [String] = []
+	/* These exist but we do not support them as we do not have created the custom properties to fetch them. */
+//	public var mobilePhone: String?
+//	public var businessPhones: [String]?
 	
 	public enum CodingKeys : String, CodingKey {
-		case id
+		case id, accountEnabled
 		case givenName, surname
 		case userPrincipalName, mail
 		case displayName
-		case mobilePhone, businessPhones
+//		case mobilePhone, businessPhones
 	}
 	
 }
