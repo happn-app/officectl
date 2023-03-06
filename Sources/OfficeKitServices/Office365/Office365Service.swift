@@ -90,10 +90,14 @@ public final class Office365Service : UserService {
 	}
 	
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?) async throws -> Office365User? {
+		/* For a client credential flow, only “/.default” scopes are allowed. */
+		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
 		throw Err.__notImplemented
 	}
 	
 	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>?) async throws -> Office365User? {
+		/* For a client credential flow, only “/.default” scopes are allowed. */
+		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
 		throw Err.__notImplemented
 	}
 	
@@ -105,21 +109,29 @@ public final class Office365Service : UserService {
 	
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: Office365User) async throws -> Office365User {
+		/* For a client credential flow, only “/.default” scopes are allowed. */
+		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
 		throw Err.__notImplemented
 	}
 	
 	public let supportsUserUpdate: Bool = true
 	public func updateUser(_ user: Office365User, propertiesToUpdate: Set<UserProperty>) async throws -> Office365User {
+		/* For a client credential flow, only “/.default” scopes are allowed. */
+		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
 		throw Err.__notImplemented
 	}
 	
 	public let supportsUserDeletion: Bool = true
 	public func deleteUser(_ user: Office365User) async throws {
+		/* For a client credential flow, only “/.default” scopes are allowed. */
+		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
 		throw Err.__notImplemented
 	}
 	
 	public let supportsPasswordChange: Bool = true
 	public func changePassword(of user: Office365User, to newPassword: String) async throws {
+		/* For a client credential flow, only “/.default” scopes are allowed. */
+		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
 		throw Err.__notImplemented
 	}
 	
