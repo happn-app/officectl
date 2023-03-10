@@ -61,8 +61,17 @@ public final class OfficeKitService : UserService {
 	}
 	
 	public func alternateIDs(fromUserID userID: TaggedID) -> (regular: TaggedID, other: Set<TaggedID>) {
-#warning("TODO: Use config.alternateUserIDsBuilders")
-		return (userID, [])
+		guard let alternateUserIDsBuilders = config.alternateUserIDsBuilders else {
+			return (userID, [])
+		}
+		let ids = alternateUserIDsBuilders.lazy
+			.compactMap{ $0.inferID(fromUser: nil, additionalVariables: ["id": userID]) }
+			.compactMap(TaggedID.init(_:))
+		guard let regular = ids.first else {
+			Conf.logger?.error("Alternate user IDs builders did not build any ID.", metadata: ["source-id": "\(userID)"])
+			return (userID, [])
+		}
+		return (regular, Set(ids.dropFirst()))
 	}
 	
 	public func logicalUserID<OtherUserType : User>(fromUser user: OtherUserType) throws -> TaggedID {

@@ -21,11 +21,11 @@ public struct UserIDBuilder : Sendable, Codable {
 		self.format = format
 	}
 	
-	public func inferID(fromUser user: any User, additionalVariables: [String: Any] = [:]) -> String? {
+	public func inferID(fromUser user: (any User)?, additionalVariables: [String: Any] = [:]) -> String? {
 		var gotError = false
 		let resolvingInfo = Str2StrXibLocInfo()
 			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "|"), replacement: { variable in
-				guard let v = Converters.convertObjectToString(user.oU_valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) else {
+				guard let v = Converters.convertObjectToString(user?.oU_valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) else {
 					gotError = true
 					return "MISSING_VALUE"
 				}
@@ -39,7 +39,7 @@ public struct UserIDBuilder : Sendable, Codable {
 				return transformed.replacingOccurrences(of: " ", with: "-")
 			})!
 			.addingSimpleReturnTypeReplacement(tokens: OneWordTokens(token: "#"), replacement: { variable in
-				let propValEmail = (user.oU_valueForProperty(.init(stringLiteral: variable)) as? MightHaveEmail)?.email
+				let propValEmail = (user?.oU_valueForProperty(.init(stringLiteral: variable)) as? MightHaveEmail)?.email
 				let additionalVarEmail = (additionalVariables[variable] as? MightHaveEmail)?.email
 				guard let email = propValEmail ?? additionalVarEmail else {
 					gotError = true
@@ -55,7 +55,7 @@ public struct UserIDBuilder : Sendable, Codable {
 				}
 				
 				let variable = String(parts[0])
-				guard let dn = (user.oU_valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? DistinguishedName else {
+				guard let dn = (user?.oU_valueForProperty(.init(stringLiteral: variable)) ?? additionalVariables[variable]) as? DistinguishedName else {
 					gotError = true
 					return "MISSING_VALUE_OR_INVALID_DISTINGUISHED_NAME"
 				}

@@ -24,6 +24,10 @@ public struct OfficeKitServiceConfig : Sendable, Codable {
 	public var supportsPasswordChange: Bool
 	
 	public var userIDBuilders: [UserIDBuilder]?
+	/**
+	 If set, must return the full list of IDs supported by the service, starting with the regular one.
+	 
+	 The builders will be called with just one variable “id” whose value will be a TaggedID. */
 	public var alternateUserIDsBuilders: [UserIDBuilder]?
 	
 	public init(json: JSON) throws {
