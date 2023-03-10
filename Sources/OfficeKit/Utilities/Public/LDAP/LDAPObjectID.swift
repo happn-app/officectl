@@ -97,8 +97,8 @@ extension LDAPObjectID.Numericoid : RawRepresentable {
 		
 		self.values = [UInt]()
 		for stringNumber in stringNumbers {
-			guard !stringNumber.isEmpty else {
-				/* A valid number cannot be empty. */
+			guard !stringNumber.isEmpty, (stringNumber == "0" || !stringNumber.starts(with: "0")) else {
+				/* A valid number cannot be empty, nor start with a 0 if it is not 0. */
 				return nil
 			}
 			/* This is all the validation we need to do for the number!
