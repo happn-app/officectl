@@ -15,11 +15,12 @@ import OfficeKit
 
 extension CollectionResponse {
 	
-	static func getAll(sourceRequest: URLRequest, requestProcessors: [RequestProcessor] = []) async throws -> [Element] {
+	static func getAll(sourceRequest: URLRequest, requestProcessors: [RequestProcessor] = [], retryProviders: [RetryProvider] = []) async throws -> [Element] {
 		let decoder = SendableJSONDecoder{ _ in }
 		let op = URLRequestDataOperation<CollectionResponse<Element>>.forAPIRequest(
 			urlRequest: sourceRequest,
-			decoders: [decoder], requestProcessors: requestProcessors, retryProviders: []
+			decoders: [decoder],
+			requestProcessors: requestProcessors, retryProviders: retryProviders
 		)
 		let collection = try await op.startAndGetResult().result
 		if let nextURL = collection.nextLink {

@@ -25,7 +25,7 @@ extension Office365User {
 		if let keys {urlParameters["$select"] = keys.union(mandatoryKeys).map{ $0.rawValue }.joined(separator: ",")}
 		
 		let request = try URLRequest(url: baseURL.appending("users").appendingQueryParameters(from: urlParameters))
-		return try await CollectionResponse<Office365User>.getAll(sourceRequest: request, requestProcessors: [AuthRequestProcessor(connector)])
+		return try await CollectionResponse<Office365User>.getAll(sourceRequest: request, requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)])
 	}
 	
 }
