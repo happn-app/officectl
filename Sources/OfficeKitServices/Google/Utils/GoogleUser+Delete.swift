@@ -35,7 +35,7 @@ internal extension GoogleUser {
 				ret.httpMethod = "DELETE"
 				return ret
 			}(),
-			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		)
 		_ = try await op.startAndGetResult().result
 	}

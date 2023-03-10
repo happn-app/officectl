@@ -34,7 +34,7 @@ internal extension GoogleUser {
 		let op = try URLRequestDataOperation<GoogleUser>.forAPIRequest(
 			url: baseURL.appending("users", userID), method: "PUT",
 			httpBody: self.forPatching(properties: properties),
-			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		)
 		return try await op.startAndGetResult().result
 	}

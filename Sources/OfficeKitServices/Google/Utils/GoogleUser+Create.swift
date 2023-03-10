@@ -26,7 +26,7 @@ internal extension GoogleUser {
 		}
 		let createUserOperation = try URLRequestDataOperation<GoogleUser>.forAPIRequest(
 			url: baseURL.appending("users"), httpBody: self,
-			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		)
 		return try await createUserOperation.startAndGetResult().result
 	}

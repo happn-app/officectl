@@ -31,7 +31,7 @@ internal extension GoogleUser {
 		}
 		let op = try URLRequestDataOperation<GoogleUser>.forAPIRequest(
 			url: try baseURL.appending("users", id), urlParameters: urlParameters,
-			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		)
 		return try await op.startAndGetResult().result
 	}

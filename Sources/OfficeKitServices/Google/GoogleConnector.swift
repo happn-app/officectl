@@ -17,9 +17,11 @@ import OperationAwaiting
 import TaskQueue
 import URLRequestOperation
 
+import OfficeKit
 
 
-public actor GoogleConnector : Connector, Authenticator, HasTaskQueue {
+
+public actor GoogleConnector : Connector, Authenticator, HTTPAuthConnector, HasTaskQueue {
 	
 	public typealias Request = URLRequest
 	public typealias Authentication = Set<String>
@@ -111,9 +113,16 @@ public actor GoogleConnector : Connector, Authenticator, HasTaskQueue {
 	public func unqueuedAuthenticate(request: URLRequest) async throws -> URLRequest {
 		if let tokenInfo, tokenInfo.expirationDate < Date() + TimeInterval(30) {
 			/* If the token expires soon, we reauth it.
-			 * Clients should retry requests failing for expired token reasons, but let’s be proactive and allow a useless call. */
-#warning("TODO: Mechanism to avoid double-token refresh when it’s not needed (a request waiting for a response, another one is launched in parallel, both get a token expired, both will refresh, but second refresh is useless).")
-			try await unqueuedConnect(tokenInfo.scope)
+			 * Clients should retry requests failing for expired token reasons, but let’s be proactive and allow a useless call.
+			 * We do not fail if the token refresh fails; our current token might still be valid.
+			 *
+			 * If the access token has _already_ expired, we do have to wait for the end of the refresh token step.
+			 * If it has not, we could spawn the refresh in the background and continue on our merry way.
+			 * We do not do this currently (TODO?): we wait whether the refresh was required or not.
+			 *
+			 * “-TimeInterval(45)”: "Rate-limiting" of the refresh of the token from request authentication to 1 per 45 seconds.
+			 * This avoids refreshing the token for each requests if the access token expires less than 45s after it is created. */
+			_ = try? await unqueuedRefreshToken(requestAuthDate: Date() - TimeInterval(45))
 		}
 		
 		/* Make sure we're connected (_after_ potentially modifying the tokenInfo). */
@@ -127,6 +136,25 @@ public actor GoogleConnector : Connector, Authenticator, HasTaskQueue {
 		return request
 	}
 	
+	/* ****************************************
+	   MARK: - HTTP Auth Connector (Retry Auth)
+	   **************************************** */
+	
+	public func refreshToken(requestAuthDate: Date?) async throws {
+		try await executeOnTaskQueue{ try await self.unqueuedRefreshToken(requestAuthDate: requestAuthDate) }
+	}
+	
+	private func unqueuedRefreshToken(requestAuthDate: Date?) async throws {
+		guard let scope = tokenInfo?.scope else {
+			throw Err.notConnected
+		}
+		guard (requestAuthDate ?? .distantFuture) > authInfoChangeDate else {
+			/* The access auth has been changed _after_ the request was authenticated; we do not refresh the token (would probably be a double-refresh). */
+			return
+		}
+		try await unqueuedConnect(scope)
+	}
+	
 	/* ***************
 	   MARK: - Private
 	   *************** */
@@ -134,7 +162,11 @@ public actor GoogleConnector : Connector, Authenticator, HasTaskQueue {
 	/** Technically public because it fulfill the HasTaskQueue requirement, but should not be used directly. */
 	public var _taskQueue = TaskQueue()
 	
-	private var tokenInfo: TokenInfo?
+	/* We only use this variable to avoid a double-refresh of the access token. */
+	private var authInfoChangeDate = Date.distantPast
+	private var tokenInfo: TokenInfo? {
+		didSet {authInfoChangeDate = Date()}
+	}
 	
 	private struct TokenInfo : Sendable, Codable {
 		
