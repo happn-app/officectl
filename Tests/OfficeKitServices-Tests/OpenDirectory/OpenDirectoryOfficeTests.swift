@@ -61,7 +61,6 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 	
 	func testListAllUser() async throws {
 		let allUsers = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil)
-		print(allUsers)
 		XCTAssertGreaterThan(allUsers.count, 0)
 	}
 	
@@ -132,7 +131,7 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 	
 	func testCreateUpdateIDDeleteUser() async throws {
 		let initialID = "officectl.test.\((0..<42).randomElement()!)"
-		let modifiedID = "officectl.test-modified.23"
+		let modifiedID = "officectl.test-\((0..<42).randomElement()!)"
 		
 		var user = OpenDirectoryUser(oU_id: initialID)
 		XCTAssertEqual(user.id, initialID)
