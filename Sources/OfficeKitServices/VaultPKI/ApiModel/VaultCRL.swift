@@ -74,7 +74,6 @@ struct VaultCRL {
 		var revocationByCertificateID = [String: Date]()
 		/* The revoked certificates list is optional. */
 		if let revokedCertificates = tbsCertList.sub(5 - delta), revokedCertificates.identifier?.tagNumber() == .sequence {
-			let now = Date()
 			for i in 0..<revokedCertificates.subCount() {
 				guard let revokedCertificate = revokedCertificates.sub(i) else {
 					throw Err.invalidCRL(message: "Cannot get certificate at index \(i) inside the revoked certificates sequence. CRL is \(crlASN1).")
