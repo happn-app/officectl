@@ -121,15 +121,10 @@ public actor Office365Connector : Connector, Authenticator, HasTaskQueue {
 	}
 	
 	public func unqueuedDisconnect() async throws {
-		guard let tokenInfo else {return}
-		
-//		let op = try URLRequestDataOperation<TokenRevokeResponseBody>.forAPIRequest(url: URL(string: "https://accounts.google.com/o/oauth2/revoke")!, urlParameters: TokenRevokeRequestQuery(token: tokenInfo.token), retryProviders: [])
-//		do {
-//			_ = try await op.startAndGetResult()
-//			self.tokenInfo = nil
-//		} catch where (error as? URLRequestOperationError)?.unexpectedStatusCodeError?.actual == 400 {
-//			/* We consider the 400 status code to be normal (usually it will be an invalid token, which we don’t care about as we’re disconnecting). */
-//		}
+		/* So AFAICT there are no endpoints to revoke an access token for the M$ graph API.
+		 * Makes sense, it’s a JWT token.
+		 * Still a bold move though… */
+		tokenInfo = nil
 	}
 	
 	/* ************************************
