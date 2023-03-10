@@ -33,7 +33,7 @@ internal extension HappnUser {
 			url: connector.baseURL.appending("api", "users", userID), method: "PUT"/* Partial apply should be PATCH in theory… */,
 			urlParameters: ["fields": Self.validFieldsParameter(from: properties)],
 			httpBody: self.forPatching(properties: properties),
-			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		)
 		let result = try await op.startAndGetResult().result
 		guard result.success, let updatedUser = result.data else {

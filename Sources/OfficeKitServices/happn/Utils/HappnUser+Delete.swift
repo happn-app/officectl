@@ -28,7 +28,7 @@ internal extension HappnUser {
 		 * We chose Int8, but could have taken anything that’s decodable: the API returns null all the time… */
 		let revokeOp = try URLRequestDataOperation<ApiResult<Int8>>.forAPIRequest(
 			url: connector.baseURL.appending("api", "administrators"), httpBody: AdminActionRequestBody(action: "revoke", userID: userID, adminPassword: connector.password),
-			bodyEncoder: FormURLEncodedEncoder(), requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			bodyEncoder: FormURLEncodedEncoder(), requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		)
 		_ = try await revokeOp.startAndGetResult()
 		
@@ -36,7 +36,7 @@ internal extension HappnUser {
 		
 		let deleteOp = try URLRequestDataOperation<ApiResult<Int8>>.forAPIRequest(
 			url: connector.baseURL.appending("api", "users", userID), method: "DELETE", urlParameters: DeleteUserRequestQuery(),
-			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		)
 		await deleteOp.startAndWait() /* We don’t care about the error if any. */
 	}

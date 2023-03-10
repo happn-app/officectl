@@ -61,7 +61,7 @@ internal extension HappnUser {
 			url: connector.baseURL.appending("api", "v1", "users-search"),
 			urlParameters: ["fields": Self.validFieldsParameter(from: fields)],
 			httpBody: request,
-			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		).startAndGetResult().result
 		guard res.success, let users = res.data else {
 			throw Err.apiError(code: res.errorCode, message: res.error ?? "Unknown API error fetching the users.")

@@ -23,7 +23,7 @@ internal extension HappnUser {
 	static func get(id: String, propertiesToFetch keys: Set<HappnUser.CodingKeys>, connector: HappnConnector) async throws -> HappnUser? {
 		let op = try URLRequestDataOperation<ApiResult<HappnUser>>.forAPIRequest(
 			url: connector.baseURL.appending("api", "users", id), urlParameters: ["fields": Self.validFieldsParameter(from: keys)],
-			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		)
 		let res = try await op.startAndGetResult().result
 		guard res.success, let user = res.data else {

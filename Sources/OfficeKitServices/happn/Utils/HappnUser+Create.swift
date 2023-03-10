@@ -33,7 +33,7 @@ internal extension HappnUser {
 		let createUserOperation = try URLRequestDataOperation<ApiResult<HappnUser>>.forAPIRequest(
 			url: connector.baseURL.appending("api", "users"),
 			urlParameters: ["fields": Self.validFieldsParameter(from: Self.keysFromProperties(nil))], httpBody: self,
-			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		)
 		let apiUserResult = try await createUserOperation.startAndGetResult().result
 		guard apiUserResult.success, let user = apiUserResult.data, let userID = user.id else {
@@ -46,7 +46,7 @@ internal extension HappnUser {
 		 * We chose Int8, but could have taken anything that’s decodable: the API returns null all the time… */
 		let makeUserAdminOperation = try URLRequestDataOperation<ApiResult<Int8>>.forAPIRequest(
 			url: connector.baseURL.appending("api", "administrators"), httpBody: AdminActionRequestBody(action: "grant", userID: userID, adminPassword: connector.password),
-			bodyEncoder: FormURLEncodedEncoder(), decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			bodyEncoder: FormURLEncodedEncoder(), decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		)
 		let apiGrantResult = try await makeUserAdminOperation.startAndGetResult().result
 		guard apiGrantResult.success else {
