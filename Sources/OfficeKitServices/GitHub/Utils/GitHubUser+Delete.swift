@@ -35,7 +35,7 @@ extension GitHubUser {
 						ret.httpMethod = "DELETE"
 						return ret
 					}(),
-					requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+					requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 				).startAndGetResult()
 				
 			case .outsideCollaborator:
@@ -45,7 +45,7 @@ extension GitHubUser {
 						ret.httpMethod = "DELETE"
 						return ret
 					}(),
-					requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+					requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 				).startAndGetResult()
 				
 			case .none:

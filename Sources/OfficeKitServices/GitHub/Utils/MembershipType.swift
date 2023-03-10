@@ -27,7 +27,7 @@ enum MembershipType : Equatable {
 		do {
 			let membership = try await URLRequestDataOperation<Membership>.forAPIRequest(
 				url: baseURL.appending("orgs", orgID, "memberships", login),
-				requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+				requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 			).startAndGetResult().result
 			return (.member(isPending: membership.state == .pending), membership.user)
 		} catch let error as URLRequestOperationError where error.unexpectedStatusCodeError?.actual == 404 {

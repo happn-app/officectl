@@ -21,7 +21,7 @@ extension GitHubUser {
 		
 		let userLogin = try await URLRequestDataOperation<GitHubUser>.forAPIRequest(
 			url: baseURL.appending("user", String(id)),
-			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		).startAndGetResult().result.login
 		return try await get(login: userLogin, orgID: orgID, connector: connector)
 	}

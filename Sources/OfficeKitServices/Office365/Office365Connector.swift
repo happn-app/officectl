@@ -185,9 +185,8 @@ public actor Office365Connector : Connector, Authenticator, HTTPAuthConnector, H
 	/** Technically public because it fulfill the HasTaskQueue requirement, but should not be used directly. */
 	public var _taskQueue = TaskQueue()
 	
-	/* We only use this to avoid a double-refresh of the access token. */
+	/* We only use this variable to avoid a double-refresh of the access token. */
 	private var authInfoChangeDate = Date.distantPast
-	/* The actual token info. */
 	private var tokenInfo: TokenInfo? {
 		didSet {authInfoChangeDate = Date()}
 	}

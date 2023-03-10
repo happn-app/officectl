@@ -37,7 +37,7 @@ extension GitHubUser {
 		
 		let op = try URLRequestDataOperation<Invite>.forAPIRequest(
 			url: baseURL.appending("orgs", orgID, "invitations"), httpBody: InviteRequestBody(inviteeID: nonOptionalID, role: role, teamIDs: teamIDs),
-			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
+			requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)]
 		)
 		return try await op.startAndGetResult().result.invitee
 	}
