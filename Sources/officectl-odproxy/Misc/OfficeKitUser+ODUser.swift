@@ -41,7 +41,7 @@ extension OfficeKitUser {
 			persistentID = nil
 		}
 		
-#warning("TODO: Basic validation that set are properly done?")
+		/* Maybe TODO: Basic validation that set are properly done. */
 		let properties = try JSONDecoder().decode([String: OpenDirectoryAttributeValue].self, from: opaqueUserInfo)
 		var ret = OpenDirectoryUser(id: id.id, properties: properties)
 		_ = ret.oU_setValue(persistentID, forProperty: .persistentID, convertMismatchingTypes: true)
