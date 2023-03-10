@@ -24,13 +24,8 @@ extension Office365User {
 		if !includeSuspended {urlParameters["$filter"] = "accountEnabled eq true"}
 		if let keys {urlParameters["$select"] = keys.union(mandatoryKeys).map{ $0.rawValue }.joined(separator: ",")}
 		
-		let decoder = SendableJSONDecoder{ _ in }
-		let op = try URLRequestDataOperation<CollectionResponse<Office365User>>.forAPIRequest(
-			url: try baseURL.appending("users"), urlParameters: urlParameters,
-			decoders: [decoder], requestProcessors: [AuthRequestProcessor(connector)], retryProviders: []
-		)
-#warning("TODO: Next link!")
-		return try await op.startAndGetResult().result.value
+		let request = try URLRequest(url: baseURL.appending("users").appendingQueryParameters(from: urlParameters))
+		return try await CollectionResponse<Office365User>.getAll(sourceRequest: request, requestProcessors: [AuthRequestProcessor(connector)])
 	}
 	
 }
