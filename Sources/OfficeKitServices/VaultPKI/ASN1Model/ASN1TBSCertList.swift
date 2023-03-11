@@ -179,7 +179,16 @@ struct ASN1TBSCertList : DERImplicitlyTaggable, Sendable {
 				nodeAfterRevokedCertificates = nil
 			}
 			let exts = try nodeAfterRevokedCertificates.flatMap{ node -> [Certificate.Extension] in
-				try DER.sequence(identifier: .sequence, rootNode: rootNode)
+				/* Logic is from `DER.sequence(of:identifier:rootNode:)`. */
+				guard case .constructed(let nodes) = node.content else {
+					/* This error is an internal parser error: the tag above is always constructed. */
+					preconditionFailure("Explicit tags are always constructed")
+				}
+				var iterator = nodes.makeIterator()
+				guard let node = iterator.next(), iterator.next() == nil else {
+					throw ASN1Error.invalidASN1Object(reason: "Too many child nodes in optionally tagged node of Certificate.Extension.")
+				}
+				return try DER.sequence(identifier: .sequence, rootNode: node)
 			}
 			guard !(exts?.isEmpty ?? false) else {
 				throw ASN1Error.invalidASN1Object(reason: "Extensions is present but empty.")

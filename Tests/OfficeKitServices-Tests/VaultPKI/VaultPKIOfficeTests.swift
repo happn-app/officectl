@@ -8,6 +8,8 @@
 import Foundation
 import XCTest
 
+import SwiftASN1
+
 import CommonForOfficeKitServicesTests
 import Logging
 import OfficeKit
@@ -49,6 +51,30 @@ final class VaultPKIOfficeTests : XCTestCase {
 		try await super.tearDown()
 		
 		service = nil
+	}
+	
+	func testParseEmptyCRL() async throws {
+		let crlURL = Self.testsDataPath.appendingPathComponent("other/apple-root.crl")
+		let crlData = try Data(contentsOf: crlURL)
+		let crlParsed = try ASN1CertificateList(derEncoded: DER.parse([UInt8](crlData)))
+		XCTAssertEqual(crlParsed.tbsCertList.revokedCertificates?.count ?? 0, 0)
+		XCTAssertNotNil(crlParsed.tbsCertList.crlExtensions)
+		
+		var serializer = DER.Serializer()
+		try crlParsed.serialize(into: &serializer)
+		XCTAssertEqual(Data(serializer.serializedBytes).reduce("", { $0 + String(format: "%02x", $1) }), crlData.reduce("", { $0 + String(format: "%02x", $1) }))
+	}
+	
+	func testParseNonEmptyCRL() async throws {
+		let crlURL = Self.testsDataPath.appendingPathComponent("other/apple-wwdrca.crl")
+		let crlData = try Data(contentsOf: crlURL)
+		let crlParsed = try ASN1CertificateList(derEncoded: DER.parse([UInt8](crlData)))
+		XCTAssertEqual(crlParsed.tbsCertList.revokedCertificates?.count ?? 0, 56006)
+		XCTAssertNotNil(crlParsed.tbsCertList.crlExtensions)
+		
+		var serializer = DER.Serializer()
+		try crlParsed.serialize(into: &serializer)
+		XCTAssertEqual(Data(serializer.serializedBytes), crlData)
 	}
 	
 	func testGetUsers() async throws {
