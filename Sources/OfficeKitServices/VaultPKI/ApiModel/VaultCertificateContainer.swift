@@ -41,6 +41,7 @@ struct VaultCertificateContainer : Decodable {
 		}
 		
 		let base64Str = pem[pem.index(pem.startIndex, offsetBy: prefix.count)..<pem.index(pem.endIndex, offsetBy: -suffix.count)]
+			.replacingOccurrences(of: "\n", with: "")
 		guard let der = Data(base64Encoded: Data(base64Str.utf8)) else {
 			throw Err.invalidPEM(pem: pem)
 		}
