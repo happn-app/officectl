@@ -83,10 +83,9 @@ struct ASN1TBSCertList : DERImplicitlyTaggable, Sendable {
 		
 		var userCertificate: Certificate.SerialNumber
 		var revocationDate: ASN1Time
-		/* Will always contain at least one element if non-nil. */
-		var crlEntryExtensions: Certificate.Extensions?
+		var crlEntryExtensions: Certificate.Extensions
 		
-		init(userCertificate: Certificate.SerialNumber, revocationDate: ASN1Time, crlEntryExtensions: Certificate.Extensions? = nil) {
+		init(userCertificate: Certificate.SerialNumber, revocationDate: ASN1Time, crlEntryExtensions: Certificate.Extensions) {
 			self.userCertificate = userCertificate
 			self.revocationDate = revocationDate
 			self.crlEntryExtensions = crlEntryExtensions
@@ -106,7 +105,7 @@ struct ASN1TBSCertList : DERImplicitlyTaggable, Sendable {
 				return .init(
 					userCertificate: Certificate.SerialNumber(bytes: cert),
 					revocationDate: date,
-					crlEntryExtensions: exts.flatMap(Certificate.Extensions.init)
+					crlEntryExtensions: Certificate.Extensions(extensions: exts ?? [])
 				)
 			})
 		}
@@ -115,12 +114,8 @@ struct ASN1TBSCertList : DERImplicitlyTaggable, Sendable {
 			try coder.appendConstructedNode(identifier: identifier, { coder in
 				try coder.serialize(userCertificate.bytes)
 				try coder.serialize(revocationDate)
-				if let exts = crlEntryExtensions {
-					try coder.appendConstructedNode(identifier: .sequence, { coder in
-						for idx in exts.startIndex..<exts.endIndex {
-							try coder.serialize(exts[idx])
-						}
-					})
+				if !crlEntryExtensions.isEmpty {
+					try coder.serializeSequenceOf(crlEntryExtensions)
 				}
 			})
 		}
@@ -133,10 +128,9 @@ struct ASN1TBSCertList : DERImplicitlyTaggable, Sendable {
 	var thisUpdate: ASN1Time
 	var nextUpdate: ASN1Time?
 	var revokedCertificates: [RevokedCertificate]?
-	/* Will always contain at least one element if non-nil. */
-	var crlExtensions: Certificate.Extensions?
+	var crlExtensions: Certificate.Extensions
 	
-	init(version: Version? = nil, signature: ASN1AlgorithmIdentifier, issuer: DistinguishedName, thisUpdate: ASN1Time, nextUpdate: ASN1Time? = nil, revokedCertificates: [RevokedCertificate]? = nil, crlExtensions: Certificate.Extensions? = nil) {
+	init(version: Version? = nil, signature: ASN1AlgorithmIdentifier, issuer: DistinguishedName, thisUpdate: ASN1Time, nextUpdate: ASN1Time? = nil, revokedCertificates: [RevokedCertificate]? = nil, crlExtensions: Certificate.Extensions) {
 		self.version = version
 		self.signature = signature
 		self.issuer = issuer
@@ -191,7 +185,7 @@ struct ASN1TBSCertList : DERImplicitlyTaggable, Sendable {
 			guard !(exts?.isEmpty ?? false) else {
 				throw ASN1Error.invalidASN1Object(reason: "Extensions is present but empty.")
 			}
-			guard version == .v2 || (revokedCertificates?.allSatisfy{ $0.crlEntryExtensions == nil } ?? true && exts == nil) else {
+			guard version == .v2 || (revokedCertificates?.allSatisfy{ $0.crlEntryExtensions.isEmpty } ?? true && exts == nil) else {
 				throw ASN1Error.invalidASN1Object(reason: "Got extensions but version is not v2.")
 			}
 			
@@ -202,30 +196,28 @@ struct ASN1TBSCertList : DERImplicitlyTaggable, Sendable {
 				thisUpdate: thisUpdate,
 				nextUpdate: nextUpdate,
 				revokedCertificates: revokedCertificates,
-				crlExtensions: exts.flatMap(Certificate.Extensions.init)
+				crlExtensions: Certificate.Extensions(extensions: exts ?? [])
 			)
 		})
 	}
 	
 	func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
 		try coder.appendConstructedNode(identifier: identifier, { coder in
-			if let version {try coder.serialize(version)}
+			if let version {
+				try coder.serialize(version)
+			}
 			try coder.serialize(signature)
 			try coder.serialize(issuer)
 			try coder.serialize(thisUpdate)
-			if let nextUpdate          {try coder.serialize(nextUpdate)}
-			if let revokedCertificates {
-				try coder.appendConstructedNode(identifier: .sequence, { coder in
-					for idx in revokedCertificates.startIndex..<revokedCertificates.endIndex {
-						try coder.serialize(revokedCertificates[idx])
-					}
-				})
+			if let nextUpdate {
+				try coder.serialize(nextUpdate)
 			}
-			if let exts = crlExtensions {
+			if let revokedCertificates {
+				try coder.serializeSequenceOf(revokedCertificates)
+			}
+			if !crlExtensions.isEmpty {
 				try coder.serialize(explicitlyTaggedWithTagNumber: 0, tagClass: .contextSpecific, { coder in
-					for idx in exts.startIndex..<exts.endIndex {
-						try coder.serialize(exts[idx])
-					}
+					try coder.serializeSequenceOf(crlExtensions)
 				})
 			}
 		})
