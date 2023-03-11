@@ -82,4 +82,11 @@ final class VaultPKIOfficeTests : XCTestCase {
 		XCTAssertGreaterThan(users.count, 0)
 	}
 	
+	func testSuspendedUsers() async throws {
+		let usersNoSuspended = try await service.listAllUsers(includeSuspended: false, propertiesToFetch: nil)
+		let usersAll = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil)
+		/* We assume we’ll have at least one user suspended in prod. If not the test fails. */
+		XCTAssertGreaterThan(usersAll.count, usersNoSuspended.count)
+	}
+	
 }

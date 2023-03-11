@@ -25,7 +25,7 @@ extension CertificateMetadata {
 		
 		/* Let’s get the CRL. */
 		let opCRL = try URLRequestDataOperation.forData(url: vaultBaseURL.appending("v1", issuerName, "crl"), requestProcessors: [requestProcessor])
-		let revocationList = try await ASN1CertificateList(derEncoded: DER.parse([UInt8](opCRL.startAndGetResult().result)))//.revocationByCertificateID
+		let revocationList = try await ASN1CertificateList(derEncoded: DER.parse([UInt8](opCRL.startAndGetResult().result)))
 		var revocationByCertificateID = [String: Date]()
 		for revokedCert in revocationList.tbsCertList.revokedCertificates ?? [] {
 			/* TODO: Check conversion from ASN1Time to Date is ok and check we do not have double certif revocation (take earliest date if we do, I guess?). */
