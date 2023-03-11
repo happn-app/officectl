@@ -7,7 +7,7 @@
 
 import Foundation
 
-import ASN1Decoder
+import X509
 import Email
 
 import OfficeKit

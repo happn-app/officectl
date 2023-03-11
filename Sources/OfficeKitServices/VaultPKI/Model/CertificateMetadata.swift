@@ -7,7 +7,7 @@
 
 import Foundation
 
-@preconcurrency import ASN1Decoder
+import X509
 
 
 
@@ -35,13 +35,13 @@ public struct CertificateMetadata : Sendable {
 	 
 	 We might make that public later, but in theory we should not have to.
 	 We might also remove the property altogether… */
-	var underlyingCertif: X509Certificate?
+	var underlyingCertif: Certificate?
 	
 	public init(
 		cn: String, certifID: String?,
 		keyUsageHasServerAuth: Bool, keyUsageHasClientAuth: Bool,
 		validityStartDate: Date, expirationDate: Date, revocationDate: Date? = nil,
-		underlyingCertif: X509Certificate? = nil
+		underlyingCertif: Certificate? = nil
 	) {
 		self.cn = cn
 		self.certifID = certifID

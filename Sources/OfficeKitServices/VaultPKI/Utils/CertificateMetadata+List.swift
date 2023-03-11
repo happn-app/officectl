@@ -10,8 +10,9 @@ import Foundation
 import FoundationNetworking
 #endif
 
-import ASN1Decoder
+import SwiftASN1
 import URLRequestOperation
+import X509
 
 import OfficeKit
 
@@ -24,7 +25,12 @@ extension CertificateMetadata {
 		
 		/* Let’s get the CRL. */
 		let opCRL = try URLRequestDataOperation.forData(url: vaultBaseURL.appending("v1", issuerName, "crl"), requestProcessors: [requestProcessor])
-		let revocationByCertificateID = try await VaultCRL(der: opCRL.startAndGetResult().result).revocationByCertificateID
+		let revocationList = try await ASN1CertificateList(derEncoded: DER.parse([UInt8](opCRL.startAndGetResult().result)))
+		var revocationByCertificateID = [String: Date]()
+		for revokedCert in revocationList.tbsCertList.revokedCertificates ?? [] {
+			/* TODO: Check conversion from ASN1Time to Date is ok and check we do not have double certif revocation (take earliest date if we do, I guess?). */
+			revocationByCertificateID[ASN1CertificateList.normalizeCertificateID(revokedCert.userCertificate)] = Date(revokedCert.revocationDate)
+		}
 		
 		/* Let’s fetch the list of current certificates in the vault. */
 		let opListCurrentCertifs = URLRequestDataOperation<VaultResponse<VaultCertificateSerialsList>>.forAPIRequest(
@@ -56,9 +62,10 @@ extension CertificateMetadata {
 		 * 	}
 		 */
 		
-		/* Get the list of certificates (which are the users). */
-		return try await certificatesList.keys.concurrentCompactMap{ id -> CertificateMetadata? in
-			let revocationDate = revocationByCertificateID[VaultCRL.normalizeCertificateID(id)]
+		/* Get the list of certificates. */
+		return try await certificatesList.keys.concurrentCompactMap{ (id: String) -> CertificateMetadata? in
+			let revocationDate = revocationByCertificateID[ASN1CertificateList.normalizeCertificateID(id)]
+			/* TODO: Check the actual revocation date? */
 			guard includeRevoked || revocationDate == nil else {
 				return nil
 			}
@@ -67,30 +74,26 @@ extension CertificateMetadata {
 				requestProcessors: [requestProcessor], retryProviders: []
 			).startAndGetResult().result
 			
-			guard let subjectDNStr = certificateResponse.data.certificate.subjectDistinguishedName else {
-				throw Err.foundInvalidCertificateWithNoDN
-			}
-			let subjectDN = try LDAPDistinguishedName(string: subjectDNStr)
+			let subjectDN = try LDAPDistinguishedName(string: certificateResponse.data.certificate.subject.description)
 			
-			guard let dnValue = (subjectDN.values.filter{ $0.key == "CN" }.onlyElement) else {
+			func asn1AnyToString(_ obj: ASN1Any?) -> String? {
+				if let str = (obj.flatMap{ try? ASN1UTF8String(     asn1Any: $0) }).flatMap(String.init) {return str}
+				if let str = (obj.flatMap{ try? ASN1PrintableString(asn1Any: $0) }).flatMap(String.init) {return str}
+				return nil
+			}
+			guard let cnAttributeValue = (certificateResponse.data.certificate.subject.compactMap{ $0.filter{ $0.type == .RDNAttributeType.commonName }.onlyElement }.onlyElement?.value),
+					let subjectCN = asn1AnyToString(cnAttributeValue)
+			else {
 				throw Err.foundInvalidCertificateWithNoUnambiguousCNInDN(dn: subjectDN)
 			}
-			let subjectCN = dnValue.value
 			
-			guard let validityStartDate = certificateResponse.data.certificate.notBefore else {
-				throw Err.foundInvalidCertificateWithNoValidityStartDate(dn: subjectDN)
-			}
-			guard let expirationDate = certificateResponse.data.certificate.notAfter else {
-				throw Err.foundInvalidCertificateWithNoExpirationDate(dn: subjectDN)
-			}
-			
-			return CertificateMetadata(
+			return try CertificateMetadata(
 				cn: subjectCN,
 				certifID: id,
-				keyUsageHasServerAuth: certificateResponse.data.certificate.extendedKeyUsage.contains("1.3.6.1.5.5.7.3.1"/*serverAuth*/),
-				keyUsageHasClientAuth: certificateResponse.data.certificate.extendedKeyUsage.contains("1.3.6.1.5.5.7.3.2"/*clientAuth*/),
-				validityStartDate: validityStartDate,
-				expirationDate: expirationDate,
+				keyUsageHasServerAuth: certificateResponse.data.certificate.extensions.extendedKeyUsage?.contains(.serverAuth) ?? false,
+				keyUsageHasClientAuth: certificateResponse.data.certificate.extensions.extendedKeyUsage?.contains(.clientAuth) ?? false,
+				validityStartDate: certificateResponse.data.certificate.notValidBefore,
+				expirationDate: certificateResponse.data.certificate.notValidAfter,
 				revocationDate: revocationDate,
 				underlyingCertif: certificateResponse.data.certificate
 			)

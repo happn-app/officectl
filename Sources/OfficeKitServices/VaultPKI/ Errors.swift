@@ -13,6 +13,7 @@ import OfficeKit
 
 public enum VaultPKIOfficeError : Error, Sendable {
 	
+	case invalidPEM(pem: String)
 	case invalidCRL(message: String)
 	
 	case foundInvalidCertificateWithNoDN
