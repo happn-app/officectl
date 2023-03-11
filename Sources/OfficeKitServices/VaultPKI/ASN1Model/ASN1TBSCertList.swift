@@ -72,9 +72,7 @@ struct ASN1TBSCertList : DERImplicitlyTaggable, Sendable {
 		}
 		
 		func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
-			try coder.appendConstructedNode(identifier: identifier, { coder in
-				try coder.serialize(ArraySlice([UInt8(rawValue)]))
-			})
+			try coder.serialize(ArraySlice([UInt8(rawValue)]))
 		}
 		
 	}
