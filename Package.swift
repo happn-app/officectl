@@ -66,14 +66,15 @@ let package = Package(
 	}(),
 	dependencies: {
 		var ret = [Package.Dependency]()
+		ret.append(.package(url: "https://github.com/apple/swift-asn1.git",                       from: "0.7.0"))
 		ret.append(.package(url: "https://github.com/apple/swift-argument-parser.git",            from: "1.1.0"))
+		ret.append(.package(url: "https://github.com/apple/swift-certificates.git",               from: "0.1.0"))
 		ret.append(.package(url: "https://github.com/apple/swift-collections.git",                from: "1.0.4"))
 		ret.append(.package(url: "https://github.com/apple/swift-crypto.git",                     from: "2.1.0"))
 		ret.append(.package(url: "https://github.com/apple/swift-log.git",                        from: "1.4.0"))
 		ret.append(.package(url: "https://github.com/apple/swift-metrics.git",                    from: "2.2.0"))
 //		ret.append(.package(url: "https://github.com/apple/swift-nio.git",                        from: "2.41.0"))
 		ret.append(.package(url: "https://github.com/dduan/TOMLDecoder.git",                      from: "0.2.2"))
-		ret.append(.package(url: "https://github.com/filom/ASN1Decoder.git",                      from: "1.8.0"))
 		ret.append(.package(url: "https://github.com/Frizlab/APIConnectionProtocols.git",         from: "1.0.0-beta.6"))
 		ret.append(.package(url: "https://github.com/Frizlab/HasResult.git",                      from: "2.0.0"))
 		ret.append(.package(url: "https://github.com/Frizlab/OperationAwaiting.git",              from: "1.3.0-beta.1"))
@@ -152,7 +153,7 @@ let package = Package(
 #if canImport(OpenDirectory)
 		ret.append(contentsOf: targetsForService(named: "OpenDirectoryOffice", folderName: "OpenDirectory"))
 #endif
-		ret.append(contentsOf: targetsForService(named: "VaultPKIOffice",      folderName: "VaultPKI",  additionalDependencies: networkDependencies + [.product(name: "ASN1Decoder", package: "ASN1Decoder")]))
+		ret.append(contentsOf: targetsForService(named: "VaultPKIOffice",      folderName: "VaultPKI",  additionalDependencies: networkDependencies + [.product(name: "X509", package: "swift-certificates"), .product(name: "SwiftASN1", package: "swift-asn1")]))
 		
 		/* ************************
 		   MARK: OfficeServer (lib)
