@@ -55,18 +55,39 @@ struct List : AsyncParsableCommand {
 			case .json: if #available(macOS 13, *) {return try FileHandle.standardOutput.write(contentsOf:      multiUsersAsDataFrame(multiUsersResult.users).jsonRepresentation())}
 		}
 #endif
-		multiUsersResult.users.forEach{ multiUser in
-			print("---")
-			let maxLength = multiUser.keys.map(\.value.id.rawValue.count).max() ?? 0
-			for key in (multiUser.keys.sorted{ $0.value.id.rawValue < $1.value.id.rawValue }) {
-				print("\(String(repeating: " ", count: maxLength - key.value.id.rawValue.count))\(key.id): ", terminator: "")
-				let result = multiUser[key]!
-				switch result {
-					case .success(nil):       print("<none>")
-					case .success(let user?): print("\(UserAndServiceFrom(user: user, service: key.value)!.taggedID.id)")
-					case .failure(let error): print("ERROR \(error)")
+		let tabData = multiUsersAsTabularData(multiUsersResult.users)
+		switch format {
+			case .json: try FileHandle.standardOutput.write(contentsOf: JSONEncoder().encode(tabData.values))
+			case .text:
+				let maxLength = tabData.keys.map(\.count).max() ?? 0
+				tabData.values.forEach{ userTabData in
+					print("---")
+					for key in tabData.keys {
+						print("\(String(repeating: " ", count: maxLength - key.count))\(key): \(userTabData[key]!)")
+					}
 				}
-			}
+			case .csv:
+				print(tabData.keys.map(Self.csvString(from:)).joined(separator: ","))
+				tabData.values.forEach{ userTabData in
+					print(tabData.keys.map{ Self.csvString(from: userTabData[$0]!) }.joined(separator: ","))
+				}
+		}
+	}
+	
+	private static func csvString(from str: String) -> String {
+		let sep = ","
+		/* From LocMapper. */
+		guard sep.utf16.count == 1, sep != "\"", sep != "\n", sep != "\r" else {fatalError("Cannot use “\(sep)” as a CSV separator")}
+		/* We use the large “newlines” character set instead of simply \n and \r to solve some problems when solving merge conflicts with FileMerge.
+		 * (FileMerge sees a weird UTF-8 newline and proposes to solve the problem by converting the newlines in the file to CR, LF or CRLF.
+		 *  When it does that, a field containing such a character becomes incomplete and the line stops there.) */
+		if str.rangeOfCharacter(from: CharacterSet(charactersIn: "\(sep)\"").union(.newlines)) != nil {
+			/* Double quotes needed */
+			let doubledDoubleQuotes = str.replacingOccurrences(of: "\"", with: "\"\"")
+			return "\"\(doubledDoubleQuotes)\""
+		} else {
+			/* Double quotes not needed */
+			return str
 		}
 	}
 	
@@ -90,5 +111,22 @@ struct List : AsyncParsableCommand {
 		return dataFrame
 	}
 #endif
+	
+	private func multiUsersAsTabularData(_ multiUsers: [MultiServicesUser]) -> (keys: [String], values: [[String: String]]) {
+		let allServices = Set(multiUsers.flatMap{ $0.keys }).sorted{ $0.value.id.rawValue < $1.value.id.rawValue }
+		let values = multiUsers.map{ multiUser in
+			return Dictionary(uniqueKeysWithValues: allServices.map{ service in
+				let userStr: String
+				switch multiUser[service] {
+					case .none:               userStr = "<internal error>"
+					case .success(nil)?:      userStr = "<none>"
+					case .success(let user?): userStr = "\(UserAndServiceFrom(user: user, service: service.value)!.taggedID.id)"
+					case .failure:            userStr = "ERROR"
+				}
+				return (service.value.id.rawValue, userStr)
+			})
+		}
+		return (keys: allServices.map{ $0.value.id.rawValue }, values: values)
+	}
 	
 }
