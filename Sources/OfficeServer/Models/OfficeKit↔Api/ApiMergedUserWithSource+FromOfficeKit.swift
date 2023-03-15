@@ -11,11 +11,12 @@ import Email
 import Logging
 import OrderedCollections
 
+import OfficeKit
 import OfficeModel
 
 
 
-public extension ApiUser {
+extension ApiUser {
 	
 	init(multiServicesUser: MultiServicesUser, servicesMergePriority: [any UserService] = [], logger: Logger?) {
 		let priority = Dictionary(uniqueKeysWithValues: servicesMergePriority.enumerated().map{ ($0.element.id, $0.offset) })

@@ -10,11 +10,12 @@ import Foundation
 import GenericJSON
 import Logging
 
+import OfficeKit
 import OfficeModel
 
 
 
-public extension ApiDirectoryUser {
+extension ApiDirectoryUser {
 	
 	init(userAndService: any UserAndService, logger: Logger? = nil) {
 		self.init(

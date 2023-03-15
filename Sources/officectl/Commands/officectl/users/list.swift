@@ -13,18 +13,10 @@ import TabularData
 import ArgumentParser
 
 import OfficeKit
-import OfficeModel
 
 
 
 struct List : AsyncParsableCommand {
-	
-	enum Format : String, CaseIterable, ExpressibleByArgument {
-		
-		case text
-		case json
-		
-	}
 	
 	static var configuration = CommandConfiguration(
 		abstract: "Create a user."
@@ -38,25 +30,14 @@ struct List : AsyncParsableCommand {
 	@Flag(help: "For the directory services that supports it, do we filter out the suspended users?")
 	var includeSuspendedUsers = false
 	
-	@Option(name: .shortAndLong, help: "The format to use to output the results of the list.")
-	var format: Format = .text
-	
 	
 	func run() async throws {
 		try officectlOptions.bootstrap()
 		let officeKitServices = officectlOptions.officeKitServices
 		
-		let services = officeKitServices.hashableUserServices(matching: usersOptions.serviceIDs)
-		let multiUsersResult = try await MultiServicesUser.fetchAll(in: services, includeSuspended: includeSuspendedUsers)
-		switch format {
-			case .text:     printUsersAsText(multiUsersResult)
-			case .json: try printUsersAsJSON(multiUsersResult, sourceServices: services)
-		}
-	}
-	
-	private func printUsersAsText(_ fetchResult: (users: [MultiServicesUser], fetchErrorsByServices: [HashableUserService: Error])) {
+		let multiUsersResult = try await MultiServicesUser.fetchAll(in: officeKitServices.hashableUserServices(matching: usersOptions.serviceIDs), includeSuspended: includeSuspendedUsers)
 #if !canImport(TabularData)
-		multiUsers.users.forEach{ multiUser in
+		multiUsersResult.users.forEach{ multiUser in
 			print("---")
 			let maxLength = multiUser.keys.map(\.value.id.rawValue.count).max() ?? 0
 			for key in (multiUser.keys.sorted{ $0.value.id.rawValue < $1.value.id.rawValue }) {
@@ -70,7 +51,7 @@ struct List : AsyncParsableCommand {
 			}
 		}
 #else
-		let multiUsers = fetchResult.users
+		let multiUsers = multiUsersResult.users
 		let allServices = Set(multiUsers.flatMap{ $0.keys }).sorted{ $0.value.id.rawValue < $1.value.id.rawValue }
 		var dataFrame = DataFrame()
 		allServices.forEach{ service in
@@ -88,18 +69,6 @@ struct List : AsyncParsableCommand {
 		}
 		print(dataFrame.sorted(on: "ggl").description(options: .init(maximumLineWidth: .max, maximumCellWidth: .max, maximumRowCount: .max, includesColumnTypes: false)))
 #endif
-	}
-	
-	private func printUsersAsJSON(_ multiUsers: (users: [MultiServicesUser], fetchErrorsByServices: [HashableUserService: Error]), sourceServices: Set<HashableUserService>) throws {
-		let (users, fetchErrors) = multiUsers
-		let errors: [Tag: Result<None, ApiError>] = Dictionary(uniqueKeysWithValues: sourceServices.map{ service in
-			(service.value.id, fetchErrors[service].flatMap{ .failure(ApiError(error: $0)) } ?? .success(None()))
-		})
-		let res = ApiUsers(
-			mergedResults: users.map{ ApiUser(multiServicesUser: $0, servicesMergePriority: [], logger: officectlOptions.logger) },
-			results: errors
-		)
-		try FileHandle.standardOutput.write(contentsOf: JSONEncoder().encode(res))
 	}
 	
 }
