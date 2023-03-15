@@ -18,6 +18,14 @@ import OfficeKit
 
 struct List : AsyncParsableCommand {
 	
+	enum Format : String, CaseIterable, ExpressibleByArgument {
+		
+		case csv
+		case json
+		case text
+		
+	}
+	
 	static var configuration = CommandConfiguration(
 		abstract: "Create a user."
 	)
@@ -30,13 +38,23 @@ struct List : AsyncParsableCommand {
 	@Flag(help: "For the directory services that supports it, do we filter out the suspended users?")
 	var includeSuspendedUsers = false
 	
+	@Option(name: .shortAndLong, help: "The format to use to output the results of the list.")
+	var format: Format = .text
+	
 	
 	func run() async throws {
 		try officectlOptions.bootstrap()
 		let officeKitServices = officectlOptions.officeKitServices
 		
 		let multiUsersResult = try await MultiServicesUser.fetchAll(in: officeKitServices.hashableUserServices(matching: usersOptions.serviceIDs), includeSuspended: includeSuspendedUsers)
-#if !canImport(TabularData)
+#if canImport(TabularData)
+		/* TabularData knows how to export in CSV, text or JSON, but only on macOS 13 for the JSON part. */
+		switch format {
+			case .csv:                              return try FileHandle.standardOutput.write(contentsOf:      multiUsersAsDataFrame(multiUsersResult.users).csvRepresentation())
+			case .text:                             return try FileHandle.standardOutput.write(contentsOf: Data(multiUsersAsDataFrame(multiUsersResult.users).description(options: .init(maximumLineWidth: .max, maximumCellWidth: .max, maximumRowCount: .max, includesColumnTypes: false)).utf8))
+			case .json: if #available(macOS 13, *) {return try FileHandle.standardOutput.write(contentsOf:      multiUsersAsDataFrame(multiUsersResult.users).jsonRepresentation())}
+		}
+#endif
 		multiUsersResult.users.forEach{ multiUser in
 			print("---")
 			let maxLength = multiUser.keys.map(\.value.id.rawValue.count).max() ?? 0
@@ -50,8 +68,10 @@ struct List : AsyncParsableCommand {
 				}
 			}
 		}
-#else
-		let multiUsers = multiUsersResult.users
+	}
+	
+#if canImport(TabularData)
+	private func multiUsersAsDataFrame(_ multiUsers: [MultiServicesUser]) -> DataFrame {
 		let allServices = Set(multiUsers.flatMap{ $0.keys }).sorted{ $0.value.id.rawValue < $1.value.id.rawValue }
 		var dataFrame = DataFrame()
 		allServices.forEach{ service in
@@ -67,8 +87,8 @@ struct List : AsyncParsableCommand {
 			}
 			dataFrame.append(column: Column<String>(name: service.value.id.rawValue, contents: rows))
 		}
-		print(dataFrame.sorted(on: "ggl").description(options: .init(maximumLineWidth: .max, maximumCellWidth: .max, maximumRowCount: .max, includesColumnTypes: false)))
-#endif
+		return dataFrame
 	}
+#endif
 	
 }
