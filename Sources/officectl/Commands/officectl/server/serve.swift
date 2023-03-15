@@ -52,8 +52,14 @@ struct Serve : AsyncParsableCommand {
 			serverArgs.append(contentsOf: ["--port", String(port)])
 		}
 		try Server.runVaporCommand(["serve"] + serverArgs, officectlOptions: officectlOptions, appSetup: { app in
+			let updateCAMetricsJob = UpdateCAMetricsJob()
 			try OfficeServerConfig.setupServer(app, scheduledJobs: [
-				(UpdateCAMetricsJob(), { $0.daily().at(4, 30) })
+				(updateCAMetricsJob, { $0.at(Date() + TimeInterval(3) /* We have to add a little bit of time otherwise the job is not started… */) }),
+				(updateCAMetricsJob, { $0.daily().at(8, 30) }),
+				(updateCAMetricsJob, { $0.daily().at(11, 42) }),
+				(updateCAMetricsJob, { $0.daily().at(14, 42) }),
+				(updateCAMetricsJob, { $0.daily().at(18, 42) }),
+				(updateCAMetricsJob, { $0.daily().at(20, 42) })
 			])
 		})
 	}

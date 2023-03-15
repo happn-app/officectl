@@ -37,13 +37,6 @@ public extension Conf {
 		for (job, buildSchedule) in jobs {
 			buildSchedule(app.queues.schedule(job))
 		}
-		/* We also run the jobs directly on server launch.
-		 * Not sure whether it’s a good idea though. */
-		Task{ [jobs] in
-			for (job, _) in jobs {
-				_ = try? await job.run(context: .init(queueName: .default, configuration: .init(), application: app, logger: app.logger, on: app.eventLoopGroup.next()))
-			}
-		}
 	}
 	
 }
