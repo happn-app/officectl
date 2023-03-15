@@ -11,6 +11,4 @@ import Foundation
 
 enum LMK {
 	
-	static let property = "property"
-	
 }
