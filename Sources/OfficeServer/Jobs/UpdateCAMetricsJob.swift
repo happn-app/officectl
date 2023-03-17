@@ -15,14 +15,18 @@ import VaultPKIOffice
 
 
 
-struct UpdateCAMetricsJob : AsyncScheduledJob {
+public struct UpdateCAMetricsJob : AsyncScheduledJob {
 	
-	static let metricName = "happn_vault_certs_expiration"
+	public let metricName: String
 	
-	func run(context: Queues.QueueContext) async throws {
+	public init(metricName: String = "happn_vault_certs_expiration") {
+		self.metricName = metricName
+	}
+	
+	public func run(context: Queues.QueueContext) async throws {
 		/* First we delete the metric completely.
 		 * This is mandatory to avoid old metrics of certificates turning invalid be left as a forever static metric. */
-		Gauge(label: Self.metricName).destroy()
+		Gauge(label: metricName).destroy()
 		
 		let now = Date()
 		let pkiServices = context.application.officeKitServices.userServices.compactMap{ $0 as? VaultPKIService }
@@ -45,7 +49,7 @@ struct UpdateCAMetricsJob : AsyncScheduledJob {
 //						certificate.certif.issuerDistinguishedName.flatMap{ ("issuer_dn", $0) },
 //						certificate.certif.subjectDistinguishedName.flatMap{ ("subject_dn", $0) }
 					].compactMap{ $0 }
-					let gauge = Gauge(label: Self.metricName, dimensions: dimensions)
+					let gauge = Gauge(label: metricName, dimensions: dimensions)
 					gauge.record(certificate.expirationDate.timeIntervalSinceNow)
 				}
 			} catch {

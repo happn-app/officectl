@@ -53,13 +53,21 @@ struct Serve : AsyncParsableCommand {
 		}
 		try Server.runVaporCommand(["serve"] + serverArgs, officectlOptions: officectlOptions, appSetup: { app in
 			let updateCAMetricsJob = UpdateCAMetricsJob()
+			let updateUsersListJob = UpdateUsersListJob()
 			try OfficeServerConfig.setupServer(app, scheduledJobs: [
+				/* Update CA metrics job – Dispatched throughout the day.
+				 * Eventually we should make this dispatching customizable via config… */
 				(updateCAMetricsJob, { $0.at(Date() + TimeInterval(3) /* We have to add a little bit of time otherwise the job is not started… */) }),
-				(updateCAMetricsJob, { $0.daily().at(8, 30) }),
+				(updateCAMetricsJob, { $0.daily().at(8,  30) }),
 				(updateCAMetricsJob, { $0.daily().at(11, 42) }),
 				(updateCAMetricsJob, { $0.daily().at(14, 42) }),
 				(updateCAMetricsJob, { $0.daily().at(18, 42) }),
-				(updateCAMetricsJob, { $0.daily().at(20, 42) })
+				(updateCAMetricsJob, { $0.daily().at(20, 42) }),
+				
+				/* Update users list job. */
+				(updateUsersListJob, { $0.at(Date() + TimeInterval(30)) }), /* For now we force reload at launch time; later the results should be cached in a db so refreshing at launch should be useless. */
+				(updateUsersListJob, { $0.daily().at(7,  30) }),
+				(updateUsersListJob, { $0.daily().at(20, 30) })
 			])
 		})
 	}
