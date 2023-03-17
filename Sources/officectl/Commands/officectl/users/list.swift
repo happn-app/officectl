@@ -112,6 +112,7 @@ struct List : AsyncParsableCommand {
 	}
 #endif
 	
+	/* Duplicated in OfficeServer. */
 	private func multiUsersAsTabularData(_ multiUsers: [MultiServicesUser]) -> (keys: [String], values: [[String: String]]) {
 		let allServices = Set(multiUsers.flatMap{ $0.keys }).sorted{ $0.value.id.rawValue < $1.value.id.rawValue }
 		let values = multiUsers.map{ multiUser in

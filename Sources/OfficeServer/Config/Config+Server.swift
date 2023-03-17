@@ -25,6 +25,7 @@ public extension Conf {
 	
 	static func setupRoutes(_ app: Application) throws {
 		app.routes.get("_internal", "metrics", use: { _ in try await MetricsSystem.prometheus().collect() })
+		app.routes.get("_internal", "users", use: { req in req.application.tempLocalCache_users?.values ?? [] })
 		
 		let apiRoute = app.grouped("api", "v2")
 //		try app.register(collection: AuthController())
