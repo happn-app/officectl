@@ -275,8 +275,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-crypto.git",
       "state" : {
-        "revision" : "75ec60b8b4cc0f085c3ac414f3dca5625fa3588e",
-        "version" : "2.2.4"
+        "revision" : "da0fe44138ab86e380f40a2acbd8a611b07d3f64",
+        "version" : "2.4.0"
       }
     },
     {
@@ -329,8 +329,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio-http2.git",
       "state" : {
-        "revision" : "860622124b01cc1863b4e65dc449b6b457ca5704",
-        "version" : "1.25.1"
+        "revision" : "38feec96bcd929028939107684073554bf01abeb",
+        "version" : "1.25.2"
       }
     },
     {
@@ -411,7 +411,7 @@
       "location" : "https://github.com/happn-app/URLRequestOperation.git",
       "state" : {
         "branch" : "dev.final_operation",
-        "revision" : "da14284d8a05a202275380125e5d4c07985551fd"
+        "revision" : "90a5b38c8640b9c63222ad2ce194693a0e055618"
       }
     },
     {
@@ -419,8 +419,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/vapor.git",
       "state" : {
-        "revision" : "08397d41d7c7c726dc6667af6b9db13d408201ff",
-        "version" : "4.70.0"
+        "revision" : "d1a89f8f54c409751a5891a3dd22f78171be5741",
+        "version" : "4.74.1"
       }
     },
     {
@@ -428,8 +428,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/websocket-kit.git",
       "state" : {
-        "revision" : "2d9d2188a08eef4a869d368daab21b3c08510991",
-        "version" : "2.6.1"
+        "revision" : "2b8885974e8d9f522e787805000553f4f7cce8a0",
+        "version" : "2.7.0"
       }
     },
     {
@@ -437,8 +437,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/happn-app/XibLoc.git",
       "state" : {
-        "revision" : "1abb69ac28e2a30b997f720ff3b3cdab59d9b1fa",
-        "version" : "1.2.4"
+        "revision" : "54f7a17a4accb8409f7ec9e7db2ed9a969ffc95e",
+        "version" : "1.2.5"
       }
     }
   ],
