@@ -93,13 +93,22 @@ public final class Office365Service : UserService {
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?) async throws -> Office365User? {
 		/* For a client credential flow, only “/.default” scopes are allowed. */
 		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
-		throw Err.__notImplemented
+		return try await Office365User.get(id: pID, propertiesToFetch: Office365User.keysFromProperties(propertiesToFetch), connector: connector)
 	}
 	
 	public func existingUser(fromID uID: Email, propertiesToFetch: Set<UserProperty>?) async throws -> Office365User? {
 		/* For a client credential flow, only “/.default” scopes are allowed. */
 		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
-		throw Err.__notImplemented
+		/* M$’s API supports getting a user through his principal name directly (`GET /users/email@domain.com`).
+		 * If it did not we’d have had to search or filter and check we only have one result.
+		 * Search version: `GET /users?$search="userPrincipalName:email@domain.com"`
+		 *    -> Not urlencoded for readability here, but must be of course;
+		 *    -> The double-quotes MUST be there;
+		 *    -> Additionally, the `ConsistencyLevel: eventual` header has to be set.
+		 * Filter version: `GET /users?$filter=userPrincipalName eq 'email@domain.com'`
+		 *    -> Not urlencoded for readability here, but must be of course;
+		 *    -> The quotes MUST be there and MUST be single-quotes. */
+		return try await Office365User.get(id: uID.rawValue, propertiesToFetch: Office365User.keysFromProperties(propertiesToFetch), connector: connector)
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [Office365User] {
