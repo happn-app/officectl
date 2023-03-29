@@ -121,7 +121,33 @@ public final class Office365Service : UserService {
 	public func createUser(_ user: Office365User) async throws -> Office365User {
 		/* For a client credential flow, only “/.default” scopes are allowed. */
 		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
-		throw Err.__notImplemented
+		
+		var user = user
+		if user.mailNickname == nil {
+			Conf.logger?.info("Asked to create a user but the mail nickname is not set. Using the local part of the user principal name.")
+			user.mailNickname = user.userPrincipalName.localPart
+		}
+		if user.accountEnabled == nil {
+			Conf.logger?.warning("Asked to create a user but account enabled is not set. Assuming true.")
+			user.accountEnabled = true
+		}
+		if user.displayName == nil {
+			Conf.logger?.warning("Asked to create a user without a display name, which is not supported by M$’s APIs. We infer a display name from the given name and the surname.")
+			user.displayName = user.computedFullName
+		}
+		if user.passwordProfile == nil {
+			/* Creating a user without a password is not possible.
+			 * Let’s generate a password!
+			 * A long and complex one. */
+			OfficeKitConfig.logger?.warning("Auto-generating a random password for M$ user creation: creating a M$ user w/o a password is not supported.")
+			user.passwordProfile = .init(
+				forceChangePasswordNextSignIn: false,
+				forceChangePasswordNextSignInWithMfa: false,
+				password: .generatePassword(allowedChars: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789=?!@#$%^&*")
+			)
+		}
+		
+		return try await user.create(connector: connector)
 	}
 	
 	public let supportsUserUpdate: Bool = true
@@ -135,7 +161,7 @@ public final class Office365Service : UserService {
 	public func deleteUser(_ user: Office365User) async throws {
 		/* For a client credential flow, only “/.default” scopes are allowed. */
 		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
-		throw Err.__notImplemented
+		return try await user.delete(connector: connector)
 	}
 	
 	public let supportsPasswordChange: Bool = true

@@ -16,6 +16,8 @@ public enum Office365OfficeError : Error, Sendable {
 	case unsupportedOperation
 	case unsupportedTokenType(String)
 	
+	case noPersistentID
+	
 	case notConnected
 	
 	case __notImplemented

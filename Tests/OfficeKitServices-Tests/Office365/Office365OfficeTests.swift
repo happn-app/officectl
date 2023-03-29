@@ -81,4 +81,37 @@ final class Office365OfficeTests : XCTestCase {
 		XCTAssertEqual(user.oU_persistentID, testConf.fetchedUser.id)
 	}
 	
+	func testCreateUpdateDeleteUser() async throws {
+		let initialEmailStr = "officectl.test.\((0..<42).randomElement()!)@happn.fr"
+		let modifiedEmailStr = "officectl.test-modified.\((0..<42).randomElement()!)@happn.fr"
+		
+		var user = Office365User(oU_id: Email(rawValue: initialEmailStr)!)
+		XCTAssertEqual(user.userPrincipalName, Email(rawValue: initialEmailStr))
+		XCTAssertNil(user.oU_firstName)
+		XCTAssertNil(user.oU_lastName)
+		
+		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], convertMismatchingTypes: true)
+		XCTAssertEqual(user.userPrincipalName, Email(rawValue: initialEmailStr))
+		XCTAssertEqual(user.oU_firstName, "Officectl")
+		XCTAssertEqual(user.oU_lastName, "Test")
+		
+		user = try await service.createUser(user)
+		XCTAssertEqual(user.userPrincipalName, Email(rawValue: initialEmailStr))
+		XCTAssertEqual(user.oU_firstName, "Officectl")
+		XCTAssertEqual(user.oU_lastName, "Test")
+		
+		XCTAssertFalse(user.oU_setValue(modifiedEmailStr, forProperty: .emails, convertMismatchingTypes: false).propertyWasModified)
+		XCTAssertTrue( user.oU_setValue(modifiedEmailStr, forProperty: .emails, convertMismatchingTypes: true ).propertyWasModified)
+		
+		/* We have to wait a bit because the user is not created immeditaly and if we try to update it we get an error. */
+//		try await Task.sleep(nanoseconds: 13_000_000_000/*13s*/)
+		
+//		user = try await service.updateUser(user, propertiesToUpdate: [.emails])
+//		XCTAssertEqual(user.userPrincipalName, Email(rawValue: modifiedEmailStr))
+//		XCTAssertEqual(user.oU_firstName, "Officectl")
+//		XCTAssertEqual(user.oU_lastName, "Test")
+		
+		try await service.deleteUser(user)
+	}
+	
 }
