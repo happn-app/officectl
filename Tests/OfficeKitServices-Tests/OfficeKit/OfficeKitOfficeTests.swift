@@ -33,8 +33,11 @@ final class OfficeKitOfficeTests : XCTestCase {
 	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
+		bootstrapIfNeeded()
+		
 		OfficeKitOfficeConfig.logger = Logger(label: "test-officekit")
 		OfficeKitOfficeConfig.logger?.logLevel = .trace
+		
 		confs = Result{ try parsedConf(for: "officekit") }
 	}
 	

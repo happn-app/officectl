@@ -37,8 +37,7 @@ final class HappnOfficeTests : XCTestCase {
 	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
-		URLRequestOperationConfig.maxResponseBodySizeToLog = .max
-		URLRequestOperationConfig.maxRequestBodySizeToLog = .max
+		bootstrapIfNeeded()
 		confs = Result{ try parsedConf(for: "happn") }
 	}
 	
@@ -59,7 +58,7 @@ final class HappnOfficeTests : XCTestCase {
 	
 	func testListAllUser() async throws {
 		let allUsers = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil)
-		print(allUsers)
+//		print(allUsers)
 		XCTAssertGreaterThan(allUsers.count, 0)
 	}
 	

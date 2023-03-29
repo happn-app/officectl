@@ -37,10 +37,11 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
+		bootstrapIfNeeded()
+		
 		OpenDirectoryOfficeConfig.logger = Logger(label: "test-od")
 		OpenDirectoryOfficeConfig.logger?.logLevel = .trace
-		URLRequestOperationConfig.maxRequestBodySizeToLog = .max
-		URLRequestOperationConfig.maxResponseBodySizeToLog = .max
+		
 		confs = Result{ try parsedConf(for: "od") }
 	}
 	

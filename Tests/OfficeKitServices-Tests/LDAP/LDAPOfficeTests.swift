@@ -36,6 +36,8 @@ final class LDAPOfficeTests : XCTestCase {
 	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
+		bootstrapIfNeeded()
+		
 		LDAPOfficeConfig.logger = Logger(label: "test-ldap")
 		LDAPOfficeConfig.logger?.logLevel = .trace
 		confs = Result{

@@ -37,8 +37,7 @@ final class GoogleOfficeTests : XCTestCase {
 	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
-		URLRequestOperationConfig.maxRequestBodySizeToLog = .max
-		URLRequestOperationConfig.maxResponseBodySizeToLog = .max
+		bootstrapIfNeeded()
 		confs = Result{ try parsedConf(for: "google") }
 	}
 	

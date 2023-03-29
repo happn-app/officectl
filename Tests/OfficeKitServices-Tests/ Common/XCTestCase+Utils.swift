@@ -8,11 +8,35 @@
 import Foundation
 import XCTest
 
+import CLTLogger
+import Logging
+import RetryingOperation
 import StreamReader
+import URLRequestOperation
 
 
 
 public extension XCTestCase {
+	
+	static var hasBootstrapped = false
+	static func bootstrapIfNeeded() {
+		guard !hasBootstrapped else {return}
+		defer {hasBootstrapped = true}
+		
+		LoggingSystem.bootstrap({ id, metadataProvider in
+			/* Note: CLTLoggers do not have IDs, so we do not use the id parameter of the handler. */
+			var ret = CLTLogger(metadataProvider: metadataProvider)
+			ret.logLevel = .trace
+			return ret
+		}, metadataProvider: nil)
+		
+		RetryingOperationConfig.oslog = nil
+		RetryingOperationConfig.logger = Logger(label: "RetryingOperation")
+		URLRequestOperationConfig.oslog = nil
+		URLRequestOperationConfig.logger = Logger(label: "URLRequestOperation")
+		URLRequestOperationConfig.maxRequestBodySizeToLog = .max
+		URLRequestOperationConfig.maxResponseBodySizeToLog = .max
+	}
 	
 	static let testsDataPath = URL(fileURLWithPath: #file, isDirectory: false)
 		.deletingLastPathComponent()

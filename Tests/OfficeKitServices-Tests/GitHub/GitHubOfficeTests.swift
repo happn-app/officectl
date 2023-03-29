@@ -39,8 +39,7 @@ final class GitHubOfficeTests : XCTestCase {
 	
 	/* Why, oh why this is not throwing? idk. */
 	override class func setUp() {
-		URLRequestOperationConfig.maxResponseBodySizeToLog = .max
-		URLRequestOperationConfig.maxRequestBodySizeToLog = .max
+		bootstrapIfNeeded()
 		confs = Result{ try parsedConf(for: "github") }
 	}
 	
