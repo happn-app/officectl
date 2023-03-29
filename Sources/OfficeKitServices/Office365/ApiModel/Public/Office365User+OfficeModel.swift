@@ -76,7 +76,7 @@ extension Office365User : User {
 						throw PropertyChangeResult.Failure.unremovableProperty
 					}
 					let other = emails.dropFirst().first
-					let changed = (userPrincipalName != first && mail != other)
+					let changed = (userPrincipalName != first || mail != other)
 					userPrincipalName = first
 					mail = other
 					return changed ? .successChanged : .successUnchanged
