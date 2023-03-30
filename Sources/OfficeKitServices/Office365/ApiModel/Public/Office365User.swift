@@ -42,6 +42,24 @@ public struct Office365User : Sendable, Hashable, Codable {
 	
 	public var passwordProfile: PasswordProfile?
 	
+	internal func forPatching(properties: Set<CodingKeys>) -> Office365User {
+		var ret = Office365User(userPrincipalName: userPrincipalName)
+		ret.id = id
+		for property in properties {
+			switch property {
+				case .id, .userPrincipalName: (/*nop*/)
+				case .accountEnabled:  ret.accountEnabled  = accountEnabled
+				case .givenName:       ret.givenName       = givenName
+				case .surname:         ret.surname         = surname
+				case .mail:            ret.mail            = mail
+				case .mailNickname:    ret.mailNickname    = mailNickname
+				case .displayName:     ret.displayName     = displayName
+				case .passwordProfile: ret.passwordProfile = passwordProfile
+			}
+		}
+		return ret
+	}
+	
 	public enum CodingKeys : String, CodingKey {
 		case id, accountEnabled
 		case givenName, surname

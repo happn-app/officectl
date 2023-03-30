@@ -154,7 +154,7 @@ public final class Office365Service : UserService {
 	public func updateUser(_ user: Office365User, propertiesToUpdate: Set<UserProperty>) async throws -> Office365User {
 		/* For a client credential flow, only “/.default” scopes are allowed. */
 		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
-		throw Err.__notImplemented
+		return try await user.update(properties: Office365User.keysFromProperties(propertiesToUpdate), connector: connector)
 	}
 	
 	public let supportsUserDeletion: Bool = true
