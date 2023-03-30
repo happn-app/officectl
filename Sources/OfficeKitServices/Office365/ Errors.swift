@@ -20,7 +20,7 @@ public enum Office365OfficeError : Error, Sendable {
 	
 	case notConnected
 	
-	case __notImplemented
+	case internalError
 	
 }
 

@@ -47,6 +47,7 @@ extension Office365User : User {
 	}
 	
 	public mutating func oU_setValue<V>(_ newValue: V?, forProperty property: OfficeKit.UserProperty, convertMismatchingTypes convert: Bool) -> OfficeKit.PropertyChangeResult where V : Sendable {
+		let passwordProperty = UserProperty(rawValue: Office365Service.providerID + "/password")
 		let userPrincipalNameProperty = UserProperty(Office365Service.providerID + "/userPrincipalName")
 		switch property {
 			case .id, userPrincipalNameProperty:
@@ -85,6 +86,29 @@ extension Office365User : User {
 					return .anyFailure(error)
 				}
 				
+			case passwordProperty:
+				do {
+					if let newValue {
+						let newPass = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+						let newPassProfile = PasswordProfile(
+							forceChangePasswordNextSignIn: false,
+							forceChangePasswordNextSignInWithMfa: false,
+							password: newPass
+						)
+						let changed = (newPassProfile != passwordProfile)
+						passwordProfile = newPassProfile
+						return changed ? .successChanged : .successUnchanged
+						
+					} else {
+						let changed = (passwordProfile != nil)
+						passwordProfile = nil
+						return changed ? .successChanged : .successUnchanged
+					}
+					
+				} catch {
+					return .anyFailure(error)
+				}
+				
 			default:
 				return .failure(.unsupportedProperty)
 		}
@@ -103,7 +127,8 @@ extension Office365User : User {
 			.emails: [.userPrincipalName, .mail],
 			.firstName: [.givenName],
 			.lastName: [.surname],
-			.nickname: [.displayName]
+			.nickname: [.displayName],
+			.init(rawValue: Office365Service.providerID + "/password"): [.passwordProfile]
 		]
 	}
 	

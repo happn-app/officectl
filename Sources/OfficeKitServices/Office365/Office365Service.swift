@@ -166,9 +166,12 @@ public final class Office365Service : UserService {
 	
 	public let supportsPasswordChange: Bool = true
 	public func changePassword(of user: Office365User, to newPassword: String) async throws {
-		/* For a client credential flow, only “/.default” scopes are allowed. */
-		try await connector.increaseScopeIfNeeded("https://graph.microsoft.com/.default")
-		throw Err.__notImplemented
+		var user = user
+		let passwordProperty = UserProperty(rawValue: Office365Service.providerID + "/password")
+		guard user.oU_setValue(newPassword, forProperty: passwordProperty, convertMismatchingTypes: false).isSuccessful else {
+			throw Err.internalError
+		}
+		_ = try await updateUser(user, propertiesToUpdate: [passwordProperty])
 	}
 	
 }
