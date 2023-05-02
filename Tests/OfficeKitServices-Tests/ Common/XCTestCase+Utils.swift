@@ -30,9 +30,11 @@ public extension XCTestCase {
 			return ret
 		}, metadataProvider: nil)
 		
+#if canImport(os)
 		RetryingOperationConfig.oslog = nil
-		RetryingOperationConfig.logger = Logger(label: "RetryingOperation")
 		URLRequestOperationConfig.oslog = nil
+#endif
+		RetryingOperationConfig.logger = Logger(label: "RetryingOperation")
 		URLRequestOperationConfig.logger = Logger(label: "URLRequestOperation")
 		URLRequestOperationConfig.maxRequestBodySizeToLog = .max
 		URLRequestOperationConfig.maxResponseBodySizeToLog = .max
