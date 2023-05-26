@@ -142,8 +142,8 @@ let package = Package(
 		/* *********************
 		   MARK: Office Services
 		   ********************* */
-		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit")],                                                                                   path: "Sources/OfficeKitServices/ Common",     swiftSettings: commonSwiftSettings))
-		ret.append(.target(name: "CommonForOfficeKitServicesTests", dependencies: [.product(name: "StreamReader", package: "stream-reader"), .product(name: "CLTLogger", package: "clt-logger")], path: "Tests/OfficeKitServices-Tests/ Common", swiftSettings: commonSwiftSettings))
+		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit")],                                                                                                                                                          path: "Sources/OfficeKitServices/ Common",     swiftSettings: commonSwiftSettings))
+		ret.append(.target(name: "CommonForOfficeKitServicesTests", dependencies: [.product(name: "URLRequestOperation", package: "URLRequestOperation"), .product(name: "StreamReader", package: "stream-reader"), .product(name: "CLTLogger", package: "clt-logger")], path: "Tests/OfficeKitServices-Tests/ Common", swiftSettings: commonSwiftSettings))
 		ret.append(contentsOf: targetsForService(named: "GitHubOffice",        folderName: "GitHub",    additionalDependencies: networkDependencies + [.product(name: "JWT", package: "jwt")]))
 		ret.append(contentsOf: targetsForService(named: "GoogleOffice",        folderName: "Google",    additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
 		ret.append(contentsOf: targetsForService(named: "HappnOffice",         folderName: "happn",     additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
