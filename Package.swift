@@ -153,6 +153,7 @@ let package = Package(
 #if canImport(OpenDirectory)
 		ret.append(contentsOf: targetsForService(named: "OpenDirectoryOffice", folderName: "OpenDirectory"))
 #endif
+		ret.append(contentsOf: targetsForService(named: "SynologyOffice",      folderName: "Synology",  additionalDependencies: networkDependencies))
 		ret.append(contentsOf: targetsForService(named: "VaultPKIOffice",      folderName: "VaultPKI",  additionalDependencies: networkDependencies + [.product(name: "X509", package: "swift-certificates"), .product(name: "SwiftASN1", package: "swift-asn1")]))
 		
 		/* ************************
@@ -207,6 +208,7 @@ let package = Package(
 #if canImport(OpenDirectory)
 				ret.append(.target(name: "OpenDirectoryOffice"))
 #endif
+				ret.append(.target(name: "SynologyOffice"))
 				ret.append(.target(name: "VaultPKIOffice"))
 				
 #if !canImport(Darwin)
