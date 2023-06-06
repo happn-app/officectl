@@ -14,24 +14,25 @@ import OfficeKit
 
 extension SynologyUser : User {
 	
-	public typealias UserIDType = Email
-	public typealias PersistentUserIDType = String
+	public typealias UserIDType = String
+	public typealias PersistentUserIDType = Int
 	
-	public init(oU_id userID: Email) {
-		self.userPrincipalName = userID
+	public init(oU_id userID: String) {
+		self.name = userID
 	}
 	
-	public var oU_id: Email {userPrincipalName}
-	public var oU_persistentID: String? {id}
+	public var oU_id: String {name}
+	public var oU_persistentID: Int? {uid}
 	
+	/* TODO: This is “expired != .normal” maybe. */
 	public var oU_isSuspended: Bool? {nil}
 	
-	public var oU_firstName: String? {givenName}
-	public var oU_lastName: String? {surname}
-	public var oU_nickname: String? {displayName}
+	public var oU_firstName: String? {nil}
+	public var oU_lastName: String? {nil}
+	public var oU_nickname: String? {nil}
 	
 	public var oU_emails: [Email]? {
-		return [userPrincipalName] + ((mail != userPrincipalName ? mail : nil).flatMap{ [$0] } ?? [])
+		return email.flatMap{ [$0] }
 	}
 	
 	public var oU_nonStandardProperties: Set<String> {
@@ -47,67 +48,68 @@ extension SynologyUser : User {
 	}
 	
 	public mutating func oU_setValue<V>(_ newValue: V?, forProperty property: OfficeKit.UserProperty, convertMismatchingTypes convert: Bool) -> OfficeKit.PropertyChangeResult where V : Sendable {
-		let passwordProperty = UserProperty(rawValue: SynologyService.providerID + "/password")
-		let userPrincipalNameProperty = UserProperty(SynologyService.providerID + "/userPrincipalName")
+//		let passwordProperty = UserProperty(rawValue: SynologyService.providerID + "/password")
+		let uidProperty = UserProperty(SynologyService.providerID + "/uid")
 		switch property {
-			case .id, userPrincipalNameProperty:
-				return Self.setProperty(&userPrincipalName, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToEmail)
+			case .id, uidProperty:
+				return Self.setProperty(&uid, to: newValue, allowTypeConversion: convert, converter: { Converters.convertObjectToInt($0) })
 				
 			case .isSuspended:
 				return .failure(.unsupportedProperty)
 				
-			case .firstName: return Self.setOptionalProperty(&givenName,   to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
-			case .lastName:  return Self.setOptionalProperty(&surname,     to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
-			case .nickname:  return Self.setOptionalProperty(&displayName, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+			case .firstName: return .failure(.unsupportedProperty)
+			case .lastName:  return .failure(.unsupportedProperty)
+			case .nickname:  return .failure(.unsupportedProperty)
 				
 			case .emails:
-				do {
-					guard let newValue else {
-						Conf.logger?.error("Cannot remove all the emails of an Synology user (id is an email…).")
-						throw PropertyChangeResult.Failure.unremovableProperty
-					}
-					
-					let emails = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToEmails)
-					guard emails.count <= 2 else {
-						Conf.logger?.error("An Synology user can have at most 2 emails.")
-						throw PropertyChangeResult.Failure.valueConversionFailed
-					}
-					guard let first = emails.first else {
-						Conf.logger?.error("Cannot remove all the emails of an Synology user (id is an email…).")
-						throw PropertyChangeResult.Failure.unremovableProperty
-					}
-					let other = emails.dropFirst().first
-					let changed = (userPrincipalName != first || mail != other)
-					userPrincipalName = first
-					mail = other
-					return changed ? .successChanged : .successUnchanged
-					
-				} catch {
-					return .anyFailure(error)
-				}
+				return .failure(.unsupportedProperty)
+//				do {
+//					guard let newValue else {
+//						Conf.logger?.error("Cannot remove all the emails of an Synology user (id is an email…).")
+//						throw PropertyChangeResult.Failure.unremovableProperty
+//					}
+//					
+//					let emails = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToEmails)
+//					guard emails.count <= 2 else {
+//						Conf.logger?.error("An Synology user can have at most 2 emails.")
+//						throw PropertyChangeResult.Failure.valueConversionFailed
+//					}
+//					guard let first = emails.first else {
+//						Conf.logger?.error("Cannot remove all the emails of an Synology user (id is an email…).")
+//						throw PropertyChangeResult.Failure.unremovableProperty
+//					}
+//					let other = emails.dropFirst().first
+//					let changed = (userPrincipalName != first || mail != other)
+//					userPrincipalName = first
+//					mail = other
+//					return changed ? .successChanged : .successUnchanged
+//					
+//				} catch {
+//					return .anyFailure(error)
+//				}
 				
-			case passwordProperty:
-				do {
-					if let newValue {
-						let newPass = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
-						let newPassProfile = PasswordProfile(
-							forceChangePasswordNextSignIn: false,
-							forceChangePasswordNextSignInWithMfa: false,
-							password: newPass
-						)
-						let changed = (newPassProfile != passwordProfile)
-						passwordProfile = newPassProfile
-						return changed ? .successChanged : .successUnchanged
-						
-					} else {
-						let changed = (passwordProfile != nil)
-						passwordProfile = nil
-						return changed ? .successChanged : .successUnchanged
-					}
-					
-				} catch {
-					return .anyFailure(error)
-				}
+//			case passwordProperty:
+//				do {
+//					if let newValue {
+//						let newPass = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+//						let newPassProfile = PasswordProfile(
+//							forceChangePasswordNextSignIn: false,
+//							forceChangePasswordNextSignInWithMfa: false,
+//							password: newPass
+//						)
+//						let changed = (newPassProfile != passwordProfile)
+//						passwordProfile = newPassProfile
+//						return changed ? .successChanged : .successUnchanged
+//						
+//					} else {
+//						let changed = (passwordProfile != nil)
+//						passwordProfile = nil
+//						return changed ? .successChanged : .successUnchanged
+//					}
+//					
+//				} catch {
+//					return .anyFailure(error)
+//				}
 				
 			default:
 				return .failure(.unsupportedProperty)
@@ -121,14 +123,14 @@ extension SynologyUser : User {
 	internal static var propertyToKeys: [UserProperty: [SynologyUser.CodingKeys]] {
 		[
 			/* Standard. */
-			.id: [.userPrincipalName],
-			.persistentID: [.id],
-			.isSuspended: [.accountEnabled],
-			.emails: [.userPrincipalName, .mail],
-			.firstName: [.givenName],
-			.lastName: [.surname],
-			.nickname: [.displayName],
-			.init(rawValue: SynologyService.providerID + "/password"): [.passwordProfile]
+			.id: [.name],
+			.persistentID: [.uid],
+			.isSuspended: [],
+			.emails: [.email],
+			.firstName: [],
+			.lastName: [],
+			.nickname: []/*,
+			.init(rawValue: SynologyService.providerID + "/password"): [.passwordProfile]*/
 		]
 	}
 	
@@ -140,8 +142,8 @@ extension SynologyUser : User {
 		return Set(keys)
 	}
 	
-	internal static func validFieldsParameter(from keys: Set<CodingKeys>) -> String {
-		return (keys + [.userPrincipalName, .id]).map{ $0.stringValue }.joined(separator: ",")
-	}
+//	internal static func validFieldsParameter(from keys: Set<CodingKeys>) -> String {
+//		return (keys + [.userPrincipalName, .id]).map{ $0.stringValue }.joined(separator: ",")
+//	}
 	
 }

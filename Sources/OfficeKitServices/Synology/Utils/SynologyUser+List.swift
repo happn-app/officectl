@@ -18,18 +18,16 @@ import OfficeKit
 
 extension SynologyUser {
 	
-	/* <https://learn.microsoft.com/en-us/graph/api/user-list> */
+	/* I did not find an actual doc for the users API for synology.
+	 * Most of what we did is reverse engineer from DSM own webapp and from the DS Manager app. */
 	static func getAll(includeSuspended: Bool = false, propertiesToFetch keys: Set<SynologyUser.CodingKeys>?, connector: SynologyConnector) async throws -> [SynologyUser] {
-		throw Err.__notImplemented
-//		let baseURL = URL(string: "https://graph.microsoft.com/v1.0/")!
-//		let mandatoryKeys: Set<SynologyUser.CodingKeys> = [.id, .userPrincipalName]
-//		
-//		var urlParameters = [String: String]()
-//		if !includeSuspended {urlParameters["$filter"] = "accountEnabled eq true"}
-//		if let keys {urlParameters["$select"] = keys.union(mandatoryKeys).map{ $0.rawValue }.joined(separator: ",")}
-//		
-//		let request = try URLRequest(url: baseURL.appending("users").appendingQueryParameters(from: urlParameters))
-//		return try await CollectionResponse<SynologyUser>.getAll(sourceRequest: request, requestProcessors: [AuthRequestProcessor(connector)], retryProviders: [AuthRequestRetryProvider(connector)])
+		let decoder = SendableJSONDecoder{ _ in }
+		return try await URLRequestDataOperation<ApiResponse<UsersListResponseBody>>.forAPIRequest(
+			urlRequest: try connector.urlRequestForEntryCGI(GETRequest: UsersListRequestBody(additionalFields: keys)),
+			decoders: [decoder],
+			requestProcessors: [AuthRequestProcessor(connector)],
+			retryProviders: []
+		).startAndGetResult().result.get().users
 	}
 	
 }

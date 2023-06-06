@@ -14,7 +14,7 @@ struct Empty : Decodable {}
 enum ApiResponse<Element : Sendable & Decodable> : Sendable, Decodable {
 	
 	case success(Element)
-	case failure(ApiError)
+	case failure(SynologyApiError)
 	
 	init(from decoder: Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -30,7 +30,20 @@ enum ApiResponse<Element : Sendable & Decodable> : Sendable, Decodable {
 				self = .success(try container.decode(Element.self, forKey: .data))
 			}
 		} else {
-			self = .failure(try container.decode(ApiError.self, forKey: .error))
+			self = .failure(try container.decode(SynologyApiError.self, forKey: .error))
+		}
+	}
+	
+	func get(apiErrorCodeToError: [Int: Error] = [:]) throws -> Element {
+		return try get(apiErrorToError: { err in
+			return apiErrorCodeToError[err.code] ?? Err.apiUnknownError(err)
+		})
+	}
+	
+	func get(apiErrorToError: @Sendable (SynologyApiError) -> Error) throws -> Element {
+		switch self {
+			case .success(let elt): return elt
+			case .failure(let err): throw apiErrorToError(err)
 		}
 	}
 	

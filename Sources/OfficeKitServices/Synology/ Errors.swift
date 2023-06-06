@@ -13,20 +13,21 @@ public enum SynologyOfficeError : Error, Sendable {
 	
 	case dsmURLIsInvalid
 	
-	case loginInvalidCreds
-	case loginAccountDisabled
-	case permissionDenied
-	case loginNeeds2FA
-	case loginFailed2FA
-	case loginEnforce2FA
-	case loginForbiddenIP
-	case loginExpiredPasswordAndCannotChange
-	case loginExpiredPassword
-	case loginPasswordMustBeChanged
-	case unknownCode(Int)
+	case apiLoginInvalidCreds
+	case apiLoginAccountDisabled
+	case apiLoginPermissionDenied
+	case apiLoginNeeds2FA
+	case apiLoginFailed2FA
+	case apiLoginEnforce2FA
+	case apiLoginForbiddenIP
+	case apiLoginExpiredPasswordAndCannotChange
+	case apiLoginExpiredPassword
+	case apiLoginPasswordMustBeChanged
+	case apiUnknownError(SynologyApiError)
 	
 	case notConnected
 	
+	case invalidPersistentID
 	case internalError
 	
 	case __notImplemented

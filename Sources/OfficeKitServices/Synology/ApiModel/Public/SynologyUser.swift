@@ -9,64 +9,46 @@ import Foundation
 
 import Email
 
+import OfficeKit
+
 
 
 public struct SynologyUser : Sendable, Hashable, Codable {
 	
-	/* <https://learn.microsoft.com/en-us/graph/api/resources/passwordprofile> */
-	public struct PasswordProfile : Sendable, Hashable, Codable {
+	public enum Expiration : String, Codable, Sendable {
 		
-		public var forceChangePasswordNextSignIn: Bool
-		public var forceChangePasswordNextSignInWithMfa: Bool
-		public var password: String
+		case now
+		case normal
 		
 	}
 	
-	public var id: String?
-	public var accountEnabled: Bool?
+	public var name: String
+	public var uid: Int?
 	
-	/** First name */
-	public var givenName: String?
-	/** Last name */
-	public var surname: String?
+	@EmptyIsNil
+	public var email: Email?
+	public var description: String?
 	
-	public var userPrincipalName: Email
-	public var mail: Email?
-	public var mailNickname: String?
-	
-	public var displayName: String?
-	
-	/* These exist but we do not support them as we do not have created the custom properties to fetch them. */
-//	public var mobilePhone: String?
-//	public var businessPhones: [String]?
-	
-	public var passwordProfile: PasswordProfile?
+	public var expired: Expiration?
 	
 	internal func forPatching(properties: Set<CodingKeys>) -> SynologyUser {
-		var ret = SynologyUser(userPrincipalName: userPrincipalName)
-		ret.id = id
+		var ret = SynologyUser(name: name)
+		ret.uid = uid
 		for property in properties {
 			switch property {
-				case .id, .userPrincipalName: (/*nop*/)
-				case .accountEnabled:  ret.accountEnabled  = accountEnabled
-				case .givenName:       ret.givenName       = givenName
-				case .surname:         ret.surname         = surname
-				case .mail:            ret.mail            = mail
-				case .mailNickname:    ret.mailNickname    = mailNickname
-				case .displayName:     ret.displayName     = displayName
-				case .passwordProfile: ret.passwordProfile = passwordProfile
+				case .uid, .name: (/*nop*/)
+				case .email:       ret.email       = email
+				case .description: ret.description = description
+				case .expired:     ret.expired     = expired
 			}
 		}
 		return ret
 	}
 	
 	public enum CodingKeys : String, CodingKey {
-		case id, accountEnabled
-		case givenName, surname
-		case userPrincipalName, mail, mailNickname
-		case displayName
-//		case mobilePhone, businessPhones
-		case passwordProfile
+		case name, uid
+		case email, description
+		case expired
 	}
 	
 }

@@ -56,6 +56,27 @@ public actor SynologyConnector : Connector, Authenticator, HasTaskQueue {
 		self.password = password
 	}
 	
+	public func connectIfNeeded() async throws {
+		guard !isConnected else {
+			return
+		}
+		
+		try await connect(())
+	}
+	
+	public nonisolated func urlRequestForEntryCGI<RequestBody : Encodable>(GETRequest request: RequestBody) throws -> URLRequest {
+		return try urlRequest(for: "webapi/entry.cgi", GETRequest: request)
+	}
+	
+	public nonisolated func urlRequest<RequestBody : Encodable>(for path: String, GETRequest request: RequestBody) throws -> URLRequest {
+		var urlComponents = dsmURLComponents
+		assert(urlComponents.percentEncodedQuery?.isEmpty ?? true)
+		urlComponents.percentEncodedQuery = try FormURLEncodedEncoder().encode(request)
+		if path.starts(with: "/") {urlComponents.path  = path}
+		else                      {urlComponents.path += path}
+		return try URLRequest(url: urlComponents.url ?! Err.internalError)
+	}
+	
 	/* ********************************
 	   MARK: - Connector Implementation
 	   ******************************** */
@@ -64,33 +85,24 @@ public actor SynologyConnector : Connector, Authenticator, HasTaskQueue {
 		try await unqueuedDisconnect()
 		
 		let request = TokenRequestBody(username: username, password: password)
-		var urlComponents = dsmURLComponents
-		assert(urlComponents.percentEncodedQuery?.isEmpty ?? true)
-		urlComponents.percentEncodedQuery = try FormURLEncodedEncoder().encode(request)
-		urlComponents.path += "webapi/entry.cgi"
-		
-		let url = try urlComponents.url ?! Err.internalError
-		let op = URLRequestDataOperation<ApiResponse<TokenResponseBody>>.forAPIRequest(url: url, retryProviders: [])
-		let res = try await op.startAndGetResult().result
-		switch res {
-			case let .success(body):
-				tokenInfo = TokenInfo(token: body.sessionID)
-				
-			case let .failure(error):
-				switch error.code {
-					case 400: throw Err.loginInvalidCreds
-					case 401: throw Err.loginAccountDisabled
-					case 402: throw Err.permissionDenied
-					case 403: throw Err.loginNeeds2FA
-					case 404: throw Err.loginFailed2FA
-					case 406: throw Err.loginEnforce2FA
-					case 407: throw Err.loginForbiddenIP
-					case 408: throw Err.loginExpiredPasswordAndCannotChange
-					case 409: throw Err.loginExpiredPassword
-					case 410: throw Err.loginPasswordMustBeChanged
-					default: throw Err.unknownCode(error.code)
-				}
-		}
+		let op = try URLRequestDataOperation<ApiResponse<TokenResponseBody>>.forAPIRequest(
+			urlRequest: urlRequestForEntryCGI(GETRequest: request),
+			retryProviders: []
+		)
+		let apiErrorToError = [
+			400: Err.apiLoginInvalidCreds,
+			401: Err.apiLoginAccountDisabled,
+			402: Err.apiLoginPermissionDenied,
+			403: Err.apiLoginNeeds2FA,
+			404: Err.apiLoginFailed2FA,
+			406: Err.apiLoginEnforce2FA,
+			407: Err.apiLoginForbiddenIP,
+			408: Err.apiLoginExpiredPasswordAndCannotChange,
+			409: Err.apiLoginExpiredPassword,
+			410: Err.apiLoginPasswordMustBeChanged
+		]
+		let responseBody = try await op.startAndGetResult().result.get(apiErrorCodeToError: apiErrorToError)
+		tokenInfo = TokenInfo(token: responseBody.sessionID)
 	}
 	
 	public func unqueuedDisconnect() async throws {
@@ -100,19 +112,10 @@ public actor SynologyConnector : Connector, Authenticator, HasTaskQueue {
 		}
 		
 		let request = TokenRevokeRequestBody()
-		var urlComponents = dsmURLComponents
-		assert(urlComponents.percentEncodedQuery?.isEmpty ?? true)
-		urlComponents.percentEncodedQuery = try FormURLEncodedEncoder().encode(request)
-		urlComponents.path += "webapi/entry.cgi"
-		
-		let urlRequest = try await unqueuedAuthenticate(request: URLRequest(url: urlComponents.url ?! Err.internalError))
+		let urlRequest = try await unqueuedAuthenticate(request: urlRequestForEntryCGI(GETRequest: request))
 		let op = URLRequestDataOperation<ApiResponse<Empty>>.forAPIRequest(urlRequest: urlRequest)
-		let res = try await op.startAndGetResult().result
-		
-		switch res {
-			case .success: tokenInfo = nil
-			case .failure(let err): throw Err.unknownCode(err.code)
-		}
+		_ = try await op.startAndGetResult().result.get()
+		tokenInfo = nil
 	}
 	
 	/* ************************************
