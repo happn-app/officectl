@@ -30,6 +30,7 @@ import OfficeKitOffice
 #if canImport(OpenDirectoryOffice)
 import OpenDirectoryOffice
 #endif
+import SynologyOffice
 import VaultPKIOffice
 
 
@@ -163,6 +164,7 @@ extension Officectl.Options {
 #if canImport(OpenDirectoryOffice)
 		OfficeKitServices.providers[OpenDirectoryService.providerID] = OpenDirectoryService.self
 #endif
+		OfficeKitServices.providers[     SynologyService.providerID] =      SynologyService.self
 		OfficeKitServices.providers[     VaultPKIService.providerID] =      VaultPKIService.self
 		
 		/* *** OFFICEKIT SERVICES *** */
