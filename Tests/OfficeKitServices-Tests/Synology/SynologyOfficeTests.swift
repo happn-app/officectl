@@ -107,14 +107,10 @@ final class SynologyOfficeTests : XCTestCase {
 		XCTAssertEqual(user.oU_lastName, nil)
 		
 		XCTAssertFalse(user.oU_setValue(modifiedID + "@happn.fr", forProperty: .emails, convertMismatchingTypes: false).propertyWasModified)
-		XCTAssertTrue( user.oU_setValue(modifiedID + "@happn.fr", forProperty: .emails, convertMismatchingTypes: true ).propertyWasModified)
+		XCTAssertTrue (user.oU_setValue(modifiedID + "@happn.fr", forProperty: .emails, convertMismatchingTypes: true ).propertyWasModified)
 		
 		user = try await service.updateUser(user, propertiesToUpdate: [.emails])
-		XCTAssertEqual(user.name, modifiedID)
-		/* First name and last name are nil here as the M$ service will fully re-fetch the user after an update, with the properties to update.
-		 * This is due to M$’s API not returning the user after an update. */
-		XCTAssertNil(user.oU_firstName)
-		XCTAssertNil(user.oU_lastName)
+		XCTAssertEqual(user.email, Email(rawValue: modifiedID + "@happn.fr")!)
 		
 		try await service.deleteUser(user)
 	}

@@ -132,19 +132,10 @@ public final class SynologyService : UserService {
 	
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: SynologyUser) async throws -> SynologyUser {
-		/* Let’s set the uid for the user if it is not already set. */
-		var user = user
-		if user.uid == nil {
-			/* First let’s get all the users.
-			 * We get the max of the current UIDs; the goal is to avoid reusing a UID.
-			 * If the UID w/ max UID gets deleted, the next user will have the same UID (or lower), but I don’t see how I can mitigate that… */
-			let users = try await listAllUsers(includeSuspended: true, propertiesToFetch: [.persistentID])
-			let maxUID = users.compactMap(\.uid).max()
-			user.uid = maxUID.flatMap{ $0 + 1 } ?? 1024 /* First UID seems to be 1024. */
-		} else {
-			Conf.logger?.warning("Setting the uid for a Synology user is not recommended. It should be left empty to be inferred from the current users on the directory.")
+		if user.uid != nil {
+			/* Note: I did not test whether the Synology would ignore the value if I sent it. */
+			Conf.logger?.warning("The uid property of a Synology user is ignored when creating it.")
 		}
-		
 		try await connector.connectIfNeeded()
 		return try await URLRequestDataOperation<ApiResponse<SynologyUser>>.forAPIRequest(
 			urlRequest: try connector.urlRequestForEntryCGI(GETRequest: UserCreateRequestBody(user: user)),
@@ -155,12 +146,29 @@ public final class SynologyService : UserService {
 	
 	public let supportsUserUpdate: Bool = true
 	public func updateUser(_ user: SynologyUser, propertiesToUpdate: Set<UserProperty>) async throws -> SynologyUser {
-		return try await user.update(properties: SynologyUser.keysFromProperties(propertiesToUpdate), connector: connector)
+		try await connector.connectIfNeeded()
+		let keys = SynologyUser.keysFromProperties(propertiesToUpdate)
+		let newUser = try await URLRequestDataOperation<ApiResponse<SynologyUser>>.forAPIRequest(
+			urlRequest: try connector.urlRequestForEntryCGI(GETRequest: UserUpdateRequestBody(user: user.forPatching(properties: keys))),
+			requestProcessors: [AuthRequestProcessor(connector)],
+			retryProviders: []
+		).startAndGetResult().result.get()
+		/* We have to re-retrieve the user as there’s no way to tell the Synology we want our updated fields returned AFAICT.
+		 * We retrieve the user from the non-persistent ID as it’s more efficient. */
+		return try await existingUser(fromID: newUser.oU_id, propertiesToFetch: propertiesToUpdate) ?? newUser
 	}
 	
 	public let supportsUserDeletion: Bool = true
 	public func deleteUser(_ user: SynologyUser) async throws {
-		return try await user.delete(connector: connector)
+		try await connector.connectIfNeeded()
+		let res = try await URLRequestDataOperation<ApiResponse<UsersDeletionResponseBody>>.forAPIRequest(
+			urlRequest: try connector.urlRequestForEntryCGI(GETRequest: UsersDeletionRequestBody(users: [user])),
+			requestProcessors: [AuthRequestProcessor(connector)],
+			retryProviders: []
+		).startAndGetResult().result.get()
+		guard res.errors.onlyElement == 3102 else {
+			throw Err.unexpectedApiResponse
+		}
 	}
 	
 	public let supportsPasswordChange: Bool = true

@@ -24,6 +24,7 @@ public enum SynologyOfficeError : Error, Sendable {
 	case apiLoginExpiredPassword
 	case apiLoginPasswordMustBeChanged
 	case apiUnknownError(SynologyApiError)
+	case unexpectedApiResponse
 	
 	case notConnected
 	

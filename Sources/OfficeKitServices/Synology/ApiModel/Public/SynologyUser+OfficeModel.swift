@@ -57,9 +57,14 @@ extension SynologyUser : User {
 	public mutating func oU_setValue<V>(_ newValue: V?, forProperty property: OfficeKit.UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult where V : Sendable {
 		do {
 			let passwordProperty = UserProperty(rawValue: SynologyService.providerID + "/password")
-			let uidProperty = UserProperty(SynologyService.providerID + "/uid")
 			switch property {
-				case .id, uidProperty:
+				case .id:
+					/* When communicating with the Synology, the ID of the user is its name.
+					 * Changing the name of the user is probably not possible, just like LDAP. */
+					Conf.logger?.warning("Changing the ID of a Synology user is not recommended at all as it will probably not do what you expect. Please delete and re-create the object instead.")
+					return Self.setProperty(&name, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+					
+				case .persistentID:
 					return Self.setProperty(&uid, to: newValue, allowTypeConversion: convert, converter: { Converters.convertObjectToInt($0) })
 					
 				case .isSuspended:
