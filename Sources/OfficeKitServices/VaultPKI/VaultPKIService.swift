@@ -142,7 +142,7 @@ public final class VaultPKIService : UserService {
 		throw NI()
 	}
 	
-	/* Use update is supported for suspending the user. */
+	/* User update is supported for suspending the user. */
 	public let supportsUserUpdate = true
 	public func updateUser(_ user: VaultPKIUser, propertiesToUpdate: Set<OfficeKit.UserProperty>) async throws -> VaultPKIUser {
 		struct NI : Error {}
