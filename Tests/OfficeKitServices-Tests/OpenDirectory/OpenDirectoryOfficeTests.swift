@@ -12,6 +12,7 @@ import CommonForOfficeKitServicesTests
 import Email
 import Logging
 import OfficeKit
+import UnwrapOrThrow
 import URLRequestOperation
 
 @testable import OpenDirectoryOffice
@@ -60,7 +61,7 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		service = nil
 	}
 	
-	func testListAllUser() async throws {
+	func testListAllUsers() async throws {
 		let allUsers = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil)
 		XCTAssertGreaterThan(allUsers.count, 0)
 	}
@@ -89,11 +90,6 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		XCTAssertNotNil(user)
 		XCTAssertNil(user?.oU_lastName)
 		XCTAssertNotNil(user?.oU_firstName)
-	}
-	
-	func testListAllUsers() async throws {
-		let users = try await service.listAllUsers(includeSuspended: true, propertiesToFetch: nil)
-		XCTAssertGreaterThan(users.count, 0)
 	}
 	
 	func testCreateUpdateDeleteUser() async throws {
@@ -144,7 +140,9 @@ final class OpenDirectoryOfficeTests : XCTestCase {
 		XCTAssertTrue(user.oU_setValue(modifiedID, forProperty: .id, convertMismatchingTypes: true).propertyWasModified)
 		XCTAssertEqual(user.id, modifiedID)
 		
-		/* So changing the ID of a user is not unsupported per se in Open Directory, but with our instance, it fails (with a cryptic error, of course: “Connection failed to the directory server.”) */
+		/* So changing the ID of a user is not unsupported per se in Open Directory,
+		 *  but with our instance, it fails (with a cryptic error, of course: “Connection failed to the directory server.”).
+		 * We have fully disabled modifying the record name of an entry now because it brought other issues (see “OpenDirectoryServices.swift”). */
 		print("Updating user...")
 		let result = await Result{ try await service.updateUser(user, propertiesToUpdate: [.id]) }
 		XCTAssertThrowsError(try result.get())

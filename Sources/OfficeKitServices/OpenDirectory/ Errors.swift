@@ -16,6 +16,7 @@ public enum OpenDirectoryOfficeError : Error, Sendable {
 	case notConnected
 	
 	case invalidPersistentID
+	case triedToChangeRecordName
 	
 	case internalError
 	

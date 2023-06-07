@@ -206,10 +206,22 @@ public final class OpenDirectoryService : UserService {
 			 * - Updating kODAttributeTypeMetaRecordName does not work either (fails with error “An invalid attribute type was provided.”);
 			 * - All other updates I tested (no much though) did work, even setting a value to multi-data when a string is “expected” (with valid UTF-8 data of course).
 			 *
-			 * From this, we do the update of kODAttributeTypeRecordName and kODAttributeTypeMetaRecordName if applicable first, to fail as early as possible. */
+			 * From this, we do the update of kODAttributeTypeRecordName and kODAttributeTypeMetaRecordName if applicable first, to fail as early as possible.
+			 *
+			 * EDIT: We fail directly after all.
+			 * Rationale:
+			 * It seems the objects modified this way are in an inconsistent state and removing them does not work using our method, for an unknown reason.
+			 * We get the error 10000, “Operation is not supported by the directory node.”
+			 * Interestingly, removing the object from Server.app does work.
+			 *
+			 * Note:
+			 * The removal probably worked at some point.
+			 * Currently it does not (client is on macOS 14.0 Beta (23A5257q), OD server is on macOS 12.6.6 (21G646)).
+			 * The host version did change for sure, but I the server one is probably the same as when it worked, so I don’t know how relevant that can be… */
 			if attributeNames.remove(kODAttributeTypeRecordName) != nil {
-				Conf.logger?.debug("Setting attribute \(kODAttributeTypeRecordName) to \(user.id)")
-				try record.setValue(user.id, forAttribute: kODAttributeTypeRecordName)
+//				Conf.logger?.debug("Setting attribute \(kODAttributeTypeRecordName) to \(user.id)")
+//				try record.setValue(user.id, forAttribute: kODAttributeTypeRecordName)
+				throw Err.triedToChangeRecordName
 			}
 			let sortedAttributesName = (
 				[attributeNames.remove(kODAttributeTypeMetaRecordName)].compactMap{ $0 } +
