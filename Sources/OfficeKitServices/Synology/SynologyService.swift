@@ -132,33 +132,25 @@ public final class SynologyService : UserService {
 	
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: SynologyUser) async throws -> SynologyUser {
-		throw Err.__notImplemented
-//		var user = user
-//		if user.mailNickname == nil {
-//			Conf.logger?.info("Asked to create a user but the mail nickname is not set. Using the local part of the user principal name.")
-//			user.mailNickname = user.userPrincipalName.localPart
-//		}
-//		if user.accountEnabled == nil {
-//			Conf.logger?.warning("Asked to create a user but account enabled is not set. Assuming true.")
-//			user.accountEnabled = true
-//		}
-//		if user.displayName == nil {
-//			Conf.logger?.warning("Asked to create a user without a display name, which is not supported by M$’s APIs. We infer a display name from the given name and the surname.")
-//			user.displayName = user.computedFullName
-//		}
-//		if user.passwordProfile == nil {
-//			/* Creating a user without a password is not possible.
-//			 * Let’s generate a password!
-//			 * A long and complex one. */
-//			OfficeKitConfig.logger?.warning("Auto-generating a random password for M$ user creation: creating a M$ user w/o a password is not supported.")
-//			user.passwordProfile = .init(
-//				forceChangePasswordNextSignIn: false,
-//				forceChangePasswordNextSignInWithMfa: false,
-//				password: .generatePassword(allowedChars: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789=?!@#$%^&*")
-//			)
-//		}
-//		
-//		return try await user.create(connector: connector)
+		/* Let’s set the uid for the user if it is not already set. */
+		var user = user
+		if user.uid == nil {
+			/* First let’s get all the users.
+			 * We get the max of the current UIDs; the goal is to avoid reusing a UID.
+			 * If the UID w/ max UID gets deleted, the next user will have the same UID (or lower), but I don’t see how I can mitigate that… */
+			let users = try await listAllUsers(includeSuspended: true, propertiesToFetch: [.persistentID])
+			let maxUID = users.compactMap(\.uid).max()
+			user.uid = maxUID.flatMap{ $0 + 1 } ?? 1024 /* First UID seems to be 1024. */
+		} else {
+			Conf.logger?.warning("Setting the uid for a Synology user is not recommended. It should be left empty to be inferred from the current users on the directory.")
+		}
+		
+		try await connector.connectIfNeeded()
+		return try await URLRequestDataOperation<ApiResponse<SynologyUser>>.forAPIRequest(
+			urlRequest: try connector.urlRequestForEntryCGI(GETRequest: UserCreateRequestBody(user: user)),
+			requestProcessors: [AuthRequestProcessor(connector)],
+			retryProviders: []
+		).startAndGetResult().result.get()
 	}
 	
 	public let supportsUserUpdate: Bool = true

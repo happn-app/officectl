@@ -96,23 +96,18 @@ final class SynologyOfficeTests : XCTestCase {
 		XCTAssertNil(user.oU_firstName)
 		XCTAssertNil(user.oU_lastName)
 		
-		user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], convertMismatchingTypes: true)
+		XCTAssertTrue(user.oU_applyHints([.firstName: "Officectl", .lastName: "Test"], convertMismatchingTypes: true).isEmpty)
 		XCTAssertEqual(user.name, initialID)
-		XCTAssertEqual(user.oU_firstName, "Officectl")
-		XCTAssertEqual(user.oU_lastName, "Test")
+		XCTAssertEqual(user.oU_firstName, nil)
+		XCTAssertEqual(user.oU_lastName, nil)
 		
 		user = try await service.createUser(user)
 		XCTAssertEqual(user.name, initialID)
-		XCTAssertEqual(user.oU_firstName, "Officectl")
-		XCTAssertEqual(user.oU_lastName, "Test")
+		XCTAssertEqual(user.oU_firstName, nil)
+		XCTAssertEqual(user.oU_lastName, nil)
 		
-		XCTAssertFalse(user.oU_setValue(modifiedID, forProperty: .emails, convertMismatchingTypes: false).propertyWasModified)
-		XCTAssertTrue( user.oU_setValue(modifiedID, forProperty: .emails, convertMismatchingTypes: true ).propertyWasModified)
-		XCTAssertFalse(user.oU_setValue("Officectl",          forProperty: .firstName, convertMismatchingTypes: false).propertyWasModified)
-		XCTAssertTrue( user.oU_setValue("Officectl Modified", forProperty: .firstName, convertMismatchingTypes: false).propertyWasModified)
-		
-		/* We have to wait a bit because the user is not created immeditaly and if we try to update it we get an error. */
-//		try await Task.sleep(nanoseconds: 13_000_000_000/*13s*/)
+		XCTAssertFalse(user.oU_setValue(modifiedID + "@happn.fr", forProperty: .emails, convertMismatchingTypes: false).propertyWasModified)
+		XCTAssertTrue( user.oU_setValue(modifiedID + "@happn.fr", forProperty: .emails, convertMismatchingTypes: true ).propertyWasModified)
 		
 		user = try await service.updateUser(user, propertiesToUpdate: [.emails])
 		XCTAssertEqual(user.name, modifiedID)

@@ -56,7 +56,7 @@ extension SynologyUser : User {
 	
 	public mutating func oU_setValue<V>(_ newValue: V?, forProperty property: OfficeKit.UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult where V : Sendable {
 		do {
-//			let passwordProperty = UserProperty(rawValue: SynologyService.providerID + "/password")
+			let passwordProperty = UserProperty(rawValue: SynologyService.providerID + "/password")
 			let uidProperty = UserProperty(SynologyService.providerID + "/uid")
 			switch property {
 				case .id, uidProperty:
@@ -86,28 +86,8 @@ extension SynologyUser : User {
 						return ret
 					}
 					
-//				case passwordProperty:
-//					do {
-//						if let newValue {
-//							let newPass = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
-//							let newPassProfile = PasswordProfile(
-//								forceChangePasswordNextSignIn: false,
-//								forceChangePasswordNextSignInWithMfa: false,
-//								password: newPass
-//							)
-//							let changed = (newPassProfile != passwordProfile)
-//							passwordProfile = newPassProfile
-//							return changed ? .successChanged : .successUnchanged
-//
-//						} else {
-//							let changed = (passwordProfile != nil)
-//							passwordProfile = nil
-//							return changed ? .successChanged : .successUnchanged
-//						}
-//
-//					} catch {
-//						return .anyFailure(error)
-//					}
+				case passwordProperty:
+					return Self.setOptionalProperty(&password, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
 					
 				default:
 					return .failure(.unsupportedProperty)
@@ -130,8 +110,8 @@ extension SynologyUser : User {
 			.emails: [.email],
 			.firstName: [],
 			.lastName: [],
-			.nickname: []/*,
-			.init(rawValue: SynologyService.providerID + "/password"): [.passwordProfile]*/
+			.nickname: [],
+			.init(rawValue: SynologyService.providerID + "/password"): [.password]
 		]
 	}
 	

@@ -62,6 +62,7 @@ public struct SynologyUser : Sendable, Hashable, Codable {
 	public var email: Email?
 	public var description: String?
 	
+	public var password: String?
 	public var passwordNeverExpires: Bool?
 	public var cannotChangePassword: Bool?
 	/* I could’ve made a property wrapper but I got lazy for this one… */
@@ -84,6 +85,7 @@ public struct SynologyUser : Sendable, Hashable, Codable {
 				case .email:                           ret.email                           = email
 				case .description:                     ret.description                     = description
 				case .expiration:                      ret.expiration                      = expiration
+				case .password:                        ret.password                        = password
 				case .passwordNeverExpires:            ret.passwordNeverExpires            = passwordNeverExpires
 				case .cannotChangePassword:            ret.cannotChangePassword            = cannotChangePassword
 				case .passwordLastChangeSynoTimestamp: ret.passwordLastChangeSynoTimestamp = passwordLastChangeSynoTimestamp
@@ -99,6 +101,7 @@ public struct SynologyUser : Sendable, Hashable, Codable {
 			  cannotChangePassword = "cannot_chg_passwd",
 			  passwordLastChangeSynoTimestamp = "password_last_change"
 		case expiration = "expired"
+		case password
 	}
 	
 }
