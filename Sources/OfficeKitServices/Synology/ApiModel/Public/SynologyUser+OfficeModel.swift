@@ -24,8 +24,14 @@ extension SynologyUser : User {
 	public var oU_id: String {name}
 	public var oU_persistentID: Int? {uid}
 	
-	/* TODO: This is “expired != .normal” maybe. */
-	public var oU_isSuspended: Bool? {nil}
+	public var oU_isSuspended: Bool? {
+		switch expiration {
+			case nil:              return nil
+			case .now?:            return true
+			case .none?:           return false
+			case .date(let date)?: return date < Date()
+		}
+	}
 	
 	public var oU_firstName: String? {nil}
 	public var oU_lastName: String? {nil}
@@ -125,7 +131,7 @@ extension SynologyUser : User {
 			/* Standard. */
 			.id: [.name],
 			.persistentID: [.uid],
-			.isSuspended: [],
+			.isSuspended: [.expiration],
 			.emails: [.email],
 			.firstName: [],
 			.lastName: [],
@@ -141,9 +147,5 @@ extension SynologyUser : User {
 			.flatMap{ $0 }
 		return Set(keys)
 	}
-	
-//	internal static func validFieldsParameter(from keys: Set<CodingKeys>) -> String {
-//		return (keys + [.userPrincipalName, .id]).map{ $0.stringValue }.joined(separator: ",")
-//	}
 	
 }
