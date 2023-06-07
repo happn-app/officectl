@@ -15,7 +15,9 @@ import OfficeKit
 
 public struct SynologyServiceConfig : Sendable, Codable {
 	
+	/* TODO: Add DSM TimeZone… */
 	public var connectorSettings: ConnectorSettings
+	
 	public var userIDBuilders: [UserIDBuilder]?
 	
 	public init(json: JSON) throws {
