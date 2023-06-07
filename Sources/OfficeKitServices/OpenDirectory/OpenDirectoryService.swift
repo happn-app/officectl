@@ -146,35 +146,45 @@ public final class OpenDirectoryService : UserService {
 	public func createUser(_ user: OpenDirectoryUser) async throws -> OpenDirectoryUser {
 		try await connector.connectIfNeeded()
 		return try await connector.performOpenDirectoryCommunication{ @ODActor node in
-			/* Let’s first search all the user records (trust me on this, we’ll need them; see later). */
-			let query = OpenDirectoryQuery(
-				recordTypes: [OpenDirectoryUser.recordType],
-				attribute: kODAttributeTypeRecordName,
-				matchType: ODMatchType(kODMatchAny),
-				queryValues: nil,
-				returnAttributes: [kODAttributeTypeUniqueID],
-				maximumResults: nil
-			)
-			let records = try query.execute(on: node)
-			/* Now find the max UID of these records.
-			 * We start at 501; users with a UID <= 500 are invisble. */
-			var maxUID = 501
-			for record in records {
-				/* The kODAttributeTypeUniqueID should already be fetched, so asking for nil here is ok. */
-				let attributes = try record.recordDetails(forAttributes: nil)
-				guard let uidstr = try? attributes[kODAttributeTypeUniqueID].flatMap(OpenDirectoryAttributeValue.init(any:))?.asString,
-						let uid = Int(uidstr)
-				else {
-					Conf.logger?.warning("Found non-int (or missing or invalid) uid \(String(describing: attributes[kODAttributeTypeUniqueID])) in user OpenDirectory record \(record).")
-					continue
+			/* Let’s set the uid for the user if it is not already set. */
+			var user = user
+			if user.properties[kODAttributeTypeUniqueID] == nil {
+				/* Let’s first search all the user records to find the max UID. */
+				let query = OpenDirectoryQuery(
+					recordTypes: [OpenDirectoryUser.recordType],
+					attribute: kODAttributeTypeRecordName,
+					matchType: ODMatchType(kODMatchAny),
+					queryValues: nil,
+					returnAttributes: [kODAttributeTypeUniqueID],
+					maximumResults: nil
+				)
+				let records = try query.execute(on: node)
+				/* Now find the max UID of these records.
+				 * We start at 501; users with a UID <= 500 are invisble. */
+				var maxUID = 501
+				for record in records {
+					/* The kODAttributeTypeUniqueID should already be fetched, so asking for nil here is ok. */
+					let attributes = try record.recordDetails(forAttributes: nil)
+					guard let uidstr = try? attributes[kODAttributeTypeUniqueID].flatMap(OpenDirectoryAttributeValue.init(any:))?.asString,
+							let uid = Int(uidstr)
+					else {
+						Conf.logger?.warning("Found non-int (or missing or invalid) uid \(String(describing: attributes[kODAttributeTypeUniqueID])) in user OpenDirectory record \(record).")
+						continue
+					}
+					maxUID = max(maxUID, uid)
 				}
-				maxUID = max(maxUID, uid)
+				/* Set UID of the new user. */
+				user.properties[kODAttributeTypeUniqueID] = .string(String(maxUID + 1))
+			} else {
+				Conf.logger?.warning("Setting the numeric unique ID for an OpenDirectory user is not recommended. It should be left empty to be inferred from the current users on the directory.")
 			}
 			
-			var user = user
-			/* We set a new unique ID from the max we found earlier. */
-			user.properties[kODAttributeTypeUniqueID] = .string(String(maxUID + 1))
-			if user.properties[kODAttributeTypeFullName] == nil {user.properties[kODAttributeTypeFullName] = .string(user.computedFullName)}
+			/* Set the full name from the first and last name if needed. */
+			if user.properties[kODAttributeTypeFullName] == nil {
+				user.properties[kODAttributeTypeFullName] = .string(user.computedFullName)
+			}
+			
+			/* Create the user. */
 			let createdRecord = try node.createRecord(withRecordType: OpenDirectoryUser.recordType, name: user.id, attributes: user.properties.mapValues{ $0.asMultiData })
 			return try OpenDirectoryUser(record: createdRecord)
 		}
