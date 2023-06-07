@@ -27,8 +27,10 @@ import TaskQueue
  * Reading does not require a password apparently, but the admin pass is required to modify certain fields (I think). */
 
 /* This helped: <https://github.com/aosm/OpenDirectory/blob/master/Tests/TestApp.m>
- * This was interesting also: <https://stackoverflow.com/a/69122631>
- *  (For some info on what is the /Search node, aka almost always (don’t know of a case when it’s not true) the node with type kODNodeTypeAuthentication.) */
+ * This was interesting also <https://stackoverflow.com/a/69122631>,
+ *  mostly for some info on what is the /Search node,
+ *  aka. almost always (don’t know of a case when it’s not true),
+ *  the node with type kODNodeTypeAuthentication. */
 public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	
 	public typealias Authentication = Void
@@ -85,8 +87,7 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	 Use the node inside the block only, do **not** store it!
 	 
 	 - Parameter communicationBlock: The block to execute.
-	 - Parameter node: The OpenDirectory node.
-	 If the connector is not connected, will be `nil`. */
+	 - Parameter node: The OpenDirectory node. */
 	public func performOpenDirectoryCommunication<T : Sendable>(_ communicationBlock: @ODActor @Sendable (_ node: ODNode) throws -> T) async throws -> T {
 		return try await _node.perform{ node in
 			guard let node else {
@@ -130,7 +131,7 @@ public final actor OpenDirectoryConnector : Connector, HasTaskQueue {
 	   MARK: - Private
 	   *************** */
 	
-	/** Technically public because it fulfill the HasTaskQueue requirement, but should not be used directly. */
+	/** Technically public because it fulfill the `HasTaskQueue` requirement, but should not be used directly. */
 	public var _taskQueue = TaskQueue()
 	
 	/* Not using the wrapper as a property wrapper or the init becomes mysteriously isolated to @ODActor… */
