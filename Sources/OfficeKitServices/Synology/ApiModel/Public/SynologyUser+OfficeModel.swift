@@ -33,6 +33,7 @@ extension SynologyUser : User {
 		}
 	}
 	
+	/* These properties seem to be unsupported. */
 	public var oU_firstName: String? {nil}
 	public var oU_lastName: String? {nil}
 	public var oU_nickname: String? {nil}
@@ -53,72 +54,66 @@ extension SynologyUser : User {
 		}
 	}
 	
-	public mutating func oU_setValue<V>(_ newValue: V?, forProperty property: OfficeKit.UserProperty, convertMismatchingTypes convert: Bool) -> OfficeKit.PropertyChangeResult where V : Sendable {
-//		let passwordProperty = UserProperty(rawValue: SynologyService.providerID + "/password")
-		let uidProperty = UserProperty(SynologyService.providerID + "/uid")
-		switch property {
-			case .id, uidProperty:
-				return Self.setProperty(&uid, to: newValue, allowTypeConversion: convert, converter: { Converters.convertObjectToInt($0) })
-				
-			case .isSuspended:
-				return .failure(.unsupportedProperty)
-				
-			case .firstName: return .failure(.unsupportedProperty)
-			case .lastName:  return .failure(.unsupportedProperty)
-			case .nickname:  return .failure(.unsupportedProperty)
-				
-			case .emails:
-				return .failure(.unsupportedProperty)
-//				do {
-//					guard let newValue else {
-//						Conf.logger?.error("Cannot remove all the emails of an Synology user (id is an email…).")
-//						throw PropertyChangeResult.Failure.unremovableProperty
+	public mutating func oU_setValue<V>(_ newValue: V?, forProperty property: OfficeKit.UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult where V : Sendable {
+		do {
+//			let passwordProperty = UserProperty(rawValue: SynologyService.providerID + "/password")
+			let uidProperty = UserProperty(SynologyService.providerID + "/uid")
+			switch property {
+				case .id, uidProperty:
+					return Self.setProperty(&uid, to: newValue, allowTypeConversion: convert, converter: { Converters.convertObjectToInt($0) })
+					
+				case .isSuspended:
+					let newValue = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToBool)
+					return (Self.setProperty(&expiration, to: .some(newValue ? .now : .none)) ? .successChanged : .successUnchanged)
+					
+				case .firstName: return .failure(.unsupportedProperty)
+				case .lastName:  return .failure(.unsupportedProperty)
+				case .nickname:  return .failure(.unsupportedProperty)
+					
+				case .emails:
+					let emails = try newValue.flatMap{
+						try Converters.convertPropertyValue($0, allowTypeConversion: convert, converter: Converters.convertObjectToEmails)
+					} ?? []
+					guard emails.count <= 1 else {
+						Conf.logger?.error("A Synology user can have at most 1 email.")
+						throw PropertyChangeResult.Failure.valueConversionFailed
+					}
+					if let newEmail = emails.first {
+						return (Self.setProperty(&email, to: newEmail) ? .successChanged : .successUnchanged)
+					} else {
+						let ret: PropertyChangeResult = (email != nil ? .successChanged : .successUnchanged)
+						email = nil
+						return ret
+					}
+					
+//				case passwordProperty:
+//					do {
+//						if let newValue {
+//							let newPass = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
+//							let newPassProfile = PasswordProfile(
+//								forceChangePasswordNextSignIn: false,
+//								forceChangePasswordNextSignInWithMfa: false,
+//								password: newPass
+//							)
+//							let changed = (newPassProfile != passwordProfile)
+//							passwordProfile = newPassProfile
+//							return changed ? .successChanged : .successUnchanged
+//
+//						} else {
+//							let changed = (passwordProfile != nil)
+//							passwordProfile = nil
+//							return changed ? .successChanged : .successUnchanged
+//						}
+//
+//					} catch {
+//						return .anyFailure(error)
 //					}
-//					
-//					let emails = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToEmails)
-//					guard emails.count <= 2 else {
-//						Conf.logger?.error("An Synology user can have at most 2 emails.")
-//						throw PropertyChangeResult.Failure.valueConversionFailed
-//					}
-//					guard let first = emails.first else {
-//						Conf.logger?.error("Cannot remove all the emails of an Synology user (id is an email…).")
-//						throw PropertyChangeResult.Failure.unremovableProperty
-//					}
-//					let other = emails.dropFirst().first
-//					let changed = (userPrincipalName != first || mail != other)
-//					userPrincipalName = first
-//					mail = other
-//					return changed ? .successChanged : .successUnchanged
-//					
-//				} catch {
-//					return .anyFailure(error)
-//				}
-				
-//			case passwordProperty:
-//				do {
-//					if let newValue {
-//						let newPass = try Converters.convertPropertyValue(newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
-//						let newPassProfile = PasswordProfile(
-//							forceChangePasswordNextSignIn: false,
-//							forceChangePasswordNextSignInWithMfa: false,
-//							password: newPass
-//						)
-//						let changed = (newPassProfile != passwordProfile)
-//						passwordProfile = newPassProfile
-//						return changed ? .successChanged : .successUnchanged
-//						
-//					} else {
-//						let changed = (passwordProfile != nil)
-//						passwordProfile = nil
-//						return changed ? .successChanged : .successUnchanged
-//					}
-//					
-//				} catch {
-//					return .anyFailure(error)
-//				}
-				
-			default:
-				return .failure(.unsupportedProperty)
+					
+				default:
+					return .failure(.unsupportedProperty)
+			}
+		} catch {
+			return .anyFailure(error)
 		}
 	}
 	
