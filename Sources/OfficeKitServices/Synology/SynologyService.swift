@@ -14,6 +14,7 @@ import GenericJSON
 import Logging
 import OfficeModelCore
 import UnwrapOrThrow
+import URLRequestOperation
 
 import OfficeKit
 
@@ -87,27 +88,46 @@ public final class SynologyService : UserService {
 	}
 	
 	public func existingUser(fromPersistentID pID: Int, propertiesToFetch: Set<UserProperty>?) async throws -> SynologyUser? {
-		throw Err.__notImplemented
-//		return try await SynologyUser.get(id: pID, propertiesToFetch: SynologyUser.keysFromProperties(propertiesToFetch), connector: connector)
+		/* AFAIK to retrieve a user with a given UID, the only way is to get them all and filter. */
+		let users = try await listAllUsers(includeSuspended: true, propertiesToFetch: propertiesToFetch?.union([.persistentID]))
+			.filter{ $0.oU_persistentID == pID }
+		guard let user = users.first else {
+			return nil
+		}
+		guard users.count <= 1 else {
+			throw OfficeKitError.tooManyUsersFromAPI(users: users)
+		}
+		return user
 	}
 	
 	public func existingUser(fromID uID: String, propertiesToFetch: Set<UserProperty>?) async throws -> SynologyUser? {
-		throw Err.__notImplemented
-		/* M$’s API supports getting a user through his principal name directly (`GET /users/email@domain.com`).
-		 * If it did not we’d have had to search or filter and check we only have one result.
-		 * Search version: `GET /users?$search="userPrincipalName:email@domain.com"`
-		 *    -> Not urlencoded for readability here, but must be of course;
-		 *    -> The double-quotes MUST be there;
-		 *    -> Additionally, the `ConsistencyLevel: eventual` header has to be set.
-		 * Filter version: `GET /users?$filter=userPrincipalName eq 'email@domain.com'`
-		 *    -> Not urlencoded for readability here, but must be of course;
-		 *    -> The quotes MUST be there and MUST be single-quotes. */
-//		return try await SynologyUser.get(id: uID.rawValue, propertiesToFetch: SynologyUser.keysFromProperties(propertiesToFetch), connector: connector)
+		try await connector.connectIfNeeded()
+		
+		/* We remove the uid and name from the fields as it is invalid to ask for them.
+		 * Interestingly, they are returned anyway… */
+		let fields = SynologyUser.keysFromProperties(propertiesToFetch).subtracting([.uid, .name])
+		let users = try await URLRequestDataOperation<ApiResponse<UserGetResponseBody>>.forAPIRequest(
+			urlRequest: try connector.urlRequestForEntryCGI(GETRequest: UserGetRequestBody(userNameToFetch: uID, additionalFields: fields)),
+			requestProcessors: [AuthRequestProcessor(connector)],
+			retryProviders: []
+		).startAndGetResult().result.get().users
+		guard let user = users.first else {
+			return nil
+		}
+		guard users.count <= 1 else {
+			throw OfficeKitError.tooManyUsersFromAPI(users: users)
+		}
+		return user
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [SynologyUser] {
 		try await connector.connectIfNeeded()
-		return try await SynologyUser.getAll(includeSuspended: includeSuspended, propertiesToFetch: SynologyUser.keysFromProperties(propertiesToFetch), connector: connector)
+		let fields = SynologyUser.keysFromProperties(propertiesToFetch)
+		return try await URLRequestDataOperation<ApiResponse<UsersListResponseBody>>.forAPIRequest(
+			urlRequest: try connector.urlRequestForEntryCGI(GETRequest: UsersListRequestBody(additionalFields: fields)),
+			requestProcessors: [AuthRequestProcessor(connector)],
+			retryProviders: []
+		).startAndGetResult().result.get().users
 	}
 	
 	public let supportsUserCreation: Bool = true

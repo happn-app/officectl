@@ -49,7 +49,7 @@ final class SynologyOfficeTests : XCTestCase {
 		
 		self.testConf = testConf
 		self.serviceConf = serviceConf
-		self.service = try SynologyService(id: "test-syno", name: "Tested Office 365 Service", synologyServiceConfig: serviceConf, workdir: nil)
+		self.service = try SynologyService(id: "test-syno", name: "Tested Synology Service", synologyServiceConfig: serviceConf, workdir: nil)
 	}
 	
 	override func tearDown() async throws {
@@ -75,10 +75,16 @@ final class SynologyOfficeTests : XCTestCase {
 		XCTAssertGreaterThan(users.count, 0)
 	}
 	
-	func testGetUser() async throws {
-//		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.userPrincipalName, propertiesToFetch: nil)
-//		let user = try XCTUnwrap(optionalUser)
-//		XCTAssertEqual(user.oU_persistentID, testConf.fetchedUser.id)
+	func testGetUserFromUID() async throws {
+		let optionalUser = try await service.existingUser(fromPersistentID: testConf.fetchedUser.uid, propertiesToFetch: nil)
+		let user = try XCTUnwrap(optionalUser)
+		XCTAssertEqual(user.oU_id, testConf.fetchedUser.name)
+	}
+	
+	func testGetUserFromName() async throws {
+		let optionalUser = try await service.existingUser(fromID: testConf.fetchedUser.name, propertiesToFetch: nil)
+		let user = try XCTUnwrap(optionalUser)
+		XCTAssertEqual(user.oU_persistentID, testConf.fetchedUser.uid)
 	}
 	
 	func testCreateUpdateDeleteUser() async throws {

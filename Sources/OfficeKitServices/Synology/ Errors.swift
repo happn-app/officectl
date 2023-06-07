@@ -30,6 +30,7 @@ public enum SynologyOfficeError : Error, Sendable {
 	case invalidPersistentID
 	case internalError
 	
+	case notSupported
 	case __notImplemented
 	
 }
