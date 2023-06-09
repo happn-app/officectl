@@ -15,6 +15,7 @@ import SystemPackage
 import ArgumentParser
 import CLTLogger
 import Logging
+import OfficeModelCore
 import RetryingOperation
 import URLRequestOperation
 import TOMLDecoder
@@ -73,7 +74,7 @@ struct Officectl : AsyncParsableCommand {
 		@Flag(name: .shortAndLong, help: "Do not ask question (when a question would have been asked, yes is answered).")
 		var yes: Bool = false
 		
-		/* We must do this because otherwise Swift complains that the struct is not Decodable because of the storage var.
+		/* We must declare the coding keys explicitly this because otherwise Swift complains that the struct is not Decodable because of the storage var.
 		 * Another solution would be to have a static storage instead, maybe even outside of Options, but an instance var is better. */
 		enum CodingKeys : CodingKey {
 			case verbosity
@@ -204,6 +205,10 @@ extension Officectl.Options {
 	
 	var officeKitServices: OfficeKitServices {
 		return storage.officeKitServices
+	}
+	
+	var ignoredUsersByServices: [Tag: [String]] {
+		return storage.conf?.servicesConf.ignoredUsersByServices ?? [:]
 	}
 	
 	var logger: Logger {

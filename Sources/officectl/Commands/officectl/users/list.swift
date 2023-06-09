@@ -38,6 +38,9 @@ struct List : AsyncParsableCommand {
 	@Flag(help: "For the directory services that supports it, do we filter out the suspended users?")
 	var includeSuspendedUsers = false
 	
+	@Flag(help: "Set this to ignore the “ignored users by services” entry in the configuration.")
+	var includeIgnoredUsers = false
+	
 	@Option(name: .shortAndLong, help: "The format to use to output the results of the list.")
 	var format: Format = .text
 	
@@ -46,7 +49,17 @@ struct List : AsyncParsableCommand {
 		try officectlOptions.bootstrap()
 		let officeKitServices = officectlOptions.officeKitServices
 		
-		let multiUsersResult = try await MultiServicesUser.fetchAll(in: officeKitServices.hashableUserServices(matching: usersOptions.serviceIDs), includeSuspended: includeSuspendedUsers)
+		let multiUsersResult = try await MultiServicesUser.fetchAll(
+			in: officeKitServices.hashableUserServices(matching: usersOptions.serviceIDs),
+			includeSuspended: includeSuspendedUsers,
+			customFetchFilter: { userAndService in
+				guard !includeIgnoredUsers else {
+					return true
+				}
+				let ignoredUsers = officectlOptions.ignoredUsersByServices[userAndService.serviceID] ?? []
+				return !ignoredUsers.contains(userAndService.taggedID.id)
+			}
+		)
 #if canImport(TabularData)
 		/* TabularData knows how to export in CSV, text or JSON, but only on macOS 13 for the JSON part. */
 		switch format {

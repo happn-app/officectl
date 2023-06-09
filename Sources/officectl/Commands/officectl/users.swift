@@ -25,7 +25,7 @@ struct Users : AsyncParsableCommand {
 	
 	struct Options : ParsableArguments {
 		
-		@Option(name: .customLong("service-ids"), help: "The list of service IDs on which the command will act.")
+		@Option(name: .customLong("service-ids"), help: "The comma-separated list of service IDs on which the command will act.")
 		var serviceIDs: String?
 		
 	}

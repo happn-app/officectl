@@ -14,9 +14,11 @@ import OfficeModelCore
 struct ServicesConf : Decodable, Sendable {
 	
 	var authServiceID: Tag
+	var ignoredUsersByServices: [Tag: [String]]
 	
 	enum CodingKeys : String, CodingKey {
 		case authServiceID = "auth_service_id"
+		case ignoredUsersByServices = "ignored_users_by_services"
 	}
 	
 }
