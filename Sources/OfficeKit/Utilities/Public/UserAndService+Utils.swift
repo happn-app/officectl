@@ -38,6 +38,14 @@ public extension UserAndService {
 		return try await otherService.existingUser(fromID: otherID, propertiesToFetch: propertiesToFetch)
 	}
 	
+	func create() async throws -> any UserAndService {
+		try await UserAndServiceFrom(user: service.createUser(user), service: service)!
+	}
+	
+	func changePassword(to newPassword: String) async throws {
+		try await service.changePassword(of: user, to: newPassword)
+	}
+	
 	func delete() async throws {
 		try await service.deleteUser(user)
 	}

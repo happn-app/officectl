@@ -21,6 +21,14 @@ public extension User {
 		}
 	}
 	
+	func oU_valuesForProperties(_ properties: Set<UserProperty>) -> [UserProperty: any Sendable] {
+		var ret = [UserProperty: any Sendable]()
+		for property in properties {
+			ret[property] = oU_valueForProperty(property)
+		}
+		return ret
+	}
+	
 	/** Returns the properties that were _modified_. */
 	@discardableResult
 	mutating func oU_applyHints(_ hints: [UserProperty: (any Sendable)?], convertMismatchingTypes convert: Bool) -> Set<UserProperty> {
@@ -79,6 +87,15 @@ public extension User {
 			return "<Unknown Name>"
 		}
 		return firstAndLastName.joined(separator: " ")
+	}
+	
+}
+
+
+public extension User {
+	
+	func logicalUser<OtherServiceType : UserService>(in service: OtherServiceType) throws -> OtherServiceType.UserType {
+		return try service.logicalUser(fromUser: self)
 	}
 	
 }
