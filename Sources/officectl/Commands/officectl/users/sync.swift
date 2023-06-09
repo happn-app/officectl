@@ -8,6 +8,7 @@
 import Foundation
 
 import ArgumentParser
+import OfficeModelCore
 
 import OfficeKit
 import LDAPOffice
@@ -59,7 +60,7 @@ struct Sync : AsyncParsableCommand {
 			throw ErrorCollection(Array(fetchErrorsByService.values))
 		}
 		let plans: [ServiceSyncPlan] = try destinationServices.map{ (destinationService: HashableUserService) -> ServiceSyncPlan in
-			let usersToCreate: [any User] = []/* try users
+			let usersToCreate: [any User] = try users
 				.filter{ user in
 					/* Multi-users w/o a value in the destination directory */
 					guard let destinationUser = user[destinationService]!.success else {
@@ -68,8 +69,8 @@ struct Sync : AsyncParsableCommand {
 					return destinationUser == nil
 				}
 				.compactMap{ $0[sourceService]!.success.flatMap{ $0 } }                /* W/ a value in the source directory */
-				.map{ try destinationService.value.logicalUserID(fromUser: $0) }  /* Converted to destination directory */
-			*/
+				.map{ try $0.logicalUser(in: destinationService.value) } /* Converted to destination directory */
+			
 			let usersToDelete: [any User] = users
 				.filter{
 					/* Multi-users w/o a value in the source directory */
@@ -90,72 +91,69 @@ struct Sync : AsyncParsableCommand {
 		}
 		
 		/* Let’s verify the user is ok with the plan. */
-		
-#if false
-		var textPlan = "********* SYNC PLAN *********" + ConsoleText.newLine
-		for plan in plans.sorted(by: { $0.service.config.serviceName < $1.service.config.serviceName }) {
-			textPlan += ConsoleText.newLine + ConsoleText.newLine + "*** For service \(plan.service.config.serviceName) (id=\(plan.service.config.serviceID))".consoleText() + ConsoleText.newLine
+		let newLine = "\n"
+		var stderrStream = StderrStream()
+		var textPlan = "********* SYNC PLAN *********" + newLine
+		for plan in plans.sorted(by: { $0.service.name < $1.service.name }) {
+			textPlan += newLine + newLine + "*** For service \(plan.service.name) (id=\(plan.service.id))" + newLine
 			
 			var printedSomething = false
 			if !plan.usersToCreate.isEmpty {
 				printedSomething = true
-				textPlan += ConsoleText.newLine + "   - Users creation:" + ConsoleText.newLine
-				plan.usersToCreate.forEach{ textPlan += "      \(plan.service.shortDescription(fromUser: $0))".consoleText() + ConsoleText.newLine }
+				textPlan += newLine + "   - Users creation:" + newLine
+				plan.usersToCreateWithService.forEach{ textPlan += "      \($0.shortDescription)" + newLine }
 			}
 			if !plan.usersToDelete.isEmpty {
 				printedSomething = true
-				textPlan += ConsoleText.newLine + "   - Users deletion:" + ConsoleText.newLine
-				plan.usersToDelete.forEach{ textPlan += "      \(plan.service.shortDescription(fromUser: $0))".consoleText() + ConsoleText.newLine }
+				textPlan += newLine + "   - Users deletion:" + newLine
+				plan.usersToDeleteWithService.forEach{ textPlan += "      \($0.shortDescription)" + newLine }
 			}
 			if !printedSomething {
-				textPlan += "   <Nothing to do for this service>" + ConsoleText.newLine
+				textPlan += "   <Nothing to do for this service>" + newLine
 			}
 		}
-		textPlan += ConsoleText.newLine + ConsoleText.newLine + ConsoleText.newLine + "Do you want to continue?"
-		guard context.console.confirm(textPlan) else {
-			throw UserAbortedError()
+		textPlan += newLine + newLine + newLine + "Do you want to continue? "
+		guard try UserConfirmation.confirmYesOrNo(prompt: textPlan, inputFileHandle: .standardInput, outputStream: &stderrStream) else {
+			throw ExitCode(1)
 		}
 		
 		/* Now let’s do the actual sync! */
-		try app.auditLogger.log(action: "Applying sync from service \(fromID) to \(toIDs.joined(separator: ",")).", source: .cli)
+//		try app.auditLogger.log(action: "Applying sync from service \(fromID) to \(toIDs.joined(separator: ",")).", source: .cli)
 		
 		await withTaskGroup(of: UserSyncResult.self, returning: Void.self, body: { group in
 			for plan in plans {
 				/* User creations */
-				for userToCreate in plan.usersToCreate {
-					let serviceID = plan.service.config.serviceID
-					let userStr = plan.service.shortDescription(fromUser: userToCreate)
+				for userToCreate in plan.usersToCreateWithService {
+					let userStr = userToCreate.shortDescription
 					group.addTask{
 						do {
-							let user = try await plan.service.createUser(userToCreate, using: app.services)
+							let user = try await userToCreate.create()
 							
 							/* If the service we’re creating the user in is the auth service, we create a password. */
 							let newPass: String?
-							if serviceID != authServiceID {
+							if userToCreate.serviceID != authService?.id {
 								newPass = nil
 							} else {
-								let pass = generateRandomPassword()
-								newPass = pass
-								let changePassAction = try plan.service.changePasswordAction(for: user, using: app.services)
-								_ = try await changePassAction.start(parameters: pass, weakeningMode: .alwaysInstantly)
+								let p = generateRandomPassword()
+								try await user.changePassword(to: generateRandomPassword())
+								newPass = p
 							}
 							
-							return UserSyncResult.create(serviceID: serviceID, userStr: userStr, password: newPass, error: nil)
+							return UserSyncResult.create(serviceID: userToCreate.serviceID, userStr: userStr, password: newPass, error: nil)
 						} catch {
-							return UserSyncResult.create(serviceID: serviceID, userStr: userStr, password: nil, error: error)
+							return UserSyncResult.create(serviceID: userToCreate.serviceID, userStr: userStr, password: nil, error: error)
 						}
 					}
 				}
 				/* User deletions */
-				for userToDelete in plan.usersToDelete {
-					let serviceID = plan.service.config.serviceID
-					let userStr = plan.service.shortDescription(fromUser: userToDelete)
+				for userToDelete in plan.usersToDeleteWithService {
+					let userStr = userToDelete.shortDescription
 					group.addTask{
 						do {
-							try await plan.service.deleteUser(userToDelete, using: app.services)
-							return UserSyncResult.delete(serviceID: serviceID, userStr: userStr, error: nil)
+							try await userToDelete.delete()
+							return UserSyncResult.delete(serviceID: userToDelete.serviceID, userStr: userStr, error: nil)
 						} catch {
-							return UserSyncResult.delete(serviceID: serviceID, userStr: userStr, error: error)
+							return UserSyncResult.delete(serviceID: userToDelete.serviceID, userStr: userStr, error: error)
 						}
 					}
 				}
@@ -165,20 +163,19 @@ struct Sync : AsyncParsableCommand {
 			var results = [UserSyncResult]()
 			for await result in group {results.append(result)}
 			
-			context.console.info()
-			context.console.info("********* SYNC RESULTS *********")
+			officectlOptions.logger.info("")
+			officectlOptions.logger.info("********* SYNC RESULTS *********")
 			for result in results.sorted() {
 				switch result {
-					case .create(serviceID: let serviceID, userStr: let userStr, password: nil, error: nil):       context.console.info("\(serviceID): created user \(userStr)", newLine: true)
-					case .create(serviceID: let serviceID, userStr: let userStr, password: let pass?, error: nil): context.console.info("\(serviceID): created user \(userStr) w/ pass \(pass)", newLine: true)
-					case .create(serviceID: let serviceID, userStr: let userStr, password: _, error: let error?):  context.console.error("\(serviceID): failed to create user \(userStr): \(error)", newLine: true)
-					case .delete(serviceID: let serviceID, userStr: let userStr, error: nil):                      context.console.info("\(serviceID): deleted user \(userStr)", newLine: true)
-					case .delete(serviceID: let serviceID, userStr: let userStr, error: let error?):               context.console.error("\(serviceID): failed to delete user \(userStr): \(error)", newLine: true)
+					case .create(serviceID: let serviceID, userStr: let userStr, password: nil, error: nil):       officectlOptions.logger.info ("\(serviceID): created user \(userStr)")
+					case .create(serviceID: let serviceID, userStr: let userStr, password: let pass?, error: nil): officectlOptions.logger.info ("\(serviceID): created user \(userStr) w/ pass \(pass)")
+					case .create(serviceID: let serviceID, userStr: let userStr, password: _, error: let error?):  officectlOptions.logger.error("\(serviceID): failed to create user \(userStr): \(error)")
+					case .delete(serviceID: let serviceID, userStr: let userStr, error: nil):                      officectlOptions.logger.info ("\(serviceID): deleted user \(userStr)")
+					case .delete(serviceID: let serviceID, userStr: let userStr, error: let error?):               officectlOptions.logger.error("\(serviceID): failed to delete user \(userStr): \(error)")
 				}
 			}
-			context.console.info()
+			officectlOptions.logger.info("")
 		})
-#endif
 	}
 	
 	private struct ServiceSyncPlan {
@@ -188,24 +185,31 @@ struct Sync : AsyncParsableCommand {
 		var usersToCreate: [any User]
 		var usersToDelete: [any User]
 		
+		var usersToCreateWithService: [any UserAndService] {
+			usersToCreate.map{ UserAndServiceFrom(user: $0, service: service)! }
+		}
+		var usersToDeleteWithService: [any UserAndService] {
+			usersToDelete.map{ UserAndServiceFrom(user: $0, service: service)! }
+		}
+		
 	}
 	
 	private enum UserSyncResult : Comparable {
 		
-		case create(serviceID: String, userStr: String, password: String?, error: Error?)
-		case delete(serviceID: String, userStr: String, error: Error?)
+		case create(serviceID: Tag, userStr: String, password: String?, error: Error?)
+		case delete(serviceID: Tag, userStr: String, error: Error?)
 		
 		static func <(lhs: UserSyncResult, rhs: UserSyncResult) -> Bool {
 			switch (lhs, rhs) {
 				case (.create(serviceID: let lhsServiceID, userStr: let lhsUserStr, password: _, error: _),
 						.create(serviceID: let rhsServiceID, userStr: let rhsUserStr, password: _, error: _)):
 					if lhsServiceID == rhsServiceID {return lhsUserStr < rhsUserStr}
-					return lhsServiceID < rhsServiceID
+					return lhsServiceID.rawValue < rhsServiceID.rawValue
 					
 				case (.delete(serviceID: let lhsServiceID, userStr: let lhsUserStr, error: _),
 						.delete(serviceID: let rhsServiceID, userStr: let rhsUserStr, error: _)):
 					if lhsServiceID == rhsServiceID {return lhsUserStr < rhsUserStr}
-					return lhsServiceID < rhsServiceID
+					return lhsServiceID.rawValue < rhsServiceID.rawValue
 					
 				case (.create, .delete):
 					return false
