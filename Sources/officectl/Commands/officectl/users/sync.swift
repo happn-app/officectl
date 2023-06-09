@@ -163,18 +163,18 @@ struct Sync : AsyncParsableCommand {
 			var results = [UserSyncResult]()
 			for await result in group {results.append(result)}
 			
-			officectlOptions.logger.info("")
-			officectlOptions.logger.info("********* SYNC RESULTS *********")
+			print()
+			print("********* SYNC RESULTS *********")
 			for result in results.sorted() {
 				switch result {
-					case .create(serviceID: let serviceID, userStr: let userStr, password: nil, error: nil):       officectlOptions.logger.info ("\(serviceID): created user \(userStr)")
-					case .create(serviceID: let serviceID, userStr: let userStr, password: let pass?, error: nil): officectlOptions.logger.info ("\(serviceID): created user \(userStr) w/ pass \(pass)")
-					case .create(serviceID: let serviceID, userStr: let userStr, password: _, error: let error?):  officectlOptions.logger.error("\(serviceID): failed to create user \(userStr): \(error)")
-					case .delete(serviceID: let serviceID, userStr: let userStr, error: nil):                      officectlOptions.logger.info ("\(serviceID): deleted user \(userStr)")
-					case .delete(serviceID: let serviceID, userStr: let userStr, error: let error?):               officectlOptions.logger.error("\(serviceID): failed to delete user \(userStr): \(error)")
+					case .create(serviceID: let serviceID, userStr: let userStr, password: nil, error: nil):       print("✅ \(serviceID): created user \(userStr)")
+					case .create(serviceID: let serviceID, userStr: let userStr, password: let pass?, error: nil): print("✅ \(serviceID): created user \(userStr) w/ pass \(pass)")
+					case .create(serviceID: let serviceID, userStr: let userStr, password: _, error: let error?):  print("🛑 \(serviceID): failed to create user \(userStr): \(error)")
+					case .delete(serviceID: let serviceID, userStr: let userStr, error: nil):                      print("✅ \(serviceID): deleted user \(userStr)")
+					case .delete(serviceID: let serviceID, userStr: let userStr, error: let error?):               print("🛑 \(serviceID): failed to delete user \(userStr): \(error)")
 				}
 			}
-			officectlOptions.logger.info("")
+			print()
 		})
 	}
 	
