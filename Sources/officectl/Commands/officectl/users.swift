@@ -19,7 +19,8 @@ struct Users : AsyncParsableCommand {
 		subcommands: [
 			Create.self,
 			Delete.self,
-			List.self
+			List.self,
+			Sync.self
 		]
 	)
 	
