@@ -62,24 +62,22 @@ struct Sync : AsyncParsableCommand {
 		let plans: [ServiceSyncPlan] = try destinationServices.map{ (destinationService: HashableUserService) -> ServiceSyncPlan in
 			let usersToCreate: [any User] = try users
 				.filter{ user in
-					/* Multi-users w/o a value in the destination directory */
 					guard let destinationUser = user[destinationService]!.success else {
 						return false
 					}
 					return destinationUser == nil
-				}
-				.compactMap{ $0[sourceService]!.success.flatMap{ $0 } }                /* W/ a value in the source directory */
-				.map{ try $0.logicalUser(in: destinationService.value) } /* Converted to destination directory */
+				}                                                        /* Multi-users w/o a value in the destination directory. */
+				.compactMap{ $0[sourceService]!.success.flatMap{ $0 } }  /* But w/ a value in the source directory. */
+				.map{ try $0.logicalUser(in: destinationService.value) } /* Converted to destination directory. */
 			
 			let usersToDelete: [any User] = users
 				.filter{
-					/* Multi-users w/o a value in the source directory */
 					guard let user = $0[sourceService]!.success else {
 						return false
 					}
 					return user == nil
-				}
-				.compactMap{ $0[destinationService]!.success.flatMap{ $0 } } /* W/ a value in the destination directory */
+				}                                                            /* Multi-users w/o a value in the source directory. */
+				.compactMap{ $0[destinationService]!.success.flatMap{ $0 } } /* But w/ a value in the destination directory. */
 			
 			return ServiceSyncPlan(service: destinationService.value, usersToCreate: usersToCreate, usersToDelete: usersToDelete)
 		}
