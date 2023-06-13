@@ -204,7 +204,7 @@ public final class OpenDirectoryService : UserService {
 			 * From different tests I did, at least on our OpenDirectory setup (Server App), I gathered that:
 			 * - Updating kODAttributeTypeRecordName does not work (fails with error “Connection failed to the directory server.”);
 			 * - Updating kODAttributeTypeMetaRecordName does not work either (fails with error “An invalid attribute type was provided.”);
-			 * - All other updates I tested (no much though) did work, even setting a value to multi-data when a string is “expected” (with valid UTF-8 data of course).
+			 * - All other updates I tested (not much though) did work, even setting a value to multi-data when a string is “expected” (with valid UTF-8 data of course).
 			 *
 			 * From this, we do the update of kODAttributeTypeRecordName and kODAttributeTypeMetaRecordName if applicable first, to fail as early as possible.
 			 *
@@ -217,7 +217,7 @@ public final class OpenDirectoryService : UserService {
 			 * Note:
 			 * The removal probably worked at some point.
 			 * Currently it does not (client is on macOS 14.0 Beta (23A5257q), OD server is on macOS 12.6.6 (21G646)).
-			 * The host version did change for sure, but I the server one is probably the same as when it worked, so I don’t know how relevant that can be… */
+			 * The host version did change for sure, but the server one is probably the same as when it worked, so I don’t know how relevant that can be… */
 			if attributeNames.remove(kODAttributeTypeRecordName) != nil {
 //				Conf.logger?.debug("Setting attribute \(kODAttributeTypeRecordName) to \(user.id)")
 //				try record.setValue(user.id, forAttribute: kODAttributeTypeRecordName)
