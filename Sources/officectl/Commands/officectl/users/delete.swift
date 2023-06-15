@@ -68,7 +68,7 @@ struct Delete : AsyncParsableCommand {
 		if !officectlOptions.yes {
 			/* Let’s confirm everything is ok before deleting the user. */
 			var stderrStream = StderrStream()
-			print("Will try and delete the uesr on these services:", to: &stderrStream)
+			print("Will try and delete the user on these services:", to: &stderrStream)
 			for userAndService in usersAndServices {
 				print("   - \(userAndService.shortDescription)", to: &stderrStream)
 			}
