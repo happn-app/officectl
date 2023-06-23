@@ -13,7 +13,7 @@ let coreDependencies: [Target.Dependency] = [
 	.product(name: "Email",                    package: "swift-email"),
 	.product(name: "GenericJSON",              package: "generic-json-swift"),
 	.product(name: "Logging",                  package: "swift-log"),
-	.product(name: "OfficeModelCore",          package: "officectl-model"/*Xcode is not read for this:, moduleAliases: ["OfficeModelCore": "ModelCore"]*/),
+	.product(name: "OfficeModelCore",          package: "officectl-model"/*Xcode is not ready for this:, moduleAliases: ["OfficeModelCore": "ModelCore"]*/),
 	.product(name: "UnwrapOrThrow",            package: "UnwrapOrThrow")
 ]
 
