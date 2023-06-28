@@ -51,8 +51,8 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
 
 # TODO: Find how to do this properly!
 ADD https://ca.1e42.net/happn_Root_CA.crt           /usr/local/share/ca-certificates/happn_Root_CA.crt
-ADD https://ca.1e42.net/happn_Intermediate_CA_2.crt /usr/local/share/ca-certificates/happn_Intermediate_CA_2.crt
 ADD https://ca.1e42.net/happn_Intermediate_CA_5.crt /usr/local/share/ca-certificates/happn_Intermediate_CA_5.crt
+ADD https://ca.1e42.net/happn_Intermediate_CA_7.crt /usr/local/share/ca-certificates/happn_Intermediate_CA_7.crt
 RUN /usr/sbin/update-ca-certificates
 
 # Create a vapor user and group with /app as its home directory
