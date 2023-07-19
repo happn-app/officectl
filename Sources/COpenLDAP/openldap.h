@@ -1,4 +1,4 @@
-/* From <https://github.com/PerfectlySoft/Perfect-OpenLDAP> */
+/* From <https://github.com/PerfectlySoft/Perfect-OpenLDAP>. */
 #ifndef __SWIFT_COPENLDAP__
 # define __SWIFT_COPENLDAP__
 # include <ldap.h>
