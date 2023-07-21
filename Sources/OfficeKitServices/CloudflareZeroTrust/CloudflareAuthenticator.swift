@@ -1,8 +1,8 @@
 /*
- * VaultPKIAuthenticator.swift
- * VaultPKIOffice
+ * CloudflareAuthenticator.swift
+ * CloudflareZeroTrustOffice
  *
- * Created by François Lamboley on 2023/01/25.
+ * Created by François Lamboley on 2023/07/21.
  */
 
 import Foundation
@@ -15,14 +15,14 @@ import TaskQueue
 
 
 
-public actor VaultPKIAuthenticator : Authenticator, HasTaskQueue {
+public actor CloudflareAuthenticator : Authenticator, HasTaskQueue {
 	
 	public typealias Request = URLRequest
 	
-	public let rootToken: String
+	public let token: String
 	
-	public init(rootToken: String) {
-		self.rootToken = rootToken
+	public init(token: String) {
+		self.token = token
 	}
 	
 	/* ************************************
@@ -32,7 +32,7 @@ public actor VaultPKIAuthenticator : Authenticator, HasTaskQueue {
 	public func unqueuedAuthenticate(request: URLRequest) async throws -> URLRequest {
 		/* Add the expected header to the request. */
 		var request = request
-		request.addValue(rootToken, forHTTPHeaderField: "X-Vault-Token")
+		request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
 		return request
 	}
 	

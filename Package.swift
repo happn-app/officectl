@@ -144,17 +144,19 @@ let package = Package(
 		   ********************* */
 		ret.append(.target(name: "CommonOfficePropertiesFromHappn", dependencies: [.target(name: "OfficeKit")],                                                                                                                                                          path: "Sources/OfficeKitServices/ Common",     swiftSettings: commonSwiftSettings))
 		ret.append(.target(name: "CommonForOfficeKitServicesTests", dependencies: [.product(name: "URLRequestOperation", package: "URLRequestOperation"), .product(name: "StreamReader", package: "stream-reader"), .product(name: "CLTLogger", package: "clt-logger")], path: "Tests/OfficeKitServices-Tests/ Common", swiftSettings: commonSwiftSettings))
-		ret.append(contentsOf: targetsForService(named: "GitHubOffice",        folderName: "GitHub",    additionalDependencies: networkDependencies + [.product(name: "JWT", package: "jwt")]))
-		ret.append(contentsOf: targetsForService(named: "GoogleOffice",        folderName: "Google",    additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
-		ret.append(contentsOf: targetsForService(named: "HappnOffice",         folderName: "happn",     additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
-		ret.append(contentsOf: targetsForService(named: "LDAPOffice",          folderName: "LDAP",      additionalDependencies: ldapDependencies))
-		ret.append(contentsOf: targetsForService(named: "Office365Office",     folderName: "Office365", additionalDependencies: networkDependencies + [.product(name: "JWT", package: "jwt")]))
-		ret.append(contentsOf: targetsForService(named: "OfficeKitOffice",     folderName: "OfficeKit", additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
+		ret.append(contentsOf: targetsForService(named: "CloudflareOffice",          folderName: "Cloudflare",          additionalDependencies: networkDependencies))
+		ret.append(contentsOf: targetsForService(named: "CloudflareZeroTrustOffice", folderName: "CloudflareZeroTrust", additionalDependencies: networkDependencies))
+		ret.append(contentsOf: targetsForService(named: "GitHubOffice",              folderName: "GitHub",              additionalDependencies: networkDependencies + [.product(name: "JWT", package: "jwt")]))
+		ret.append(contentsOf: targetsForService(named: "GoogleOffice",              folderName: "Google",              additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto"), .product(name: "JWT", package: "jwt")]))
+		ret.append(contentsOf: targetsForService(named: "HappnOffice",               folderName: "happn",               additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
+		ret.append(contentsOf: targetsForService(named: "LDAPOffice",                folderName: "LDAP",                additionalDependencies: ldapDependencies))
+		ret.append(contentsOf: targetsForService(named: "Office365Office",           folderName: "Office365",           additionalDependencies: networkDependencies + [.product(name: "JWT", package: "jwt")]))
+		ret.append(contentsOf: targetsForService(named: "OfficeKitOffice",           folderName: "OfficeKit",           additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
 #if canImport(OpenDirectory)
-		ret.append(contentsOf: targetsForService(named: "OpenDirectoryOffice", folderName: "OpenDirectory"))
+		ret.append(contentsOf: targetsForService(named: "OpenDirectoryOffice",       folderName: "OpenDirectory"))
 #endif
-		ret.append(contentsOf: targetsForService(named: "SynologyOffice",      folderName: "Synology",  additionalDependencies: networkDependencies))
-		ret.append(contentsOf: targetsForService(named: "VaultPKIOffice",      folderName: "VaultPKI",  additionalDependencies: networkDependencies + [.product(name: "X509", package: "swift-certificates"), .product(name: "SwiftASN1", package: "swift-asn1")]))
+		ret.append(contentsOf: targetsForService(named: "SynologyOffice",            folderName: "Synology",            additionalDependencies: networkDependencies))
+		ret.append(contentsOf: targetsForService(named: "VaultPKIOffice",            folderName: "VaultPKI",            additionalDependencies: networkDependencies + [.product(name: "X509", package: "swift-certificates"), .product(name: "SwiftASN1", package: "swift-asn1")]))
 		
 		/* ************************
 		   MARK: OfficeServer (lib)
