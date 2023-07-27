@@ -58,7 +58,16 @@ final class CloudflareZeroTrustOfficeTests : XCTestCase {
 //		service = nil
 	}
 	
-	func testNothing() async throws {
+	func testCloudFlareZeroTrustIDStringConversions() async throws {
+		func testID(_ id: CloudflareZeroTrustUser.ID, _ expectedString: String, _ separator: String? = nil, _ escape: String? = nil) {
+			XCTAssertEqual(id.rawValue(forcedSeparator: separator, forcedEscape: escape), expectedString)
+			XCTAssertEqual(id, CloudflareZeroTrustUser.ID(rawValue: expectedString, forcedSeparator: separator, forcedEscape: escape))
+		}
+		testID(.init(cfSeatID: "123"), "123")
+		testID(.init(cfSeatID: "123 #456"), "123 #/456")
+		testID(.init(cfSeatID: "123", email: Email(rawValue: "a@example.org")!), "a@example.org #123")
+		testID(.init(cfSeatID: "123", email: Email(rawValue: "abc#.def@example.org")!), "abc#.def@example.org#.123", "#.")
+		testID(.init(cfSeatID: "123#.456", email: Email(rawValue: "abc#.def#.ghi@example.org")!), "abc#.def#.ghi@example.org#.123#.%*456", "#.", "%*")
 	}
 	
 }

@@ -1,6 +1,6 @@
 /*
  * CloudflareAuthenticator.swift
- * CloudflareZeroTrustOffice
+ * CloudflareOffice
  *
  * Created by François Lamboley on 2023/07/21.
  */

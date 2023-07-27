@@ -7,8 +7,6 @@
 
 import Foundation
 
-import Email
-
 
 
 public enum HappnOfficeError : Error, Sendable {
@@ -19,6 +17,7 @@ public enum HappnOfficeError : Error, Sendable {
 	
 	case apiError(code: Int, message: String)
 	
+	/* _Not_ the same as `OfficeKit.unsupportedOperation`. */
 	case unsupportedOperation
 	
 }

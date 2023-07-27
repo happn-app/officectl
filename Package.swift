@@ -49,11 +49,13 @@ let package = Package(
 		/* Base framework. */
 		ret.append(.library(name: "OfficeKit", targets: ["OfficeKit"]))
 		/* Office implementations. */
-		ret.append(.library(name: "GitHubOffice",        targets: ["GitHubOffice"]))
-		ret.append(.library(name: "GoogleOffice",        targets: ["GoogleOffice"]))
-		ret.append(.library(name: "HappnOffice",         targets: ["HappnOffice"]))
-		ret.append(.library(name: "LDAPOffice",          targets: ["LDAPOffice"]))
-		ret.append(.library(name: "OfficeKitOffice",     targets: ["OfficeKitOffice"]))
+		ret.append(.library(name: "CloudflareOffice",          targets: ["CloudflareOffice"]))
+		ret.append(.library(name: "CloudflareZeroTrustOffice", targets: ["CloudflareZeroTrustOffice"]))
+		ret.append(.library(name: "GitHubOffice",              targets: ["GitHubOffice"]))
+		ret.append(.library(name: "GoogleOffice",              targets: ["GoogleOffice"]))
+		ret.append(.library(name: "HappnOffice",               targets: ["HappnOffice"]))
+		ret.append(.library(name: "LDAPOffice",                targets: ["LDAPOffice"]))
+		ret.append(.library(name: "OfficeKitOffice",           targets: ["OfficeKitOffice"]))
 #if canImport(OpenDirectory)
 		ret.append(.library(name: "OpenDirectoryOffice", targets: ["OpenDirectoryOffice"]))
 #endif
@@ -201,6 +203,8 @@ let package = Package(
 				ret.append(.target(name: "OfficeServer"))
 				
 				ret.append(.target(name: "OfficeKit"))
+				ret.append(.target(name: "CloudflareOffice"))
+				ret.append(.target(name: "CloudflareZeroTrustOffice"))
 				ret.append(.target(name: "GitHubOffice"))
 				ret.append(.target(name: "GoogleOffice"))
 				ret.append(.target(name: "HappnOffice"))

@@ -1,8 +1,8 @@
 /*
- * CloudflareZeroTrustServiceConfig.swift
- * CloudflareZeroTrustOffice
+ * CloudflareServiceConfig.swift
+ * CloudflareOffice
  *
- * Created by François Lamboley on 2023/07/21.
+ * Created by François Lamboley on 2023/07/25.
  */
 
 import Foundation
@@ -13,7 +13,7 @@ import OfficeKit
 
 
 
-public struct CloudflareZeroTrustServiceConfig : Sendable, Codable {
+public struct CloudflareServiceConfig : Sendable, Codable {
 	
 	public var accountID: String
 	public var connectorSettings: ConnectorSettings
