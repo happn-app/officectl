@@ -40,9 +40,9 @@ public struct CloudflareZeroTrustUser : Sendable, Hashable, Codable {
 	public var lastSuccessfulLogin: Date?
 	
 	/** `true` if the user has authenticated with Cloudflare Access. */
-	public var accessSeat: Bool?
+	public var accessSeat: Bool
 	/** `true` if the user has logged into the WARP client. */
-	public var gatewaySeat: Bool?
+	public var gatewaySeat: Bool
 	
 	/** The number of active devices registered to the user. */
 	public var activeDeviceCount: Int?

@@ -38,6 +38,14 @@ public final class CloudflareZeroTrustService : UserService {
 		self.config = cloudflareZeroTrustServiceConfig
 		
 		self.authenticator = CloudflareAuthenticator(token: cloudflareZeroTrustServiceConfig.connectorSettings.token)
+		
+		if #available(macOS 13.0, *) {
+			self.apiBaseURL = URL(string: "https://api.cloudflare.com/client/v4/accounts")!
+				.appending(path: config.accountID)
+		} else {
+			self.apiBaseURL = URL(string: "https://api.cloudflare.com/client/v4/accounts")!
+				.appendingPathComponent(config.accountID)
+		}
 	}
 	
 	public func shortDescription(fromUser user: CloudflareZeroTrustUser) -> String {
@@ -90,10 +98,16 @@ public final class CloudflareZeroTrustService : UserService {
 	}
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [CloudflareZeroTrustUser] {
-		throw Err.notImplemented
-//		return try await CloudflareZeroTrustUser.list(orgID: config.orgID, connector: connector)
+		let url = try apiBaseURL.appendingPathComponent("access/users")
+			.appendingQueryParameters(from: ["per_page": "250"])
+		return try await CollectionResponse<CloudflareZeroTrustUser>.getAll(
+			sourceRequest: URLRequest(url: url),
+			requestProcessors: [AuthRequestProcessor(authenticator)]
+		).filter{ $0.accessSeat || $0.gatewaySeat }
 	}
 	
+	/* Technically we could probably create ZeroTrust gateway account <https://developers.cloudflare.com/api/operations/zero-trust-accounts-create-zero-trust-account>.
+	 * We do not support it (at least for now). */
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: CloudflareZeroTrustUser) async throws -> CloudflareZeroTrustUser {
 		throw OfficeKitError.unsupportedOperation
@@ -113,4 +127,7 @@ public final class CloudflareZeroTrustService : UserService {
 	public func changePassword(of user: CloudflareZeroTrustUser, to newPassword: String) async throws {
 		throw OfficeKitError.unsupportedOperation
 	}
+	
+	private let apiBaseURL: URL
+	
 }

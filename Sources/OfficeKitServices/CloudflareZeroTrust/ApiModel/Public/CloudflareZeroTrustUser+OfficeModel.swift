@@ -15,10 +15,18 @@ import OfficeKit
 
 extension CloudflareZeroTrustUser : User {
 	
+	/** Two IDs are equal iif their seat ID are equal. */
 	public struct ID : Hashable, Codable, Sendable, RawRepresentable, MightHaveEmail {
 		
 		public static let escape = "/"
 		public static let separator = " #"
+		
+		public static func ==(lhs: ID, rhs: ID) -> Bool {
+			return lhs.cfSeatID == rhs.cfSeatID
+		}
+		public func hash(into hasher: inout Hasher) {
+			hasher.combine(cfSeatID)
+		}
 		
 		public var cfSeatID: String
 		public var email: Email?
@@ -28,13 +36,13 @@ extension CloudflareZeroTrustUser : User {
 			self.email = email
 		}
 		
-		/* This code is awful. I know. */
 		public init?(rawValue: String) {
 			self.init(rawValue: rawValue, forcedSeparator: nil, forcedEscape: nil)
 		}
 		
 		/* For tests. */
 		internal init?(rawValue: String, forcedSeparator: String?, forcedEscape: String?) {
+			/* This code is awful. I know. */
 			let escape = String((forcedEscape ?? Self.escape).reversed())
 			let separator = String((forcedSeparator ?? Self.separator).reversed())
 			var reversedAndSplit: [String]
@@ -85,6 +93,9 @@ extension CloudflareZeroTrustUser : User {
 	public init(oU_id userID: ID) {
 		self.seatUID = userID.cfSeatID
 		self.email = userID.email
+		
+		self.accessSeat = false
+		self.gatewaySeat = false
 	}
 	
 	public var oU_id: ID {

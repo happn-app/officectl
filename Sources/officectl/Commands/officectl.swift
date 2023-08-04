@@ -22,6 +22,8 @@ import TOMLDecoder
 import XDG
 
 import OfficeKit
+import CloudflareOffice
+import CloudflareZeroTrustOffice
 import GitHubOffice
 import GoogleOffice
 import HappnOffice
@@ -156,17 +158,18 @@ extension Officectl.Options {
 		
 		
 		/* *** OFFICEKIT SERVICE PROVIDERS *** */
-		OfficeKitServices.providers[       GitHubService.providerID] =        GitHubService.self
-		OfficeKitServices.providers[       GoogleService.providerID] =        GoogleService.self
-		OfficeKitServices.providers[        HappnService.providerID] =         HappnService.self
-		OfficeKitServices.providers[         LDAPService.providerID] =          LDAPService.self
-		OfficeKitServices.providers[    Office365Service.providerID] =     Office365Service.self
-		OfficeKitServices.providers[    OfficeKitService.providerID] =     OfficeKitService.self
+		OfficeKitServices.providers[CloudflareZeroTrustService.providerID] = CloudflareZeroTrustService.self
+		OfficeKitServices.providers[             GitHubService.providerID] =              GitHubService.self
+		OfficeKitServices.providers[             GoogleService.providerID] =              GoogleService.self
+		OfficeKitServices.providers[              HappnService.providerID] =               HappnService.self
+		OfficeKitServices.providers[               LDAPService.providerID] =                LDAPService.self
+		OfficeKitServices.providers[          Office365Service.providerID] =           Office365Service.self
+		OfficeKitServices.providers[          OfficeKitService.providerID] =           OfficeKitService.self
 #if canImport(OpenDirectoryOffice)
-		OfficeKitServices.providers[OpenDirectoryService.providerID] = OpenDirectoryService.self
+		OfficeKitServices.providers[      OpenDirectoryService.providerID] =       OpenDirectoryService.self
 #endif
-		OfficeKitServices.providers[     SynologyService.providerID] =      SynologyService.self
-		OfficeKitServices.providers[     VaultPKIService.providerID] =      VaultPKIService.self
+		OfficeKitServices.providers[           SynologyService.providerID] =            SynologyService.self
+		OfficeKitServices.providers[           VaultPKIService.providerID] =            VaultPKIService.self
 		
 		/* *** OFFICEKIT SERVICES *** */
 		var services = OfficeKitServices()
