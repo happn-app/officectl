@@ -60,6 +60,9 @@ struct List : AsyncParsableCommand {
 				return !ignoredUsers.contains(userAndService.taggedID.id)
 			}
 		)
+		for (service, error) in multiUsersResult.fetchErrorsByServices {
+			officectlOptions.logger.warning("Failed fetching users.", metadata: [LMK.serviceID: "\(service)", LMK.error: "\(error)"])
+		}
 #if canImport(TabularData)
 		/* TabularData knows how to export in CSV, text or JSON, but only on macOS 13 for the JSON part. */
 		switch format {
