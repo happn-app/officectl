@@ -16,7 +16,7 @@ enum Environment : String, CaseIterable, Decodable, ExpressibleByArgument {
 
 	case development
 	case production
-
+	
 	init?(argument: String) {
 		switch argument {
 			case let str where str.starts(with: "dev"):  self = .development
