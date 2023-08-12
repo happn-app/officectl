@@ -32,8 +32,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/xcode-actions/clt-logger.git",
       "state" : {
-        "revision" : "a3e33f58aa30ec9c33f022dd512e00e0663606c1",
-        "version" : "0.5.1"
+        "revision" : "12a5ebc1b00ec0d3588fe168cef29bad96e0c7f6",
+        "version" : "0.6.0"
       }
     },
     {
@@ -411,7 +411,7 @@
       "location" : "https://github.com/happn-app/URLRequestOperation.git",
       "state" : {
         "branch" : "dev.final_operation",
-        "revision" : "1f9c90cd5e64310edc14b160d024e4db4b6c0293"
+        "revision" : "b0dd4a6bc5206afdd1cc26654a942db23f65471b"
       }
     },
     {
