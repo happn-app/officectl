@@ -90,7 +90,7 @@ let package = Package(
 //		ret.append(.package(url: "https://github.com/happn-app/RetryingOperation.git",            from: "1.1.7"))
 		ret.append(.package(url: "https://github.com/happn-app/SemiSingleton.git",                from: "2.1.0-beta.1"))
 		ret.append(.package(url: "https://github.com/happn-app/URLRequestOperation.git",          branch: "dev.final_operation"))
-		ret.append(.package(url: "https://github.com/happn-app/XibLoc.git",                       from: "1.2.4"))
+		ret.append(.package(url: "https://github.com/happn-app/XibLoc.git",                       from: "1.3.0"))
 		ret.append(.package(url: "https://github.com/iwill/generic-json-swift.git",               from: "2.0.2"))
 		ret.append(.package(url: "https://github.com/mxcl/LegibleError.git",                      from: "1.0.0"))
 		ret.append(.package(url: "https://github.com/swift-server-community/SwiftPrometheus.git", from: "1.0.0"))
@@ -189,6 +189,9 @@ let package = Package(
 			name: "officectl",
 			dependencies: {
 				var ret = [Target.Dependency]()
+				/* They are not required per-se, but when we do tests and stuff it’s convenient to have them. */
+				ret.append(contentsOf: networkDependencies)
+				
 				ret.append(.product(name: "ArgumentParser", package: "swift-argument-parser"))
 				ret.append(.product(name: "CLTLogger",      package: "clt-logger"))
 				ret.append(.product(name: "JWT",            package: "jwt"))

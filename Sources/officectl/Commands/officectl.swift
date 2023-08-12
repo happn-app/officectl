@@ -45,7 +45,8 @@ struct Officectl : AsyncParsableCommand {
 		abstract: "Manage multiple directories.",
 		subcommands: [
 			Users.self,
-			Server.self
+			Server.self,
+			Dev.self
 		]
 	)
 	
