@@ -16,7 +16,7 @@ import OfficeKit
 extension CloudflareZeroTrustUser : User {
 	
 	/** Two IDs are equal iif their seat ID are equal. */
-	public struct ID : Hashable, Codable, Sendable, RawRepresentable, MightHaveEmail {
+	public struct ID : Hashable, Codable, Sendable, RawRepresentable, MightBeEmail {
 		
 		public static let escape = "/"
 		public static let separator = " #"

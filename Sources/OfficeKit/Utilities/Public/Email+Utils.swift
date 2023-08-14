@@ -11,7 +11,7 @@ import Email
 
 
 
-extension Email : MightHaveEmail {
+extension Email : MightBeEmail {
 	
 	public var email: Email? {
 		return self

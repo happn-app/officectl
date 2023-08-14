@@ -437,8 +437,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/happn-app/XibLoc.git",
       "state" : {
-        "revision" : "54f7a17a4accb8409f7ec9e7db2ed9a969ffc95e",
-        "version" : "1.2.5"
+        "revision" : "575dfaef781b378e84be0144bae4a4ccb9f45a5e",
+        "version" : "1.3.0"
       }
     }
   ],
