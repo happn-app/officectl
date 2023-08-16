@@ -54,10 +54,16 @@ public actor HappnConnector : Connector, Authenticator, HTTPAuthConnector, HasTa
 			return
 		}
 		
-		let scope = Set(scope).union(currentScope ?? [])
 		try await executeOnTaskQueue{
+			let currentScope = await self.currentScope
+			/* We check once more if the re-connection is still needed.
+			 * We have checked once, before the task queue jump, but the scope might have changed during the switch to the task queue! */
+			guard !(currentScope?.isSubset(of: scope) ?? false) else {
+				return
+			}
+			
 			try await self.unqueuedDisconnect()
-			try await self.unqueuedConnect(scope)
+			try await self.unqueuedConnect(Set(scope).union(currentScope ?? []))
 		}
 	}
 	
