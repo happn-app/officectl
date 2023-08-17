@@ -28,7 +28,7 @@ struct ConsolePerm : AsyncParsableCommand {
 	var officectlOptions: Officectl.Options
 	
 	@Argument
-	var email: String
+	var email: Email
 	
 	func run() async throws {
 		try officectlOptions.bootstrap()
