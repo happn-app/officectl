@@ -17,10 +17,10 @@ struct Users : AsyncParsableCommand {
 	static var configuration = CommandConfiguration(
 		abstract: "Manage the users.",
 		subcommands: [
-			Create.self,
-			Delete.self,
-			List.self,
-			Sync.self
+			Users_Create.self,
+			Users_Delete.self,
+			Users_List.self,
+			Users_Sync.self
 		]
 	)
 	

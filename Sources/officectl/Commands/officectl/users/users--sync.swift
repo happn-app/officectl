@@ -1,5 +1,5 @@
 /*
- * sync.swift
+ * users--sync.swift
  * officectl
  *
  * Created by François Lamboley on 2023/06/09.
@@ -15,7 +15,7 @@ import LDAPOffice
 
 
 
-struct Sync : AsyncParsableCommand {
+struct Users_Sync : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		abstract: "Sync users from a given service to one or multiple services."

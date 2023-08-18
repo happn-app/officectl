@@ -1,5 +1,5 @@
 /*
- * create.swift
+ * users--create.swift
  * officectl
  *
  * Created by François Lamboley on 2023/01/12.
@@ -14,7 +14,7 @@ import LDAPOffice
 
 
 
-struct Create : AsyncParsableCommand {
+struct Users_Create : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		abstract: "Create a user."

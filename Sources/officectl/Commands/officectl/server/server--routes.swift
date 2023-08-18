@@ -1,5 +1,5 @@
 /*
- * routes.swift
+ * server--routes.swift
  * officectl
  *
  * Created by François Lamboley on 2023/01/16.
@@ -13,7 +13,7 @@ import OfficeServer
 
 
 
-struct Routes : AsyncParsableCommand {
+struct Server_Routes : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		abstract: "Show all the server’s routes."

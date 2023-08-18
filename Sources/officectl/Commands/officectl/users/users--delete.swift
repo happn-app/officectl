@@ -1,5 +1,5 @@
 /*
- * delete.swift
+ * users--delete.swift
  * officectl
  *
  * Created by François Lamboley on 2023/01/23.
@@ -15,7 +15,7 @@ import OfficeKit
 
 
 
-struct Delete : AsyncParsableCommand {
+struct Users_Delete : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		abstract: "Delete a user."

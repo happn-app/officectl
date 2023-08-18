@@ -18,7 +18,7 @@ struct Experimental : AsyncParsableCommand {
 		abstract: "Experimental commands; use with care.",
 		shouldDisplay: false,
 		subcommands: [
-			ConsolePerm.self
+			Experimental_ConsolePerm.self
 		]
 	)
 	

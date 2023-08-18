@@ -1,5 +1,5 @@
 /*
- * cur-test.swift
+ * dev--cur-test.swift
  * officectl
  *
  * Created by François Lamboley on 2023/08/11.
@@ -20,7 +20,7 @@ import OfficeKit
 
 
 
-struct CurTest : AsyncParsableCommand {
+struct Dev_CurTest : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		abstract: "The current test done by the dev. Definitely do not run this if you’re not the dev.",

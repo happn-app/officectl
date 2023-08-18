@@ -1,5 +1,5 @@
 /*
- * list.swift
+ * users--list.swift
  * officectl
  *
  * Created by François Lamboley on 2023/01/17.
@@ -16,7 +16,7 @@ import OfficeKit
 
 
 
-struct List : AsyncParsableCommand {
+struct Users_List : AsyncParsableCommand {
 	
 	enum Format : String, CaseIterable, ExpressibleByArgument {
 		

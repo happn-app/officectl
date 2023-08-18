@@ -20,9 +20,9 @@ struct Server : AsyncParsableCommand {
 	static var configuration = CommandConfiguration(
 		abstract: "Interact with the server.",
 		subcommands: [
-//			ProcessJobs.self, /* We do not have jobs. */
-			Routes.self,
-			Serve.self
+//			Server_ProcessJobs.self, /* We do not have jobs. */
+			Server_Routes.self,
+			Server_Serve.self
 		]
 	)
 	

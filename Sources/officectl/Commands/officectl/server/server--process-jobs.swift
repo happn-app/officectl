@@ -1,5 +1,5 @@
 /*
- * process-jobs.swift
+ * server--process-jobs.swift
  * officectl
  *
  * Created by François Lamboley on 2023/01/25.
@@ -13,7 +13,7 @@ import OfficeServer
 
 
 
-struct ProcessJobs : AsyncParsableCommand {
+struct Server_ProcessJobs : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		abstract: "Start processing (non-scheduled) jobs in Vapor queues."

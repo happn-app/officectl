@@ -1,5 +1,5 @@
 /*
- * console-perm.swift
+ * experimental--console-perm.swift
  * officectl
  *
  * Created by François Lamboley on 2023/08/17.
@@ -18,7 +18,7 @@ import OfficeKit
 
 
 
-struct ConsolePerm : AsyncParsableCommand {
+struct Experimental_ConsolePerm : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
 		abstract: "Set the console permissions for a given user in the happn console."

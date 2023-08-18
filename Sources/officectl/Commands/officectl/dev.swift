@@ -18,7 +18,7 @@ struct Dev : AsyncParsableCommand {
 		abstract: "Dev commands; use with care, only if you know what you’re doing.",
 		shouldDisplay: false,
 		subcommands: [
-			CurTest.self
+			Dev_CurTest.self
 		]
 	)
 	
