@@ -46,6 +46,7 @@ struct Officectl : AsyncParsableCommand {
 		subcommands: [
 			Users.self,
 			Server.self,
+			Services.self,
 			Experimental.self,
 			Dev.self
 		]
