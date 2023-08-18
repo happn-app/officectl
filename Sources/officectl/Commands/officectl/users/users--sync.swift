@@ -18,6 +18,7 @@ import LDAPOffice
 struct Users_Sync : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
+		commandName: "sync",
 		abstract: "Sync users from a given service to one or multiple services."
 	)
 	

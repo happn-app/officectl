@@ -18,6 +18,7 @@ import OfficeKit
 struct Users_Delete : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
+		commandName: "delete",
 		abstract: "Delete a user."
 	)
 	

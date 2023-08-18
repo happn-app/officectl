@@ -21,6 +21,7 @@ import OfficeKit
 struct Experimental_ConsolePerm : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
+		commandName: "console-perm",
 		abstract: "Set the console permissions for a given user in the happn console."
 	)
 	

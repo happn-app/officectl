@@ -27,6 +27,7 @@ struct Users_List : AsyncParsableCommand {
 	}
 	
 	static var configuration = CommandConfiguration(
+		commandName: "list",
 		abstract: "Create a user."
 	)
 	

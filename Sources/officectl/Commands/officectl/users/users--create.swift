@@ -10,13 +10,13 @@ import Foundation
 import ArgumentParser
 
 import OfficeKit
-import LDAPOffice
 
 
 
 struct Users_Create : AsyncParsableCommand {
 	
 	static var configuration = CommandConfiguration(
+		commandName: "create",
 		abstract: "Create a user."
 	)
 	
