@@ -1,4 +1,4 @@
-// swift-tools-version:5.7
+// swift-tools-version:5.8
 import PackageDescription
 
 
@@ -157,7 +157,7 @@ let package = Package(
 #if canImport(OpenDirectory)
 		ret.append(contentsOf: targetsForService(named: "OpenDirectoryOffice",       folderName: "OpenDirectory"))
 #endif
-		ret.append(contentsOf: targetsForService(named: "SynologyOffice",            folderName: "Synology",            additionalDependencies: networkDependencies))
+		ret.append(contentsOf: targetsForService(named: "SynologyOffice",            folderName: "Synology",            additionalDependencies: networkDependencies + [.product(name: "Crypto", package: "swift-crypto")]))
 		ret.append(contentsOf: targetsForService(named: "VaultPKIOffice",            folderName: "VaultPKI",            additionalDependencies: networkDependencies + [.product(name: "X509", package: "swift-certificates"), .product(name: "SwiftASN1", package: "swift-asn1")]))
 		
 		/* ************************
