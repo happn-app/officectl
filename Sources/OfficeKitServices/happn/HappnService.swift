@@ -162,6 +162,10 @@ public final class HappnService : UserService {
 		try await connector.increaseScopeIfNeeded("admin_create", "user_create")
 		
 		var user = user
+		if user.gender == nil {
+			Conf.logger?.info("Asked to create a user but the gender is not set. Setting to male.")
+			user.gender = .male
+		}
 		if user.password == nil {
 			/* Creating a user without a password is not possible.
 			 * Let’s generate a password!
