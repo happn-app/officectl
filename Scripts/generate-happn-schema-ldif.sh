@@ -17,7 +17,7 @@ done
 slaptest -f "$TMP_CONF_FILE" -F .
 rm -f "$TMP_CONF_FILE"
 
-# Move the generated ldifs in .
+# Move the generated ldifs.
 for ldif in "./cn=config/cn=schema"/*.ldif; do
 	mv -f "$ldif" "$(basename "$ldif" | sed -E 's/^cn=\{[0-9]+\}//')"
 done
@@ -27,7 +27,7 @@ rm -fr "./cn=config.ldif"
 rm -fr "./cn=config"
 
 # Print some info
-echo "The ldif have been created. Only the following properties should be kept (not removed automatically):"
+echo "The ldif have been created. Only the following properties should be kept (we do not remove the rest automatically):"
 echo "  - dn (value should start with “cn={0}”);"
 echo "  - objectClass (value should be “olcSchemaConfig”);"
 echo "  - cn (value should be the value of the dn minus “cn=”);"
