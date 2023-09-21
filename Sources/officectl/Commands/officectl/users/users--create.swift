@@ -82,10 +82,6 @@ struct Users_Create : AsyncParsableCommand {
 			return
 		}
 		
-		URLRequestOperationConfig.logger = officectlOptions.logger
-		URLRequestOperationConfig.maxRequestBodySizeToLog = .max
-		URLRequestOperationConfig.maxResponseBodySizeToLog = .max
-		
 		if !officectlOptions.yes {
 			/* Let’s confirm everything is ok before deleting the user. */
 			var stderrStream = StderrStream()
