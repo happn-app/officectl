@@ -6,6 +6,9 @@
  */
 
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 import GenericJSON
 import OfficeModelCore
@@ -39,13 +42,14 @@ public final class CloudflareZeroTrustService : UserService {
 		
 		self.authenticator = CloudflareAuthenticator(token: cloudflareZeroTrustServiceConfig.connectorSettings.token)
 		
-		if #available(macOS 13.0, *) {
-			self.apiBaseURL = URL(string: "https://api.cloudflare.com/client/v4/accounts")!
-				.appending(path: config.accountID)
-		} else {
+		/* When Linux has OpenSource Foundation we’ll be able to unify the calls to URLs… for now we do the obsolete one everywhere. */
+//		if #available(macOS 13.0, *) {
+//			self.apiBaseURL = URL(string: "https://api.cloudflare.com/client/v4/accounts")!
+//				.appending(path: config.accountID)
+//		} else {
 			self.apiBaseURL = URL(string: "https://api.cloudflare.com/client/v4/accounts")!
 				.appendingPathComponent(config.accountID)
-		}
+//		}
 	}
 	
 	public func shortDescription(fromUser user: CloudflareZeroTrustUser) -> String {
