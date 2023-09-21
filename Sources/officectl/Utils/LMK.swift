@@ -15,7 +15,12 @@ enum LMK {
 	static let serviceID = "service_id"
 	static let serviceIDs = "service_ids"
 
+	static let email = "email"
+	
+	static let users = "users"
 	static let userAndServices = "users_and_services"
+	
+	static let permissions = "permissions"
 	
 	static let error = "error"
 	
