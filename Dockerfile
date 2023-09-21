@@ -1,7 +1,9 @@
+ARG BASE_IMAGE=swift:5.9-jammy
+
 # ================================
 # Build image
 # ================================
-FROM swiftlang/swift@sha256:f96dc42d419213a0dc041a6fd4d132ab82755d07c1642e060a5f4882ccce396a as build
+FROM $BASE_IMAGE as build
 
 # Install OS updates and required packages
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -40,7 +42,7 @@ RUN [ -d /build/Resources ] && { mv /build/Resources ./Resources && chmod -R a-w
 # ================================
 # Run image
 # ================================
-FROM swift:5.7-jammy-slim
+FROM $BASE_IMAGE-slim
 
 # Make sure all system packages are up to date and install required libs
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
