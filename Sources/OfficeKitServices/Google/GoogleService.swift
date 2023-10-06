@@ -113,6 +113,18 @@ public final class GoogleService : UserService {
 	public let supportsUserCreation: Bool = true
 	public func createUser(_ user: GoogleUser) async throws -> GoogleUser {
 		try await connector.increaseScopeIfNeeded("https://www.googleapis.com/auth/admin.directory.user")
+		var user = user
+		if user.password == nil {
+			/* Creating a user without a password is not possible.
+			 * Let’s generate a password!
+			 * A long and complex one. */
+			OfficeKitConfig.logger?.warning("Auto-generating a random password for gougle user creation: creating a gougle user w/o a password is not supported.")
+			let passwordProperty = UserProperty(rawValue: GoogleService.providerID + "/password")
+			let newPassword = String.generatePassword(allowedChars: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789=?!@#$%^&*")
+			guard user.oU_setValue(newPassword, forProperty: passwordProperty, convertMismatchingTypes: false).isSuccessful else {
+				throw Err.internalError
+			}
+		}
 		return try await user.create(connector: connector)
 	}
 	
