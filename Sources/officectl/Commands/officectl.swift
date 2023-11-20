@@ -55,6 +55,9 @@ struct Officectl : AsyncParsableCommand {
 	
 	struct Options : ParsableArguments {
 		
+		@Option(name: .long, help: "Override the log handler defined in the configuration.")
+		var logHandler: Conf.LogHandler?
+		
 		@Option(name: .long, help: "Override the verbosity defined in the configuration. If no verbosity is defined in the conf, the default level is notice for production environment, info for development environment. Overrides the --verbose option.")
 		var verbosity: Logger.Level?
 		
@@ -83,6 +86,7 @@ struct Officectl : AsyncParsableCommand {
 		/* We must declare the coding keys explicitly this because otherwise Swift complains that the struct is not Decodable because of the storage var.
 		 * Another solution would be to have a static storage instead, maybe even outside of Options, but an instance var is better. */
 		enum CodingKeys : CodingKey {
+			case logHandler
 			case verbosity
 			case verbose
 			case logToStdout
@@ -134,7 +138,7 @@ extension Officectl.Options {
 		
 		/* *** LOGGER *** */
 		/* We log using clt logger by default because this program is a CLT and can be used directly in a Terminal. */
-		switch conf?.logHandler ?? .cltLogger {
+		switch logHandler ?? conf?.logHandler ?? .cltLogger {
 			case .jsonLogger:
 				LoggingSystem.bootstrap({ label, metadataProvider in
 					var ret = JSONLogger(label: label, fd: !logToStdout ? .standardError : .standardOutput, metadataProvider: metadataProvider)

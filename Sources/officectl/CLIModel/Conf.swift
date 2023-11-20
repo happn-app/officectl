@@ -13,6 +13,7 @@ import System
 import SystemPackage
 #endif
 
+import ArgumentParser
 import Logging
 
 
@@ -20,13 +21,17 @@ import Logging
 /* We use Strings instead of FilePaths in the conf to avoid decoding issues (FilePath encoding is structured). */
 struct Conf : Decodable, Sendable {
 	
-	enum LogHandler : String, LosslessStringConvertible, Decodable, Sendable {
+	enum LogHandler : String, LosslessStringConvertible, Decodable, Sendable, ExpressibleByArgument {
 		
 		case cltLogger = "clt-logger"
 		case jsonLogger = "json-logger"
 		
 		init?(_ description: String) {
 			self.init(rawValue: description)
+		}
+		
+		init?(argument: String) {
+			self.init(argument)
 		}
 		
 		var description: String {
