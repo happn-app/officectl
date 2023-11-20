@@ -165,6 +165,10 @@ extension Officectl.Options {
 		RetryingOperationConfig.logger = nil
 		URLRequestOperationConfig.logger = Logger(label: "URLRequestOperation")
 		URLRequestOperationConfig.networkRetryProviderDefaultNumberOfRetries = 0
+		if URLRequestOperationConfig.logger?.logLevel == .trace {
+			URLRequestOperationConfig.maxRequestBodySizeToLog = 5 * 1024
+			URLRequestOperationConfig.maxResponseBodySizeToLog = 5 * 1024
+		}
 		
 		
 		/* *** SET CA CERTS FILE FOR LDAP *** */
