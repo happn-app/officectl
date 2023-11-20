@@ -49,9 +49,21 @@ extension HappnUser : User {
 	public mutating func oU_setValue<V : Sendable>(_ newValue: V?, forProperty property: UserProperty, convertMismatchingTypes convert: Bool) -> PropertyChangeResult {
 		let passwdProp = UserProperty(rawValue: HappnService.providerID + "/password")
 		switch property {
-			case .id, .persistentID, .emails:
-				Conf.logger?.error("Changing the id (email) or persistent id of a happn user is not supported by the happn API.")
-				return .failure(.readOnlyProperty)
+			case .id, .persistentID:
+				Conf.logger?.warning("Changing the ID of a happn user is not recommended at all as it will probably not do what you expect. Please delete and re-create the object instead.")
+				let ret = Self.setProperty(&login, to: newValue, allowTypeConversion: convert, converter: { obj in
+					if let id = obj as? HappnUserID {return id}
+					if let obj = (obj as Any?) {return Converters.convertObjectToEmail(obj).flatMap{ .login($0) }}
+					else                       {return .nullLogin}
+				})
+				return ret
+				
+			case .emails:
+				Conf.logger?.warning("Changing the email of a happn user changes the ID of the user, which is not recommended at all as it will probably not do what you expect. Please delete and re-create the object instead.")
+				let ret = Self.setProperty(&login, to: newValue, allowTypeConversion: convert, converter: { obj in
+					Converters.convertObjectToEmails(obj)?.first.flatMap{ .login($0) }
+				})
+				return ret
 				
 			case .firstName: return Self.setOptionalProperty(&firstName, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)
 			case .lastName:  return Self.setOptionalProperty(&lastName,  to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToString)

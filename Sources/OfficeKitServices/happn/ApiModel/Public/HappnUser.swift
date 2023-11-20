@@ -39,8 +39,7 @@ public struct HappnUser : Sendable, Hashable, Codable {
 		
 	}
 	
-	/* Updating the login is not possible, so this is a `let`, not a `var`. */
-	public let login: HappnUserID
+	public var login: HappnUserID
 	public var id: String?
 	public var isAdmin: Bool?
 	
