@@ -23,12 +23,12 @@ public extension XCTestCase {
 		guard !hasBootstrapped else {return}
 		defer {hasBootstrapped = true}
 		
-		LoggingSystem.bootstrap({ id, metadataProvider in
-			/* Note: CLTLoggers do not have IDs, so we do not use the id parameter of the handler. */
-			var ret = CLTLogger(metadataProvider: metadataProvider)
+		LoggingSystem.bootstrap({ label, metadataProvider in
+			var ret = CLTLogger(multilineMode: .allMultiline, metadataProvider: metadataProvider)
+			ret.metadata = ["zz-label": "\(label)"]
 			ret.logLevel = .trace
 			return ret
-		}, metadataProvider: nil)
+		}, metadataProvider: .init{ ["zz-date": "\(Date())"] })
 		
 #if canImport(os)
 		RetryingOperationConfig.oslog = nil

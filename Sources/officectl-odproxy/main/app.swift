@@ -8,6 +8,7 @@
 import Foundation
 
 import CLTLogger
+import JSONLogger
 import OfficeKit
 import Vapor
 
@@ -35,13 +36,30 @@ func app(_ env: Environment) throws -> Application {
 		throw MessageError(message: "The --config-file or --verbose options can only be specified once. The config-file option requires an argument.")
 	}
 	
-	try LoggingSystem.bootstrap(from: &env, { level in
-		return { _ in
-			var ret = CLTLogger()
-			ret.logLevel = level
-			return ret
+	let factory: (Logger.Level) -> (String) -> LogHandler = {
+		switch Environment.get("LOGGER") {
+			case "clt": return { level in
+				return { label in
+					var ret = CLTLogger(multilineMode: .allMultiline, metadataProvider: .init{ ["zz-date": "\(Date())"] })
+					ret.metadata = ["zz-label": "\(label)"] /* Note: CLTLogger does not use the label by default so we add it in the metadata. */
+					ret.logLevel = level
+					return ret
+				}
+			}
+				
+			case "json": fallthrough
+			default:
+				/* We log using json by default because this program is a server and nothing else (there is no reasons to run this in a Terminal directly). */
+				return { level in
+					return { label in
+						var ret = JSONLogger(label: label)
+						ret.logLevel = level
+						return ret
+					}
+				}
 		}
-	})
+	}()
+	try LoggingSystem.bootstrap(from: &env, factory)
 	
 	let app = Application(env)
 	do    {try configure(app, forcedConfigPath: forcedConfigPath, verbose: verbose)}

@@ -14,6 +14,7 @@ import SystemPackage
 
 import ArgumentParser
 import CLTLogger
+import JSONLogger
 import Logging
 import OfficeModelCore
 import RetryingOperation
@@ -60,7 +61,7 @@ struct Officectl : AsyncParsableCommand {
 		@Flag(name: .shortAndLong, inversion: .prefixedNo, help: "Shortcut to set the verbosity. When on, verbosity is set to debug, when off it is set to warning. Overridden by the --verbosity option.")
 		var verbose: Bool?
 		
-		@Flag(name: .long, inversion: .prefixedNo, help: "By default, logs are printed on stderr. Use this option to print to stdout instead.")
+		@Flag(name: .long, inversion: .prefixedNo, help: "As a command line tool, the logs are printed by default on stderr. Use this option to print to stdout instead (e.g. when running the server in a Docker, to be able to collect the logs).")
 		var logToStdout: Bool = false
 		
 		@Option(name: .long, help: "Override the environment in which to run the program (dev or prod). If no environment is defined, the default value is development.")
@@ -132,12 +133,23 @@ extension Officectl.Options {
 		
 		
 		/* *** LOGGER *** */
-		LoggingSystem.bootstrap({ id, metadataProvider in
-			/* Note: CLTLoggers do not have IDs, so we do not use the id parameter of the handler. */
-			var ret = CLTLogger(fd: !logToStdout ? .standardError : .standardOutput, metadataProvider: metadataProvider)
-			ret.logLevel = resolvedLogLevel
-			return ret
-		}, metadataProvider: nil)
+		/* We log using clt logger by default because this program is a CLT and can be used directly in a Terminal. */
+		switch conf?.logHandler ?? .cltLogger {
+			case .jsonLogger:
+				LoggingSystem.bootstrap({ label, metadataProvider in
+					var ret = JSONLogger(label: label, fd: !logToStdout ? .standardError : .standardOutput, metadataProvider: metadataProvider)
+					ret.logLevel = resolvedLogLevel
+					return ret
+				}, metadataProvider: nil)
+				
+			case .cltLogger:
+				LoggingSystem.bootstrap({ label, metadataProvider in
+					var ret = CLTLogger(fd: !logToStdout ? .standardError : .standardOutput, multilineMode: .allMultiline, metadataProvider: metadataProvider)
+					ret.metadata = ["zz-label": "\(label)"] /* Note: CLTLogger does not use the label by default so we add it in the metadata. */
+					ret.logLevel = resolvedLogLevel
+					return ret
+				}, metadataProvider: .init{ ["zz-date": "\(Date())"] })
+		}
 		storage.logger = Logger(label: "com.happn.officectl")
 		
 		if verbose != nil && verbosity != nil {

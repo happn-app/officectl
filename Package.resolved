@@ -100,6 +100,15 @@
       }
     },
     {
+      "identity" : "json-logger",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/xcode-actions/json-logger.git",
+      "state" : {
+        "revision" : "b8cc811156e41f1263defc5983f41197ccd07662",
+        "version" : "0.1.3"
+      }
+    },
+    {
       "identity" : "jwt",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/jwt.git",

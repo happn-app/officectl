@@ -76,6 +76,9 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/apple/swift-log.git",                        from: "1.4.0"))
 		ret.append(.package(url: "https://github.com/apple/swift-metrics.git",                    from: "2.2.0"))
 //		ret.append(.package(url: "https://github.com/apple/swift-nio.git",                        from: "2.41.0"))
+#if !canImport(System)
+		ret.append(.package(url: "https://github.com/apple/swift-system.git",                     from: "1.0.0"))
+#endif
 		ret.append(.package(url: "https://github.com/dduan/TOMLDecoder.git",                      from: "0.2.2"))
 		ret.append(.package(url: "https://github.com/Frizlab/APIConnectionProtocols.git",         from: "1.0.0-beta.6"))
 		ret.append(.package(url: "https://github.com/Frizlab/HasResult.git",                      from: "2.0.0"))
@@ -107,9 +110,7 @@ let package = Package(
 		ret.append(.package(url: "https://github.com/xcode-actions/COpenSSL.git",                 from: "1.1.111"))
 		ret.append(.package(url: "https://github.com/xcode-actions/COpenLDAP.git",                from: "2.5.5"))
 #endif
-#if !canImport(System)
-		ret.append(.package(url: "https://github.com/apple/swift-system.git",                     from: "1.0.0"))
-#endif
+		ret.append(.package(url: "https://github.com/xcode-actions/json-logger.git",              from: "0.1.1"))
 		return ret
 	}(),
 	targets: {
@@ -194,6 +195,7 @@ let package = Package(
 				
 				ret.append(.product(name: "ArgumentParser", package: "swift-argument-parser"))
 				ret.append(.product(name: "CLTLogger",      package: "clt-logger"))
+				ret.append(.product(name: "JSONLogger",     package: "json-logger"))
 				ret.append(.product(name: "JWT",            package: "jwt"))
 				ret.append(.product(name: "StreamReader",   package: "stream-reader"))
 				ret.append(.product(name: "TOMLDecoder",    package: "TOMLDecoder"))
@@ -236,6 +238,7 @@ let package = Package(
 			.product(name: "CLTLogger",     package: "clt-logger"),
 			.product(name: "Crypto",        package: "swift-crypto"),
 			.product(name: "GenericJSON",   package: "generic-json-swift"),
+			.product(name: "JSONLogger",    package: "json-logger"),
 			.product(name: "JWT",           package: "jwt"),
 			.product(name: "LegibleError",  package: "LegibleError"),
 			.product(name: "TOMLDecoder",   package: "TOMLDecoder"),

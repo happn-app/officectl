@@ -20,8 +20,25 @@ import Logging
 /* We use Strings instead of FilePaths in the conf to avoid decoding issues (FilePath encoding is structured). */
 struct Conf : Decodable, Sendable {
 	
-	var logLevel: Logger.Level?
+	enum LogHandler : String, LosslessStringConvertible, Decodable, Sendable {
+		
+		case cltLogger = "clt-logger"
+		case jsonLogger = "json-logger"
+		
+		init?(_ description: String) {
+			self.init(rawValue: description)
+		}
+		
+		var description: String {
+			return rawValue
+		}
+		
+	}
+	
 	var environment: Environment?
+	
+	var logHandler: LogHandler?
+	var logLevel: Logger.Level?
 	
 	/* Not sure if this should be in the server config… for now only the server uses it anyway. */
 	var staticDataDir: String?
@@ -57,9 +74,11 @@ struct Conf : Decodable, Sendable {
 	
 	
 	enum CodingKeys : String, CodingKey {
-		case logLevel = "log_level"
 		case environment
 		
+		case logHandler = "log_handler"
+		case logLevel = "log_level"
+
 		case staticDataDir = "static_data_dir"
 		
 		case misc
