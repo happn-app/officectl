@@ -40,11 +40,6 @@ struct Server : AsyncParsableCommand {
 			throw ExitCode.validationFailure
 		}
 		
-		/* Straight from Vapor’s `bootstrap(from:_:)`. */
-		if officectlOptions.resolvedLogLevel > .trace {
-			StackTrace.isCaptureEnabled = false
-		}
-		
 		var vaporEnv: Vapor.Environment
 		switch officectlOptions.resolvedEnvironment {
 			case .production:  vaporEnv = .production
