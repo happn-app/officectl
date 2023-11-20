@@ -43,7 +43,6 @@ struct Dev_CurTest : AsyncParsableCommand {
 			throw ExitCode(1)
 		}
 		
-		URLRequestOperationConfig.logger = officectlOptions.logger
 		URLRequestOperationConfig.maxRequestBodySizeToLog = .max
 		URLRequestOperationConfig.maxResponseBodySizeToLog = .max
 		
