@@ -26,7 +26,7 @@ enum LDAPInetOrgPersonClass : LDAPClass {
 		
 		static let objectClass: LDAPClass.Type = LDAPInetOrgPersonClass.self
 		
-		static let descr = LDAPObjectID.Descr(rawValue: "uid")! /* Note: RFC 1274 uses the identifier "userid" <http://www.oid-info.com/get/0.9.2342.19200300.100.1.1> */
+		static let descr = LDAPObjectID.Descr(rawValue: "uid")! /* Note: RFC 1274 uses the identifier "userid" <http://www.oid-info.com/get/0.9.2342.19200300.100.1.1>. */
 		static let numericoid = LDAPObjectID.Numericoid(rawValue: "0.9.2342.19200300.100.1.1")!
 		
 	}
@@ -49,7 +49,7 @@ enum LDAPInetOrgPersonClass : LDAPClass {
 		
 		static let objectClass: LDAPClass.Type = LDAPInetOrgPersonClass.self
 		
-		static let descr = LDAPObjectID.Descr(rawValue: "mail")! /* Note: RFC 1274 uses the identifier "rfc822Mailbox" <http://www.oid-info.com/get/0.9.2342.19200300.100.1.3> */
+		static let descr = LDAPObjectID.Descr(rawValue: "mail")! /* Note: RFC 1274 uses the identifier "rfc822Mailbox" <http://www.oid-info.com/get/0.9.2342.19200300.100.1.3>. */
 		static let numericoid = LDAPObjectID.Numericoid(rawValue: "0.9.2342.19200300.100.1.3")!
 		
 		static func value(from ldapValue: [Data]) throws -> [Email] {

@@ -84,7 +84,7 @@ extension LDAPObject : User {
 				case .id:
 					/* When communicating with LDAP, libldap uses the DN to specify which object the operation is destined to.
 					 * AFAICT there is no way to _change_ the DN of an entry using LDAP, one has to delete the entry and create it again. */
-					Conf.logger?.warning("Changing the ID of an LDAP is not recommended at all as it will probably not do what you expect. Please delete and re-create the object instead.")
+					Conf.logger?.warning("Changing the ID of an LDAP user is not recommended at all as it will probably not do what you expect. Please delete and re-create the object instead.")
 					return Self.setProperty(&id, to: newValue, allowTypeConversion: convert, converter: Converters.convertObjectToDN)
 					
 				case .persistentID, .isSuspended:
