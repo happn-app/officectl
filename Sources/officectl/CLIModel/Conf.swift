@@ -70,9 +70,12 @@ struct Conf : Decodable, Sendable {
 		 * It’s only a first line of defense against the non-admin users, not an actual part of the service. */
 		var maxExpirationDelayBeforeAllowingReissuance: TimeInterval
 		
+		var happnConsolePermGroups: [String: String]?
+		
 		enum CodingKeys : String, CodingKey {
 			case caCertsFile = "ca_certs_file"
 			case maxExpirationDelayBeforeAllowingReissuance = "max_expiration_delay_before_allowing_reissuance"
+			case happnConsolePermGroups = "happn_console_perm_groups"
 		}
 		
 	}
