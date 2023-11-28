@@ -125,7 +125,7 @@ public final class HappnService : UserService {
 				
 			case .login(let l):
 				let ids = Set(l.allDomainVariants(aliasMap: config.domainAliases))
-				users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector) }
+				users = try await ids.asyncFlatMap{ try await HappnUser.search(text: $0.rawValue, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch).union([.id]), connector: connector) }
 		}
 		
 		guard users.count <= 1 else {
@@ -137,7 +137,7 @@ public final class HappnService : UserService {
 	public func existingUser(fromPersistentID pID: String, propertiesToFetch: Set<UserProperty>?) async throws -> HappnUser? {
 		try await connector.increaseScopeIfNeeded("admin_read")
 		
-		let ret = try await HappnUser.get(id: pID, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch), connector: connector)
+		let ret = try await HappnUser.get(id: pID, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch).union([.id]), connector: connector)
 		/* happn’s API happily returns a user for a non-existing ID!
 		 * Except all the fields (apart from id) are nil.
 		 *
@@ -151,8 +151,8 @@ public final class HappnService : UserService {
 	
 	public func listAllUsers(includeSuspended: Bool, propertiesToFetch: Set<UserProperty>?) async throws -> [HappnUser] {
 		try await connector.increaseScopeIfNeeded("admin_read", "admin_search_user")
-		let forcedProperty: Set<UserProperty> = (!includeSuspended ? [.isSuspended] : [])
-		let users = try await HappnUser.search(text: nil, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch?.union(forcedProperty)), connector: connector)
+		let forcedProperty: Set<HappnUser.CodingKeys> = (!includeSuspended ? [.status/*isSuspended*/] : [])
+		let users = try await HappnUser.search(text: nil, propertiesToFetch: HappnUser.keysFromProperties(propertiesToFetch).union(forcedProperty).union([.id]), connector: connector)
 		if !includeSuspended {return users.filter{ !($0.oU_isSuspended ?? false) }}
 		else                 {return users}
 	}
@@ -193,7 +193,7 @@ public final class HappnService : UserService {
 	public func changePassword(of user: HappnUser, to newPassword: String) async throws {
 		var user = user
 		user.password = newPassword
-		_ = try await updateUser(user, propertiesToUpdate: [.id, .init(rawValue: HappnService.providerID + "/password")])
+		_ = try await updateUser(user, propertiesToUpdate: [.init(rawValue: HappnService.providerID + "/password")])
 	}
 	
 }

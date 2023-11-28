@@ -102,7 +102,7 @@ extension HappnUser : User {
 	}
 	
 	internal static func keysFromProperties(_ properties: Set<UserProperty>?) -> Set<HappnUser.CodingKeys> {
-		let properties = (properties ?? Set(UserProperty.standardProperties + [.gender, .birthdate])).union([.id])
+		let properties = (properties ?? Set(UserProperty.standardProperties + [.gender, .birthdate]))
 		let keys = properties
 			.compactMap{ propertyToKeys[$0] }
 			.flatMap{ $0 }
