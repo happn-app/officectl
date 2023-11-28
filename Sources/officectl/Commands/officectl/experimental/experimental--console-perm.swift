@@ -43,7 +43,6 @@ struct Experimental_ConsolePerm : AsyncParsableCommand {
 			throw ExitCode(1)
 		}
 		
-		let requestedPermissions: String
 		guard let requestedPermissions = officectlOptions.conf?.misc.happnConsolePermGroups?[group] else {
 			officectlOptions.logger.error("Unknown group “\(group)”; bailing.")
 			throw ExitCode(1)
