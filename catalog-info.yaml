@@ -1,0 +1,15 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: officectl-api
+  namespace: default
+  annotations:
+    github.com/project-slug: happn-app/officectl
+    backstage.io/techdocs-ref: dir:.
+  labels:
+    language: swift
+    framework: unknown
+spec:
+  type: service
+  lifecycle: deprecated
+  owner: ops
