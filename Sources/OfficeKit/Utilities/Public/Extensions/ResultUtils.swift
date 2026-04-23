@@ -7,10 +7,6 @@
 
 import Foundation
 
-import AsyncOperationResult
-
-
-
 extension Result {
 	
 	public var successValue: Success? {
@@ -31,28 +27,6 @@ extension Result {
 		switch self {
 		case .success: return true
 		case .failure: return false
-		}
-	}
-	
-}
-
-extension Result where Failure == Error {
-	
-	public var asyncOperationResult: AsyncOperationResult<Success> {
-		switch self {
-		case .success(let success): return .success(success)
-		case .failure(let failure): return .error(failure)
-		}
-	}
-	
-}
-
-extension AsyncOperationResult {
-	
-	public var result: Result<T, Error> {
-		switch self {
-		case .success(let success): return .success(success)
-		case .error(let error):     return .failure(error)
 		}
 	}
 	

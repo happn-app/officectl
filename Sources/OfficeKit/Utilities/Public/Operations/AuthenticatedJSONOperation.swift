@@ -10,7 +10,6 @@ import Foundation
 	import FoundationNetworking
 #endif
 
-import AsyncOperationResult
 import URLRequestOperation
 
 
@@ -53,13 +52,13 @@ public class AuthenticatedJSONOperation<ObjectType : Decodable> : URLRequestOper
 		super.init(config: c, retryInfoRecoveryHandler: h)
 	}
 	
-	public override func processURLRequestForRunning(_ originalRequest: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>) -> Void) {
+	public override func processURLRequestForRunning(_ originalRequest: URLRequest, handler: @escaping (Result<URLRequest, Error>) -> Void) {
 		guard let authenticator = authenticator else {
 			handler(.success(originalRequest))
 			return
 		}
-		
-		authenticator(originalRequest, { r, _ in handler(r.asyncOperationResult) })
+
+		authenticator(originalRequest, { r, _ in handler(r) })
 	}
 	
 	public override func computeRetryInfo(sourceError error: Error?, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {

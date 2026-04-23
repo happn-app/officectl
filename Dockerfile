@@ -1,7 +1,7 @@
 # ================================
 # Build image
 # ================================
-FROM swift:5.4-focal as build
+FROM swift:5.4-focal AS build
 
 # Install OS updates and required packages
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
@@ -13,6 +13,9 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
 # Set up a build area
 WORKDIR /build
 
+# Older swift-email tags still point one docs submodule at the retired happn-tech org.
+RUN git config --global url."https://github.com/Frizlab/isemail.git".insteadOf "https://github.com/happn-tech/isemail.git"
+
 # First just resolve dependencies.
 # This creates a cached layer that can be reused as long as your
 # Package.swift/Package.resolved files do not change.
@@ -22,8 +25,10 @@ RUN swift package resolve
 # Copy entire repo into container
 COPY . .
 
-# Build everything, with optimizations and test discovery
-RUN swift build --enable-test-discovery -c release
+# QEMU-backed buildx builders are flaky with SwiftPM's parallel scheduler.
+# Keep the default conservative, and allow native builders to override it.
+ARG SWIFT_BUILD_JOBS=1
+RUN swift build -c release --jobs "${SWIFT_BUILD_JOBS}"
 
 # Switch to the staging area
 WORKDIR /staging
@@ -51,8 +56,8 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
 
 # TODO: Find how to do this properly!
 ADD https://ca.1e42.net/happn_Root_CA.crt           /usr/local/share/ca-certificates/happn_Root_CA.crt
-ADD https://ca.1e42.net/happn_Intermediate_CA_2.crt /usr/local/share/ca-certificates/happn_Intermediate_CA_2.crt
-ADD https://ca.1e42.net/happn_Intermediate_CA_5.crt /usr/local/share/ca-certificates/happn_Intermediate_CA_5.crt
+ADD https://ca.1e42.net/happn_Intermediate_CA_7.crt /usr/local/share/ca-certificates/happn_Intermediate_CA_7.crt
+ADD https://ca.1e42.net/happn_Intermediate_CA_7.crt /usr/local/share/ca-certificates/happn_Intermediate_CA_7.crt
 RUN /usr/sbin/update-ca-certificates
 
 # Create a vapor user and group with /app as its home directory

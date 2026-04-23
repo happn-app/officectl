@@ -29,15 +29,6 @@
         }
       },
       {
-        "package": "AsyncOperationResult",
-        "repositoryURL": "https://github.com/happn-tech/AsyncOperationResult.git",
-        "state": {
-          "branch": null,
-          "revision": "fe81cdaa25a577a9ea688d71aa81387bfed213c7",
-          "version": "1.0.7"
-        }
-      },
-      {
         "package": "clt-logger",
         "repositoryURL": "https://github.com/xcode-actions/clt-logger.git",
         "state": {
@@ -71,15 +62,6 @@
           "branch": null,
           "revision": "468c0c03b9d22467784e957017f4677361221b43",
           "version": "1.1.111"
-        }
-      },
-      {
-        "package": "EmailValidator",
-        "repositoryURL": "https://github.com/happn-tech/EmailValidator.git",
-        "state": {
-          "branch": null,
-          "revision": "9c469b899cd06c3f91d8f94fc8c16a7bec299c3e",
-          "version": "0.1.0"
         }
       },
       {
@@ -147,7 +129,7 @@
       },
       {
         "package": "RetryingOperation",
-        "repositoryURL": "https://github.com/happn-tech/RetryingOperation.git",
+        "repositoryURL": "https://github.com/happn-app/RetryingOperation.git",
         "state": {
           "branch": null,
           "revision": "4d69ec3aa4cb5d33e973fcfe01378a1d49e351f2",
@@ -165,7 +147,7 @@
       },
       {
         "package": "SemiSingleton",
-        "repositoryURL": "https://github.com/happn-tech/SemiSingleton.git",
+        "repositoryURL": "https://github.com/happn-app/SemiSingleton.git",
         "state": {
           "branch": null,
           "revision": "1c17d1ab5d6026b18b22b1aa3c0eca111b8a87db",
@@ -197,6 +179,15 @@
           "branch": null,
           "revision": "3bea268b223651c4ab7b7b9ad62ef9b2d4143eb6",
           "version": "1.1.6"
+        }
+      },
+      {
+        "package": "swift-email",
+        "repositoryURL": "https://github.com/Frizlab/swift-email.git",
+        "state": {
+          "branch": null,
+          "revision": "f73b72d8e2b15034e31381490c49d281b3b5acde",
+          "version": "0.2.2"
         }
       },
       {
@@ -273,11 +264,11 @@
       },
       {
         "package": "URLRequestOperation",
-        "repositoryURL": "https://github.com/happn-tech/URLRequestOperation.git",
+        "repositoryURL": "https://github.com/happn-app/URLRequestOperation.git",
         "state": {
           "branch": null,
-          "revision": "58768e27a229184b3da813ffb60612eb2f1daf45",
-          "version": "1.1.9"
+          "revision": "cafea350e06f73dfd82f20f926088fb62aed0eec",
+          "version": "1.1.11"
         }
       },
       {

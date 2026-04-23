@@ -10,7 +10,6 @@ import Foundation
 	import FoundationNetworking
 #endif
 
-import AsyncOperationResult
 import GenericJSON
 import NIO
 import OfficeKit
@@ -175,13 +174,13 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 			super.init(config: c)
 		}
 		
-		override func processURLRequestForRunning(_ originalRequest: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>) -> Void) {
+		override func processURLRequestForRunning(_ originalRequest: URLRequest, handler: @escaping (Result<URLRequest, Error>) -> Void) {
 			guard let authenticator = authenticator else {
 				handler(.success(originalRequest))
 				return
 			}
-			
-			authenticator(originalRequest, { r, _ in handler(r.asyncOperationResult) })
+
+			authenticator(originalRequest, { r, _ in handler(r) })
 		}
 		
 		override func computeRetryInfo(sourceError error: Error?, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {
@@ -218,13 +217,13 @@ class DownloadDriveFileOperation : RetryingOperation, HasResult {
 			super.init(config: c)
 		}
 		
-		override func processURLRequestForRunning(_ originalRequest: URLRequest, handler: @escaping (AsyncOperationResult<URLRequest>) -> Void) {
+		override func processURLRequestForRunning(_ originalRequest: URLRequest, handler: @escaping (Result<URLRequest, Error>) -> Void) {
 			guard let authenticator = authenticator else {
 				handler(.success(originalRequest))
 				return
 			}
-			
-			authenticator(originalRequest, { r, _ in handler(r.asyncOperationResult) })
+
+			authenticator(originalRequest, { r, _ in handler(r) })
 		}
 		
 		override func computeRetryInfo(sourceError error: Error?, completionHandler: @escaping (URLRequestOperation.RetryMode, URLRequest, Error?) -> Void) {

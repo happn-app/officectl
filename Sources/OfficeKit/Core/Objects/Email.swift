@@ -7,7 +7,7 @@
 
 import Foundation
 
-import EmailValidator
+import class Email.EmailValidator
 
 
 
@@ -25,7 +25,7 @@ public struct Email {
 		/* For the time being we only do this validation. In a future time,
 		 * EmailValidator will return the full, parsed email (getting rid of
 		 * comments, etc.). */
-		guard EmailValidator(string: string).evaluateEmail().category.value < EmailValidator.ValidationCategory.err.value else {
+		guard EmailValidator(string: string).evaluateEmail().0.category.value < EmailValidator.ValidationCategory.err.value else {
 			return nil
 		}
 		let components = string.split(separator: "@")
