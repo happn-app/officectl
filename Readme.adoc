@@ -1,5 +1,12 @@
 = officectl
 
+---
+
+NOTE: This repo is no longer maintained by happn. +
+A maintained version is available from its creator at https://github.com/Frizlab/officectl[Frizlab/officectl].
+
+---
+
 == REST API
 
 === Basics
