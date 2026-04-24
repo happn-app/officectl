@@ -41,21 +41,21 @@ final class IosTestDevicesController {
 		
 		let getDevicesAction: GetMDMDevicesAction = semiSingletonStore.semiSingleton(forKey: token)
 		return getDevicesAction.start(parameters: (), weakeningMode: .always(successDelay: 3600, errorDelay: nil), shouldJoinRunningAction: { _ in true }, shouldRetrievePreviousRun: { _, wasSuccessful in wasSuccessful }, eventLoop: req.eventLoop)
-		.map{ devices in
-			devices.filter{ $0.relationships.deviceGroup.id == 61452 }.sorted(by: { $0.attributes.deviceName < $1.attributes.deviceName }).map{
-				DevicesContext.Device(
-					name: $0.attributes.deviceName,
-					dateLastSeen: $0.attributes.lastSeenAt,
-					osVersion: $0.attributes.osVersion,
-					modelName: $0.attributes.modelName,
-					udid: $0.attributes.uniqueIdentifier,
-					phoneNumber: $0.attributes.phoneNumber,
-					serialNumber: $0.attributes.serialNumber,
-					wifiMAC: $0.attributes.wifiMac,
-					bluetoothMAC: $0.attributes.bluetoothMac
-				)
+			.map{ devices in
+				devices.filter{ $0.relationships.deviceGroup.id == Optional(61452) }.sorted(by: { $0.attributes.deviceName < $1.attributes.deviceName }).map{
+					DevicesContext.Device(
+						name: $0.attributes.deviceName,
+						dateLastSeen: $0.attributes.lastSeenAt,
+						osVersion: $0.attributes.osVersion,
+						modelName: $0.attributes.modelName,
+						udid: $0.attributes.uniqueIdentifier,
+						phoneNumber: $0.attributes.phoneNumber,
+						serialNumber: $0.attributes.serialNumber,
+						wifiMAC: $0.attributes.wifiMac,
+						bluetoothMAC: $0.attributes.bluetoothMac
+					)
+				}
 			}
-		}
 		.flatMap{ devices in
 			req.view.render("IosTestDevicesList", DevicesContext(devices: devices))
 		}

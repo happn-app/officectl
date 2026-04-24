@@ -75,18 +75,18 @@ struct SimpleMDMDevice : Decodable {
 	
 	struct DeviceGroup : Decodable {
 		
-		var id: Int
-		var type: String /* Technically enum */
+		var id: Int?
+		var type: String? /* Technically enum */
 		
 		init(from decoder: Decoder) throws {
 			struct GroupData : Decodable {
 				var type: String /* Technically enum */
-				var id: Int
+				var id: Int?
 			}
 			let container = try decoder.container(keyedBy: DeviceGroup.CodingKeys.self)
-			let groupData = try container.decode(GroupData.self, forKey: .data)
-			id = groupData.id
-			type = groupData.type
+			let groupData = try container.decodeIfPresent(GroupData.self, forKey: .data)
+			id = groupData?.id
+			type = groupData?.type
 		}
 		
 		private enum CodingKeys : String, CodingKey {
