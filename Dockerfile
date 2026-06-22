@@ -55,9 +55,7 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
     && rm -rf /var/lib/apt/lists/*
 
 # TODO: Find how to do this properly!
-ADD https://ca.1e42.net/happn_Root_CA.crt           /usr/local/share/ca-certificates/happn_Root_CA.crt
-ADD https://ca.1e42.net/happn_Intermediate_CA_7.crt /usr/local/share/ca-certificates/happn_Intermediate_CA_7.crt
-ADD https://ca.1e42.net/happn_Intermediate_CA_7.crt /usr/local/share/ca-certificates/happn_Intermediate_CA_7.crt
+ADD https://pki.happn.io/v1/pki_int/ca_chain           /usr/local/share/ca-certificates/happn_ca_chain
 RUN /usr/sbin/update-ca-certificates
 
 # Create a vapor user and group with /app as its home directory
