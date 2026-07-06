@@ -125,12 +125,6 @@ func setup_routes_and_middlewares(_ app: Application) throws {
 	authedWebRoutesBuilderRedir.get("password-reset",  ":email", use: webPasswordResetController.showResetPage)
 	authedWebRoutesBuilderGuard.post("password-reset", ":email", use: webPasswordResetController.resetPassword)
 	
-	/* ******** Temporary certificate renew page ******** */
-	
-	let webCertificateRenewController = WebCertificateRenewController()
-	authedWebRoutesBuilderRedir.get("get-certificate", use: webCertificateRenewController.showLogin)
-	authedWebRoutesBuilderGuard.post("get-certificate", use: webCertificateRenewController.renewCertificate)
-	
 	/* ******** Temporary get licenses page ******** */
 	
 	let getLicensesController = GetLicensesController()
