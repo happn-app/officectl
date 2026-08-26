@@ -54,8 +54,18 @@ RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
     && apt-get install -y libldap-2.4-2 libncurses6 libncursesw6 libssl1.1 zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
-ADD https://pki.happn.io/v1/pki_int/ca_chain /usr/local/share/ca-certificates/happn_ca_chain.crt
-RUN update-ca-certificates
+ADD https://pki.happn.io/v1/pki_root/ca/pem /usr/local/share/ca-certificates/happn_root_ca.crt
+ADD https://pki.happn.io/v1/pki_int/ca/pem  /usr/local/share/ca-certificates/happn_intermediate_ca.crt
+RUN set -eu; \
+    chmod 0644 /usr/local/share/ca-certificates/happn_root_ca.crt \
+               /usr/local/share/ca-certificates/happn_intermediate_ca.crt; \
+    update-ca-certificates; \
+    # Fail the build instead of shipping a silently incomplete trust store.
+    for f in /usr/local/share/ca-certificates/happn_root_ca.crt \
+             /usr/local/share/ca-certificates/happn_intermediate_ca.crt; do \
+        openssl x509 -in "$f" -noout -subject; \
+        test -L "/etc/ssl/certs/$(openssl x509 -in "$f" -noout -hash).0"; \
+    done
 
 # Create a vapor user and group with /app as its home directory
 RUN useradd --user-group --create-home --system --skel /dev/null --home-dir /app vapor
